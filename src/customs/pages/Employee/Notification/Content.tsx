@@ -74,10 +74,10 @@ const Content = () => {
   }, []);
 
   return (
-    <PageContainer
-      itemDataCustomNavListing={AdminNavListingData}
-      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    >
+    // <PageContainer
+    //   itemDataCustomNavListing={AdminNavListingData}
+    //   itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    // >
       <Container title="Notification" description="Notification page">
         <Box>
           <Grid container spacing={3}>
@@ -118,7 +118,7 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-    </PageContainer>
+    // </PageContainer>
   );
 };
 

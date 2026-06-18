@@ -156,3 +156,10 @@ export const approveMeetingHost = async (
   });
   return response.data;
 };
+
+export const getVisitorByTickedId= async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};

@@ -3668,7 +3668,7 @@ const Content = () => {
               onClose={handleCloseBlacklistVisitor}
             />
             {/* List Visitor */}
-            <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor} />
+            <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor}  upcomingVisitors={upcomingVisitors}/>
             {/* Open */}
             <TriggeredAccessDialog
               open={openTriggeredAccess}

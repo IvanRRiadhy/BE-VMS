@@ -3365,7 +3365,7 @@ const OperatorView = () => {
     };
     fetchData();
   }, [token, selectedPurpose]);
-
+  
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
   const filteredVisitors = useMemo(() => {
@@ -3881,7 +3881,11 @@ const OperatorView = () => {
             onClose={handleCloseBlacklistVisitor}
           />
           {/* List Visitor */}
-          <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor} />
+          <ListVisitorDialog
+            open={openListVisitor}
+            onClose={handleCloseListVisitor}
+            upcomingVisitors={upcomingVisitors}
+          />
           {/* Open */}
           <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
           {/* Dialog Swipe No Code */}

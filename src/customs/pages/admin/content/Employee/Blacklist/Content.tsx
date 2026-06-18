@@ -19,6 +19,7 @@ import { getAllEmployeeBlacklistPagination } from 'src/customs/api/admin';
 import { IconUsers } from '@tabler/icons-react';
 
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 type EmployeesTableRow = {
   id: string;
@@ -51,22 +52,13 @@ const Content = () => {
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-
-  const [filters, setFilters] = useState<Filters>({
-    joinStart: '',
-    exitEnd: '',
-    gender: 0,
-    statusEmployee: 0,
-    organization: '',
-    department: '',
-    district: '',
-  });
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Blacklist Employee',
+      title: t('total_blacklist'),
       icon: IconUsers,
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -87,8 +79,6 @@ const Content = () => {
             rowsPerPage,
             sortDir,
             search,
-            // filters.joinStart,
-            // filters.exitEnd,
             true,
           );
         } catch (err: any) {
@@ -96,10 +86,6 @@ const Content = () => {
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-        const isNotFound =
-          employeeRes?.status_code === 404 ||
-          employeeRes?.status === 'not_found' ||
-          safeCollection.length === 0;
 
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);

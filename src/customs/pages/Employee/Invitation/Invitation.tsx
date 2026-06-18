@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Box,
   Dialog,
@@ -10,6 +10,21 @@ import {
   Portal,
   Snackbar,
   Alert,
+  useMediaQuery,
+  useTheme,
+  Typography,
+  InputAdornment,
+  Skeleton,
+  TableRow,
+  TableCell,
+  TableHead,
+  Table,
+  TableBody,
+  Button,
+  CircularProgress,
+  TableContainer,
+  Paper,
+  Tooltip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
@@ -22,18 +37,25 @@ import {
   CreateVisitorRequestSchema,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
+import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import {
   getAllVisitorPagination,
   getEmployeeById,
-  getFormEmployee,
-  getRegisteredSite,
-  getVisitorEmployee,
+  getVisitorTransactionByIds,
+  getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconBolt, IconClipboard, IconLink, IconShare, IconUsers } from '@tabler/icons-react';
+import {
+  IconBolt,
+  IconClipboard,
+  IconFilterFilled,
+  IconLink,
+  IconPdf,
+  IconShare,
+  IconUsers,
+} from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
-import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
@@ -64,6 +86,19 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
+import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
+import { IconFileSpreadsheet } from '@tabler/icons-react';
+import { cancelVisitor } from 'src/customs/api/users';
+import { useProfile } from 'src/hooks/useProfile';
+
+type Group = {
+  id: string;
+  name: string;
+  agenda: string;
+  rows: any[];
+};
 
 const Content = () => {
   const { token } = useSession();
@@ -109,17 +144,10 @@ const Content = () => {
   // Employee Detail
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  // Visitor Detail
-  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any[]>([]);
   const [openRelatedInvitation, setOpenRelatedInvitation] = useState(false);
-  const [emails, setEmails] = useState<string[]>([]);
-  // Registered Site
-  // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
   const [generatedLink, setGeneratedLink] = useState('');
@@ -132,6 +160,8 @@ const Content = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -149,6 +179,10 @@ const Content = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState('');
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const secdrawerWidth = 300;
+  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
+  const [groupHeader, setGroupHeader] = useState<any | null>(null);
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleEmployeeClick = (employeeId: string) => {
     setSelectedEmployeeId(employeeId);
@@ -176,10 +210,8 @@ const Content = () => {
     // setEmployeeDetail(null);
     setEmployeeError(null);
   };
-
-  const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
-  >('All');
+  const theme = useTheme();
+  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const [search, setSearch] = useState<string>('');
   const [searchHost, setSearchHost] = useState<any>('');
@@ -198,19 +230,184 @@ const Content = () => {
     end_date: '',
   });
 
-  const queryClient = useQueryClient();
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
-  const {
-    data: allVisitorData,
-    isLoading: isLoading,
-    isFetching: isFetching,
-  } = useQuery({
-    queryKey: ['visitors', search, appliedFilters],
-    queryFn: async () => {
-      const statusParam =
-        appliedFilters.status && appliedFilters.status !== 'All'
-          ? appliedFilters.status
-          : undefined;
+  const queryClient = useQueryClient();
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [searchAgenda, setSearchAgenda] = useState('');
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
+  const [openGroup, setOpenGroup] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const observerRef = useRef<HTMLDivElement>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // const {
+  //   data: allVisitorData,
+  //   isLoading: isLoading,
+  //   isFetching: isFetching,
+  // } = useQuery({
+  //   queryKey: ['visitors', page, rowsPerPage, search, appliedFilters, sortDir],
+  //   queryFn: async () => {
+  //     const statusParam =
+  //       appliedFilters.status && appliedFilters.status !== 'All'
+  //         ? appliedFilters.status
+  //         : undefined;
+
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
+
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+  //     const start = page * rowsPerPage;
+
+  //     // const res = await getAllVisitorPagination(
+  //     //   token as string,
+  //     //   0,
+  //     //   -1,
+  //     //   search || undefined,
+  //     //   appliedFilters.start_date
+  //     //     ? dayjs(appliedFilters.start_date).utc().toISOString()
+  //     //     : undefined,
+  //     //   appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
+  //     //   statusParam,
+  //     //   appliedFilters.data_filter,
+  //     //   appliedFilters.site_id || undefined,
+  //     //   appliedFilters.visitor_role || undefined,
+  //     //   isEmergencyParam,
+  //     //   isBlockParam,
+  //     //   appliedFilters.host_id || undefined,
+  //     // );
+
+  //     const res = await getVisitorTransactionPagination(
+  //       token as string,
+  //       start,
+  //       rowsPerPage,
+  //       sortDir,
+  //       search || undefined,
+  //       appliedFilters.start_date || undefined,
+  //       appliedFilters.end_date || undefined,
+  //       appliedFilters.visitor_status || undefined,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.transaction_status || undefined,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
+
+  //     setTotalRecords(res.RecordsTotal);
+  //     setTotalFilteredRecords(res.RecordsFiltered);
+
+  //     return res.collection;
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 1000 * 60 * 1,
+  // });
+
+  // const [totalRecords, setTotalRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [openGroup, setOpenGroup] = useState(true);
+
+  // const processedData = useMemo(() => {
+  //   if (!allVisitorData) return [];
+
+  //   return allVisitorData.map((item: any) => {
+  //     // const isExpired =
+  //     //   item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+  //     return {
+  //       id: item.id,
+  //       visitor_type: item.visitor_type_name || '-',
+  //       agenda: item.agenda || '-',
+  //       visitor_period_start: item.visitor_period_start || '-',
+  //       visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //       // invitation_created_at: item.invitation_created_at,
+  //       host: item.host_name ?? '-',
+  //       // visitor_status: item.transaction_status || '-',
+  //     };
+  //   });
+  // }, [allVisitorData]);
+
+  // const visitorDataAll = useMemo(
+  //   () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
+  //   [processedData, rowsPerPage, page],
+  // );
+
+  // const fetchData = async () => {
+  //   if (!token) return;
+
+  //   setLoading(true);
+  //   try {
+  //     const start = page * rowsPerPage;
+
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
+
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+  //     const res = await getVisitorTransactionPagination(
+  //       token,
+  //       start,
+  //       rowsPerPage,
+  //       sortDir,
+  //       debouncedSearchAgenda || undefined,
+  //       appliedFilters.start_date || undefined,
+  //       appliedFilters.end_date || undefined,
+  //       appliedFilters.visitor_status || undefined,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.transaction_status || undefined,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
+
+  //     setTableRowVisitors(
+  //       res.collection.map((item: any) => ({
+  //         id: item.id,
+  //         agenda: item.agenda || '-',
+  //         visitor_type: item.visitor_type_name || '-',
+  //         host_name: item.host_name || '-',
+  //         visitor_period_start: formatDateTime(item.visitor_period_start),
+  //         visitor_period_end: formatDateTime(item.visitor_period_end),
+  //         invited_by: item.invited_by || '-',
+  //       })),
+  //     );
+
+  //     setTotalRecords(res.RecordsTotal);
+  //     setTotalFilteredRecords(res.RecordsFiltered);
+  //   } catch (err) {
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (!token) return;
+  //   fetchData();
+  // }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
+
+  const fetchData = async (append = false) => {
+    if (!token) return;
+
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    try {
+      const start = append ? tableRowVisitors.length : 0;
 
       const isEmergencyParam =
         appliedFilters.emergency_situation === ''
@@ -220,17 +417,17 @@ const Content = () => {
       const isBlockParam =
         appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
-      const res = await getAllVisitorPagination(
-        token as string,
-        0,
-        -1,
-        search || undefined,
-        appliedFilters.start_date
-          ? dayjs(appliedFilters.start_date).utc().toISOString()
-          : undefined,
-        appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-        statusParam,
+      const res = await getVisitorTransactionPagination(
+        token,
+        start,
+        rowsPerPage,
+        sortDir,
+        debouncedSearchAgenda || undefined,
+        appliedFilters.start_date || undefined,
+        appliedFilters.end_date || undefined,
+        appliedFilters.visitor_status || undefined,
         appliedFilters.data_filter,
+        appliedFilters.transaction_status || undefined,
         appliedFilters.site_id || undefined,
         appliedFilters.visitor_role || undefined,
         isEmergencyParam,
@@ -238,57 +435,84 @@ const Content = () => {
         appliedFilters.host_id || undefined,
       );
 
-      return res.collection;
-    },
-    enabled: !!token,
-    staleTime: 1000 * 60 * 1,
-  });
+      const newRows = res.collection.map((item: any) => ({
+        id: item.id,
+        agenda: item.agenda || '-',
+        visitor_type: item.visitor_type_name || '-',
+        host_name: item.host_name || '-',
+        visitor_period_start: formatDateTime(item.visitor_period_start),
+        visitor_period_end: formatDateTime(item.visitor_period_end),
+        invited_by: item.invited_by || '-',
+      }));
 
-  const processedData = useMemo(() => {
-    if (!allVisitorData) return [];
+      if (append) {
+        setTableRowVisitors((prev) => [...prev, ...newRows]);
+      } else {
+        setTableRowVisitors(newRows);
+      }
 
-    return allVisitorData
-      .map((item: any) => {
-        const isExpired =
-          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+      setHasMore(start + newRows.length < res.RecordsFiltered);
 
-        return {
-          id: item.id,
-          visitor_type: item.visitor_type_name || '-',
-          name: item.visitor_name || '-',
-          identity_id: item.visitor_identity_id || '-',
-          email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
-          invitation_code: item.invitation_code || '-',
-          phone: item.visitor_phone || '-',
-          visitor_period_start: item.visitor_period_start || '-',
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          invitation_created_at: item.invitation_created_at,
-          host: item.host ?? '-',
-          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
-        };
-      })
-      .sort((a: any, b: any) => {
-        const dateA = a.invitation_created_at ?? a.visitor_period_start;
-        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+      setTotalRecords(res.RecordsTotal);
+      setTotalFilteredRecords(res.RecordsFiltered);
+    } catch {
+      setTableRowVisitors([]);
+      setTotalRecords(0);
+      setTotalFilteredRecords(0);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
-        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
-      })
-      .map(({ invitation_created_at, ...rest }: any) => rest);
-  }, [allVisitorData]);
+  useEffect(() => {
+    if (!token) return;
+    fetchData(false);
+  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
-  const visitorDataAll = useMemo(
-    () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
-    [processedData],
-  );
+  useEffect(() => {
+    if (!observerRef.current) return;
 
-  const paginatedData = useMemo(() => {
-    return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-  }, [processedData, page, rowsPerPage]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !loadingMore) {
+          fetchData(true);
+        }
+      },
+      {
+        threshold: 0.1,
+      },
+    );
+
+    observer.observe(observerRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore]);
+
+  useEffect(() => {
+    if (!selectedGroupId || !token) return;
+
+    const fetchDetail = async () => {
+      setGroupDetailLoading(true);
+      try {
+        const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        setGroupHeader(res.collection[0]);
+        setGroupVisitors(res.collection);
+      } catch (e) {
+        // setGroupVisitors([]);
+      } finally {
+        setGroupDetailLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [selectedGroupId, token]);
 
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const { data: profile } = useProfile(token);
 
   const { data: quickAccessResult } = useQuery({
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
@@ -343,21 +567,17 @@ const Content = () => {
   }, [quickAccessResult]);
 
   const visitorTableData = {
-    data: paginatedData,
+    // data: visitorDataAll,
     dataQuickAccess: processedQuickAccessData,
-    RecordsFiltered: processedData.length,
-    RecordsTotal: processedData.length,
+    // RecordsFiltered: processedData.length,
+    // RecordsTotal: processedData.length,
   };
-
-  const totalVisitorRecords = useMemo(() => {
-    return visitorDataAll.length;
-  }, [visitorDataAll]);
 
   const cards = [
     {
       title: 'Total Visitor',
       icon: IconUsers,
-      subTitle: `${totalVisitorRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -395,16 +615,6 @@ const Content = () => {
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
-
-    // if (saved) {
-    //   try {
-    //     freshForm = JSON.parse(saved);
-    //   } catch {
-    //     freshForm = CreateVisitorRequestSchema.parse({});
-    //   }
-    // } else {
-    //   freshForm = CreateVisitorRequestSchema.parse({});
-    // }
 
     freshForm = CreateVisitorRequestSchema.parse({});
     setEdittingId('');
@@ -455,7 +665,8 @@ const Content = () => {
     setOpenRelatedInvitation(true);
 
     try {
-      const res = await getInvitationRelatedVisitor(id, token);
+      // const res = await getInvitationRelatedVisitor(id, token);
+      const res = await getVisitorTransactionByIds(token, id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -470,7 +681,14 @@ const Content = () => {
       .map((v, i) => ({
         id: v.id,
         name: v.visitor_name,
-        vehicle_plate_number: v.vehicle_plate_number,
+        phone: v.visitor_phone,
+        email: v.visitor_email,
+        agenda: v.agenda,
+        visitor_period_start: formatDateTime(v.visitor_period_start),
+        visitor_period_end: formatDateTime(v.visitor_period_end, v.extend_visitor_period),
+        vehicle_type: v.vehicle_type,
+        vehicle_plate_number: v.vehicle_plate_number || '-',
+        site: v.site_place_name || '-',
         visitor_status: v.visitor_status,
       }));
   }, [visitorDetail, selected]);
@@ -478,6 +696,7 @@ const Content = () => {
   const handleCloseRelation = () => {
     setOpenRelatedInvitation(false);
     setVisitorDetail([]);
+    setSelected([]);
     setVisitorError(null);
   };
 
@@ -685,6 +904,27 @@ const Content = () => {
     setQuickSearch(keyword);
   }, []);
 
+  const filteredVisitors = tableRowVisitors.filter((item) => {
+    const keyword = searchAgenda.trim().toLowerCase();
+
+    return (
+      item.agenda?.toLowerCase().includes(keyword) ||
+      item.host_name?.toLowerCase().includes(keyword)
+    );
+  });
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelVisitor(token as string, id);
+
+      showSwal('success', 'Transaction successfully cancelled');
+
+      fetchData();
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to cancel visitor');
+    }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -710,7 +950,7 @@ const Content = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, lg: 12 }}>
+            {/* <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 loading={isLoading}
                 isHavePagination={true}
@@ -718,10 +958,11 @@ const Content = () => {
                 minWidth={2400}
                 stickyHeader={true}
                 currentPage={page}
-                data={visitorTableData?.data || []}
-                totalCount={totalVisitorRecords}
+                data={processedData || []}
+                totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
                 selectedRows={selectedRows}
+                defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
@@ -731,9 +972,6 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveImage={true}
                 isHaveSearch={true}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
                 isHaveVip={true}
                 isHavePeriod={true}
                 // isVip={(row) => row.is_vip === true}
@@ -745,59 +983,241 @@ const Content = () => {
                 isActionEmployee={true}
                 stickyVisitorCount={2}
                 isBlacklistPage={false}
-                isHaveEmployee={true}
-                onEmployeeClick={(row: any) => {
-                  handleEmployeeClick(row.host as string);
-                }}
+                isHaveEmployee={false}
+                // onEmployeeClick={(row: any) => {
+                //   handleEmployeeClick(row.host as string);
+                // }}
                 isHaveVerified={false}
-                headerContent={{
-                  title: '',
-                  subTitle: 'Monitoring Data Visitor',
-                  items: [
-                    { name: 'All' },
-                    { name: 'Preregis' },
-                    { name: 'Checkin' },
-                    { name: 'Checkout' },
-                    { name: 'Block' },
-                    { name: 'Denied' },
-                    { name: 'Waiting' },
-                  ],
-                }}
-                onHeaderItemClick={(item) => {
-                  if (
-                    item.name === 'All' ||
-                    item.name === 'Checkin' ||
-                    item.name === 'Checkout' ||
-                    item.name === 'Preregis' ||
-                    item.name === 'Denied' ||
-                    item.name === 'Block' ||
-                    item.name === 'Waiting'
-                  ) {
-                    setSelectedType(item.name);
-                    setPage(0);
-                    setAppliedFilters((prev: any) => ({
-                      ...prev,
-                      status: item.name === 'All' ? 0 : item.name,
-                    }));
-                  }
-                }}
+                // headerContent={{
+                //   title: '',
+                //   subTitle: 'Monitoring Data Visitor',
+                //   items: [
+                //     { name: 'All' },
+                //     { name: 'Preregis' },
+                //     { name: 'Checkin' },
+                //     { name: 'Checkout' },
+                //     { name: 'Block' },
+                //     { name: 'Denied' },
+                //     { name: 'Waiting' },
+                //   ],
+                // }}
+                // onHeaderItemClick={(item) => {
+                //   if (
+                //     item.name === 'All' ||
+                //     item.name === 'Checkin' ||
+                //     item.name === 'Checkout' ||
+                //     item.name === 'Preregis' ||
+                //     item.name === 'Denied' ||
+                //     item.name === 'Block' ||
+                //     item.name === 'Waiting'
+                //   ) {
+                //     setSelectedType(item.name);
+                //     setPage(0);
+                //     setAppliedFilters((prev: any) => ({
+                //       ...prev,
+                //       status: item.name === 'All' ? 0 : item.name,
+                //     }));
+                //   }
+                // }}
                 defaultSelectedHeaderItem="All"
                 onView={(row) => {
                   handleView(row.id);
                 }}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                onFilterCalenderChange={(ranges) => {
-                  if (ranges.startDate && ranges.endDate) {
-                    setStartDate(ranges.startDate.toISOString());
-                    setEndDate(ranges.endDate.toISOString());
-                    setPage(0);
-                  }
-                }}
                 onAddData={handleAdd}
-                isHaveFilterMore={false}
               />
-            </Grid>
+            </Grid> */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: mdUp ? 'row' : 'column',
+                backgroundColor: '#fff',
+                height: '100%',
+                width: '100%',
+                // overflow: 'hidden',
+                marginTop: '5px',
+              }}
+            >
+              <Box
+                sx={{
+                  width: mdUp ? secdrawerWidth : '100%',
+                  borderRight: '1px solid #eee',
+                  p: 2,
+                  pt: 2,
+                  overflow: 'auto',
+                  height: { xs: '100%', md: '75vh' },
+                }}
+              >
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                  <Typography variant="h6" fontSize="1rem">
+                    Transaction Visitor
+                  </Typography>
+                </Box>
+
+                {/* Search */}
+                <CustomTextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search Transaction"
+                  value={searchAgenda}
+                  onChange={(e) => setSearchAgenda(e.target.value)}
+                  sx={{ mb: 2 }}
+                  // InputProps={{
+                  //   endAdornment: (
+                  //     <InputAdornment position="end">
+                  //       <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+                  //         <IconFilterFilled />
+                  //       </IconButton>
+                  //     </InputAdornment>
+                  //   ),
+                  // }}
+                />
+                <Box>
+                  <Box>
+                    {loading
+                      ? Array.from({ length: 10 }).map((_, i) => (
+                          <Box
+                            key={i}
+                            sx={{
+                              backgroundColor: '#f5f5f5',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              mb: 1,
+                            }}
+                          >
+                            <Skeleton variant="text" width="60%" height={24} />
+                            <Skeleton variant="text" width="40%" height={20} />
+                          </Box>
+                        ))
+                      : filteredVisitors.map((group: any) => (
+                          <Box
+                            key={group.id}
+                            sx={{
+                              backgroundColor:
+                                selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              cursor: 'pointer',
+                              mb: 1,
+                              '&:hover': {
+                                backgroundColor: '#eee',
+                              },
+                            }}
+                            onClick={() => {
+                              setSelectedGroup(group);
+                              setSelectedGroupId(group.id);
+                            }}
+                          >
+                            <Typography variant="body1" fontWeight="bold">
+                              {group.agenda}
+                            </Typography>
+                            <Box display={'flex'} justifyContent={'space-between'}>
+                              <Typography>{group.visitor_type}</Typography>
+                              <Typography>{group.host_name}</Typography>
+                            </Box>
+                            <Typography>Start : {group.visitor_period_start}</Typography>
+                            <Typography>End : {group.visitor_period_end}</Typography>
+                            <Box display={'flex'} justifyContent={'flex-end'}>
+                              {group.invited_by === profile?.user_id && (
+                                <Button
+                                  variant="contained"
+                                  color="error"
+                                  onClick={() => handleCancel(group.id)}
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                            </Box>
+                          </Box>
+                        ))}
+                    <div
+                      ref={observerRef}
+                      style={{
+                        height: 20,
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+              {/* Right */}
+              <Box flexGrow={1} p={2} sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}>
+                {selectedGroupId ? (
+                  <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
+                    <Table aria-label="collapsible table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ width: 50 }}>
+                            <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
+                              {openGroup ? (
+                                <KeyboardArrowUpOutlined />
+                              ) : (
+                                <KeyboardArrowDownOutlined />
+                              )}
+                            </IconButton>
+                          </TableCell>
+                          <TableCell colSpan={5}>
+                            <Box
+                              display={'flex'}
+                              justifyContent={'space-between'}
+                              alignItems={'center'}
+                            >
+                              <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
+                                {groupHeader?.group_name ?? '-'}
+                              </Typography>
+                              <Box display={'flex'} gap={0.5}>
+                                <Tooltip title="Export PDF" arrow>
+                                  <Button variant="contained" color="error">
+                                    <IconPdf />
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip title="Export Excel" arrow>
+                                  <Button variant="contained" color="success">
+                                    <IconFileSpreadsheet />
+                                  </Button>
+                                </Tooltip>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {groupDetailLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={6} align="center">
+                              <CircularProgress size={24} />
+                            </TableCell>
+                          </TableRow>
+                        ) : groupVisitors.length > 0 ? (
+                          groupVisitors.map((visitor: any, index: number) => (
+                            <VisitorRow key={visitor.id} visitor={visitor} index={index} />
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} align="center">
+                              <Typography color="text.secondary">No visitor data</Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box
+                    height="100%"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    flexDirection="column"
+                  >
+                    <img src={bg_nodata} width={150} />
+                    <Typography color="text.secondary" mt={2} variant="h5">
+                      Select a group from the list.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Grid>
         </Box>
       </PageContainer>

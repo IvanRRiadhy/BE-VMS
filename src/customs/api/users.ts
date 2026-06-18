@@ -66,7 +66,7 @@ export const revokeToken = async (token: string): Promise<RevokeTokenResponse> =
   }
 };
 
-export const getProfile = async (token: string): Promise<GetProfileResponse> => {
+export const getProfile = async (token?: string | null): Promise<GetProfileResponse> => {
   try {
     const response = await axiosInstance.get('/profile/me', {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -79,6 +79,20 @@ export const getProfile = async (token: string): Promise<GetProfileResponse> => 
     throw error;
   }
 };
+
+export const updatePasswordUser = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/profile/password', data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+}
 
 export const updateProfile = async (token: string, data: any): Promise<any> => {
   try {
@@ -140,6 +154,25 @@ export const getPermission = async (token: string): Promise<any> => {
     if (error.response?.status === 404) {
       return { collection: [] };
     }
+    throw error;
+  }
+};
+
+export const cancelVisitor = async (token: string, id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/visitor-transaction/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+
     throw error;
   }
 };

@@ -15,11 +15,12 @@ import {
   useMediaQuery,
   useTheme,
   CircularProgress,
+  MenuItem,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getProfile, updateProfile } from 'src/customs/api/users';
+import { getProfile, updatePasswordUser, updateProfile } from 'src/customs/api/users';
 import type { GetProfileResponse, Item } from 'src/customs/api/models/profile';
 import PageContainer from 'src/customs/components/container/PageContainer';
 
@@ -27,9 +28,10 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import { updateUser } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { InputAdornment, IconButton } from '@mui/material';
 
 const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -42,6 +44,18 @@ const DetailProfile = () => {
   const { user } = useAuth();
   const roleAccess = localStorage.getItem('roleAccess');
   const isAdmin = roleAccess === 'Admin';
+  const [passwordData, setPasswordData] = useState({
+    old_password: null,
+    new_password: null,
+    con_password: null,
+  });
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const [formData, setFormData] = useState<Item>({
     id: '',
@@ -138,6 +152,46 @@ const DetailProfile = () => {
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  const handleChangePassword = async () => {
+    try {
+      if (!token) return;
+
+      if (passwordData.new_password !== passwordData.con_password) {
+        showSwal('error', 'Password confirmation does not match');
+        return;
+      }
+
+      await updatePasswordUser(token, {
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password,
+        con_password: passwordData.con_password,
+      });
+
+      setPasswordData({
+        old_password: null,
+        new_password: null,
+        con_password: null,
+      });
+
+      showSwal('success', 'Password updated successfully');
+    } catch (error: any) {
+  
+
+      const collection =
+        error?.response?.data?.collection || error?.collection; // axios normal // custom API shape kamu
+
+      const messages = Array.isArray(collection)
+        ? collection.join('\n')
+        : error?.message || 'Failed to update password';
+
+      showSwal('error', messages);
+    }
+  };
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+
   const content = (
     <Container title="Profile">
       <Grid container justifyContent="center" sx={{ mt: 4 }}>
@@ -193,7 +247,8 @@ const DetailProfile = () => {
                     }}
                   >
                     <Tab label="Personal Info" />
-                    <Tab label="Organization Info" />
+                    {/* <Tab label="Organization Info" /> */}
+                    <Tab label="Change Password" />
                   </Tabs>
                 </Grid>
 
@@ -201,7 +256,7 @@ const DetailProfile = () => {
                 <Grid size={{ xs: 12, md: 8 }}>
                   <Box>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      {activeTab === 0 ? ' Personal Information' : ' Organization Information'}
+                      {activeTab === 0 ? ' Personal Information' : ' Change Password'}
                     </Typography>
                     {/* <Typography variant="body2" color="text.secondary" gutterBottom>
                       {activeTab === 0
@@ -244,13 +299,18 @@ const DetailProfile = () => {
                           </Grid> */}
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
+
                           <TextField
+                            select
                             fullWidth
-                            label=""
                             name="gender"
                             value={formData.gender}
                             onChange={handleInputChange}
-                          />
+                          >
+                            <MenuItem value="Male">Male</MenuItem>
+                            <MenuItem value="Female">Female</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                          </TextField>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>Phone Number</CustomFormLabel>
@@ -272,34 +332,6 @@ const DetailProfile = () => {
                             onChange={handleInputChange}
                           />
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <CustomFormLabel sx={{ mt: 0 }}>Password</CustomFormLabel>
-                          <TextField
-                            fullWidth
-                            label=""
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <CustomFormLabel sx={{ mt: 0 }}>Confirmation Password</CustomFormLabel>
-                          <TextField
-                            fullWidth
-                            label=""
-                            name="passsowrd"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                          />
-                        </Grid>
-                      </Grid>
-                    )}
-
-                    {/* ORGANIZATION INFO */}
-                    {activeTab === 1 && (
-                      <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>Organization Name</CustomFormLabel>
                           <TextField
@@ -330,30 +362,97 @@ const DetailProfile = () => {
                             onChange={handleInputChange}
                           />
                         </Grid>
+                        {/* Tombol aksi */}
+                        <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1}>
+                          <>
+                            <Button variant="contained" color="primary" onClick={handleUpdate}>
+                              Update Profile
+                            </Button>
+                            {/* <Button variant="outlined" color="inherit" onClick={handleCancel}>
+                            Cancel
+                          </Button> */}
+                          </>
+                        </Stack>
                       </Grid>
                     )}
 
-                    {/* Tombol aksi */}
-                    <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
-                      {/* {!isEditing ? (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => setIsEditing(true)}
-                        >
-                          Edit
-                        </Button>
-                      ) : ( */}
-                      <>
-                        <Button variant="contained" color="primary" onClick={handleUpdate}>
-                          Update Profile
-                        </Button>
-                        {/* <Button variant="outlined" color="inherit" onClick={handleCancel}>
-                            Cancel
-                          </Button> */}
-                      </>
-                      {/* )} */}
-                    </Stack>
+                    {/* ORGANIZATION INFO */}
+                    {/* {activeTab === 1 && <Grid container spacing={2}></Grid>} */}
+                    {activeTab === 1 && (
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                          <CustomFormLabel sx={{ mt: 0 }}>Old Password</CustomFormLabel>
+                          <TextField
+                            fullWidth
+                            type={showOldPassword ? 'text' : 'password'}
+                            name="old_password"
+                            value={passwordData.old_password}
+                            onChange={handlePasswordChange}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    onClick={() => setShowOldPassword((v) => !v)}
+                                    edge="end"
+                                  >
+                                    {showOldPassword ? <IconEyeOff /> : <IconEye />}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <CustomFormLabel>New Password</CustomFormLabel>
+                          <TextField
+                            fullWidth
+                            type={showPassword ? 'text' : 'password'}
+                            name="new_password"
+                            value={passwordData.new_password}
+                            onChange={handlePasswordChange}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton onClick={() => setShowPassword((v) => !v)} edge="end">
+                                    {showPassword ? <IconEyeOff /> : <IconEye />}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <CustomFormLabel>Confirm Password</CustomFormLabel>
+                          <TextField
+                            fullWidth
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            name="con_password"
+                            value={passwordData.con_password}
+                            onChange={handlePasswordChange}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    onClick={() => setShowConfirmPassword((v) => !v)}
+                                    edge="end"
+                                  >
+                                    {showConfirmPassword ? <IconEyeOff /> : <IconEye />}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Button variant="contained" onClick={handleChangePassword}>
+                            Change Password
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    )}
                   </Box>
                 </Grid>
               </Grid>

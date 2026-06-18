@@ -1,6 +1,6 @@
 // src/store/dateRangeSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { subDays } from 'date-fns';
+import { startOfDay, subDays } from 'date-fns';
 
 export interface DateRangeState {
   startDate: Date;
@@ -9,8 +9,10 @@ export interface DateRangeState {
 }
 
 const initialState: DateRangeState = {
-  startDate: subDays(new Date(), 7),
-  endDate: new Date(),
+  // startDate: subDays(new Date(), 7),
+  // endDate: new Date(),
+  startDate: startOfDay(subDays(new Date(), 7)),
+  endDate: startOfDay(new Date()),
   isManual: false,
 };
 

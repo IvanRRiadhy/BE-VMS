@@ -50,6 +50,7 @@ import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 type EnableField = {
   name: boolean;
@@ -78,23 +79,24 @@ const entityLabel = (e?: DialogEntity) =>
 
 const Content = () => {
   const [totals, setTotals] = useState({ organization: 0, department: 0, district: 0 });
+  const { t } = useTranslation();
   const cards = [
     {
-      title: 'Total Organization',
+      title: t('total_organization'),
       subTitle: totals.organization.toString(),
       subTitleSetting: totals.organization,
       icon: IconBuildingSkyscraper,
       color: 'none',
     },
     {
-      title: 'Total Department',
+      title: t('total_department'),
       subTitle: totals.department.toString(),
       subTitleSetting: totals.department,
       icon: IconBuilding,
       color: 'none',
     },
     {
-      title: 'Total District',
+      title: t('total_district'),
       subTitle: totals.district.toString(),
       subTitleSetting: totals.district,
       icon: IconMapPins,

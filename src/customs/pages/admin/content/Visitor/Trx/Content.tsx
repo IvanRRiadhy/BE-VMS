@@ -362,13 +362,13 @@ const Content = () => {
 
         return {
           id: item.id,
-          visitor_type: item.visitor_type_name || '-',
+          // visitor_type: item.visitor_type_name || '-',
           name: item.visitor_name || '-',
           // identity_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
           organization: item.visitor_organization_name || '-',
           receiver_name: item.receiver_name || '-',
-          invitation_code: item.invitation_code || '-',
+          // invitation_code: item.invitation_code || '-',
           phone: item.visitor_phone || '-',
           visitor_period_start: item.visitor_period_start || '-',
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),

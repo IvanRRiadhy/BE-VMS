@@ -34,14 +34,13 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTodayPraregister } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import dayjs from 'dayjs';
 
 const Content = () => {
   const dispatch = useDispatch();
   // const { startDate, endDate, isManual } = useSelector((state: RootState) => state.dateRange);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [page, setPage] = useState(0);
   const exportRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { token } = useSession();
@@ -93,19 +92,25 @@ const Content = () => {
       try {
         const response = await getTodayPraregister(
           token as any,
-          new Date().toISOString().split('T')[0],
-          new Date().toISOString().split('T')[0],
+          dayjs(startDate).format('YYYY-MM-DD'),
+          dayjs(endDate).format('YYYY-MM-DD'),
         );
-        const rows = response.collection.slice(0, 5).map((item: any) => ({
-          id: item.id,
-          name: item.visitor_name,
-          host: item.host_name,
-          visit_start: formatDateTime(item.visitor_period_start),
-          visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-        }));
+        const rows = response.collection
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.invitation_created_at).getTime() -
+              new Date(a.invitation_created_at).getTime(),
+          )
+          .slice(0, 5)
+          .map((item: any) => ({
+            id: item.id,
+            name: item.visitor_name,
+            host: item.host_name,
+            visit_start: formatDateTime(item.visitor_period_start),
+            visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          }));
         setDataPraregist(rows || []);
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     fetchData();
@@ -115,7 +120,6 @@ const Content = () => {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
-
 
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
@@ -203,7 +207,7 @@ const Content = () => {
                   <VisitingTypeChart />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-                  <TopVisitingPurposeChart title="Top Visiting Purpose" />
+                  <TopVisitingPurposeChart />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6, xl: 5 }}>
                   <TopVisitor />
@@ -225,12 +229,6 @@ const Content = () => {
                     isHaveExportXlf={false}
                     isHaveHeaderTitle={true}
                     titleHeader="Pre-Registration Visitor List"
-                    // defaultRowsPerPage={rowsPerPage}
-                    // rowsPerPageOptions={[10, 50, 100]}
-                    // onPaginationChange={(page, rowsPerPage) => {
-                    //   setPage(page);
-                    //   setRowsPerPage(rowsPerPage);
-                    // }}
                     isHaveFilterDuration={false}
                     isHaveAddData={false}
                     isHaveHeader={false}

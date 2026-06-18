@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import {
   Box,
   Dialog,
@@ -41,25 +41,13 @@ import {
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
-import CloseIcon from '@mui/icons-material/Close';
-import FormWizardAddInvitation from 'src/customs/pages/admin/content/Visitor/Trx/FormWizardAddInvitation';
-import FormWizardAddVisitor from 'src/customs/pages/admin/content/Visitor/Trx/FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
   Item,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
-import {
-  getAllEmployee,
-  getAllSite,
-  getAllVisitorType,
-  getRegisteredSite,
-  getVisitorById,
-  getVisitorEmployee,
-  getVisitorTransactionByIds,
-  getVisitorTransactionPagination,
-} from 'src/customs/api/admin';
+import { getVisitorTransactionByIds, getVisitorTransactionPagination } from 'src/customs/api/admin';
 import {
   IconClipboard,
   IconFileSpreadsheet,
@@ -73,11 +61,14 @@ import {
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
-import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
+import {
+  ContentCopy,
+  KeyboardArrowDownOutlined,
+  KeyboardArrowUpOutlined,
+} from '@mui/icons-material';
 import { useDebounce } from 'src/hooks/useDebounce';
 import VisitorRow from './VisitorRow';
 import FilterTransaction from './FilterMoreContent';
-import { useQuery } from '@tanstack/react-query';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
@@ -89,6 +80,11 @@ import { useEmployees } from 'src/hooks/useEmployees';
 import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from '../Trx/components/InvitationVisitorDialog';
 import PreRegistrationDialog from '../Trx/components/PreRegistrationDialog';
+import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
+import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
+import { cancelVisitor, getProfile } from 'src/customs/api/users';
+import { useProfile } from 'src/hooks/useProfile';
+import { any } from 'video.js/dist/types/utils/events';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -104,7 +100,7 @@ const Content = () => {
   const { token, roleAccess } = useSession();
   const isOperatorAdmin = roleAccess === 'OperatorAdmin';
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
@@ -113,17 +109,20 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  // const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
+  //   // const saved = localStorage.getItem('unsavedVisitorData');
+  //   // return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
+  // });
+
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<any>({});
+
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const cards = [
     {
@@ -174,21 +173,19 @@ const Content = () => {
   const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-    } else {
-      localStorage.removeItem('unsavedVisitorData');
-    }
-  }, [formDataAddVisitor, isFormChanged]);
+  // useEffect(() => {
+  //   if (isFormChanged) {
+  //     localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
+  //   } else {
+  //     localStorage.removeItem('unsavedVisitorData');
+  //   }
+  // }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
-  // Registered Site
-  const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   // Qr Scanner
   const [qrValue, setQrValue] = useState('');
@@ -198,7 +195,7 @@ const Content = () => {
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
-  const secdrawerWidth = 260;
+  const secdrawerWidth = 300;
   const [search, setSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [openGroup, setOpenGroup] = useState(true);
@@ -207,6 +204,8 @@ const Content = () => {
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
   const [groupHeader, setGroupHeader] = useState<any | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+
+  const observerRef = useRef<HTMLDivElement>(null);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -233,7 +232,7 @@ const Content = () => {
   };
 
   const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 1000);
 
   const [filters, setFilters] = useState<any>({
     status: undefined,
@@ -263,12 +262,72 @@ const Content = () => {
     end_date: '',
   });
 
-  const fetchData = async () => {
+  // const fetchData = async () => {
+  //   if (!token) return;
+
+  //   setLoading(true);
+  //   try {
+  //     const start = page * rowsPerPage;
+
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
+
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+  //     const res = await getVisitorTransactionPagination(
+  //       token,
+  //       start,
+  //       rowsPerPage,
+  //       sortDir,
+  //       debouncedSearchAgenda || undefined,
+  //       appliedFilters.start_date || undefined,
+  //       appliedFilters.end_date || undefined,
+  //       appliedFilters.visitor_status || undefined,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.transaction_status || undefined,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
+
+  //     setTableRowVisitors(
+  //       res.collection.map((item: any) => ({
+  //         id: item.id,
+  //         agenda: item.agenda || '-',
+  //         visitor_type: item.visitor_type_name || '-',
+  //         host_name: item.host_name || '-',
+  //         visitor_period_start: formatDateTime(item.visitor_period_start),
+  //         visitor_period_end: formatDateTime(item.visitor_period_end),
+  //         invited_by: item.invited_by || '-',
+  //       })),
+  //     );
+
+  //     setTotalRecords(res.RecordsTotal);
+  //     setTotalFilteredRecords(res.RecordsFiltered);
+  //   } catch (err) {
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchData = async (append = false) => {
     if (!token) return;
 
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
     setLoading(true);
+
     try {
-      const start = page * rowsPerPage;
+      const start = append ? tableRowVisitors.length : 0;
 
       const isEmergencyParam =
         appliedFilters.emergency_situation === ''
@@ -296,37 +355,64 @@ const Content = () => {
         appliedFilters.host_id || undefined,
       );
 
-      setTableRowVisitors(
-        res.collection.map((item: any) => ({
-          id: item.id,
-          agenda: item.agenda || '-',
-          visitor_type: item.visitor_type_name || '-',
-          host_name: item.host_name || '-',
-          visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
-        })),
-      );
+      const newRows = res.collection.map((item: any) => ({
+        id: item.id,
+        agenda: item.agenda || '-',
+        visitor_type_id: item.visitor_type_id,
+        visitor_type: item.visitor_type_name || '-',
+        host_name: item.host_name || '-',
+        visitor_period_start: formatDateTime(item.visitor_period_start),
+        visitor_period_end: formatDateTime(item.visitor_period_end),
+        invited_by: item.invited_by || '-',
+      }));
+
+      if (append) {
+        setTableRowVisitors((prev) => [...prev, ...newRows]);
+      } else {
+        setTableRowVisitors(newRows);
+      }
+
+      setHasMore(start + newRows.length < res.RecordsFiltered);
 
       setTotalRecords(res.RecordsTotal);
       setTotalFilteredRecords(res.RecordsFiltered);
-    } catch (err) {
+    } catch {
+      setTableRowVisitors([]);
+      setTotalRecords(0);
+      setTotalFilteredRecords(0);
+      setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
     if (!token) return;
-    fetchData();
+    fetchData(false);
   }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getRegisteredSite(token as string);
-      setSiteData(response.collection);
-    };
-    fetchData();
-  }, [token]);
+    if (!observerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !loadingMore) {
+          fetchData(true);
+        }
+      },
+      {
+        threshold: 0.1,
+      },
+    );
+
+    observer.observe(observerRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore]);
+
+  const { data: siteData } = useRegisteredSite(token);
+  const { data: profile } = useProfile(token);
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
@@ -347,13 +433,11 @@ const Content = () => {
   };
 
   const openDiscardForCloseAdd = () => {
-    setDiscardMode('close-add');
     setConfirmDialogOpen(true);
   };
 
   const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     setPendingEditId(null);
   };
 
@@ -370,7 +454,6 @@ const Content = () => {
     setOpenDialogIndex(null);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     handleDialogClose();
   };
 
@@ -401,7 +484,6 @@ const Content = () => {
       setGroupDetailLoading(true);
       try {
         const res = await getVisitorTransactionByIds(token, selectedGroupId);
-        console.log('res', res.collection);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -451,56 +533,19 @@ const Content = () => {
     // setShowDrawerFilterMore(false);
   };
 
-  // const { data: visitorType = [], isLoading: vtLoading } = useQuery({
-  //   queryKey: ['visitorType'],
-  //   queryFn: async () => {
-  //     const res = await getAllVisitorType(token as string);
-  //     return res?.collection || [];
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 0,
-  //   refetchOnMount: true,
-  //   refetchOnWindowFocus: false,
-  // });
-  // const { data: sites = [], isLoading: siteLoading } = useQuery({
-  //   queryKey: ['sites'],
-  //   queryFn: async () => {
-  //     const res = await getAllSite(token as string);
-  //     return res?.collection ?? [];
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 0,
-  //   refetchOnMount: true,
-  //   refetchOnWindowFocus: false,
-  // });
+  const [hostSearch, setHostSearch] = useState('');
 
-  // const { data: employee = [], isLoading: employeeLoading } = useQuery({
-  //   queryKey: ['employee'],
-  //   queryFn: async () => {
-  //     const res = await getAllEmployee(token as string);
-  //     return res?.collection ?? [];
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 0,
-  //   refetchOnMount: true,
-  //   refetchOnWindowFocus: false,
-  // });
-
-  // const { data: allVisitorEmployee = [], isLoading: visitorEmployeeLoading } = useQuery({
-  //   queryKey: ['allVisitorEmployee'],
-  //   queryFn: async () => {
-  //     const res = await getVisitorEmployee(token as string);
-  //     return res?.collection ?? [];
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 0,
-  //   refetchOnMount: true,
-  //   refetchOnWindowFocus: false,
-  // });
+  const debouncedSearch = useDebounce(hostSearch, 1000);
 
   const { visitorType } = useVisitorType(token as string);
   const { sites } = useSites(token as string);
-  const { employee } = useEmployees(token as string);
+  // const { employee } = useEmployees(token as string);
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination(token, {
+    'search[value]': debouncedSearch,
+    sortDir: 'desc',
+  });
+
+  const employeeData = data?.collection ?? [];
   const { allVisitorEmployee } = useVisitorEmployees(token as string);
   const [vtLoading, setVtLoading] = useState(false);
 
@@ -517,6 +562,41 @@ const Content = () => {
     } else if (flowTarget === 'preReg') {
       setOpenPreRegistration(true);
     }
+  };
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelVisitor(token as string, id);
+
+      showSwal('success', 'Transaction successfully cancelled');
+
+      fetchData();
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to cancel visitor');
+    }
+  };
+
+  const filteredVisitors = tableRowVisitors.filter((item) => {
+    const keyword = searchAgenda.trim().toLowerCase();
+
+    return (
+      item.agenda?.toLowerCase().includes(keyword) ||
+      item.host_name?.toLowerCase().includes(keyword)
+    );
+  });
+
+  const [duplicateData, setDuplicateData] = useState<any>(null);
+
+  const handleDuplicate = (group: any) => {
+    setFormDataAddVisitor({
+      visitor_type: group.visitor_type_id,
+      is_group: false,
+      registered_site: group.site_id,
+    });
+
+    setWizardKey((prev) => prev + 1);
+
+    setOpenPreRegistration(true);
   };
 
   return (
@@ -557,6 +637,7 @@ const Content = () => {
               marginTop: '5px',
             }}
           >
+            {/* Left */}
             <Box
               sx={{
                 width: mdUp ? secdrawerWidth : '100%',
@@ -577,7 +658,7 @@ const Content = () => {
               <CustomTextField
                 fullWidth
                 size="small"
-                placeholder="Search Agenda"
+                placeholder="Search Transaction"
                 value={searchAgenda}
                 onChange={(e) => setSearchAgenda(e.target.value)}
                 sx={{ mb: 2 }}
@@ -608,7 +689,7 @@ const Content = () => {
                           <Skeleton variant="text" width="40%" height={20} />
                         </Box>
                       ))
-                    : tableRowVisitors.map((group: any) => (
+                    : filteredVisitors.map((group: any) => (
                         <Box
                           key={group.id}
                           sx={{
@@ -635,11 +716,47 @@ const Content = () => {
                           </Box>
                           <Typography>Start : {group.visitor_period_start}</Typography>
                           <Typography>End : {group.visitor_period_end}</Typography>
+
+                          <Box
+                            display={'flex'}
+                            justifyContent={'flex-end'}
+                            alignItems={'center'}
+                            sx={{ width: '100%' }}
+                          >
+                            {/* <Button
+                              variant="outlined"
+                              startIcon={<ContentCopy />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDuplicate(group);
+                              }}
+                            >
+                              Duplicate
+                            </Button> */}
+                            {group.invited_by === profile?.user_id && (
+                              <Button
+                                variant="contained"
+                                color="error"
+                                onClick={() => handleCancel(group.id)}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </Box>
                         </Box>
                       ))}
+                  <div
+                    ref={observerRef}
+                    style={{
+                      height: 20,
+                    }}
+                  />
+
+                  {loadingMore && <CircularProgress />}
                 </Box>
               </Box>
             </Box>
+            {/* Right */}
             <Box flexGrow={1} p={2} sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}>
               {selectedGroupId ? (
                 <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
@@ -734,9 +851,11 @@ const Content = () => {
         handleSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={employeeData}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
+        search={setHostSearch}
+        isLoadingEmployee={isLoadingEmployee}
       />
 
       <PreRegistrationDialog
@@ -752,15 +871,18 @@ const Content = () => {
         handleSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={employeeData}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
+        search={setHostSearch}
+        isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
       />
 
       {/* Select Registered Site */}
       <RegisteredSiteDialog
         open={openDialogIndex === 2}
-        siteData={siteData}
+        siteData={siteData as any[]}
         selectedSite={selectedSite}
         setSelectedSite={(nv) => {
           setSelectedSite(nv);

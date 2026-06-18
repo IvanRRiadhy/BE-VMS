@@ -23,15 +23,14 @@ import { IconBan, IconCheck, IconClock, IconScript, IconX } from '@tabler/icons-
 import { useCallback, useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
   approveMeetingHost,
   approveTicket,
   getApprovalTicket,
+  getVisitorByTickedId,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { IconFilterFilled } from '@tabler/icons-react';
@@ -149,6 +148,7 @@ const Approval = () => {
           agenda: item.agenda,
           host_name: item.host_name,
           entity_id: item.entity_id,
+          ticket_id: item.ticket_id,
           approval_actor_status: item.approval_actor_status,
           approval_workflow_type: item.approval_workflow_type,
           approval_status: item.approval_status,
@@ -218,7 +218,7 @@ const Approval = () => {
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const handleApproveMeetingHost = async (id: string) => {
-    console.log("id", id);
+    console.log('id', id);
     try {
       setLoading(true);
 
@@ -250,7 +250,8 @@ const Approval = () => {
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
-        const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        // const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        const res = await getVisitorByTickedId(token, selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -298,6 +299,7 @@ const Approval = () => {
                   marginTop: '5px',
                 }}
               >
+                {/* Left */}
                 <Box
                   sx={{
                     width: mdUp ? secdrawerWidth : '100%',
@@ -355,7 +357,7 @@ const Approval = () => {
                             )
                             .map((group: any) => (
                               <Box
-                                key={group.entity_id}
+                                key={group.ticket_id}
                                 sx={{
                                   backgroundColor:
                                     selectedId === group.approval_ticket_id ? '#e3f2fd' : '#f5f5f5',
@@ -369,11 +371,8 @@ const Approval = () => {
                                 }}
                                 onClick={() => {
                                   setSelectedGroup(group);
-                                  setSelectedGroupId(group.entity_id);
+                                  setSelectedGroupId(group.ticket_id);
                                   setSelectedId(group.approval_ticket_id);
-                                  console.log("selectedId", selectedId);
-                                  // setOpenGroup(true);
-                                  // setOpenDialog(true);
                                 }}
                               >
                                 <Box
@@ -409,13 +408,6 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          // onClick={(e: any) => {
-                                          //   e.stopPropagation();
-                                          //   handleActionApproval(
-                                          //     group.approval_ticket_id,
-                                          //     'Approve',
-                                          //   );
-                                          // }}
                                           onClick={async (e: any) => {
                                             e.stopPropagation();
 
@@ -440,7 +432,6 @@ const Approval = () => {
                                                 setTriggerCheckAll(true);
                                               }, 0);
                                             } catch (err) {
-                                              // setGroupVisitors([]);
                                             } finally {
                                               setGroupDetailLoading(false);
                                             }
@@ -462,13 +453,6 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          // onClick={(e: any) => {
-                                          //   e.stopPropagation();
-                                          //   handleActionApproval(
-                                          //     group.approval_ticket_id,
-                                          //     'Reject',
-                                          //   );
-                                          // }}
                                           onClick={async (e: any) => {
                                             e.stopPropagation();
 
@@ -538,6 +522,7 @@ const Approval = () => {
                     </Box>
                   </Box>
                 </Box>
+                {/* Right */}
                 <Box
                   flexGrow={1}
                   p={2}
@@ -684,80 +669,7 @@ const Approval = () => {
           </Grid>
         </Box>
       </PageContainer>
-      {/* <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        fullWidth
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
-      >
-        <DialogTitle>
-          {groupHeader?.group_name ?? 'Visitor Group'}
-          <IconButton
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-            onClick={() => setOpenDialog(false)}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
 
-        <DialogContent dividers sx={{ padding: '0px !important' }}>
-          <DynamicTable
-            loading={groupDetailLoading}
-            data={visitorTableData ?? []}
-            selectedRows={selectedRows}
-            onCheckedChange={setSelectedRows}
-            setSelectedRows={setSelectedRows}
-            triggerCheckAll={triggerCheckAll}
-            isHaveChecked={true}
-            titleHeader="Select visitors for approval or rejection"
-            isHaveHeaderTitle={true}
-            isNoActionTableHead={true}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={(e: any) => {
-              e.stopPropagation();
-
-              if (!selectedId) return;
-
-              handleActionApproval(selectedId, 'Reject');
-              setOpenDialog(false);
-            }}
-            fullWidth
-            color="error"
-            variant="contained"
-          >
-            Reject
-          </Button>
-          <Button
-            onClick={(e: any) => {
-              e.stopPropagation();
-
-              if (!selectedId) return;
-
-              // handleActionApproval(selectedId, 'Approve');
-              // setOpenDialog(false);
-              handleApproveMeetingHost(selectedId);
-            }}
-            variant="contained"
-            fullWidth
-          >
-            Approve
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       <VisitorApprovalDialog
         open={openDialog}

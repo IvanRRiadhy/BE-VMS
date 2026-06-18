@@ -53,7 +53,7 @@ const History = () => {
             vehicle_type: item.vehicle_type || '-',
             vehicle_plate_number: item.vehicle_plate_number || '-',
             host: item.host_name || item.host || '-',
-            visitor_period_start: item.visitor_period_start || '-',
+            visitor_period_start: formatDateTime(item.visitor_period_start || '-'),
             visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           };
         });
@@ -87,7 +87,7 @@ const History = () => {
               //   setRowsPerPage(rowsPerPage);
               // }}
               isHaveChecked={true}
-              isHaveAction={true}
+              isHaveAction={false}
               isHaveSearch={true}
               isHaveFilter={false}
               isHaveExportPdf={false}
@@ -96,7 +96,7 @@ const History = () => {
               isHaveAddData={false}
               isHaveFilterMore={false}
               isHaveHeader={false}
-              isHavePdf={true}
+              isHavePdf={false}
             />
           </Grid>
         </Grid>

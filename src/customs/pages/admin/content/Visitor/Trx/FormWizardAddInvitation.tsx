@@ -3,6 +3,7 @@ import { CreateVisitorRequest } from 'src/customs/api/models/Admin/Visitor';
 import FormWizardAddVisitor from './FormWizardAddVisitor.tsx';
 
 type Props = {
+  key?: any;
   formData: CreateVisitorRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorRequest>>;
   edittingId?: string;
@@ -15,6 +16,7 @@ type Props = {
   allVisitorEmployee?: any;
   enableInvitationTypeStep?: boolean;
   isLoadingEmployee?: any;
+  duplicateData?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

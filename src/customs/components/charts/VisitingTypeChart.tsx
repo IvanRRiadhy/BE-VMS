@@ -24,17 +24,12 @@ const VisitingTypeChart = () => {
 
   const start = startDate?.toISOString().split('T')[0];
   const end = endDate?.toISOString().split('T')[0];
+  
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
-
         const res = await getRepeatsVisitor(token, start, end);
 
         if (res?.collection) {

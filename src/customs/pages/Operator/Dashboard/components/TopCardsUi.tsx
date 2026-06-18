@@ -150,7 +150,7 @@ export default function TopCardsUI({ onOpenQuick }: any) {
           >
             Add Visitor
           </Button>
-          <Button
+          {/* <Button
             startIcon={<IconBolt />}
             variant="contained"
             color="secondary"
@@ -170,7 +170,7 @@ export default function TopCardsUI({ onOpenQuick }: any) {
             }}
           >
             Quick Access
-          </Button>
+          </Button> */}
         </Box>
         {/* </Card> */}
       </Grid>

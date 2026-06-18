@@ -121,6 +121,7 @@ interface FormVisitorTypeProps {
   allVisitorEmployee?: any;
   enableInvitationTypeStep?: boolean;
   isLoadingEmployee?: any;
+  duplicateData?: any;
 }
 
 dayjs.extend(utc);
@@ -166,6 +167,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   allVisitorEmployee,
   enableInvitationTypeStep,
   isLoadingEmployee,
+  duplicateData,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -224,6 +226,53 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
     Record<number, string[]>
   >({});
+
+  // useEffect(() => {
+  //   if (!duplicateData) return;
+  //   if (!sectionsData.length) return;
+
+  //   setSectionsData((prev) =>
+  //     prev.map((section) => ({
+  //       ...section,
+  //       [FORM_KEY]: formsOf(section).map((field) => {
+  //         switch (field.remarks) {
+  //           case 'host':
+  //             return {
+  //               ...field,
+  //               answer_text: duplicateData.host_id,
+  //             };
+
+  //           case 'agenda':
+  //             return {
+  //               ...field,
+  //               answer_text: duplicateData.agenda,
+  //             };
+
+  //           case 'visitor_period_start':
+  //             return {
+  //               ...field,
+  //               answer_datetime: duplicateData.visitor_period_start,
+  //             };
+
+  //           case 'visitor_period_end':
+  //             return {
+  //               ...field,
+  //               answer_datetime: duplicateData.visitor_period_end,
+  //             };
+
+  //           case 'visitor_role':
+  //             return {
+  //               ...field,
+  //               answer_text: duplicateData.visitor_role,
+  //             };
+
+  //           default:
+  //             return field;
+  //         }
+  //       }),
+  //     })),
+  //   );
+  // }, [duplicateData, sectionsData.length]);
 
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
@@ -964,7 +1013,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         </Box>
       );
     }
+
     const currentSection = sectionsData[step - 1];
+
     if (!currentSection) return null;
 
     return (
@@ -3082,7 +3133,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               buildSiteTreeWithParent(sites, pid),
                             );
 
-                      
                             const collectIds = (nodes: any[]): string[] => {
                               return nodes.flatMap((n) => [
                                 n.id,

@@ -22,7 +22,7 @@ const CustomFormLabel = styled(({ required, children, ...props }: CustomFormLabe
   </Typography>
 ))(() => ({
   marginBottom: '5px',
-  marginTop: '25px',
+  marginTop: '10px',
   display: 'block',
 }));
 

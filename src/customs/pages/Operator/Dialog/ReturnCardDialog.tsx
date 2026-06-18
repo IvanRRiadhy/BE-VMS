@@ -9,6 +9,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 
 interface ReturnCardDialogProps {
   open: boolean;
@@ -46,9 +47,10 @@ const ReturnCardDialog = ({
       </DialogTitle>
 
       <DialogContent dividers>
+        <CustomFormLabel sx={{ mt: 0 }}>Card Number</CustomFormLabel>
         <TextField
           fullWidth
-          label="Card Number"
+          label=""
           placeholder="Enter card number"
           value={value}
           onChange={(e) => onChange(e.target.value)}

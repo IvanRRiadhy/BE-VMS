@@ -23,6 +23,7 @@ interface Props {
   allVisitorEmployee: any;
   vtLoading: boolean;
   isLoadingEmployee?: any;
+  duplicateData?: any;
 }
 
 export default function PreRegistrationDialog({
@@ -43,6 +44,7 @@ export default function PreRegistrationDialog({
   allVisitorEmployee,
   vtLoading,
   isLoadingEmployee,
+  duplicateData,
 }: Props) {
   const handleClose = () => {
     if (isFormChanged) {
@@ -84,6 +86,7 @@ export default function PreRegistrationDialog({
           vtLoading={vtLoading}
           enableInvitationTypeStep={false}
           isLoadingEmployee={isLoadingEmployee}
+          duplicateData={duplicateData}
         />
       </DialogContent>
     </Dialog>

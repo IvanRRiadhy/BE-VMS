@@ -35,8 +35,14 @@ const RelatedInvitationDialog: React.FC<Props> = ({
   selectedVisitorData,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
-      <DialogTitle>Related Visitor Invitation</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth={false}
+      PaperProps={{ sx: { width: '100vw' } }}
+    >
+      <DialogTitle>List Visitor Invitation</DialogTitle>
 
       <IconButton
         aria-label="close"
@@ -116,7 +122,7 @@ const RelatedInvitationDialog: React.FC<Props> = ({
                           bgcolor: 'white',
                           borderRadius: '50%',
                           p: 0.2,
-                          '& .MuiSvgIcon-root': { fontSize: 16 },
+                          '& .MuiSvgIcon-root': { fontSize: 20 },
                         }}
                       />
 
@@ -143,7 +149,10 @@ const RelatedInvitationDialog: React.FC<Props> = ({
 
             <DynamicTable
               data={selectedVisitorData}
+              overflowX={'auto'}
+              minWidth={2400}
               isHaveChecked={false}
+              isNoActionTableHead
               isHavePagination={false}
               isHaveHeaderTitle
               titleHeader="Selected Visitor"

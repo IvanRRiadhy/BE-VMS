@@ -43,6 +43,7 @@ import { useDepartment } from 'src/hooks/useDepartment';
 import { useDistricts } from 'src/hooks/useDistricts';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 type EmployeesTableRow = {
   id: string;
@@ -80,14 +81,11 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -96,6 +94,7 @@ const Content = () => {
   const { department } = useDepartment();
   const { districts } = useDistricts();
   const [loadingData, setLoadingData] = useState(false);
+  const { t } = useTranslation();
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -111,9 +110,9 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Employee',
+      title: t('total_employee'),
       icon: IconUsers,
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },

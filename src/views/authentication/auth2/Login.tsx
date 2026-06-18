@@ -47,7 +47,6 @@ const Login = () => {
   const { saveToken } = useSession();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -67,6 +66,7 @@ const Login = () => {
   // const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
   const [guestError, setGuestError] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(true);
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
@@ -145,19 +145,6 @@ const Login = () => {
           navigate('/guest/dashboard');
           break;
       }
-
-      // if (user_group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin) {
-      //   navigate('/operator-admin/dashboard');
-      // } else if (user_group_id.toUpperCase() === GroupRoleId.Manager)
-      //   navigate('/manager/dashboard');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.Employee)
-      //   navigate('/employee/dashboard');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
-      //   navigate('/delivery-staff/dashboard');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
-      // console.log('ROLE LOGIN:', role_access);
     } catch (err) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
@@ -258,7 +245,11 @@ const Login = () => {
     }
   }, [codeFromUrl]);
 
-  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const handleForgotPassword = () => {
+    setSnackbarMsg('Please contact your administrator');
+    setSnackbarType('success');
+    setSnackbarOpen(true);
+  };
 
   return (
     <>
@@ -408,7 +399,7 @@ const Login = () => {
                     {/* Login Form */}
                     {tab === 0 && (
                       <form onSubmit={loginSubmit}>
-                        <Typography variant="h6" mb={0} mt={1} textAlign="center">
+                        <Typography variant="h6" mb={0} mt={2} textAlign="center">
                           Sign in to your account
                         </Typography>
                         <Stack spacing={2}>
@@ -473,7 +464,7 @@ const Login = () => {
                             Silakan centang captcha sebelum melanjutkan.
                           </Typography>
                         )} */}
-                          <Link
+                          {/* <Link
                             to={'/auth/forgot-password'}
                             // variant="body1"
                             color="textSecondary"
@@ -487,7 +478,22 @@ const Login = () => {
                             }}
                           >
                             Forgot Password?
-                          </Link>
+                          </Link> */}
+                          <Typography
+                            onClick={handleForgotPassword}
+                            sx={{
+                              opacity: 0.6,
+                              cursor: 'pointer',
+                              mt: 1,
+                              fontSize: 14,
+                              '&:hover': {
+                                opacity: 1,
+                                textDecoration: 'underline',
+                              },
+                            }}
+                          >
+                            Forgot Password?
+                          </Typography>
                         </Stack>
 
                         <Box marginTop={1.5}>
@@ -696,7 +702,7 @@ const Login = () => {
                             Silakan centang captcha sebelum melanjutkan.
                           </Typography>
                         )} */}
-                          <Link
+                          {/* <Link
                             to={'/auth/forgot-password'}
                             // variant="body1"
                             color="textSecondary"
@@ -710,7 +716,22 @@ const Login = () => {
                             }}
                           >
                             Forgot Password?
-                          </Link>
+                          </Link> */}
+                          <Typography
+                            onClick={handleForgotPassword}
+                            sx={{
+                              opacity: 0.6,
+                              cursor: 'pointer',
+                              mt: 1,
+                              fontSize: 14,
+                              '&:hover': {
+                                opacity: 1,
+                                textDecoration: 'underline',
+                              },
+                            }}
+                          >
+                            Forgot Password?
+                          </Typography>
                         </Stack>
 
                         <Box marginTop={1}>

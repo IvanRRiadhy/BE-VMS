@@ -169,6 +169,17 @@ const GuestInformationStepper = () => {
       if (!code) return;
 
       const res = await AuthVisitor({ code });
+      const token = res?.collection?.token;
+
+      if (token) {
+        saveToken(token, GroupRoleId.Visitor.toLowerCase(), 'Visitor');
+
+        navigate('/guest/dashboard', {
+          replace: true,
+        });
+
+        return;
+      }
       setInvitationData(res.collection);
 
       const initial: Record<string, any> = {};
@@ -1075,9 +1086,7 @@ const GuestInformationStepper = () => {
                       onChange={(e) => handleChange(f.remarks, e.target.value)}
                       displayEmpty
                     >
-                      <MenuItem value="">
-                        Select Role
-                      </MenuItem>
+                      <MenuItem value="">Select Role</MenuItem>
 
                       {invitationData?.visitor_type_data?.visitor_roles
                         ?.filter((x: any) => x.active)
