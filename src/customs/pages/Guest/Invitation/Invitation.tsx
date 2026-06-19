@@ -8,10 +8,6 @@ import {
   Typography,
   Stack,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   RadioGroup,
   Autocomplete,
   Divider,
@@ -21,10 +17,6 @@ import {
   Chip,
   Checkbox,
   FormControlLabel,
-  Stepper,
-  StepLabel,
-  Step,
-  StepIcon,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -87,7 +79,6 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { updateExtend } from 'src/customs/api/admin';
 import moment from 'moment-timezone';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import InvitationDetailDialog from './components/Dialog/InvitationDetailDialog';
 import ExtendVisitDialog from './components/Dialog/ExtendVisitDialog';
@@ -1367,7 +1358,7 @@ const Invitation = () => {
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
-                isHaveAddData={true}
+                isHaveAddData={false}
                 isHaveView={true}
                 isHaveFilterMore={false}
                 onView={(row: { id: string }) => {

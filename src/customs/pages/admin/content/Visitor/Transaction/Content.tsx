@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef, use } from 'react';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
   CircularProgress,
   Skeleton,
   Grid2 as Grid,
@@ -84,7 +80,6 @@ import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { cancelVisitor, getProfile } from 'src/customs/api/users';
 import { useProfile } from 'src/hooks/useProfile';
-import { any } from 'video.js/dist/types/utils/events';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -114,12 +109,12 @@ const Content = () => {
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  // const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-  //   // const saved = localStorage.getItem('unsavedVisitorData');
-  //   // return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  // });
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
+    const saved = localStorage.getItem('unsavedVisitorData');
+    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
+  });
 
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<any>({});
+  // const [formDataAddVisitor, setFormDataAddVisitor] = useState<any>({});
 
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -173,13 +168,13 @@ const Content = () => {
   const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
-  // useEffect(() => {
-  //   if (isFormChanged) {
-  //     localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-  //   } else {
-  //     localStorage.removeItem('unsavedVisitorData');
-  //   }
-  // }, [formDataAddVisitor, isFormChanged]);
+  useEffect(() => {
+    if (isFormChanged) {
+      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
+    } else {
+      localStorage.removeItem('unsavedVisitorData');
+    }
+  }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -360,6 +355,7 @@ const Content = () => {
         agenda: item.agenda || '-',
         visitor_type_id: item.visitor_type_id,
         visitor_type: item.visitor_type_name || '-',
+        site_id: item.site_id,
         host_name: item.host_name || '-',
         visitor_period_start: formatDateTime(item.visitor_period_start),
         visitor_period_end: formatDateTime(item.visitor_period_end),
@@ -550,7 +546,7 @@ const Content = () => {
   const [vtLoading, setVtLoading] = useState(false);
 
   const handleSelectSite = (site: any) => {
-    setFormDataAddVisitor((prev) => ({
+    setFormDataAddVisitor((prev: any) => ({
       ...prev,
       registered_site: site.id,
     }));
@@ -587,16 +583,27 @@ const Content = () => {
 
   const [duplicateData, setDuplicateData] = useState<any>(null);
 
-  const handleDuplicate = (group: any) => {
-    setFormDataAddVisitor({
-      visitor_type: group.visitor_type_id,
-      is_group: false,
-      registered_site: group.site_id,
-    });
+  const handleDuplicate = async (group: any) => {
+    try {
+      const res = await getVisitorTransactionByIds(token as string, group.id);
 
-    setWizardKey((prev) => prev + 1);
+      const visitors = res.collection;
 
-    setOpenPreRegistration(true);
+      setDuplicateData({
+        group,
+        visitors,
+      });
+
+      setFormDataAddVisitor({
+        visitor_type: group.visitor_type_id,
+        is_group: false,
+        registered_site: group.site_id,
+      } as any);
+
+      setOpenPreRegistration(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -722,9 +729,12 @@ const Content = () => {
                             justifyContent={'flex-end'}
                             alignItems={'center'}
                             sx={{ width: '100%' }}
+                            mt={1}
+                            gap={1}
                           >
-                            {/* <Button
+                            <Button
                               variant="outlined"
+                              sx={{ backgroundColor: 'gray', color: 'white' }}
                               startIcon={<ContentCopy />}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -732,7 +742,7 @@ const Content = () => {
                               }}
                             >
                               Duplicate
-                            </Button> */}
+                            </Button>
                             {group.invited_by === profile?.user_id && (
                               <Button
                                 variant="contained"

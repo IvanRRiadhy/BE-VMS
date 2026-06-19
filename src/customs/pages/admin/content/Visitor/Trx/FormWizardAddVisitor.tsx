@@ -192,6 +192,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const firstStep = enableInvitationTypeStep ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
+
+  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -227,52 +229,110 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Record<number, string[]>
   >({});
 
-  // useEffect(() => {
-  //   if (!duplicateData) return;
-  //   if (!sectionsData.length) return;
+  useEffect(() => {
+    if (!duplicateData) return;
+    if (!sectionsData.length) return;
 
-  //   setSectionsData((prev) =>
-  //     prev.map((section) => ({
-  //       ...section,
-  //       [FORM_KEY]: formsOf(section).map((field) => {
-  //         switch (field.remarks) {
-  //           case 'host':
-  //             return {
-  //               ...field,
-  //               answer_text: duplicateData.host_id,
-  //             };
+    const visitor = duplicateData?.visitors?.[0];
+    console.log('visitor', visitor);
 
-  //           case 'agenda':
-  //             return {
-  //               ...field,
-  //               answer_text: duplicateData.agenda,
-  //             };
+    setSectionsData((prev) =>
+      prev.map((section) => ({
+        ...section,
+        [FORM_KEY]: formsOf(section).map((field: any) => {
+          const remark = (field.remarks || '').toLowerCase();
 
-  //           case 'visitor_period_start':
-  //             return {
-  //               ...field,
-  //               answer_datetime: duplicateData.visitor_period_start,
-  //             };
+          switch (remark) {
+            case 'host':
+              return {
+                ...field,
+                answer_text: visitor.host,
+              };
 
-  //           case 'visitor_period_end':
-  //             return {
-  //               ...field,
-  //               answer_datetime: duplicateData.visitor_period_end,
-  //             };
+            case 'agenda':
+              return {
+                ...field,
+                answer_text: duplicateData.group.agenda,
+              };
+            case 'site_place':
+              return {
+                ...field,
+                answer_text: duplicateData.group?.site_id?.toUpperCase() ?? '',
+              };
+            case 'visitor_period_start':
+              return {
+                ...field,
+                answer_datetime: duplicateData.group.visitor_period_start,
+              };
 
-  //           case 'visitor_role':
-  //             return {
-  //               ...field,
-  //               answer_text: duplicateData.visitor_role,
-  //             };
+            case 'visitor_period_end':
+              return {
+                ...field,
+                answer_datetime: duplicateData.group.visitor_period_end,
+              };
 
-  //           default:
-  //             return field;
-  //         }
-  //       }),
-  //     })),
-  //   );
-  // }, [duplicateData, sectionsData.length]);
+            case 'visitor_role':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_role,
+              };
+
+            case 'fullname':
+            case 'name':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_name,
+              };
+
+            case 'email':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_email,
+              };
+
+            case 'phone':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_phone,
+              };
+
+            case 'organization':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_organization_name,
+              };
+
+            case 'indentity_id':
+            case 'identity_id':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_identity_id,
+              };
+
+            default:
+              return field;
+          }
+        }),
+      })),
+    );
+  }, [duplicateData, sectionsData.length]);
+
+  useEffect(() => {
+    const siteId = duplicateData?.group?.site_id;
+
+    if (!siteId || !sites?.length) return;
+
+    const parentId = siteId.toUpperCase();
+
+    setSelectedSiteParentIds([parentId]);
+
+    const rawTrees = buildSiteTreeWithParent(sites, parentId);
+    const uniqueTrees = dedupeTree(rawTrees);
+
+    setSiteTree(uniqueTrees);
+
+    setSelectedSiteIds([parentId]);
+  }, [duplicateData, sites]);
 
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
@@ -668,6 +728,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
+  useEffect(() => {
+    if (formData.is_group === false) {
+      setIsSingle(true);
+      setIsGroup(false);
+    } else if (formData.is_group === true) {
+      setIsSingle(false);
+      setIsGroup(true);
+    }
+  }, [formData.is_group]);
+
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step === -1 && enableInvitationTypeStep) {
@@ -1024,6 +1094,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <Grid>
             {(() => {
               // const section = sectionsData[activeStep - 1];
+
               const section = currentSection;
               const sectionType = getSectionType(section);
               const isEmployee = isEmployeeSection(section);
@@ -2742,6 +2813,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       });
     } else {
       const section = sectionsData[activeStep - 1];
+
       const details = formsOf(section);
 
       const visibilityMap: any = getVisibilityMap(details);
@@ -3247,13 +3319,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
 
-                    const availableHosts = employee.filter(
-                      (emp: any) => !siteHostIds.includes(emp.id),
-                    );
+                    // const availableHosts = employee.filter(
+                    //   (emp: any) => !siteHostIds.includes(emp.id),
+                    // );
 
-                    const otherHosts = (
-                      isSearchActive ? availableHosts : availableHosts.slice(0, 10)
-                    ).map((emp: any) => ({
+                    const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
+
+                    const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
+
+                    const mergedHosts = selectedHost
+                      ? [selectedHost, ...visibleHosts.filter((x: any) => x.id !== selectedHost.id)]
+                      : visibleHosts;
+
+                    const otherHosts = mergedHosts.map((emp: any) => ({
                       value: emp.id,
                       name: emp.name,
                       group: 'All Host',
@@ -3271,12 +3349,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         inputValue={inputValues[originalIndex] || ''}
-                        // onInputChange={(_, newInputValue) => {
-                        //   setInputValues((prev: any) => ({
-                        //     ...prev,
-                        //     [originalIndex]: newInputValue,
-                        //   }));
-                        // }}
                         onInputChange={(_, newInputValue) => {
                           setInputValues((prev: any) => ({
                             ...prev,
@@ -4607,7 +4679,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         tz: tz,
         is_group: isGroup,
         flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
-        visitor_role: 'Visitor',
+        // visitor_role: 'Visitor',
         ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
         ...(TYPE_REGISTERED !== 0 && {
           is_self_registered: isSelfInvitation ?? false,
@@ -4682,7 +4754,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Payload', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         await submitFn(token, parsed as any);
@@ -4712,26 +4784,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
-        // console.log('Payload :', JSON.stringify(payload, null, 2));
+        console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        await submitFn(token, parsed);
+        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
+        // await submitFn(token, parsed);
 
-        const successMessage =
-          TYPE_REGISTERED === 0
-            ? 'Pre-registration created successfully.'
-            : 'Invitation Visitor created successfully.';
+        // const successMessage =
+        //   TYPE_REGISTERED === 0
+        //     ? 'Pre-registration created successfully.'
+        //     : 'Invitation Visitor created successfully.';
 
-        showSwal('success', successMessage, 3000);
-        resetMediaState();
-        clearAnswerFiles();
+        // showSwal('success', successMessage, 3000);
+        // resetMediaState();
+        // clearAnswerFiles();
       }
-      setLoading(false);
-      setActiveStep(0);
-      onSuccess?.();
+      // setLoading(false);
+      // setActiveStep(0);
+      // onSuccess?.();
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -5069,14 +5141,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
-  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
-
   useEffect(() => {
     // if (!formData.visitor_type || !token) return;
-    setInputValues({});
-    setSelectedSiteParentIds([]);
-    setSelectedSiteIds([]);
-    setSiteTree([]);
+    if (!duplicateData) {
+      setInputValues({});
+      setSelectedSiteParentIds([]);
+      setSelectedSiteIds([]);
+      setSiteTree([]);
+    }
+    // setInputValues({});
+    // // setSelectedSiteParentIds([]);
+    // setSelectedSiteIds([]);
+    // setSiteTree([]);
     if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
@@ -5112,11 +5188,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
+    if (!duplicateData) {
+      setInputValues({});
+      setSelectedSiteParentIds([]);
+      setSelectedSiteIds([]);
+      setSiteTree([]);
+    }
 
-    setInputValues({});
-    setSelectedSiteParentIds([]);
-    setSelectedSiteIds([]);
-    setSiteTree([]);
+    // setInputValues({});
+    // // setSelectedSiteParentIds([]);
+    // setSelectedSiteIds([]);
+    // setSiteTree([]);
     if (isGroup) {
       const groupSections = buildGroupSections(rawSections);
       setSectionsData(groupSections);
@@ -5151,6 +5233,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
+
     if (!validateCurrentStep()) return;
     setActiveStep((prev) => prev + 1);
   };

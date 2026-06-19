@@ -11,61 +11,77 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { getHistory } from 'src/customs/api/visitor';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import FilterMoreContent from './FilterMoreContent';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const History = () => {
+  const { token } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [filters, setFilters] = useState<any>({
+    start_date: '',
+    end_date: '',
+  });
   const cards = [
     {
       title: 'Total History',
-      subTitle: `0`,
+      subTitle: `${historyData.length}`,
       subTitleSetting: 10,
       icon: IconHistory,
       color: 'none',
     },
   ];
 
-  const { token } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [historyData, setHistoryData] = useState<any[]>([]);
-  const [filters, setFilters] = useState<any>({
-    site_id: '',
-  });
+  const fetchHistory = async (startDate?: string, endDate?: string) => {
+    try {
+      setLoading(true);
+
+      const start_date = startDate || dayjs().subtract(7, 'day').format('YYYY-MM-DD');
+
+      const end_date = endDate || dayjs().format('YYYY-MM-DD');
+
+      const res = await getHistory(token as string, start_date, end_date, '');
+
+      const rows = res.collection.map((item: any) => ({
+        id: item.id,
+        name: item.visitor?.name || '-',
+        agenda: item.agenda || '-',
+        site: item.site_place_name || '-',
+        vehicle_type: item.vehicle_type || '-',
+        vehicle_plate_number: item.vehicle_plate_number || '-',
+        host: item.host_name || item.host || '-',
+        visitor_period_start: formatDateTime(item.visitor_period_start || '-'),
+        visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+        visitor_status: item.visitor_status || '-',
+      }));
+
+      setHistoryData(rows);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-        const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
-
-        const res = await getHistory(token as string, start_date, end_date, filters.site_id ?? '');
-        const rows = res.collection.map((item: any) => {
-          return {
-            id: item.id,
-            name: item.visitor?.name || '-',
-            agenda: item.agenda || '-',
-            site: item.site_place_name || '-',
-            visitor_status: item.visitor_status || '-',
-            // invitation_code: item.invitation_code || '-',
-            vehicle_type: item.vehicle_type || '-',
-            vehicle_plate_number: item.vehicle_plate_number || '-',
-            host: item.host_name || item.host || '-',
-            visitor_period_start: formatDateTime(item.visitor_period_start || '-'),
-            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          };
-        });
-        setHistoryData(rows ?? []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
-      }
-    };
-    fetchData();
+    fetchHistory();
   }, [token]);
+
+  const handleApplyFilter = () => {
+    fetchHistory(filters.start_date, filters.end_date);
+  };
+
+  const handleResetFilter = () => {
+    setFilters({
+      start_date: '',
+      end_date: '',
+    });
+
+    fetchHistory();
+  };
 
   return (
     <PageContainer title="History" description="History page">
@@ -78,25 +94,27 @@ const History = () => {
             <DynamicTable
               overflowX={'auto'}
               data={historyData}
-              isHavePagination={true}
+              isHavePagination={false}
               // selectedRows={selectedRows}
               // defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[10, 20, 100]}
+              // rowsPerPageOptions={[10, 20, 100]}
               // onPaginationChange={(page, rowsPerPage) => {
               //   setPage(page);
               //   setRowsPerPage(rowsPerPage);
               // }}
+              isHaveHeaderTitle
+              titleHeader="History"
               isHaveChecked={true}
-              isHaveAction={false}
-              isHaveSearch={true}
-              isHaveFilter={false}
-              isHaveExportPdf={false}
-              isHaveExportXlf={false}
-              isHaveFilterDuration={false}
-              isHaveAddData={false}
-              isHaveFilterMore={false}
-              isHaveHeader={false}
-              isHavePdf={false}
+              isNoActionTableHead
+              isHaveFilterMore={true}
+              filterMoreContent={
+                <FilterMoreContent
+                  filters={filters}
+                  setFilters={setFilters}
+                  onApplyFilter={handleApplyFilter}
+                  onResetFilter={handleResetFilter}
+                />
+              }
             />
           </Grid>
         </Grid>

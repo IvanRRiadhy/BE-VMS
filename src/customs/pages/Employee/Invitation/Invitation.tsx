@@ -110,7 +110,6 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
@@ -134,9 +133,8 @@ const Content = () => {
     }
   }, [formDataAddVisitor, isFormChanged]);
 
-  const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
+  // const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
 
-  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
@@ -168,7 +166,6 @@ const Content = () => {
     setFormDataAddVisitor(defaultFormData);
   };
   const handleDialogClose = () => {
-    setOpenDialogIndex(null);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     resetRegisteredFlow();
@@ -653,7 +650,6 @@ const Content = () => {
     resetFormData();
     setWizardKey((k) => k + 1);
     setOpenDialog(false);
-    setOpenDialogIndex(null);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
     handleDialogClose();
@@ -942,8 +938,6 @@ const Content = () => {
                     setOpenDetailShareLink(true);
                   } else if (index === 3) {
                     setOpenQuickAccess(true);
-                  } else {
-                    setOpenDialogIndex(index);
                   }
                 }}
                 size={{ xs: 12, lg: 3 }}
@@ -1190,7 +1184,11 @@ const Content = () => {
                           </TableRow>
                         ) : groupVisitors.length > 0 ? (
                           groupVisitors.map((visitor: any, index: number) => (
-                            <VisitorRow key={visitor.id} visitor={visitor} index={index} />
+                            <VisitorRow
+                              key={`${visitor.id}-${index}`}
+                              visitor={visitor}
+                              index={index}
+                            />
                           ))
                         ) : (
                           <TableRow>

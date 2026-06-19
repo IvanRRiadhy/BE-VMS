@@ -79,6 +79,7 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import dayjs from 'dayjs';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
+import { useActivities } from 'src/hooks/useActivity';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -783,6 +784,18 @@ const DashboardEmployee = () => {
     }
   };
 
+  const {
+    data: activites = [],
+    isLoading: isLoadingActivities,
+    error,
+  } = useActivities({
+    token,
+    start: 0,
+    length: 5,
+    start_date: startDate.toISOString().split('T')[0],
+    end_date: endDate.toISOString().split('T')[0],
+  });
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
@@ -994,6 +1007,18 @@ const DashboardEmployee = () => {
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <Heatmap />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 12 }}>
+          <DynamicTable
+            loading={isLoadingActivities}
+            isHavePagination={false}
+            defaultRowsPerPage={10}
+            data={activites}
+            isHaveHeaderTitle
+            titleHeader="Activities"
+            // height={420}
+            overflowX="auto"
+          />
         </Grid>
       </Grid>
 

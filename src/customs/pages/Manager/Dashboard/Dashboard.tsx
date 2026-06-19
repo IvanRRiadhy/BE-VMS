@@ -11,7 +11,7 @@ import {
   IconLogout,
   IconReport,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -37,6 +37,8 @@ import { QuickAccessDialog } from '../../Employee/Components/Dialog/QuickAccessD
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { getAllVisitorPagination } from 'src/customs/api/admin';
 import dayjs from 'dayjs';
+import { useActivities } from 'src/hooks/useActivity';
+import PieCharts from './PieCharts';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -54,7 +56,8 @@ const DashboardEmployee = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
-
+  const [activities, setActivities] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const start = page * rowsPerPage;
   const {
     data: approvalRes,
@@ -209,8 +212,6 @@ const DashboardEmployee = () => {
     }
   };
 
-  const queryClient = useQueryClient();
-
   const handleCreateQuickAccess = async (payload: any) => {
     try {
       await createQuickAccess(token, payload);
@@ -286,6 +287,18 @@ const DashboardEmployee = () => {
     setQuickPage(0);
     setQuickSearch(keyword);
   }, []);
+
+  const {
+    data: activites = [],
+    isLoading,
+    error,
+  } = useActivities({
+    token,
+    start: 0,
+    length: 5,
+    start_date: startDate.toISOString().split('T')[0],
+    end_date: endDate.toISOString().split('T')[0],
+  });
 
   return (
     <PageContainer title="Dashboard" description="This is Manager Dashboard">
@@ -396,7 +409,7 @@ const DashboardEmployee = () => {
 
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
-          <DynamicTable
+          {/* <DynamicTable
             height={'100'}
             isHavePagination={false}
             overflowX="auto"
@@ -405,6 +418,16 @@ const DashboardEmployee = () => {
             isHaveAction={false}
             isHaveHeaderTitle
             titleHeader="Active Visit"
+          /> */}
+          <DynamicTable
+            // height={'100%'}
+            isHavePagination={false}
+            defaultRowsPerPage={10}
+            data={activites}
+            isHaveHeaderTitle
+            titleHeader="Activities"
+            height={'100%'}
+            overflowX="auto"
           />
         </Grid>
 
@@ -433,10 +456,13 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           {/* <PieCharts /> */}
           <DynamicTable
+            // height={'100%'}
+            isHavePagination={false}
+            defaultRowsPerPage={10}
             data={[]}
             isHaveHeaderTitle
-            titleHeader="Activities"
-            height={420}
+            titleHeader="Quick Access"
+            height={'100%'}
             overflowX="auto"
           />
         </Grid>

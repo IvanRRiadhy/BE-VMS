@@ -3344,7 +3344,7 @@ const OperatorView = () => {
     const fetchData = async () => {
       const res = await getUpComingVisitors(token as string, {
         today: 'true',
-        all_visitor_type: 'true',
+        // all_visitor_type: 'true',
         visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
       });
 

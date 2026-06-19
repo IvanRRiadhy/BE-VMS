@@ -320,19 +320,19 @@ const Approval = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="Search Agenda"
+                    placeholder="Search Transaksi"
                     value={searchAgenda}
                     onChange={(e) => setSearchAgenda(e.target.value)}
                     sx={{ mb: 2 }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                            <IconFilterFilled />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
+                    // InputProps={{
+                    //   endAdornment: (
+                    //     <InputAdornment position="end">
+                    //       <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+                    //         <IconFilterFilled />
+                    //       </IconButton>
+                    //     </InputAdornment>
+                    //   ),
+                    // }}
                   />
                   <Box>
                     <Box>
@@ -669,7 +669,6 @@ const Approval = () => {
           </Grid>
         </Box>
       </PageContainer>
-
 
       <VisitorApprovalDialog
         open={openDialog}
