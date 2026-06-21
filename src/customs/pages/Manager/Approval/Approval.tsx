@@ -272,7 +272,6 @@ const Approval = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
 
   const handleApproveMeetingHost = async (id: string) => {
-    console.log('id', id);
     try {
       setLoadingAction(true);
 
@@ -280,18 +279,16 @@ const Approval = () => {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       const response = await approveMeetingHost(token, id, payload);
-      console.log('response', response);
-
       const res = await approveTicket(token as string, id);
-      console.log('res', res);
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
       setSelectedRows([]);
       setOpenVisitorApproval(false);
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
     } finally {

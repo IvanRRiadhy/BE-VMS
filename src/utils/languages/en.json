@@ -50,6 +50,7 @@
   "new_visitor": "New Visitor",
   "print_badge": "Print Badge",
   "transction_visitor": "Transction Visitor",
+    "blacklist": "Blacklist",
   "blacklist_visitor": "Blacklist Visitor",
   "no_visit_today": "No Visit data for today.",
   "report": "Report",

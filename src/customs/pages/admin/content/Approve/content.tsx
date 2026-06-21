@@ -132,11 +132,10 @@ const Content = ({
     setPendingEditId(null);
   };
 
-  const handleCancelEdit = () => {
-    setEdittingId('');
-    setConfirmDialogOpen(false);
-    setPendingEditId(null);
-  };
+ const handleCancelEdit = () => {
+   setConfirmDialogOpen(false);
+   setPendingEditId(null);
+ };
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -180,9 +179,12 @@ const Content = ({
 
   const handleSuccessApprovalWorkflow = async () => {
     setIsDirty(false);
-    handleCloseDialog();
-    setRefreshTrigger((prev: any) => prev + 1);
+
+    setOpenFormAddDocument(false);
     setEdittingId('');
+    setFormAddApprovalWorkflow(defaultApprovalWorkflow);
+
+    setRefreshTrigger((prev: any) => prev + 1);
 
     await new Promise((r) => setTimeout(r, 200));
 

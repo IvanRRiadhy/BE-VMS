@@ -5,7 +5,7 @@ import FormWizardAddInvitation from '../FormWizardAddInvitation';
 
 interface Props {
   open: boolean;
-  handleDialogClose: () => void;
+  handleDialogClose?: () => void;
   handleCloseDialog: () => void;
   openDiscardForCloseAdd: () => void;
   isFormChanged: boolean;
@@ -58,7 +58,7 @@ export default function PreRegistrationDialog({
     <Dialog
       fullWidth
       open={open}
-      onClose={handleDialogClose}
+      onClose={handleClose}
       maxWidth={false}
       PaperProps={{ sx: { width: '100vw' } }}
     >

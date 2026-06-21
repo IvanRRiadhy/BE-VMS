@@ -41,6 +41,7 @@ import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
+import { set } from 'lodash';
 
 type Group = {
   id: string;
@@ -229,14 +230,15 @@ const Approval = () => {
       console.log('payload', payload);
 
       const response = await approveMeetingHost(token, id, payload);
-      console.log('response', response);
+      // console.log('response', response);
 
       const res = await handleActionApproval(id, 'Approve');
-      console.log('res', res);
+      // console.log('res', res);
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
       setSelectedRows([]);
+      // setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
     } finally {

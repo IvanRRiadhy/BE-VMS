@@ -16,8 +16,8 @@ interface VisitorStatusItem {
 }
 
 interface ApiDateGroup {
-  Date: string;
-  Status: VisitorStatusItem[];
+  date: string;
+  status: VisitorStatusItem[];
 }
 
 const TopCards = ({ items = [], size }: any) => {
@@ -83,11 +83,11 @@ const TopCards = ({ items = [], size }: any) => {
         const previousTotals: Record<string, number> = {};
 
         collection.forEach((day) => {
-          const dayDate = new Date(day.Date);
+          const dayDate = new Date(day.date);
 
           // day.Status.forEach((item) => {
-          (day.Status || []).forEach((item) => {
-            const key = item.visitor_status.trim();
+          (day.status || []).forEach((item) => {
+            const key = item.visitor_status.trim().toLowerCase();
 
             if (dayDate >= currentStart && dayDate <= currentEnd) {
               currentTotals[key] = (currentTotals[key] || 0) + item.Count;
@@ -194,7 +194,8 @@ const TopCards = ({ items = [], size }: any) => {
         items.map((card, index) => {
           if (!card?.key) return null;
 
-          const key = String(card.key);
+          // const key = String(card.key);
+          const key = String(card.key).toLowerCase();
           const change = getPercentageChange(key);
           const baseColor = getColorByKey(key);
           return (

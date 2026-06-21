@@ -79,6 +79,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
           id: createId(),
           type: 'GROUP',
           operator: cond.logic,
+          step_order: cond.step_order,
           children: cond.children.map(convert),
         };
       }
@@ -91,6 +92,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         type: 'ROLE',
         role: roleName,
         entity_id: cond.entity_id,
+        step_order: cond.step_order,
       };
     };
 
@@ -163,7 +165,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         conditions,
       };
 
-      // console.log('payload', JSON.stringify(payload, null, 2));
+      console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
         await updateApprovalWorkflow(token as string, edittingId, payload);

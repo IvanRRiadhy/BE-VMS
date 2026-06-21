@@ -5,8 +5,8 @@ import FormWizardAddVisitor from '../FormWizardAddVisitor';
 
 interface Props {
   open: boolean;
-  onClose: () => void;
-  handleDialogClose: () => void;
+  onClose?: () => void;
+  handleDialogClose?: () => void;
   handleCloseDialog: () => void;
   openDiscardForCloseAdd: () => void;
   isFormChanged: boolean;
@@ -45,19 +45,28 @@ export default function InvitationVisitorDialog({
   vtLoading,
   isLoadingEmployee,
 }: Props) {
-  const handleClose = () => {
+  // const handleClose = () => {
+  //   if (isFormChanged) {
+  //     openDiscardForCloseAdd();
+  //   } else {
+  //     handleCloseDialog();
+  //   }
+  // };
+
+  const handleClose = (_event?: object, reason?: 'backdropClick' | 'escapeKeyDown') => {
     if (isFormChanged) {
       openDiscardForCloseAdd();
-    } else {
-      handleCloseDialog();
+      return;
     }
+
+    handleCloseDialog();
   };
 
   return (
     <Dialog
       fullWidth
       open={open}
-      onClose={handleDialogClose}
+      onClose={handleClose}
       keepMounted
       maxWidth={false}
       PaperProps={{ sx: { width: '100vw' } }}

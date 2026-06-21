@@ -185,13 +185,6 @@ const Content = () => {
     setFormDataAddVisitor(defaultFormData);
   };
 
-  const handleDialogClose = () => {
-    setOpenDialogIndex(null);
-    setOpenInvitationVisitor(false);
-    setOpenPreRegistration(false);
-    resetRegisteredFlow();
-  };
-
   const handleEmployeeClick = async (employeeId: string) => {
     if (!token) return;
 
@@ -444,11 +437,26 @@ const Content = () => {
       : []),
   ];
 
-  const handleCloseDialog = useCallback(() => {
-    setSelectedSite(null);
+  //   const closeVisitorDialog = () => {
+  //     setOpenDialogIndex(null);
+  //     setOpenInvitationVisitor(false);
+  //     setOpenPreRegistration(false);
+  //     resetRegisteredFlow();
+  //   };
+
+  // const closeVisitorDialog  = useCallback(() => {
+  //   setSelectedSite(null);
+  //   setOpenInvitationVisitor(false);
+  //   setOpenPreRegistration(false);
+  //   closeVisitorDialog();
+  // }, []);
+
+  const closeVisitorDialog = useCallback(() => {
+    setOpenDialogIndex(null);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
-    handleDialogClose();
+    setSelectedSite(null);
+    resetRegisteredFlow();
   }, []);
 
   const handleAdd = () => {
@@ -479,7 +487,7 @@ const Content = () => {
     }));
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
     localStorage.removeItem('unsavedVisitorData');
-    handleCloseDialog();
+    closeVisitorDialog();
   };
 
   const openDiscardForCloseAdd = () => {
@@ -505,7 +513,7 @@ const Content = () => {
     setOpenPreRegistration(false);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
-    handleDialogClose();
+    closeVisitorDialog();
   };
 
   const handleView = async (id: string) => {
@@ -543,7 +551,7 @@ const Content = () => {
 
       setVisitorData(data);
       setOpenDetail(true);
-      handleDialogClose();
+      closeVisitorDialog();
       if (data.length === 0) {
         showSwal('error', 'Your code does not exist.', 3000);
         return;
@@ -890,9 +898,7 @@ const Content = () => {
 
       <InvitationVisitorDialog
         open={openInvitationVisitor}
-        onClose={handleDialogClose}
-        handleDialogClose={handleDialogClose}
-        handleCloseDialog={handleCloseDialog}
+        handleCloseDialog={closeVisitorDialog}
         openDiscardForCloseAdd={openDiscardForCloseAdd}
         isFormChanged={isFormChanged}
         wizardKey={wizardKey}
@@ -911,8 +917,7 @@ const Content = () => {
 
       <PreRegistrationDialog
         open={openPreRegistration}
-        handleDialogClose={handleDialogClose}
-        handleCloseDialog={handleCloseDialog}
+        handleCloseDialog={closeVisitorDialog}
         openDiscardForCloseAdd={openDiscardForCloseAdd}
         isFormChanged={isFormChanged}
         wizardKey={wizardKey}
@@ -952,14 +957,14 @@ const Content = () => {
         }}
         isFormChanged={isFormChanged}
         onDiscard={openDiscardForCloseAdd}
-        onClose={handleCloseDialog}
+        onClose={closeVisitorDialog}
         toast={toast as any}
         onSubmit={handleSelectSite}
       />
       {/* QR Code */}
       <QrScannerDialog
         open={openDialogIndex === 1}
-        onClose={handleDialogClose}
+        onClose={closeVisitorDialog}
         qrMode={qrMode}
         setQrMode={setQrMode}
         qrValue={qrValue}
