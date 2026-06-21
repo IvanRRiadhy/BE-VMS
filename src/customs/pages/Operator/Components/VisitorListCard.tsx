@@ -89,6 +89,7 @@ const VisitorListCard: React.FC<Props> = ({
   }, [displayedVisitors]);
 
   const theme = useTheme();
+
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 

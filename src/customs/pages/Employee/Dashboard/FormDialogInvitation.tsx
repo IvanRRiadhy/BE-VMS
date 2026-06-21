@@ -23,7 +23,6 @@ import { Grid2 as Grid } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import Logo from 'src/customs/components/logo/Logo';
 import {
   IconArrowLeft,
   IconGenderTransgender,
@@ -33,7 +32,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -52,8 +50,17 @@ import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/componen
 import { IconArrowRight } from '@tabler/icons-react';
 import { useSelector } from 'src/store/Store';
 import moment from 'moment';
+import weekday from 'dayjs/plugin/weekday';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 dayjs.extend(utc);
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
 dayjs.extend(timezone);
+
 dayjs.locale('id');
 
 interface FormDialogInvitationProps {
@@ -82,10 +89,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const code = searchParams.get('code') || '';
-
-  // const formatDateTime = (value: string | null) =>
-  //   !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
 
   const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
     if (!dateStr) return '-';
@@ -1016,7 +1019,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const user = useSelector((state: any) => state.userReducer.data);
 
   const transformToSubmitPayload = (data: any) => ({
-    trx_visitor_id: data.trx_visitor_id,
+    trx_visitor_id: data.id,
+    // trx_visitor_id: data.transaction_visitor_id,
     visitor_type: data.visitor_type,
     type_registered: 1,
     is_group: false,

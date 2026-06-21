@@ -1323,79 +1323,6 @@ const OperatorView = () => {
       const visitorIds =
         selectedVisitors.length > 0 ? selectedVisitors : [invitationCode?.[0]?.id].filter(Boolean);
 
-      const visitor = relatedVisitors.find(
-        (v) => v.id?.toLowerCase() === visitorIds[0]?.toLowerCase(),
-      );
-
-      // const currentUsed = visitor?.card?.find((c: any) => c.current_used === true);
-      // const currentUsed = (visitor?.card as any[])?.find((c) => c.current_used === true);
-
-      // if (currentUsed) {
-      //   const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
-
-      //   const payloads = pairs
-      //     .map(({ visitorId, cardNumber }) => {
-      //       const visitor = relatedVisitors.find(
-      //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-      //       );
-      //       if (!visitor) return null;
-
-      //       return {
-      //         card_number: String(cardNumber),
-      //         trx_visitor_id: visitorId,
-      //         description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
-      //         swap_card_from_card: currentUsed?.card_number ?? null,
-      //         swap_card_from_card_id: currentUsed?.id ?? null,
-      //         swap_card_from_site_id: registerSiteOperator,
-      //         is_swapcard: false,
-      //         swap_type: 'Other',
-      //         visitorName: visitor.name || visitorId,
-      //         registered_site_id: registerSiteOperator,
-      //       };
-      //     })
-      //     .filter(Boolean) as any[];
-      //   console.log('payloads', payloads);
-
-      //   // setSwipePayload(payloads);
-      //   // setCurrentAccessVisitor(visitor);
-      //   // setOpenSwipeAccess(true);
-
-      //   if (payloads.length > 1) {
-      //     // await createMultipleGrantAccess(token as string, {
-      //     //   data: payloads,
-      //     // });
-      //   } else {
-      //     // await createGrandAccessOperator(token as string, payloads[0]);
-      //   }
-
-      //   await fetchAvailableCards();
-
-      //   setAvailableCards((prev) =>
-      //     prev.map((card) => {
-      //       const assigned = payloads.find(
-      //         (p) => String(p.card_number) === String(card.card_number),
-      //       );
-
-      //       if (assigned) {
-      //         return {
-      //           ...card,
-      //           current_used: true,
-      //           is_used: true,
-      //           card_status: 'Used',
-      //         };
-      //       }
-
-      //       return card;
-      //     }),
-      //   );
-
-      //   showSwal('success', 'Card swapped successfully.');
-
-      //   // handleCloseChooseCard();
-
-      //   return;
-      // }
-
       if (!visitorIds.length) {
         showSwal('info', 'No visitor found to assign card.');
         return;
@@ -1442,22 +1369,15 @@ const OperatorView = () => {
         await createMultipleGrantAccess(token as string, {
           data: payloads.map(({ visitorName, ...p }) => p),
         });
-        console.log('payloads multiple', payloads);
+        // console.log('payloads multiple', payloads);
       } else {
         const { visitorName = '', ...payload } = payloads[0] as {
           visitorName?: string;
         } & (typeof payloads)[0];
 
-        console.log('payload', payload);
+        // console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
       }
-
-      const invitationId = invitationCode?.[0]?.id;
-      if (invitationId) {
-        await fetchRelatedVisitorsByInvitationId(invitationId);
-      }
-
-      await fetchAvailableCards();
 
       setVisitorCards((prev) =>
         prev.map((card) => {
@@ -1482,8 +1402,6 @@ const OperatorView = () => {
         .map((p: any) => `• ${p.visitorName} (Card: ${p.card_number})`)
         .join('\n');
 
-      showSwal('success', `Successfully assigned card(s):\n${message}`);
-
       setInvitationCode((prev) =>
         prev.map((inv) => {
           const match = payloads.find(
@@ -1499,6 +1417,14 @@ const OperatorView = () => {
       );
       resetSwipeStates();
       handleCloseChooseCard();
+      await showSwal('success', `Successfully assigned card(s):\n${message}`);
+
+      const invitationId = invitationCode?.[0]?.id;
+      if (invitationId) {
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+      }
+
+      await fetchAvailableCards();
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
@@ -3365,7 +3291,7 @@ const OperatorView = () => {
     };
     fetchData();
   }, [token, selectedPurpose]);
-  
+
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
   const filteredVisitors = useMemo(() => {
@@ -3414,109 +3340,6 @@ const OperatorView = () => {
 
   const scanLockRef = useRef(false);
   const lastScanRef = useRef('');
-
-  // const { connect, disconnect, connected } = useSerialRS232({
-  //   options: {
-  //     baudRate: 115200,
-  //   },
-
-  //   onConnect: () => {
-  //     console.log('RS232 CONNECTED');
-  //     toast('RS232 Connected', 'success');
-  //   },
-  //   onDisconnect: () => {
-  //     console.log('RS232 DISCONNECTED');
-  //     toast('RS232 Disconnected', 'warning');
-  //   },
-
-  //   onData: async (data) => {
-  //     if (scanLockRef.current) return;
-
-  //     const clean = data.replace(/[^a-zA-Z0-9-_]/g, '').trim();
-
-  //     if (!clean) return;
-
-  //     if (clean.length < 6) return;
-
-  //     if (clean.length > 20) return;
-
-  //     if (lastScanRef.current === clean) return;
-
-  //     scanLockRef.current = true;
-  //     lastScanRef.current = clean;
-
-  //     try {
-  //       console.log('FINAL QR:', clean);
-  //       await handleSubmitQRCode(clean);
-  //     } finally {
-  //       setTimeout(() => {
-  //         scanLockRef.current = false;
-  //         lastScanRef.current = '';
-  //       }, 2000);
-  //     }
-  //   },
-
-  //   onError: (err) => {
-  //     console.error(err);
-
-  //     toast('Serial Error', 'error');
-  //   },
-  // });
-
-  // useEffect(() => {
-  //   // Pastikan socket hanya dibuat sekali
-  //   const socket = new WebSocket('ws://localhost:8081/ws');
-
-  //   socket.onopen = () => {
-  //     console.log('✅ WebSocket connected');
-  //   };
-
-  //   socket.onerror = (err) => {
-  //     console.error('❌ WebSocket error:', err);
-  //   };
-
-  //   socket.onmessage = async (event) => {
-  //     console.log('📥 WebSocket message received:', event.data);
-
-  //     try {
-  //       const msg = JSON.parse(event.data);
-
-  //       console.log('💬 Console client:', msg);
-
-  //       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
-  //         const value = String(msg.data).trim();
-
-  //         //  console.log('📩 QR Value from socket:', value);
-
-  //         if (!value) return;
-  //         if (scanLockRef.current) return;
-  //         if (lastScanRef.current === value) return;
-
-  //         scanLockRef.current = true;
-  //         lastScanRef.current = value;
-
-  //         try {
-  //           await handleSubmitQRCode(value);
-  //         } finally {
-  //           setTimeout(() => {
-  //             scanLockRef.current = false;
-  //             lastScanRef.current = '';
-  //           }, 2000);
-  //         }
-  //       } else {
-  //       }
-  //     } catch (err) {
-  //       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-  //     }
-  //   };
-  //   socket.onclose = () => {
-  //     console.warn('🔌 WebSocket disconnected');
-  //   };
-
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, []);
 
   const bulkPrintingRef = useRef(false);
 

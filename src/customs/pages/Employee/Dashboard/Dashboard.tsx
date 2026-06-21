@@ -1187,7 +1187,7 @@ const DashboardEmployee = () => {
               onClose={() => setOpenDialogInvitation(false)}
               onSubmitted={() => {
                 setOpenDialogInvitation(false);
-                setInvitationDetailVisitor([]);
+                // setInvitationDetailVisitor([]);
               }}
               onSubmitting={setSubmitting}
             />

@@ -95,7 +95,7 @@ const Content = () => {
   const { token, roleAccess } = useSession();
   const isOperatorAdmin = roleAccess === 'OperatorAdmin';
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
@@ -202,17 +202,6 @@ const Content = () => {
 
   const observerRef = useRef<HTMLDivElement>(null);
 
-  const resetRegisteredFlow = () => {
-    setSelectedSite(null);
-    setFormDataAddVisitor(defaultFormData);
-  };
-  const handleDialogClose = () => {
-    setOpenDialogIndex(null);
-    setOpenInvitationVisitor(false);
-    setOpenPreRegistration(false);
-    resetRegisteredFlow();
-  };
-
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
   >('All');
@@ -227,7 +216,7 @@ const Content = () => {
   };
 
   const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 1000);
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 2000);
 
   const [filters, setFilters] = useState<any>({
     status: undefined,
@@ -311,15 +300,15 @@ const Content = () => {
   // };
 
   const fetchData = async (append = false) => {
-    if (!token) return;
+    if (!token || isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
 
     if (append) {
       setLoadingMore(true);
     } else {
       setLoading(true);
     }
-
-    setLoading(true);
 
     try {
       const start = append ? tableRowVisitors.length : 0;
@@ -378,43 +367,86 @@ const Content = () => {
       setTotalFilteredRecords(0);
       setHasMore(false);
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
       setLoadingMore(false);
     }
   };
 
+  const isSearching = debouncedSearchAgenda.trim() !== '';
+  const isFetchingRef = useRef(false);
+  useEffect(() => {
+    const target = observerRef.current;
+
+    if (!target) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && hasMore && !isSearching && !isFetchingRef.current) {
+        fetchData(true);
+      }
+    });
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [hasMore, isSearching]);
+
   useEffect(() => {
     if (!token) return;
+
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+
     fetchData(false);
   }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
-  useEffect(() => {
-    if (!observerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && hasMore && !loadingMore) {
-          fetchData(true);
-        }
-      },
-      {
-        threshold: 0.1,
-      },
-    );
-
-    observer.observe(observerRef.current);
-
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore]);
-
   const { data: siteData } = useRegisteredSite(token);
   const { data: profile } = useProfile(token);
+
+  const resetRegisteredFlow = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor(defaultFormData);
+  };
+  const handleDialogClose = () => {
+    setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setDuplicateData(null);
+
+    // reset edit mode
+    setEdittingId('');
+
+    // reset wizard
+    setWizardKey((prev) => prev + 1);
+
+    // reset form
+    setFormDataAddVisitor({
+      visitor_type: '',
+      is_group: false,
+      registered_site: '',
+    } as any);
+    resetRegisteredFlow();
+  };
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
     setOpenDialog(false);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
+    setDuplicateData(null);
+
+    // reset edit mode
+    setEdittingId('');
+
+    // reset wizard
+    setWizardKey((prev) => prev + 1);
+
+    // reset form
+    setFormDataAddVisitor({
+      visitor_type: '',
+      is_group: false,
+      registered_site: '',
+    } as any);
     handleDialogClose();
   };
 
@@ -531,7 +563,7 @@ const Content = () => {
 
   const [hostSearch, setHostSearch] = useState('');
 
-  const debouncedSearch = useDebounce(hostSearch, 1000);
+  const debouncedSearch = useDebounce(hostSearch, 800);
 
   const { visitorType } = useVisitorType(token as string);
   const { sites } = useSites(token as string);
@@ -589,6 +621,8 @@ const Content = () => {
 
       const visitors = res.collection;
 
+      const isGroup = visitors.length > 1;
+
       setDuplicateData({
         group,
         visitors,
@@ -596,9 +630,20 @@ const Content = () => {
 
       setFormDataAddVisitor({
         visitor_type: group.visitor_type_id,
-        is_group: false,
+        is_group: isGroup,
         registered_site: group.site_id,
       } as any);
+
+      if (isGroup) {
+        setGroupVisitors([
+          {
+            id: crypto.randomUUID(),
+            group_name: visitors[0]?.group_name || '',
+            group_code: visitors[0]?.visitor_code || '',
+            // data_visitor: [],
+          },
+        ]);
+      }
 
       setOpenPreRegistration(true);
     } catch (err) {

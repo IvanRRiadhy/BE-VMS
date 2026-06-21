@@ -21,7 +21,6 @@ import {
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
-import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = ({
   tableData,
@@ -46,88 +45,89 @@ const Content = ({
     conditions: [],
   };
 
+  const [isDirty, setIsDirty] = useState(false);
+
+  // const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
+  //   useState<CreateApprovalWorkflowRequest>(() => {
+  //     const saved = localStorage.getItem('unsavedApprovalWorkflow');
+  //     return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
+  //   });
+
   const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
-    useState<CreateApprovalWorkflowRequest>(() => {
-      const saved = localStorage.getItem('unsavedApprovalWorkflow');
-      return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
-    });
+    useState<CreateApprovalWorkflowRequest>(defaultApprovalWorkflow);
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleCloseDialog = () => {
-    setOpenFormAddDocument(false);
-    setEdittingId('');
-    localStorage.removeItem('unsavedApprovalWorkflow');
-  };
-
-  const defaultDoc = defaultApprovalWorkflow;
-
-  const isEmptyDoc = (doc: any) => {
-    if (!doc || typeof doc !== 'object') return true;
-    try {
-      return JSON.stringify(doc) === JSON.stringify(defaultDoc);
-    } catch {
-      return false;
-    }
-  };
-
-  const hasUnsaved = useCallback(() => {
-    const raw = localStorage.getItem('unsavedApprovalWorkflow');
-    if (!raw) return false;
-
-    try {
-      const parsed = JSON.parse(raw);
-
-      if (parsed?.id === edittingId) return false;
-
-      return !isEmptyDoc(parsed);
-    } catch {
-      return false;
-    }
-  }, [edittingId]);
-
-  const handleAdd = useCallback(() => {
-    if (hasUnsaved()) {
+    if (isDirty) {
       setPendingEditId(null);
       setConfirmDialogOpen(true);
-    } else {
-      setFormAddApprovalWorkflow(defaultApprovalWorkflow);
-      setOpenFormAddDocument(true);
+      return;
     }
-  }, [hasUnsaved]);
+
+    setOpenFormAddDocument(false);
+    setEdittingId('');
+    setIsDirty(false);
+  };
+
+  const handleAdd = useCallback(() => {
+    if (isDirty) {
+      setPendingEditId(null);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    setEdittingId('');
+    setFormAddApprovalWorkflow(defaultApprovalWorkflow);
+    setOpenFormAddDocument(true);
+  }, [isDirty]);
+
+  // const handleEdit = (id: string) => {
+  //   if (isDirty) {
+  //     setPendingEditId(id);
+  //     setConfirmDialogOpen(true);
+  //     return;
+  //   }
+
+  //   const item = tableData.find((item: any) => item.id === id);
+
+  //   setEdittingId(id);
+
+  //   if (item) {
+  //     setFormAddApprovalWorkflow(CreateApprovalWorkflowSchema.parse(item));
+  //   }
+
+  //   setOpenFormAddDocument(true);
+  // };
 
   const handleEdit = (id: string) => {
-    if (hasUnsaved()) {
-      const parsed = JSON.parse(localStorage.getItem('unsavedApprovalWorkflow') as string);
-      console.log('parsed data', parsed);
-      if (parsed?.id === id) {
-        setOpenFormAddDocument(true);
-        return;
-      }
+    if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
     }
 
     setEdittingId(id);
+    setIsDirty(false);
     setOpenFormAddDocument(true);
   };
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedApprovalWorkflow');
-    setEdittingId(pendingEditId || '');
+    setIsDirty(false);
 
-    const item = tableData.find((item: any) => item.id === pendingEditId);
-
-    if (item) {
-      setFormAddApprovalWorkflow(CreateApprovalWorkflowSchema.parse(item));
-    } else {
+    // discard dari tombol close
+    if (!pendingEditId) {
+      setOpenFormAddDocument(false);
+      setEdittingId('');
       setFormAddApprovalWorkflow(defaultApprovalWorkflow);
+      return;
     }
 
+    // discard lalu pindah edit item lain
+    setEdittingId(pendingEditId);
     setOpenFormAddDocument(true);
     setPendingEditId(null);
   };
@@ -137,11 +137,6 @@ const Content = ({
     setConfirmDialogOpen(false);
     setPendingEditId(null);
   };
-
-  useEffect(() => {
-    if (!openFormAddDocument) return;
-    localStorage.setItem('unsavedApprovalWorkflow', JSON.stringify({ ...formAddApprovalWorkflow }));
-  }, [formAddApprovalWorkflow, openFormAddDocument]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -184,7 +179,7 @@ const Content = ({
   };
 
   const handleSuccessApprovalWorkflow = async () => {
-    localStorage.removeItem('unsavedApprovalWorkflow');
+    setIsDirty(false);
     handleCloseDialog();
     setRefreshTrigger((prev: any) => prev + 1);
     setEdittingId('');
@@ -198,16 +193,6 @@ const Content = ({
         : 'Approval workflow created successfully!',
     );
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -283,6 +268,7 @@ const Content = ({
             setFormData={setFormAddApprovalWorkflow}
             edittingId={edittingId}
             onSuccess={handleSuccessApprovalWorkflow}
+            setIsDirty={setIsDirty}
           />
         </DialogContent>
       </Dialog>

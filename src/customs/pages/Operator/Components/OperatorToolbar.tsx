@@ -61,11 +61,15 @@ const OperatorToolbar = ({
       display="flex"
       gap={0.5}
       alignItems="center"
+      // sx={{
+      //   mb: { xs: 2, md: '2px' },
+      //   flexWrap: { xs: 'wrap', xl: 'nowrap' },
+      //   width: '100%',
+      //   px: '5px',
+      // }}
       sx={{
-        mb: { xs: 2, md: '2px' },
-        flexWrap: { xs: 'wrap', xl: 'nowrap' },
         width: '100%',
-        px: '5px',
+        flexWrap: 'nowrap',
       }}
     >
       <Select
@@ -74,7 +78,7 @@ const OperatorToolbar = ({
         displayEmpty
         size="medium"
         // disabled={(registeredSite?.length ?? 0) === 1}
-        sx={{ width: '150px'}}
+        sx={{ width: '120px' }}
       >
         <MenuItem value="" disabled>
           Select Site
@@ -94,6 +98,12 @@ const OperatorToolbar = ({
           endIcon={<IconCaretDownFilled size={18} />}
           // sx={{ width: '30%' }}
           size="medium"
+          sx={{
+            maxWidth: 150,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
         >
           Visitor Site
         </Button>
@@ -119,7 +129,7 @@ const OperatorToolbar = ({
         </MenuItem>
       </Menu>
       <Tooltip title="Information Guide Operator" {...tooltipProps}>
-        <Button variant="contained" onClick={onOpenInfo} sx={{ width: 36, height: 36, p: 0.7 }}>
+        <Button variant="contained" onClick={onOpenInfo} sx={{ width: 18, height: 36, p: 0.7 }}>
           <IconInfoCircle size={25} />
         </Button>
       </Tooltip>

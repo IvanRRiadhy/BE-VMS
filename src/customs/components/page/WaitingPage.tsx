@@ -109,7 +109,8 @@ const WaitingPage = () => {
         sx={{
           p: 4,
           borderRadius: 5,
-          maxWidth: 440,
+          maxWidth: 600,
+          height: '100%',
           width: '100%',
           textAlign: 'center',
           position: 'relative',

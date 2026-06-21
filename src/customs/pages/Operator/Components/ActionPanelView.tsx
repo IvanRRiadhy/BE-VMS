@@ -97,6 +97,7 @@ const ActionPanelView: FC<Props> = ({
   } = permission;
 
   const data = visitor;
+
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d',
     Checkout: '#F44336',
@@ -191,7 +192,7 @@ const ActionPanelView: FC<Props> = ({
                         Name
                       </Typography>
                       <Typography variant="h4" fontWeight={'600'}>
-                        {data?.name || '-'}
+                        {data?.name || data?.visitor_name || '-'}
                       </Typography>
                       <Typography variant="body1" sx={{ opacity: 0.7 }} mt={1}>
                         National ID : {data?.visitor_identity_id || '-'}

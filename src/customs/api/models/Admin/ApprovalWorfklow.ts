@@ -38,7 +38,7 @@ export const CreateApprovalWorkflowSchema = z.object({
   description: z.string(),
   root_logic: z.enum(['AND', 'OR']),
   type: z.string(),
-  conditions: z.array(ConditionSchema),
+  conditions: z.array(ConditionSchema).default([]),
 });
 
 export type CreateApprovalWorkflowRequest = z.infer<typeof CreateApprovalWorkflowSchema>;

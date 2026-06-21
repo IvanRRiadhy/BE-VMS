@@ -192,7 +192,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const firstStep = enableInvitationTypeStep ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
-
+  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -203,7 +203,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
-
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -233,8 +232,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!duplicateData) return;
     if (!sectionsData.length) return;
 
+    if (isGroup) return;
+
     const visitor = duplicateData?.visitors?.[0];
-    console.log('visitor', visitor);
 
     setSectionsData((prev) =>
       prev.map((section) => ({
@@ -318,6 +318,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   }, [duplicateData, sectionsData.length]);
 
   useEffect(() => {
+    if (!duplicateData) return;
     const siteId = duplicateData?.group?.site_id;
 
     if (!siteId || !sites?.length) return;
@@ -333,6 +334,145 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setSelectedSiteIds([parentId]);
   }, [duplicateData, sites]);
+
+  useEffect(() => {
+    if (formData.is_group === false) {
+      setIsSingle(true);
+      setIsGroup(false);
+    } else if (formData.is_group === true) {
+      setIsSingle(false);
+      setIsGroup(true);
+    }
+  }, [formData.is_group]);
+
+  useEffect(() => {
+    if (!duplicateData) return;
+    if (!duplicateData?.visitors?.length) return;
+    if (!isGroup) return;
+    if (!rawSections.length) return;
+
+    const groupSections = buildGroupSections(rawSections);
+
+    setSectionsData(groupSections);
+    setDraggableSteps(groupSections.map((s) => s.name));
+
+    const grouped = buildGroupedPages(groupSections);
+    setGroupedPages(grouped);
+
+    const seed = seedDataVisitorFromSections(groupSections);
+
+    const mappedVisitors = duplicateData.visitors.map((visitor: any) => {
+      const template = structuredClone(seed[0]);
+
+      template.question_page.forEach((page: any) => {
+        page.form.forEach((field: any) => {
+          switch (field.remarks?.toLowerCase()) {
+            case 'name':
+              field.answer_text = visitor.visitor_name ?? '';
+              break;
+
+            case 'email':
+              field.answer_text = visitor.visitor_email ?? '';
+              break;
+
+            case 'phone':
+              field.answer_text = visitor.visitor_phone ?? '';
+              break;
+
+            case 'indentity_id':
+              field.answer_text = visitor.visitor_identity_id ?? '';
+              break;
+
+            case 'organization':
+              field.answer_text = visitor.visitor_organization_name ?? '';
+              break;
+
+            case 'visitor_role':
+              field.answer_text = visitor.visitor_role ?? '';
+              break;
+
+            case 'host':
+              field.answer_text = visitor.host ?? '';
+              break;
+
+            case 'agenda':
+              field.answer_text = visitor.agenda ?? '';
+              break;
+
+            case 'visitor_period_start':
+              field.answer_datetime = visitor.visitor_period_start ?? '';
+              break;
+
+            case 'visitor_period_end':
+              field.answer_datetime = visitor.visitor_period_end ?? '';
+              break;
+
+            case 'site_place':
+              field.answer_text = duplicateData.group?.site_id?.toUpperCase() ?? '';
+              break;
+          }
+        });
+      });
+
+      return template;
+    });
+
+    const firstVisitor = duplicateData.visitors[0];
+
+    grouped.single_page = grouped.single_page.map((field: any) => {
+      switch (field.remarks?.toLowerCase()) {
+        case 'host':
+          return {
+            ...field,
+            answer_text: firstVisitor.host,
+          };
+
+        case 'agenda':
+          return {
+            ...field,
+            answer_text: firstVisitor.agenda,
+          };
+
+        case 'visitor_period_start':
+          return {
+            ...field,
+            answer_datetime: firstVisitor.visitor_period_start,
+          };
+
+        case 'visitor_period_end':
+          return {
+            ...field,
+            answer_datetime: firstVisitor.visitor_period_end,
+          };
+
+        case 'site_place':
+          return {
+            ...field,
+            answer_text: duplicateData.group?.site_id?.toUpperCase() ?? '',
+          };
+
+        default:
+          return field;
+      }
+    });
+
+    setGroupedPages(grouped);
+
+    const randomCode = Array.from({ length: 6 }, () =>
+      Math.random().toString(36).charAt(2).toUpperCase(),
+    ).join('');
+
+    setGroupVisitors([
+      {
+        id: crypto.randomUUID(),
+        group_name: duplicateData.visitors[0]?.group_name ?? '',
+        group_code: randomCode,
+        data_visitor: mappedVisitors,
+      },
+    ]);
+
+    setDataVisitor(mappedVisitors);
+  }, [duplicateData, rawSections, isGroup]);
 
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
@@ -413,8 +553,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelfOnlyOpen(false);
     setSelfOnlyVisitorIdx(0);
   };
-
-  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
     const newGroupIndex = groupVisitors.length;
@@ -728,16 +866,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  useEffect(() => {
-    if (formData.is_group === false) {
-      setIsSingle(true);
-      setIsGroup(false);
-    } else if (formData.is_group === true) {
-      setIsSingle(false);
-      setIsGroup(true);
-    }
-  }, [formData.is_group]);
-
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step === -1 && enableInvitationTypeStep) {
@@ -1036,6 +1164,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     const fresh = deepClone(
                                       seedDataVisitorFromSections(sectionsData),
                                     );
+                  
                                     setDataVisitor(fresh);
                                   }
                                   setActiveStep(1);
@@ -1520,7 +1649,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               } else if (sectionType === 'purpose_visit') {
                 const visitor = dataVisitor[0];
                 if (!visitor) return null;
-                const pIdx = visitor.question_page.findIndex((p) =>
+                const pIdx = visitor?.question_page?.findIndex((p) =>
                   p.name.toLowerCase().includes('purpose visit'),
                 );
                 if (pIdx < 0) return null;
@@ -1639,10 +1768,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           axiosInstance2
             .delete(`/cdn${u}`)
             .then(() => {
-              console.log(`Berhasil hapus file CDN: ${u}`);
+
             })
             .catch((err) => {
-              console.warn(`Gagal hapus file CDN ${u}:`, err);
+
             }),
         ),
       );
@@ -3349,15 +3478,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         inputValue={inputValues[originalIndex] || ''}
-                        onInputChange={(_, newInputValue) => {
+                        onInputChange={(_, newInputValue,reason) => {
+                          
                           setInputValues((prev: any) => ({
                             ...prev,
                             [originalIndex]: newInputValue,
                           }));
 
-                          if (newInputValue.length >= 3 || newInputValue.length === 0) {
-                            search?.(newInputValue);
-                          }
+                           if (reason === 'input') {
+                             if (newInputValue.length >= 3 || newInputValue.length === 0) {
+                               search?.(newInputValue);
+                             }
+                           }
                         }}
                         filterOptions={(opts, state) => {
                           if (!state.inputValue) {
@@ -3705,6 +3837,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                 case 9: {
                   const remark = (item.remarks || '').toLowerCase();
+
                   if (
                     remark === 'visitor_period_start' &&
                     filteredDetails[originalIndex + 1] &&
@@ -4784,26 +4917,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
-        console.log('Payload :', JSON.stringify(payload, null, 2));
+        // console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
-        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        // await submitFn(token, parsed);
+        const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
+        await submitFn(token, parsed);
 
-        // const successMessage =
-        //   TYPE_REGISTERED === 0
-        //     ? 'Pre-registration created successfully.'
-        //     : 'Invitation Visitor created successfully.';
+        const successMessage =
+          TYPE_REGISTERED === 0
+            ? 'Pre-registration created successfully.'
+            : 'Invitation Visitor created successfully.';
 
-        // showSwal('success', successMessage, 3000);
-        // resetMediaState();
-        // clearAnswerFiles();
+        showSwal('success', successMessage, 3000);
+        resetMediaState();
+        clearAnswerFiles();
       }
-      // setLoading(false);
-      // setActiveStep(0);
-      // onSuccess?.();
+      setLoading(false);
+      setActiveStep(0);
+      onSuccess?.();
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -5170,11 +5303,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setRawSections(sections);
 
       if (isGroup) {
-        const groupSections = buildGroupSections(sections);
-        setSectionsData(groupSections);
-        setDraggableSteps(groupSections.map((s) => s.name));
-        seedDataVisitorFromSections(groupSections);
-        setGroupedPages(buildGroupedPages(groupSections));
+        if (!duplicateData) {
+          const groupSections = buildGroupSections(sections);
+          setSectionsData(groupSections);
+          setDraggableSteps(groupSections.map((s) => s.name));
+          seedDataVisitorFromSections(groupSections);
+
+          // seedDataVisitorFromSections(groupSections);
+
+          setGroupedPages(buildGroupedPages(groupSections));
+        }
       } else {
         setSectionsData(sections);
         setDraggableSteps(sections.map((s: any) => s.name));
@@ -5200,11 +5338,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     // setSelectedSiteIds([]);
     // setSiteTree([]);
     if (isGroup) {
-      const groupSections = buildGroupSections(rawSections);
-      setSectionsData(groupSections);
-      setDraggableSteps(groupSections.map((s) => s.name));
-      seedDataVisitorFromSections(groupSections);
-      setGroupedPages(buildGroupedPages(groupSections));
+      if (!duplicateData) {
+        const groupSections = buildGroupSections(rawSections);
+        setSectionsData(groupSections);
+        setDraggableSteps(groupSections.map((s) => s.name));
+        // seedDataVisitorFromSections(groupSections);
+        seedDataVisitorFromSections(groupSections);
+        setGroupedPages(buildGroupedPages(groupSections));
+      }
     } else {
       setSectionsData(rawSections);
       setDraggableSteps(rawSections.map((s: any) => s.name));

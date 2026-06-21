@@ -107,7 +107,7 @@ const VisitorInformationDetail: React.FC<Props> = ({
                       whiteSpace: 'normal',
                     }}
                   >
-                    {invitationCode[0]?.visitor?.email || '-'}
+                    {data?.visitor_email || invitationCode[0]?.visitor?.email || '-'}
                   </Typography>
                 </Box>
               </Box>
@@ -130,7 +130,7 @@ const VisitorInformationDetail: React.FC<Props> = ({
                 </Box>
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                  <Typography>{data?.phone || '-'}</Typography>
+                  <Typography>{data?.visitor_phone || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -162,7 +162,7 @@ const VisitorInformationDetail: React.FC<Props> = ({
                 </Box>
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                  <Typography>{data?.visitor?.gender || '-'}</Typography>
+                  <Typography>{data?.visitor_gender || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -205,7 +205,7 @@ const VisitorInformationDetail: React.FC<Props> = ({
                 </Box>
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Organization</CustomFormLabel>
-                  <Typography>{data?.organization || '-'}</Typography>
+                  <Typography>{data?.visitor_organization_name || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>

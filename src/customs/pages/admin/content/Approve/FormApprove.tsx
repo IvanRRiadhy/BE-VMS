@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Button,
   Grid2,
@@ -33,6 +33,7 @@ interface FormApproveProps {
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   edittingId: string;
   onSuccess?: () => void;
+  setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type RuleNode = {
@@ -50,6 +51,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   setFormData,
   edittingId,
   onSuccess,
+  setIsDirty,
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
   const createId = () => Math.random().toString(36).substring(2, 9);
   const [rules, setRules] = useState<RuleNode[]>([]);
+  const markDirty = useCallback(() => {
+    setIsDirty(true);
+  }, [setIsDirty]);
 
   const buildRulesFromConditions = (conditions: any[], rootLogic: 'AND' | 'OR'): RuleNode[] => {
     const convert = (cond: any): RuleNode => {
@@ -102,7 +107,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
         const res = await getApprovalWorkflowById(token as string, edittingId);
         const data = res.collection;
         // console.log('data', data);
-        
 
         setFormData({
           name: data.name,
@@ -122,16 +126,18 @@ const FormApprove: React.FC<FormApproveProps> = ({
     loadData();
   }, [edittingId]);
 
-  const handleChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = useCallback(
+    (e: any) => {
       const { name, value } = e.target;
 
       setFormData((prev: any) => ({
         ...prev,
         [name]: value,
       }));
+
+      markDirty();
     },
-    [],
+    [markDirty],
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,7 +163,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         conditions,
       };
 
-      console.log('payload', JSON.stringify(payload, null, 2));
+      // console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
         await updateApprovalWorkflow(token as string, edittingId, payload);
@@ -184,6 +190,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
         children: [],
       },
     ]);
+
+    markDirty();
   };
 
   const uuid = () => crypto.randomUUID();
@@ -270,6 +278,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
     setRules(update);
     setExpanded((prev) => [...new Set([...prev, groupId])]);
+    markDirty();
   };
 
   const addGroup = (targetId: string, operator: 'AND' | 'OR') => {
@@ -314,6 +323,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
     setRules(update);
     setExpanded((prev) => [...new Set([...prev, targetId])]);
+    markDirty();
   };
 
   useEffect(() => {
@@ -330,16 +340,23 @@ const FormApprove: React.FC<FormApproveProps> = ({
   }, []);
 
   const getOptionsByRole = (role?: string) => {
-     if (role === 'Manager') {
-       return users
-         .filter((u) => u.group_name === 'Manager')
-         .map((u) => ({
-           label: u.fullname,
-           value: u.id,
-         }));
-     }
+    if (role === 'Manager') {
+      return users
+        .filter((u) => u.group_name === 'Manager')
+        .map((u) => ({
+          label: u.fullname,
+          value: u.id,
+        }));
+    }
 
-    if (role === 'PIC' ) {
+    if (role === 'PIC') {
+      return employees.map((e) => ({
+        label: e.name,
+        value: e.id,
+      }));
+    }
+
+    if (role === 'InvitationHost' || role === 'Host') {
       return employees.map((e) => ({
         label: e.name,
         value: e.id,
@@ -395,7 +412,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
               >
                 {node.role}
               </Typography>
-              <CustomSelect
+              {/* <CustomSelect
                 size="small"
                 value={node.entity_id || ''}
                 sx={{ minWidth: 150 }}
@@ -423,7 +440,48 @@ const FormApprove: React.FC<FormApproveProps> = ({
                     {opt.label}
                   </MenuItem>
                 ))}
-              </CustomSelect>
+              </CustomSelect> */}
+              <Autocomplete
+                size="small"
+                options={options}
+                value={options.find((opt) => opt.value === node.entity_id) || null}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                sx={{
+                  minWidth: 200,
+                  // '& .MuiInputBase-root': {
+                  //   height: '36px !important', // atur tinggi
+                  // },
+                }}
+                onChange={(_, selected) => {
+                  const value = selected?.value || '';
+
+                  const update = (nodes: any[]): any[] =>
+                    nodes.map((n) => {
+                      if (n.id === node.id) {
+                        return { ...n, entity_id: value };
+                      }
+                      if (n.children) {
+                        return { ...n, children: update(n.children) };
+                      }
+                      return n;
+                    });
+
+                  setRules(update);
+                  markDirty();
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="Select User" size="small" />
+                )}
+                slotProps={{
+                  listbox: {
+                    sx: {
+                      maxHeight: 200,
+                      minWidth: '200px !important',
+                    },
+                  },
+                }}
+              />
               <Button
                 size="small"
                 variant="contained"
@@ -507,6 +565,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                   });
 
                 setRules((prev) => updateNode(prev));
+                markDirty();
               }}
             >
               {stepOptions.map((s) => (
@@ -574,6 +633,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         }));
 
     setRules((prev) => remove(prev));
+    markDirty();
   };
 
   return (

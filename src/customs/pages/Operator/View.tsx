@@ -225,21 +225,6 @@ const View = () => {
     fetchUpcomingPurpose();
   }, [token]);
 
-  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
-    {
-      id: '1',
-      site: 'SCP 3A',
-    },
-    {
-      id: '2',
-      site: 'SPU 2B',
-    },
-    {
-      id: '3',
-      site: 'SPU 1D',
-    },
-  ]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -1068,7 +1053,7 @@ const View = () => {
 
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
-      name: v.visitor?.name ?? '-',
+      name: v.visitor_name ?? '-',
       selfie_image: v.selfie_image ?? '-',
       identity_image: v.identity_image ?? '-',
       visitor_period_start: v.visitor_period_start ?? '-',
@@ -1405,6 +1390,8 @@ const View = () => {
     setInvitationCode([]);
     setRelatedVisitors([]);
     setOpen(false);
+    setSelectedVisitors([]);
+    setSelectedVisitorId(null);
     setOpenDialogIndex(null);
     setTorchOn(false);
     setActionButton('');
@@ -1656,7 +1643,7 @@ const View = () => {
     setSelectedCards([]);
 
     setInvitationCode((prev) => {
-      if (!prev?.length) return prev;
+      // if (!prev?.length) return prev;
 
       return [
         {
@@ -3186,14 +3173,52 @@ const View = () => {
     });
   };
 
-  const activeVisitor = useMemo(() => {
-    if (selectedVisitorId) {
-      const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
-      if (visitor) return visitor;
-    }
+  const [dataUpcomingVisitors, setDataUpcomingVisitors] = useState<any[]>([]);
 
-    return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
-  }, [selectedVisitorId, relatedVisitors, invitationCode]);
+  // const activeVisitor = useMemo(() => {
+  //   if (selectedVisitorId) {
+  //     const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
+  //     if (visitor) return visitor;
+  //   }
+
+  //   return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
+  // }, [selectedVisitorId, relatedVisitors, invitationCode]);
+
+  // const activeVisitor = useMemo(() => {
+  //   if (selectedVisitorId) {
+  //     const related = relatedVisitors.find((v) => v.id === selectedVisitorId);
+
+  //     if (related) return related;
+
+  //     const upcoming = dataUpcomingVisitors.find(
+  //       (v: any) =>
+  //         v.id === selectedVisitorId ||
+  //         v.visitor_id === selectedVisitorId ||
+  //         v.transaction_visitor_id === selectedVisitorId,
+  //     );
+
+  //     if (upcoming) return upcoming;
+  //   }
+
+  //   return relatedVisitors?.[0] ?? dataUpcomingVisitors?.[0] ?? invitationCode?.[0] ?? null;
+  // }, [selectedVisitorId, relatedVisitors, dataUpcomingVisitors, invitationCode]);
+
+  const activeVisitor = useMemo(() => {
+    if (!selectedVisitorId) return null;
+
+    const related = relatedVisitors.find((v) => v.id === selectedVisitorId);
+
+    if (related) return related;
+
+    return (
+      dataUpcomingVisitors.find(
+        (v: any) =>
+          v.id === selectedVisitorId ||
+          v.visitor_id === selectedVisitorId ||
+          v.transaction_visitor_id === selectedVisitorId,
+      ) || null
+    );
+  }, [selectedVisitorId, relatedVisitors, dataUpcomingVisitors]);
 
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
@@ -3237,7 +3262,7 @@ const View = () => {
         card_number: returnCardNumber.trim(),
       };
 
-      console.log('return card payload', payload);
+      // console.log('return card payload', payload);
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
@@ -3296,8 +3321,6 @@ const View = () => {
       }
     });
   };
-
-  const [dataUpcomingVisitors, setDataUpcomingVisitors] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
