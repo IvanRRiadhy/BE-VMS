@@ -504,7 +504,7 @@ const FormSelfPraregistration = ({
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
         setLoading(false);
@@ -3048,15 +3048,14 @@ const FormSelfPraregistration = ({
         // toast('Group visitor created successfully.', 'success');
         showSwal('success', 'Group visitor created successfully.');
       } else {
-        // await createSubmitShareLink(token as string, code, timestamp, previewPayload);
-        console.log('preview payload', previewPayload);
-        const successMessage =
-          TYPE_REGISTERED === 0
-            ? 'Pre-registration created successfully.'
-            : 'Self pre-registration successfully.';
-
+        await createSubmitShareLink(token as string, code, timestamp, previewPayload);
+        // console.log('preview payload', previewPayload);
+        // const successMessage =
+        //   TYPE_REGISTERED === 0
+        //     ? 'Pre-registration created successfully.'
+        //     : 'Self pre-registration successfully.';
         setLoading(false);
-        await showSwal('success', successMessage, 2000);
+        // await showSwal('success', successMessage, 2000);
       }
 
       setPreviewOpen(false);
