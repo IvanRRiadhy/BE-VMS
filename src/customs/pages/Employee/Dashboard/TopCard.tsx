@@ -12,8 +12,8 @@ interface VisitorStatusItem {
 }
 
 interface ApiDateGroup {
-  Date: string;
-  Status: VisitorStatusItem[];
+  date: string;
+  status: VisitorStatusItem[];
 }
 
 const TopCard = ({ items = [], size }: any) => {
@@ -90,10 +90,10 @@ const TopCard = ({ items = [], size }: any) => {
         const previousTotals: Record<string, number> = {};
 
         collection.forEach((day) => {
-          const dayDate = new Date(day.Date);
+          const dayDate = new Date(day.date);
 
           // day.Status.forEach((item) => {
-          (day.Status || []).forEach((item) => {
+          (day.status || []).forEach((item) => {
             const key = item.visitor_status.trim();
 
             if (dayDate >= currentStart && dayDate <= currentEnd) {

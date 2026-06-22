@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Paper, Stack, keyframes } from '@mui/material';
 import LoadingImage from '../../../assets/images/backgrounds/loading-img.svg';
 import { useNavigate } from 'react-router';
@@ -13,6 +13,7 @@ const WaitingPage = () => {
   const { saveToken } = useSession();
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const code = localStorage.getItem('visitor_ref_code');
@@ -27,6 +28,7 @@ const WaitingPage = () => {
         const res = await AuthVisitor({ code });
         const token = res?.collection?.token;
         const status = res?.status;
+        setMessage(res?.msg);
 
         if (token) {
           await saveToken(token, GroupRoleId.Visitor);
@@ -146,16 +148,11 @@ const WaitingPage = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-
               backgroundColor: 'primary.main',
               color: 'white',
-
               boxShadow: '0 5px 10px rgba(59, 130, 246, 0.35)',
-
               position: 'relative',
-
               animation: `${float} 2.5s ease-in-out infinite`,
-
               '& svg': {
                 animation: `${rotateSoft} 6s linear infinite`,
               },
@@ -194,7 +191,8 @@ const WaitingPage = () => {
           {/* <CircularProgress size={26} thickness={5} /> */}
 
           <Typography variant="h6" fontWeight={700}>
-            Processing Your Visit Request
+            {/* Processing Your Visit Request */}
+            {message}
           </Typography>
 
           <Typography

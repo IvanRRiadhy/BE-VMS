@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import {
   Button,
   Grid2,
@@ -27,6 +27,7 @@ import {
 } from 'src/customs/api/Admin/ApprovalWorkflow';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getAllUser, getAllEmployee } from 'src/customs/api/admin';
+import { useEmployees } from 'src/hooks/useEmployees';
 
 interface FormApproveProps {
   formData: any;
@@ -64,7 +65,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
     { label: 'PIC', value: 'PIC' },
   ];
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  // const [employees, setEmployees] = useState<any[]>([]);
+
+  const { employee } = useEmployees(token);
 
   const createId = () => Math.random().toString(36).substring(2, 9);
   const [rules, setRules] = useState<RuleNode[]>([]);
@@ -182,6 +185,20 @@ const FormApprove: React.FC<FormApproveProps> = ({
     }
   };
 
+  // const addRootRule = (operator: 'AND' | 'OR') => {
+  //   setRules((prev) => [
+  //     ...prev,
+  //     {
+  //       id: createId(),
+  //       type: 'GROUP',
+  //       operator,
+  //       children: [],
+  //     },
+  //   ]);
+
+  //   markDirty();
+  // };
+
   const addRootRule = (operator: 'AND' | 'OR') => {
     setRules((prev) => [
       ...prev,
@@ -189,6 +206,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         id: createId(),
         type: 'GROUP',
         operator,
+        step_order: prev.length + 1,
         children: [],
       },
     ]);
@@ -218,7 +236,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
         if (!node.children?.length) return [];
         // const myStep = groupStep++;
         // const myStep = node.step_order ?? 1;
-        const myStep = isRootLevel ? (node.step_order ?? 1) : parentStep;
+        // const myStep = isRootLevel ? (node.step_order ?? 1) : parentStep;
+        // change step 2
+        const myStep = node.step_order ?? parentStep;
         return {
           logic: node.operator ?? 'NONE',
           approver_type: roleMap?.[node.role as string] ?? null,
@@ -286,6 +306,18 @@ const FormApprove: React.FC<FormApproveProps> = ({
   const addGroup = (targetId: string, operator: 'AND' | 'OR') => {
     const update = (nodes: RuleNode[]): RuleNode[] =>
       nodes.flatMap((node) => {
+        // if (node.id === targetId && node.type === 'ROLE') {
+        //   return [
+        //     node,
+        //     {
+        //       id: createId(),
+        //       type: 'GROUP',
+        //       operator,
+        //       children: [],
+        //     },
+        //   ];
+        // }
+
         if (node.id === targetId && node.type === 'ROLE') {
           return [
             node,
@@ -293,6 +325,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
               id: createId(),
               type: 'GROUP',
               operator,
+              step_order: (node.step_order ?? 1) + 1,
               children: [],
             },
           ];
@@ -307,11 +340,27 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 id: createId(),
                 type: 'GROUP',
                 operator,
+                step_order: (node.step_order ?? 1) + 1,
                 children: [],
               },
             ],
           };
         }
+
+        // if (node.id === targetId && node.type === 'GROUP') {
+        //   return {
+        //     ...node,
+        //     children: [
+        //       ...(node.children || []),
+        //       {
+        //         id: createId(),
+        //         type: 'GROUP',
+        //         operator,
+        //         children: [],
+        //       },
+        //     ],
+        //   };
+        // }
 
         if (node.children) {
           return {
@@ -352,41 +401,29 @@ const FormApprove: React.FC<FormApproveProps> = ({
     }
 
     if (role === 'PIC') {
-      return employees.map((e) => ({
+      return employee.map((e) => ({
         label: e.name,
         value: e.id,
       }));
     }
 
-    if (role === 'InvitationHost' || role === 'Host') {
-      return employees.map((e) => ({
-        label: e.name,
-        value: e.id,
-      }));
-    }
+    // if (role === 'InvitationHost' || role === 'Host') {
+    //   return employees.map((e) => ({
+    //     label: e.name,
+    //     value: e.id,
+    //   }));
+    // }
 
     return [];
   };
-
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await getAllEmployee(token as string);
-        setEmployees(res.collection || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchEmployees();
-  }, []);
 
   const countRootGroups = (nodes: RuleNode[]): number => {
     return nodes.filter((n) => n.type === 'GROUP').length;
   };
 
   const totalSteps = countRootGroups(rules);
-  const stepOptions = Array.from({ length: totalSteps }, (_, i) => i + 1);
+  // const stepOptions = Array.from({ length: totalSteps }, (_, i) => i + 1);
+  const stepOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
   const renderNode = (node: RuleNode) => {
     const options = getOptionsByRole(node.role);
@@ -770,4 +807,4 @@ const FormApprove: React.FC<FormApproveProps> = ({
   );
 };
 
-export default React.memo(FormApprove);
+export default memo(FormApprove);

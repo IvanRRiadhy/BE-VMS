@@ -408,66 +408,60 @@ const DashboardEmployee = () => {
         </Grid>
 
         {/* Tabel */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          {/* <DynamicTable
-            height={'100'}
-            isHavePagination={false}
-            overflowX="auto"
-            data={activeInvitation}
-            isHaveChecked={false}
-            isHaveAction={false}
-            isHaveHeaderTitle
-            titleHeader="Active Visit"
-          /> */}
+        <Grid
+          size={{ xs: 12, lg: 6 }}
+          sx={{
+            display: 'flex',
+          }}
+        >
           <DynamicTable
-            // height={'100%'}
+            height="100%"
             isHavePagination={false}
             defaultRowsPerPage={10}
             data={activites}
             isHaveHeaderTitle
             titleHeader="Activities"
-            height={'100%'}
             overflowX="auto"
           />
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid
+          size={{ xs: 12, lg: 6 }}
+          sx={{
+            display: 'flex',
+          }}
+        >
           <DynamicTable
-            height={'100%'}
+            height="100%"
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
-            isHaveChecked={true}
-            // defaultRowsPerPage={rowsPerPage}
-            // rowsPerPageOptions={[10, 20, 100]}
-            // onPaginationChange={(page, rowsPerPage) => {
-            //   setPage(page);
-            //   setRowsPerPage(rowsPerPage);
-            // }}
-            isHaveAction={true}
+            isHaveChecked
+            isHaveAction
             isHaveHeaderTitle
             titleHeader="Approval"
-            isHaveApproval={true}
+            isHaveApproval
             onAccept={(row: any) => handleActionApproval(row.id, 'Approve')}
             onDenied={(row: any) => handleActionApproval(row.id, 'Reject')}
-            isHavePeriod={true}
+            isHavePeriod
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          {/* <PieCharts /> */}
+        <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            // height={'100%'}
             isHavePagination={false}
             defaultRowsPerPage={10}
             data={[]}
             isHaveHeaderTitle
             titleHeader="Quick Access"
-            height={'100%'}
+            height="420px"
             overflowX="auto"
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          <Heatmap />
+
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Box sx={{ height: '500px' }}>
+            <Heatmap />
+          </Box>
         </Grid>
       </Grid>
 

@@ -1,5 +1,5 @@
 import { Button, IconButton, Menu, MenuItem, Select, Tooltip } from '@mui/material';
-import { Box } from '@mui/system';
+import { Box, useMediaQuery } from '@mui/system';
 import {
   IconArrowsMaximize,
   IconCar,
@@ -55,6 +55,7 @@ const OperatorToolbar = ({
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const lg = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
 
   return (
     <Box
@@ -78,7 +79,13 @@ const OperatorToolbar = ({
         displayEmpty
         size="medium"
         // disabled={(registeredSite?.length ?? 0) === 1}
-        sx={{ width: '120px' }}
+        sx={{
+          width: {
+            xs: '100%',
+            md: 150,
+            lg: 200,
+          },
+        }}
       >
         <MenuItem value="" disabled>
           Select Site
@@ -99,7 +106,11 @@ const OperatorToolbar = ({
           // sx={{ width: '30%' }}
           size="medium"
           sx={{
-            maxWidth: 150,
+            maxWidth: {
+              sm: 250,
+              md: 150,
+              lg: 200,
+            },
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',

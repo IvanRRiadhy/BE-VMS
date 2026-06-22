@@ -39,6 +39,8 @@ import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
 import Footer from '../components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
+import Language from 'src/layouts/full/vertical/header/Language';
+import { useTranslation } from 'react-i18next';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const Login = () => {
@@ -47,6 +49,7 @@ const Login = () => {
   const { saveToken } = useSession();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -339,12 +342,14 @@ const Login = () => {
                       mt={4}
                       fontWeight={600}
                     >
-                      Bank Indonesia - Di Setiap Makna Indonesia
+                      {/* Bank Indonesia - Di Setiap Makna Indonesia */}
+                      {t('titleLogin')}
                     </Typography>
 
                     <Typography sx={{ color: '#fff', lineHeight: 1.5 }} fontSize={16} mb={2} mt={5}>
-                      Indonesia adalah Bank Sentral Republik Indonesia dengan Satu Tujuan Tunggal
-                      yaitu Mencapai dan Memelihara Kestabilan Nilai Rupiah.
+                      {/* Indonesia adalah Bank Sentral Republik Indonesia dengan Satu Tujuan Tunggal
+                      yaitu Mencapai dan Memelihara Kestabilan Nilai Rupiah. */}
+                      {t('subTitleLogin')}
                     </Typography>
                   </Card>
                 </Grid>
@@ -380,10 +385,28 @@ const Login = () => {
                       // borderLeftRadius: 10,
                     }}
                   >
-                    <Box display="flex" alignItems="center" justifyContent="center" mb={0}>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      mb={0}
+                      sx={{
+                        position: 'relative',
+                      }}
+                    >
                       <img src={Logo} width={250} height={80} />
-                    </Box>
 
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          right: -10,
+                          top: '20%',
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        <Language />
+                      </Box>
+                    </Box>
                     <Box sx={{ width: '100%', mb: 1.5 }}>
                       {/* Tabs Switch */}
                       <Tabs
@@ -425,7 +448,8 @@ const Login = () => {
                       {tab === 0 && (
                         <form onSubmit={loginSubmit}>
                           <Typography variant="h5" mb={0} mt={0} textAlign="center">
-                            Sign in to your account
+                            {/* Sign in to your account */}
+                            {t('signIn')}
                           </Typography>
                           <Stack spacing={2}>
                             <Box>
@@ -519,7 +543,8 @@ const Login = () => {
                                 },
                               }}
                             >
-                              Forgot Password?
+                              {/* Forgot Password? */}
+                              {t('forgotPassword')}
                             </Typography>
                           </Stack>
 
@@ -599,11 +624,13 @@ const Login = () => {
                           Guest/Visitor Code
                         </Typography>
                         <Typography variant="body1" textAlign="center" color="text.secondary">
-                          Please enter your invitation code
+                          {t('confirmationInputCode')}
                         </Typography>
                         <Stack spacing={2}>
                           <Box>
-                            <CustomFormLabel htmlFor="guest-id">Invitation Code</CustomFormLabel>
+                            <CustomFormLabel htmlFor="guest-id">
+                              {t('invitationCode')}
+                            </CustomFormLabel>
                             <CustomTextField
                               id="guest-id"
                               variant="outlined"
@@ -644,7 +671,7 @@ const Login = () => {
                             {loading ? (
                               <CircularProgress sx={{ color: 'white' }} size={24} />
                             ) : (
-                              'Verify'
+                              t('verify')
                             )}
                           </Button>
                         </Box>
@@ -664,7 +691,8 @@ const Login = () => {
                               variant="subtitle1"
                               color="error"
                             >
-                              Invitation Code not found
+                              {/* Invitation Code not found */}
+                              {t('invitationCodeNotFound')}
                             </Typography>
                           )}
                         </Box>
@@ -766,7 +794,8 @@ const Login = () => {
                               },
                             }}
                           >
-                            Forgot Password?
+                            {/* Forgot Password? */}
+                            {t('forgotPassword')}
                           </Typography>
                         </Stack>
 
@@ -829,7 +858,8 @@ const Login = () => {
                         sx={{ color: 'grey.600', opacity: 0.7 }}
                         fontWeight={200}
                       >
-                        Need some help?
+                        {/* Need some help? */}
+                        {t('needHelp')}
                       </Typography>
                       <Typography
                         variant="subtitle2"
@@ -837,10 +867,11 @@ const Login = () => {
                         fontWeight={600}
                         // component={RouterLink}
                         // to="/"
-                        sx={{ marginLeft: 1 }}
+                        sx={{ marginLeft: 1, cursor: 'pointer' }}
                         onClick={handleForgotPassword}
                       >
-                        Contact Us
+                        {/* Contact Us */}
+                        {t('contactUs')}
                       </Typography>
                     </Box>
 

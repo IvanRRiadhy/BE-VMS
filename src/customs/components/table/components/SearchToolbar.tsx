@@ -55,9 +55,11 @@ const SearchToolbar = memo(
             }
           }}
           sx={{
-            flexGrow: 1,
-            minWidth: 0,
-            width: { xs: '100%', sm: '300px' },
+            // flexGrow: 1,
+            // minWidth: 270,
+            // width: { xs: '100%', sm: '280px' },
+            flex: 1,
+            minWidth: 280,
           }}
           InputProps={{
             sx: { height: 36 },
@@ -84,6 +86,7 @@ const SearchToolbar = memo(
               height: 36,
               fontSize: '0.7rem',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             <Typography fontSize="0.7rem" variant="caption">

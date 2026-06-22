@@ -880,7 +880,7 @@ function DynamicTableBase<
                 Back
               </Button>
             )}
-            <Grid2
+            {/* <Grid2
               size={{ xs: 12 }}
               display="flex"
               justifyContent="space-between"
@@ -891,219 +891,244 @@ function DynamicTableBase<
                 gap: { xs: 1.5, md: 0 },
               }}
               width="100%"
+            > */}
+            <Grid2
+              size={{ xs: 12 }}
+              display="flex"
+              // alignItems="center"
+              flexDirection={{ xs: 'column', sm: 'row', xl: 'row' }}
+              flexWrap="wrap"
+              sx={{
+                mb: 1,
+                gap: 1,
+              }}
+              width="100%"
             >
               {/* SEARCH MENU */}
 
-              <Stack direction="row" spacing={2}>
-                {isHaveSearch && (
-                  <SearchToolbar
-                    value={searchKeyword}
-                    t={t}
-                    onSearch={onSearch}
-                    onKeyDown={handleKeyDown}
-                    onNavigatePage={onNavigatePage}
-                    isOperatorSetting={isOperatorSetting}
-                    isBlacklistPage={isBlacklistPage}
-                  />
-                )}
-                {isHaveHeaderTitle && (
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: '',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {titleHeader}
-                  </Typography>
-                )}
-              </Stack>
-
-              <Stack direction="row" spacing={0.5} alignItems="center" flexWrap={'wrap'} gap={0}>
-                {/* PRINT */}
-                {isHavePrint && onPrint && (
-                  <Button
-                    size="medium"
-                    variant="contained"
-                    startIcon={<IconPrinter size={16} />}
-                    color="primary"
-                    sx={{ height: 36 }}
-                    onClick={onPrint}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Print
-                    </Typography>
-                  </Button>
-                )}
-
-                {/* EXPORT PDF */}
-                {isHaveExportPdf && onExportPdf && (
-                  <Button
-                    size="medium"
-                    variant="contained"
-                    startIcon={<IconFileTypePdf size={16} />}
-                    color="error"
-                    sx={{ height: 36 }}
-                    onClick={onExportPdf}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export PDF
-                    </Typography>
-                  </Button>
-                )}
-
-                {/* EXPORT CSV */}
-                {isHaveExportCsv && onExportCsv && (
-                  <Button
-                    size="medium"
-                    variant="contained"
-                    startIcon={<IconFileSpreadsheet size={16} />}
-                    color="success"
-                    sx={{ height: 36 }}
-                    onClick={onExportCsv}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export CSV
-                    </Typography>
-                  </Button>
-                )}
-
-                {/* EXPORT EXCEL */}
-                {isHaveExportExcel && onExportExcel && (
-                  <Button
-                    size="medium"
-                    variant="contained"
-                    startIcon={<IconFileExport size={16} />}
-                    color="secondary"
-                    sx={{ height: 36 }}
-                    onClick={onExportExcel}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export Excel
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveImportExcel && onImportExcel && (
-                  <>
-                    <input
-                      type="file"
-                      accept=".xlsx, .xls, .csv"
-                      id="upload-excel"
-                      style={{ display: 'none' }}
-                      onChange={onImportExcel}
+              <Box sx={{ display: 'flex', flex: 1, minWidth: 0 }}>
+                <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+                  {isHaveSearch && (
+                    <SearchToolbar
+                      value={searchKeyword}
+                      t={t}
+                      onSearch={onSearch}
+                      onKeyDown={handleKeyDown}
+                      onNavigatePage={onNavigatePage}
+                      isOperatorSetting={isOperatorSetting}
+                      isBlacklistPage={isBlacklistPage}
                     />
-                    <label htmlFor="upload-excel">
-                      <Button
-                        component="span"
-                        size="medium"
-                        variant="contained"
-                        startIcon={<InsertDriveFile sx={{ color: 'white' }} />}
-                        color="success"
-                        sx={{ height: 36 }}
-                      >
-                        <Typography variant="caption" fontSize={'0.7rem'}>
-                          Import XLS
-                        </Typography>
-                      </Button>
-                    </label>
-                  </>
-                )}
-
-                {isHaveExportXlf && (
-                  <Button
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<AddCircle />}
-                    color="secondary"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export xls
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilterMore && (
-                  <Button
-                    onClick={() => setShowDrawerFilterMore(true)}
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<IconAdjustmentsHorizontal />}
-                    color="info"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Filter more
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilterDuration && (
-                  <Button
-                    onClick={() => setShowDrawer(true)}
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<CalendarMonth />}
-                    color="info"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      By duration
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilter && columnss.length > 0 && (
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <Select
-                      displayEmpty
-                      value={selectedColumn}
-                      onChange={(e) => handleColumnChange(e.target.value)}
+                  )}
+                  {isHaveHeaderTitle && (
+                    <Typography
+                      variant="h6"
                       sx={{
-                        height: 36,
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '0.7rem',
-                      }}
-                      MenuProps={{
-                        PaperProps: {
-                          sx: { fontSize: '0.7rem' },
-                        },
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        color: '',
+                        textTransform: 'capitalize',
                       }}
                     >
-                      <MenuItem value="">
-                        <Typography fontSize={'0.7rem'} variant="caption">
-                          Sort by column
-                        </Typography>
-                      </MenuItem>
-                      {columnss.map((col) => (
-                        <MenuItem key={col} value={col}>
+                      {titleHeader}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  flexWrap: 'wrap',
+                  justifyContent: {
+                    xs: 'flex-start',
+                    md: 'flex-end',
+                  },
+                }}
+              >
+                <Stack direction="row" spacing={0.5} alignItems="center" flexWrap={'wrap'} gap={0}>
+                  {/* PRINT */}
+                  {isHavePrint && onPrint && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconPrinter size={16} />}
+                      color="primary"
+                      sx={{ height: 36 }}
+                      onClick={onPrint}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Print
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT PDF */}
+                  {isHaveExportPdf && onExportPdf && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileTypePdf size={16} />}
+                      color="error"
+                      sx={{ height: 36 }}
+                      onClick={onExportPdf}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export PDF
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT CSV */}
+                  {isHaveExportCsv && onExportCsv && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileSpreadsheet size={16} />}
+                      color="success"
+                      sx={{ height: 36 }}
+                      onClick={onExportCsv}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export CSV
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT EXCEL */}
+                  {isHaveExportExcel && onExportExcel && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileExport size={16} />}
+                      color="secondary"
+                      sx={{ height: 36 }}
+                      onClick={onExportExcel}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export Excel
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveImportExcel && onImportExcel && (
+                    <>
+                      <input
+                        type="file"
+                        accept=".xlsx, .xls, .csv"
+                        id="upload-excel"
+                        style={{ display: 'none' }}
+                        onChange={onImportExcel}
+                      />
+                      <label htmlFor="upload-excel">
+                        <Button
+                          component="span"
+                          size="medium"
+                          variant="contained"
+                          startIcon={<InsertDriveFile sx={{ color: 'white' }} />}
+                          color="success"
+                          sx={{ height: 36 }}
+                        >
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Import XLS
+                          </Typography>
+                        </Button>
+                      </label>
+                    </>
+                  )}
+
+                  {isHaveExportXlf && (
+                    <Button
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<AddCircle />}
+                      color="secondary"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export xls
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilterMore && (
+                    <Button
+                      onClick={() => setShowDrawerFilterMore(true)}
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<IconAdjustmentsHorizontal />}
+                      color="info"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Filter more
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilterDuration && (
+                    <Button
+                      onClick={() => setShowDrawer(true)}
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<CalendarMonth />}
+                      color="info"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        By duration
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilter && columnss.length > 0 && (
+                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                      <Select
+                        displayEmpty
+                        value={selectedColumn}
+                        onChange={(e) => handleColumnChange(e.target.value)}
+                        sx={{
+                          height: 36,
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '0.7rem',
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { fontSize: '0.7rem' },
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
                           <Typography fontSize={'0.7rem'} variant="caption">
-                            {toTitleCase(col)}
+                            Sort by column
                           </Typography>
                         </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
+                        {columnss.map((col) => (
+                          <MenuItem key={col} value={col}>
+                            <Typography fontSize={'0.7rem'} variant="caption">
+                              {toTitleCase(col)}
+                            </Typography>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
 
-                {isHaveConnection && (
-                  <Tooltip title="Check Connection">
-                    <Button
-                      startIcon={<IconLink />}
-                      variant="contained"
-                      onClick={onCheckConnection}
-                    >
-                      Check Connection
-                    </Button>
-                  </Tooltip>
-                )}
+                  {isHaveConnection && (
+                    <Tooltip title="Check Connection">
+                      <Button
+                        startIcon={<IconLink />}
+                        variant="contained"
+                        onClick={onCheckConnection}
+                      >
+                        Check Connection
+                      </Button>
+                    </Tooltip>
+                  )}
 
-                {/* {isHaveAssign && (
+                  {/* {isHaveAssign && (
                   <Tooltip title="Assign Employee">
                     <Button
                       onClick={() => onAssign?.(true)}
@@ -1122,19 +1147,20 @@ function DynamicTableBase<
                   </Tooltip>
                 )} */}
 
-                {isHaveAddData && (
-                  <Tooltip title="Add Data">
-                    <Fab
-                      size="small"
-                      color="primary"
-                      sx={{ height: 36, width: 40 }}
-                      onClick={handleAddData}
-                    >
-                      <IconPlus width={16} height={16} />
-                    </Fab>
-                  </Tooltip>
-                )}
-              </Stack>
+                  {isHaveAddData && (
+                    <Tooltip title="Add Data">
+                      <Fab
+                        size="small"
+                        color="primary"
+                        sx={{ height: 36, width: 40 }}
+                        onClick={handleAddData}
+                      >
+                        <IconPlus width={16} height={16} />
+                      </Fab>
+                    </Tooltip>
+                  )}
+                </Stack>
+              </Box>
             </Grid2>
             {checkedIds.length > 0 && (
               <Grid2
