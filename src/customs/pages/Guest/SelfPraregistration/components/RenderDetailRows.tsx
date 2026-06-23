@@ -1961,8 +1961,9 @@ const RenderDetailRows = ({
                                     }}
                                     style={{
                                       width: '100%',
-                                      height: '200px',
                                       borderRadius: 8,
+                                      height: '200px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -2025,6 +2026,7 @@ const RenderDetailRows = ({
                                     style={{
                                       width: '100%',
                                       height: '200px',
+                                      objectFit: 'cover',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',
                                     }}
