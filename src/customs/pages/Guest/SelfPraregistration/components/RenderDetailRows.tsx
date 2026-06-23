@@ -1516,7 +1516,7 @@ const RenderDetailRows = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 350,
+                                    width: lg ? 300 : 220,
                                     height: 200,
                                     objectFit: 'cover',
                                     borderRadius: 8,
@@ -1818,7 +1818,7 @@ const RenderDetailRows = ({
                           </Typography>
 
                           <Box
-                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
@@ -1881,12 +1881,10 @@ const RenderDetailRows = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
-                                      width: 350,
+                                      width: lg ? 300 : 220,
                                       height: 200,
-                                      borderRadius: 12,
                                       objectFit: 'cover',
-                                      cursor: 'pointer',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                      borderRadius: 8,
                                     }}
                                   />
                                   <Button
@@ -1991,34 +1989,6 @@ const RenderDetailRows = ({
                               </Grid>
 
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                {/* {screenshot ? (
-                                  <img
-                                    src={screenshot}
-                                    alt="Captured"
-                                    style={{
-                                      width: '100%',
-                                      borderRadius: 8,
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-                                ) : (
-                                  <Box
-                                    sx={{
-                                      width: '100%',
-                                      height: '100%',
-                                      border: '2px dashed #ccc',
-                                      borderRadius: 8,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      minHeight: 240,
-                                    }}
-                                  >
-                                    <Typography color="text.secondary">
-                                      No Photos Have Been Taken Yet
-                                    </Typography>
-                                  </Box>
-                                )} */}
                                 {previews[key] ? (
                                   <img
                                     src={previews[key] as string}
