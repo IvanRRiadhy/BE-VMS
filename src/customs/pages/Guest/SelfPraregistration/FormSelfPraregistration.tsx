@@ -533,7 +533,7 @@ const FormSelfPraregistration = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
+        // console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
         setLoading(false);
@@ -715,6 +715,25 @@ const FormSelfPraregistration = ({
 
           validateField(item, key, errors);
         });
+        // details.forEach((item: any, fIdx: number) => {
+        //   const remark = (item.remarks || '').toLowerCase();
+
+        //   const forceRequired =
+        //     (remark === 'host' && !invitation?.host) ||
+        //     (remark === 'site_place' && !invitation?.site_id) ||
+        //     (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+        //     (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+        //   if (!item?.mandatory && !forceRequired) return;
+
+        //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+        //   if (!isVisible) return;
+
+        //   const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+
+        //   validateField(item, key, errors);
+        // });
       });
     } else {
       const section = sectionsData[activeStep - 1];
@@ -722,21 +741,46 @@ const FormSelfPraregistration = ({
 
       const visibilityMap: any = getVisibilityMap(details);
 
-      details.forEach((item: any, index: number) => {
-        if (!item?.mandatory) return;
+      // details.forEach((item: any, index: number) => {
+      //   if (!item?.mandatory) return;
 
+      //   const remark = (item.remarks || '').toLowerCase();
+      //     const forceRequired =
+      //       (remark === 'host' && !invitation?.host) ||
+      //       (remark === 'site_place' && !invitation?.site_id) ||
+      //       (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+      //       (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+      //     if (!item?.mandatory && !forceRequired) return;
+      //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+      //   if (!isVisible) return;
+
+      //   // const key = `${activeStep - 1}:${index}`;
+      //   const key = `${activeStep - 1}:${item.id}`;
+
+      //   validateField(item, key, errors);
+      // });
+      details.forEach((item: any, index: number) => {
         const remark = (item.remarks || '').toLowerCase();
+
+        const forceRequired =
+          (remark === 'host' && !invitation?.host) ||
+          (remark === 'site_place' && !invitation?.site_id) ||
+          (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+          (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+        if (!item?.mandatory && !forceRequired) return;
+
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
         if (!isVisible) return;
 
-        // const key = `${activeStep - 1}:${index}`;
         const key = `${activeStep - 1}:${item.id}`;
 
         validateField(item, key, errors);
       });
     }
-
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -1993,7 +2037,7 @@ const FormSelfPraregistration = ({
       );
       const sections = res?.collection?.section_page_visitor_types ?? [];
       const roles = res?.collection?.visitor_roles ?? [];
-      console.log('sections', roles);
+      // console.log('sections', roles);
 
       setVisitorRoles(roles);
       const injected = injectInvitationData(sections, invitation);
@@ -2406,37 +2450,6 @@ const FormSelfPraregistration = ({
                                     </AccordionSummary>
 
                                     <AccordionDetails>
-                                      <Box sx={{ width: '100%', mb: 2 }}>
-                                        {/* <CustomFormLabel>Role (Opsional)</CustomFormLabel> */}
-
-                                        {/* <CustomTextField
-                                          select
-                                          size="small"
-                                          fullWidth
-                                          value={dataVisitor[gIdx]?.type || ''}
-                                          onChange={(e) => {
-                                            const selectedRole = e.target.value;
-
-                                            setDataVisitor((prev: any[]) => {
-                                              const updated = [...prev];
-                                              updated[gIdx] = {
-                                                ...updated[gIdx],
-                                                type: selectedRole,
-                                              };
-
-                                              return updated;
-                                            });
-                                          }}
-                                        >
-                                          <MenuItem value="">Select Role</MenuItem>
-
-                                          {visitorRoles.map((role: any) => (
-                                            <MenuItem key={role.id} value={role.role}>
-                                              {role.role}
-                                            </MenuItem>
-                                          ))}
-                                        </CustomTextField> */}
-                                      </Box>
                                       {page.form?.map((field: any, fIdx: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -2540,35 +2553,6 @@ const FormSelfPraregistration = ({
 
                                   return (
                                     <TableRow key={gIdx}>
-                                      {/* <TableCell sx={{ minWidth: 200 }}>
-                                        <CustomTextField
-                                          select
-                                          size="small"
-                                          fullWidth
-                                          value={dataVisitor[gIdx]?.type || ''}
-                                          onChange={(e) => {
-                                            const selectedRole = e.target.value;
-
-                                            setDataVisitor((prev: any[]) => {
-                                              const updated = [...prev];
-                                              updated[gIdx] = {
-                                                ...updated[gIdx],
-                                                type: selectedRole,
-                                              };
-
-                                              return updated;
-                                            });
-                                          }}
-                                        >
-                                          <MenuItem value="">Select Role</MenuItem>
-
-                                          {visitorRoles.map((role: any) => (
-                                            <MenuItem key={role.id} value={role.role}>
-                                              {role.role}
-                                            </MenuItem>
-                                          ))}
-                                        </CustomTextField>
-                                      </TableCell> */}
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -3061,7 +3045,8 @@ const FormSelfPraregistration = ({
       setPreviewOpen(false);
       resetSingleFormState();
       navigate('/invitation-share/success', { replace: true });
-    } catch (err) {
+    } catch (err: any) {
+      showSwal('error', err?.response.data.message ?? 'Failed to create visitor.');
       setLoading(false);
     }
   };

@@ -775,6 +775,7 @@ const OperatorView = () => {
 
     try {
       setLoadingAccess(true);
+      await fetchAvailableCards();
       setSelectedCards([]);
 
       const visitor = relatedVisitors.find(

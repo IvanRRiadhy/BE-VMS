@@ -127,7 +127,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
   const handleCreateLink = (sendEmail: boolean) => {
     try {
       const payload = buildPayload();
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       if (sendEmail) {
         onSendEmail(payload);

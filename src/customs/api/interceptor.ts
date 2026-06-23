@@ -105,8 +105,6 @@ const errorInterceptor = (error: any) => {
   return Promise.reject(error);
 };
 
-// Pasang interceptor ke kedua instance
-// axiosInstance.interceptors.response.use(requestInterceptor, errorInterceptor);
 axiosInstance.interceptors.response.use(responseInterceptor, errorInterceptor);
 axiosInstance2.interceptors.response.use(responseInterceptor, errorInterceptor);
 // axiosInstance2.interceptors.response.use(requestInterceptor, errorInterceptor);

@@ -3,7 +3,7 @@ import { Box, Typography, Divider, IconButton, Button } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import Webcam from 'react-webcam';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import { IconCamera, IconDeviceFloppy, IconTrash, IconX } from '@tabler/icons-react';
+import { IconCamera, IconDeviceFloppy, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
 import Dialog from '@mui/material/Dialog';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
@@ -20,6 +20,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
   const [removing, setRemoving] = useState(false);
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
   const clearLocal = () => {
     setScreenshot(null);
@@ -94,7 +95,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
           gap: 2,
         }}
       >
-        <Button size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
+        <Button size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />} fullWidth>
           Camera
         </Button>
         {previewUrl && (
@@ -105,6 +106,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
             onClick={handleRemove}
             startIcon={<IconTrash />}
             disabled={removing}
+            fullWidth
           >
             {removing ? 'Removing...' : 'Remove'}
           </Button>
@@ -135,15 +137,50 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
             <IconX />
           </IconButton>
 
+          <Divider sx={{ mb: 2 }} />
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <Webcam
+              {/* <Webcam
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
                 videoConstraints={{ facingMode: 'environment' }}
                 style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-              />
+              /> */}
+              <Box sx={{ position: 'relative' }}>
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={{
+                    facingMode,
+                  }}
+                  style={{
+                    width: '100%',
+                    borderRadius: 8,
+                    border: '2px solid #ccc',
+                  }}
+                />
+
+                <IconButton
+                  onClick={() =>
+                    setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                  }
+                  sx={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    bgcolor: 'rgba(0,0,0,0.5)',
+                    color: '#fff',
+                    '&:hover': {
+                      bgcolor: 'rgba(0,0,0,0.7)',
+                    },
+                  }}
+                >
+                  <IconRefresh />
+                </IconButton>
+              </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               {screenshot ? (

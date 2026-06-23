@@ -41,7 +41,6 @@ import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
-import { set } from 'lodash';
 
 type Group = {
   id: string;
@@ -219,7 +218,7 @@ const Approval = () => {
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const handleApproveMeetingHost = async (id: string) => {
-    console.log('id', id);
+    // console.log('id', id);
     try {
       setLoading(true);
 
@@ -268,9 +267,9 @@ const Approval = () => {
 
   const visitorTableData = groupVisitors.map((item: any) => ({
     id: item.id,
+    name: item.visitor_name,
     agenda: item.agenda,
     site_name: item.site_place_name,
-    name: item.visitor_name,
     organization_name: item.visitor_organization_name,
     identity_id: item.visitor_identity_id,
     visitor_phone: item.visitor_phone,
@@ -280,6 +279,11 @@ const Approval = () => {
   }));
 
   const [triggerCheckAll, setTriggerCheckAll] = useState(false);
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setTriggerCheckAll(false);
+  };
 
   return (
     <>
@@ -674,7 +678,7 @@ const Approval = () => {
 
       <VisitorApprovalDialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={handleCloseDialog}
         groupName={groupHeader?.group_name}
         loading={groupDetailLoading}
         visitorTableData={visitorTableData ?? []}

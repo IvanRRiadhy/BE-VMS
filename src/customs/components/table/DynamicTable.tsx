@@ -548,18 +548,6 @@ function DynamicTableBase<
   const togglePassword = (id: string | number) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const statusBgMap: Record<string, string> = {
-    Checkin: '#21c45d', // hijau
-    Checkout: '#F44336', // merah
-    Block: '#000000', // hitam
-    Deny: '#8B0000', // merah tua
-    Approve: '#21c45d', // hijau
-    Pracheckin: '#21c45d', // hijau
-  };
-
-  const defaultBg = '#9E9E9E'; // abu-abu
-
   const tooltipLabels: Record<string, { true: string; false: string }> = {
     is_primary: {
       true: 'Primary',

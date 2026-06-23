@@ -41,7 +41,7 @@ import Webcam from 'react-webcam';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import { IconCamera, IconDeviceFloppy, IconTrash, IconX } from '@tabler/icons-react';
+import { IconCamera, IconDeviceFloppy, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
@@ -82,6 +82,7 @@ const RenderDetailRows = ({
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [siteTree, setSiteTree] = useState<any[]>([]);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
   useEffect(() => {
     if (invitation?.site?.id && selectedSiteParentIds.length === 0) {
@@ -677,12 +678,12 @@ const RenderDetailRows = ({
                                 [index]: newInputValue,
                               }));
                             }}
-                            filterOptions={(opts, state) => {
-                              if (state.inputValue.length < 3) return [];
-                              return opts.filter((opt) =>
-                                opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                              );
-                            }}
+                            // filterOptions={(opts, state) => {
+                            //   if (state.inputValue.length < 3) return [];
+                            //   return opts.filter((opt) =>
+                            //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                            //   );
+                            // }}
                             noOptionsText={
                               (inputValues[index] || '').length < 3
                                 ? 'Enter at least 3 characters to search'
@@ -710,7 +711,7 @@ const RenderDetailRows = ({
                             renderInput={(params) => (
                               <CustomTextField
                                 {...params}
-                                placeholder="Enter at least 3 characters to search"
+                                placeholder="Select Site or type at least 3 characters to search"
                                 fullWidth
                                 error={!!errorMessage}
                                 helperText={errorMessage}
@@ -732,12 +733,12 @@ const RenderDetailRows = ({
                         getOptionLabel={(option) => option.name}
                         value={options.find((opt) => opt.value === item.answer_text) || null}
                         getOptionDisabled={(option) => option.disabled || false}
-                        filterOptions={(opts, state) => {
-                          if (!state.inputValue || state.inputValue.length < 3) return [];
-                          return opts.filter((opt) =>
-                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                          );
-                        }}
+                        // filterOptions={(opts, state) => {
+                        //   if (!state.inputValue || state.inputValue.length < 3) return [];
+                        //   return opts.filter((opt) =>
+                        //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                        //   );
+                        // }}
                         noOptionsText="Enter at least 3 characters to search"
                         onChange={(_, newValue) => {
                           const selectedValue = newValue ? newValue.value : '';
@@ -748,7 +749,9 @@ const RenderDetailRows = ({
                           <CustomTextField
                             {...params}
                             placeholder={
-                              !item.answer_text ? 'Enter at least 3 characters to search' : ''
+                              !item.answer_text
+                                ? 'Select  or type at least 3 characters to search'
+                                : ''
                             }
                             fullWidth
                             error={!!errorMessage}
@@ -904,6 +907,9 @@ const RenderDetailRows = ({
                             seconds: renderTimeViewClock,
                           }}
                           slotProps={{
+                            actionBar: {
+                              actions: ['clear', 'accept'],
+                            },
                             textField: {
                               fullWidth: true,
                               error: !!errorMessage,
@@ -914,6 +920,9 @@ const RenderDetailRows = ({
                                 },
                                 '& .MuiInputBase-input.Mui-disabled': {
                                   WebkitTextFillColor: '#909294ff',
+                                },
+                                '& .MuiFormHelperText-root': {
+                                  marginLeft: 0,
                                 },
                               },
                             },
@@ -1059,7 +1068,7 @@ const RenderDetailRows = ({
                             </Box>
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                <Webcam
+                                {/* <Webcam
                                   audio={false}
                                   ref={webcamRef}
                                   screenshotFormat="image/jpeg"
@@ -1069,7 +1078,42 @@ const RenderDetailRows = ({
                                     borderRadius: 8,
                                     border: '2px solid #ccc',
                                   }}
-                                />
+                                /> */}
+                                <Box sx={{ position: 'relative' }}>
+                                  <Webcam
+                                    audio={false}
+                                    ref={webcamRef}
+                                    screenshotFormat="image/jpeg"
+                                    videoConstraints={{
+                                      facingMode,
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      borderRadius: 8,
+                                      border: '2px solid #ccc',
+                                    }}
+                                  />
+
+                                  <IconButton
+                                    onClick={() =>
+                                      setFacingMode((prev) =>
+                                        prev === 'environment' ? 'user' : 'environment',
+                                      )
+                                    }
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 10,
+                                      right: 10,
+                                      bgcolor: 'rgba(0,0,0,0.5)',
+                                      color: '#fff',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(0,0,0,0.7)',
+                                      },
+                                    }}
+                                  >
+                                    <IconRefresh />
+                                  </IconButton>
+                                </Box>
                               </Grid>
 
                               <Grid size={{ xs: 12, sm: 6 }}>

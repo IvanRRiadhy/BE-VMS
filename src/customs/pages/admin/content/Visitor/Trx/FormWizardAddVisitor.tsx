@@ -106,6 +106,7 @@ import { IconPencil } from '@tabler/icons-react';
 import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
 import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
+import { IconRefresh } from '@tabler/icons-react';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -194,6 +195,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1164,7 +1166,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     const fresh = deepClone(
                                       seedDataVisitorFromSections(sectionsData),
                                     );
-                  
+
                                     setDataVisitor(fresh);
                                   }
                                   setActiveStep(1);
@@ -1767,12 +1769,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => {
-
-            })
-            .catch((err) => {
-
-            }),
+            .then(() => {})
+            .catch((err) => {}),
         ),
       );
 
@@ -2249,6 +2247,91 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 10: // Camera
+          if ((field.remarks || '').toLowerCase() === 'selfie_image') {
+            // const key = opts?.uniqueKey ?? String(index);
+            const key = `camera_${opts?.uniqueKey ?? index}`;
+
+            return (
+              <Box
+                display="flex"
+                flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
+                alignItems={{ xs: 'stretch', md: 'center' }}
+                // justifyContent="space-between"
+                gap={1.5}
+                width="100%"
+                sx={{ maxWidth: 400 }}
+              >
+                <TextField
+                  select
+                  size="small"
+                  value={uploadMethods[key] || 'file'}
+                  onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+                  fullWidth
+                  sx={{ width: { xs: '100%', md: '200px' } }}
+                >
+                  <MenuItem value="file">Choose File</MenuItem>
+                  <MenuItem value="camera">Take Photo</MenuItem>
+                </TextField>
+
+                {(uploadMethods[key] || 'file') === 'camera' ? (
+                  <CameraUpload
+                    value={field.answer_file as string | undefined}
+                    onChange={(url) => {
+                      onChange(index, 'answer_file', url);
+                      if (url) clearFieldError(errorKey);
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+                    <label htmlFor={key}>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1.5,
+                          borderRadius: 2,
+                          p: 0.5,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
+                          cursor: 'pointer',
+                          width: '100%',
+                        }}
+                      >
+                        <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                        <Typography variant="subtitle1">Upload File</Typography>
+                      </Box>
+                    </label>
+
+                    <input
+                      id={key}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) =>
+                        handleFileChangeForField(
+                          e as React.ChangeEvent<HTMLInputElement>,
+                          (url) => {
+                            onChange(index, 'answer_file', url);
+                            if (url) clearFieldError(errorKey);
+                          },
+                          key,
+                        )
+                      }
+                    />
+                  </Box>
+                )}
+
+                {errorMessage && (
+                  <Typography variant="caption" color="error">
+                    {errorMessage}
+                  </Typography>
+                )}
+              </Box>
+            );
+          }
+
           return (
             <>
               <CameraUpload
@@ -2265,6 +2348,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               )}
             </>
           );
+          // return (
+          //   <>
+          //     <CameraUpload
+          //       value={field.answer_file as string | undefined}
+          //       onChange={(url) => {
+          //         onChange(index, 'answer_file', url);
+          //         if (url) clearFieldError(errorKey);
+          //       }}
+          //     />
+          //     {errorMessage && (
+          //       <Typography variant="caption" color="error">
+          //         {errorMessage}
+          //       </Typography>
+          //     )}
+          //   </>
+          // );
 
         case 11: {
           const key = opts?.uniqueKey ?? String(index);
@@ -2628,6 +2727,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
 
       setAnswerFile('');
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -2657,6 +2757,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
+
+    setScreenshot(imageSrc);
 
     const blob = await fetch(imageSrc).then((res) => res.blob());
     // compress
@@ -3478,18 +3580,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         inputValue={inputValues[originalIndex] || ''}
-                        onInputChange={(_, newInputValue,reason) => {
-                          
+                        onInputChange={(_, newInputValue, reason) => {
                           setInputValues((prev: any) => ({
                             ...prev,
                             [originalIndex]: newInputValue,
                           }));
 
-                           if (reason === 'input') {
-                             if (newInputValue.length >= 3 || newInputValue.length === 0) {
-                               search?.(newInputValue);
-                             }
-                           }
+                          if (reason === 'input') {
+                            if (newInputValue.length >= 3 || newInputValue.length === 0) {
+                              search?.(newInputValue);
+                            }
+                          }
                         }}
                         filterOptions={(opts, state) => {
                           if (!state.inputValue) {
@@ -4028,7 +4129,286 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   );
                 }
 
-                case 10: // TakePicture
+                case 10: {
+                  // TakePicture
+                  if (remark == 'selfie_image') {
+                    return (
+                      <Box>
+                        <Box
+                          sx={{
+                            border: '2px dashed #90caf9',
+                            borderRadius: 2,
+                            padding: 4,
+                            textAlign: 'center',
+                            backgroundColor: '#f5faff',
+                            cursor: 'pointer',
+                            width: '100%',
+                            pointerEvents: 'auto',
+                            opacity: 1,
+                          }}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                          <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
+                            Upload File
+                          </Typography>
+
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Typography variant="body1" color="textSecondary">
+                              Supports: JPG, PNG, JPEG, Up to
+                              <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                            </Typography>
+
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              color="primary"
+                              sx={{
+                                fontWeight: 600,
+                                ml: 1,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenCamera(true);
+                              }}
+                            >
+                              <IconCamera /> Use Camera
+                            </Typography>
+                          </Box>
+
+                          <input
+                            id={`file-${key}`}
+                            type="file"
+                            accept="*"
+                            hidden
+                            ref={fileInputRef}
+                            onChange={(e) =>
+                              handleFileChangeForField(
+                                e as React.ChangeEvent<HTMLInputElement>,
+                                (url) => {
+                                  onChange(originalIndex, 'answer_file', url);
+                                  if (url) clearFieldError(key);
+                                },
+                                key,
+                              )
+                            }
+                          />
+                          {(previewSrc || shownName) && (
+                            <Box
+                              mt={2}
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              {previewSrc ? (
+                                <>
+                                  <img
+                                    src={previewSrc}
+                                    alt="preview"
+                                    style={{
+                                      width: 350,
+                                      height: 200,
+                                      borderRadius: 12,
+                                      objectFit: 'cover',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                    }}
+                                  />
+                                  <MuiButton
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ mt: 2, minWidth: 120 }}
+                                    onClick={(e: any) => {
+                                      e.stopPropagation();
+                                      handleRemoveFileForField(
+                                        (item as any).answer_file,
+                                        (url) => onChange(originalIndex, 'answer_file', url),
+                                        key,
+                                      );
+                                    }}
+                                    startIcon={<IconTrash />}
+                                  >
+                                    Remove
+                                  </MuiButton>
+                                </>
+                              ) : (
+                                <Typography variant="caption" noWrap>
+                                  {shownName}
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+                        </Box>
+
+                        {errorMessage && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            sx={{ mt: 1, display: 'block' }}
+                          >
+                            {errorMessage}
+                          </Typography>
+                        )}
+
+                        <Dialog
+                          open={openCamera}
+                          onClose={() => setOpenCamera(false)}
+                          maxWidth="md"
+                          fullWidth
+                        >
+                          <Box sx={{ p: 2 }}>
+                            <Box
+                              display={'flex'}
+                              justifyContent={'space-between'}
+                              alignItems={'center'}
+                              mb={1}
+                            >
+                              <Typography variant="h6" mb={0}>
+                                Take Photo From Camera
+                              </Typography>
+                              <IconButton onClick={() => setOpenCamera(false)}>
+                                <IconX />
+                              </IconButton>
+                            </Box>
+
+                            <Grid container spacing={2}>
+                              <Grid size={{ xs: 12, sm: 6 }}>
+                                {/* <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                videoConstraints={{ facingMode: 'environment' }}
+                                style={{
+                                  width: '100%',
+                                  borderRadius: 8,
+                                  border: '2px solid #ccc',
+                                }}
+                              /> */}
+                                <Box sx={{ position: 'relative' }}>
+                                  <Webcam
+                                    audio={false}
+                                    ref={webcamRef}
+                                    screenshotFormat="image/jpeg"
+                                    videoConstraints={{
+                                      facingMode,
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      borderRadius: 8,
+                                      border: '2px solid #ccc',
+                                    }}
+                                  />
+
+                                  <IconButton
+                                    onClick={() =>
+                                      setFacingMode((prev) =>
+                                        prev === 'environment' ? 'user' : 'environment',
+                                      )
+                                    }
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 10,
+                                      right: 10,
+                                      bgcolor: 'rgba(0,0,0,0.5)',
+                                      color: '#fff',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(0,0,0,0.7)',
+                                      },
+                                    }}
+                                  >
+                                    <IconRefresh />
+                                  </IconButton>
+                                </Box>
+                              </Grid>
+
+                              <Grid size={{ xs: 12, sm: 6 }}>
+                                {screenshot ? (
+                                  <img
+                                    src={screenshot}
+                                    alt="Captured"
+                                    style={{
+                                      width: '100%',
+                                      borderRadius: 8,
+                                      border: '2px solid #ccc',
+                                    }}
+                                  />
+                                ) : (
+                                  <Box
+                                    sx={{
+                                      width: '100%',
+                                      height: '100%',
+                                      border: '2px dashed #ccc',
+                                      borderRadius: 8,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      minHeight: 240,
+                                    }}
+                                  >
+                                    <Typography color="text.secondary">
+                                      No Photos Have Been Taken Yet
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Grid>
+                            </Grid>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                              <Button
+                                onClick={() =>
+                                  handleRemoveFileForField(
+                                    (item as any).answer_file,
+                                    (url) => onChange(originalIndex, 'answer_file', url),
+                                    key,
+                                  )
+                                }
+                                color="error"
+                                sx={{ mr: 1 }}
+                                startIcon={<IconTrash />}
+                              >
+                                Clear Foto
+                              </Button>
+                              <Button
+                                variant="contained"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCaptureForField(
+                                    (url) => onChange(originalIndex, 'answer_file', url),
+                                    key,
+                                  );
+                                }}
+                                startIcon={<IconCamera />}
+                              >
+                                Take Foto
+                              </Button>
+                              <Button
+                                startIcon={<IconDeviceFloppy />}
+                                onClick={() => {
+                                  setOpenCamera(false);
+                                  setScreenshot(null);
+                                }}
+                                sx={{ ml: 1 }}
+                              >
+                                Submit
+                              </Button>
+                            </Box>
+                          </Box>
+                        </Dialog>
+                      </Box>
+                    );
+                  }
+
                   return (
                     <Box>
                       <Box
@@ -4161,19 +4541,44 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               <IconX size={22} />
                             </IconButton>
                           </Box>
+                          <Divider sx={{ mb: 2 }} />
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
+                              <Box sx={{ position: 'relative' }}>
+                                <Webcam
+                                  audio={false}
+                                  ref={webcamRef}
+                                  screenshotFormat="image/jpeg"
+                                  videoConstraints={{
+                                    facingMode,
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    borderRadius: 8,
+                                    border: '2px solid #ccc',
+                                  }}
+                                />
+
+                                <IconButton
+                                  onClick={() =>
+                                    setFacingMode((prev) =>
+                                      prev === 'environment' ? 'user' : 'environment',
+                                    )
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 10,
+                                    right: 10,
+                                    bgcolor: 'rgba(0,0,0,0.5)',
+                                    color: '#fff',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(0,0,0,0.7)',
+                                    },
+                                  }}
+                                >
+                                  <IconRefresh />
+                                </IconButton>
+                              </Box>
                             </Grid>
 
                             <Grid size={{ xs: 12, sm: 6 }}>
@@ -4210,7 +4615,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                           <Divider sx={{ my: 2 }} />
 
-                          <Box sx={{ textAlign: 'right' }}>
+                          <Box
+                            sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}
+                          >
                             <MuiButton
                               onClick={() =>
                                 handleRemoveFileForField(
@@ -4239,7 +4646,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </MuiButton>
                             <MuiButton
                               startIcon={<IconDeviceFloppy />}
-                              onClick={() => setOpenCamera(false)}
+                              onClick={() => {
+                                setOpenCamera(false);
+                                setScreenshot(null);
+                              }}
                               sx={{ ml: 1 }}
                             >
                               Submit
@@ -4249,6 +4659,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       </Dialog>
                     </Box>
                   );
+                }
 
                 case 11: {
                   // FileUpload
@@ -4377,20 +4788,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         >
                           <Typography variant="body1" color="textSecondary">
                             Supports: JPG, PNG, JPEG, Up to
-                            <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                            <span style={{ fontWeight: '700' }}> 1 Mb | </span>
                           </Typography>
 
                           <Typography
                             variant="h6"
                             component="span"
                             color="primary"
-                            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                            sx={{
+                              fontWeight: 600,
+                              ml: 1,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenCamera(true);
                             }}
                           >
-                            Use Camera
+                            <IconCamera /> Use Camera
                           </Typography>
                         </Box>
 
@@ -4400,13 +4818,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          // onChange={(e) =>
-                          //   handleFileChangeForField(
-                          //     e as React.ChangeEvent<HTMLInputElement>,
-                          //     (url) => onChange(index, 'answer_file', url),
-                          //     key,
-                          //   )
-                          // }
                           onChange={(e) =>
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
@@ -4442,13 +4853,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   size="small"
                                   variant="outlined"
                                   sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
                                       (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
-                                    )
-                                  }
+                                    );
+                                  }}
                                   startIcon={<IconTrash />}
                                 >
                                   Remove
@@ -4496,7 +4908,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
+                              {/* <Webcam
                                 audio={false}
                                 ref={webcamRef}
                                 screenshotFormat="image/jpeg"
@@ -4506,7 +4918,42 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   borderRadius: 8,
                                   border: '2px solid #ccc',
                                 }}
-                              />
+                              /> */}
+                              <Box sx={{ position: 'relative' }}>
+                                <Webcam
+                                  audio={false}
+                                  ref={webcamRef}
+                                  screenshotFormat="image/jpeg"
+                                  videoConstraints={{
+                                    facingMode,
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    borderRadius: 8,
+                                    border: '2px solid #ccc',
+                                  }}
+                                />
+
+                                <IconButton
+                                  onClick={() =>
+                                    setFacingMode((prev) =>
+                                      prev === 'environment' ? 'user' : 'environment',
+                                    )
+                                  }
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 10,
+                                    right: 10,
+                                    bgcolor: 'rgba(0,0,0,0.5)',
+                                    color: '#fff',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(0,0,0,0.7)',
+                                    },
+                                  }}
+                                >
+                                  <IconRefresh />
+                                </IconButton>
+                              </Box>
                             </Grid>
 
                             <Grid size={{ xs: 12, sm: 6 }}>
@@ -4543,7 +4990,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                           <Divider sx={{ my: 2 }} />
 
-                          <Box sx={{ textAlign: 'right' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Button
                               onClick={() =>
                                 handleRemoveFileForField(
@@ -4562,8 +5009,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               variant="contained"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCaptureForField((url) =>
-                                  onChange(originalIndex, 'answer_file', url),
+                                handleCaptureForField(
+                                  (url) => onChange(originalIndex, 'answer_file', url),
+                                  key,
                                 );
                               }}
                               startIcon={<IconCamera />}

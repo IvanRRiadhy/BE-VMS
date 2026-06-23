@@ -41,7 +41,14 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconGenderTransgender, IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
+import {
+  IconGenderTransgender,
+  IconMan,
+  IconRefresh,
+  IconTrash,
+  IconWoman,
+  IconX,
+} from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
@@ -58,6 +65,7 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
 import imageCompression from 'browser-image-compression';
+import { wrap } from 'module';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -84,7 +92,7 @@ const GuestInformationStepper = () => {
     message: '',
     severity: 'success',
   });
-
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [selfRegisterData, setSelfRegisterData] = useState<{
     is_self_registered: boolean;
     filled_by_relationship: string;
@@ -496,9 +504,10 @@ const GuestInformationStepper = () => {
               </IconButton>
             </Box>
 
+            <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
+                {/* <Webcam
                   audio={false}
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
@@ -508,7 +517,40 @@ const GuestInformationStepper = () => {
                     borderRadius: 8,
                     border: '2px solid #ccc',
                   }}
-                />
+                /> */}
+                <Box sx={{ position: 'relative' }}>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={{
+                      facingMode,
+                    }}
+                    style={{
+                      width: '100%',
+                      borderRadius: 8,
+                      border: '2px solid #ccc',
+                    }}
+                  />
+
+                  <IconButton
+                    onClick={() =>
+                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                    }
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.7)',
+                      },
+                    }}
+                  >
+                    <IconRefresh />
+                  </IconButton>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -543,7 +585,7 @@ const GuestInformationStepper = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ textAlign: 'right',display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 color="error"
                 startIcon={<IconTrash />}
@@ -721,23 +763,24 @@ const GuestInformationStepper = () => {
           <Typography variant="h6" sx={{ mt: 1 }}>
             Upload File
           </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
+            <Typography variant="body1" color="textSecondary">
+              Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb | </span>
+            </Typography>
 
-          <Typography variant="caption" color="textSecondary">
-            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
-          </Typography>
-
-          <Typography
-            variant="subtitle1"
-            component="span"
-            color="primary"
-            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenCamera(true);
-            }}
-          >
-            Use Camera
-          </Typography>
+            <Typography
+              variant="subtitle1"
+              component="span"
+              color="primary"
+              sx={{ fontWeight: 600, ml: 1, cursor: 'pointer', display: 'flex', gap: 1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenCamera(true);
+              }}
+            >
+              <IconCamera /> Use Camera
+            </Typography>
+          </Box>
 
           <input
             id={`file-${key}`}
@@ -816,9 +859,11 @@ const GuestInformationStepper = () => {
               </IconButton>
             </Box>
 
+            <Divider sx={{ mb: 2 }} />
+
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
+                {/* <Webcam
                   audio={false}
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
@@ -828,7 +873,40 @@ const GuestInformationStepper = () => {
                     borderRadius: 8,
                     border: '2px solid #ccc',
                   }}
-                />
+                /> */}
+                <Box sx={{ position: 'relative' }}>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={{
+                      facingMode,
+                    }}
+                    style={{
+                      width: '100%',
+                      borderRadius: 8,
+                      border: '2px solid #ccc',
+                    }}
+                  />
+
+                  <IconButton
+                    onClick={() =>
+                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                    }
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.7)',
+                      },
+                    }}
+                  >
+                    <IconRefresh />
+                  </IconButton>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -863,7 +941,15 @@ const GuestInformationStepper = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ textAlign: 'right' }}>
+            <Box
+              sx={{
+                textAlign: 'right',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                // flexWrap: 'wrap',
+                // gap: 1,
+              }}
+            >
               <Button
                 onClick={() =>
                   handleRemoveFileForField(

@@ -696,7 +696,7 @@ const Content = () => {
         permission: permissionName,
       }));
 
-      console.log('Payload Visitor Type Permission:', payload);
+      // console.log('Payload Visitor Type Permission:', payload);
 
       await createPermissionVisitorType(token as string, payload, edittingId);
     } catch (error: any) {

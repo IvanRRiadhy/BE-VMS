@@ -152,7 +152,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
       if (editingId) {
         const payload = UpdateAccessControlRequestSchema.parse({
           ...data,
-          brand_id: null,
+          brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
 
@@ -160,7 +160,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
           ...data,
-          brand_id: null,
+          brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
         await createAccessControl(payload, token);
@@ -171,8 +171,8 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
         editingId ? 'Updated successfully Access Control' : 'Created successfully Access Control',
       );
       onSuccess?.();
-    } catch {
-      showSwal('error', 'Something went wrong');
+    } catch (err: any) {
+      showSwal('error', err?.message ?? err?.response?.data?.message ?? 'Failed to create Access Control.');
     } finally {
       setLoading(false);
     }
