@@ -1223,7 +1223,7 @@ const RenderDetailRows = ({
                                       src={previewSrc}
                                       alt="preview"
                                       style={{
-                                        width: lg ? 300 : 220,
+                                        width: lg ? 350 : 220,
                                         height: 200,
                                         borderRadius: 12,
                                         objectFit: 'cover',
@@ -1304,7 +1304,7 @@ const RenderDetailRows = ({
                                       style={{
                                         width: '100%',
                                         borderRadius: 8,
-                                        height: '200px',
+                                        height: '250px',
                                         objectFit: 'cover',
                                         border: '2px solid #ccc',
                                       }}
@@ -1368,6 +1368,8 @@ const RenderDetailRows = ({
                                       style={{
                                         width: '100%',
                                         borderRadius: 8,
+                                        height: '250px',
+                                        objectFit: 'cover',
                                         border: '2px solid #ccc',
                                       }}
                                     />
@@ -1621,7 +1623,7 @@ const RenderDetailRows = ({
                                     alt="Captured"
                                     style={{
                                       width: '100%',
-                                      height: '200px',
+                                      height: '250px',
                                       objectFit: 'cover',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',
@@ -1883,7 +1885,7 @@ const RenderDetailRows = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
-                                      width: lg ? 300 : 220,
+                                      width: lg ? 350 : 220,
                                       height: 200,
                                       objectFit: 'cover',
                                       borderRadius: 8,
@@ -1962,7 +1964,7 @@ const RenderDetailRows = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
-                                      height: '200px',
+                                      height: '250px',
                                       objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
@@ -1997,7 +1999,7 @@ const RenderDetailRows = ({
                                     alt="Captured"
                                     style={{
                                       width: '100%',
-                                      height: '200px',
+                                      height: '250px',
                                       objectFit: 'cover',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',

@@ -554,8 +554,8 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="Captured"
                     style={{
-                      width: lg ? 300 : 220,
-                      height: 200,
+                      width: lg ? 350 : 220,
+                      height: 250,
                       objectFit: 'cover',
                       borderRadius: 8,
                     }}
@@ -804,7 +804,7 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: lg ? 300 : 220,
+                      width: lg ? 350 : 220,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -874,7 +874,7 @@ const GuestInformationStepper = () => {
                     style={{
                       width: '100%',
                       borderRadius: 8,
-                      height: '200px',
+                      height: '250px',
                       objectFit: 'cover',
                       border: '2px solid #ccc',
                     }}
@@ -906,8 +906,11 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="Captured"
                     style={{
-                      width: lg ? 300 : 220,
-                      height: 200,
+                      // width: lg ? 350 : 220,
+                      width: '100%',
+                      height: '250px',
+                      // height: 200,
+                      // height: '100%',
                       objectFit: 'cover',
                       borderRadius: 8,
                     }}
