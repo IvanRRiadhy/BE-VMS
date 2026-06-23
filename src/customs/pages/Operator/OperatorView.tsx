@@ -472,6 +472,7 @@ const OperatorView = () => {
         if (!isLastVisitor) {
           return;
         }
+        console.log("payload", JSON.stringify(newPayload, null, 2));
 
         await handleSubmitBatchSwipe(newPayload);
 

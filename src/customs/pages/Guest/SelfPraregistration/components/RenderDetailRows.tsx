@@ -55,6 +55,7 @@ dayjs.extend(timezone);
 import 'dayjs/locale/id';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useMediaQuery, useTheme } from '@mui/system';
 
 const RenderDetailRows = ({
   details,
@@ -83,6 +84,8 @@ const RenderDetailRows = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [siteTree, setSiteTree] = useState<any[]>([]);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
 
   useEffect(() => {
     if (invitation?.site?.id && selectedSiteParentIds.length === 0) {
@@ -1159,6 +1162,7 @@ const RenderDetailRows = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                flexWrap: 'wrap',
                               }}
                             >
                               <Typography variant="body1" color="textSecondary">
@@ -1219,7 +1223,7 @@ const RenderDetailRows = ({
                                       src={previewSrc}
                                       alt="preview"
                                       style={{
-                                        width: 350,
+                                        width: lg ? 300 : 220,
                                         height: 200,
                                         borderRadius: 12,
                                         objectFit: 'cover',
@@ -1284,6 +1288,8 @@ const RenderDetailRows = ({
                                   <IconX />
                                 </IconButton>
                               </Box>
+
+                              <Divider sx={{ mb: 2 }} />
 
                               <Grid container spacing={2}>
                                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1567,17 +1573,6 @@ const RenderDetailRows = ({
                             <Divider sx={{ mb: 2 }} />
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                {/* <Webcam
-                                  audio={false}
-                                  ref={webcamRef}
-                                  screenshotFormat="image/jpeg"
-                                  videoConstraints={{ facingMode: 'environment' }}
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                /> */}
                                 <Box sx={{ position: 'relative' }}>
                                   <Webcam
                                     audio={false}
@@ -1589,6 +1584,8 @@ const RenderDetailRows = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
+                                      height: '200px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -1622,6 +1619,8 @@ const RenderDetailRows = ({
                                     alt="Captured"
                                     style={{
                                       width: '100%',
+                                      height: '200px',
+                                      objectFit: 'cover',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',
                                     }}
@@ -1962,6 +1961,7 @@ const RenderDetailRows = ({
                                     }}
                                     style={{
                                       width: '100%',
+                                      height: '200px',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',
                                     }}
@@ -2024,6 +2024,7 @@ const RenderDetailRows = ({
                                     alt="Captured"
                                     style={{
                                       width: '100%',
+                                      height: '200px',
                                       borderRadius: 8,
                                       border: '2px solid #ccc',
                                     }}
@@ -2051,7 +2052,14 @@ const RenderDetailRows = ({
 
                             <Divider sx={{ my: 2 }} />
 
-                            <Box sx={{ textAlign: 'right' }}>
+                            <Box
+                              sx={{
+                                textAlign: 'right',
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: 1,
+                              }}
+                            >
                               <Button
                                 onClick={() =>
                                   handleRemoveFileForField(

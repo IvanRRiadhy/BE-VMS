@@ -195,8 +195,6 @@ useEffect(() => {
   handleChange(currentVisitorIndex, 'value', currentUsed?.card_number ?? '');
 }, [open, currentVisitorIndex, visitors]);
 
-// Optional:
-// Jika dipaksa CardAccess, dropdown tidak boleh diubah.
 const isDocumentTypeLocked = initialValues?.isDocumentTypeLocked === true;
 
   return (

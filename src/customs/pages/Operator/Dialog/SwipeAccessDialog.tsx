@@ -98,7 +98,7 @@ const SwipeAccessDialog = ({
         trx_visitor_id: visitor.id,
       })),
     };
-    console.log('📤 GIVE ACCESS PAYLOAD', payloads);
+    console.log('📤 GIVE ACCESS PAYLOAD', JSON.stringify(payloads, null, 2));
     setLoadingAccess(true);
     try {
       await createMultipleGrantAccess(token as string, payloads);
