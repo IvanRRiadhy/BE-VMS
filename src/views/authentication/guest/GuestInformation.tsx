@@ -65,7 +65,7 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
 import imageCompression from 'browser-image-compression';
-import { wrap } from 'module';
+
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -103,6 +103,8 @@ const GuestInformationStepper = () => {
     email: '',
     phone: '',
   });
+
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
 
   const validateFillerData = () => {
     if (selfRegisterData?.is_self_registered) return true;
@@ -455,7 +457,7 @@ const GuestInformationStepper = () => {
                       src={previewSrc}
                       alt="preview"
                       style={{
-                        width: 350,
+                        width: lg ? 300 : 220,
                         height: 200,
                         objectFit: 'cover',
                         borderRadius: 8,
@@ -509,17 +511,6 @@ const GuestInformationStepper = () => {
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                {/* <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'user' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                /> */}
                 <Box sx={{ position: 'relative' }}>
                   <Webcam
                     audio={false}
@@ -531,6 +522,8 @@ const GuestInformationStepper = () => {
                     style={{
                       width: '100%',
                       borderRadius: 8,
+                      height: '200px',
+                      objectFit: 'cover',
                       border: '2px solid #ccc',
                     }}
                   />
@@ -561,9 +554,10 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="Captured"
                     style={{
-                      width: '100%',
+                      width: lg ? 300 : 220,
+                      height: 200,
+                      objectFit: 'cover',
                       borderRadius: 8,
-                      border: '2px solid #ccc',
                     }}
                   />
                 ) : (
@@ -810,7 +804,7 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: 350,
+                      width: lg ? 300 : 220,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -880,6 +874,8 @@ const GuestInformationStepper = () => {
                     style={{
                       width: '100%',
                       borderRadius: 8,
+                      height: '200px',
+                      objectFit: 'cover',
                       border: '2px solid #ccc',
                     }}
                   />
@@ -910,9 +906,10 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="Captured"
                     style={{
-                      width: '100%',
+                      width: lg ? 300 : 220,
+                      height: 200,
+                      objectFit: 'cover',
                       borderRadius: 8,
-                      border: '2px solid #ccc',
                     }}
                   />
                 ) : (

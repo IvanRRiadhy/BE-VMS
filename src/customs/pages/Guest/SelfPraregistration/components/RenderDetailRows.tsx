@@ -1304,6 +1304,8 @@ const RenderDetailRows = ({
                                       style={{
                                         width: '100%',
                                         borderRadius: 8,
+                                        height: '200px',
+                                        objectFit: 'cover',
                                         border: '2px solid #ccc',
                                       }}
                                     />
