@@ -274,6 +274,7 @@ const Approval = () => {
     identity_id: item.visitor_identity_id,
     visitor_phone: item.visitor_phone,
     email: item.visitor_email,
+    site_place: item.site_place_name,
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));

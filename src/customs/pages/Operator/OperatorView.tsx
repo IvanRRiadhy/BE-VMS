@@ -399,10 +399,10 @@ const OperatorView = () => {
       const currentUsed = (visitor?.card ?? []).find((c: any) => c.current_used === true);
 
       const currentUsedCardNumber = String(currentUsed?.card_number || '').trim();
-      console.log('currentUsedCardNumber', currentUsedCardNumber);
+      // console.log('currentUsedCardNumber', currentUsedCardNumber);
 
       const newCardNumber = selectedCards[visitorIndex];
-      console.log('newCardNumber', newCardNumber);
+      // console.log('newCardNumber', newCardNumber);
 
       if (!newCardNumber) {
         showSwal('error', 'New card not found');
@@ -3219,12 +3219,18 @@ const OperatorView = () => {
         card_number: returnCardNumber.trim(),
         registered_site_id: registerSiteOperator,
       };
+      console.log("return card payload", JSON.stringify(payload, null,2));
 
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
-      // await fetchAvailableCards?.();
+      const invitationId = invitationCode?.[0]?.id;
+      if (invitationId) {
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+      }
+
+      await fetchAvailableCards();
     } catch (error: any) {
       showSwal('error', error.message || 'Failed to return card');
     } finally {

@@ -70,7 +70,7 @@ const VisitorApprovalDialog: React.FC<VisitorApprovalDialogProps> = ({
           data={visitorTableData}
           selectedRows={selectedRows}
           onCheckedChange={setSelectedRows}
-          
+          isHaveDataImage={true}
           setSelectedRows={setSelectedRows as any}
           triggerCheckAll={triggerCheckAll}
           isHaveChecked={true}

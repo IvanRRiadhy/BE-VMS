@@ -107,6 +107,7 @@ type DynamicTableProps<
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
   isHaveDuplicate?: boolean;
+  isHaveDataImage?: boolean;
   isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
@@ -256,6 +257,7 @@ function DynamicTableBase<
     isHaveHeader = false,
     isHaveBooleanSwitch = false,
     isHavePermission = false,
+    isHaveDataImage= false,
     isHaveAssignTracking,
     onAssignTracking,
     isHaveActionRevoke,
