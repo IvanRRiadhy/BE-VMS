@@ -372,6 +372,7 @@ const RenderDetailRows = ({
       }
 
       setAnswerFile('');
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -420,69 +421,82 @@ const RenderDetailRows = ({
     <>
       {filteredDetails.map((item, index) => {
         const key = `${activeStep - 1}:${item.id}`;
+        const originalIndex = details.findIndex((d) => d.id === item.id);
+        const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
         const previewSrc = getPreviewSrc(key, item.answer_file);
         const shownName = uploadNames[key] || fileNameFromAnswer(item.answer_file);
         const errorMessage = fieldErrors[key];
+        const remark = (item.remarks || '').toLowerCase();
+        if (remark === 'visitor_period_end') {
+          return null;
+        }
+
+        const isVisitorPeriodPair =
+          remark === 'visitor_period_start' &&
+          filteredDetails[index + 1] &&
+          (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
 
         return (
           <TableRow key={key}>
             <TableCell>
-              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  {item.long_display_text}
-                  {item.mandatory && (
-                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
-                      *
-                    </Typography>
-                  )}
-                </Typography>
+              {!isVisitorPeriodPair && (
+                <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {item.long_display_text}
+                    {item.mandatory && (
+                      <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                        *
+                      </Typography>
+                    )}
+                  </Typography>
 
-                {item.remarks === 'host' && (
-                  <Tooltip
-                    title="The host is the person in charge responsible for this visitor"
-                    arrow
-                    placement="top"
-                  >
-                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                  </Tooltip>
-                )}
-                {item.remarks === 'agenda' && (
-                  <Tooltip
-                    title="The agenda is the purpose of the visitor's visit"
-                    arrow
-                    placement="top"
-                  >
-                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                  </Tooltip>
-                )}
-                {item.remarks === 'site_place' && (
-                  <Tooltip
-                    title="The site place is the location where the visitor will be received"
-                    arrow
-                    placement="top"
-                  >
-                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                  </Tooltip>
-                )}
-                {item.remarks === 'visitor_period_start' && (
-                  <Tooltip
-                    title="The visitor period start is the date when the visitor's visit begins"
-                    arrow
-                    placement="top"
-                  >
-                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                  </Tooltip>
-                )}
-                {item.remarks === 'visitor_period_end' && (
-                  <Tooltip
-                    title="The visitor period end is the date when the visitor's visit ends"
-                    arrow
-                    placement="top"
-                  >
-                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                  </Tooltip>
-                )}
-              </Box>
+                  {item.remarks === 'host' && (
+                    <Tooltip
+                      title="The host is the person in charge responsible for this visitor"
+                      arrow
+                      placement="top"
+                    >
+                      <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                    </Tooltip>
+                  )}
+                  {item.remarks === 'agenda' && (
+                    <Tooltip
+                      title="The agenda is the purpose of the visitor's visit"
+                      arrow
+                      placement="top"
+                    >
+                      <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                    </Tooltip>
+                  )}
+                  {item.remarks === 'site_place' && (
+                    <Tooltip
+                      title="The site place is the location where the visitor will be received"
+                      arrow
+                      placement="top"
+                    >
+                      <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                    </Tooltip>
+                  )}
+                  {item.remarks === 'visitor_period_start' && (
+                    <Tooltip
+                      title="The visitor period start is the date when the visitor's visit begins"
+                      arrow
+                      placement="top"
+                    >
+                      <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                    </Tooltip>
+                  )}
+                  {item.remarks === 'visitor_period_end' && (
+                    <Tooltip
+                      title="The visitor period end is the date when the visitor's visit ends"
+                      arrow
+                      placement="top"
+                    >
+                      <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                    </Tooltip>
+                  )}
+                </Box>
+              )}
 
               {(() => {
                 switch (item.field_type) {
@@ -880,11 +894,195 @@ const RenderDetailRows = ({
                       />
                     );
                   case 9:
-                    const hasValue = !!item.answer_datetime;
+                    const remark = (item.remarks || '').toLowerCase();
                     const isLockedByInvitation =
                       (item.remarks === 'visitor_period_start' &&
                         !!invitation?.visitor_period_start) ||
                       (item.remarks === 'visitor_period_end' && !!invitation?.visitor_period_end);
+                    if (
+                      remark === 'visitor_period_start' &&
+                      filteredDetails[index + 1] &&
+                      (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                        'visitor_period_end'
+                    ) {
+                      const startItem = item;
+                      const endItem = filteredDetails[index + 1];
+
+                      const startIndex = details.findIndex((d) => d.id === startItem.id);
+                      const endIndex = details.findIndex((d) => d.id === endItem.id);
+
+                      const startKey = `${activeStep - 1}:${startItem.id}`;
+                      const endKey = `${activeStep - 1}:${endItem.id}`;
+
+                      const startError = fieldErrors[startKey];
+                      const endError = fieldErrors[endKey];
+
+                      const startLocked =
+                        startItem.remarks === 'visitor_period_start' &&
+                        !!invitation?.visitor_period_start;
+
+                      const endLocked =
+                        endItem.remarks === 'visitor_period_end' &&
+                        !!invitation?.visitor_period_end;
+
+                      return (
+                        <Box sx={{ width: '100%' }}>
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                  {startItem.long_display_text}
+                                  {startItem.mandatory && (
+                                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                      *
+                                    </Typography>
+                                  )}
+                                </Typography>
+
+                                <Tooltip
+                                  title="The visitor period start is the date when the visitor's visit begins"
+                                  arrow
+                                  placement="top"
+                                >
+                                  <IconInfoCircle
+                                    size={20}
+                                    style={{ color: '#1976d2', cursor: 'pointer' }}
+                                  />
+                                </Tooltip>
+                              </Box>
+
+                              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                                <DateTimePicker
+                                  disabled={startLocked}
+                                  value={
+                                    startItem.answer_datetime
+                                      ? dayjs.utc(startItem.answer_datetime).local()
+                                      : null
+                                  }
+                                  ampm={false}
+                                  onChange={(newValue) => {
+                                    if (newValue) {
+                                      const utc = newValue.utc().format();
+                                      onChange(startIndex, 'answer_datetime', utc);
+                                      clearFieldError(startKey);
+
+                                      if (
+                                        endItem.answer_datetime &&
+                                        dayjs(endItem.answer_datetime).isBefore(newValue)
+                                      ) {
+                                        onChange(endIndex, 'answer_datetime', '');
+                                      }
+                                    }
+                                  }}
+                                  format="dddd, DD MMMM YYYY, HH:mm"
+                                  viewRenderers={{
+                                    hours: renderTimeViewClock,
+                                    minutes: renderTimeViewClock,
+                                    seconds: renderTimeViewClock,
+                                  }}
+                                  slotProps={{
+                                    actionBar: {
+                                      actions: ['clear', 'accept'],
+                                    },
+                                    textField: {
+                                      fullWidth: true,
+                                      error: !!startError,
+                                      helperText: startError,
+                                      sx: {
+                                        '& .MuiInputBase-root.Mui-disabled': {
+                                          backgroundColor: '#f3f4f6',
+                                        },
+                                        '& .MuiInputBase-input.Mui-disabled': {
+                                          WebkitTextFillColor: '#909294ff',
+                                        },
+                                        '& .MuiFormHelperText-root': {
+                                          marginLeft: 0,
+                                        },
+                                      },
+                                    },
+                                  }}
+                                />
+                              </LocalizationProvider>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                  {endItem.long_display_text}
+                                  {endItem.mandatory && (
+                                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                      *
+                                    </Typography>
+                                  )}
+                                </Typography>
+
+                                <Tooltip
+                                  title="The visitor period end is the date when the visitor's visit ends"
+                                  arrow
+                                  placement="top"
+                                >
+                                  <IconInfoCircle
+                                    size={20}
+                                    style={{ color: '#1976d2', cursor: 'pointer' }}
+                                  />
+                                </Tooltip>
+                              </Box>
+
+                              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                                <DateTimePicker
+                                  disabled={endLocked}
+                                  value={
+                                    endItem.answer_datetime
+                                      ? dayjs.utc(endItem.answer_datetime).local()
+                                      : null
+                                  }
+                                  ampm={false}
+                                  minDateTime={
+                                    startItem.answer_datetime
+                                      ? dayjs(startItem.answer_datetime)
+                                      : undefined
+                                  }
+                                  onChange={(newValue) => {
+                                    if (newValue) {
+                                      const utc = newValue.utc().format();
+                                      onChange(endIndex, 'answer_datetime', utc);
+                                      clearFieldError(endKey);
+                                    }
+                                  }}
+                                  format="dddd, DD MMMM YYYY, HH:mm"
+                                  viewRenderers={{
+                                    hours: renderTimeViewClock,
+                                    minutes: renderTimeViewClock,
+                                    seconds: renderTimeViewClock,
+                                  }}
+                                  slotProps={{
+                                    textField: {
+                                      fullWidth: true,
+                                      error: !!endError,
+                                      helperText: endError,
+                                      sx: {
+                                        '& .MuiInputBase-root.Mui-disabled': {
+                                          backgroundColor: '#f3f4f6',
+                                        },
+                                        '& .MuiInputBase-input.Mui-disabled': {
+                                          WebkitTextFillColor: '#909294ff',
+                                        },
+                                        '& .MuiFormHelperText-root': {
+                                          marginLeft: 0,
+                                        },
+                                      },
+                                    },
+                                  }}
+                                />
+                              </LocalizationProvider>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      );
+                    }
+                    if (remark === 'visitor_period_end') {
+                      return null;
+                    }
                     return (
                       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                         <DateTimePicker
@@ -931,7 +1129,307 @@ const RenderDetailRows = ({
                       </LocalizationProvider>
                     );
 
-                  case 10: // TakePicture (Assuming image capture from device camera)
+                  case 10: {
+                    // TakePicture (Assuming image capture from device camera)
+                    const remark = (item.remarks || '').toLowerCase();
+                    if (remark === 'selfie_image') {
+                      return (
+                        <Box>
+                          <Box
+                            sx={{
+                              border: '2px dashed #90caf9',
+                              borderRadius: 2,
+                              padding: 4,
+                              textAlign: 'center',
+                              backgroundColor: '#f5faff',
+                              cursor: 'pointer',
+                              width: '100%',
+                              pointerEvents: 'auto',
+                              opacity: 1,
+                            }}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                            <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
+                              Upload File
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <Typography variant="body1" color="textSecondary">
+                                Supports: JPG, PNG, JPEG, Up to
+                                <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                              </Typography>
+
+                              <Typography
+                                variant="h6"
+                                component="span"
+                                color="primary"
+                                sx={{
+                                  fontWeight: 600,
+                                  ml: 1,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenCamera(true);
+                                }}
+                              >
+                                <IconCamera /> Use Camera
+                              </Typography>
+                            </Box>
+
+                            <input
+                              id={`file-${key}`}
+                              type="file"
+                              accept="*"
+                              hidden
+                              ref={fileInputRef}
+                              onChange={(e) =>
+                                handleFileChangeForField(
+                                  e as React.ChangeEvent<HTMLInputElement>,
+                                  (url) => {
+                                    onChange(originalIndex, 'answer_file', url);
+                                    if (url) clearFieldError(key);
+                                  },
+                                  key,
+                                )
+                              }
+                            />
+                            {(previewSrc || shownName) && (
+                              <Box
+                                mt={2}
+                                sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                {previewSrc ? (
+                                  <>
+                                    <img
+                                      src={previewSrc}
+                                      alt="preview"
+                                      style={{
+                                        width: 350,
+                                        height: 200,
+                                        borderRadius: 12,
+                                        objectFit: 'cover',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                      }}
+                                    />
+                                    <Button
+                                      color="error"
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{ mt: 2, minWidth: 120 }}
+                                      onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        handleRemoveFileForField(
+                                          (item as any).answer_file,
+                                          (url) => onChange(originalIndex, 'answer_file', url),
+                                          key,
+                                        );
+                                      }}
+                                      startIcon={<IconTrash />}
+                                    >
+                                      Remove
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Typography variant="caption" noWrap>
+                                    {shownName}
+                                  </Typography>
+                                )}
+                              </Box>
+                            )}
+                          </Box>
+
+                          {errorMessage && (
+                            <Typography
+                              variant="caption"
+                              color="error"
+                              sx={{ mt: 1, display: 'block' }}
+                            >
+                              {errorMessage}
+                            </Typography>
+                          )}
+
+                          <Dialog
+                            open={openCamera}
+                            onClose={() => setOpenCamera(false)}
+                            maxWidth="md"
+                            fullWidth
+                          >
+                            <Box sx={{ p: 2 }}>
+                              <Box
+                                display={'flex'}
+                                justifyContent={'space-between'}
+                                alignItems={'center'}
+                                mb={1}
+                              >
+                                <Typography variant="h6" mb={0}>
+                                  Take Photo From Camera
+                                </Typography>
+                                <IconButton onClick={() => setOpenCamera(false)}>
+                                  <IconX />
+                                </IconButton>
+                              </Box>
+
+                              <Grid container spacing={2}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                  <Box sx={{ position: 'relative' }}>
+                                    <Webcam
+                                      audio={false}
+                                      ref={webcamRef}
+                                      screenshotFormat="image/jpeg"
+                                      videoConstraints={{
+                                        facingMode,
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        borderRadius: 8,
+                                        border: '2px solid #ccc',
+                                      }}
+                                    />
+
+                                    <IconButton
+                                      onClick={() =>
+                                        setFacingMode((prev) =>
+                                          prev === 'environment' ? 'user' : 'environment',
+                                        )
+                                      }
+                                      sx={{
+                                        position: 'absolute',
+                                        top: 10,
+                                        right: 10,
+                                        bgcolor: 'rgba(0,0,0,0.5)',
+                                        color: '#fff',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(0,0,0,0.7)',
+                                        },
+                                      }}
+                                    >
+                                      <IconRefresh />
+                                    </IconButton>
+                                  </Box>
+                                </Grid>
+
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                  {/* {screenshot ? (
+                                    <img
+                                      src={screenshot}
+                                      alt="Captured"
+                                      style={{
+                                        width: '100%',
+                                        borderRadius: 8,
+                                        border: '2px solid #ccc',
+                                      }}
+                                    />
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        border: '2px dashed #ccc',
+                                        borderRadius: 8,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: 240,
+                                      }}
+                                    >
+                                      <Typography color="text.secondary">
+                                        No Photos Have Been Taken Yet
+                                      </Typography>
+                                    </Box>
+                                  )} */}
+                                  {previews[key] ? (
+                                    <img
+                                      src={previews[key] as string}
+                                      alt="Captured"
+                                      style={{
+                                        width: '100%',
+                                        borderRadius: 8,
+                                        border: '2px solid #ccc',
+                                      }}
+                                    />
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        border: '2px dashed #ccc',
+                                        borderRadius: 8,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minHeight: 240,
+                                      }}
+                                    >
+                                      <Typography color="text.secondary">
+                                        No Photos Have Been Taken Yet
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Grid>
+                              </Grid>
+
+                              <Divider sx={{ my: 2 }} />
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <Button
+                                  onClick={() =>
+                                    handleRemoveFileForField(
+                                      (item as any).answer_file,
+                                      (url) => onChange(originalIndex, 'answer_file', url),
+                                      key,
+                                    )
+                                  }
+                                  color="error"
+                                  sx={{ mr: 1 }}
+                                  startIcon={<IconTrash />}
+                                >
+                                  Clear Foto
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCaptureForField(
+                                      (url) => onChange(originalIndex, 'answer_file', url),
+                                      key,
+                                    );
+                                  }}
+                                  startIcon={<IconCamera />}
+                                >
+                                  Take Foto
+                                </Button>
+                                <Button
+                                  startIcon={<IconDeviceFloppy />}
+                                  onClick={() => {
+                                    setOpenCamera(false);
+                                    // setScreenshot(null);
+                                  }}
+                                  sx={{ ml: 1 }}
+                                >
+                                  Submit
+                                </Button>
+                              </Box>
+                            </Box>
+                          </Dialog>
+                        </Box>
+                      );
+                    }
                     return (
                       <Box>
                         <Box
@@ -1066,6 +1564,7 @@ const RenderDetailRows = ({
                                 <IconX size={22} />
                               </IconButton>
                             </Box>
+                            <Divider sx={{ mb: 2 }} />
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
                                 {/* <Webcam
@@ -1179,7 +1678,10 @@ const RenderDetailRows = ({
                               </Button>
                               <Button
                                 startIcon={<IconDeviceFloppy />}
-                                onClick={() => setOpenCamera(false)}
+                                onClick={() => {
+                                  setOpenCamera(false);
+                                  setScreenshot(null);
+                                }}
                                 sx={{ ml: 1 }}
                               >
                                 Submit
@@ -1189,6 +1691,7 @@ const RenderDetailRows = ({
                         </Dialog>
                       </Box>
                     );
+                  }
 
                   case 11: {
                     // FileUpload
@@ -1319,20 +1822,28 @@ const RenderDetailRows = ({
                             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
                             <Typography variant="body1" color="textSecondary">
-                              Supports: JPG, PNG, JPEG Up to
-                              <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                              Supports: JPG, PNG, JPEG, Up to
+                              <span style={{ fontWeight: '700' }}> 1 Mb | </span>
                             </Typography>
 
                             <Typography
                               variant="h6"
                               component="span"
                               color="primary"
-                              sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                              sx={{
+                                fontWeight: 600,
+                                ml: 1,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenCamera(true);
                               }}
                             >
+                              <IconCamera />
                               Use Camera
                             </Typography>
                           </Box>
@@ -1384,13 +1895,14 @@ const RenderDetailRows = ({
                                     size="small"
                                     variant="outlined"
                                     sx={{ mt: 2, minWidth: 120 }}
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       handleRemoveFileForField(
                                         (item as any).answer_file,
                                         (url) => onChange(index, 'answer_file', url),
                                         key,
-                                      )
-                                    }
+                                      );
+                                    }}
                                     startIcon={<IconTrash />}
                                   >
                                     Remove
@@ -1436,25 +1948,79 @@ const RenderDetailRows = ({
                               </IconButton>
                             </Box>
 
+                            <Divider sx={{ mb: 2 }} />
+
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                <Webcam
-                                  audio={false}
-                                  ref={webcamRef}
-                                  screenshotFormat="image/jpeg"
-                                  videoConstraints={{ facingMode: 'environment' }}
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
+                                <Box sx={{ position: 'relative' }}>
+                                  <Webcam
+                                    audio={false}
+                                    ref={webcamRef}
+                                    screenshotFormat="image/jpeg"
+                                    videoConstraints={{
+                                      facingMode,
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      borderRadius: 8,
+                                      border: '2px solid #ccc',
+                                    }}
+                                  />
+
+                                  <IconButton
+                                    onClick={() =>
+                                      setFacingMode((prev) =>
+                                        prev === 'environment' ? 'user' : 'environment',
+                                      )
+                                    }
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 10,
+                                      right: 10,
+                                      bgcolor: 'rgba(0,0,0,0.5)',
+                                      color: '#fff',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(0,0,0,0.7)',
+                                      },
+                                    }}
+                                  >
+                                    <IconRefresh />
+                                  </IconButton>
+                                </Box>
                               </Grid>
 
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                {screenshot ? (
+                                {/* {screenshot ? (
                                   <img
                                     src={screenshot}
+                                    alt="Captured"
+                                    style={{
+                                      width: '100%',
+                                      borderRadius: 8,
+                                      border: '2px solid #ccc',
+                                    }}
+                                  />
+                                ) : (
+                                  <Box
+                                    sx={{
+                                      width: '100%',
+                                      height: '100%',
+                                      border: '2px dashed #ccc',
+                                      borderRadius: 8,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      minHeight: 240,
+                                    }}
+                                  >
+                                    <Typography color="text.secondary">
+                                      No Photos Have Been Taken Yet
+                                    </Typography>
+                                  </Box>
+                                )} */}
+                                {previews[key] ? (
+                                  <img
+                                    src={previews[key] as string}
                                     alt="Captured"
                                     style={{
                                       width: '100%',
@@ -1504,8 +2070,9 @@ const RenderDetailRows = ({
                                 variant="contained"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleCaptureForField((url) =>
-                                    onChange(index, 'answer_file', url),
+                                  handleCaptureForField(
+                                    (url) => onChange(index, 'answer_file', url),
+                                    key,
                                   );
                                 }}
                                 startIcon={<IconCamera />}
@@ -1514,7 +2081,10 @@ const RenderDetailRows = ({
                               </Button>
                               <Button
                                 startIcon={<IconDeviceFloppy />}
-                                onClick={() => setOpenCamera(false)}
+                                onClick={() => {
+                                  setOpenCamera(false);
+                                  setScreenshot(null);
+                                }}
                                 sx={{ ml: 1 }}
                               >
                                 Submit

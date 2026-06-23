@@ -288,6 +288,7 @@ const GuestInformationStepper = () => {
       }
 
       setAnswerFile('');
+      // setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -467,13 +468,14 @@ const GuestInformationStepper = () => {
                       variant="outlined"
                       sx={{ mt: 2, minWidth: 120 }}
                       startIcon={<IconTrash />}
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleRemoveFileForField(
                           f.answer_file,
                           (url) => handleChange(f.remarks, url),
                           key,
-                        )
-                      }
+                        );
+                      }}
                     >
                       Remove
                     </Button>
@@ -585,7 +587,7 @@ const GuestInformationStepper = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ textAlign: 'right',display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 color="error"
                 startIcon={<IconTrash />}
@@ -603,7 +605,10 @@ const GuestInformationStepper = () => {
               <Button
                 variant="contained"
                 startIcon={<IconCamera />}
-                onClick={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCaptureForField((url) => handleChange(f.remarks, url), key);
+                }}
               >
                 Take Foto
               </Button>
@@ -818,13 +823,14 @@ const GuestInformationStepper = () => {
                     size="small"
                     variant="outlined"
                     sx={{ mt: 2, minWidth: 120 }}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleRemoveFileForField(
                         f.answer_file,
                         (url) => handleChange(f.remarks, url),
                         key,
-                      )
-                    }
+                      );
+                    }}
                     startIcon={<IconTrash />}
                   >
                     Remove
@@ -863,17 +869,6 @@ const GuestInformationStepper = () => {
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                {/* <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'environment' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                /> */}
                 <Box sx={{ position: 'relative' }}>
                   <Webcam
                     audio={false}
@@ -975,7 +970,9 @@ const GuestInformationStepper = () => {
                 Take Foto
               </Button>
               <Button
-                onClick={() => setOpenCamera(false)}
+                onClick={() => {
+                  setOpenCamera(false);
+                }}
                 sx={{ ml: 2 }}
                 startIcon={<IconDeviceFloppy />}
               >
@@ -1033,7 +1030,10 @@ const GuestInformationStepper = () => {
                 {(() => {
                   switch (type) {
                     case 10:
-                      return renderCameraField(f, idx);
+                      // return renderCameraField(f, idx);
+                      return f.remarks === 'selfie_image'
+                        ? renderUploadWithCamera(f, idx, section)
+                        : renderCameraField(f, idx);
                     case 11:
                       return renderFileUploadField(f, idx);
                     case 12:

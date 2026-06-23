@@ -3900,17 +3900,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                {/* <Webcam
-                                                audio={false}
-                                                ref={webcamRef}
-                                                screenshotFormat="image/jpeg"
-                                                videoConstraints={{ facingMode: 'environment' }}
-                                                style={{
-                                                  width: '100%',
-                                                  borderRadius: 8,
-                                                  border: '2px solid #ccc',
-                                                }}
-                                              /> */}
                                 <Box sx={{ position: 'relative' }}>
                                   <Webcam
                                     audio={false}
