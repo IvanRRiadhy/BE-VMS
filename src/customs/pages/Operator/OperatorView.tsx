@@ -472,7 +472,7 @@ const OperatorView = () => {
         if (!isLastVisitor) {
           return;
         }
-        console.log("payload", JSON.stringify(newPayload, null, 2));
+        console.log('payload', JSON.stringify(newPayload, null, 2));
 
         await handleSubmitBatchSwipe(newPayload);
 
@@ -1419,14 +1419,14 @@ const OperatorView = () => {
       );
       resetSwipeStates();
       handleCloseChooseCard();
-      await showSwal('success', `Successfully assigned card(s):\n${message}`);
+      showSwal('success', `Successfully assigned card(s):\n${message}`);
 
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      await fetchAvailableCards();
+      // await fetchAvailableCards();
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
@@ -3219,7 +3219,7 @@ const OperatorView = () => {
         card_number: returnCardNumber.trim(),
         registered_site_id: registerSiteOperator,
       };
-      console.log("return card payload", JSON.stringify(payload, null,2));
+      console.log('return card payload', JSON.stringify(payload, null, 2));
 
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
