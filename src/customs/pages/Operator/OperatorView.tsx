@@ -348,27 +348,29 @@ const OperatorView = () => {
     try {
       if (!payloads.length) return;
 
+      setOpenSwipeDialog(false);
+      setOpenChooseCardDialog(false);
+      handleCloseChooseCard();
+
       await createMultipleGrantAccess(token as string, {
         data: payloads,
       });
 
-      console.log('payloads', payloads);
-
-      showSwal('success', 'All cards swapped successfully!');
-
       resetSwipeStates();
 
-      setOpenSwipeDialog(false);
-      setOpenChooseCardDialog(false);
-
       await fetchRelatedVisitorsByInvitationId(invitationId as string);
+
+      showSwal('success', 'All cards swapped successfully!');
     } catch (err: any) {
+      setLoadingAccess(false);
       showSwal(
         'error',
         Array.isArray(err?.response?.data?.collection)
           ? err.response.data.collection.join('\n')
           : err?.response?.data?.collection || 'Failed to swap cards',
       );
+    } finally {
+      setLoadingAccess(false);
     }
   };
 
@@ -1419,18 +1421,18 @@ const OperatorView = () => {
       );
       resetSwipeStates();
       handleCloseChooseCard();
-      showSwal('success', `Successfully assigned card(s):\n${message}`);
 
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      // await fetchAvailableCards();
+      // await new Promise((resolve) => setTimeout(resolve, 300));
+      showSwal('success', `Successfully assigned card(s):\n${message}`);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 600);
+      setLoadingAccess(false);
     }
   };
 

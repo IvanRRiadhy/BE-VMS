@@ -345,14 +345,14 @@ const Content = () => {
 
       // console.log('payloads', payloads);
 
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
+
       showSwal('success', 'All cards swapped successfully!');
 
       setSwipePayload([]);
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
       setSearchTerm('');
-
-      await fetchRelatedVisitorsByInvitationId(invitationId as string);
     } catch (err: any) {
       showSwal(
         'error',
@@ -3668,7 +3668,11 @@ const Content = () => {
               onClose={handleCloseBlacklistVisitor}
             />
             {/* List Visitor */}
-            <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor}  upcomingVisitors={upcomingVisitors}/>
+            <ListVisitorDialog
+              open={openListVisitor}
+              onClose={handleCloseListVisitor}
+              upcomingVisitors={upcomingVisitors}
+            />
             {/* Open */}
             <TriggeredAccessDialog
               open={openTriggeredAccess}

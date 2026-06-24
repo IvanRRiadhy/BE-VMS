@@ -10,7 +10,7 @@ const GlobalBackdropLoading = ({ open }: GlobalBackdropLoadingProps) => {
       <Backdrop
         open={open}
         sx={{
-          zIndex: 999999,
+          zIndex: 999999999,
           position: 'fixed',
           margin: '0 auto',
         }}
