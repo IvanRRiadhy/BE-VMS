@@ -945,7 +945,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid>
-{/* 
+          {/* 
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel

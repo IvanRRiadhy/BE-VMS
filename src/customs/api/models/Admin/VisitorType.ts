@@ -237,7 +237,7 @@ export const updateVisitorTypeSchmea = z.object({
   is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),
   vip: z.boolean().optional(),
-  is_multi_site: z.boolean().optional(),
+  is_multi_site: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
   expiry_reminder_minutes: z.coerce.number().default(0),

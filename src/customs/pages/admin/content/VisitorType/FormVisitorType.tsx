@@ -283,6 +283,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         period: Number(localForm.period),
         section_page_visitor_types: transformedSections,
         expiry_reminder_minutes: Number(localForm.expiry_reminder_minutes),
+        is_multi_site: localForm.is_multi_site ?? false,
         visitor_roles:
           localForm.visitor_roles?.map((item) => ({
             role: item.role,
@@ -296,7 +297,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         })),
         visitor_category: localForm.visitor_category ?? null,
       };
-      console.log('Payload to submit:', data);
+      // console.log('Payload to submit:', data);
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {

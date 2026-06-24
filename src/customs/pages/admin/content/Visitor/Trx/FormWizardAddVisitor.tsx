@@ -40,6 +40,7 @@ import {
   useMediaQuery,
   MobileStepper,
   Tooltip,
+  Select,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -196,11 +197,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
+
+  const [customAgenda, setCustomAgenda] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
@@ -1443,8 +1447,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
 
                                         return (
                                           <Box key={fIdx} sx={{ mb: 2 }}>
@@ -1468,7 +1472,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               {
                                                 showLabel: true,
                                                 // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  field.custom_field_id
+                                                }`,
                                               },
                                             )}
                                           </Box>
@@ -1558,8 +1564,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
 
                                         return (
                                           <TableCell key={field.custom_field_id}>
@@ -1587,7 +1593,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               },
                                               {
                                                 showLabel: false,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  field.custom_field_id
+                                                }`,
                                                 details: page.form || [],
                                               },
                                             )}
@@ -1695,7 +1703,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                ? next.single_page[found].foreign_id ?? resolvedForeign
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2842,7 +2850,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         key={`${node.parentId ?? 'root'}-${node.id}`}
         itemId={`${node.parentId ?? 'root'}-${node.id}`}
         label={
-          <Box display="flex" alignItems="center" gap={1} >
+          <Box display="flex" alignItems="center" gap={1}>
             <Checkbox
               size="small"
               disabled={isDisabled}
@@ -3162,6 +3170,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
 
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+    const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
     return filteredDetails.map((item) => {
       // const key = `${activeStep - 1}:${item.id}`;
@@ -3184,7 +3193,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
-          <TableCell>
+          <TableCell
+            sx={{
+              display: item.remarks === 'employee' ? 'none' : 'table-cell',
+            }}
+          >
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                 <Typography variant="subtitle2" fontWeight={600}>
@@ -3216,7 +3229,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 )}
                 {item.remarks === 'site_place' && (
                   <Tooltip
-                    title="The site place is the location where the visitor will be received"
+                    title="The site place is the location where the visitor will be received, please select and check the appropriate site place."
                     arrow
                     placement="top"
                   >
@@ -3243,37 +3256,59 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 )}
               </Box>
             )}
+
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
                   if (item.remarks === 'agenda') {
                     return (
-                      <Autocomplete
-                        size="small"
-                        freeSolo
-                        options={[
-                          'Meeting',
-                          'Presentation',
-                          'Visit',
-                          'Training',
-                          'Report',
-                          // 'Others',
-                        ]}
-                        value={item.answer_text || ''}
-                        onInputChange={(event, newValue) => {
-                          onChange(originalIndex, 'answer_text', newValue || '');
-                          if (newValue) clearFieldError(key);
-                        }}
-                        renderInput={(params) => (
+                      <Box>
+                        <Select
+                          value={showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            if (value === 'Others') {
+                              setShowOtherAgenda((prev) => ({
+                                ...prev,
+                                [originalIndex]: true,
+                              }));
+
+                              onChange(originalIndex, 'answer_text', '');
+                            } else {
+                              setShowOtherAgenda((prev) => ({
+                                ...prev,
+                                [originalIndex]: false,
+                              }));
+
+                              onChange(originalIndex, 'answer_text', value);
+                            }
+                          }}
+                          fullWidth
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            Select agenda
+                          </MenuItem>
+
+                          <MenuItem value="Meeting">Meeting</MenuItem>
+                          <MenuItem value="Presentation">Presentation</MenuItem>
+                          <MenuItem value="Visit">Visit</MenuItem>
+                          <MenuItem value="Training">Training</MenuItem>
+                          <MenuItem value="Report">Report</MenuItem>
+                          <MenuItem value="Others">Others</MenuItem>
+                        </Select>
+
+                        {showOtherAgenda[originalIndex] && (
                           <CustomTextField
-                            {...params}
-                            placeholder="Choose or write manually agenda"
+                            sx={{ mt: 2 }}
                             fullWidth
-                            error={!!errorMessage}
-                            helperText={errorMessage}
+                            placeholder="Please specify agenda"
+                            value={item.answer_text || ''}
+                            onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
                           />
                         )}
-                      />
+                      </Box>
                     );
                   }
                   return (
@@ -3288,13 +3323,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                              ? ''
-                              : item.remarks === 'indentity_id'
-                                ? ''
-                                : ''
+                          ? ''
+                          : item.remarks === 'organization'
+                          ? ''
+                          : item.remarks === 'indentity_id'
+                          ? ''
+                          : ''
                       }
+                      disabled={item.remarks === 'name' && isEmployee}
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -3452,8 +3488,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? String(item.answer_text).split(',')
-                                : [];
+                              ? String(item.answer_text).split(',')
+                              : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3668,6 +3704,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   if (item.remarks === 'employee') {
                     return (
                       <Autocomplete
+                        sx={{ display: 'none' }}
                         size="small"
                         options={options}
                         getOptionLabel={(option) => option.name}
@@ -3885,8 +3922,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                              ? [String(item.answer_text)]
+                              : [];
 
                             return (
                               <FormControlLabel
@@ -5961,8 +5998,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'
