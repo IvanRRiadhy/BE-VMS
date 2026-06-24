@@ -131,7 +131,6 @@ const SwipeCardDialog = ({
       onSubmit?.(value, type, visitor, isLastVisitor, currentVisitorIndex);
 
       if (!isLastVisitor) {
-        // ✅ lanjut ke visitor berikutnya
         setCurrentVisitorIndex((prev: any) => prev + 1);
       } else {
         onClose();

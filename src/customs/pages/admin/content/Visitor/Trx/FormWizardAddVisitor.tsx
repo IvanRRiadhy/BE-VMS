@@ -206,6 +206,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
     setSnackbar((s) => ({ ...s, open: false }));
@@ -2348,22 +2351,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               )}
             </>
           );
-          // return (
-          //   <>
-          //     <CameraUpload
-          //       value={field.answer_file as string | undefined}
-          //       onChange={(url) => {
-          //         onChange(index, 'answer_file', url);
-          //         if (url) clearFieldError(errorKey);
-          //       }}
-          //     />
-          //     {errorMessage && (
-          //       <Typography variant="caption" color="error">
-          //         {errorMessage}
-          //       </Typography>
-          //     )}
-          //   </>
-          // );
+        // return (
+        //   <>
+        //     <CameraUpload
+        //       value={field.answer_file as string | undefined}
+        //       onChange={(url) => {
+        //         onChange(index, 'answer_file', url);
+        //         if (url) clearFieldError(errorKey);
+        //       }}
+        //     />
+        //     {errorMessage && (
+        //       <Typography variant="caption" color="error">
+        //         {errorMessage}
+        //       </Typography>
+        //     )}
+        //   </>
+        // );
 
         case 11: {
           const key = opts?.uniqueKey ?? String(index);
@@ -2839,7 +2842,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         key={`${node.parentId ?? 'root'}-${node.id}`}
         itemId={`${node.parentId ?? 'root'}-${node.id}`}
         label={
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box display="flex" alignItems="center" gap={1} >
             <Checkbox
               size="small"
               disabled={isDisabled}
@@ -4214,7 +4217,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
-                                      width: 350,
+                                      width: lg ? 350 : 220,
                                       height: 200,
                                       borderRadius: 12,
                                       objectFit: 'cover',
@@ -4282,17 +4285,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
-                                {/* <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              /> */}
                                 <Box sx={{ position: 'relative' }}>
                                   <Webcam
                                     audio={false}
@@ -4304,6 +4296,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
+                                      height: '250px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -4338,6 +4332,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
+                                      height: '250px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -4364,7 +4360,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <Divider sx={{ my: 2 }} />
 
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                               <Button
                                 onClick={() =>
                                   handleRemoveFileForField(
@@ -4488,10 +4484,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 src={previewSrc}
                                 alt="preview"
                                 style={{
-                                  width: 350,
+                                  width: lg ? 350 : 220,
                                   height: 200,
+                                  borderRadius: 12,
                                   objectFit: 'cover',
-                                  borderRadius: 8,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                 }}
                               />
                               <Button
@@ -4555,6 +4553,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4589,6 +4589,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4616,7 +4618,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <Divider sx={{ my: 2 }} />
 
                           <Box
-                            sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}
+                            sx={{
+                              textAlign: 'right',
+                              display: 'flex',
+                              justifyContent: 'flex-end',
+                              gap: 1,
+                            }}
                           >
                             <MuiButton
                               onClick={() =>
@@ -4840,7 +4847,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 350,
+                                    // width: 350,
+                                    // height: 200,
+                                    width: lg ? 350 : 220,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -4908,17 +4917,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                              {/* <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              /> */}
                               <Box sx={{ position: 'relative' }}>
                                 <Webcam
                                   audio={false}
@@ -4930,6 +4928,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4963,6 +4963,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   alt="Captured"
                                   style={{
                                     width: '100%',
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     borderRadius: 8,
                                     border: '2px solid #ccc',
                                   }}

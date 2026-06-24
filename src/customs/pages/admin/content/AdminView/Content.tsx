@@ -336,6 +336,7 @@ const Content = () => {
   }, [visitorCards]);
 
   const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    setLoadingAccess(true);
     try {
       if (!payloads.length) return;
 
@@ -343,16 +344,14 @@ const Content = () => {
         data: payloads,
       });
 
-      // console.log('payloads', payloads);
-
-      await fetchRelatedVisitorsByInvitationId(invitationId as string);
-
-      showSwal('success', 'All cards swapped successfully!');
-
       setSwipePayload([]);
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
       setSearchTerm('');
+      // console.log('payloads', payloads);
+      showSwal('success', 'All cards swapped successfully!');
+
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
     } catch (err: any) {
       showSwal(
         'error',
@@ -360,6 +359,8 @@ const Content = () => {
           ? err.response.data.collection.join('\n')
           : err?.response?.data?.collection || 'Failed to swap cards',
       );
+    } finally {
+      setLoadingAccess(true);
     }
   };
 
@@ -370,7 +371,7 @@ const Content = () => {
     isLastVisitor: boolean,
     visitorIndex: number,
   ) => {
-    setLoadingAccess(true);
+    // setLoadingAccess(true);
     try {
       // const selectedCardNumber = selectedCards[visitorIndex];
       // const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
@@ -433,9 +434,11 @@ const Content = () => {
       setOpenSwipeDialog(false);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
-    } finally {
-      setLoadingAccess(false);
     }
+
+    // finally {
+    //   setLoadingAccess(false);
+    // }
   };
 
   type CardActionType = 'Swipe' | 'Give';

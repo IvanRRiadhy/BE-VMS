@@ -345,24 +345,24 @@ const OperatorView = () => {
   }, [relatedVisitors, selectedVisitors]);
 
   const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    setLoadingAccess(true);
+
     try {
       if (!payloads.length) return;
 
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
-      handleCloseChooseCard();
 
       await createMultipleGrantAccess(token as string, {
         data: payloads,
       });
+      console.log('payloads', payloads);
 
       resetSwipeStates();
+      showSwal('success', 'All cards swapped successfully!');
 
       await fetchRelatedVisitorsByInvitationId(invitationId as string);
-
-      showSwal('success', 'All cards swapped successfully!');
     } catch (err: any) {
-      setLoadingAccess(false);
       showSwal(
         'error',
         Array.isArray(err?.response?.data?.collection)
@@ -390,7 +390,7 @@ const OperatorView = () => {
     isLastVisitor: boolean,
     visitorIndex: number,
   ) => {
-    setLoadingAccess(true);
+    // setLoadingAccess(true);
     try {
       // const selectedCardNumber = selectedCards[visitorIndex];
       // const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
@@ -501,9 +501,11 @@ const OperatorView = () => {
       setOpenSwipeDialog(false);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
-    } finally {
-      setLoadingAccess(false);
     }
+
+    // finally {
+    //   setLoadingAccess(false);
+    // }
   };
 
   type CardActionType = 'Swipe' | 'Give';
@@ -1373,13 +1375,11 @@ const OperatorView = () => {
         await createMultipleGrantAccess(token as string, {
           data: payloads.map(({ visitorName, ...p }) => p),
         });
-        // console.log('payloads multiple', payloads);
       } else {
         const { visitorName = '', ...payload } = payloads[0] as {
           visitorName?: string;
         } & (typeof payloads)[0];
 
-        // console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
       }
 
@@ -3721,6 +3721,7 @@ const OperatorView = () => {
           />
           {/* Open */}
           <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
+
           {/* Dialog Swipe No Code */}
           <SwipeCardNoCodeDialog
             open={openSwipeDialogNoInvitation}
@@ -3756,6 +3757,7 @@ const OperatorView = () => {
             setAccessIssuance={setAccessIssuance}
             // setSelectedCurrentCards={setSelectedCurrentCards}
           />
+
           {/* Dialog Swipe Card */}
           <SwipeCardDialog
             open={openSwipeDialog}
@@ -3842,6 +3844,7 @@ const OperatorView = () => {
             handleAccessAction={handleAccessAction}
             toast={toast}
           /> */}
+
           {/* Extend Visit */}
           <ExtendVisitDialog
             open={openExtendVisit}
@@ -3966,6 +3969,7 @@ const OperatorView = () => {
             data={dataImage}
             container={containerRef ?? null}
           />
+          
           <ReturnCardDialog
             open={openReturnCard}
             value={returnCardNumber}

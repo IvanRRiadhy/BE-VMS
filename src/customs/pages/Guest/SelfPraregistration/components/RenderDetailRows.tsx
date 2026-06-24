@@ -1396,7 +1396,7 @@ const RenderDetailRows = ({
 
                               <Divider sx={{ my: 2 }} />
 
-                              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                                 <Button
                                   onClick={() =>
                                     handleRemoveFileForField(
@@ -1652,7 +1652,14 @@ const RenderDetailRows = ({
 
                             <Divider sx={{ my: 2 }} />
 
-                            <Box sx={{ textAlign: 'right' }}>
+                            <Box
+                              sx={{
+                                textAlign: 'right',
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: 1,
+                              }}
+                            >
                               <Button
                                 onClick={() =>
                                   handleRemoveFileForField(
@@ -1822,7 +1829,12 @@ const RenderDetailRows = ({
                           </Typography>
 
                           <Box
-                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexWrap: 'wrap',
+                            }}
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
