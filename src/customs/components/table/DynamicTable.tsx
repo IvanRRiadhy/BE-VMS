@@ -1586,6 +1586,7 @@ function DynamicTableBase<
                   onAssignTracking={onAssignTracking}
                   openRow={openRow}
                   page={currentPage}
+                  isHaveDataImage={isHaveDataImage}
                   isActionEmployee={isActionEmployee}
                   isHaveBlacklist={isHaveBlacklist}
                   isHaveVip={isHaveVip}

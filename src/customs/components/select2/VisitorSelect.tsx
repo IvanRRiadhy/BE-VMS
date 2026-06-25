@@ -133,6 +133,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
           alignItems: 'center',
           gap: 10,
           borderBottom: '1px solid #eaeaea',
+          overflow: 'hidden',
         }}
       >
         <Avatar
@@ -190,10 +191,17 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
       isClearable
       menuPortalTarget={document.body}
       styles={{
+
         menuPortal: (base) => ({
           ...base,
           zIndex: 1300,
         }),
+        // overflow hidden
+        // menu: (base) => ({
+        //   ...base,
+        //   overflow: 'hidden',
+        // }),
+        
       }}
     />
   );

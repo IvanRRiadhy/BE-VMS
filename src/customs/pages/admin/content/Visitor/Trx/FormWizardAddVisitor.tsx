@@ -41,6 +41,7 @@ import {
   MobileStepper,
   Tooltip,
   Select,
+  FormHelperText,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -742,7 +743,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       name: v.name,
       email: v.email,
       phone: v.phone,
-      organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+      // organization: typeof v.organization === 'object' ? v.Organization.name : v.organization,
+      organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
       indentity_id: v.identity_id,
       gender: genderValue,
       employee: v.id,
@@ -818,8 +820,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : updateSectionForm(section, (arr) =>
                 arr.map((item) => {
                   if (resetKeys.includes(item.remarks)) {
-                    const errorKey = `${currentStep}:${item.id}`;
-                    clearFieldError(errorKey);
+                    const fieldKey = item.custom_field_id || item.id;
+                    const errorKey = `${currentStep}:${fieldKey}`;
 
                     return {
                       ...item,
@@ -859,7 +861,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           : updateSectionForm(section, (arr) =>
               arr.map((item) => {
                 if (mapping[item.remarks] !== undefined) {
-                  const errorKey = `${currentStep}:${item.id}`;
+                  const fieldKey = item.custom_field_id || item.id;
+                  const errorKey = `${currentStep}:${fieldKey}`;
+
                   clearFieldError(errorKey);
 
                   return {
@@ -1231,8 +1235,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         {isSingle && (
           <Grid>
             {(() => {
-              // const section = sectionsData[activeStep - 1];
-
               const section = currentSection;
               const sectionType = getSectionType(section);
               const isEmployee = isEmployeeSection(section);
@@ -1378,9 +1380,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         {isGroup && (
           <Grid>
             {(() => {
-              // const section = sectionsData[activeStep - 1];
               const section = currentSection;
               const sectionType = getSectionType(section);
+
               if (sectionType === 'visitor_information_group') {
                 return (
                   <Grid>
@@ -1392,6 +1394,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               dataVisitor.map((group, gIdx) => {
                                 const page = group.question_page[activeStep - 1];
                                 if (!page) return null;
+                                const isEmployee =
+                                  dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
+                                    (f) => f.remarks === 'is_employee',
+                                  )?.answer_text === 'true';
 
                                 return (
                                   <Accordion key={gIdx} sx={{ mb: 1 }}>
@@ -1431,55 +1437,74 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <Box sx={{ width: '100%', mb: 2 }}>
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
+                                          key={String(isEmployee)}
                                           token={token as string}
-                                          // isEmployee={isEmployee}
+                                          isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                       </Box>
 
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                      {page.form
+                                        ?.filter(
+                                          (field: any) =>
+                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                        )
+                                        .map((field: any, fIdx: any) => {
+                                          const matchedKey = Object.keys(
+                                            groupedPages.batch_page || {},
+                                          ).find((k) =>
+                                            sameField(groupedPages.batch_page[k], field),
+                                          );
+                                          const shared = matchedKey
+                                            ? groupedPages.batch_page[matchedKey]
+                                            : undefined;
+                                          const proxyField = hasAns(field)
+                                            ? field
+                                            : shared
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
+                                          const originalIndex = page?.form?.findIndex(
+                                            (f: any) => f.custom_field_id === field.custom_field_id,
+                                          );
 
-                                        return (
-                                          <Box key={fIdx} sx={{ mb: 2 }}>
-                                            {renderFieldInput(
-                                              proxyField,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              // undefined,
-                                              {
-                                                showLabel: true,
-                                                // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
-                                                  field.custom_field_id
-                                                }`,
-                                              },
-                                            )}
-                                          </Box>
-                                        );
-                                      })}
+                                          return (
+                                            <Box key={field.custom_field_id} sx={{ mb: 2 }}>
+                                              {renderFieldInput(
+                                                proxyField,
+                                                originalIndex || fIdx,
+                                                (idx, fieldKey, value) => {
+                                                  setDataVisitor((prev) => {
+                                                    const next = [...prev];
+                                                    const s = activeStep - 1;
+                                                    if (
+                                                      !next[gIdx]?.question_page?.[s]?.form?.[
+                                                        originalIndex || fIdx
+                                                      ]
+                                                    )
+                                                      return prev;
+                                                    next[gIdx].question_page[s].form[
+                                                      originalIndex || fIdx
+                                                    ] = {
+                                                      ...next[gIdx].question_page[s].form[
+                                                        originalIndex || fIdx
+                                                      ],
+                                                      [fieldKey]: value,
+                                                    };
+                                                    return next;
+                                                  });
+                                                },
+                                                // undefined,
+                                                {
+                                                  showLabel: true,
+                                                  // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                    field.custom_field_id
+                                                  }`,
+                                                },
+                                              )}
+                                            </Box>
+                                          );
+                                        })}
                                     </AccordionDetails>
                                   </Accordion>
                                 );
@@ -1515,15 +1540,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 <TableCell>
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
-                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
-                                  (f: any, i: any) => (
+                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || [])
+                                  .filter(
+                                    (f: any) => (f.remarks || '').toLowerCase() !== 'employee',
+                                  )
+                                  .map((f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
                                       <CustomFormLabel required={f.mandatory === true}>
                                         {f.long_display_text}
                                       </CustomFormLabel>
                                     </TableCell>
-                                  ),
-                                )}
+                                  ))}
                                 <TableCell align="center">
                                   <Typography variant="subtitle2" fontWeight={600}>
                                     Action
@@ -1543,65 +1570,77 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     (f: any) => f.answer_text || f.answer_datetime || f.answer_file,
                                   );
 
+                                  const isEmployee =
+                                    dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
+                                      (f) => f.remarks === 'is_employee',
+                                    )?.answer_text === 'true';
                                   return (
                                     <TableRow key={gIdx}>
                                       <TableCell sx={{ minWidth: 250 }}>
                                         <VisitorSelect
+                                          key={String(isEmployee)}
                                           token={token as string}
-                                          // isEmployee={isEmployee}
+                                          isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                       </TableCell>
-                                      {fields.map((field: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
+                                      {fields
+                                        .filter(
+                                          (field: any) =>
+                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                        )
+                                        .map((field: any) => {
+                                          const matchedKey = Object.keys(
+                                            groupedPages.batch_page || {},
+                                          ).find((k) =>
+                                            sameField(groupedPages.batch_page[k], field),
+                                          );
 
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
+                                          const shared = matchedKey
+                                            ? groupedPages.batch_page[matchedKey]
+                                            : undefined;
 
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                          const proxyField = hasAns(field)
+                                            ? field
+                                            : shared
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
 
-                                        return (
-                                          <TableCell key={field.custom_field_id}>
-                                            {renderFieldInput(
-                                              proxyField,
-                                              field.custom_field_id,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
+                                          return (
+                                            <TableCell key={field.custom_field_id}>
+                                              {renderFieldInput(
+                                                proxyField,
+                                                field.custom_field_id,
+                                                (idx, fieldKey, value) => {
+                                                  setDataVisitor((prev) => {
+                                                    const next = [...prev];
+                                                    const s = activeStep - 1;
 
-                                                  if (!next[gIdx]?.question_page?.[s]?.form)
-                                                    return prev;
+                                                    if (!next[gIdx]?.question_page?.[s]?.form)
+                                                      return prev;
 
-                                                  next[gIdx].question_page[s].form = next[
-                                                    gIdx
-                                                  ].question_page[s].form.map((f: any) =>
-                                                    f.custom_field_id === field.custom_field_id
-                                                      ? { ...f, [fieldKey]: value }
-                                                      : f,
-                                                  );
+                                                    next[gIdx].question_page[s].form = next[
+                                                      gIdx
+                                                    ].question_page[s].form.map((f: any) =>
+                                                      f.custom_field_id === field.custom_field_id
+                                                        ? { ...f, [fieldKey]: value }
+                                                        : f,
+                                                    );
 
-                                                  return next;
-                                                });
-                                              },
-                                              {
-                                                showLabel: false,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
-                                                  field.custom_field_id
-                                                }`,
-                                                details: page.form || [],
-                                              },
-                                            )}
-                                          </TableCell>
-                                        );
-                                      })}
+                                                    return next;
+                                                  });
+                                                },
+                                                {
+                                                  showLabel: false,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                    field.custom_field_id
+                                                  }`,
+                                                  details: page.form || [],
+                                                },
+                                              )}
+                                            </TableCell>
+                                          );
+                                        })}
 
                                       <TableCell align="right">
                                         {dataVisitor.length > 1 && (
@@ -1684,6 +1723,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   return shared ? { ...f, ...pickAns(shared) } : f;
                 });
 
+                const visibilityMap = getVisibilityMap(mergedVisitForm);
+
+                mergedVisitForm.forEach((item: any) => {
+                  if (!item?.mandatory) return;
+
+                  const remark = (item.remarks || '').toLowerCase();
+                  const isVisible = visibilityMap.hasOwnProperty(remark)
+                    ? visibilityMap[remark]
+                    : true;
+
+                  if (!isVisible) return;
+
+                  const fieldId = item.custom_field_id || item.id;
+
+                  // key HARUS sama dengan renderDetailRows
+                  const key = `${activeStep - 1}:${fieldId}`;
+
+                  validateField(item, key, errors);
+                });
+
                 return (
                   <Table>
                     <TableBody>
@@ -1703,7 +1762,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -1809,6 +1868,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
     const errorMessage = fieldErrors[errorKey];
 
+    // if ((field.remarks || '').toLowerCase() === 'employee') {
+    //   return null;
+    // }
+
     let shouldDisable = false;
 
     const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
@@ -1819,8 +1882,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const startField = opts?.details?.find(
         (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
       );
+      if ((field.remarks || '').toLowerCase() === 'employee') {
+        return null;
+      }
 
       const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+      const employeeSelected = !!opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
+      );
 
       switch (field.field_type) {
         case 0: // Text
@@ -1837,7 +1906,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               sx={{ minWidth: 160, maxWidth: '100%' }}
               error={!!errorMessage}
               helperText={errorMessage}
-              disabled={shouldDisable}
+              disabled={
+                shouldDisable ||
+                ((field.remarks || '').toLowerCase() === 'name' && employeeSelected)
+              }
             />
           );
 
@@ -2607,6 +2679,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSiteTree([]);
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
+    setGroupVisitors([]);
     setSiteTree([]);
     setSelfOnlySelectedSiteIdsMap({});
     setSelfOnlySelectedSiteParentIdsMap({});
@@ -2831,6 +2904,91 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
+  const handleSiteCheck = (
+    node: any,
+    isChecked: boolean,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const isParentNode = !!node.children?.length;
+
+    const setter = isSelfOnly
+      ? (callback: any) =>
+          setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+            ...prevMap,
+            [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+          }))
+      : setSelectedSiteIds;
+
+    setter((prev: string[]) => {
+      let updated = [...prev];
+
+      if (isChecked) {
+        // tambah current
+        if (!updated.includes(node.id)) {
+          updated.push(node.id);
+        }
+
+        // child pilih -> parent ikut
+        if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+          updated.push(node.parentId);
+        }
+      } else {
+        // remove current
+        updated = updated.filter((id) => id !== node.id);
+
+        // parent dihapus -> semua child ikut hilang
+        if (isParentNode) {
+          const childIds = collectAllChildIds(node);
+
+          updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+        }
+
+        // child dihapus -> cek sibling
+        if (!isParentNode && node.parentId) {
+          const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+          const collectSiblingIds = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => (n.children ? n.children.map((c: any) => c.id) : []));
+
+          const siblingIds = collectSiblingIds(parentTree);
+
+          const stillHasCheckedSibling = siblingIds.some((id: string) => updated.includes(id));
+
+          // kalau tidak ada child aktif -> remove parent
+          if (!stillHasCheckedSibling) {
+            updated = updated.filter((id) => id !== node.parentId);
+          }
+        }
+      }
+
+      // VALIDASI BERDASARKAN PARENT AKTIF
+      const activeParentIds = isSelfOnly
+        ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+        : selectedSiteParentIds;
+
+      updated = updated.filter((id) => {
+        return activeParentIds.some((parentId) => {
+          if (id === parentId) return true;
+
+          const tree = buildSiteTreeWithParent(sites, parentId);
+
+          const collect = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+          return collect(tree).includes(id);
+        });
+      });
+
+      updated = [...new Set(updated)];
+
+      onChange(index, 'answer_text', toCsv(updated));
+
+      return updated;
+    });
+  };
+
   const renderTree = (
     node: any,
     index: number,
@@ -2845,110 +3003,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const isDisabled = !canVisited;
 
+    const isChecked = isSelfOnly
+      ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+      : selectedSiteIds.includes(node.id);
+
     return (
       <TreeItem
         key={`${node.parentId ?? 'root'}-${node.id}`}
         itemId={`${node.parentId ?? 'root'}-${node.id}`}
         label={
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              if (isDisabled) return;
+
+              handleSiteCheck(node, !isChecked, index, onChange, isSelfOnly);
+            }}
+            sx={{
+              cursor: isDisabled ? 'default' : 'pointer',
+              width: '100%',
+            }}
+          >
             <Checkbox
               size="small"
               disabled={isDisabled}
-              checked={
-                isSelfOnly
-                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-                  : selectedSiteIds.includes(node.id)
-              }
+              checked={isChecked}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
-                if (isDisabled) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return;
-                }
-
-                const isChecked = e.target.checked;
-                const isParentNode = !!node.children?.length;
-
-                const setter = isSelfOnly
-                  ? (callback: any) =>
-                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-                        ...prevMap,
-                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-                      }))
-                  : setSelectedSiteIds;
-
-                setter((prev: any) => {
-                  let updated = [...prev];
-
-                  if (isChecked) {
-                    // tambah current
-                    if (!updated.includes(node.id)) {
-                      updated.push(node.id);
-                    }
-
-                    // child pilih -> parent ikut
-                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                      updated.push(node.parentId);
-                    }
-                  } else {
-                    // remove current
-                    updated = updated.filter((id) => id !== node.id);
-
-                    // parent dihapus -> semua child ikut hilang
-                    if (isParentNode) {
-                      const childIds = collectAllChildIds(node);
-
-                      updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
-                    }
-
-                    // child dihapus -> cek sibling
-                    if (!isParentNode && node.parentId) {
-                      const parentTree = buildSiteTreeWithParent(sites, node.parentId);
-
-                      const collectSiblingIds = (nodes: any[]): string[] =>
-                        nodes.flatMap((n) => [
-                          ...(n.children ? n.children.map((c: any) => c.id) : []),
-                        ]);
-
-                      const siblingIds = collectSiblingIds(parentTree);
-
-                      const stillHasCheckedSibling = siblingIds.some((id: string) =>
-                        updated.includes(id),
-                      );
-
-                      // kalau tidak ada child aktif -> remove parent
-                      if (!stillHasCheckedSibling) {
-                        updated = updated.filter((id) => id !== node.parentId);
-                      }
-                    }
-                  }
-
-                  // VALIDASI BERDASARKAN PARENT AKTIF
-                  const activeParentIds = isSelfOnly
-                    ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
-                    : selectedSiteParentIds;
-
-                  updated = updated.filter((id) => {
-                    return activeParentIds.some((parentId) => {
-                      if (id === parentId) return true;
-
-                      const tree = buildSiteTreeWithParent(sites, parentId);
-
-                      const collect = (nodes: any[]): string[] =>
-                        nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
-
-                      return collect(tree).includes(id);
-                    });
-                  });
-
-                  updated = [...new Set(updated)];
-
-                  onChange(index, 'answer_text', toCsv(updated));
-
-                  return updated;
-                });
+                handleSiteCheck(node, e.target.checked, index, onChange, isSelfOnly);
               }}
             />
 
@@ -3030,29 +3117,68 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (activeStep === 0) return true;
 
     const errors: Record<string, string> = {};
+    const section = sectionsData[activeStep - 1];
+    console.log('section exist', section);
 
     if (isGroup) {
-      dataVisitor.forEach((visitor, gIdx) => {
-        const page = visitor.question_page?.[activeStep - 1];
-        if (!page?.form) return;
+      // Purpose Visit (shared page)
+      if (section.name === 'Purpose Visit') {
+        const sameField = (a: any, b: any) =>
+          (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
+          (a?.remarks && b?.remarks && a.remarks === b.remarks);
 
-        const details = page.form;
-        const visibilityMap: any = getVisibilityMap(details);
+        const mergedFields = formsOf(section).map((f: any) => {
+          const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
 
-        details.forEach((item: any, fIdx: number) => {
+          return shared
+            ? {
+                ...f,
+                answer_text: shared.answer_text,
+                answer_datetime: shared.answer_datetime,
+                answer_file: shared.answer_file,
+              }
+            : f;
+        });
+
+        const visibilityMap = getVisibilityMap(mergedFields);
+
+        mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
           if (!isVisible) return;
 
-          // const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
           const fieldId = item.custom_field_id || item.id;
-          const key = `${activeStep - 1}:${gIdx}:${fieldId}`;
 
-          validateField(item, key, errors);
+          validateField(item, `${activeStep - 1}:${fieldId}`, errors);
         });
-      });
+      }
+
+      // Semua page visitor (Visitor Information, Vehicle, dll)
+      else {
+        dataVisitor.forEach((visitor, gIdx) => {
+          const page = visitor.question_page?.[activeStep - 1];
+          if (!page?.form) return;
+
+          const details = page.form;
+          const visibilityMap = getVisibilityMap(details);
+
+          details.forEach((item: any) => {
+            if (!item?.mandatory) return;
+
+            const remark = (item.remarks || '').toLowerCase();
+            const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+            if (!isVisible) return;
+
+            const fieldId = item.custom_field_id || item.id;
+
+            validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
+          });
+        });
+      }
     } else {
       const section = sectionsData[activeStep - 1];
 
@@ -3074,6 +3200,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         validateField(item, key, errors);
       });
     }
+
+    console.log('ACTIVE STEP', activeStep);
+    console.log('GROUPED', groupedPages.single_page);
+    console.log('SECTION', formsOf(sectionsData[activeStep - 1]));
+    console.log(errors);
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -3263,41 +3394,47 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   if (item.remarks === 'agenda') {
                     return (
                       <Box>
-                        <Select
-                          value={showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-
-                            if (value === 'Others') {
-                              setShowOtherAgenda((prev) => ({
-                                ...prev,
-                                [originalIndex]: true,
-                              }));
-
-                              onChange(originalIndex, 'answer_text', '');
-                            } else {
-                              setShowOtherAgenda((prev) => ({
-                                ...prev,
-                                [originalIndex]: false,
-                              }));
-
-                              onChange(originalIndex, 'answer_text', value);
+                        <FormControl fullWidth error={!!errorMessage}>
+                          <Select
+                            value={
+                              showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''
                             }
-                          }}
-                          fullWidth
-                          displayEmpty
-                        >
-                          <MenuItem value="" disabled>
-                            Select agenda
-                          </MenuItem>
+                            onChange={(e) => {
+                              const value = e.target.value;
 
-                          <MenuItem value="Meeting">Meeting</MenuItem>
-                          <MenuItem value="Presentation">Presentation</MenuItem>
-                          <MenuItem value="Visit">Visit</MenuItem>
-                          <MenuItem value="Training">Training</MenuItem>
-                          <MenuItem value="Report">Report</MenuItem>
-                          <MenuItem value="Others">Others</MenuItem>
-                        </Select>
+                              if (value === 'Others') {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: true,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', '');
+                              } else {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: false,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', value);
+                              }
+                              clearFieldError(key);
+                            }}
+                            fullWidth
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              Select agenda
+                            </MenuItem>
+
+                            <MenuItem value="Meeting">Meeting</MenuItem>
+                            <MenuItem value="Presentation">Presentation</MenuItem>
+                            <MenuItem value="Visit">Visit</MenuItem>
+                            <MenuItem value="Training">Training</MenuItem>
+                            <MenuItem value="Report">Report</MenuItem>
+                            <MenuItem value="Others">Others</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <FormHelperText sx={{ color: 'red' }}>{errorMessage}</FormHelperText>
 
                         {showOtherAgenda[originalIndex] && (
                           <CustomTextField
@@ -3323,12 +3460,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                          ? ''
-                          : item.remarks === 'organization'
-                          ? ''
-                          : item.remarks === 'indentity_id'
-                          ? ''
-                          : ''
+                            ? ''
+                            : item.remarks === 'organization'
+                              ? ''
+                              : item.remarks === 'indentity_id'
+                                ? ''
+                                : ''
                       }
                       disabled={item.remarks === 'name' && isEmployee}
                       fullWidth
@@ -3488,8 +3625,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? String(item.answer_text).split(',')
-                              : [];
+                                ? String(item.answer_text).split(',')
+                                : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3501,6 +3638,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             // update
                             onChange(originalIndex, 'answer_text', finalAnswer);
+                            if (finalAnswer.length > 0) {
+                              clearFieldError(key);
+                            }
 
                             const uniqueTrees = dedupeTree(rawTrees);
 
@@ -3922,8 +4062,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? [String(item.answer_text)]
-                              : [];
+                                ? [String(item.answer_text)]
+                                : [];
 
                             return (
                               <FormControlLabel
@@ -3991,8 +4131,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     const startIndex = details.findIndex((d) => d.id === startItem.id);
                     const endIndex = details.findIndex((d) => d.id === endItem.id);
 
-                    const startKey = `${activeStep - 1}:${startItem.id}`;
-                    const endKey = `${activeStep - 1}:${endItem.id}`;
+                    const startFieldKey =
+                      startItem.custom_field_id ||
+                      startItem.id ||
+                      `visitor_period_start-${startIndex}`;
+
+                    const endFieldKey =
+                      endItem.custom_field_id || endItem.id || `visitor_period_end-${endIndex}`;
+
+                    const startKey = `${activeStep - 1}:${startFieldKey}`;
+                    const endKey = `${activeStep - 1}:${endFieldKey}`;
 
                     const startError = fieldErrors[startKey];
                     const endError = fieldErrors[endKey];
@@ -4059,6 +4207,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     fullWidth: true,
                                     error: !!startError,
                                     helperText: startError,
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
                                   },
                                 }}
                               />
@@ -4120,6 +4274,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     fullWidth: true,
                                     error: !!endError,
                                     helperText: endError,
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
                                   },
                                 }}
                               />
@@ -5374,7 +5534,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Payload', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         await submitFn(token, parsed as any);
@@ -5998,8 +6158,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'
@@ -6042,13 +6202,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ) : (
             <>
               <Typography fontWeight={600} color="black" textAlign="center" variant="h5" mt={2}>
-                {stepLabels[activeStep]}
+                {activeStep === -1 ? 'Invitation Type' : stepLabels[activeStep]}
               </Typography>
               <MobileStepper
+                steps={stepLabels.length + (enableInvitationTypeStep ? 1 : 0)}
+                activeStep={activeStep === -1 ? 0 : activeStep + 1}
                 variant="dots"
-                steps={draggableSteps.length + 1}
                 position="static"
-                activeStep={activeStep}
                 sx={{
                   background: 'transparent',
                   justifyContent: 'center',

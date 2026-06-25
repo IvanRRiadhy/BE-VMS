@@ -29,6 +29,7 @@ import {
   IconButton,
   Switch,
   Breadcrumbs,
+  Avatar,
 } from '@mui/material';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import {
@@ -95,6 +96,7 @@ export const TableBodyContent = ({
   isHavePeriod,
   isHaveEmployee,
   isHaveGender,
+  isHaveDataImage,
   isHaveActive,
   onActiveToggle,
   isSiteSpaceType,
@@ -344,6 +346,7 @@ export const TableBodyContent = ({
                 isHaveAssign,
                 isHaveUnAssign,
                 onAssign,
+                isHaveDataImage,
                 onUnAssign,
                 isHaveActive,
                 onActiveToggle,
@@ -449,6 +452,7 @@ const TableRowItem = React.memo(
       isSiteSpaceType,
       isHaveActive,
       onActiveToggle,
+      isHaveDataImage,
       isHaveImage,
       imageFields,
       isHaveAssign,
@@ -746,6 +750,26 @@ const TableRowItem = React.memo(
                 ) : (
                   <IconUserX size={20} color="red" />
                 )
+              ) : isHaveDataImage && col === 'name' ? (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar
+                    src={
+                      // row.image
+                      //   ? row.image.startsWith('http') || row.image.startsWith('data:image')
+                      //     ? row.image
+                      //     : `${BASE_URL}${row.image}`
+                      //   : undefined
+                      undefined
+                    }
+                    sx={{ width: 32, height: 32 }}
+                  >
+                    {/* {String(row.name ?? '')
+                      .charAt(0)
+                      .toUpperCase()} */}
+                  </Avatar>
+
+                  <Typography variant="body2">{row.name ?? '-'}</Typography>
+                </Box>
               ) : col === 'visitor_status' ? (
                 <Box
                   sx={{
