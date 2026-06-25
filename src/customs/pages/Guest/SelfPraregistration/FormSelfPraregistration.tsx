@@ -111,6 +111,7 @@ const FormSelfPraregistration = ({
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
   const [vtLoading, setVtLoading] = useState(false);
   const [isSingle, setIsSingle] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isGroup, setIsGroup] = useState(false);
   const [sectionsData, setSectionsData] = useState<any[]>([]);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
@@ -124,8 +125,6 @@ const FormSelfPraregistration = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any>(null);
   const [previewSections, setPreviewSections] = useState<any>(null);
-  const [type, setType] = useState('');
-  // const [siteTree, setSiteTree] = useState<any[]>([]);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
@@ -355,6 +354,7 @@ const FormSelfPraregistration = ({
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     if (!validateOtherForm()) return;
     try {
       const tz =
@@ -508,7 +508,7 @@ const FormSelfPraregistration = ({
 
         await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
         setLoading(false);
-        showSwal('success', 'Group visitor created successfully.', 1000);
+        // showSwal('success', 'Group visitor created successfully.', 1000);
         resetGroupFormState();
         navigate('/invitation-share/success');
       } else {
@@ -553,7 +553,7 @@ const FormSelfPraregistration = ({
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-        // setErrors(fieldErrors);
+        setErrors(fieldErrors);
       } else if (err?.errors) {
         // setErrors(err.errors);
       }
@@ -695,95 +695,185 @@ const FormSelfPraregistration = ({
     if (activeStep === 0) return true;
 
     const errors: Record<string, string> = {};
-
+    const section = sectionsData[activeStep - 1];
     if (isGroup) {
-      dataVisitor.forEach((visitor, gIdx) => {
-        const page = visitor.question_page?.[activeStep - 1];
-        if (!page?.form) return;
+      // Purpose Visit (shared page)
+      if (section.name === 'Purpose Visit') {
+        const sameField = (a: any, b: any) =>
+          (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
+          (a?.remarks && b?.remarks && a.remarks === b.remarks);
 
-        const details = page.form;
-        const visibilityMap: any = getVisibilityMap(details);
+        const mergedFields = formsOf(section).map((f: any) => {
+          const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
 
-        details.forEach((item: any, fIdx: number) => {
+          return shared
+            ? {
+                ...f,
+                answer_text: shared.answer_text,
+                answer_datetime: shared.answer_datetime,
+                answer_file: shared.answer_file,
+              }
+            : f;
+        });
+
+        const visibilityMap = getVisibilityMap(mergedFields);
+
+        mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
           if (!isVisible) return;
 
-          const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+          const fieldId = item.custom_field_id || item.id;
 
-          validateField(item, key, errors);
+          validateField(item, `${activeStep - 1}:${fieldId}`, errors);
         });
-        // details.forEach((item: any, fIdx: number) => {
-        //   const remark = (item.remarks || '').toLowerCase();
+      }
 
-        //   const forceRequired =
-        //     (remark === 'host' && !invitation?.host) ||
-        //     (remark === 'site_place' && !invitation?.site_id) ||
-        //     (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-        //     (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+      // Semua page visitor (Visitor Information, Vehicle, dll)
+      else {
+        dataVisitor.forEach((visitor, gIdx) => {
+          const page = visitor.question_page?.[activeStep - 1];
+          if (!page?.form) return;
 
-        //   if (!item?.mandatory && !forceRequired) return;
+          const details = page.form;
+          const visibilityMap = getVisibilityMap(details);
 
-        //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+          details.forEach((item: any) => {
+            if (!item?.mandatory) return;
 
-        //   if (!isVisible) return;
+            const remark = (item.remarks || '').toLowerCase();
+            const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
-        //   const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+            if (!isVisible) return;
 
-        //   validateField(item, key, errors);
-        // });
-      });
+            const fieldId = item.custom_field_id || item.id;
+
+            validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
+          });
+        });
+      }
     } else {
       const section = sectionsData[activeStep - 1];
+
       const details = formsOf(section);
 
       const visibilityMap: any = getVisibilityMap(details);
 
-      // details.forEach((item: any, index: number) => {
-      //   if (!item?.mandatory) return;
-
-      //   const remark = (item.remarks || '').toLowerCase();
-      //     const forceRequired =
-      //       (remark === 'host' && !invitation?.host) ||
-      //       (remark === 'site_place' && !invitation?.site_id) ||
-      //       (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-      //       (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
-
-      //     if (!item?.mandatory && !forceRequired) return;
-      //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-      //   if (!isVisible) return;
-
-      //   // const key = `${activeStep - 1}:${index}`;
-      //   const key = `${activeStep - 1}:${item.id}`;
-
-      //   validateField(item, key, errors);
-      // });
       details.forEach((item: any, index: number) => {
+        if (!item?.mandatory) return;
+
         const remark = (item.remarks || '').toLowerCase();
-
-        const forceRequired =
-          (remark === 'host' && !invitation?.host) ||
-          (remark === 'site_place' && !invitation?.site_id) ||
-          (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-          (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
-
-        if (!item?.mandatory && !forceRequired) return;
-
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
         if (!isVisible) return;
 
-        const key = `${activeStep - 1}:${item.id}`;
+        const fieldId = item.custom_field_id || item.id;
+        const key = `${activeStep - 1}:${fieldId}`;
 
         validateField(item, key, errors);
       });
     }
+
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
+
+  // const validateCurrentStep = () => {
+  //   if (activeStep === 0) return true;
+
+  //   const errors: Record<string, string> = {};
+
+  //   if (isGroup) {
+  //     dataVisitor.forEach((visitor, gIdx) => {
+  //       const page = visitor.question_page?.[activeStep - 1];
+  //       if (!page?.form) return;
+
+  //       const details = page.form;
+  //       const visibilityMap: any = getVisibilityMap(details);
+
+  //       details.forEach((item: any, fIdx: number) => {
+  //         if (!item?.mandatory) return;
+
+  //         const remark = (item.remarks || '').toLowerCase();
+  //         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+  //         if (!isVisible) return;
+
+  //         const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+
+  //         validateField(item, key, errors);
+  //       });
+  //       // details.forEach((item: any, fIdx: number) => {
+  //       //   const remark = (item.remarks || '').toLowerCase();
+
+  //       //   const forceRequired =
+  //       //     (remark === 'host' && !invitation?.host) ||
+  //       //     (remark === 'site_place' && !invitation?.site_id) ||
+  //       //     (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+  //       //     (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+  //       //   if (!item?.mandatory && !forceRequired) return;
+
+  //       //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //       //   if (!isVisible) return;
+
+  //       //   const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+
+  //       //   validateField(item, key, errors);
+  //       // });
+  //     });
+  //   } else {
+  //     const section = sectionsData[activeStep - 1];
+  //     const details = formsOf(section);
+
+  //     const visibilityMap: any = getVisibilityMap(details);
+
+  //     // details.forEach((item: any, index: number) => {
+  //     //   if (!item?.mandatory) return;
+
+  //     //   const remark = (item.remarks || '').toLowerCase();
+  //     //     const forceRequired =
+  //     //       (remark === 'host' && !invitation?.host) ||
+  //     //       (remark === 'site_place' && !invitation?.site_id) ||
+  //     //       (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+  //     //       (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+  //     //     if (!item?.mandatory && !forceRequired) return;
+  //     //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //     //   if (!isVisible) return;
+
+  //     //   // const key = `${activeStep - 1}:${index}`;
+  //     //   const key = `${activeStep - 1}:${item.id}`;
+
+  //     //   validateField(item, key, errors);
+  //     // });
+  //     details.forEach((item: any, index: number) => {
+  //       const remark = (item.remarks || '').toLowerCase();
+
+  //       const forceRequired =
+  //         (remark === 'host' && !invitation?.host) ||
+  //         (remark === 'site_place' && !invitation?.site_id) ||
+  //         (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
+  //         (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
+
+  //       if (!item?.mandatory && !forceRequired) return;
+
+  //       const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //       if (!isVisible) return;
+
+  //       const key = `${activeStep - 1}:${item.id}`;
+
+  //       validateField(item, key, errors);
+  //     });
+  //   }
+  //   setFieldErrors(errors);
+  //   return Object.keys(errors).length === 0;
+  // };
 
   const handleSaveGroup = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -2462,12 +2552,15 @@ const FormSelfPraregistration = ({
                                           : shared
                                             ? { ...field, ...pickAns(shared) }
                                             : field;
+                                        const originalIndex = page?.form?.findIndex(
+                                          (f: any) => f.custom_field_id === field.custom_field_id,
+                                        );
 
                                         return (
                                           <Box key={fIdx} sx={{ mb: 2 }}>
                                             {renderFieldInput(
                                               proxyField,
-                                              fIdx,
+                                              originalIndex || fIdx,
                                               (idx: any, fieldKey: any, value: any) => {
                                                 setDataVisitor((prev) => {
                                                   const next = [...prev];
@@ -2674,6 +2767,26 @@ const FormSelfPraregistration = ({
                         ),
                       }
                     : f;
+                });
+
+                const visibilityMap = getVisibilityMap(mergedVisitForm);
+
+                mergedVisitForm.forEach((item: any) => {
+                  if (!item?.mandatory) return;
+
+                  const remark = (item.remarks || '').toLowerCase();
+                  const isVisible = visibilityMap.hasOwnProperty(remark)
+                    ? visibilityMap[remark]
+                    : true;
+
+                  if (!isVisible) return;
+
+                  const fieldId = item.custom_field_id || item.id;
+
+                  // key HARUS sama dengan renderDetailRows
+                  const key = `${activeStep - 1}:${fieldId}`;
+
+                  validateField(item, key, errors);
                 });
                 return (
                   <Table>
@@ -2950,7 +3063,7 @@ const FormSelfPraregistration = ({
             },
           ]),
         };
-    return [vi, pv];
+    return [vi,pv];
   };
 
   const isPurposeVisit = (section: any) => {

@@ -3316,8 +3316,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
 
-      
-
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'visitor_period_end') {
         return null;
@@ -5396,8 +5394,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    if (!validateCurrentStep()) {
+      return;
+    }
     if (!token) return;
-
     try {
       setLoading(true);
       const tz =

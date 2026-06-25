@@ -4803,6 +4803,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    if (!validateCurrentStep()) {
+      return;
+    }
+
     if (!token) return;
 
     try {
@@ -4987,9 +4992,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         clearAnswerFiles();
       }
       // setTimeout(() => {
-        setLoading(false);
-        setActiveStep(0);
-        onSuccess?.();
+      setLoading(false);
+      setActiveStep(0);
+      onSuccess?.();
       // }, 700);
     } catch (err: any) {
       setLoading(false);

@@ -5084,8 +5084,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    if (!validateCurrentStep()) {
+      return;
+    }
     if (!token) return;
-
     try {
       setLoading(true);
 
@@ -5317,10 +5319,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         }
       }
 
-      setTimeout(() => {
-        setLoading(false);
-        onSuccess?.();
-      }, 500);
+      // setTimeout(() => {
+      setLoading(false);
+      onSuccess?.();
+      // }, 500);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -5329,9 +5331,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       showSwal(
         'error',
-        err?.response.data.msg ?? err.response.data.message ?? 'Failed to create visitor.',
+        err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
+          err.response?.data?.message ||
+          'Failed to create visitor.',
       );
-      // toast('Failed to create visitor.', 'error');
 
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
@@ -6161,7 +6164,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </ScanContainer>
         </DialogContent>
       </Dialog>
-{/* 
+      {/* 
       <VisitorSelectDialog
         open={openVisitorDialog}
         isEmployeeMode={isEmployeeMode}

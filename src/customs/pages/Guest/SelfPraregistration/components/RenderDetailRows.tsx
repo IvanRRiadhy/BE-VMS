@@ -216,10 +216,6 @@ const RenderDetailRows = ({
       e.target.value = '';
     };
 
-  const handleUploadMethodChange = (ukey: string, v: string) => {
-    setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
-  };
-
   const collectAllChildIds = (node: any): string[] => {
     if (!node.children) return [];
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
@@ -227,73 +223,149 @@ const RenderDetailRows = ({
 
   const toCsv = (ids: string[]) => ids.join(',');
 
+  const handleSiteCheck = (
+    node: any,
+    isChecked: boolean,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const isParentNode = !!node.children?.length;
+
+    const setter = setSelectedSiteIds;
+
+    setter((prev: string[]) => {
+      let updated = [...prev];
+
+      if (isChecked) {
+        // tambah current
+        if (!updated.includes(node.id)) {
+          updated.push(node.id);
+        }
+
+        // child pilih -> parent ikut
+        if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+          updated.push(node.parentId);
+        }
+      } else {
+        // remove current
+        updated = updated.filter((id) => id !== node.id);
+
+        // parent dihapus -> semua child ikut hilang
+        if (isParentNode) {
+          const childIds = collectAllChildIds(node);
+
+          updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+        }
+
+        // child dihapus -> cek sibling
+        if (!isParentNode && node.parentId) {
+          const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+          const collectSiblingIds = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => (n.children ? n.children.map((c: any) => c.id) : []));
+
+          const siblingIds = collectSiblingIds(parentTree);
+
+          const stillHasCheckedSibling = siblingIds.some((id: string) => updated.includes(id));
+
+          // kalau tidak ada child aktif -> remove parent
+          if (!stillHasCheckedSibling) {
+            updated = updated.filter((id) => id !== node.parentId);
+          }
+        }
+      }
+
+      // VALIDASI BERDASARKAN PARENT AKTIF
+      const activeParentIds = selectedSiteParentIds;
+
+      updated = updated.filter((id) => {
+        return activeParentIds.some((parentId) => {
+          if (id === parentId) return true;
+
+          const tree = buildSiteTreeWithParent(sites, parentId);
+
+          const collect = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+          return collect(tree).includes(id);
+        });
+      });
+
+      updated = [...new Set(updated)];
+
+      onChange(index, 'answer_text', toCsv(updated));
+
+      return updated;
+    });
+  };
+
   const renderTree = (
     node: any,
     index: number,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
   ) => {
-    const checked = selectedSiteIds.includes(node.id);
+    const originalSite = sites.find(
+      (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+    );
+
+    const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+
+    const isDisabled = !canVisited;
+
+    const isChecked = selectedSiteIds.includes(node.id);
 
     return (
       <TreeItem
         key={`${node.parentId ?? 'root'}-${node.id}`}
         itemId={`${node.parentId ?? 'root'}-${node.id}`}
         label={
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              if (isDisabled) return;
+
+              handleSiteCheck(node, !isChecked, index, onChange, isSelfOnly);
+            }}
+            sx={{
+              cursor: isDisabled ? 'default' : 'pointer',
+              width: '100%',
+            }}
+          >
             <Checkbox
               size="small"
-              checked={checked}
+              disabled={isDisabled}
+              checked={isChecked}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
-                const isChecked = e.target.checked;
-                const isParentNode = !!node.children?.length;
-                setSelectedSiteIds((prev) => {
-                  let updated = [...prev];
-
-                  if (isChecked) {
-                    if (!updated.includes(node.id)) {
-                      updated.push(node.id);
-                    }
-                    // if (isParentNode) {
-                    //   const childIds = collectAllChildIds(node);
-                    //   childIds.forEach((cid) => {
-                    //     if (!updated.includes(cid)) {
-                    //       updated.push(cid);
-                    //     }
-                    //   });
-                    // }
-                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                      updated.push(node.parentId);
-                    }
-                  } else {
-                    updated = updated.filter((id) => id !== node.id);
-                    if (isParentNode) {
-                      const childIds = collectAllChildIds(node);
-                      updated = updated.filter((id) => !childIds.includes(id));
-                    }
-                  }
-
-                  onChange(index, 'answer_text', toCsv(updated));
-                  // console.log('[TREE CHECK]', {
-                  //   clicked: node.id,
-                  //   isChecked,
-                  //   result: updated,
-                  // });
-
-                  return updated;
-                });
+                handleSiteCheck(node, e.target.checked, index, onChange, isSelfOnly);
               }}
             />
-            <Typography variant="body2">{node.name}</Typography>
+
+            <Box display="flex" flexDirection="column">
+              <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+                {node.name}
+              </Typography>
+
+              {!canVisited && (
+                <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                  This site cannot be visited.
+                </Typography>
+              )}
+            </Box>
           </Box>
         }
       >
-        {node.children?.map((child: any) => renderTree(child, index, onChange))}
+        {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
       </TreeItem>
     );
   };
-
   const compressImage = async (file: File | Blob) => {
     const compressedFile = await imageCompression(file as File, {
       maxSizeMB: 1,
@@ -410,11 +482,12 @@ const RenderDetailRows = ({
   const visibilityMap: any = getVisibilityMap(details);
 
   const filteredDetails = details.filter((item, i) => {
+    const originalIndex = details.findIndex((d) => d.id === item.id);
     const remark = (item.remarks || '').toLowerCase();
     const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
     if (!visible && item.answer_text) {
-      onChange(i, 'answer_text', '');
+      onChange(originalIndex, 'answer_text', '');
     }
 
     return visible;
@@ -423,9 +496,11 @@ const RenderDetailRows = ({
   return (
     <>
       {filteredDetails.map((item, index) => {
-        const key = `${activeStep - 1}:${item.id}`;
+        // const key = `${activeStep - 1}:${item.id}`;
         const originalIndex = details.findIndex((d) => d.id === item.id);
         const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
+
+        const key = `${activeStep - 1}:${fieldKey}`;
         const previewSrc = getPreviewSrc(key, item.answer_file);
         const shownName = uploadNames[key] || fileNameFromAnswer(item.answer_file);
         const errorMessage = fieldErrors[key];
@@ -545,7 +620,7 @@ const RenderDetailRows = ({
                         size="small"
                         value={item.answer_text || ''}
                         onChange={(e) => {
-                          onChange(index, 'answer_text', e.target.value);
+                          onChange(originalIndex, 'answer_text', e.target.value);
                           if (e.target.value) clearFieldError(key);
                         }}
                         placeholder={
@@ -571,7 +646,7 @@ const RenderDetailRows = ({
                         size="small"
                         value={item.answer_text}
                         onChange={(e) => {
-                          onChange(index, 'answer_text', e.target.value);
+                          onChange(originalIndex, 'answer_text', e.target.value);
                           if (e.target.value) clearFieldError(key);
                         }}
                         placeholder="Enter number"
@@ -587,7 +662,7 @@ const RenderDetailRows = ({
                         size="small"
                         value={item.answer_text}
                         onChange={(e) => {
-                          onChange(index, 'answer_text', e.target.value);
+                          onChange(originalIndex, 'answer_text', e.target.value);
                           if (e.target.value) clearFieldError(key);
                         }}
                         placeholder={item.remarks === 'email' ? '' : ''}
@@ -658,7 +733,7 @@ const RenderDetailRows = ({
                           getOptionLabel={(option) => option.name}
                           value={roleOptions.find((opt) => opt.value === item.answer_text) || null}
                           onChange={(_, newValue) => {
-                            onChange(index, 'answer_text', newValue?.value ?? '');
+                            onChange(originalIndex, 'answer_text', newValue?.value ?? '');
 
                             if (newValue) {
                               clearFieldError(key);
@@ -686,13 +761,13 @@ const RenderDetailRows = ({
                             options={options}
                             getOptionLabel={(option) => option.name}
                             getOptionDisabled={(option) => option.disabled || false}
-                            inputValue={inputValues[index] || ''}
+                            inputValue={inputValues[originalIndex] || ''}
                             onInputChange={(_, newInputValue, reason) => {
                               if (reason !== 'input') return;
 
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: newInputValue,
+                                [originalIndex]: newInputValue,
                               }));
                             }}
                             // filterOptions={(opts, state) => {
@@ -702,7 +777,7 @@ const RenderDetailRows = ({
                             //   );
                             // }}
                             noOptionsText={
-                              (inputValues[index] || '').length < 3
+                              (inputValues[originalIndex] || '').length < 3
                                 ? 'Enter at least 3 characters to search'
                                 : 'Not found'
                             }
@@ -720,10 +795,11 @@ const RenderDetailRows = ({
 
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: '',
+                                [originalIndex]: '',
                               }));
 
                               setSiteTree(trees);
+                              clearFieldError(key);
                             }}
                             renderInput={(params) => (
                               <CustomTextField
@@ -737,7 +813,9 @@ const RenderDetailRows = ({
                           />
 
                           <SimpleTreeView>
-                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                            {siteTree.map((node) =>
+                              renderTree(node, originalIndex, handleSitePlaceChange),
+                            )}
                           </SimpleTreeView>
                         </>
                       );
@@ -759,7 +837,7 @@ const RenderDetailRows = ({
                         noOptionsText="Enter at least 3 characters to search"
                         onChange={(_, newValue) => {
                           const selectedValue = newValue ? newValue.value : '';
-                          onChange(index, 'answer_text', selectedValue);
+                          onChange(originalIndex, 'answer_text', selectedValue);
                           if (selectedValue) clearFieldError(key);
                         }}
                         renderInput={(params) => (
@@ -806,7 +884,7 @@ const RenderDetailRows = ({
                           <RadioGroup
                             value={String(item.answer_text)}
                             onChange={(e) => {
-                              onChange(index, 'answer_text', e.target.value);
+                              onChange(originalIndex, 'answer_text', e.target.value);
                               if (e.target.value) clearFieldError(key);
                             }}
                             sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
@@ -862,7 +940,7 @@ const RenderDetailRows = ({
                                         const newValue = e.target.checked
                                           ? [...answerArray, val]
                                           : answerArray.filter((v: string) => v !== val);
-                                        onChange(index, 'answer_text', newValue);
+                                        onChange(originalIndex, 'answer_text', newValue);
                                         if (newValue.length > 0) {
                                           clearFieldError(key);
                                         }
@@ -890,7 +968,7 @@ const RenderDetailRows = ({
                         type="time"
                         size="small"
                         value={item.answer_datetime}
-                        onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
+                        onChange={(e) => onChange(originalIndex, 'answer_datetime', e.target.value)}
                         fullWidth
                         error={!!errorMessage}
                         helperText={errorMessage}
@@ -914,8 +992,11 @@ const RenderDetailRows = ({
                       const startIndex = details.findIndex((d) => d.id === startItem.id);
                       const endIndex = details.findIndex((d) => d.id === endItem.id);
 
-                      const startKey = `${activeStep - 1}:${startItem.id}`;
-                      const endKey = `${activeStep - 1}:${endItem.id}`;
+                      const startFieldId = startItem.custom_field_id || startItem.id;
+                      const endFieldId = endItem.custom_field_id || endItem.id;
+
+                      const startKey = `${activeStep - 1}:${startFieldId}`;
+                      const endKey = `${activeStep - 1}:${endFieldId}`;
 
                       const startError = fieldErrors[startKey];
                       const endError = fieldErrors[endKey];
@@ -1097,7 +1178,7 @@ const RenderDetailRows = ({
                           onChange={(newValue) => {
                             if (newValue) {
                               const utc = newValue.utc().format();
-                              onChange(index, 'answer_datetime', utc);
+                              onChange(originalIndex, 'answer_datetime', utc);
                               clearFieldError(key);
                             }
                           }}
@@ -1495,7 +1576,7 @@ const RenderDetailRows = ({
                               handleFileChangeForField(
                                 e as React.ChangeEvent<HTMLInputElement>,
                                 (url) => {
-                                  onChange(index, 'answer_file', url);
+                                  onChange(originalIndex, 'answer_file', url);
                                   if (url) clearFieldError(key);
                                 },
                                 key,
@@ -1534,7 +1615,7 @@ const RenderDetailRows = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -1664,7 +1745,7 @@ const RenderDetailRows = ({
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url),
+                                    (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   )
                                 }
@@ -1678,7 +1759,7 @@ const RenderDetailRows = ({
                                 variant="contained"
                                 onClick={() =>
                                   handleCaptureForField((url) => {
-                                    onChange(index, 'answer_file', url);
+                                    onChange(originalIndex, 'answer_file', url);
                                     if (url) clearFieldError(key);
                                   }, key)
                                 }
@@ -1761,7 +1842,7 @@ const RenderDetailRows = ({
                                     onClick={() =>
                                       handleRemoveFileForField(
                                         (item as any).answer_file,
-                                        (url) => onChange(index, 'answer_file', url),
+                                        (url) => onChange(originalIndex, 'answer_file', url),
                                         key,
                                       )
                                     }
@@ -1873,7 +1954,7 @@ const RenderDetailRows = ({
                               handleFileChangeForField(
                                 e as React.ChangeEvent<HTMLInputElement>,
                                 (url) => {
-                                  onChange(index, 'answer_file', url);
+                                  onChange(originalIndex, 'answer_file', url);
                                   if (url) clearFieldError(key);
                                 },
                                 key,
@@ -1912,7 +1993,7 @@ const RenderDetailRows = ({
                                       e.stopPropagation();
                                       handleRemoveFileForField(
                                         (item as any).answer_file,
-                                        (url) => onChange(index, 'answer_file', url),
+                                        (url) => onChange(originalIndex, 'answer_file', url),
                                         key,
                                       );
                                     }}
@@ -2052,7 +2133,7 @@ const RenderDetailRows = ({
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url),
+                                    (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   )
                                 }
@@ -2067,7 +2148,7 @@ const RenderDetailRows = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleCaptureForField(
-                                    (url) => onChange(index, 'answer_file', url),
+                                    (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   );
                                 }}
@@ -2096,7 +2177,9 @@ const RenderDetailRows = ({
                       <TextField
                         size="small"
                         value={item.long_display_text}
-                        onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                        onChange={(e) =>
+                          onChange(originalIndex, 'long_display_text', e.target.value)
+                        }
                         placeholder="Enter value"
                         fullWidth
                       />
