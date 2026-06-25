@@ -15,6 +15,7 @@ type Props = {
   // customField?: any;
   vtLoading?: boolean;
   search?: any;
+  isLoadingEmployee: any;
 };
 
 const Praregist: React.FC<Props> = (props) => {

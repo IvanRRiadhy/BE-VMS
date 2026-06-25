@@ -723,9 +723,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         if (!page?.form) return prev;
 
-        next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
-          resetKeys.includes(item.remarks) ? { ...item, answer_text: '' } : item,
-        );
+        page.form = page.form.map((item: any) => {
+          if (resetKeys.includes(item.remarks)) {
+            clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+            return {
+              ...item,
+              answer_text: '',
+            };
+          }
+
+          return item;
+        });
 
         return next;
       });
@@ -743,24 +752,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       name: v.name,
       email: v.email,
       phone: v.phone,
-      // organization: typeof v.organization === 'object' ? v.Organization.name : v.organization,
+      // organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
       organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
       indentity_id: v.identity_id,
       gender: genderValue,
       employee: v.id,
     };
-
     setDataVisitor((prev) => {
       const next = [...prev];
       const page = next[gIdx]?.question_page?.[activeStep - 1];
 
       if (!page?.form) return prev;
 
-      next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
-        mapping[item.remarks] !== undefined
-          ? { ...item, answer_text: mapping[item.remarks]! }
-          : item,
-      );
+      page.form = page.form.map((item: any) => {
+        if (mapping[item.remarks] !== undefined) {
+          clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+          return {
+            ...item,
+            answer_text: mapping[item.remarks]!,
+          };
+        }
+
+        return item;
+      });
 
       return next;
     });
@@ -1868,9 +1883,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
     const errorMessage = fieldErrors[errorKey];
 
-    // if ((field.remarks || '').toLowerCase() === 'employee') {
-    //   return null;
-    // }
 
     let shouldDisable = false;
 
@@ -3118,8 +3130,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const errors: Record<string, string> = {};
     const section = sectionsData[activeStep - 1];
-    console.log('section exist', section);
-
     if (isGroup) {
       // Purpose Visit (shared page)
       if (section.name === 'Purpose Visit') {
@@ -3200,11 +3210,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         validateField(item, key, errors);
       });
     }
-
-    console.log('ACTIVE STEP', activeStep);
-    console.log('GROUPED', groupedPages.single_page);
-    console.log('SECTION', formsOf(sectionsData[activeStep - 1]));
-    console.log(errors);
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -6202,11 +6207,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ) : (
             <>
               <Typography fontWeight={600} color="black" textAlign="center" variant="h5" mt={2}>
-                {activeStep === -1 ? 'Invitation Type' : stepLabels[activeStep]}
+                {enableInvitationTypeStep && activeStep === -1
+                  ? 'Invitation Type'
+                  : stepLabels[Math.max(activeStep, 0)]}
               </Typography>
               <MobileStepper
                 steps={stepLabels.length + (enableInvitationTypeStep ? 1 : 0)}
-                activeStep={activeStep === -1 ? 0 : activeStep + 1}
+                activeStep={
+                  enableInvitationTypeStep ? (activeStep === -1 ? 0 : activeStep + 1) : activeStep
+                }
                 variant="dots"
                 position="static"
                 sx={{

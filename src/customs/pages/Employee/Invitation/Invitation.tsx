@@ -41,6 +41,7 @@ import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import {
   getAllVisitorPagination,
   getEmployeeById,
+  getFormEmployee,
   getVisitorTransactionByIds,
   getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
@@ -107,7 +108,6 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
@@ -466,7 +466,7 @@ const Content = () => {
   useEffect(() => {
     if (!token) return;
     fetchData(false);
-  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
+  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
 
   useEffect(() => {
     if (!observerRef.current) return;
@@ -618,7 +618,8 @@ const Content = () => {
     setFormDataAddVisitor(freshForm);
     setSelectedSite(null);
     setPendingEditId(null);
-    setOpenDialog(true);
+    // setOpenDialog(true);
+    setOpenPreRegistration(true);
   };
 
   const handleSuccess = () => {
@@ -628,6 +629,7 @@ const Content = () => {
       registered_site: '',
     }));
     setRefreshTrigger((prev) => prev + 1);
+    queryClient.invalidateQueries({ queryKey: ['visitors'] });
     handleCloseDialog();
   };
 
@@ -730,11 +732,12 @@ const Content = () => {
     fetchSecondaryData();
   }, [token]);
 
-  const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token, {
-    search: debounceSearch,
-    start: 0,
-    length: 10,
-  });
+  const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
+    useInvitationVisitorEmployee(token, {
+      search: debounceSearch,
+      start: 0,
+      length: 10,
+    });
 
   const { visitorType } = useInvitationVisitorType(token);
 
@@ -934,6 +937,7 @@ const Content = () => {
                   if (index === 1) {
                     setFlowTarget('preReg');
                     setOpenPreRegistration(true);
+                    // handleAdd();
                   } else if (index === 2) {
                     setOpenDetailShareLink(true);
                   } else if (index === 3) {
@@ -1260,6 +1264,7 @@ const Content = () => {
             allVisitorEmployee={allVisitorEmployee}
             vtLoading={vtLoading}
             search={setSearchHost}
+            isLoadingEmployee={isLoadingEmployee}
           />
         </DialogContent>
       </Dialog>
