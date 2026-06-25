@@ -111,6 +111,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
   const showLabel = opts?.showLabel ?? true;
   const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
   const errorMessage = fieldErrors[errorKey];
+  let shouldDisable = false;
   const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
     onChange(idx, fieldKey, value);
   };
@@ -129,7 +130,14 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
       (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
     );
 
+    if ((field.remarks || '').toLowerCase() === 'employee') {
+      return null;
+    }
+
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+    const employeeSelected = !!opts?.details?.find(
+      (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
+    );
     switch (field.field_type) {
       case 0: // Text
         return (
@@ -143,6 +151,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             sx={{ minWidth: 160, maxWidth: '100%' }}
             error={!!errorMessage}
             helperText={errorMessage}
+            disabled={
+              shouldDisable || ((field.remarks || '').toLowerCase() === 'name' && employeeSelected)
+            }
           />
         );
 
@@ -528,7 +539,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                     const isYes = value === 'true';
                     setIsEmployeeMode(isYes);
                     setActiveGroupIdx(groupIndex);
-                    setOpenVisitorDialog(true);
+                    // setOpenVisitorDialog(true);
                   }}
                   sx={{
                     justifyContent: 'center',
@@ -557,7 +568,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
         if (field.remarks === 'is_driving') {
           return (
             <>
-              <FormControl error={!!errorMessage} sx={{minWidth: '150px'}}>
+              <FormControl error={!!errorMessage} sx={{ minWidth: '150px' }}>
                 <RadioGroup
                   row
                   value={field.answer_text || ''}

@@ -9,7 +9,6 @@ import {
   getVisitorInvitation,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
 
 type Visitor = {
   id: string;
@@ -196,11 +195,6 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
           ...base,
           zIndex: 1300,
         }),
-        // overflow hidden
-        // menu: (base) => ({
-        //   ...base,
-        //   overflow: 'hidden',
-        // }),
         
       }}
     />

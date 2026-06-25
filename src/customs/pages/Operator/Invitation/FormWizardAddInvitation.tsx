@@ -15,6 +15,8 @@ type Props = {
   employee?: any;
   allVisitorEmployee?: any;
   enableInvitationTypeStep?: boolean;
+  search?: any;
+  isLoadingEmployee?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

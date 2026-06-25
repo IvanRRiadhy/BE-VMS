@@ -227,8 +227,6 @@ const Content = () => {
     end_date: '',
   });
 
-  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
-
   const queryClient = useQueryClient();
   const [sortDir, setSortDir] = useState<string>('desc');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -240,160 +238,6 @@ const Content = () => {
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef<HTMLDivElement>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-
-  // const {
-  //   data: allVisitorData,
-  //   isLoading: isLoading,
-  //   isFetching: isFetching,
-  // } = useQuery({
-  //   queryKey: ['visitors', page, rowsPerPage, search, appliedFilters, sortDir],
-  //   queryFn: async () => {
-  //     const statusParam =
-  //       appliedFilters.status && appliedFilters.status !== 'All'
-  //         ? appliedFilters.status
-  //         : undefined;
-
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-  //     const start = page * rowsPerPage;
-
-  //     // const res = await getAllVisitorPagination(
-  //     //   token as string,
-  //     //   0,
-  //     //   -1,
-  //     //   search || undefined,
-  //     //   appliedFilters.start_date
-  //     //     ? dayjs(appliedFilters.start_date).utc().toISOString()
-  //     //     : undefined,
-  //     //   appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-  //     //   statusParam,
-  //     //   appliedFilters.data_filter,
-  //     //   appliedFilters.site_id || undefined,
-  //     //   appliedFilters.visitor_role || undefined,
-  //     //   isEmergencyParam,
-  //     //   isBlockParam,
-  //     //   appliedFilters.host_id || undefined,
-  //     // );
-
-  //     const res = await getVisitorTransactionPagination(
-  //       token as string,
-  //       start,
-  //       rowsPerPage,
-  //       sortDir,
-  //       search || undefined,
-  //       appliedFilters.start_date || undefined,
-  //       appliedFilters.end_date || undefined,
-  //       appliedFilters.visitor_status || undefined,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.transaction_status || undefined,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-
-  //     setTotalRecords(res.RecordsTotal);
-  //     setTotalFilteredRecords(res.RecordsFiltered);
-
-  //     return res.collection;
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 1000 * 60 * 1,
-  // });
-
-  // const [totalRecords, setTotalRecords] = useState(0);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [openGroup, setOpenGroup] = useState(true);
-
-  // const processedData = useMemo(() => {
-  //   if (!allVisitorData) return [];
-
-  //   return allVisitorData.map((item: any) => {
-  //     // const isExpired =
-  //     //   item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
-
-  //     return {
-  //       id: item.id,
-  //       visitor_type: item.visitor_type_name || '-',
-  //       agenda: item.agenda || '-',
-  //       visitor_period_start: item.visitor_period_start || '-',
-  //       visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-  //       // invitation_created_at: item.invitation_created_at,
-  //       host: item.host_name ?? '-',
-  //       // visitor_status: item.transaction_status || '-',
-  //     };
-  //   });
-  // }, [allVisitorData]);
-
-  // const visitorDataAll = useMemo(
-  //   () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
-  //   [processedData, rowsPerPage, page],
-  // );
-
-  // const fetchData = async () => {
-  //   if (!token) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const start = page * rowsPerPage;
-
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-  //     const res = await getVisitorTransactionPagination(
-  //       token,
-  //       start,
-  //       rowsPerPage,
-  //       sortDir,
-  //       debouncedSearchAgenda || undefined,
-  //       appliedFilters.start_date || undefined,
-  //       appliedFilters.end_date || undefined,
-  //       appliedFilters.visitor_status || undefined,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.transaction_status || undefined,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-
-  //     setTableRowVisitors(
-  //       res.collection.map((item: any) => ({
-  //         id: item.id,
-  //         agenda: item.agenda || '-',
-  //         visitor_type: item.visitor_type_name || '-',
-  //         host_name: item.host_name || '-',
-  //         visitor_period_start: formatDateTime(item.visitor_period_start),
-  //         visitor_period_end: formatDateTime(item.visitor_period_end),
-  //         invited_by: item.invited_by || '-',
-  //       })),
-  //     );
-
-  //     setTotalRecords(res.RecordsTotal);
-  //     setTotalFilteredRecords(res.RecordsFiltered);
-  //   } catch (err) {
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   fetchData();
-  // }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   const fetchData = async (append = false) => {
     if (!token) return;
@@ -936,8 +780,7 @@ const Content = () => {
                 onImageClick={(_, index) => {
                   if (index === 1) {
                     setFlowTarget('preReg');
-                    setOpenPreRegistration(true);
-                    // handleAdd();
+                    handleAdd();
                   } else if (index === 2) {
                     setOpenDetailShareLink(true);
                   } else if (index === 3) {

@@ -41,6 +41,8 @@ import {
   useMediaQuery,
   MobileStepper,
   MenuItem,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -129,6 +131,8 @@ interface FormVisitorTypeProps {
   allVisitorEmployee?: any;
   vtLoading?: boolean;
   enableInvitationTypeStep?: boolean;
+  search?: any;
+  isLoadingEmployee?: any;
 }
 
 type GroupedPages = {
@@ -220,6 +224,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   allVisitorEmployee,
   vtLoading,
   enableInvitationTypeStep,
+  search,
+  isLoadingEmployee,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('md'));
@@ -261,14 +267,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [openGroupPreview, setOpenGroupPreview] = useState(false);
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [isEmployeeMode, setIsEmployeeMode] = useState(false);
-  const [type, setType] = useState('');
   const [selfOnlyOpen, setSelfOnlyOpen] = useState(false);
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
     Record<number, string[]>
   >({});
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-
+  const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
       const next = [...prev];
@@ -992,9 +1000,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         if (!page?.form) return prev;
 
-        next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
-          resetKeys.includes(item.remarks) ? { ...item, answer_text: '' } : item,
-        );
+        page.form = page.form.map((item: any) => {
+          if (resetKeys.includes(item.remarks)) {
+            clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+            return {
+              ...item,
+              answer_text: '',
+            };
+          }
+
+          return item;
+        });
 
         return next;
       });
@@ -1012,23 +1029,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       name: v.name,
       email: v.email,
       phone: v.phone,
-      organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+      // organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+      organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
       indentity_id: v.identity_id,
       gender: genderValue,
       employee: v.id,
     };
-
     setDataVisitor((prev) => {
       const next = [...prev];
       const page = next[gIdx]?.question_page?.[activeStep - 1];
 
       if (!page?.form) return prev;
 
-      next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
-        mapping[item.remarks] !== undefined
-          ? { ...item, answer_text: mapping[item.remarks]! }
-          : item,
-      );
+      page.form = page.form.map((item: any) => {
+        if (mapping[item.remarks] !== undefined) {
+          clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+          return {
+            ...item,
+            answer_text: mapping[item.remarks]!,
+          };
+        }
+
+        return item;
+      });
 
       return next;
     });
@@ -1057,7 +1081,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleSelectDataVisitor = (v: any | null, isEmployee: boolean = false) => {
     const currentStep = activeStep - 1;
 
-    // Field yang perlu di-reset jika value null
     const resetKeys = [
       'name',
       'email',
@@ -1068,7 +1091,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       'employee',
     ];
 
-    // Jika tidak ada data yang dipilih, reset field terkait
     if (!v) {
       setSectionsData((prev) =>
         prev.map((section, sectionIndex) =>
@@ -1077,8 +1099,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : updateSectionForm(section, (arr) =>
                 arr.map((item) => {
                   if (resetKeys.includes(item.remarks)) {
-                    const errorKey = `${currentStep}:${item.id}`;
-                    clearFieldError(errorKey);
+                    const fieldKey = item.custom_field_id || item.id;
+                    const errorKey = `${currentStep}:${fieldKey}`;
 
                     return {
                       ...item,
@@ -1094,11 +1116,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       return;
     }
+
     let genderValue: string | undefined;
 
     if (v.gender === 'Male') genderValue = '1';
     else if (v.gender === 'Female') genderValue = '0';
     else if (v.gender === 'Prefer not to say') genderValue = '2';
+
     const mapping: Record<string, string | undefined> = {
       name: v.name,
       email: v.email,
@@ -1109,7 +1133,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       employee: v.id,
     };
 
-    // Update form berdasarkan mapping
     setSectionsData((prev) =>
       prev.map((section, sectionIndex) =>
         sectionIndex !== currentStep
@@ -1117,7 +1140,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           : updateSectionForm(section, (arr) =>
               arr.map((item) => {
                 if (mapping[item.remarks] !== undefined) {
-                  const errorKey = `${currentStep}:${item.id}`;
+                  const fieldKey = item.custom_field_id || item.id;
+                  const errorKey = `${currentStep}:${fieldKey}`;
+
                   clearFieldError(errorKey);
 
                   return {
@@ -1735,9 +1760,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             {(() => {
               const section = sectionsData[activeStep - 1];
               const sectionType = getSectionType(section);
-              const firstPage = dataVisitor[0]?.question_page?.[activeStep - 1];
-              const showEmployeeSearchHeader = isEmployeeSelected(firstPage?.form || []);
-              const isEmployee = isEmployeeSection(section);
+              // const firstPage = dataVisitor[0]?.question_page?.[activeStep - 1];
+              // const showEmployeeSearchHeader = isEmployeeSelected(firstPage?.form || []);
+              // const isEmployee = isEmployeeSection(section);
               if (sectionType === 'visitor_information_group') {
                 return (
                   <Grid>
@@ -1749,6 +1774,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               dataVisitor.map((group, gIdx) => {
                                 const page = group.question_page?.[activeStep - 1];
                                 if (!page) return null;
+                                const isEmployee =
+                                  dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
+                                    (f) => f.remarks === 'is_employee',
+                                  )?.answer_text === 'true';
 
                                 return (
                                   <Accordion key={gIdx} sx={{ mb: 1 }}>
@@ -1788,6 +1817,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <Box sx={{ width: '100%', mb: 2 }}>
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
+                                          key={String(isEmployee)}
                                           token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
@@ -1795,15 +1825,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       </Box>
 
                                       {page?.form
-                                        ?.filter((field: any) => {
-                                          if (
-                                            field.remarks === 'employee' &&
-                                            !showEmployeeSearchHeader
-                                          )
-                                            return false;
+                                        // ?.filter((field: any) => {
+                                        //   if (
+                                        //     field.remarks === 'employee' &&
+                                        //     !showEmployeeSearchHeader
+                                        //   )
+                                        //     return false;
 
-                                          return true;
-                                        })
+                                        //   return true;
+                                        // })
+                                        ?.filter(
+                                          (field: any) =>
+                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                        )
                                         .map((field: any, fIdx: any) => {
                                           const matchedKey = Object.keys(
                                             groupedPages.batch_page || {},
@@ -1840,6 +1874,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             });
                                           };
 
+                                          const originalIndex = page?.form?.findIndex(
+                                            (f: any) => f.custom_field_id === field.custom_field_id,
+                                          );
+
                                           return (
                                             <Box key={fIdx} sx={{ mb: 2 }}>
                                               <CustomFormLabel required={field.mandatory === true}>
@@ -1847,7 +1885,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               </CustomFormLabel>
                                               <RenderFieldGroup
                                                 field={proxyField}
-                                                index={fIdx}
+                                                index={originalIndex ?? fIdx}
                                                 groupIndex={gIdx}
                                                 onChange={handleChangeGroup}
                                                 opts={{
@@ -1920,7 +1958,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
 
-                                {(firstPage?.form || [])
+                                {/* {(firstPage?.form || [])
                                   .filter((field: any) => {
                                     if (field.remarks === 'employee' && !showEmployeeSearchHeader)
                                       return false;
@@ -1930,6 +1968,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   .map((f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
                                       <CustomFormLabel required={f.mandatory == true}>
+                                        {f.long_display_text}
+                                      </CustomFormLabel>
+                                    </TableCell>
+                                  ))} */}
+
+                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || [])
+                                  .filter(
+                                    (f: any) => (f.remarks || '').toLowerCase() !== 'employee',
+                                  )
+                                  .map((f: any, i: any) => (
+                                    <TableCell key={f.custom_field_id || i}>
+                                      <CustomFormLabel required={f.mandatory === true}>
                                         {f.long_display_text}
                                       </CustomFormLabel>
                                     </TableCell>
@@ -1956,11 +2006,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   );
 
                                   const showEmployeeSearch = isEmployeeSelected(page.form as any);
+
+                                  const isEmployee =
+                                    dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
+                                      (f) => f.remarks === 'is_employee',
+                                    )?.answer_text === 'true';
                                   return (
                                     <React.Fragment key={gIdx}>
                                       <TableRow key={gIdx}>
                                         <TableCell sx={{ minWidth: 250 }}>
                                           <VisitorSelect
+                                            key={String(isEmployee)}
                                             token={token as string}
                                             isEmployee={isEmployee}
                                             onSelect={(v) => handleSelectVisitor(gIdx, v)}
@@ -1968,12 +2024,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         </TableCell>
 
                                         {form
-                                          ?.filter((field: any) => {
-                                            if (field.remarks === 'employee' && !showEmployeeSearch)
-                                              return false;
+                                          // ?.filter((field: any) => {
+                                          //   if (field.remarks === 'employee' && !showEmployeeSearch)
+                                          //     return false;
 
-                                            return true;
-                                          })
+                                          //   return true;
+                                          // })
+                                          .filter(
+                                            (field: any) =>
+                                              (field.remarks || '').toLowerCase() !== 'employee',
+                                          )
                                           .map((field: any, fIdx: any) => {
                                             const matchedKey = Object.keys(
                                               groupedPages.batch_page || {},
@@ -2010,6 +2070,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               });
                                             };
 
+                                            const originalIndex = page?.form?.findIndex(
+                                              (f: any) =>
+                                                f.custom_field_id === field.custom_field_id,
+                                            );
+
                                             return (
                                               <>
                                                 <TableCell
@@ -2017,7 +2082,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 >
                                                   <RenderFieldGroup
                                                     field={proxyField}
-                                                    index={fIdx}
+                                                    index={originalIndex || fIdx}
                                                     groupIndex={gIdx}
                                                     onChange={handleChangeGroup}
                                                     opts={{
@@ -2146,10 +2211,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     a.custom_field_id === b.custom_field_id) ||
                   (a?.remarks && b?.remarks && a.remarks === b.remarks);
 
-                const page = visitor.question_page[pIdx];
                 const mergedVisitForm = formsOf(section).map((f: any) => {
                   const shared = groupedPages.single_page.find((sf) => sameField(sf, f));
                   return shared ? { ...f, ...pickAns(shared) } : f;
+                });
+
+                const visibilityMap = getVisibilityMap(mergedVisitForm);
+
+                mergedVisitForm.forEach((item: any) => {
+                  if (!item?.mandatory) return;
+
+                  const remark = (item.remarks || '').toLowerCase();
+                  const isVisible = visibilityMap.hasOwnProperty(remark)
+                    ? visibilityMap[remark]
+                    : true;
+
+                  if (!isVisible) return;
+
+                  const fieldId = item.custom_field_id || item.id;
+
+                  // key HARUS sama dengan renderDetailRows
+                  const key = `${activeStep - 1}:${fieldId}`;
+
+                  validateField(item, key, errors);
                 });
                 return (
                   <Table>
@@ -2482,6 +2566,91 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
+  const handleSiteCheck = (
+    node: any,
+    isChecked: boolean,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const isParentNode = !!node.children?.length;
+
+    const setter = isSelfOnly
+      ? (callback: any) =>
+          setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+            ...prevMap,
+            [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+          }))
+      : setSelectedSiteIds;
+
+    setter((prev: string[]) => {
+      let updated = [...prev];
+
+      if (isChecked) {
+        // tambah current
+        if (!updated.includes(node.id)) {
+          updated.push(node.id);
+        }
+
+        // child pilih -> parent ikut
+        if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+          updated.push(node.parentId);
+        }
+      } else {
+        // remove current
+        updated = updated.filter((id) => id !== node.id);
+
+        // parent dihapus -> semua child ikut hilang
+        if (isParentNode) {
+          const childIds = collectAllChildIds(node);
+
+          updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+        }
+
+        // child dihapus -> cek sibling
+        if (!isParentNode && node.parentId) {
+          const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+          const collectSiblingIds = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => (n.children ? n.children.map((c: any) => c.id) : []));
+
+          const siblingIds = collectSiblingIds(parentTree);
+
+          const stillHasCheckedSibling = siblingIds.some((id: string) => updated.includes(id));
+
+          // kalau tidak ada child aktif -> remove parent
+          if (!stillHasCheckedSibling) {
+            updated = updated.filter((id) => id !== node.parentId);
+          }
+        }
+      }
+
+      // VALIDASI BERDASARKAN PARENT AKTIF
+      const activeParentIds = isSelfOnly
+        ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+        : selectedSiteParentIds;
+
+      updated = updated.filter((id) => {
+        return activeParentIds.some((parentId) => {
+          if (id === parentId) return true;
+
+          const tree = buildSiteTreeWithParent(sites, parentId);
+
+          const collect = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+          return collect(tree).includes(id);
+        });
+      });
+
+      updated = [...new Set(updated)];
+
+      onChange(index, 'answer_text', toCsv(updated));
+
+      return updated;
+    });
+  };
+
   const renderTree = (
     node: any,
     index: number,
@@ -2496,110 +2665,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const isDisabled = !canVisited;
 
+    const isChecked = isSelfOnly
+      ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+      : selectedSiteIds.includes(node.id);
+
     return (
       <TreeItem
         key={`${node.parentId ?? 'root'}-${node.id}`}
         itemId={`${node.parentId ?? 'root'}-${node.id}`}
         label={
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              if (isDisabled) return;
+
+              handleSiteCheck(node, !isChecked, index, onChange, isSelfOnly);
+            }}
+            sx={{
+              cursor: isDisabled ? 'default' : 'pointer',
+              width: '100%',
+            }}
+          >
             <Checkbox
               size="small"
               disabled={isDisabled}
-              checked={
-                isSelfOnly
-                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-                  : selectedSiteIds.includes(node.id)
-              }
+              checked={isChecked}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
-                if (isDisabled) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return;
-                }
-
-                const isChecked = e.target.checked;
-                const isParentNode = !!node.children?.length;
-
-                const setter = isSelfOnly
-                  ? (callback: any) =>
-                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-                        ...prevMap,
-                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-                      }))
-                  : setSelectedSiteIds;
-
-                setter((prev: any) => {
-                  let updated = [...prev];
-
-                  if (isChecked) {
-                    // tambah current
-                    if (!updated.includes(node.id)) {
-                      updated.push(node.id);
-                    }
-
-                    // child pilih -> parent ikut
-                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                      updated.push(node.parentId);
-                    }
-                  } else {
-                    // remove current
-                    updated = updated.filter((id) => id !== node.id);
-
-                    // parent dihapus -> semua child ikut hilang
-                    if (isParentNode) {
-                      const childIds = collectAllChildIds(node);
-
-                      updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
-                    }
-
-                    // child dihapus -> cek sibling
-                    if (!isParentNode && node.parentId) {
-                      const parentTree = buildSiteTreeWithParent(sites, node.parentId);
-
-                      const collectSiblingIds = (nodes: any[]): string[] =>
-                        nodes.flatMap((n) => [
-                          ...(n.children ? n.children.map((c: any) => c.id) : []),
-                        ]);
-
-                      const siblingIds = collectSiblingIds(parentTree);
-
-                      const stillHasCheckedSibling = siblingIds.some((id: string) =>
-                        updated.includes(id),
-                      );
-
-                      // kalau tidak ada child aktif -> remove parent
-                      if (!stillHasCheckedSibling) {
-                        updated = updated.filter((id) => id !== node.parentId);
-                      }
-                    }
-                  }
-
-                  // VALIDASI BERDASARKAN PARENT AKTIF
-                  const activeParentIds = isSelfOnly
-                    ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
-                    : selectedSiteParentIds;
-
-                  updated = updated.filter((id) => {
-                    return activeParentIds.some((parentId) => {
-                      if (id === parentId) return true;
-
-                      const tree = buildSiteTreeWithParent(sites, parentId);
-
-                      const collect = (nodes: any[]): string[] =>
-                        nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
-
-                      return collect(tree).includes(id);
-                    });
-                  });
-
-                  updated = [...new Set(updated)];
-
-                  onChange(index, 'answer_text', toCsv(updated));
-
-                  return updated;
-                });
+                handleSiteCheck(node, e.target.checked, index, onChange, isSelfOnly);
               }}
             />
 
@@ -2683,29 +2781,69 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (activeStep === 0) return true;
 
     const errors: Record<string, string> = {};
-
+    const section = sectionsData[activeStep - 1];
     if (isGroup) {
-      dataVisitor.forEach((visitor, gIdx) => {
-        const page = visitor.question_page?.[activeStep - 1];
-        if (!page?.form) return;
+      // Purpose Visit (shared page)
+      if (section.name === 'Purpose Visit') {
+        const sameField = (a: any, b: any) =>
+          (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
+          (a?.remarks && b?.remarks && a.remarks === b.remarks);
 
-        const details = page.form;
-        const visibilityMap: any = getVisibilityMap(details);
+        const mergedFields = formsOf(section).map((f: any) => {
+          const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
 
-        details.forEach((item: any, fIdx: number) => {
+          return shared
+            ? {
+                ...f,
+                answer_text: shared.answer_text,
+                answer_datetime: shared.answer_datetime,
+                answer_file: shared.answer_file,
+              }
+            : f;
+        });
+
+        const visibilityMap = getVisibilityMap(mergedFields);
+
+        mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-          if (!isVisible) return;
-          const fieldId = item.custom_field_id || item.id;
-          const key = `${activeStep - 1}:${gIdx}:${fieldId}`;
 
-          validateField(item, key, errors);
+          if (!isVisible) return;
+
+          const fieldId = item.custom_field_id || item.id;
+
+          validateField(item, `${activeStep - 1}:${fieldId}`, errors);
         });
-      });
+      }
+
+      // Semua page visitor (Visitor Information, Vehicle, dll)
+      else {
+        dataVisitor.forEach((visitor, gIdx) => {
+          const page = visitor.question_page?.[activeStep - 1];
+          if (!page?.form) return;
+
+          const details = page.form;
+          const visibilityMap = getVisibilityMap(details);
+
+          details.forEach((item: any) => {
+            if (!item?.mandatory) return;
+
+            const remark = (item.remarks || '').toLowerCase();
+            const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+            if (!isVisible) return;
+
+            const fieldId = item.custom_field_id || item.id;
+
+            validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
+          });
+        });
+      }
     } else {
       const section = sectionsData[activeStep - 1];
+
       const details = formsOf(section);
 
       const visibilityMap: any = getVisibilityMap(details);
@@ -2717,8 +2855,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
         if (!isVisible) return;
+
         const fieldId = item.custom_field_id || item.id;
         const key = `${activeStep - 1}:${fieldId}`;
+
         validateField(item, key, errors);
       });
     }
@@ -2819,6 +2959,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
 
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+    const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
     return filteredDetails.map((item) => {
       // const key = `${activeStep - 1}:${item.id}`;
@@ -2841,7 +2982,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
-          <TableCell>
+          <TableCell
+            sx={{
+              display: item.remarks === 'employee' ? 'none' : 'table-cell',
+            }}
+          >
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                 <Typography variant="subtitle2" fontWeight={600}>
@@ -2873,7 +3018,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 )}
                 {item.remarks === 'site_place' && (
                   <Tooltip
-                    title="The site place is the location where the visitor will be received"
+                    title="The site place is the location where the visitor will be received, please select and check the appropriate site place."
                     arrow
                     placement="top"
                   >
@@ -2900,37 +3045,65 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 )}
               </Box>
             )}
+
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
                   if (item.remarks === 'agenda') {
                     return (
-                      <Autocomplete
-                        size="small"
-                        freeSolo
-                        options={[
-                          'Meeting',
-                          'Presentation',
-                          'Visit',
-                          'Training',
-                          'Report',
-                          // 'Others',
-                        ]}
-                        value={item.answer_text || ''}
-                        onInputChange={(event, newValue) => {
-                          onChange(originalIndex, 'answer_text', newValue || '');
-                          if (newValue) clearFieldError(key);
-                        }}
-                        renderInput={(params) => (
-                          <CustomTextField
-                            {...params}
-                            placeholder="Choose or write manually agenda"
+                      <Box>
+                        <FormControl fullWidth error={!!errorMessage}>
+                          <Select
+                            value={
+                              showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+
+                              if (value === 'Others') {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: true,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', '');
+                              } else {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: false,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', value);
+                              }
+                              clearFieldError(key);
+                            }}
                             fullWidth
-                            error={!!errorMessage}
-                            helperText={errorMessage}
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              Select agenda
+                            </MenuItem>
+
+                            <MenuItem value="Meeting">Meeting</MenuItem>
+                            <MenuItem value="Presentation">Presentation</MenuItem>
+                            <MenuItem value="Visit">Visit</MenuItem>
+                            <MenuItem value="Training">Training</MenuItem>
+                            <MenuItem value="Report">Report</MenuItem>
+                            <MenuItem value="Others">Others</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <FormHelperText sx={{ color: 'red' }}>{errorMessage}</FormHelperText>
+
+                        {showOtherAgenda[originalIndex] && (
+                          <CustomTextField
+                            sx={{ mt: 2 }}
+                            fullWidth
+                            placeholder="Please specify agenda"
+                            value={item.answer_text || ''}
+                            onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
                           />
                         )}
-                      />
+                      </Box>
                     );
                   }
                   return (
@@ -2952,6 +3125,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ? ''
                                 : ''
                       }
+                      disabled={item.remarks === 'name' && isEmployee}
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -3022,7 +3196,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
-
                   if (item.remarks === 'site_place') {
                     return (
                       <>
@@ -3097,7 +3270,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               buildSiteTreeWithParent(sites, pid),
                             );
 
-                            // ambil semua id valid dari parent terbaru
                             const collectIds = (nodes: any[]): string[] => {
                               return nodes.flatMap((n) => [
                                 n.id,
@@ -3124,6 +3296,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             // update
                             onChange(originalIndex, 'answer_text', finalAnswer);
+                            if (finalAnswer.length > 0) {
+                              clearFieldError(key);
+                            }
 
                             const uniqueTrees = dedupeTree(rawTrees);
 
@@ -3202,29 +3377,57 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         group: 'Host Based on Destination',
                       }));
 
-                    const otherHosts = employee
-                      .filter((emp: any) => !siteHostIds.includes(emp.id))
-                      .map((emp: any) => ({
-                        value: emp.id,
-                        name: emp.name,
-                        group: 'All Host',
-                      }));
+                    // const otherHosts = employee
+                    //   .filter((emp: any) => !siteHostIds.includes(emp.id))
+                    //   .map((emp: any) => ({
+                    //     value: emp.id,
+                    //     name: emp.name,
+                    //     group: 'All Host',
+                    //   }));
+                    const searchText = (inputValues[originalIndex] || '').trim();
+                    const isSearchActive = searchText.length >= 3;
+
+                    // const availableHosts = employee.filter(
+                    //   (emp: any) => !siteHostIds.includes(emp.id),
+                    // );
+
+                    const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
+
+                    const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
+
+                    const mergedHosts = selectedHost
+                      ? [selectedHost, ...visibleHosts.filter((x: any) => x.id !== selectedHost.id)]
+                      : visibleHosts;
+
+                    const otherHosts = mergedHosts.map((emp: any) => ({
+                      value: emp.id,
+                      name: emp.name,
+                      group: 'All Host',
+                    }));
 
                     const finalOptions = [...matchedHosts, ...otherHosts];
 
                     return (
                       <Autocomplete
+                        loading={isLoadingEmployee}
+                        loadingText="Searching Host..."
                         size="small"
                         options={finalOptions}
                         groupBy={(option) => option.group}
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         inputValue={inputValues[originalIndex] || ''}
-                        onInputChange={(_, newInputValue) => {
+                        onInputChange={(_, newInputValue, reason) => {
                           setInputValues((prev: any) => ({
                             ...prev,
                             [originalIndex]: newInputValue,
                           }));
+
+                          if (reason === 'input') {
+                            if (newInputValue.length >= 3 || newInputValue.length === 0) {
+                              search?.(newInputValue);
+                            }
+                          }
                         }}
                         filterOptions={(opts, state) => {
                           if (!state.inputValue) {
@@ -3284,12 +3487,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             helperText={errorMessage}
                           />
                         )}
+                        renderOption={(props, option) => {
+                          const { key, ...rest } = props;
+
+                          return (
+                            <li {...rest} key={option.value}>
+                              {option.name}
+                            </li>
+                          );
+                        }}
                       />
                     );
                   }
                   if (item.remarks === 'employee') {
                     return (
                       <Autocomplete
+                        sx={{ display: 'none' }}
                         size="small"
                         options={options}
                         getOptionLabel={(option) => option.name}
@@ -3563,6 +3776,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                 case 9: {
                   const remark = (item.remarks || '').toLowerCase();
+
                   if (
                     remark === 'visitor_period_start' &&
                     filteredDetails[originalIndex + 1] &&
@@ -3575,8 +3789,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     const startIndex = details.findIndex((d) => d.id === startItem.id);
                     const endIndex = details.findIndex((d) => d.id === endItem.id);
 
-                    const startKey = `${activeStep - 1}:${startItem.id}`;
-                    const endKey = `${activeStep - 1}:${endItem.id}`;
+                    const startFieldKey =
+                      startItem.custom_field_id ||
+                      startItem.id ||
+                      `visitor_period_start-${startIndex}`;
+
+                    const endFieldKey =
+                      endItem.custom_field_id || endItem.id || `visitor_period_end-${endIndex}`;
+
+                    const startKey = `${activeStep - 1}:${startFieldKey}`;
+                    const endKey = `${activeStep - 1}:${endFieldKey}`;
 
                     const startError = fieldErrors[startKey];
                     const endError = fieldErrors[endKey];
@@ -3643,6 +3865,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     fullWidth: true,
                                     error: !!startError,
                                     helperText: startError,
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
                                   },
                                 }}
                               />
@@ -3697,10 +3925,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!endError,
                                     helperText: endError,
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
                                   },
                                 }}
                               />
@@ -3736,6 +3973,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           seconds: renderTimeViewClock,
                         }}
                         slotProps={{
+                          actionBar: {
+                            actions: ['clear', 'accept'],
+                          },
                           textField: {
                             fullWidth: true,
                             error: !!errorMessage,
@@ -3832,7 +4072,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
-                                      width: 350,
+                                      width: lg ? 350 : 220,
                                       height: 200,
                                       borderRadius: 12,
                                       objectFit: 'cover',
@@ -3911,6 +4151,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
+                                      height: '250px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -3945,6 +4187,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     style={{
                                       width: '100%',
                                       borderRadius: 8,
+                                      height: '250px',
+                                      objectFit: 'cover',
                                       border: '2px solid #ccc',
                                     }}
                                   />
@@ -3971,7 +4215,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <Divider sx={{ my: 2 }} />
 
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                               <Button
                                 onClick={() =>
                                   handleRemoveFileForField(
@@ -4015,6 +4259,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       </Box>
                     );
                   }
+
                   return (
                     <Box>
                       <Box
@@ -4094,10 +4339,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 src={previewSrc}
                                 alt="preview"
                                 style={{
-                                  width: 350,
+                                  width: lg ? 350 : 220,
                                   height: 200,
+                                  borderRadius: 12,
                                   objectFit: 'cover',
-                                  borderRadius: 8,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                 }}
                               />
                               <Button
@@ -4161,6 +4408,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4195,6 +4444,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4222,7 +4473,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <Divider sx={{ my: 2 }} />
 
                           <Box
-                            sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}
+                            sx={{
+                              textAlign: 'right',
+                              display: 'flex',
+                              justifyContent: 'flex-end',
+                              gap: 1,
+                            }}
                           >
                             <MuiButton
                               onClick={() =>
@@ -4406,6 +4662,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               ml: 1,
                               cursor: 'pointer',
                               display: 'flex',
+                              alignItems: 'center',
                               gap: 1,
                             }}
                             onClick={(e) => {
@@ -4423,13 +4680,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          // onChange={(e) =>
-                          //   handleFileChangeForField(
-                          //     e as React.ChangeEvent<HTMLInputElement>,
-                          //     (url) => onChange(index, 'answer_file', url),
-                          //     key,
-                          //   )
-                          // }
                           onChange={(e) =>
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
@@ -4452,7 +4702,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 350,
+                                    // width: 350,
+                                    // height: 200,
+                                    width: lg ? 350 : 220,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -4465,13 +4717,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   size="small"
                                   variant="outlined"
                                   sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
                                       (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
-                                    )
-                                  }
+                                    );
+                                  }}
                                   startIcon={<IconTrash />}
                                 >
                                   Remove
@@ -4517,8 +4770,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </IconButton>
                           </Box>
 
-                          <Divider sx={{ mb: 2 }} />
-
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
                               <Box sx={{ position: 'relative' }}>
@@ -4532,6 +4783,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   style={{
                                     width: '100%',
                                     borderRadius: 8,
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     border: '2px solid #ccc',
                                   }}
                                 />
@@ -4565,6 +4818,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   alt="Captured"
                                   style={{
                                     width: '100%',
+                                    height: '250px',
+                                    objectFit: 'cover',
                                     borderRadius: 8,
                                     border: '2px solid #ccc',
                                   }}
@@ -4592,9 +4847,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                           <Divider sx={{ my: 2 }} />
 
-                          <Box
-                            sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}
-                          >
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Button
                               onClick={() =>
                                 handleRemoveFileForField(
@@ -4613,8 +4866,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               variant="contained"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCaptureForField((url) =>
-                                  onChange(originalIndex, 'answer_file', url),
+                                handleCaptureForField(
+                                  (url) => onChange(originalIndex, 'answer_file', url),
+                                  key,
                                 );
                               }}
                               startIcon={<IconCamera />}
@@ -4651,7 +4905,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
     });
   };
-
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
 
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
@@ -5751,14 +6004,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             </DragDropContext>
           ) : (
             <>
-              <Typography fontWeight={600} color="black" textAlign="center" variant="h5">
-                {stepLabels[activeStep]}
+              <Typography fontWeight={600} color="black" textAlign="center" variant="h5" mt={2}>
+                {enableInvitationTypeStep && activeStep === -1
+                  ? 'Invitation Type'
+                  : stepLabels[Math.max(activeStep, 0)]}
               </Typography>
               <MobileStepper
                 variant="dots"
-                steps={draggableSteps.length + 1}
+                steps={stepLabels.length + (enableInvitationTypeStep ? 1 : 0)}
+                activeStep={
+                  enableInvitationTypeStep ? (activeStep === -1 ? 0 : activeStep + 1) : activeStep
+                }
                 position="static"
-                activeStep={activeStep}
                 sx={{
                   background: 'transparent',
                   justifyContent: 'center',
@@ -5904,7 +6161,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </ScanContainer>
         </DialogContent>
       </Dialog>
-
+{/* 
       <VisitorSelectDialog
         open={openVisitorDialog}
         isEmployeeMode={isEmployeeMode}
@@ -5914,7 +6171,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setOpen={setOpenVisitorDialog}
         setActiveGroupIdx={setActiveGroupIdx as any}
         setDataVisitor={setDataVisitor}
-      />
+      /> */}
 
       <GlobalBackdropLoading open={loading} />
 

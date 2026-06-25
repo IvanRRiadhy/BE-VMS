@@ -205,8 +205,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
-  const [customAgenda, setCustomAgenda] = useState('');
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
@@ -1883,7 +1881,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
     const errorMessage = fieldErrors[errorKey];
 
-
     let shouldDisable = false;
 
     const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
@@ -3318,6 +3315,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
+
+      
 
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'visitor_period_end') {

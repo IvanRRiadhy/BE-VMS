@@ -231,8 +231,15 @@ const OperatorView = () => {
   const { availableCards, setAvailableCards } = useAvailableCardOperator(token);
   const { visitorType } = useInvitationVisitorType(token);
   const { employee } = useInvitationHost(token);
-  // const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
-  const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token);
+  const [searchHost, setSearchHost] = useState<any>('');
+  const debounceSearch = useDebounce(searchHost, 400);
+
+  const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
+    useInvitationVisitorEmployee(token, {
+      search: debounceSearch,
+      start: 0,
+      length: 10,
+    });
   const permissionHook = usePermission(permission);
 
   const [relatedVisitors, setRelatedVisitors] = useState<
@@ -3881,8 +3888,7 @@ const OperatorView = () => {
                 <IconX />
               </IconButton>
             </DialogTitle>
-            <Divider />
-            <DialogContent>
+            <DialogContent dividers>
               <FormWizardAddVisitor
                 formData={formDataAddVisitor}
                 setFormData={setFormDataAddVisitor}
@@ -3906,6 +3912,8 @@ const OperatorView = () => {
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
                 enableInvitationTypeStep={true}
+                search={setSearchHost}
+                isLoadingEmployee={isLoadingEmployee}
               />
             </DialogContent>
           </Dialog>
@@ -3934,8 +3942,7 @@ const OperatorView = () => {
                 <IconX />
               </IconButton>
             </DialogTitle>
-            <Divider />
-            <DialogContent sx={{ paddingTop: '0px' }}>
+            <DialogContent sx={{ paddingTop: '0px' }} dividers>
               <br />
               <FormWizardAddInvitation
                 key={wizardKey}
@@ -3950,6 +3957,8 @@ const OperatorView = () => {
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
                 enableInvitationTypeStep={false}
+                search={setSearchHost}
+                isLoadingEmployee={isLoadingEmployee}
               />
             </DialogContent>
           </Dialog>
@@ -3969,7 +3978,7 @@ const OperatorView = () => {
             data={dataImage}
             container={containerRef ?? null}
           />
-          
+
           <ReturnCardDialog
             open={openReturnCard}
             value={returnCardNumber}

@@ -4992,10 +4992,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         onSuccess?.();
       // }, 700);
     } catch (err: any) {
-      // setTimeout(() => {
       setLoading(false);
-      // }, 700);
-
       showSwal(
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
