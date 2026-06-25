@@ -110,6 +110,7 @@ const Content = () => {
   const [cardInactiveCount, setCardInactiveCount] = useState(0);
   const [usedCard, setUsedCard] = useState(0);
   const [unUsedCard, setUnUsedCard] = useState(0);
+  const [isDirty, setIsDirty] = useState(false);
   const cards = [
     {
       title: 'Total Card',
@@ -223,39 +224,28 @@ const Content = () => {
     setOpenFormCreateVisitorCard(false);
     setEdittingId('');
     setIsBatchEdit(false);
-    localStorage.removeItem('unsavedVisitorCardData');
+    setIsDirty(false);
   };
 
   // Form Default State Management
-  const [formAddVisitorCard, setFormAddVisitorCard] = useState<CreateVisitorCardRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorCardData');
-    return saved ? JSON.parse(saved) : CreateVisitorCardRequestSchema.parse({});
-  });
-
+  const [formAddVisitorCard, setFormAddVisitorCard] = useState<CreateVisitorCardRequest>(
+    CreateVisitorCardRequestSchema.parse({}),
+  );
   const [initialFormData, setInitialFormData] = useState<CreateVisitorCardRequest>(
     CreateVisitorCardRequestSchema.parse({}),
   );
 
-  const isFormChanged = React.useMemo(
-    () => JSON.stringify(formAddVisitorCard) !== JSON.stringify(initialFormData),
-    [formAddVisitorCard, initialFormData],
-  );
-
-  useEffect(() => {
-    if (Object.keys(formAddVisitorCard).length > 0) {
-      localStorage.setItem('unsavedVisitorCardData', JSON.stringify(formAddVisitorCard));
-    }
-  }, [formAddVisitorCard]);
-
   const handleAddVisitorCard = useCallback(() => {
     let saved = localStorage.getItem('unsavedVisitorCardData');
     let freshForm;
-    if (saved) {
-      freshForm = JSON.parse(saved);
-    } else {
-      freshForm = CreateVisitorCardRequestSchema.parse({});
-      localStorage.setItem('unsavedVisitorCardData', JSON.stringify(freshForm));
-    }
+    // if (saved) {
+    //   freshForm = JSON.parse(saved);
+    // } else {
+    //   freshForm = CreateVisitorCardRequestSchema.parse({});
+    //   localStorage.setItem('unsavedVisitorCardData', JSON.stringify(freshForm));
+    // }
+
+    freshForm = CreateVisitorCardRequestSchema.parse({});
 
     setEdittingId('');
     setFormAddVisitorCard(freshForm);
@@ -277,7 +267,6 @@ const Content = () => {
     setEdittingId(id);
     setFormAddVisitorCard(parsedData);
     setInitialFormData(parsedData);
-    localStorage.setItem('unsavedVisitorCardData', JSON.stringify({ ...parsedData, id }));
     handleOpenDialog();
   };
 
@@ -301,11 +290,11 @@ const Content = () => {
 
   const handleSuccess = () => {
     setRefreshTrigger((prev) => prev + 1);
-    localStorage.removeItem('unsavedVisitorCardData');
 
     if (!edittingId) {
       setFormAddVisitorCard(CreateVisitorCardRequestSchema.parse({}));
     }
+    setIsDirty(false);
     handleCloseModalCreateVisitorCard();
   };
 
@@ -419,14 +408,14 @@ const Content = () => {
   };
 
   const handleConfirmEditDiscard = () => {
+    setIsDirty(false);
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedVisitorCardData');
     if (pendingEditId) {
       const existingData = tableVisitorCard.find((item) => item.id === pendingEditId);
       const parsed = CreateVisitorCardRequestSchema.parse(existingData ?? {});
       setEdittingId(pendingEditId);
       setFormAddVisitorCard(parsed);
-      +setInitialFormData(parsed);
+      setInitialFormData(parsed);
       setOpenFormCreateVisitorCard(true);
       setPendingEditId(null);
       return;
@@ -448,7 +437,7 @@ const Content = () => {
     reason?: 'backdropClick' | 'escapeKeyDown' | 'closeButton',
   ) => {
     if (
-      isFormChanged &&
+      isDirty &&
       (reason === 'backdropClick' || reason === 'escapeKeyDown' || reason === 'closeButton')
     ) {
       setConfirmDialogOpen(true);
@@ -581,6 +570,7 @@ const Content = () => {
             selectedRows={selectedRows}
             enabledFields={enabledFields}
             setEnabledFields={setEnabledFields}
+            setIsDirty={setIsDirty}
           />
         </DialogContent>
       </Dialog>

@@ -138,7 +138,6 @@ const FormSite = ({
   ];
   const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<any[]>([]);
-  const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [siteParking, setSiteParking] = useState<Parking[]>([]);
   const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
   const [newDocument, setNewDocument] = useState<SiteDocumentItem>({
@@ -148,7 +147,7 @@ const FormSite = ({
     documents: {} as DocumentItem,
     retentionTime: 0,
   });
-
+  const [deletedSiteDocuments, setDeletedSiteDocuments] = useState<any[]>([]);
   const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
 
   const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
@@ -157,6 +156,7 @@ const FormSite = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localForm, setLocalForm] = useState(formData);
   const lastSentRef = useRef<string>('');
+  const [newSiteDocuments, setNewSiteDocuments] = useState<any[]>([]);
   const [retentionInput, setRetentionInput] = useState('0');
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
 
@@ -295,14 +295,16 @@ const FormSite = ({
           };
         });
 
+        // setFilteredSiteDocumentList(siteDocumentRelations);
+        // setSiteDocuments(
+        //   siteDocumentRelations.map((item: any) => ({
+        //     site_id: item.site_id,
+        //     document_id: item.documents?.id ?? item.document_id,
+        //     retention_time: item.retentionTime ?? item.retention_time ?? 0,
+        //   })),
+        // );
+
         setFilteredSiteDocumentList(siteDocumentRelations);
-        setSiteDocuments(
-          siteDocumentRelations.map((item: any) => ({
-            site_id: item.site_id,
-            document_id: item.documents?.id ?? item.document_id,
-            retention_time: item.retentionTime ?? item.retention_time ?? 0,
-          })),
-        );
 
         setLocalForm((prev) => ({
           ...prev,
@@ -482,6 +484,8 @@ const FormSite = ({
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
 
+        console.log(updateData);
+
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
@@ -524,29 +528,28 @@ const FormSite = ({
 
         handleFileUpload(editingId);
 
-        let existingSiteDocuments: any[] = [];
+        if (!localForm.need_document) {
+          try {
+            const { collection = [] } = await getSiteDocumentBySiteId(token, editingId);
 
-        try {
-          const siteDocumentRes = await getAllSiteDocument(token);
-          existingSiteDocuments = (siteDocumentRes?.collection ?? []).filter(
-            (doc: any) => String(doc.site_id).toLowerCase() === editingId.toLowerCase(),
-          );
-        } catch (error: any) {
-          const message = error?.message?.toLowerCase?.() || '';
+            await Promise.all(collection.map((doc: any) => deleteSiteDocument(doc.id, token)));
+          } catch (err: any) {
+            const status = err?.response?.status;
 
-          if (!message.includes('not found') && !message.includes('404')) {
-            throw error;
+            // Kalau memang tidak ada document, lanjut saja
+            if (status !== 404) {
+              throw err;
+            }
           }
-        }
-
-        // Hapus semua relasi dokumen lama
-        await Promise.all(
-          existingSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id, token)),
-        );
-
-        if (localForm.need_document) {
+        } else {
+          // Hapus document yang memang dihapus user
           await Promise.all(
-            (siteDocuments ?? []).map((doc) =>
+            deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id, token)),
+          );
+
+          // Tambah document baru
+          await Promise.all(
+            newSiteDocuments.map((doc) =>
               createSiteDocument(
                 {
                   site_id: editingId,
@@ -560,6 +563,8 @@ const FormSite = ({
         }
 
         showSwal('success', 'Site successfully updated!');
+        setDeletedSiteDocuments([]);
+        setNewSiteDocuments([]);
       } else {
         const isValidParent =
           typeof parentRouteId === 'string' &&
@@ -656,7 +661,7 @@ const FormSite = ({
     if (!newSite) {
       return;
     }
-    for (const doc of siteDocuments) {
+    for (const doc of newSiteDocuments) {
       const docWithSiteId: CreateSiteDocumentRequest = {
         ...doc,
         site_id: newSite.id,
@@ -1837,9 +1842,21 @@ const FormSite = ({
                                           '&:hover': { bgcolor: '#ffcdd2' },
                                         }}
                                         onClick={() => {
-                                          setSiteDocuments((prev) =>
-                                            prev.filter((_, i) => i !== idx),
-                                          );
+                                          const doc = filteredSiteDocumentList[idx];
+
+                                          if (doc.id) {
+                                            // Document lama (sudah ada di database)
+                                            setDeletedSiteDocuments((prev) => [...prev, doc]);
+                                          } else {
+                                            // Document baru (belum pernah disimpan)
+                                            const documentId = doc.documents?.id ?? doc.documentId;
+
+                                            setNewSiteDocuments((prev) =>
+                                              prev.filter((d) => d.document_id !== documentId),
+                                            );
+                                          }
+
+                                          // Hilangkan dari tampilan
                                           setFilteredSiteDocumentList((prev) =>
                                             prev.filter((_, i) => i !== idx),
                                           );
@@ -1934,7 +1951,7 @@ const FormSite = ({
                           }
 
                           const isDuplicate = filteredSiteDocumentList.some(
-                            (doc) => doc.documents?.name === selectedDoc.name,
+                            (doc) => (doc.documents?.id ?? doc.documentId) === selectedDoc.id,
                           );
 
                           if (isDuplicate) {
@@ -1942,7 +1959,7 @@ const FormSite = ({
                             return;
                           }
 
-                          setSiteDocuments((prev) => [
+                          setNewSiteDocuments((prev) => [
                             ...prev,
                             {
                               document_id: selectedDoc.id,
@@ -1951,7 +1968,13 @@ const FormSite = ({
                             },
                           ]);
 
-                          setFilteredSiteDocumentList((prev) => [...prev, newDocument]);
+                          setFilteredSiteDocumentList((prev) => [
+                            ...prev,
+                            {
+                              ...newDocument,
+                              isNew: true,
+                            },
+                          ]);
 
                           setNewDocument({
                             id: '',

@@ -59,6 +59,7 @@ interface FormVisitorCardProps {
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  setIsDirty?: any;
 }
 
 const FormWizardAddVisitorCard = ({
@@ -70,6 +71,7 @@ const FormWizardAddVisitorCard = ({
   isBatchEdit,
   enabledFields,
   setEnabledFields,
+  setIsDirty,
 }: FormVisitorCardProps) => {
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set());
@@ -112,6 +114,8 @@ const FormWizardAddVisitorCard = ({
       ...prev,
       [key]: value,
     }));
+
+    setIsDirty?.(true);
   };
 
   useEffect(() => {
@@ -288,6 +292,7 @@ const FormWizardAddVisitorCard = ({
       ...prev,
       [name]: numericFields.includes(name) ? (value === '' ? null : Number(value)) : value,
     }));
+    setIsDirty?.(true);
   };
 
   const validateStep = (step: number) => {
@@ -339,7 +344,7 @@ const FormWizardAddVisitorCard = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       setFormData(localForm);
-    }, 500); // delay 500ms (bisa 300–800ms)
+    }, 500);
 
     return () => clearTimeout(handler);
   }, [localForm]);
@@ -418,6 +423,7 @@ const FormWizardAddVisitorCard = ({
                           employee_id: checked,
                           is_employee_used: checked,
                         }));
+                        setIsDirty?.(true);
                       }}
                     />
                   }
@@ -433,6 +439,7 @@ const FormWizardAddVisitorCard = ({
                     ...prev,
                     employee_id: newValue ? newValue.id : '',
                   }));
+                  setIsDirty?.(true);
                 }}
                 disabled={!enabledFields?.employee_id}
                 renderInput={(params) => (
@@ -475,6 +482,7 @@ const FormWizardAddVisitorCard = ({
                           is_multi_site: checked,
                           registered_site: checked ? null : prev.registered_site,
                         }));
+                        setIsDirty?.(true);
 
                         setErrors((prev) => {
                           if (checked) {
@@ -507,6 +515,7 @@ const FormWizardAddVisitorCard = ({
                     ...prev,
                     registered_site: newValue ? newValue.id : null,
                   }));
+                  setIsDirty?.(true);
                 }}
                 renderInput={(params) => (
                   <CustomTextField
@@ -645,6 +654,7 @@ const FormWizardAddVisitorCard = ({
       is_employee_used: false,
       employee_id: false,
     });
+    setIsDirty?.(true);
   };
 
   return (

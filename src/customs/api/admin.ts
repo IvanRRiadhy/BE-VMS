@@ -2360,9 +2360,9 @@ export const getAllSiteDocument = async (token: string): Promise<GetAllSiteDocum
   }
 };
 
-export const getSiteDocumentBySiteId = async (token: string, siteId: string): Promise<any> => {
+export const getSiteDocumentBySiteId = async (token: string, id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/site-document/site/${siteId}`, {
+    const response = await axiosInstance.get(`/site-document/site/${id}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
