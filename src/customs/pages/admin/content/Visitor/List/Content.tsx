@@ -25,6 +25,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 type VisitorTableRow = {
   id: string;
@@ -65,11 +66,12 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
+  const { t } = useTranslation();
 
   const cards = useMemo(
     () => [
       {
-        title: 'Total Visitor',
+        title: t('totalVisitor'),
         icon: IconUsers,
         subTitle: `${totalRecords}`,
         subTitleSetting: 10,
@@ -106,13 +108,7 @@ const Content = () => {
       try {
         // const limit = rowsPerPage === -1 ? undefined : rowsPerPage;
         const start = page * rowsPerPage;
-        const response = await getListVisitorPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-        );
+        const response = await getListVisitorPagination(token, start, rowsPerPage, sortDir, search);
         let rows = response.collection.map((item: any) => {
           return {
             id: item.id,
@@ -253,16 +249,6 @@ const Content = () => {
   const handleViewMemo = useCallback((row: any) => {
     handleView(row.id);
   }, []);
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {

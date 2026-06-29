@@ -29,6 +29,7 @@ const PageWrapper = styled('div')(() => ({
   zIndex: 1,
   width: '100%',
   background: '#ebedefff !important',
+  // bgcolor: 'background.paper !important',
 }));
 
 const PageContainer: React.FC<CustomPageContainerProps> = ({
@@ -39,29 +40,6 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
   const customizer = useSelector((state: AppState) => state.customizer);
   const [hideChrome, setHideChrome] = React.useState(false);
   const theme = useTheme();
-  // useEffect(() => {
-  //   const checkFullscreen = () => {
-  //     const isF11 = window.innerHeight === screen.height;
-  //     // const isF11 = document.fullscreenElement != null;
-  //     setHideChrome(isF11);
-  //   };
-
-  // listen F11 fullscreen changes
-  // window.addEventListener('resize', checkFullscreen);
-
-  // listen react-full-screen child events
-  // const handler = (e: any) => {
-  //   setHideChrome(e.detail.isFullscreen);
-  // };
-  // window.addEventListener('operator-fullscreen-changed', handler);
-
-  // checkFullscreen(); // initial
-
-  // return () => {
-  //   // window.removeEventListener('resize', checkFullscreen);
-  //   window.removeEventListener('operator-fullscreen-changed', handler);
-  // };
-  // }, []);
 
   return (
     <>
@@ -99,6 +77,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
             sx={{
               borderRadius: 0,
               background: '#ebedefff',
+              // bgcolor: 'background.paper',
               p: {
                 xs: '10px',
                 // md: '15px',
@@ -106,7 +85,13 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               width: '100%',
             }}
           >
-            <Box sx={{ minHeight: 'calc(100vh - 170px)', background: '#ebedefff' }}>
+            <Box
+              sx={{
+                minHeight: 'calc(100vh - 170px)',
+                background: '#ebedefff'
+                // bgcolor: 'background.paper',
+              }}
+            >
               {React.isValidElement(children) ? (
                 <ScrollToTop>{children}</ScrollToTop>
               ) : (

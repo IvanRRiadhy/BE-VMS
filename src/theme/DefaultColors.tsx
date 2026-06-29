@@ -60,7 +60,8 @@ const baselightTheme = {
     },
     divider: '#e5eaef',
     background: {
-      default: '#ffffff',
+      default: '#ebedefff',
+      // paper: '#ebedefff',
     },
   },
 };

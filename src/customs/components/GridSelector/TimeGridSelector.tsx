@@ -8,7 +8,9 @@ import {
   IconChecklist,
   IconSquareOff,
   IconTrash,
+  IconDeviceFloppy,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 // Define types
 interface TimeBlock {
@@ -42,6 +44,7 @@ export const TimeGridSelector = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionMode, setSelectionMode] = useState<'add' | 'remove'>('add');
   const [dragStart, setDragStart] = useState<{ day: number; time: number } | null>(null);
+  const { t } = useTranslation();
 
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');
@@ -164,7 +167,6 @@ export const TimeGridSelector = ({
     },
     [selectionMode],
   );
-
 
   const handleMouseDown = (dayIndex: number, timeIndex: number) => {
     setIsSelecting(true);
@@ -357,7 +359,7 @@ export const TimeGridSelector = ({
         flexWrap={'wrap'}
       >
         <Typography variant="subtitle1" fontWeight="bold">
-          Time Access Schedule
+          {t('timeAccessSchedule')}
         </Typography>
         <Box display="flex" gap={1} flexWrap={'wrap'}>
           <Tooltip title="Add/Remove Hours Selection" arrow>
@@ -382,7 +384,7 @@ export const TimeGridSelector = ({
               onClick={handleToggleAll}
               sx={{ fontSize: '0.75rem' }}
             >
-              {isAllSelected ? 'Remove All' : 'Select All'}
+              {isAllSelected ? t('removeAll') : t('selectAll')}
             </Button>
           </Tooltip>
           <Tooltip title="Clear All Hours" arrow>
@@ -393,7 +395,7 @@ export const TimeGridSelector = ({
               onClick={handleClearAll}
               size="small"
             >
-              Clear
+              {t('clear')}
             </Button>
           </Tooltip>
           <Tooltip title="Apply Selection" arrow>
@@ -405,8 +407,9 @@ export const TimeGridSelector = ({
                 onSubmit?.(newDays);
               }}
               size="small"
+              startIcon={<IconDeviceFloppy size={16} />}
             >
-              Apply
+              {t('apply')}
             </Button>
           </Tooltip>
         </Box>

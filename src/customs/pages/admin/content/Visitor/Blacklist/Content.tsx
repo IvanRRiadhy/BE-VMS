@@ -14,42 +14,41 @@ import { getBlacklistDt, getListVisitor } from 'src/customs/api/admin';
 import { IconForbid, IconScript } from '@tabler/icons-react';
 import FilterBlacklist from './FilterBlacklist';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
-  // const [searchInput, setSearchInput] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [totalActive, setTotalActive] = useState(0);
   const [totalNonActive, setTotalNonActive] = useState(0);
   const [visitors, setVisitors] = useState<any[]>([]);
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Blacklist',
+      title: t('total_blacklist'),
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       icon: IconForbid,
       color: 'none',
     },
     {
-      title: 'Active Blacklist',
+      title: t('activeBlacklist'),
       subTitle: `${totalActive}`,
       subTitleSetting: 10,
       icon: IconForbid,
       color: 'none',
     },
     {
-      title: 'Nonactive Blacklist',
+      title: t('nonActiveBlacklist'),
       subTitle: `${totalNonActive}`,
       subTitleSetting: 10,
       icon: IconForbid,
@@ -95,8 +94,6 @@ const Content = () => {
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        // setTableData([]);
       } finally {
         setLoading(false);
       }
@@ -137,16 +134,6 @@ const Content = () => {
     setPage(0);
     setRefreshTrigger((prev) => prev + 1);
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -191,10 +178,8 @@ const Content = () => {
                 isHaveFilterMore={true}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 filterMoreContent={
                   <FilterBlacklist
                     filters={filters}

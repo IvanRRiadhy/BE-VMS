@@ -58,7 +58,7 @@ const Content = () => {
     {
       title: t('total_blacklist'),
       icon: IconUsers,
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },

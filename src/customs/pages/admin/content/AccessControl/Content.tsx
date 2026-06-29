@@ -23,7 +23,6 @@ import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
 } from 'src/customs/api/models/Admin/AccessControl';
-import FormAccessControl from './FormAccessControl';
 
 interface Item {
   brand_id: string;
@@ -45,6 +44,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import AccessControlDialog from './AccessControlDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -52,23 +52,22 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Access Control',
+      title: t('totalAccessControl'),
       icon: IconAccessible,
       subTitle: `${totalRecords}`,
       subTitleSetting: 10,
@@ -144,71 +143,26 @@ const Content = () => {
   });
 
   const [formDataAddAccessControl, setFormDataAddAccessControl] =
-    useState<CreateAccessControlRequest>(() => {
-      const saved = localStorage.getItem('unsavedAccessControl');
-      if (!saved) return defaultFormData;
-      try {
-        const parsed = JSON.parse(saved);
-        return JSON.stringify(parsed) === JSON.stringify(defaultFormData)
-          ? defaultFormData
-          : parsed;
-      } catch {
-        return defaultFormData;
-      }
-    });
-
-  const isFormChanged =
-    JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedAccessControl', JSON.stringify(formDataAddAccessControl));
-    } else {
-      localStorage.removeItem('unsavedAccessControl');
-    }
-  }, [formDataAddAccessControl, isFormChanged]);
-
-  useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
-        if (isFormChanged) {
-          setConfirmDialogOpen(true);
-        }
-      }
-    };
-
-    const dialogEl = dialogRef.current;
-    if (dialogEl) {
-      dialogEl.addEventListener('mouseleave', handleMouseLeave);
-    }
-
-    return () => {
-      if (dialogEl) {
-        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-  }, [isFormChanged]);
+    useState<CreateAccessControlRequest>(defaultFormData);
 
   const handleOpenDialog = () => {
     setOpenCreateAccessControl(true);
   };
-  const handleCloseDialog = () => setOpenCreateAccessControl(false);
-
-  const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedAccessControl');
-    if (editing) {
-      setPendingEditId(null);
-      setConfirmDialogOpen(true);
-    } else {
-      setEdittingId('');
-      setFormDataAddAccessControl(defaultFormData);
-      handleOpenDialog();
-    }
+  const handleCloseDialog = () => {
+    setIsDirty(false);
+    setOpenCreateAccessControl(false);
   };
-  const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedAccessControl');
 
-    if (editing) {
+const handleAdd = () => {
+  setIsDirty(false); 
+  setPendingEditId(null);
+  setEdittingId('');
+  setFormDataAddAccessControl(defaultFormData);
+  handleOpenDialog();
+};
+
+  const handleEdit = (id: string) => {
+    if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
@@ -222,19 +176,16 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedAccessControl');
-    setLoading(true);
+    setIsDirty(false);
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
       setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || defaultFormData);
       setEdittingId(pendingEditId);
-      setLoading(false);
       handleOpenDialog();
     } else {
       setFormDataAddAccessControl(defaultFormData);
       setEdittingId('');
-      setLoading(false);
       setOpenCreateAccessControl(false);
     }
 
@@ -290,7 +241,7 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    localStorage.removeItem('unsavedAccessControl');
+    setIsDirty(false);
     handleCloseDialog();
     setRefreshTrigger((prev) => prev + 1);
 
@@ -300,16 +251,6 @@ const Content = () => {
     );
   };
 
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
-
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -317,19 +258,6 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
-  const hasUnsaved = () => {
-    const raw = localStorage.getItem('unsavedAccessControl');
-    if (!raw) return false;
-
-    try {
-      const parsed = JSON.parse(raw);
-      return Object.values(parsed).some(
-        (val) => val !== '' && val !== null && val !== undefined && val !== '{}',
-      );
-    } catch {
-      return false;
-    }
-  };
 
   return (
     <PageContainer
@@ -397,8 +325,9 @@ const Content = () => {
         edittingId={edittingId}
         onClose={handleCloseDialog}
         onSuccess={handleSuccess}
-        hasUnsaved={hasUnsaved}
         setConfirmDialogOpen={setConfirmDialogOpen}
+        isDirty={isDirty}
+        onDirty={(dirty: any) => setIsDirty(dirty)}
       />
 
       <ConfirmUnsavedDialog

@@ -36,13 +36,13 @@ import {
   showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
-
-import { IconCards, IconUserCheck, IconCircleCheck, IconUserOff, IconX } from '@tabler/icons-react';
+import { IconCards, IconUserCheck, IconCircleCheck, IconUserOff, IconX, IconCreditCardOff, IconCreditCard } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
 import FilterMoreContent from './FilterMoreContent';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import ImportErrorDialog from './components/ImportErroDialog';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useTranslation } from 'react-i18next';
 
 type EnableField = {
   employee_id: boolean;
@@ -80,7 +80,6 @@ const typeMap: Record<string, number> = {
 
 const Content = () => {
   const { token } = useSession();
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
@@ -88,18 +87,13 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
-
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [sortDir, setSortDir] = useState('desc');
-
   const [openFormCreateVisitorCard, setOpenFormCreateVisitorCard] = useState(false);
   const BASE_URL = axiosInstance.defaults.baseURL;
   const [importErrorOpen, setImportErrorOpen] = useState(false);
@@ -111,36 +105,37 @@ const Content = () => {
   const [usedCard, setUsedCard] = useState(0);
   const [unUsedCard, setUnUsedCard] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
+  const { t } = useTranslation();
   const cards = [
     {
-      title: 'Total Card',
+      title: t('totalCards'),
       icon: IconCards,
       subTitle: `${totalRecords}`,
       subTitleSetting: totalRecords,
       color: 'none',
     },
     {
-      title: 'Total Used Card',
+      title: t('totalUsedCards'),
       icon: IconUserCheck,
       subTitle: `${usedCard}`,
       color: 'none',
     },
     {
-      title: 'Total Unused Card',
+      title: t('totalUnusedCards'),
       icon: IconUserOff,
       subTitle: `${unUsedCard}`,
       color: 'none',
     },
     {
-      title: 'Total Card Active',
-      icon: IconCircleCheck,
+      title: t('totalCardActive'),
+      icon: IconCreditCard,
       subTitle: `${cardActiveCount}`,
       subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 1).length,
       color: 'none',
     },
     {
-      title: 'Total Card Inactive',
-      icon: IconCircleCheck,
+      title: t('totalCardNonActive'),
+      icon: IconCreditCardOff,
       subTitle: `${cardInactiveCount}`,
       subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 0).length,
       color: 'none',
@@ -455,16 +450,6 @@ const Content = () => {
     setPage(0);
     setRefreshTrigger((prev) => prev + 1);
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {

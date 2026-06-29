@@ -80,6 +80,7 @@ import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { cancelVisitor, getProfile } from 'src/customs/api/users';
 import { useProfile } from 'src/hooks/useProfile';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -113,6 +114,7 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
+  const { t } = useTranslation();
 
   // const [formDataAddVisitor, setFormDataAddVisitor] = useState<any>({});
 
@@ -121,14 +123,14 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Visitor',
+      title: t('totalVisitor'),
       icon: IconUsers,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
     {
-      title: 'Scan QR Visitor',
+      title: 'Scan QR ' + t('navigation.visitor'),
       icon: IconQrcode,
       subTitle: iconScanQR,
       subTitleSetting: 'image',
@@ -137,14 +139,14 @@ const Content = () => {
     ...(!isOperatorAdmin
       ? [
           {
-            title: 'Add Invitation',
+            title: t('add') + ' Invitation',
             icon: IconUser,
             subTitle: iconAdd,
             subTitleSetting: 'image',
             color: 'none',
           },
           {
-            title: 'Add Pre Registration',
+            title: t('add') + ' Pre Registration',
             icon: IconClipboard,
             subTitle: iconAdd,
             subTitleSetting: 'image',
@@ -683,6 +685,7 @@ const Content = () => {
               display: 'flex',
               flexDirection: mdUp ? 'row' : 'column',
               backgroundColor: '#fff',
+              // bgcolor: 'background.paper',
               height: '100%',
               width: '100%',
               // overflow: 'hidden',

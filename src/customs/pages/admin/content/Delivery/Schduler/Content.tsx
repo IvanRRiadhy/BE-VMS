@@ -1,11 +1,8 @@
 import {
-  Autocomplete,
   Backdrop,
   Box,
-  Button,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Grid2 as Grid,
@@ -45,6 +42,7 @@ import FilterMoreContent from './FilterMoreContent';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import SchedulerErrorDialog from './Dialog/SchedulerErrorDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 interface Filters {
   visitor_type_id: string | null;
@@ -78,7 +76,7 @@ const Content = () => {
   const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorDialogRows, setErrorDialogRows] = useState<any[]>([]);
-
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     visitor_type_id: '',
     host_id: '',
@@ -103,7 +101,7 @@ const Content = () => {
   };
   const cards = [
     {
-      title: 'Total Scheduler',
+      title: t('totalScheduler'),
       icon: IconCalendarFilled,
       subTitle: `${totalRecords}`,
       subTitleSetting: 0,
@@ -260,16 +258,6 @@ const Content = () => {
     setPage(0);
     setRefreshTrigger((prev) => prev + 1);
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {

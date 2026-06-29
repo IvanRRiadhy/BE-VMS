@@ -10,6 +10,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconBell } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
@@ -20,14 +21,14 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
-  const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const { t } = useTranslation();
   const cards = [
     {
-      title: 'Total Notification',
+      title: t('totalNotification'),
       subTitle: `${0}`,
       subTitleSetting: 10,
       icon: IconBell,
@@ -60,9 +61,6 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
 
   const handleSearch = useCallback((keyword: string) => {
     setPage(0);
@@ -75,7 +73,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Notification" description="Notification page">
+      <Container title={t('navigation.notification')} description="Notification page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -108,8 +106,6 @@ const Content = () => {
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
               />
             </Grid>
           </Grid>

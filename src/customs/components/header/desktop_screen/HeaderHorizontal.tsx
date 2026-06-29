@@ -1,7 +1,6 @@
 import { IconButton, Box, AppBar, Toolbar, Stack, Theme } from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
-import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import { IconMenu2, IconMoon, IconMoonFilled } from '@tabler/icons-react';
 import Notifications from 'src/layouts/full/vertical/header/Notification';
 import Profile from 'src/layouts/full/vertical/header/Profile';
@@ -11,6 +10,7 @@ import Language from 'src/layouts/full/vertical/header/Language';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
+import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   background: theme.palette.background.paper,
@@ -42,6 +42,12 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
+
+  const isDark = customizer.activeMode === 'dark';
+
+  const handleToggleTheme = () => {
+    dispatch(setDarkMode(isDark ? 'light' : 'dark'));
+  };
 
   return (
     <AppBarStyled
@@ -93,6 +99,10 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
 
         {/* Kanan: Mode, Notifikasi, Profile */}
         <Stack spacing={1} direction="row" alignItems="center">
+          {/* <IconButton color="inherit" onClick={handleToggleTheme}>
+            {isDark ? <IconMoonFilled size={20} /> : <IconMoon size={20} />}
+          </IconButton> */}
+
           <Notifications />
           <Language />
           <Profile />

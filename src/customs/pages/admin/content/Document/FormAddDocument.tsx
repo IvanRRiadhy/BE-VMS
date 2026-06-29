@@ -13,28 +13,24 @@ import {
   Portal,
   Backdrop,
   TextField,
+  Divider,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import axios from 'axios';
 import { createDocument, updateDocument } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import axiosInstance from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
 
 interface FormAddDocumentProps {
-  // formData: CreateDocumentRequest;
   initialData: CreateDocumentRequest;
-  // setFormData: React.Dispatch<React.SetStateAction<CreateDocumentRequest>>;
   edittingId: string;
   onSuccess?: () => void;
   onDirty?: () => void;
@@ -60,28 +56,20 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-
-    setLocalForm((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem('unsavedDocumentData', JSON.stringify(localForm));
-    }, 400);
-
-    return () => clearTimeout(timeout);
-  }, [localForm]);
-
   const resetFileState = () => {
     setFile(null);
     setPreview(null);
-    setLocalForm((prev: any) => ({ ...prev, file: '' }));
-    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    setLocalForm((prev: any) => ({
+      ...prev,
+      file: '',
+    }));
+
+    onDirty?.();
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,8 +145,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         can_declined: localForm.can_declined ?? false,
         remarks: '',
       };
-      console.log('payload : ', JSON.stringify(payload, null, 2));
-
       let docId: string;
 
       if (edittingId) {
@@ -191,16 +177,16 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         'success',
         edittingId ? 'Document updated successfully!' : 'Document created successfully!',
       );
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
+      // setTimeout(() => {
+      onSuccess?.();
+      // }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message || 'Failed to create document.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      // setTimeout(() => {
+      setLoading(false);
+      // }, 600);
     }
   };
 
@@ -214,6 +200,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       file: '',
     }));
 
+    onDirty?.();
     resetFileState();
   };
 
@@ -239,12 +226,11 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               error={Boolean(errors.name)}
               helperText={errors.name ?? ''}
               fullWidth
-              disabled={loading}
             />
           </Grid2>
 
           <Grid2 size={{ xs: 6, lg: 6 }}>
-            <FormControl component="fieldset" disabled={loading}>
+            <FormControl component="fieldset">
               <CustomFormLabel sx={{ mt: 0 }} required>
                 Document Type
               </CustomFormLabel>
@@ -479,6 +465,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 </Grid2>
               </Box>
             )}
+            <Divider sx={{ mb: 2 }} />
             <Box display="flex" justifyContent="flex-end" mt={0}>
               <Button
                 color="primary"

@@ -33,7 +33,6 @@ interface Props {
 }
 
 const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => {
-  console.log('FORM DATA', form);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { token } = useSession();

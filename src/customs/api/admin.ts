@@ -1896,7 +1896,7 @@ export const getAllEmployeePaginationFilterMore = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
   gender?: number,
@@ -1910,7 +1910,7 @@ export const getAllEmployeePaginationFilterMore = async (
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
     sort_dir: sortDir,
   };
 

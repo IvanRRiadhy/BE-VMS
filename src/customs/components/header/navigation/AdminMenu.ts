@@ -451,6 +451,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       // },
       {
         id: uniqueId(),
+        title: 'navigation.visitor_providers',
+        icon: IconUserCircle,
+        href: '/admin/manage/visitor-providers',
+      },
+      {
+        id: uniqueId(),
         title: 'navigation.settings',
         icon: IconSettingsFilled,
         chipColor: 'secondary',

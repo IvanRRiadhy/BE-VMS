@@ -30,7 +30,8 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           // position: 'sticky', // ✅ bikin nempel
           // top: 0, // ✅ nempel di atas
           // zIndex: 1100,
-          background: 'white',
+          // background: 'white',
+          bgcolor: 'background.paper',
           width: '100%',
           px: xl ? '10px !important' : '5px !important',
           py: 2,

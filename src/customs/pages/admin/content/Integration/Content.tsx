@@ -41,6 +41,7 @@ import { IconWorldCog } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import IntegrationDialog from './components/IntegrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 type IntegrationTableRow = {
   id: string;
@@ -193,21 +194,6 @@ const Content = () => {
     );
   }, [tableData, search]);
 
-  // const [formDataAddIntegration, setFormDataAddIntegration] = useState<any>(() => {
-  //   const saved = localStorage.getItem('unsavedIntegrationData');
-  //   if (!saved)
-  //     return CreateIntegrationRequestSchema.parse({
-  //       name: '',
-  //       brand_name: '',
-  //       brand_type: 0,
-  //       integration_type: 0,
-  //       api_type_auth: 0,
-  //     });
-
-  //   const parsed = JSON.parse(saved);
-  //   return sanitizeIntegrationForForm(parsed as Item);
-  // });
-
   const [formDataAddIntegration, setFormDataAddIntegration] = useState<any>(
     CreateIntegrationRequestSchema.parse({
       name: '',
@@ -217,10 +203,11 @@ const Content = () => {
       api_type_auth: '',
     }),
   );
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Integration',
+      title: t('totalIntegration'),
       subTitle: `${totalRecords}`,
       icon: IconWorldCog,
       subTitleSetting: 10,
@@ -428,7 +415,6 @@ const Content = () => {
                 isHaveSearch={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
-              
                 isHaveExportXlf={false}
                 isCopy={true}
                 onCopy={(row) => {

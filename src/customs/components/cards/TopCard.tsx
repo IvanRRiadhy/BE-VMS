@@ -30,7 +30,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
       {items.map((card, index) => {
         const isImage = typeof card.subTitleSetting === 'string';
         const cardColor =
-          !card.color || card.color.toLowerCase() === 'none' ? defaultColor : card.color;
+          !card.color || card.color.toLowerCase() === 'none' ? 'background.paper' : card.color;
         const isAction = card.type === 'action';
         return (
           <Grid2
@@ -44,7 +44,8 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                 onClick={() => isAction && card.onIconClick?.(card)}
                 sx={{
                   backgroundColor: cardColor,
-                  color: '#000',
+                  // color: '#000',
+                  color: 'text.primary',
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',

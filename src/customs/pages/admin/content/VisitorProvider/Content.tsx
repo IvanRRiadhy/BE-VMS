@@ -6,7 +6,6 @@ import {
   Grid2 as Grid,
   Portal,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -21,9 +20,8 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { IconBrandMedium, IconCategory, IconX } from '@tabler/icons-react';
+import { IconCategory, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import FilterMoreContent from './components/FilterMoreContent';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import {
   deleteVisitorProvider,
@@ -33,7 +31,7 @@ import {
 } from 'src/customs/api/Admin/VisitorProviders';
 import FormVisitorProvider from './FormVisitorProvider';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
-import { de, is } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 interface VisitorProviderForm {
   name: string;
   code: string;
@@ -52,7 +50,6 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -62,10 +59,11 @@ const Content = () => {
   const [openDialogVisitorProvider, setOpenDialogVisitorProvider] = useState(false);
   const [openUnsavedDialog, setOpenUnsavedDialog] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Visitor Providers',
+      title: t('totalVisitorProviders'),
       subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       icon: IconCategory,
@@ -217,10 +215,6 @@ const Content = () => {
     setLocalForm(defaultForm);
   };
 
-  const checkIsDirty = (form: VisitorProviderForm) => {
-    return JSON.stringify(form) !== JSON.stringify(defaultForm);
-  };
-
   const handleChangeForm = (updater: any) => {
     setLocalForm((prev: any) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -268,7 +262,6 @@ const Content = () => {
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
                 isHaveAddData={true}
@@ -286,7 +279,7 @@ const Content = () => {
       </Container>
       <Dialog open={openDialogVisitorProvider} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          {editingId ? 'Edit Visitor Provider' : 'Add New Visitor Provider'}
+          {editingId ? 'Edit Visitor Provider' : 'Add Visitor Provider'}
           <IconButton
             aria-label="close"
             onClick={handleClose}

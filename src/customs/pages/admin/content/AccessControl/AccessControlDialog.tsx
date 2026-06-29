@@ -6,12 +6,11 @@ import FormAccessControl from './FormAccessControl';
 interface AccessControlDialogProps {
   open: boolean;
   edittingId: string;
-
   onClose: () => void;
   onSuccess: () => void;
-
-  hasUnsaved: () => boolean;
   setConfirmDialogOpen: (open: boolean) => void;
+  isDirty?: boolean;
+  onDirty?: (dirty: boolean) => void;
 }
 
 export default function AccessControlDialog({
@@ -19,19 +18,22 @@ export default function AccessControlDialog({
   edittingId,
   onClose,
   onSuccess,
-  hasUnsaved,
   setConfirmDialogOpen,
+  isDirty,
+  onDirty,
 }: AccessControlDialogProps) {
-  const handleClose = () => {
-    if (hasUnsaved()) {
-      setConfirmDialogOpen(true);
-    } else {
-      onClose();
-    }
-  };
+const handleClose = () => {
+  if (isDirty) {
+    setConfirmDialogOpen(true);
+    return;
+  }
+
+  onDirty?.(false);
+  onClose();
+};
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" keepMounted={false}>
       <DialogTitle
         sx={{
           position: 'relative',
@@ -54,7 +56,7 @@ export default function AccessControlDialog({
       </DialogTitle>
 
       <DialogContent dividers>
-        <FormAccessControl onSuccess={onSuccess} editingId={edittingId} />
+        <FormAccessControl onSuccess={onSuccess} editingId={edittingId} onDirty={onDirty} />
       </DialogContent>
     </Dialog>
   );

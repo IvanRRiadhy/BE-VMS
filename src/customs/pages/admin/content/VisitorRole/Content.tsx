@@ -13,24 +13,24 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconBrandMedium } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { getVisitorRoleByDt, updateVisitorRole } from 'src/customs/api/Admin/VisitorRole';
-import FilterMoreContent from './components/FilterMoreContent';
+
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState('desc');
+  const { t } = useTranslation();
   const cards = [
     {
-      title: 'Total Visitor Role',
+      title: t('totalVisitorRole'),
       subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       icon: IconBrandMedium,
@@ -43,13 +43,7 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getVisitorRoleByDt(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-        );
+        const response = await getVisitorRoleByDt(token, start, rowsPerPage, sortDir, search);
         setTableData(response.collection);
         setTotalRecords(response.collection.length);
       } catch (error) {
@@ -65,13 +59,13 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
- const handleSearch = useCallback(
-   (keyword: string) => {
-     setPage(0);
-     setSearch(keyword);
-   },
-   [setPage, setSearch],
- );
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const [loadingAction, setLoadingAction] = useState(false);
 

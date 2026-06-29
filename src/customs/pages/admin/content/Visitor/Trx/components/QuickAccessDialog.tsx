@@ -222,6 +222,7 @@ export const QuickAccessDialog = ({
 
         <DialogContent dividers sx={{ p: 0 }}>
           <DynamicTable
+            // loading
             data={visitorTableData || []}
             isHaveSearch={true}
             searchKeyword={searchKeyword}

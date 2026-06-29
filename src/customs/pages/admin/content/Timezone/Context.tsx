@@ -20,15 +20,13 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormTimezone from './FormTimezone';
 import { useDebounce } from 'src/hooks/useDebounce';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { IconClock } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useTranslation } from 'react-i18next';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 const dayKeyMap: Record<string, string> = {
@@ -89,6 +87,7 @@ const Content = () => {
   const { token } = useSession();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!token) return;
@@ -113,7 +112,6 @@ const Content = () => {
   );
 
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
-
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -156,7 +154,8 @@ const Content = () => {
           sx={{
             display: 'flex',
             flexDirection: mdUp ? 'row' : 'column',
-            backgroundColor: '#fff',
+            // backgroundColor: '#fff',
+            bgcolor: 'background.paper',
             height: '100%',
             width: '100%',
             overflow: 'hidden',
@@ -173,7 +172,7 @@ const Content = () => {
           >
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
               <Typography variant="h6" fontSize="1rem">
-                Time Access
+                {t('navigation.timeaccess')}
               </Typography>
               <Tooltip title="Add Time Access" arrow>
                 <Button
@@ -186,14 +185,14 @@ const Content = () => {
                   }}
                   startIcon={<IconPlus />}
                 >
-                   Add
+                  {t('add')}
                 </Button>
               </Tooltip>
             </Box>
             <CustomTextField
               fullWidth
               size="small"
-              placeholder="Search time access..."
+              placeholder={t('searchTimeAccess') + '...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               sx={{ mb: 2 }}
@@ -216,7 +215,7 @@ const Content = () => {
                       borderRadius={1}
                       sx={{
                         cursor: 'pointer',
-                        backgroundColor: isActive ? 'primary.main' : 'transparent',
+                        backgroundColor: isActive ? 'primary.main' : 'background.paper',
                         color: isActive ? '#fff' : 'inherit',
                         '&:hover': {
                           backgroundColor: isActive ? 'primary.dark' : '#f5f5f5',
@@ -252,7 +251,7 @@ const Content = () => {
                           '&:hover': { color: 'red !important' },
                         }}
                       >
-                        <Tooltip title="Delete">
+                        <Tooltip title={t('delete')} arrow>
                           <IconTrash size={18} />
                         </Tooltip>
                       </IconButton>

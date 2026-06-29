@@ -192,6 +192,11 @@ const DetailProfile = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
 
+  const passwordMismatch =
+    !!passwordData.new_password &&
+    !!passwordData.con_password &&
+    passwordData.new_password !== passwordData.con_password;
+
   const content = (
     <Container title="Profile">
       <Grid container justifyContent="center" sx={{ mt: 4 }}>
@@ -431,6 +436,19 @@ const DetailProfile = () => {
                             name="con_password"
                             value={passwordData.con_password}
                             onChange={handlePasswordChange}
+                            error={passwordMismatch}
+                            helperText={
+                              passwordMismatch
+                                ? 'Confirm password must match the new password.'
+                                : ''
+                            }
+                            FormHelperTextProps={{
+                              sx: {
+                                ml: 0,
+                                mr: 0,
+                                mt: 0.5, // sesuaikan atau 0 jika ingin benar-benar rapat
+                              },
+                            }}
                             InputProps={{
                               endAdornment: (
                                 <InputAdornment position="end">

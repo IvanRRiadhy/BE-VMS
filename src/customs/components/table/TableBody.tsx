@@ -593,7 +593,7 @@ const TableRowItem = React.memo(
         {isHaveChecked && (
           <TableCell
             padding="checkbox"
-            sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
+            sx={{ position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper' }}
           >
             <Checkbox
               checked={checkedIds.includes(row.id)}
@@ -616,7 +616,8 @@ const TableRowItem = React.memo(
               position: 'sticky',
               left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
               zIndex: 3,
-              background: 'white',
+              // background: 'white',
+              bgcolor: 'background.paper',
               minWidth: ACTION_COL_WIDTH,
               maxWidth: ACTION_COL_WIDTH,
             }}
@@ -629,6 +630,7 @@ const TableRowItem = React.memo(
                   disableRipple
                   sx={{
                     color: 'white',
+                    bgcolor: 'background.paper',
                     backgroundColor: 'gray !important',
                     width: 28,
                     height: 28,
@@ -698,7 +700,8 @@ const TableRowItem = React.memo(
             left:
               (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) + (isActionVisitor ? ACTION_COL_WIDTH : 0),
             zIndex: 3,
-            background: 'white',
+            // background: 'white',
+            bgcolor: 'background.paper',
             minWidth: INDEX_COL_WIDTH,
             maxWidth: INDEX_COL_WIDTH,
             fontSize: '0.85rem !important',
@@ -717,7 +720,8 @@ const TableRowItem = React.memo(
                   position: { xs: 'static', lg: 'sticky' },
                   left: getStickyLeft(idx),
                   zIndex: 3,
-                  background: 'white',
+                  // background: 'white',
+                  bgcolor: 'background.paper',
                   minWidth: DATA_COL_WIDTH,
                   maxWidth: DATA_COL_WIDTH,
                 }),
@@ -988,7 +992,7 @@ const TableRowItem = React.memo(
                     </Box>
                   </Tooltip>
                 </Box>
-              ) : isHavePdf && col === 'file' ? (
+              ) : isHavePdf && col == 'document_text' ? (
                 <Tooltip title="View File">
                   <IconButton
                     size="small"

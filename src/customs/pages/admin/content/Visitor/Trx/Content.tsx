@@ -67,7 +67,6 @@ import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useSites } from 'src/hooks/useSites';
-import { useEmployees } from 'src/hooks/useEmployees';
 import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
@@ -76,6 +75,7 @@ import { QuickAccessDialog } from './components/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const { token } = useSession();
@@ -387,17 +387,18 @@ const Content = () => {
   };
 
   const totalFilteredRecords = visitorTableData?.RecordsFiltered ?? 0;
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Visitor',
+      title: t('totalVisitor'),
       icon: IconUsers,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
     {
-      title: 'Scan QR Visitor',
+      title: 'Scan QR ' + t('navigation.visitor'),
       icon: IconQrcode,
       subTitle: iconScanQR,
       subTitleSetting: 'image',
@@ -406,28 +407,28 @@ const Content = () => {
     ...(!isOperatorAdmin
       ? [
           {
-            title: 'Add Invitation',
+            title: t('add') + ' Invitation',
             icon: IconUser,
             subTitle: iconAdd,
             subTitleSetting: 'image',
             color: 'none',
           },
           {
-            title: 'Add Pre Registration',
+            title: t('add') + ' Pre Registration',
             icon: IconClipboard,
             subTitle: iconAdd,
             subTitleSetting: 'image',
             color: 'none',
           },
           {
-            title: 'Share Link',
+            title: t('shareLink'),
             icon: IconShare,
             subTitle: iconAdd,
             subTitleSetting: 'image',
             color: 'none',
           },
           {
-            title: 'Quick Access',
+            title: t('quickAccess'),
             icon: IconBolt,
             subTitle: iconAdd,
             subTitleSetting: 'image',
@@ -436,20 +437,6 @@ const Content = () => {
         ]
       : []),
   ];
-
-  //   const closeVisitorDialog = () => {
-  //     setOpenDialogIndex(null);
-  //     setOpenInvitationVisitor(false);
-  //     setOpenPreRegistration(false);
-  //     resetRegisteredFlow();
-  //   };
-
-  // const closeVisitorDialog  = useCallback(() => {
-  //   setSelectedSite(null);
-  //   setOpenInvitationVisitor(false);
-  //   setOpenPreRegistration(false);
-  //   closeVisitorDialog();
-  // }, []);
 
   const closeVisitorDialog = useCallback(() => {
     setOpenDialogIndex(null);

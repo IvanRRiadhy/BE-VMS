@@ -131,7 +131,7 @@ const Content = () => {
             token,
             start,
             rowsPerPage,
-            sortColumn,
+            // sortColumn,
             sortDir,
             search,
             filters.gender === 0 ? undefined : filters.gender,
@@ -503,7 +503,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Employee" description="this is Employee page">
+      <Container title={t('navigation.employees')} description="this is Employee page">
         <Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>

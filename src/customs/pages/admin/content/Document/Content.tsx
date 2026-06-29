@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -31,35 +28,36 @@ import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { useSearchParams } from 'react-router';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchParams] = useSearchParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
-  // const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
-  // const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
-  // const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [sortColumn] = useState('id');
   const [sortDir] = useState('desc');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
-    const saved = localStorage.getItem('unsavedDocumentData');
-    return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
-  });
+  const [isDirty, setIsDirty] = useState(false);
+  const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [openPdfDialog, setOpenPdfDialog] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(
+    CreateDocumentRequestSchema.parse({}),
+  );
+  const { t } = useTranslation();
 
   const cards = [
     {
-      title: 'Total Document',
+      title: t('totalDocument'),
       subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       icon: IconScript,
@@ -91,13 +89,8 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, search]);
 
-  const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [openPdfDialog, setOpenPdfDialog] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState('');
   const handleCloseDialog = () => {
-    if (hasUnsaved()) {
+    if (isDirty) {
       setPendingEditId(null);
       setConfirmDialogOpen(true);
       return;
@@ -106,40 +99,20 @@ const Content = () => {
     setOpenFormAddDocument(false);
   };
 
-  const hasUnsaved = useCallback(() => {
-    const raw = localStorage.getItem('unsavedDocumentData');
-    if (!raw) return false;
-
-    try {
-      const parsed = JSON.parse(raw);
-
-      return Object.values(parsed).some((val) => val !== '' && val !== null && val !== undefined);
-    } catch {
-      return false;
-    }
-  }, []);
-
   const handleAdd = useCallback(() => {
-    if (hasUnsaved()) {
+    if (isDirty) {
       setPendingEditId(null);
       setConfirmDialogOpen(true);
     } else {
-      const empty = CreateDocumentRequestSchema.parse({});
-      setFormDataAddDocument(empty);
-      localStorage.removeItem('unsavedDocumentData');
+      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
       setOpenFormAddDocument(true);
     }
-  }, [hasUnsaved]);
+  }, [isDirty]);
 
   const handleEdit = (id: string) => {
-    if (hasUnsaved()) {
-      const parsed = JSON.parse(localStorage.getItem('unsavedDocumentData') as string);
-      if (parsed?.id === id) {
-        setOpenFormAddDocument(true);
-      } else {
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-      }
+    if (isDirty) {
+      setPendingEditId(id);
+      setConfirmDialogOpen(true);
     } else {
       setFormDataAddDocument(
         CreateDocumentRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
@@ -149,7 +122,7 @@ const Content = () => {
   };
 
   const handleConfirmEdit = () => {
-    localStorage.removeItem('unsavedDocumentData');
+    setIsDirty(false);
     setConfirmDialogOpen(false);
 
     if (pendingEditId) {
@@ -157,11 +130,13 @@ const Content = () => {
         tableData.find((item) => item.id === pendingEditId) ||
           CreateDocumentRequestSchema.parse({}),
       );
+
+      setOpenFormAddDocument(false);
     } else {
       setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+      setOpenFormAddDocument(false);
     }
 
-    setOpenFormAddDocument(false);
     setPendingEditId(null);
   };
 
@@ -170,16 +145,6 @@ const Content = () => {
     setConfirmDialogOpen(false);
     setPendingEditId(null);
   };
-
-  useEffect(() => {
-    if (!openFormAddDocument) return;
-
-    const timeout = setTimeout(() => {
-      localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [formDataAddDocument, openFormAddDocument]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -231,15 +196,11 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    localStorage.removeItem('unsavedDocumentData');
-    handleCloseDialog();
+    setIsDirty(false);
+    setOpenFormAddDocument(false);
     setRefreshTrigger((prev) => prev + 1);
     setEdittingId('');
   };
-
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearch(keyword);
-  }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -276,13 +237,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
                 isHaveAddData={true}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
                 isHavePdf={true}
                 onFileClick={(row) => handleFileClick(row)}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
@@ -294,7 +249,6 @@ const Content = () => {
                 onBatchDelete={handleBatchDelete}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleAdd}
                 htmlFields={['document_text']}
@@ -328,6 +282,7 @@ const Content = () => {
             initialData={formDataAddDocument}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            onDirty={() => setIsDirty(true)}
           />
         </DialogContent>
       </Dialog>

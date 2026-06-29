@@ -33,6 +33,7 @@ import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Acc
 import VisitorTypeDialog from './components/VisitorTypeDialog';
 import { updateQuickVisitorType, updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -44,7 +45,6 @@ type VisitorTypeTableRow = {
 const Content = () => {
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
-  // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
@@ -66,8 +66,6 @@ const Content = () => {
   const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [documentIdentities, setDocumentIdentities] = useState<
@@ -75,9 +73,10 @@ const Content = () => {
   >([]);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [duplicatedAccess, setDuplicatedAccess] = useState<any[]>([]);
+  const { t } = useTranslation();
   const cards = [
     {
-      title: 'Total Visitor Type',
+      title: t('totalVisitorType'),
       subTitle: `${totalRecords}`,
       icon: IconUsersGroup,
       subTitleSetting: 10,

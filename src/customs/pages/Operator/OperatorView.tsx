@@ -3361,7 +3361,7 @@ const OperatorView = () => {
   const bulkPrintingRef = useRef(false);
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8081/ws');
+    const socket = new WebSocket('ws://localhost:3001/ws');
 
     socketRef.current = socket;
 

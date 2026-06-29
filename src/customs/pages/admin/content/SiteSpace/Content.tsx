@@ -30,6 +30,7 @@ import { useEmployees } from 'src/hooks/useEmployees';
 import { updateSiteActive } from 'src/customs/api/Admin/Site';
 import DialogSiteSpace from './components/Dialog/DialogSiteSpace';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
 
 type SiteTableRow = {
   id: string;
@@ -85,6 +86,7 @@ const Content = () => {
   const [breadcrumbItems, setBreadcrumbItems] = useState<{ id: string; name: string }[]>([]);
   const [appliedType, setAppliedType] = useState<number>(-1);
   const { '*': wildcard } = useParams();
+  const { t } = useTranslation();
 
   const handleCloseDetailType = () => {
     setSelectedType(null);
@@ -145,7 +147,7 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Site Space',
+      title: `Total ${t('navigation.site_space')}`,
       subTitle: `${totalFilteredRecords}`,
       icon: IconSitemap,
       subTitleSetting: 10,

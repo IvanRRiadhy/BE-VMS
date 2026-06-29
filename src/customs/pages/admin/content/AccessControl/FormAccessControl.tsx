@@ -42,15 +42,14 @@ type FormType = z.infer<typeof CreateAccessControlRequestSchema>;
 interface Props {
   editingId?: string;
   onSuccess?: () => void;
-  onDirtyChange?: (dirty: boolean) => void;
+  onDirty?: (dirty: boolean) => void;
 }
 
-const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
+const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
-  const [brandList, setBrandList] = useState<any[]>([]);
+  // const [brandList, setBrandList] = useState<any[]>([]);
   const [integrationList, setIntegrationList] = useState<any[]>([]);
-  const DRAFT_KEY = 'unsavedAccessControl';
 
   const typeMap: Record<string, number> = {
     Access: 0,
@@ -61,7 +60,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-    watch,
   } = useForm<FormType>({
     resolver: zodResolver(CreateAccessControlRequestSchema),
     defaultValues: {
@@ -78,32 +76,9 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
     },
   });
 
-  const formValues = watch();
   useEffect(() => {
-    if (!isDirty) return;
-
-    const timeout = setTimeout(() => {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [formValues, isDirty]);
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty]);
-
-  useEffect(() => {
-    const draft = localStorage.getItem(DRAFT_KEY);
-
-    if (!draft) return;
-
-    if (!editingId) {
-      try {
-        reset(JSON.parse(draft));
-      } catch {}
-    }
-  }, [editingId]);
+    onDirty?.(isDirty);
+  }, [isDirty, onDirty]);
 
   useEffect(() => {
     if (!token) return;
@@ -172,7 +147,10 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
       );
       onSuccess?.();
     } catch (err: any) {
-      showSwal('error', err?.message ?? err?.response?.data?.message ?? 'Failed to create Access Control.');
+      showSwal(
+        'error',
+        err?.message ?? err?.response?.data?.message ?? 'Failed to create Access Control.',
+      );
     } finally {
       setLoading(false);
     }
