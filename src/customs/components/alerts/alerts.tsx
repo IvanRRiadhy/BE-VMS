@@ -169,7 +169,7 @@ export const showSwal = (
     allowEscapeKey: true,
     showCloseButton: true,
     heightAuto: false,
-    target: document.fullscreenElement ?? document.body,
+    // target: document.fullscreenElement ?? document.body,
     backdrop: true,
     customClass: {
       ...baseConfig.customClass,

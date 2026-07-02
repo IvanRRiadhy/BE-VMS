@@ -6,6 +6,7 @@ import PageContainer from 'src/customs/components/container/PageContainer';
 import { Outlet } from 'react-router';
 
 const OperatorLayout = () => {
+
   return (
     <PageContainer
       itemDataCustomNavListing={OperatorNavListingData}

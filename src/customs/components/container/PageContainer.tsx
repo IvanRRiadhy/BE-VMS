@@ -41,6 +41,18 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
   const [hideChrome, setHideChrome] = React.useState(false);
   const theme = useTheme();
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setHideChrome(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
     <>
       <MainWrapper
@@ -88,15 +100,11 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
             <Box
               sx={{
                 minHeight: 'calc(100vh - 170px)',
-                background: '#ebedefff'
+                background: '#ebedefff',
                 // bgcolor: 'background.paper',
               }}
             >
-              {React.isValidElement(children) ? (
-                <ScrollToTop>{children}</ScrollToTop>
-              ) : (
-                children
-              )}{' '}
+              {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
             </Box>
           </Box>
           {/* <Customizer /> */}

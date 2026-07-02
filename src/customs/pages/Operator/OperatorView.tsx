@@ -242,6 +242,32 @@ const OperatorView = () => {
     });
   const permissionHook = usePermission(permission);
 
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
       id: string;
@@ -593,21 +619,21 @@ const OperatorView = () => {
     setOpenDetailVistingPurpose(true);
   };
 
-  useEffect(() => {
-    const handleBrowserFullscreen = () => {
-      const isBrowserFullscreen = !!document.fullscreenElement;
-      setIsFullscreen(isBrowserFullscreen);
+  // useEffect(() => {
+  //   const handleBrowserFullscreen = () => {
+  //     const isBrowserFullscreen = !!document.fullscreenElement;
+  //     setIsFullscreen(isBrowserFullscreen);
 
-      if (isBrowserFullscreen) {
-        setHidePageContainer(true);
-      } else {
-        setHidePageContainer(false);
-      }
-    };
+  //     if (isBrowserFullscreen) {
+  //       setHidePageContainer(true);
+  //     } else {
+  //       setHidePageContainer(false);
+  //     }
+  //   };
 
-    document.addEventListener('fullscreenchange', handleBrowserFullscreen);
-    return () => document.removeEventListener('fullscreenchange', handleBrowserFullscreen);
-  }, []);
+  //   document.addEventListener('fullscreenchange', handleBrowserFullscreen);
+  //   return () => document.removeEventListener('fullscreenchange', handleBrowserFullscreen);
+  // }, []);
 
   function getColorByName(name: string) {
     let hash = 0;
@@ -1155,7 +1181,7 @@ const OperatorView = () => {
           ...inv,
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
         };
       }),
     );
@@ -2927,7 +2953,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
                   }
 
                   return fieldPayload;
@@ -3472,8 +3498,12 @@ const OperatorView = () => {
   };
 
   return (
-    <PageContainer title={'Operator View'} description={'Operator View'}>
-      <FullScreen handle={handle}>
+    <PageContainer
+      title={'Operator View'}
+      description={'Operator View'}
+     
+    >
+      {/* <FullScreen handle={handle}> */}
         <Box
           ref={containerRef}
           sx={{
@@ -3518,7 +3548,8 @@ const OperatorView = () => {
                   onOpenInfo={() => setOpenDialogInfo(true)}
                   onOpenVehicle={handleOpenVehicle}
                   isFullscreen={isFullscreen}
-                  onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
+                  // onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
+                  onToggleFullscreen={toggleFullscreen}
                   containerRef={containerRef as any}
                 />
               </Grid>
@@ -4008,7 +4039,7 @@ const OperatorView = () => {
           </Portal>
           <GlobalBackdropLoading open={loadingAccess} />
         </Box>
-      </FullScreen>
+      {/* </FullScreen> */}
     </PageContainer>
   );
 };
