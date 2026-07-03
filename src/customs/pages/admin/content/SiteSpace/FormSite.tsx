@@ -411,9 +411,9 @@ const FormSite = ({
     }
 
     // Site Host wajib
-    if (!localForm.host) {
-      newErrors.host = 'Site Host is required.';
-    }
+    // if (!localForm.host) {
+    //   newErrors.host = 'Site Host is required.';
+    // }
 
     // Can Visit wajib aktif
     // if (!localForm.can_visited) {

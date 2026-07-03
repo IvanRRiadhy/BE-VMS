@@ -77,6 +77,7 @@ const ShareLinkDialog: React.FC<Props> = ({
           link_status: item.link_status,
         })) || [];
 
+
       setShareLinkList(mapped);
       setTotalFilterRecords(res?.RecordsFiltered || 0);
     } catch (err) {
@@ -126,6 +127,7 @@ const ShareLinkDialog: React.FC<Props> = ({
           onSearch={handleSearch}
           isHaveChecked={true}
           isNoActionTableHead={true}
+          currentPage={page}
           // titleHeader="Share Link"
           isCopyLink={true}
           isHavePagination={true}

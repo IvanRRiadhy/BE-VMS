@@ -29,8 +29,6 @@ export const getShareLinkByDt = async (
   length: number,
   keyword: string = '',
   sortDir: string,
-  startDate?: string,
-  endDate?: string,
 ): Promise<any> => {
   const response = await axiosInstance.get(`/visitor-share-link/dt`, {
     headers: { Authorization: `Bearer ${token}` },

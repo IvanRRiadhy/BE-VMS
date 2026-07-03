@@ -3165,7 +3165,7 @@ const OperatorView = () => {
         // console.log('Final Payload:', payload);
 
         const res = await createGiveAccessOperator(token as string, payload);
-        console.log('Access Action Response:', JSON.stringify(res, null, 2));
+        // console.log('Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
@@ -3254,7 +3254,6 @@ const OperatorView = () => {
         card_number: returnCardNumber.trim(),
         registered_site_id: registerSiteOperator,
       };
-      console.log('return card payload', JSON.stringify(payload, null, 2));
 
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
@@ -3909,7 +3908,7 @@ const OperatorView = () => {
             container={containerRef.current ?? undefined}
           >
             <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-              Add Invitation Visitor
+              {t("add")} Invitation Visitor
               <IconButton
                 aria-label="close"
                 onClick={() => {
@@ -3963,7 +3962,7 @@ const OperatorView = () => {
             container={containerRef.current ?? undefined}
           >
             <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-              Add Pra Registration
+              {t("add")} Pra Registration
               <IconButton
                 aria-label="close"
                 onClick={() => {

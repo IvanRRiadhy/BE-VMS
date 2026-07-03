@@ -1425,12 +1425,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconEye,
     href: '/operator/view',
   },
-  {
-    id: uniqueId(),
-    title: 'View',
-    icon: IconEye,
-    href: '/operator/vms-view',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'View',
+  //   icon: IconEye,
+  //   href: '/operator/vms-view',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Monitoring',

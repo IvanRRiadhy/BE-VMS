@@ -13,7 +13,6 @@ const VisitorDetailCard = ({
   handleConfirmStatus,
   handleView,
 }: any) => {
-//   if (!invitationCode?.length) return null;
 
   const selectedVisitor =
     relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||

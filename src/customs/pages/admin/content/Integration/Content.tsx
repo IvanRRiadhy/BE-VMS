@@ -119,56 +119,124 @@ const Content = () => {
     Bacnet: 4,
   };
 
+  // useEffect(() => {
+  //   if (!token) return;
+
+  //   let cancelled = false;
+  //   const fetchData = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const [response, availableResponse] = await Promise.all([
+  //         getAllIntegration(token),
+  //         getAvailableIntegration(token),
+  //       ]);
+
+  //       const integrations: Item[] = Array.isArray(response?.collection) ? response.collection : [];
+  //       const availables = (availableResponse.collection ?? []).map((item: any) => ({
+  //         ...item,
+  //         brand_type: normalizeBrandType(item.brand_type),
+  //         // integration_type: normalizeBrandType(item.integration_type),
+  //         // integration_type: IntegrationTypeMap[item.integration_type],
+  //         // api_type_auth: normalizeBrandType(item.api_type_auth),
+  //         api_type_auth: item.api_type_auth,
+  //       }));
+
+  //       setAvailableIntegration(availables);
+
+  //       if (cancelled) return;
+
+  //       setIntegrationData(integrations);
+  //       // setAvailableIntegration(availables);
+  //       setTotalRecords(integrations.length);
+
+  //       const rows: any[] = integrations.map((item) => ({
+  //         id: item.id,
+  //         name: item.name,
+  //         brand_name: item.brand_name,
+  //         brand_type: item.brand_type,
+  //         // integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
+  //         // api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
+  //         integration_type: item.integration_type,
+  //         api_type_auth: item.api_type_auth,
+  //         api_url: item.api_url || '',
+  //       }));
+
+  //       setTableData(rows);
+  //     } catch (error) {
+  //     } finally {
+  //       if (!cancelled) setLoading(false);
+  //     }
+  //   };
+
+  //   fetchData();
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [token, page, rowsPerPage, search, refreshTrigger]);
+
   useEffect(() => {
     if (!token) return;
 
     let cancelled = false;
+
     const fetchData = async () => {
       setLoading(true);
+
       try {
-        const [response, availableResponse] = await Promise.all([
+        const [responseResult, availableResponseResult] = await Promise.allSettled([
           getAllIntegration(token),
           getAvailableIntegration(token),
         ]);
 
-        const integrations: Item[] = Array.isArray(response?.collection) ? response.collection : [];
-        const availables = (availableResponse.collection ?? []).map((item: any) => ({
-          ...item,
-          brand_type: normalizeBrandType(item.brand_type),
-          // integration_type: normalizeBrandType(item.integration_type),
-          // integration_type: IntegrationTypeMap[item.integration_type],
-          // api_type_auth: normalizeBrandType(item.api_type_auth),
-          api_type_auth: item.api_type_auth,
-        }));
+        const integrations: Item[] =
+          responseResult.status === 'fulfilled' && Array.isArray(responseResult.value?.collection)
+            ? responseResult.value.collection
+            : [];
 
-        setAvailableIntegration(availables);
+        const availables =
+          availableResponseResult.status === 'fulfilled'
+            ? (availableResponseResult.value.collection ?? []).map((item: any) => ({
+                ...item,
+                brand_type: normalizeBrandType(item.brand_type),
+                api_type_auth: item.api_type_auth,
+              }))
+            : [];
+
+        if (availableResponseResult.status === 'rejected') {
+          console.error('getAvailableIntegration failed:', availableResponseResult.reason);
+        }
+
+        if (responseResult.status === 'rejected') {
+          console.error('getAllIntegration failed:', responseResult.reason);
+        }
 
         if (cancelled) return;
 
+        setAvailableIntegration(availables);
+
         setIntegrationData(integrations);
-        // setAvailableIntegration(availables);
         setTotalRecords(integrations.length);
 
-        const rows: any[] = integrations.map((item) => ({
+        const rows = integrations.map((item) => ({
           id: item.id,
           name: item.name,
           brand_name: item.brand_name,
           brand_type: item.brand_type,
-          // integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
-          // api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
           integration_type: item.integration_type,
           api_type_auth: item.api_type_auth,
           api_url: item.api_url || '',
         }));
 
         setTableData(rows);
-      } catch (error) {
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+
     return () => {
       cancelled = true;
     };

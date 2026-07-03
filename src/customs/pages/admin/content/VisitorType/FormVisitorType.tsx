@@ -282,7 +282,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         grace_time: Number(localForm.grace_time),
         period: Number(localForm.period),
         section_page_visitor_types: transformedSections,
-        expiry_reminder_minutes: Number(localForm.expiry_reminder_minutes),
+        expiry_reminder_minutes: localForm.expiry_reminder_minutes
+          ? Number(localForm.expiry_reminder_minutes)
+          : 0,
         is_multi_site: localForm.is_multi_site ?? false,
         visitor_roles:
           localForm.visitor_roles?.map((item) => ({
@@ -354,8 +356,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setLoading(false);
       }, 600);
     } catch (err: any) {
-      console.error('Submit Error:', err);
-
       if (err?.errors) {
         setErrors(err.errors);
       }
