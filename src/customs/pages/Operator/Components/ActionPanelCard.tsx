@@ -75,6 +75,7 @@ const ActionPanelCard: FC<Props> = ({
         display: 'flex',
         justifyContent: isFullscreen ? 'center' : 'flex-start',
         alignItems: isFullscreen ? 'center' : 'stretch',
+        // height: '350px',
       }}
     >
       <Card
@@ -86,7 +87,7 @@ const ActionPanelCard: FC<Props> = ({
           maxHeight: isFullscreen
             ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
             : { xs: '100%', sm: '100%', xl: '400px' },
-          overflow: isFullscreen ? 'auto' : 'visible',
+          overflow: isFullscreen ? 'hidden' : 'visible',
           //   display: 'flex',
           //   flexDirection: 'column',
         }}
@@ -95,6 +96,7 @@ const ActionPanelCard: FC<Props> = ({
           sx={{
             flex: 1,
             p: 2,
+
             px: '5px !important',
             overflow: 'auto',
           }}
@@ -132,12 +134,12 @@ const ActionPanelCard: FC<Props> = ({
                     },
                     zIndex: 999,
                     width: '100%',
-                    height: '55px',
+                    height: '50px',
                     p: 0,
                   }}
                 >
                   <Typography variant="h5" color="white">
-                    Scan
+                    Scan QR
                   </Typography>
                 </Button>
               </Tooltip>

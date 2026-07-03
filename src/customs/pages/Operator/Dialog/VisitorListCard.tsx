@@ -109,7 +109,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
       sx={{
         flex: 1,
         height: '100%',
-        maxHeight: isFullscreen ? '100%' : '530px',
+        // maxHeight: isFullscreen ? '100%' : '530px',
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -147,79 +147,79 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
             <MenuItem
               onClick={() => {
-                setTypeVisitor('related');
-                setAnchorEl(null);
-              }}
-            >
-              Related Visitors
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
                 setTypeVisitor('live');
                 setAnchorEl(null);
               }}
             >
               Live Visitors
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setTypeVisitor('related');
+                setAnchorEl(null);
+              }}
+            >
+              Related Visitors
+            </MenuItem>
           </Menu>
         </Box>
+      </Box>
 
-        <Box display={'flex'} gap={1}>
-          <FormControl sx={{ width: '100%' }}>
-            <CustomTextField
-              fullWidth
-              size="medium"
-              value={searchKeyword}
-              onChange={(e: any) => setSearchKeyword(e.target.value)}
-              placeholder="Search Visitor"
-              sx={{ mb: 0, width: '100%', p: 0 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </FormControl>
-
-          <Tooltip
-            title="Click and Select more than 1 visitor"
-            slotProps={{
-              tooltip: {
-                sx: {
-                  fontSize: '8.7remrem',
-                  padding: '8px 14px',
-                },
-              },
-              popper: {
-                container: containerRef.current,
-              },
+      <Box display={'flex'} gap={1} mt={2}>
+        <FormControl sx={{ width: '100%' }}>
+          <CustomTextField
+            fullWidth
+            size="medium"
+            value={searchKeyword}
+            onChange={(e: any) => setSearchKeyword(e.target.value)}
+            placeholder="Search Visitor"
+            sx={{ mb: 0, width: '100%', p: 0 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconSearch fontSize="small" />
+                </InputAdornment>
+              ),
             }}
-            arrow
-          >
-            <FormControlLabel
-              value="end"
-              control={
-                <Checkbox
-                  checked={selectMultiple}
-                  onChange={(e) => {
-                    setSelectMultiple(e.target.checked);
-                    setSelectedVisitors([]);
-                  }}
-                />
-              }
-              label="Select Multiple"
-              labelPlacement="end"
-              sx={{ marginRight: 0, width: '250px' }}
-            />
-          </Tooltip>
-        </Box>
+          />
+        </FormControl>
+
+        <Tooltip
+          title="Click and Select more than 1 visitor"
+          slotProps={{
+            tooltip: {
+              sx: {
+                fontSize: '8.7remrem',
+                padding: '8px 14px',
+              },
+            },
+            popper: {
+              container: containerRef.current,
+            },
+          }}
+          arrow
+        >
+          <FormControlLabel
+            value="end"
+            control={
+              <Checkbox
+                checked={selectMultiple}
+                onChange={(e) => {
+                  setSelectMultiple(e.target.checked);
+                  setSelectedVisitors([]);
+                }}
+              />
+            }
+            label="Select Multiple"
+            labelPlacement="end"
+            sx={{ marginRight: 0, width: '250px' }}
+          />
+        </Tooltip>
       </Box>
 
       <Divider sx={{ mt: 1 }} />
 
-      <CardContent
+      {/* <CardContent
         sx={{
           flex: 1,
           overflowY: 'auto',
@@ -392,6 +392,159 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             </React.Fragment>
           );
         })}
+      </CardContent> */}
+
+      <CardContent
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          p: 1,
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(3, 1fr)',
+              md: 'repeat(4, 1fr)',
+              xl: 'repeat(5, 1fr)',
+            },
+            gap: 1,
+          }}
+        >
+          {filteredVisitors.map((visitor, index) => {
+            const isDriving = visitor.is_driving === true;
+            const isScanned =
+              visitor.visitor_number &&
+              scannedVisitorNumber &&
+              visitor.visitor_number === scannedVisitorNumber;
+
+            const selected = selectedVisitors.includes(visitor.id);
+
+            return (
+              <Card
+                key={visitor.id || index}
+                onClick={() => handleSelectRelatedVisitor(visitor)}
+                sx={{
+                  cursor: 'pointer',
+                  borderRadius: 3,
+                  border: selected ? '2px solid' : '1px solid',
+                  borderColor: selected ? 'primary.main' : 'divider',
+                  transition: '.2s',
+                  padding: '5px',
+
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: 4,
+                  },
+                }}
+              >
+                <CardContent
+                  sx={{
+                    p: 0.5,
+                    textAlign: 'center',
+                    '&:last-child': {
+                      pb: 0.5,
+                    },
+                  }}
+                >
+                  <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                    <Avatar
+                      src={getCdnUrl(visitor.selfie_image) || undefined}
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: 'auto',
+                      }}
+                    />
+
+                    {(isDriving || isScanned) && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          right: -4,
+                          bottom: -4,
+                          display: 'flex',
+                          gap: 0.5,
+                        }}
+                      >
+                        {isDriving && (
+                          <Box
+                            sx={{
+                              width: 18,
+                              height: 18,
+                              bgcolor: 'success.main',
+                              color: '#fff',
+                              borderRadius: '50%',
+                              fontSize: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            P
+                          </Box>
+                        )}
+
+                        {isScanned && (
+                          <Box
+                            sx={{
+                              width: 18,
+                              height: 18,
+                              bgcolor: 'primary.main',
+                              color: '#fff',
+                              borderRadius: '50%',
+                              fontSize: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            S
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Typography variant="subtitle2" fontWeight={700} mt={1.5} noWrap>
+                    {visitor.name}
+                  </Typography>
+
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {visitor.organization}
+                  </Typography>
+                  <br />
+
+                  <Checkbox
+                    checked={selected}
+                    sx={{ mt: 1 }}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+
+                      setSelectedVisitors((prev) => {
+                        if (selectMultiple) {
+                          return checked
+                            ? [...new Set([...prev, visitor.id])]
+                            : prev.filter((id) => id !== visitor.id);
+                        }
+
+                        if (checked) {
+                          handleSelectRelatedVisitor(visitor);
+                          return [visitor.id];
+                        }
+
+                        return [];
+                      });
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
       </CardContent>
 
       <CardActions sx={{ overflow: 'visible', p: '0' }}>

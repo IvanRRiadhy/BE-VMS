@@ -85,6 +85,7 @@ const OperatorToolbar = ({
             md: 150,
             lg: 200,
           },
+          backgroundColor: '#fff'
         }}
       >
         <MenuItem value="" disabled>
@@ -149,7 +150,7 @@ const OperatorToolbar = ({
         <IconButton
           onClick={onToggleFullscreen}
           sx={{
-            backgroundColor: '#5D87FF',
+            backgroundColor:'primary.main',
             color: '#fff',
             width: 36,
             height: 36,

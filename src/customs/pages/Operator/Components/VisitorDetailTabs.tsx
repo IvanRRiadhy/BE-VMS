@@ -74,6 +74,8 @@ const VisitorDetailTabs: React.FC<Props> = ({
         <Tab label="Info" />
         <Tab label="Visit Information" />
         <Tab label="Purpose Visit" />
+        <Tab label="Card" />
+        <Tab label="Parking" />
         {/* <Tab label="Barcode" /> */}
       </Tabs>
 

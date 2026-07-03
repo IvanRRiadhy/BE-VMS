@@ -46,6 +46,8 @@ import {
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
+import beImage from 'src/assets/images/logos/bio-experience-1x1-logo.png';
+import frImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
@@ -109,6 +111,8 @@ import useInvitationSite from 'src/hooks/useInvitationSite';
 import useRegisteredSiteOperator from 'src/hooks/useRegisteredSiteOperator';
 import useInvitationHost from 'src/hooks/useInvitationHost';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import VisitorInformation from './Components/VisitorInformation';
+import HostInformation from './Components/HostInformation';
 // import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
 
 type DocumentType = 'CardAccess' | 'Other';
@@ -219,7 +223,7 @@ const OperatorView = () => {
     { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
   ];
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [typeVisitor, setTypeVisitor] = useState('related');
+  const [typeVisitor, setTypeVisitor] = useState('live');
   const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
   const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
   const { sitesOperator } = useInvitationSite(token);
@@ -1110,7 +1114,7 @@ const OperatorView = () => {
         return;
       }
       handleCloseScanQR();
-
+      setTypeVisitor('related');
       showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
       showSwal('error', 'Your code does not exist.', 3000);
@@ -1181,7 +1185,7 @@ const OperatorView = () => {
           ...inv,
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
         };
       }),
     );
@@ -2953,7 +2957,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;
@@ -3497,81 +3501,79 @@ const OperatorView = () => {
   };
 
   return (
-    <PageContainer
-      title={'Operator View'}
-      description={'Operator View'}
-     
-    >
+    <PageContainer title={'Operator View'} description={'Operator View'}>
       {/* <FullScreen handle={handle}> */}
-        <Box
-          ref={containerRef}
-          sx={{
-            display: 'flex',
-            // flexDirection: mdUp ? 'row' : 'column',
-            flexDirection: { xs: 'column', md: 'row' },
-            backgroundColor: '#fff',
-            height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
-            width: '100%',
-            padding: '5px !important',
+      <Box
+        ref={containerRef}
+        sx={{
+          display: 'flex',
+          // flexDirection: mdUp ? 'row' : 'column',
+          flexDirection: { xs: 'column', md: 'row' },
+          // backgroundColor: '#fff',
+          height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
+          width: '100%',
+          // padding: '5px !important',
 
-            position: 'relative',
-            overflow: 'visible',
+          position: 'relative',
+          overflow: 'visible',
+          padding: '0px !important',
+        }}
+      >
+        <Box
+          flexGrow={1}
+          sx={{
+            // overflow: isFullscreen ? 'auto' : 'hidden',
+            display: 'flex',
+            padding: '0px !important',
+            flexDirection: 'column',
+            height: isFullscreen ? '100vh' : 'auto',
           }}
         >
-          <Box
-            flexGrow={1}
-            sx={{
-              // overflow: isFullscreen ? 'auto' : 'hidden',
-              display: 'flex',
-              padding: '0px !important',
-              flexDirection: 'column',
-              height: isFullscreen ? '100vh' : 'auto',
-            }}
-          >
-            <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
-              <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
-                <VisitorSearchInput
-                  onOpenSearch={() => setOpenSearch(true)}
-                  onClear={handleClearAll}
-                  containerRef={containerRef as any}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
-                <OperatorToolbar
-                  registeredSite={registeredSite}
-                  selectedSite={registerSiteOperator}
-                  onChangeSite={setRegisterSiteOperator}
-                  onClear={handleClearAll}
-                  onOpenList={handleOpenListVisitor}
-                  onOpenBlacklist={handleOpenBlacklistVisitor}
-                  onOpenInfo={() => setOpenDialogInfo(true)}
-                  onOpenVehicle={handleOpenVehicle}
-                  isFullscreen={isFullscreen}
-                  // onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
-                  onToggleFullscreen={toggleFullscreen}
-                  containerRef={containerRef as any}
-                />
-              </Grid>
+          <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
+            <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
+              <VisitorSearchInput
+                onOpenSearch={() => setOpenSearch(true)}
+                onClear={handleClearAll}
+                containerRef={containerRef as any}
+              />
             </Grid>
+            <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
+              <OperatorToolbar
+                registeredSite={registeredSite}
+                selectedSite={registerSiteOperator}
+                onChangeSite={setRegisterSiteOperator}
+                onClear={handleClearAll}
+                onOpenList={handleOpenListVisitor}
+                onOpenBlacklist={handleOpenBlacklistVisitor}
+                onOpenInfo={() => setOpenDialogInfo(true)}
+                onOpenVehicle={handleOpenVehicle}
+                isFullscreen={isFullscreen}
+                // onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
+                onToggleFullscreen={toggleFullscreen}
+                containerRef={containerRef as any}
+              />
+            </Grid>
+          </Grid>
 
-            <Grid container spacing={2} alignItems="stretch">
+          <Grid container spacing={2} alignItems="stretch">
+            <Grid
+              container
+              spacing={2}
+              size={{ xs: 12 }}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                // alignItems: 'stretch',
+                // height: '100%',
+                flexWrap: 'wrap',
+                // height: '340px',
+              }}
+            >
               <Grid
-                container
-                spacing={2}
-                size={{ xs: 12 }}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'stretch',
-                  height: '100%',
-                  flexWrap: 'wrap',
-                }}
+                size={{ xs: 12, lg: 4.5 }}
+                sx={{ borderRadius: '15px', backgroundColor: '#fff' }}
               >
-                <Grid
-                  size={{ xs: 12, lg: 4.5 }}
-                  sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
-                >
-                  <LprVisitorCard
+                {/* <LprVisitorCard
                     LprImage={LprImage}
                     todayVisitingPurpose={upcomingPurpose}
                     invitationCode={invitationCode}
@@ -3584,460 +3586,481 @@ const OperatorView = () => {
                     getColorByName={getColorByName}
                     backgroundnodata={backgroundnodata}
                     t={t}
-                  />
-                </Grid>
-
-                <ActionPanelCard
-                  loading={loadingPermission}
-                  permission={permissionHook}
+                  /> */}
+                <VisitorInformation
+                  faceImage={activeSelfie}
+                  LprImage={frImage}
+                  todayVisitingPurpose={upcomingPurpose}
+                  invitationCode={invitationCode}
                   isFullscreen={isFullscreen}
-                  handleOpenScanQR={handleOpenScanQR}
-                  handleActionClick={handleActionClick as any}
-                  handleOpenAction={handleOpenAction}
-                  handlePrint={handlePrint}
-                  handleActionBlacklist={handleActionBlacklist as any}
-                  setOpenPreRegistration={setOpenPreRegistration}
-                  setOpenInvitationVisitor={setOpenInvitationVisitor}
-                  setOpenReturnCard={setOpenReturnCard}
-                  setAccessIssuance={setAccessIssuance}
+                  lgUp={lgUp}
+                  openMore={openMore}
+                  setOpenMore={setOpenMore}
+                  handleOpenMore={handleOpenMore}
+                  handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                  getColorByName={getColorByName}
+                  backgroundnodata={backgroundnodata}
+                  t={t}
                 />
-
-                {/* Side Right QR Code */}
-                <Grid size={{ xs: 12, lg: 3 }}>
-                  <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
-                </Grid>
               </Grid>
+
+              <ActionPanelCard
+                loading={loadingPermission}
+                permission={permissionHook}
+                isFullscreen={isFullscreen}
+                handleOpenScanQR={handleOpenScanQR}
+                handleActionClick={handleActionClick as any}
+                handleOpenAction={handleOpenAction}
+                handlePrint={handlePrint}
+                handleActionBlacklist={handleActionBlacklist as any}
+                setOpenPreRegistration={setOpenPreRegistration}
+                setOpenInvitationVisitor={setOpenInvitationVisitor}
+                setOpenReturnCard={setOpenReturnCard}
+                setAccessIssuance={setAccessIssuance}
+              />
+
+              {/* Side Right QR Code */}
+              <Grid size={{ xs: 12, lg: 3 }}>
+                <HostInformation invitationCode={invitationCode} isFullscreen={isFullscreen} />
+                {/* <InvitationQrCard invitationCode={invitationCode} /> */}
+              </Grid>
+            </Grid>
+          </Grid>
+
+          <Grid
+            container
+            spacing={2}
+            // mt={1}
+            sx={{
+              flex: isFullscreen ? 1 : 'unset',
+              minHeight: 0,
+              alignItems: 'stretch',
+              marginTop: '10px',
+            }}
+          >
+            <VisitorDetailCard
+              invitationCode={invitationCode}
+              activeVisitor={activeVisitor}
+              relatedVisitors={relatedVisitors}
+              selectedVisitorNumber={selectedVisitorNumber}
+              permissionHook={permissionHook}
+              containerRef={containerRef}
+              handleChooseCard={handleChooseCard}
+              handleConfirmStatus={handleConfirmStatus}
+              handleView={handleView}
+            />
+
+            {/* Related Visitor */}
+            <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <VisitorListCard
+                isFullscreen={isFullscreen}
+                typeVisitor={typeVisitor}
+                anchorEl={anchorEl}
+                searchKeyword={searchKeyword}
+                selectMultiple={selectMultiple}
+                bulkAction={bulkAction}
+                selectedVisitors={selectedVisitors}
+                scannedVisitorNumber={scannedVisitorNumber}
+                totalVisitors={totalVisitors}
+                filteredVisitors={filteredVisitors}
+                relatedVisitors={relatedVisitors}
+                invitationCode={invitationCode}
+                availableActions={availableActions}
+                lgUp={lgUp}
+                theme={theme}
+                permissionHook={permissionHook}
+                containerRef={containerRef}
+                CustomTextField={CustomTextField}
+                getCdnUrl={getCdnUrl as (path?: string) => string}
+                formatDateTime={formatDateTime}
+                setAnchorEl={setAnchorEl}
+                setTypeVisitor={
+                  setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
+                }
+                setSearchKeyword={setSearchKeyword}
+                setSelectMultiple={setSelectMultiple}
+                setSelectedVisitors={setSelectedVisitors}
+                setBulkAction={setBulkAction}
+                setOpenExtendVisit={setOpenExtendVisit}
+                handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                handleApplyBulkAction={handleApplyBulkAction}
+                handleChooseCard={handleChooseCard}
+                handlePrintClick={handlePrintClick}
+              />
             </Grid>
 
             <Grid
-              container
-              spacing={2}
-              mt={1}
+              size={{ xs: 12, lg: 3 }}
               sx={{
-                flex: isFullscreen ? 1 : 'unset',
-                minHeight: 0,
-                alignItems: 'stretch',
+                display: 'flex',
+                flexDirection: 'column',
+                // height: '100%',
               }}
             >
-              <VisitorDetailCard
-                invitationCode={invitationCode}
-                activeVisitor={activeVisitor}
-                relatedVisitors={relatedVisitors}
-                selectedVisitorNumber={selectedVisitorNumber}
-                permissionHook={permissionHook}
-                containerRef={containerRef}
-                handleChooseCard={handleChooseCard}
-                handleConfirmStatus={handleConfirmStatus}
-                handleView={handleView}
+              <VisitorImage
+                faceImage={activeSelfie}
+                identityImage={activeKTP}
+                isFullscreen={isFullscreen}
               />
-
-              {/* Related Visitor */}
-              <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-                <VisitorListCard
-                  isFullscreen={isFullscreen}
-                  typeVisitor={typeVisitor}
-                  anchorEl={anchorEl}
-                  searchKeyword={searchKeyword}
-                  selectMultiple={selectMultiple}
-                  bulkAction={bulkAction}
-                  selectedVisitors={selectedVisitors}
-                  scannedVisitorNumber={scannedVisitorNumber}
-                  totalVisitors={totalVisitors}
-                  filteredVisitors={filteredVisitors}
-                  relatedVisitors={relatedVisitors}
-                  invitationCode={invitationCode}
-                  availableActions={availableActions}
-                  lgUp={lgUp}
-                  theme={theme}
-                  permissionHook={permissionHook}
-                  containerRef={containerRef}
-                  CustomTextField={CustomTextField}
-                  getCdnUrl={getCdnUrl as (path?: string) => string}
-                  formatDateTime={formatDateTime}
-                  setAnchorEl={setAnchorEl}
-                  setTypeVisitor={
-                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
-                  }
-                  setSearchKeyword={setSearchKeyword}
-                  setSelectMultiple={setSelectMultiple}
-                  setSelectedVisitors={setSelectedVisitors}
-                  setBulkAction={setBulkAction}
-                  setOpenExtendVisit={setOpenExtendVisit}
-                  handleSelectRelatedVisitor={handleSelectRelatedVisitor}
-                  handleApplyBulkAction={handleApplyBulkAction}
-                  handleChooseCard={handleChooseCard}
-                  handlePrintClick={handlePrintClick}
-                />
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, lg: 3 }}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // height: '100%',
-                }}
-              >
-                <VisitorImage
-                  faceImage={activeSelfie}
-                  identityImage={activeKTP}
-                  isFullscreen={isFullscreen}
-                />
-              </Grid>
             </Grid>
+          </Grid>
+          <Box
+            sx={{
+              width: '100%',
+              bgcolor: '#fff',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              py: 1.5,
+              px: 1,
+              marginTop: '5px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" fontWeight={'bold'}>
+              Copyright © 2026{' '}
+              <span style={{ color: 'red' }}>
+                <img
+                  src={beImage}
+                  style={{ width: '15px', marginRight: '5px', marginLeft: '5px' }}
+                />
+                {/* Bio Experience */}
+              </span>
+              . All Rights Reserved.
+            </Typography>
           </Box>
-          {/* Print */}
-          <PrintDialogBulk
-            open={openBulkPrint}
-            onClose={() => setOpenBulkPrint(false)}
-            visitors={selectedBulkVisitors}
-            printData={printData}
-            onPrint={(base64: any) => {
-              sendWs({
-                cmd: 'print',
-                data: base64,
-              });
-            }}
-          />
-          <PrintDialog
-            open={openPreviewPrint}
-            onClose={() => setOpenPreviewPrint(false)}
-            invitationData={invitationCode[0]}
-            printData={printData}
-            onPrint={(base64: any) => {
-              sendWs({
-                cmd: 'print',
-                data: base64,
-              });
-            }}
-          />
-          {/* Detail Purpose */}
-          <DetailVisitingPurpose
-            open={openDetailVisitingPurpose}
-            onClose={() => setOpenDetailVistingPurpose(false)}
-            data={upcomingVisitors}
-            purposeName={selectedPurpose}
-          />
-          {/* Search Visitor */}
-          <SearchVisitorDialog
-            open={openSearch}
-            onClose={() => setOpenSearch(false)}
-            onSearch={(data) => {
-              setVisitorData(data);
-              setOpenDetail(true);
-            }}
-            container={containerRef.current}
-          />
-          {/* Dialog Detail */}
-          <DetailVisitorDialog
-            open={openDetail}
-            onClose={() => setOpenDetail(false)}
-            visitorData={visitorData}
-            container={containerRef.current ?? undefined}
-          />
-          {/* Scan QR Visitor */}
-          <ScanQrVisitorDialog
-            open={openDialogIndex === 1}
-            onClose={handleCloseScanQR}
-            handleSubmitQRCode={handleSubmitQRCode}
-            container={containerRef.current ?? undefined}
-            onOpenInvitation={() => {
-              handleCloseScanQR();
-              setOpenInvitationVisitor(true);
-            }}
-          />
-          <BlacklistVisitorDialog
-            open={openBlacklistVisitor}
-            onClose={handleCloseBlacklistVisitor}
-          />
-          {/* List Visitor */}
-          <ListVisitorDialog
-            open={openListVisitor}
-            onClose={handleCloseListVisitor}
-            upcomingVisitors={upcomingVisitors}
-          />
-          {/* Open */}
-          <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
-
-          {/* Dialog Swipe No Code */}
-          <SwipeCardNoCodeDialog
-            open={openSwipeDialogNoInvitation}
-            onClose={handleCloseSwipeDialogNoInvitation}
-            findCard={findCard}
-            showSwal={showSwal}
-            setSnackbar={setSnackbar}
-            onSubmit={handleSwipeCardSubmitNoCode}
-          />
-
-          <ChooseCardDialog
-            open={openChooseCardDialog}
-            onClose={() => {
-              setOpenChooseCardDialog(false);
-              setSearchTerm('');
-            }}
-            cards={availableCards}
-            containerRef={containerRef}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            isChecked={isChecked}
-            isIndeterminate={isIndeterminate}
-            handleSelectAll={handleSelectAll}
-            capacity={capacity}
-            currentUsedCards={currentUsedCardsByVisitor}
-            selectedCards={selectedCards}
-            handleToggleCard={handleToggleCard}
-            filteredCards={filteredCards}
-            selectedVisitors={selectedVisitors}
-            availableCount={availableCount}
-            handleOpenSwipeDialog={handleOpenSwipeDialog}
-            handleConfirmChooseCards={handleConfirmChooseCards}
-            setAccessIssuance={setAccessIssuance}
-            // setSelectedCurrentCards={setSelectedCurrentCards}
-          />
-
-          {/* Dialog Swipe Card */}
-          <SwipeCardDialog
-            open={openSwipeDialog}
-            onClose={handleCloseSwipeDialog}
-            onSubmit={handleSwipeCardSubmit}
-            invitationId={invitationId}
-            visitors={visitorsForSwipe}
-            loading={setLoadingAccess}
-            currentVisitorIndex={currentVisitorIndex}
-            setCurrentVisitorIndex={setCurrentVisitorIndex}
-            initialValues={swipeDialogInitialValues}
-          />
-
-          {/* Dialog Swipe Access */}
-          <SwipeAccessDialog
-            open={openSwipeAccess}
-            onClose={handleCloseSwipeAccess}
-            data={sitesOperator}
-            payload={swipePayload}
-            invitationId={invitationId as string}
-            visitor={currentAccessVisitor}
-            setLoadingAccess={setLoadingAccess}
-            onSuccessRefresh={() => fetchRelatedVisitorsByInvitationId(invitationId as string)}
-          />
-
-          {/* Dialog QR Access Issuance */}
-          <GrantAccessDialog
-            open={openAccessIssuance}
-            onClose={() => setAccessIssuance(false)}
-            invitationCode={invitationCode}
-            selectedCards={selectedCards}
-            handleToggleCard={handleToggleCard}
-            formatDateTime={formatDateTime}
-            accessData={accessData}
-          />
-
-          {/* Fill Form Pra regist Multiple*/}
-          <FillPraregistrationGroup
-            open={openFillForm}
-            onClose={() => setOpenFillForm(false)}
-            containerRef={containerRef}
-            fillFormData={fillFormData}
-            fillFormActiveStep={fillFormActiveStep}
-            setFillFormActiveStep={setFillFormActiveStep}
-            fillFormDataVisitor={fillFormDataVisitor}
-            setFillFormDataVisitor={setFillFormDataVisitor}
-            loadingAccess={loadingAccess}
-            handleSubmitPramultiple={handleSubmitPramultiple}
-            renderFieldInput={renderFieldInput}
-            getSectionType={getSectionType}
-            formsOf={formsOf}
-            isSelfGroup={isSelfGroup}
-            setIsSelfGroup={setIsSelfGroup}
-          />
-
-          {/* Submit Praregister */}
-          <FillPraregistrationSingle
-            open={openDialogInvitation}
-            onClose={() => setOpenDialogInvitation(false)}
-            loadingAccess={loadingAccess}
-            selectedInvitationId={selectedInvitationId ?? invitationCode?.[0]?.id}
-            invitationCode={invitationCode}
-            containerRef={containerRef.current}
-            fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
-            fetchUpcomingPurpose={fetchUpcomingPurpose}
-            registeredSite={registerSiteOperator}
-          />
-
-          {/* Access Dialog */}
-          {/* <AccessDialog
-            open={openAccessData}
-            onClose={() => {
-              // setAction('');
-              setOpenAccessData(false);
-            }}
-            containerRef={containerRef.current || null}
-            accessData={accessData}
-            selectedVisitors={selectedVisitors}
-            allowedActions={allowedActions}
-            selectedAccessIds={selectedAccessIds}
-            setSelectedAccessIds={setSelectedAccessIds}
-            selectedActionAccess={selectedActionAccess || ''}
-            setSelectedActionAccess={setSelectedActionAccess}
-            handleAccessAction={handleAccessAction}
-            toast={toast}
-          /> */}
-
-          {/* Extend Visit */}
-          <ExtendVisitDialog
-            open={openExtendVisit}
-            onClose={() => setOpenExtendVisit(false)}
-            container={containerRef.current}
-            durationOptions={durationOptions}
-            selectedMinutes={selectedMinutes}
-            setSelectedMinutes={setSelectedMinutes}
-            applyToAll={applyToAll}
-            onApplyToAllChange={handleApplyToAllChange}
-            onSubmit={handleExtend}
-          />
-          {/* Create Invitation */}
-          <Dialog
-            fullWidth
-            maxWidth={false}
-            PaperProps={{
-              sx: {
-                width: '100vw',
-              },
-            }}
-            open={openInvitationVisitor}
-            onClose={handleCloseDialog}
-            container={containerRef.current ?? undefined}
-          >
-            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-              {t("add")} Invitation Visitor
-              <IconButton
-                aria-label="close"
-                onClick={() => {
-                  handleCloseDialog();
-                }}
-              >
-                <IconX />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent dividers>
-              <FormWizardAddVisitor
-                formData={formDataAddVisitor}
-                setFormData={setFormDataAddVisitor}
-                onSuccess={handleSuccess}
-                containerRef={containerRef}
-                fullscreenHandle={handle}
-                resetStep={resetStep}
-                onInvitationCreated={handleInvitationCreated}
-                ws={{
-                  imageQueue: wsImageQueueRef,
-                  ocrQueue: wsOcrQueueRef,
-                  send: sendToScanner,
-                }}
-                // ws={ws}
-                setWsPayload={setWsPayload}
-                registeredSite={registerSiteOperator}
-                forceTick={tick}
-                visitorType={visitorType}
-                sites={sitesOperator}
-                employee={employee}
-                allVisitorEmployee={allVisitorEmployee}
-                vtLoading={vtLoading}
-                enableInvitationTypeStep={true}
-                search={setSearchHost}
-                isLoadingEmployee={isLoadingEmployee}
-              />
-            </DialogContent>
-          </Dialog>
-          {/* Create Pra Registration */}
-          <Dialog
-            fullWidth
-            // maxWidth="xl"
-            maxWidth={false}
-            PaperProps={{
-              sx: {
-                width: '100vw',
-              },
-            }}
-            open={openPreRegistration}
-            onClose={handleCloseDialog}
-            container={containerRef.current ?? undefined}
-          >
-            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-              {t("add")} Pra Registration
-              <IconButton
-                aria-label="close"
-                onClick={() => {
-                  handleCloseDialog();
-                }}
-              >
-                <IconX />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent sx={{ paddingTop: '0px' }} dividers>
-              <br />
-              <FormWizardAddInvitation
-                key={wizardKey}
-                formData={formDataAddVisitor}
-                setFormData={setFormDataAddVisitor}
-                onSuccess={handleSuccess}
-                containerRef={containerRef ?? null}
-                visitorType={visitorType}
-                sites={sitesOperator}
-                registeredSite={registerSiteOperator}
-                employee={employee}
-                allVisitorEmployee={allVisitorEmployee}
-                vtLoading={vtLoading}
-                enableInvitationTypeStep={false}
-                search={setSearchHost}
-                isLoadingEmployee={isLoadingEmployee}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <ParkingDialog
-            open={openParking}
-            onClose={() => {
-              setActionButton('');
-              setOpenParking(false);
-            }}
-            data={parkingData}
-          />
-
-          <InfoDialog
-            open={openDialogInfo}
-            onClose={() => setOpenDialogInfo(false)}
-            data={dataImage}
-            container={containerRef ?? null}
-          />
-
-          <ReturnCardDialog
-            open={openReturnCard}
-            value={returnCardNumber}
-            loading={loadingAccess}
-            onClose={() => setOpenReturnCard(false)}
-            onChange={setReturnCardNumber}
-            onSubmit={handleSubmitReturnCard}
-          />
-
-          <Portal>
-            <Snackbar
-              open={snackbar.open}
-              autoHideDuration={3000}
-              onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              sx={{ zIndex: 999999 }}
-            >
-              <Alert
-                onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-                severity={snackbar.severity}
-                sx={{ width: '100%' }}
-                variant="filled"
-              >
-                {snackbar.message}
-              </Alert>
-            </Snackbar>
-          </Portal>
-          <GlobalBackdropLoading open={loadingAccess} />
         </Box>
+        {/* Print */}
+        <PrintDialogBulk
+          open={openBulkPrint}
+          onClose={() => setOpenBulkPrint(false)}
+          visitors={selectedBulkVisitors}
+          printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
+          }}
+        />
+        <PrintDialog
+          open={openPreviewPrint}
+          onClose={() => setOpenPreviewPrint(false)}
+          invitationData={invitationCode[0]}
+          printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
+          }}
+        />
+        {/* Detail Purpose */}
+        <DetailVisitingPurpose
+          open={openDetailVisitingPurpose}
+          onClose={() => setOpenDetailVistingPurpose(false)}
+          data={upcomingVisitors}
+          purposeName={selectedPurpose}
+        />
+        {/* Search Visitor */}
+        <SearchVisitorDialog
+          open={openSearch}
+          onClose={() => setOpenSearch(false)}
+          onSearch={(data) => {
+            setVisitorData(data);
+            setOpenDetail(true);
+          }}
+          container={containerRef.current}
+        />
+        {/* Dialog Detail */}
+        <DetailVisitorDialog
+          open={openDetail}
+          onClose={() => setOpenDetail(false)}
+          visitorData={visitorData}
+          container={containerRef.current ?? undefined}
+        />
+        {/* Scan QR Visitor */}
+        <ScanQrVisitorDialog
+          open={openDialogIndex === 1}
+          onClose={handleCloseScanQR}
+          handleSubmitQRCode={handleSubmitQRCode}
+          container={containerRef.current ?? undefined}
+          onOpenInvitation={() => {
+            handleCloseScanQR();
+            setOpenInvitationVisitor(true);
+          }}
+        />
+        <BlacklistVisitorDialog open={openBlacklistVisitor} onClose={handleCloseBlacklistVisitor} />
+        {/* List Visitor */}
+        <ListVisitorDialog
+          open={openListVisitor}
+          onClose={handleCloseListVisitor}
+          upcomingVisitors={upcomingVisitors}
+        />
+        {/* Open */}
+        <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
+
+        {/* Dialog Swipe No Code */}
+        <SwipeCardNoCodeDialog
+          open={openSwipeDialogNoInvitation}
+          onClose={handleCloseSwipeDialogNoInvitation}
+          findCard={findCard}
+          showSwal={showSwal}
+          setSnackbar={setSnackbar}
+          onSubmit={handleSwipeCardSubmitNoCode}
+        />
+
+        <ChooseCardDialog
+          open={openChooseCardDialog}
+          onClose={() => {
+            setOpenChooseCardDialog(false);
+            setSearchTerm('');
+          }}
+          cards={availableCards}
+          containerRef={containerRef}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          isChecked={isChecked}
+          isIndeterminate={isIndeterminate}
+          handleSelectAll={handleSelectAll}
+          capacity={capacity}
+          currentUsedCards={currentUsedCardsByVisitor}
+          selectedCards={selectedCards}
+          handleToggleCard={handleToggleCard}
+          filteredCards={filteredCards}
+          selectedVisitors={selectedVisitors}
+          availableCount={availableCount}
+          handleOpenSwipeDialog={handleOpenSwipeDialog}
+          handleConfirmChooseCards={handleConfirmChooseCards}
+          setAccessIssuance={setAccessIssuance}
+          // setSelectedCurrentCards={setSelectedCurrentCards}
+        />
+
+        {/* Dialog Swipe Card */}
+        <SwipeCardDialog
+          open={openSwipeDialog}
+          onClose={handleCloseSwipeDialog}
+          onSubmit={handleSwipeCardSubmit}
+          invitationId={invitationId}
+          visitors={visitorsForSwipe}
+          loading={setLoadingAccess}
+          currentVisitorIndex={currentVisitorIndex}
+          setCurrentVisitorIndex={setCurrentVisitorIndex}
+          initialValues={swipeDialogInitialValues}
+        />
+
+        {/* Dialog Swipe Access */}
+        <SwipeAccessDialog
+          open={openSwipeAccess}
+          onClose={handleCloseSwipeAccess}
+          data={sitesOperator}
+          payload={swipePayload}
+          invitationId={invitationId as string}
+          visitor={currentAccessVisitor}
+          setLoadingAccess={setLoadingAccess}
+          onSuccessRefresh={() => fetchRelatedVisitorsByInvitationId(invitationId as string)}
+        />
+
+        {/* Dialog QR Access Issuance */}
+        <GrantAccessDialog
+          open={openAccessIssuance}
+          onClose={() => setAccessIssuance(false)}
+          invitationCode={invitationCode}
+          selectedCards={selectedCards}
+          handleToggleCard={handleToggleCard}
+          formatDateTime={formatDateTime}
+          accessData={accessData}
+        />
+
+        {/* Fill Form Pra regist Multiple*/}
+        <FillPraregistrationGroup
+          open={openFillForm}
+          onClose={() => setOpenFillForm(false)}
+          containerRef={containerRef}
+          fillFormData={fillFormData}
+          fillFormActiveStep={fillFormActiveStep}
+          setFillFormActiveStep={setFillFormActiveStep}
+          fillFormDataVisitor={fillFormDataVisitor}
+          setFillFormDataVisitor={setFillFormDataVisitor}
+          loadingAccess={loadingAccess}
+          handleSubmitPramultiple={handleSubmitPramultiple}
+          renderFieldInput={renderFieldInput}
+          getSectionType={getSectionType}
+          formsOf={formsOf}
+          isSelfGroup={isSelfGroup}
+          setIsSelfGroup={setIsSelfGroup}
+        />
+
+        {/* Submit Praregister */}
+        <FillPraregistrationSingle
+          open={openDialogInvitation}
+          onClose={() => setOpenDialogInvitation(false)}
+          loadingAccess={loadingAccess}
+          selectedInvitationId={selectedInvitationId ?? invitationCode?.[0]?.id}
+          invitationCode={invitationCode}
+          containerRef={containerRef.current}
+          fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+          fetchUpcomingPurpose={fetchUpcomingPurpose}
+          registeredSite={registerSiteOperator}
+        />
+
+        {/* Extend Visit */}
+        <ExtendVisitDialog
+          open={openExtendVisit}
+          onClose={() => setOpenExtendVisit(false)}
+          container={containerRef.current}
+          durationOptions={durationOptions}
+          selectedMinutes={selectedMinutes}
+          setSelectedMinutes={setSelectedMinutes}
+          applyToAll={applyToAll}
+          onApplyToAllChange={handleApplyToAllChange}
+          onSubmit={handleExtend}
+        />
+        {/* Create Invitation */}
+        <Dialog
+          fullWidth
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: '100vw',
+            },
+          }}
+          open={openInvitationVisitor}
+          onClose={handleCloseDialog}
+          container={containerRef.current ?? undefined}
+        >
+          <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+            {t('add')} Invitation Visitor
+            <IconButton
+              aria-label="close"
+              onClick={() => {
+                handleCloseDialog();
+              }}
+            >
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <FormWizardAddVisitor
+              formData={formDataAddVisitor}
+              setFormData={setFormDataAddVisitor}
+              onSuccess={handleSuccess}
+              containerRef={containerRef}
+              fullscreenHandle={handle}
+              resetStep={resetStep}
+              onInvitationCreated={handleInvitationCreated}
+              ws={{
+                imageQueue: wsImageQueueRef,
+                ocrQueue: wsOcrQueueRef,
+                send: sendToScanner,
+              }}
+              // ws={ws}
+              setWsPayload={setWsPayload}
+              registeredSite={registerSiteOperator}
+              forceTick={tick}
+              visitorType={visitorType}
+              sites={sitesOperator}
+              employee={employee}
+              allVisitorEmployee={allVisitorEmployee}
+              vtLoading={vtLoading}
+              enableInvitationTypeStep={true}
+              search={setSearchHost}
+              isLoadingEmployee={isLoadingEmployee}
+            />
+          </DialogContent>
+        </Dialog>
+        {/* Create Pra Registration */}
+        <Dialog
+          fullWidth
+          // maxWidth="xl"
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: '100vw',
+            },
+          }}
+          open={openPreRegistration}
+          onClose={handleCloseDialog}
+          container={containerRef.current ?? undefined}
+        >
+          <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+            {t('add')} Pra Registration
+            <IconButton
+              aria-label="close"
+              onClick={() => {
+                handleCloseDialog();
+              }}
+            >
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ paddingTop: '0px' }} dividers>
+            <br />
+            <FormWizardAddInvitation
+              key={wizardKey}
+              formData={formDataAddVisitor}
+              setFormData={setFormDataAddVisitor}
+              onSuccess={handleSuccess}
+              containerRef={containerRef ?? null}
+              visitorType={visitorType}
+              sites={sitesOperator}
+              registeredSite={registerSiteOperator}
+              employee={employee}
+              allVisitorEmployee={allVisitorEmployee}
+              vtLoading={vtLoading}
+              enableInvitationTypeStep={false}
+              search={setSearchHost}
+              isLoadingEmployee={isLoadingEmployee}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <ParkingDialog
+          open={openParking}
+          onClose={() => {
+            setActionButton('');
+            setOpenParking(false);
+          }}
+          data={parkingData}
+        />
+
+        <InfoDialog
+          open={openDialogInfo}
+          onClose={() => setOpenDialogInfo(false)}
+          data={dataImage}
+          container={containerRef ?? null}
+        />
+
+        <ReturnCardDialog
+          open={openReturnCard}
+          value={returnCardNumber}
+          loading={loadingAccess}
+          onClose={() => setOpenReturnCard(false)}
+          onChange={setReturnCardNumber}
+          onSubmit={handleSubmitReturnCard}
+        />
+
+        <Portal>
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3000}
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            sx={{ zIndex: 999999 }}
+          >
+            <Alert
+              onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+              variant="filled"
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Portal>
+        <GlobalBackdropLoading open={loadingAccess} />
+      </Box>
       {/* </FullScreen> */}
     </PageContainer>
   );

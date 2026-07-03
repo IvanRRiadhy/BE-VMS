@@ -1,6 +1,7 @@
 import { Grid2 as Grid, Card, CardContent, CardActions, Button, Box, Tooltip } from '@mui/material';
 import { IconLogin, IconLogout, IconForbid2, IconBan } from '@tabler/icons-react';
 import VisitorDetailTabs from './VisitorDetailTabs';
+import InvitationQrCard from './InvitationQrCard';
 
 const VisitorDetailCard = ({
   invitationCode,
@@ -13,7 +14,6 @@ const VisitorDetailCard = ({
   handleConfirmStatus,
   handleView,
 }: any) => {
-
   const selectedVisitor =
     relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||
     relatedVisitors.find((v: any) => v.visitor_number === selectedVisitorNumber);
@@ -135,10 +135,12 @@ const VisitorDetailCard = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        p: 1,
+        // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        // p: 1,
         borderRadius: 2,
-        border: '1px solid #e0e0e0',
+
+        // border: '1px solid #e0e0e0',
+        // height: '250px',
       }}
     >
       <Card
@@ -148,7 +150,9 @@ const VisitorDetailCard = ({
           flexDirection: 'column',
           boxShadow: 'none',
           p: 1,
-          minHeight: 450,
+
+          // minHeight: 450,
+          borderRadius: 1,
         }}
       >
         <CardContent sx={{ p: 0 }}>
@@ -161,6 +165,7 @@ const VisitorDetailCard = ({
 
         <CardActions sx={{ justifyContent: 'center', mt: 2 }}>{renderActions()}</CardActions>
       </Card>
+      <InvitationQrCard invitationCode={invitationCode} />
     </Grid>
   );
 };

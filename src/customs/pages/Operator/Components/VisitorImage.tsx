@@ -6,8 +6,12 @@ import {
   CardHeader,
   DialogActions,
   DialogTitle,
+  FormControl,
   Grid2 as Grid,
   IconButton,
+  MenuItem,
+  Select,
+  Typography,
 } from '@mui/material';
 
 interface ImageCardProps {
@@ -78,8 +82,8 @@ const ImageCard = ({
             display="flex"
             alignItems="center"
             justifyContent="center"
-            // height={'100%'}
-            height={isFullscreen ? '100%' : { xs: '200px', md: '100%', xl: '190px' }}
+            height={'100%'}
+            // height={isFullscreen ? '100%' : { xs: '200px', md: '100%', xl: '190px' }}
             sx={{
               borderRadius: '8px',
               backgroundColor: '#f9f9f9',
@@ -97,6 +101,7 @@ const ImageCard = ({
 };
 
 import { Dialog, DialogContent } from '@mui/material';
+import { IconCar, IconTruck, IconUser, IconUsersGroup } from '@tabler/icons-react';
 import { IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -105,6 +110,43 @@ interface VisitorImageProps {
   identityImage?: string | null;
   isFullscreen?: boolean;
 }
+
+const StatCard = ({
+  title,
+  value,
+  icon,
+  color,
+}: {
+  title: string;
+  value: number | string;
+  icon: React.ReactNode;
+  color: string;
+}) => (
+  <Box
+    sx={{
+      p: 2,
+      borderRadius: 2,
+      bgcolor: '#f8fafc',
+      border: '1px solid',
+      borderColor: 'divider',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }}
+  >
+    <Box>
+      <Typography variant="caption" color="text.secondary">
+        {title}
+      </Typography>
+
+      <Typography variant="h5" fontWeight={700} sx={{ color }}>
+        {value}
+      </Typography>
+    </Box>
+
+    <Box sx={{ color }}>{icon}</Box>
+  </Box>
+);
 
 const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: VisitorImageProps) => {
   const [open, setOpen] = useState(false);
@@ -126,9 +168,9 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
       container
       direction="column"
       spacing={1}
-      sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap', marginTop: '10px' }}
+      sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap' }}
     >
-      <Grid sx={{ flex: 1, display: 'flex' }}>
+      {/* <Grid sx={{ flex: 1, display: 'flex' }}>
         <ImageCard
           title="Face Image"
           imageSrc={faceImage}
@@ -136,8 +178,63 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
           isFullscreen={isFullscreen}
           onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
         />
-      </Grid>
+      </Grid> */}{' '}
+      <Box sx={{ backgroundColor: '#fff', p: 2, borderRadius: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+          }}
+        >
+          <Typography variant="h5" fontWeight="bold">
+            Live Occupancy
+          </Typography>
 
+          <FormControl size="small">
+            <Select
+              defaultValue="today"
+              sx={{
+                minWidth: 120,
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="today">Today</MenuItem>
+              <MenuItem value="yesterday">Yesterday</MenuItem>
+              <MenuItem value="week">This Week</MenuItem>
+              <MenuItem value="month">This Month</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        <Grid container spacing={2} mt={2}>
+          <Grid size={6}>
+            <StatCard
+              title="Employees"
+              value={382}
+              color="#1976d2"
+              icon={<IconUsersGroup size={30} />}
+            />
+          </Grid>
+
+          <Grid size={6}>
+            <StatCard title="Visitors" value={27} color="#2e7d32" icon={<IconUser size={30} />} />
+          </Grid>
+
+          <Grid size={6}>
+            <StatCard
+              title="Contractors"
+              value={15}
+              color="#f9a825"
+              icon={<IconTruck size={30} />}
+            />
+          </Grid>
+
+          <Grid size={6}>
+            <StatCard title="Vehicles" value={41} color="#7b1fa2" icon={<IconCar size={30} />} />
+          </Grid>
+        </Grid>
+      </Box>
       <Grid sx={{ flex: 1, display: 'flex' }}>
         <ImageCard
           title="Identity Image"
