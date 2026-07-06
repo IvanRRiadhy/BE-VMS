@@ -70,7 +70,7 @@ const ActionPanelCard: FC<Props> = ({
   } = permission;
   return (
     <Grid
-      size={{ xs: 12, lg: 4.5 }}
+      size={{ xs: 12 }}
       sx={{
         display: 'flex',
         justifyContent: isFullscreen ? 'center' : 'flex-start',

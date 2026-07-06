@@ -1061,19 +1061,6 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            margin: '0 auto',
-            color: 'primary',
-          }}
-          open={isGenerating}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
     </PageContainer>
   );
 };

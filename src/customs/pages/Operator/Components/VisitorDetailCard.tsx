@@ -2,6 +2,7 @@ import { Grid2 as Grid, Card, CardContent, CardActions, Button, Box, Tooltip } f
 import { IconLogin, IconLogout, IconForbid2, IconBan } from '@tabler/icons-react';
 import VisitorDetailTabs from './VisitorDetailTabs';
 import InvitationQrCard from './InvitationQrCard';
+import { useState } from 'react';
 
 const VisitorDetailCard = ({
   invitationCode,
@@ -129,18 +130,16 @@ const VisitorDetailCard = ({
     return null;
   };
 
+  const [activeTab, setActiveTab] = useState(0);
+  const hasData = invitationCode && invitationCode.length > 0;
+
   return (
     <Grid
-      size={{ xs: 12, lg: 4.5 }}
+      size={{ xs: 12 }}
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        // p: 1,
-        borderRadius: 2,
-
-        // border: '1px solid #e0e0e0',
-        // height: '250px',
+        gap: 1,
       }}
     >
       <Card
@@ -152,18 +151,21 @@ const VisitorDetailCard = ({
           p: 1,
 
           // minHeight: 450,
-          borderRadius: 1,
+          borderRadius: 2,
         }}
       >
-        <CardContent sx={{ p: 0 }}>
+        <CardContent sx={{ p: '0px !important' }}>
           <VisitorDetailTabs
             invitationCode={invitationCode}
             activeVisitor={activeVisitor}
             handleChooseCard={handleChooseCard}
+            tabValue={activeTab}
+            onTabChange={setActiveTab}
           />
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'center', mt: 2 }}>{renderActions()}</CardActions>
+        {hasData && activeTab === 0 && (
+          <CardActions sx={{ justifyContent: 'center', mt: 1 }}>{renderActions()}</CardActions>
+        )}
       </Card>
       <InvitationQrCard invitationCode={invitationCode} />
     </Grid>

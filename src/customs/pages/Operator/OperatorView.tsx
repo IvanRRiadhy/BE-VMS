@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Grid2 as Grid,
   Typography,
-  Divider,
   TextField,
   IconButton,
   Dialog,
@@ -19,7 +18,6 @@ import {
   Portal,
   Snackbar,
   Alert,
-  Button,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
@@ -45,7 +43,6 @@ import {
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import LprImage from 'src/assets/images/products/pic_lpr.png';
 import beImage from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import frImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
@@ -86,7 +83,6 @@ import PrintDialog from 'src/customs/pages/Operator/Dialog/PrintDialog';
 import PrintDialogBulk from 'src/customs/pages/Operator/Dialog/PrintDialogBluk';
 import { returnCard } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from 'src/customs/pages/Operator/Dialog/SwipeCardNoCodeDialog';
-import InvitationQrCard from 'src/customs/pages/Operator/Components/InvitationQrCard';
 import VisitorSearchInput from 'src/customs/pages/Operator/Components/VisitorSearchInput';
 import OperatorToolbar from 'src/customs/pages/Operator/Components/OperatorToolbar';
 import VisitorImage from 'src/customs/pages/Operator/Components/VisitorImage';
@@ -96,7 +92,6 @@ import ParkingDialog from 'src/customs/pages/Operator/Dialog/ParkingDialog';
 import ActionPanelCard from 'src/customs/pages/Operator/Components/ActionPanelCard';
 import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
 import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
-import LprVisitorCard from 'src/customs/pages/Operator/Components/LprVisitorCard';
 import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
 import { usePermission } from 'src/hooks/usePermission';
 import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
@@ -113,6 +108,7 @@ import useInvitationHost from 'src/hooks/useInvitationHost';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 import VisitorInformation from './Components/VisitorInformation';
 import HostInformation from './Components/HostInformation';
+import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
 // import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
 
 type DocumentType = 'CardAccess' | 'Other';
@@ -189,7 +185,6 @@ const OperatorView = () => {
   const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
-  const [hidePageContainer, setHidePageContainer] = useState(false);
   const [invitationDetail, setInvitationDetail] = useState<any>([]);
   const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
   const [applyToAll, setApplyToAll] = useState(false);
@@ -294,6 +289,7 @@ const OperatorView = () => {
       block_by: string;
       is_block: boolean;
       nda: string;
+      invited_by: string;
     }[]
   >([]);
 
@@ -623,22 +619,6 @@ const OperatorView = () => {
     setOpenDetailVistingPurpose(true);
   };
 
-  // useEffect(() => {
-  //   const handleBrowserFullscreen = () => {
-  //     const isBrowserFullscreen = !!document.fullscreenElement;
-  //     setIsFullscreen(isBrowserFullscreen);
-
-  //     if (isBrowserFullscreen) {
-  //       setHidePageContainer(true);
-  //     } else {
-  //       setHidePageContainer(false);
-  //     }
-  //   };
-
-  //   document.addEventListener('fullscreenchange', handleBrowserFullscreen);
-  //   return () => document.removeEventListener('fullscreenchange', handleBrowserFullscreen);
-  // }, []);
-
   function getColorByName(name: string) {
     let hash = 0;
 
@@ -731,7 +711,6 @@ const OperatorView = () => {
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    // console.log('filename', filename);
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
@@ -859,21 +838,6 @@ const OperatorView = () => {
     setAvailableCards(res.collection);
   };
 
-  // const handleToggleCard = (cardNumber: string) => {
-  //   const normalized = String(cardNumber);
-
-  //   setSelectedCards((prev) => {
-  //     let updated: string[];
-
-  //     if (prev.includes(normalized)) {
-  //       updated = prev.filter((c) => c !== normalized);
-  //     } else {
-  //       updated = [...prev, normalized];
-  //     }
-  //     return updated;
-  //   });
-  // };
-
   const handleToggleCard = (cardNumber: string) => {
     const normalized = String(cardNumber);
 
@@ -993,15 +957,8 @@ const OperatorView = () => {
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
-  const lastSerialRef = useRef('');
-  const serialLockRef = useRef(false);
 
   const handleSubmitQRCode = async (value: string) => {
-    // console.log('value', value.length);
-    // if (value.length < 4 || value.length > 15) {
-    //   showSwal('error', 'Code must be between 6 and 10 characters.', 3000);
-    //   return;
-    // }
     try {
       const res = await getInvitationCode(token as string, value);
       const data = res.collection?.data ?? [];
@@ -1063,7 +1020,6 @@ const OperatorView = () => {
           // disabled: !perm,
         };
       });
-      // console.log('mergedAccess', mergedAccess);
 
       // setAccessData([...mergedAccess]);
       setAccessData(mergedAccess);
@@ -1169,6 +1125,7 @@ const OperatorView = () => {
       access: v.access ?? [],
       block_by: v.block_by ?? null,
       is_block: v.is_block ?? false,
+      invited_by_name: v.invited_by_name ?? '-',
     }));
 
     setInvitationCode((prev) =>
@@ -1305,31 +1262,6 @@ const OperatorView = () => {
   const cappedCount = Math.min(visibleIds.length, capacity);
   const isChecked = cappedCount > 0 && selectedVisibleCount === cappedCount;
   const isIndeterminate = selectedVisibleCount > 0 && selectedVisibleCount < cappedCount;
-
-  // const handleSelectAll = () => {
-  //   const visible = availableVisibleCards.map((c) => String(c.card_number));
-
-  //   const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
-
-  //   if (capacity <= 0) {
-  //     toast('Please select visitor first.', 'warning');
-  //     return;
-  //   }
-
-  //   const selectedVisible = visible.filter((n) => selectedCards.includes(n));
-  //   const cappedCount = Math.min(visible.length, capacity);
-
-  //   const fullySelected = cappedCount > 0 && selectedVisible.length === cappedCount;
-
-  //   if (fullySelected) {
-  //     setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-  //     // toast('Visible cards cleared.', 'info');
-  //   } else {
-  //     const toAdd = visible.slice(0, cappedCount);
-  //     setSelectedCards(toAdd);
-  //     toast(`Selected ${toAdd.length} card(s).`, 'success');
-  //   }
-  // };
 
   const handleSelectAll = () => {
     const maxSelection = selectMultiple ? selectedVisitors.length : 1;
@@ -1832,6 +1764,8 @@ const OperatorView = () => {
       })),
     };
 
+    console.log('payload', payload);
+
     try {
       setLoadingAccess(true);
 
@@ -1917,18 +1851,18 @@ const OperatorView = () => {
         }
       });
 
-      showSwal('success', resultMessages.join('\n'));
-      setSelectedVisitors([]);
-      setBulkAction('');
-
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         setTimeout(async () => {
           await fetchRelatedVisitorsByInvitationId(invitationId);
         }, 500);
       }
+      setSelectedVisitors([]);
+      setBulkAction('');
+
+      showSwal('success', resultMessages.join('\n'));
     } catch (error: any) {
-      showSwal('error', 'Failed to perform multiple action.');
+      showSwal('error', error?.message || 'Failed to perform multiple action.');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
@@ -3502,31 +3436,26 @@ const OperatorView = () => {
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
-      {/* <FullScreen handle={handle}> */}
       <Box
         ref={containerRef}
         sx={{
           display: 'flex',
-          // flexDirection: mdUp ? 'row' : 'column',
           flexDirection: { xs: 'column', md: 'row' },
-          // backgroundColor: '#fff',
-          height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
+          // height: isFullscreen ? '100vh' : '100%',
+          height: '100%',
           width: '100%',
-          // padding: '5px !important',
-
           position: 'relative',
-          overflow: 'visible',
-          padding: '0px !important',
+          overflowY: isFullscreen ? 'hidden' : 'auto',
+          // overflowX: 'hidden',
         }}
       >
         <Box
-          flexGrow={1}
           sx={{
-            // overflow: isFullscreen ? 'auto' : 'hidden',
+            flex: 1,
             display: 'flex',
-            padding: '0px !important',
             flexDirection: 'column',
-            height: isFullscreen ? '100vh' : 'auto',
+            minHeight: 0,
+            // overflow: 'hidden',
           }}
         >
           <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
@@ -3571,22 +3500,14 @@ const OperatorView = () => {
             >
               <Grid
                 size={{ xs: 12, lg: 4.5 }}
-                sx={{ borderRadius: '15px', backgroundColor: '#fff' }}
+                sx={{
+                  borderRadius: '15px',
+                  // backgroundColor: '#fff',
+                  gap: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
-                {/* <LprVisitorCard
-                    LprImage={LprImage}
-                    todayVisitingPurpose={upcomingPurpose}
-                    invitationCode={invitationCode}
-                    isFullscreen={isFullscreen}
-                    lgUp={lgUp}
-                    openMore={openMore}
-                    setOpenMore={setOpenMore}
-                    handleOpenMore={handleOpenMore}
-                    handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
-                    getColorByName={getColorByName}
-                    backgroundnodata={backgroundnodata}
-                    t={t}
-                  /> */}
                 <VisitorInformation
                   faceImage={activeSelfie}
                   LprImage={frImage}
@@ -3602,106 +3523,100 @@ const OperatorView = () => {
                   backgroundnodata={backgroundnodata}
                   t={t}
                 />
+
+                <VisitorDetailCard
+                  invitationCode={invitationCode}
+                  activeVisitor={activeVisitor}
+                  relatedVisitors={relatedVisitors}
+                  selectedVisitorNumber={selectedVisitorNumber}
+                  permissionHook={permissionHook}
+                  containerRef={containerRef}
+                  handleChooseCard={handleChooseCard}
+                  handleConfirmStatus={handleConfirmStatus}
+                  handleView={handleView}
+                />
               </Grid>
 
-              <ActionPanelCard
-                loading={loadingPermission}
-                permission={permissionHook}
-                isFullscreen={isFullscreen}
-                handleOpenScanQR={handleOpenScanQR}
-                handleActionClick={handleActionClick as any}
-                handleOpenAction={handleOpenAction}
-                handlePrint={handlePrint}
-                handleActionBlacklist={handleActionBlacklist as any}
-                setOpenPreRegistration={setOpenPreRegistration}
-                setOpenInvitationVisitor={setOpenInvitationVisitor}
-                setOpenReturnCard={setOpenReturnCard}
-                setAccessIssuance={setAccessIssuance}
-              />
+              <Grid
+                size={{ xs: 12, lg: 4.5 }}
+                sx={{
+                  borderRadius: '15px',
+                  // backgroundColor: '#fff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  minHeight: 0,
+                }}
+              >
+                <ActionPanelCard
+                  loading={loadingPermission}
+                  permission={permissionHook}
+                  isFullscreen={isFullscreen}
+                  handleOpenScanQR={handleOpenScanQR}
+                  handleActionClick={handleActionClick as any}
+                  handleOpenAction={handleOpenAction}
+                  handlePrint={handlePrint}
+                  handleActionBlacklist={handleActionBlacklist as any}
+                  setOpenPreRegistration={setOpenPreRegistration}
+                  setOpenInvitationVisitor={setOpenInvitationVisitor}
+                  setOpenReturnCard={setOpenReturnCard}
+                  setAccessIssuance={setAccessIssuance}
+                />
+                <VisitorListCard
+                  isFullscreen={isFullscreen}
+                  typeVisitor={typeVisitor}
+                  anchorEl={anchorEl}
+                  searchKeyword={searchKeyword}
+                  selectMultiple={selectMultiple}
+                  bulkAction={bulkAction}
+                  selectedVisitors={selectedVisitors}
+                  scannedVisitorNumber={scannedVisitorNumber}
+                  totalVisitors={totalVisitors}
+                  filteredVisitors={filteredVisitors}
+                  relatedVisitors={relatedVisitors}
+                  invitationCode={invitationCode}
+                  availableActions={availableActions}
+                  lgUp={lgUp}
+                  theme={theme}
+                  permissionHook={permissionHook}
+                  containerRef={containerRef}
+                  CustomTextField={CustomTextField}
+                  getCdnUrl={getCdnUrl as (path?: string) => string}
+                  formatDateTime={formatDateTime}
+                  setAnchorEl={setAnchorEl}
+                  setTypeVisitor={
+                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
+                  }
+                  setSearchKeyword={setSearchKeyword}
+                  setSelectMultiple={setSelectMultiple}
+                  setSelectedVisitors={setSelectedVisitors}
+                  setBulkAction={setBulkAction}
+                  setOpenExtendVisit={setOpenExtendVisit}
+                  handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                  handleApplyBulkAction={handleApplyBulkAction}
+                  handleChooseCard={handleChooseCard}
+                  handlePrintClick={handlePrintClick}
+                />
+              </Grid>
 
               {/* Side Right QR Code */}
-              <Grid size={{ xs: 12, lg: 3 }}>
+              <Grid
+                size={{ xs: 12, lg: 3 }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+              >
                 <HostInformation invitationCode={invitationCode} isFullscreen={isFullscreen} />
-                {/* <InvitationQrCard invitationCode={invitationCode} /> */}
+                <VisitorImage
+                  faceImage={activeSelfie}
+                  identityImage={activeKTP}
+                  isFullscreen={isFullscreen}
+                  openMore={openMore}
+                  setOpenMore={setOpenMore}
+                  handleOpenMore={handleOpenMore}
+                  handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                  getColorByName={getColorByName}
+                  todayVisitingPurpose={upcomingPurpose}
+                />
               </Grid>
-            </Grid>
-          </Grid>
-
-          <Grid
-            container
-            spacing={2}
-            // mt={1}
-            sx={{
-              flex: isFullscreen ? 1 : 'unset',
-              minHeight: 0,
-              alignItems: 'stretch',
-              marginTop: '10px',
-            }}
-          >
-            <VisitorDetailCard
-              invitationCode={invitationCode}
-              activeVisitor={activeVisitor}
-              relatedVisitors={relatedVisitors}
-              selectedVisitorNumber={selectedVisitorNumber}
-              permissionHook={permissionHook}
-              containerRef={containerRef}
-              handleChooseCard={handleChooseCard}
-              handleConfirmStatus={handleConfirmStatus}
-              handleView={handleView}
-            />
-
-            {/* Related Visitor */}
-            <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <VisitorListCard
-                isFullscreen={isFullscreen}
-                typeVisitor={typeVisitor}
-                anchorEl={anchorEl}
-                searchKeyword={searchKeyword}
-                selectMultiple={selectMultiple}
-                bulkAction={bulkAction}
-                selectedVisitors={selectedVisitors}
-                scannedVisitorNumber={scannedVisitorNumber}
-                totalVisitors={totalVisitors}
-                filteredVisitors={filteredVisitors}
-                relatedVisitors={relatedVisitors}
-                invitationCode={invitationCode}
-                availableActions={availableActions}
-                lgUp={lgUp}
-                theme={theme}
-                permissionHook={permissionHook}
-                containerRef={containerRef}
-                CustomTextField={CustomTextField}
-                getCdnUrl={getCdnUrl as (path?: string) => string}
-                formatDateTime={formatDateTime}
-                setAnchorEl={setAnchorEl}
-                setTypeVisitor={
-                  setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
-                }
-                setSearchKeyword={setSearchKeyword}
-                setSelectMultiple={setSelectMultiple}
-                setSelectedVisitors={setSelectedVisitors}
-                setBulkAction={setBulkAction}
-                setOpenExtendVisit={setOpenExtendVisit}
-                handleSelectRelatedVisitor={handleSelectRelatedVisitor}
-                handleApplyBulkAction={handleApplyBulkAction}
-                handleChooseCard={handleChooseCard}
-                handlePrintClick={handlePrintClick}
-              />
-            </Grid>
-
-            <Grid
-              size={{ xs: 12, lg: 3 }}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                // height: '100%',
-              }}
-            >
-              <VisitorImage
-                faceImage={activeSelfie}
-                identityImage={activeKTP}
-                isFullscreen={isFullscreen}
-              />
             </Grid>
           </Grid>
           <Box
@@ -3712,6 +3627,7 @@ const OperatorView = () => {
               borderColor: 'divider',
               py: 1.5,
               px: 1,
+              // overflow: 'hidden',
               marginTop: '5px',
               display: 'flex',
               justifyContent: 'center',
@@ -3725,7 +3641,6 @@ const OperatorView = () => {
                   src={beImage}
                   style={{ width: '15px', marginRight: '5px', marginLeft: '5px' }}
                 />
-                {/* Bio Experience */}
               </span>
               . All Rights Reserved.
             </Typography>
@@ -4060,8 +3975,12 @@ const OperatorView = () => {
           </Snackbar>
         </Portal>
         <GlobalBackdropLoading open={loadingAccess} />
+        {/* <ConfirmUnsavedDialog
+          open={confirmDialogOpen}
+          onClose={handleCancelDiscard}
+          onDiscard={confirmDiscardAndClose}
+        /> */}
       </Box>
-      {/* </FullScreen> */}
     </PageContainer>
   );
 };

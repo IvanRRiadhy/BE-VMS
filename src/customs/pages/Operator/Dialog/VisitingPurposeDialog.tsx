@@ -44,7 +44,7 @@ export default function VisitingPurposeDialog({ open, onClose, data }: any) {
 
       <DialogContent dividers>
         <Grid container spacing={2}>
-          {data.map((item: any) => (
+          {data?.map((item: any) => (
             <Grid key={item.id} item xs={12}>
               <Card
                 sx={{

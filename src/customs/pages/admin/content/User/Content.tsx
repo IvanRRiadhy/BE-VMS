@@ -1,30 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  List,
-  ListItemButton,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Select,
-  Typography,
-} from '@mui/material';
+import { Box } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { IconArrowLeft, IconArrowRight, IconUsers, IconX } from '@tabler/icons-react';
+import { IconUsers, IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
-import { deleteUser, getAllOrganizations, getAllUser, getUserById } from 'src/customs/api/admin';
+import { deleteUser, getAllUser, getUserById } from 'src/customs/api/admin';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -45,9 +28,9 @@ import {
   unassignAccount,
 } from 'src/customs/api/Admin/User';
 import { useEmployees } from 'src/hooks/useEmployees';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import { useOrganization } from 'src/hooks/useOrganization';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import EmployeeAssignDialog from './components/EmployeeAssignDialog';
+import AssignTrackingDialog from './components/AssignTrackingDialog';
 
 const Content = () => {
   const { token } = useSession();
@@ -261,10 +244,8 @@ const Content = () => {
           tracking_ble_integration_id: item.trackingSystemId,
         })),
       };
-      console.log('payload', payload);
 
       const res = await createLinkAccountTracking(token as string, selectedUser.id, payload);
-      console.log('res', res.status);
 
       showSwal('success', 'Tracking assigned successfully');
 
@@ -288,7 +269,6 @@ const Content = () => {
 
     const id = selectedAvailable.id;
 
-    // 🔥 CEK KE ASSIGNED
     const alreadyAssigned = assignedAccounts.some((x) => x.tracking_ble_account_id === id);
 
     if (alreadyAssigned) {
@@ -329,7 +309,6 @@ const Content = () => {
 
     const id = selectedAssigned.tracking_ble_account_id;
 
-    // 🔥 CEK KE AVAILABLE (opsional safety)
     const alreadyExists = availableAccounts.some((x) => x.id === id);
 
     if (alreadyExists) {
@@ -351,9 +330,6 @@ const Content = () => {
     setSelectedAssigned(null);
     setSelectedAvailable(null);
   };
-
-  const [selectedAvailableId, setSelectedAvailableId] = useState<string | null>(null);
-  const [selectedAssignedId, setSelectedAssignedId] = useState<string | null>(null);
 
   return (
     <PageContainer
@@ -414,199 +390,34 @@ const Content = () => {
         }}
         organizationRes={organizations}
       />
+
+      <EmployeeAssignDialog
+        open={openEmployeeAssign}
+        onClose={() => setOpenEmployeeAssign(false)}
+        onSubmit={handleSubmitAssign}
+        employee={employee}
+        selectedEmployeeId={selectedEmployeeId}
+        setSelectedEmployeeId={setSelectedEmployeeId}
+      />
+      <AssignTrackingDialog
+        open={openAssignDialog}
+        onClose={() => setOpenAssignDialog(false)}
+        onSubmit={handleSubmitTracking}
+        availableAccounts={availableAccounts}
+        assignedAccounts={assignedAccounts}
+        selectedAvailable={selectedAvailable}
+        selectedAssigned={selectedAssigned}
+        setSelectedAvailable={setSelectedAvailable}
+        setSelectedAssigned={setSelectedAssigned}
+        moveToAssigned={moveToAssigned}
+        moveToUnassigned={moveToUnassigned}
+      />
+
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
         onDiscard={handleDiscard}
       />
-      <Dialog
-        open={openEmployeeAssign}
-        onClose={() => setOpenEmployeeAssign(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          Assign Employee
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenEmployeeAssign(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          {/* <FormControl fullWidth sx={{ mt: 0 }}> */}
-          <CustomFormLabel sx={{ mt: 0 }}>Employee</CustomFormLabel>
-
-          <Select
-            value={selectedEmployeeId}
-            // label="Employee"
-            onChange={(e) => setSelectedEmployeeId(e.target.value)}
-            fullWidth
-          >
-            {employee?.map((item: any) => (
-              <MenuItem key={item.id} value={item.id}>
-                {item.name}
-              </MenuItem>
-            ))}
-          </Select>
-          {/* </FormControl> */}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setOpenEmployeeAssign(false)}>Cancel</Button>
-
-          <Button variant="contained" onClick={handleSubmitAssign}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={openAssignDialog}
-        onClose={() => setOpenAssignDialog(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>
-          Assign Account Tracking
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              setOpenAssignDialog(false);
-              setSelectedAvailable(null);
-              setSelectedAssigned(null);
-            }}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <Grid container spacing={2} alignItems="center">
-            {/* LEFT */}
-            <Grid size={{ xs: 5 }}>
-              <Box textAlign="center" mb={1}>
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    px: 4,
-                    borderRadius: 2,
-                    bgcolor: 'warning.light',
-                    border: '1px solid',
-                    borderColor: 'warning.main',
-                  }}
-                >
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      py: 1,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Unassign
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Paper variant="outlined">
-                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                  {availableAccounts.map((item) => (
-                    <ListItemButton
-                      key={item.id}
-                      selected={selectedAvailable?.id === item.id}
-                      onClick={() => setSelectedAvailable(item)}
-                    >
-                      <ListItemText primary={item.trackingSystemName} secondary={item.username} />
-                    </ListItemButton>
-                  ))}
-                </List>
-              </Paper>
-            </Grid>
-
-            {/* CENTER */}
-            <Grid
-              size={{ xs: 2 }}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent={'center'}
-              mt={5}
-              gap={2}
-            >
-              <Button variant="outlined" disabled={!selectedAvailable} onClick={moveToAssigned}>
-                <IconArrowRight />
-              </Button>
-
-              <Button variant="outlined" disabled={!selectedAssigned} onClick={moveToUnassigned}>
-                <IconArrowLeft />
-              </Button>
-            </Grid>
-
-            {/* RIGHT */}
-            <Grid size={{ xs: 5 }}>
-              <Box
-                sx={{
-                  width: 180,
-                  mx: 'auto',
-                  borderRadius: 2,
-                  bgcolor: 'success.light',
-                  border: '1px solid',
-                  borderColor: 'success.main',
-                  mb: 2,
-                }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  textAlign="center"
-                  sx={{
-                    py: 1,
-                    fontWeight: 600,
-                  }}
-                >
-                  Assigned
-                </Typography>
-              </Box>
-
-              <Paper variant="outlined">
-                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                  {assignedAccounts.map((item) => (
-                    <ListItemButton
-                      key={item.tracking_ble_account_id}
-                      selected={
-                        selectedAssigned?.tracking_ble_account_id === item.tracking_ble_account_id
-                      }
-                      onClick={() => setSelectedAssigned(item)}
-                    >
-                      <ListItemText
-                        primary={item.link_type}
-                        secondary={item.tracking_ble_username}
-                      />
-                    </ListItemButton>
-                  ))}
-                </List>
-              </Paper>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button variant="contained" onClick={handleSubmitTracking}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
     </PageContainer>
   );
 };

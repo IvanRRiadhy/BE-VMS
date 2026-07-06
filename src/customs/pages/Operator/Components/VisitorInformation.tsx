@@ -11,6 +11,7 @@ import {
   Avatar,
 } from '@mui/material';
 import {
+  IconCheck,
   IconCreditCard,
   IconGenderBigender,
   IconPhone,
@@ -18,6 +19,8 @@ import {
   IconWorld,
 } from '@tabler/icons-react';
 import { IconBuilding, IconMail } from '@tabler/icons-react';
+import PreviewImageDialog from '../Dialog/PreviewImageDialog';
+import { useState } from 'react';
 
 const InfoRow = ({
   icon,
@@ -59,38 +62,37 @@ const VisitorInformation = ({
   isFullscreen,
   faceImage,
   lgUp,
-  openMore,
-  setOpenMore,
-  handleOpenMore,
-  handleOpenDetailVistingPurpose,
-  getColorByName,
-  backgroundnodata,
-  t,
 }: any) => {
+  const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [selectedTitle, setSelectedTitle] = useState('');
+  const handleOpen = (image: string, title: string) => {
+    if (!image) return;
+
+    setSelectedImage(image);
+    setSelectedTitle(title);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
   return (
-    // <Box
-    //   sx={{
-    //     display: 'flex',
-    //     justifyContent: isFullscreen ? 'center' : 'flex-start',
-    //     alignItems: 'start',
-    //     gap: '5px',
-    //     padding: '20px',
-    //     flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
-    //   }}
-    // >
     <Grid
       container
       spacing={2}
       sx={{
         p: 2.5,
+        pb: 0,
         alignItems: 'flex-start',
-
+        backgroundColor: '#fff !important',
+        borderRadius: 2,
         // height: '100%',
         // height: '340px',
       }}
     >
       {/* IMAGE */}
-      <Grid size={{ xs: 12, xl: 4.5 }}>
+      <Grid size={{ xs: 12, xl: 4 }} sx={{}}>
         <Card
           sx={{
             flex: 1,
@@ -101,8 +103,8 @@ const VisitorInformation = ({
             height: '100%',
             maxHeight: isFullscreen ? '50vh' : { xs: '100%', xl: '400px' },
             boxShadow: 'none !important',
-            backgroundColor: 'none !important',
-            py: '0 !important',
+            // backgroundColor: 'none !important',
+            // py: '0 !important',
             px: { xs: '0', lg: '0px' },
           }}
         >
@@ -135,23 +137,30 @@ const VisitorInformation = ({
                 <img
                   src={faceImage || LprImage}
                   alt="Visitor"
+                  onClick={() =>
+                    handleOpen(
+                      faceImage || LprImage,
+                      invitationCode[0]?.visitor_name || 'Visitor Image',
+                    )
+                  }
                   style={{
                     width: '100%',
                     height: '100%',
-                    minHeight: '300px',
-                    maxHeight: lgUp ? '400px' : '300px',
+                    minHeight: '280px',
+                    maxHeight: lgUp ? '300px' : '300px',
                     objectFit: 'cover',
                     borderRadius: '30px',
+                    cursor: 'pointer',
                   }}
                 />
               ) : (
-                <Typography color="text.secondary">No LPR image</Typography>
+                <Typography color="text.secondary">No image</Typography>
               )}
             </Box>
           </CardContent>
         </Card>
       </Grid>
-      <Grid size={{ xs: 12, xl: 7.5 }}>
+      <Grid size={{ xs: 12, xl: 8 }}>
         <Card
           elevation={0}
           sx={
@@ -173,29 +182,56 @@ const VisitorInformation = ({
                 >
                   {invitationCode?.nama?.charAt(0)}
                 </Avatar> */}
-
               <Box flex={1}>
-                <Typography variant="h6" fontWeight={700}>
-                  {invitationCode[0]?.visitor_name ?? '-'}
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                >
+                  {invitationCode[0]?.visitor_name ?? 'Name'}
+                  {invitationCode[0]?.visitor_name && (
+                    <Box
+                      sx={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        bgcolor: 'success.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <IconCheck size={14} color="white" stroke={3} />
+                    </Box>
+                  )}
                 </Typography>
 
                 {/* <Typography variant="body2" color="text.secondary" mb={1.5}>
                   {invitationCode?.jabatan ?? 'Marketing'}
                 </Typography> */}
 
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={2} mt={1.5}>
-                  <Chip size="small" label="VIP VISITOR" color="secondary" />
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1} mt={1.5}>
+                  {invitationCode[0]?.visitor_type_name?.trim() && (
+                    <Chip
+                      size="small"
+                      label={invitationCode[0].visitor_type_name}
+                      color="secondary"
+                    />
+                  )}
 
-                  <Chip size="small" label="FREQUENT VISITOR" color="primary" />
-
-                  <Chip size="small" label="VERIFIED" color="success" />
+                  {/* 
+  <Chip size="small" label="FREQUENT VISITOR" color="primary" />
+  <Chip size="small" label="VERIFIED" color="success" />
+  */}
                 </Stack>
 
                 <Divider sx={{ mb: 1 }} />
 
                 <InfoRow
                   icon={<IconBuilding size={18} />}
-                  label="Company"
+                  label="Organization"
                   value={invitationCode[0]?.visitor_organization_name}
                 />
 
@@ -213,7 +249,7 @@ const VisitorInformation = ({
 
                 <InfoRow
                   icon={<IconCreditCard size={18} />}
-                  label="ID / Card No"
+                  label="Identity ID"
                   value={invitationCode[0]?.visitor_identity_id}
                 />
 
@@ -225,7 +261,7 @@ const VisitorInformation = ({
 
                 <InfoRow
                   icon={<IconUser size={18} />}
-                  label="Role"
+                  label="Occupancy"
                   value={invitationCode[0]?.visitor_role}
                 />
               </Box>
@@ -233,6 +269,13 @@ const VisitorInformation = ({
           </CardContent>
         </Card>
       </Grid>
+
+      <PreviewImageDialog
+        open={open}
+        image={selectedImage}
+        title={selectedTitle}
+        onClose={handleClose}
+      />
     </Grid>
   );
 };

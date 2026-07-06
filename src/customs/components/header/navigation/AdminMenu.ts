@@ -298,12 +298,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconRun,
     href: '/admin/evacuate',
   },
-  {
-    id: uniqueId(),
-    title: 'Operator View',
-    icon: IconEye,
-    href: '/admin/view',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Operator View',
+  //   icon: IconEye,
+  //   href: '/admin/view',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'navigation.helps',
@@ -587,12 +587,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     href: '/admin/evacuate',
   },
 
-  {
-    id: uniqueId(),
-    title: 'Operator View',
-    icon: IconEye,
-    href: '/admin/view',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Operator View',
+  //   icon: IconEye,
+  //   href: '/admin/view',
+  // },
 
   // {
   //   id: uniqueId(),

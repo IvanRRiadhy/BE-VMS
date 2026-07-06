@@ -92,9 +92,11 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               // bgcolor: 'background.paper',
               p: {
                 xs: '10px',
+
                 // md: '15px',
               },
               width: '100%',
+              paddingBottom: '0px !important',
             }}
           >
             <Box
@@ -104,7 +106,11 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
                 // bgcolor: 'background.paper',
               }}
             >
-              {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
+              {React.isValidElement(children) ? (
+                <ScrollToTop>{children}</ScrollToTop>
+              ) : (
+                children
+              )}{' '}
             </Box>
           </Box>
           {/* <Customizer /> */}

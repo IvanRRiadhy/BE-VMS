@@ -76,8 +76,7 @@ const HostInformation = ({
 }: InvitationQrCardProps) => {
   const data = invitationCode[0];
 
-  const theme = useTheme();
-  const lg = theme.breakpoints.up('lg');
+  const whatsappNumber = data?.host_phone?.replace(/\D/g, '');
 
   return (
     <>
@@ -86,7 +85,7 @@ const HostInformation = ({
           borderRadius: 2,
           // height: '100%',
           width: '100%',
-          height: '100%',
+          // height: '100%',
           // height: {
           //   xs: '100%',
           //   xl: data ? '400px' : '400px',
@@ -118,24 +117,32 @@ const HostInformation = ({
           <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             <Avatar style={{ width: '100px', height: '100px' }} />
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
                 <Typography variant="h6" fontWeight="bold" mb={1}>
-                  {data?.nama || 'John Doe'}
+                  {data?.host_name || '-'}
                 </Typography>
-                <Typography
-                  sx={{
-                    backgroundColor: 'success.main',
-                    color: '#fff',
-                    borderRadius: '5px',
-                    padding: '5px',
-                  }}
-                >
-                  Available
-                </Typography>
+                {data && (
+                  <Typography
+                    sx={{
+                      backgroundColor: 'success.main',
+                      color: '#fff',
+                      borderRadius: '20px',
+                      padding: '8px',
+                    }}
+                  >
+                    Available
+                  </Typography>
+                )}
               </Box>
               <Typography variant="h6" color="text.secondary" mb={2} fontWeight={'semibold'}>
-                {/* {data?.visitor_number || '-'} */}
-                IT Manager
+                {data?.host_organization_name || '-'}
               </Typography>
               <Box
                 sx={{
@@ -157,8 +164,8 @@ const HostInformation = ({
 
                 <Typography sx={{ width: 5 }}>:</Typography>
 
-                <Typography variant="h6" color="text.secondary">
-                  08123456789
+                <Typography variant="body1" color="text.secondary">
+                  {data?.host_phone || '-'}
                 </Typography>
               </Box>
 
@@ -181,8 +188,8 @@ const HostInformation = ({
 
                 <Typography sx={{ width: 5 }}>:</Typography>
 
-                <Typography variant="h6" color="text.secondary">
-                  qM7tN@example.com
+                <Typography variant="body1" color="text.secondary">
+                  {data?.host_email || '-'}
                 </Typography>
               </Box>
             </Box>
@@ -190,6 +197,8 @@ const HostInformation = ({
           <Divider sx={{ my: 1 }} />
           <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
             <Box
+              component="a"
+              href={data?.host_phone ? `tel:${data.host_phone}` : undefined}
               sx={{
                 flex: 1,
                 bgcolor: 'primary.main',
@@ -200,6 +209,9 @@ const HostInformation = ({
                 gap: 1,
                 p: 1,
                 borderRadius: 2,
+                textDecoration: 'none',
+                cursor: data?.host_phone ? 'pointer' : 'not-allowed',
+                opacity: data?.host_phone ? 1 : 0.5,
               }}
             >
               <IconPhone size={20} />
@@ -207,9 +219,13 @@ const HostInformation = ({
             </Box>
 
             <Box
+              component="a"
+              href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
               sx={{
                 flex: 1,
-                bgcolor: 'primary.main',
+                bgcolor: 'success.main',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
@@ -217,6 +233,9 @@ const HostInformation = ({
                 gap: 1,
                 p: 1,
                 borderRadius: 2,
+                textDecoration: 'none',
+                cursor: whatsappNumber ? 'pointer' : 'not-allowed',
+                opacity: whatsappNumber ? 1 : 0.5,
               }}
             >
               <IconBrandWhatsapp size={20} />
@@ -224,9 +243,11 @@ const HostInformation = ({
             </Box>
 
             <Box
+              component="a"
+              href={data?.host_email ? `mailto:${data.host_email}` : undefined}
               sx={{
                 flex: 1,
-                bgcolor: 'primary.main',
+                bgcolor: 'secondary.main',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
@@ -234,6 +255,9 @@ const HostInformation = ({
                 gap: 1,
                 p: 1,
                 borderRadius: 2,
+                textDecoration: 'none',
+                cursor: data?.host_email ? 'pointer' : 'not-allowed',
+                opacity: data?.host_email ? 1 : 0.5,
               }}
             >
               <Email />
@@ -242,7 +266,6 @@ const HostInformation = ({
           </Box>
         </CardContent>
       </Card>
-  
     </>
   );
 };

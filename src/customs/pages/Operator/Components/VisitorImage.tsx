@@ -4,11 +4,15 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   DialogActions,
   DialogTitle,
+  Divider,
   FormControl,
   Grid2 as Grid,
   IconButton,
+  List,
+  ListItem,
   MenuItem,
   Select,
   Typography,
@@ -32,9 +36,10 @@ const ImageCard = ({
   return (
     <Card
       sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
+        // flex: 1,
+        // display: 'flex',
+        // flexDirection: 'column',
+        display: 'block',
         border: '1px solid #e0e0e0',
         boxShadow: 1,
       }}
@@ -45,8 +50,9 @@ const ImageCard = ({
         slotProps={{
           title: {
             sx: {
-              fontSize: '15px !important',
-              mb: '2px',
+              fontSize: '16px !important',
+              mb: '8px',
+              fontWeight: 'bold',
             },
           },
         }}
@@ -54,10 +60,11 @@ const ImageCard = ({
 
       <CardContent
         sx={{
-          flex: 1,
           p: 0,
           overflow: 'hidden',
-          pb: '0 !important',
+          '&:last-child': {
+            pb: 0,
+          },
         }}
       >
         {imageSrc ? (
@@ -68,7 +75,13 @@ const ImageCard = ({
             sx={{
               width: '100%',
               maxHeight: '300px',
-              height: isFullscreen ? { xs: '250px', md: '100%', xl: '270px' } : '200px',
+
+              // height: isFullscreen ? { xs: '250px', md: '100%', xl: '270px' } : '250px',
+              height: {
+                xs: 250,
+                md: 190,
+                xl: 200,
+              },
               borderRadius: '8px',
               objectFit: 'cover',
               objectPosition: 'center center',
@@ -79,14 +92,18 @@ const ImageCard = ({
           />
         ) : (
           <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height={'100%'}
-            // height={isFullscreen ? '100%' : { xs: '200px', md: '100%', xl: '190px' }}
             sx={{
-              borderRadius: '8px',
-              backgroundColor: '#f9f9f9',
+              width: '100%',
+              minHeight: {
+                xs: 120,
+                md: 150,
+                xl: 180,
+              },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'grey.50',
+              borderRadius: 2,
               color: '#888',
               fontStyle: 'italic',
               fontSize: '0.9rem',
@@ -100,15 +117,21 @@ const ImageCard = ({
   );
 };
 
-import { Dialog, DialogContent } from '@mui/material';
-import { IconCar, IconTruck, IconUser, IconUsersGroup } from '@tabler/icons-react';
-import { IconX } from '@tabler/icons-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import VisitingPurposeDialog from '../Dialog/VisitingPurposeDialog';
+import PreviewImageDialog from '../Dialog/PreviewImageDialog';
+import AlertCard from './AlertCard';
 
 interface VisitorImageProps {
   faceImage?: string | null;
   identityImage?: string | null;
   isFullscreen?: boolean;
+  openMore?: any;
+  setOpenMore?: any;
+  handleOpenMore?: any;
+  handleOpenDetailVistingPurpose?: any;
+  getColorByName?: any;
+  todayVisitingPurpose?: any;
 }
 
 const StatCard = ({
@@ -148,7 +171,17 @@ const StatCard = ({
   </Box>
 );
 
-const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: VisitorImageProps) => {
+const VisitorImage = ({
+  faceImage,
+  identityImage,
+  isFullscreen = false,
+  openMore,
+  setOpenMore,
+  handleOpenMore,
+  handleOpenDetailVistingPurpose,
+  getColorByName,
+  todayVisitingPurpose,
+}: VisitorImageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = useState('');
@@ -161,8 +194,11 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedImage(null);
   };
+  const [alertData, setAlertData] = useState<any[]>([]);
+
+  const [openAlertDialog, setOpenAlertDialog] = useState(false);
+
   return (
     <Grid
       container
@@ -171,14 +207,14 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
       sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap' }}
     >
       {/* <Grid sx={{ flex: 1, display: 'flex' }}>
-        <ImageCard
-          title="Face Image"
-          imageSrc={faceImage}
-          emptyText="No Face Image"
-          isFullscreen={isFullscreen}
-          onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
-        />
-      </Grid> */}{' '}
+          <ImageCard
+            title="Face Image"
+            imageSrc={faceImage}
+            emptyText="No Face Image"
+            isFullscreen={isFullscreen}
+            onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
+          />
+        </Grid> */}{' '}
       <Box sx={{ backgroundColor: '#fff', p: 2, borderRadius: 1.5 }}>
         <Box
           sx={{
@@ -201,41 +237,60 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
               }}
             >
               <MenuItem value="today">Today</MenuItem>
-              <MenuItem value="yesterday">Yesterday</MenuItem>
-              <MenuItem value="week">This Week</MenuItem>
-              <MenuItem value="month">This Month</MenuItem>
+              {/* <MenuItem value="yesterday">Yesterday</MenuItem>
+                <MenuItem value="week">This Week</MenuItem>
+                <MenuItem value="month">This Month</MenuItem> */}
             </Select>
           </FormControl>
         </Box>
+
         <Grid container spacing={2} mt={2}>
-          <Grid size={6}>
-            <StatCard
-              title="Employees"
-              value={382}
-              color="#1976d2"
-              icon={<IconUsersGroup size={30} />}
-            />
-          </Grid>
+          {todayVisitingPurpose?.length > 0 ? (
+            todayVisitingPurpose.map((item: any) => (
+              <Grid size={{ xs: 12, lg: 6 }} key={item.id}>
+                <Card
+                  sx={{
+                    flex: 1,
+                    p: 0,
+                    borderRadius: 1,
+                    background: getColorByName(item.name),
+                    boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                    },
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleOpenDetailVistingPurpose(item)}
+                >
+                  <CardContent sx={{ p: '15px !important' }}>
+                    <Typography fontWeight={600}>{item.name}</Typography>
 
-          <Grid size={6}>
-            <StatCard title="Visitors" value={27} color="#2e7d32" icon={<IconUser size={30} />} />
-          </Grid>
-
-          <Grid size={6}>
-            <StatCard
-              title="Contractors"
-              value={15}
-              color="#f9a825"
-              icon={<IconTruck size={30} />}
-            />
-          </Grid>
-
-          <Grid size={6}>
-            <StatCard title="Vehicles" value={41} color="#7b1fa2" icon={<IconCar size={30} />} />
-          </Grid>
+                    <Typography variant="h4" color="primary" fontWeight="bold" mt={1}>
+                      {item.count}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Grid size={12}>
+              <Card
+                variant="outlined"
+                sx={{
+                  py: 5,
+                  textAlign: 'center',
+                  borderStyle: 'dashed',
+                }}
+              >
+                <Typography color="text.secondary">No visiting purpose available.</Typography>
+              </Card>
+            </Grid>
+          )}
         </Grid>
       </Box>
-      <Grid sx={{ flex: 1, display: 'flex' }}>
+      <Grid>
         <ImageCard
           title="Identity Image"
           imageSrc={identityImage}
@@ -244,56 +299,26 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
           onClick={() => identityImage && handleOpen(identityImage, 'Identity Image')}
         />
       </Grid>
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Preview
-          <IconButton
-            aria-label="close"
-            onClick={handleClose}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            p: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          dividers
-        >
-          {selectedImage && (
-            <Box
-              component="img"
-              src={selectedImage}
-              alt={selectedTitle}
-              sx={{
-                maxWidth: '100%',
-                maxHeight: '75vh',
-                borderRadius: 2,
-                objectFit: 'contain',
-                cursor: 'zoom-in',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                },
-              }}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" color="error" fullWidth onClick={handleClose}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }}>
+        <AlertCard
+          isFullscreen={isFullscreen}
+          title="Alerts"
+          data={alertData || []}
+          onViewAll={() => setOpenAlertDialog(true)}
+          onItemClick={(item) => console.log(item)}
+        />
+      </Grid>
+      <PreviewImageDialog
+        open={open}
+        image={selectedImage}
+        title={selectedTitle}
+        onClose={handleClose}
+      />
+      <VisitingPurposeDialog
+        open={openMore}
+        onClose={() => setOpenMore(false)}
+        data={todayVisitingPurpose}
+      />
     </Grid>
   );
 };

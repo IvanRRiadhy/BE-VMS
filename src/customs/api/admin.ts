@@ -1003,8 +1003,9 @@ export const getAllVisitorCardPagination = async (
     length,
     // sort_column: sortColumn,
     sort_dir,
-    'search[value]': keyword,
   };
+
+  if (keyword?.trim()) params['search[value]'] = keyword.trim();
 
   if (type !== undefined && type !== null) {
     params.type = type;

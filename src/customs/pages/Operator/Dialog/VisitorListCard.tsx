@@ -18,6 +18,8 @@ import {
   CardActions,
   Select,
   Button,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   IconChevronDown,
@@ -107,61 +109,44 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   return (
     <Card
       sx={{
+        // flex: 1,
+        // // height: '100%',
+        // // maxHeight: isFullscreen ? '100%' : '530px',
+        // display: 'flex',
+        // flexDirection: 'column',
+        // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        // overflow: 'auto',
+        // border: '1px solid #e0e0e0',
         flex: 1,
-        height: '100%',
-        // maxHeight: isFullscreen ? '100%' : '530px',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        overflow: 'auto',
-        border: '1px solid #e0e0e0',
+        overflow: 'hidden',
       }}
     >
       <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
-        <Box display="flex" alignItems="center" gap={0.5} flex={1}>
-          <Box
-            display="flex"
-            alignItems="center"
-            gap={0.5}
-            flex={1}
-            onClick={(e) => setAnchorEl(e.currentTarget)}
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Tabs
+            value={typeVisitor}
+            onChange={(_, value) => setTypeVisitor(value)}
             sx={{
-              cursor: 'pointer',
-              width: 'fit-content',
+              minHeight: 40,
+              '& .MuiTab-root': {
+                minHeight: 40,
+                textTransform: 'none',
+                fontWeight: 600,
+              },
             }}
           >
-            <CardHeader
-              title={typeVisitor === 'related' ? 'Related Visitors' : 'Live Visitors'}
-              sx={{ p: 0, fontSize: '14px', fontWeight: 600 }}
-            />
+            <Tab value="live" label="Live Visitors" />
+            <Tab value="related" label="Related Visitors" />
+          </Tabs>
 
-            <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
-              <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
-                ({totalVisitors})
-              </Typography>
-            </Tooltip>
-
-            <IconChevronDown size={18} />
-          </Box>
-
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-            <MenuItem
-              onClick={() => {
-                setTypeVisitor('live');
-                setAnchorEl(null);
-              }}
-            >
-              Live Visitors
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setTypeVisitor('related');
-                setAnchorEl(null);
-              }}
-            >
-              Related Visitors
-            </MenuItem>
-          </Menu>
+          <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
+            <Typography variant="body2" color="text.secondary">
+              ({totalVisitors})
+            </Typography>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -219,181 +204,6 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
 
       <Divider sx={{ mt: 1 }} />
 
-      {/* <CardContent
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          p: 0,
-          pb: '0 !important',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {filteredVisitors.map((visitor, index) => {
-          const isDriving = visitor.is_driving === true;
-          const isScanned =
-            visitor.visitor_number &&
-            scannedVisitorNumber &&
-            visitor.visitor_number === scannedVisitorNumber;
-
-          return (
-            <React.Fragment key={visitor.id || index}>
-              <ListItem
-                sx={{
-                  px: 1,
-                  py: 1.5,
-                  borderBottom: index !== relatedVisitors.length - 1 ? 'none' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease',
-
-                  '&:hover': {
-                    backgroundColor: 'rgba(93,135,255,0.08)',
-                  },
-                }}
-                onClick={() => handleSelectRelatedVisitor(visitor)}
-              >
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Avatar
-                    src={getCdnUrl(visitor.selfie_image) || undefined}
-                    alt={visitor.name}
-                    sx={{ width: 45, height: 45 }}
-                  />
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">
-                      {visitor.name || '-'}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      {visitor.organization || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
-                  <Box display="flex" gap={1} flexDirection={'column'}>
-                    {isDriving && (
-                      <Tooltip
-                        title="Parking"
-                        arrow
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              fontSize: '1rem',
-                              padding: '8px 14px',
-                            },
-                          },
-                          popper: {
-                            container: containerRef.current,
-                          },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            fontWeight: 600,
-                            borderRadius: '6px',
-                            px: 1,
-                            py: 0.25,
-                            fontSize: '0.75rem',
-                            textAlign: 'center',
-                            cursor: 'default',
-                          }}
-                        >
-                          P
-                        </Box>
-                      </Tooltip>
-                    )}
-
-                    {isScanned && (
-                      <Tooltip
-                        title="Scanned"
-                        arrow
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              fontSize: '1rem',
-                              padding: '8px 14px',
-                            },
-                          },
-                          popper: {
-                            container: containerRef.current,
-                          },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            backgroundColor: '#1976D2',
-                            color: 'white',
-                            fontWeight: 600,
-                            borderRadius: '6px',
-                            px: 1,
-                            py: 0.25,
-                            fontSize: '0.75rem',
-                            textAlign: 'center',
-                            cursor: 'default',
-                          }}
-                        >
-                          S
-                        </Box>
-                      </Tooltip>
-                    )}
-                  </Box>
-
-                  <Checkbox
-                    checked={selectedVisitors.includes(visitor.id)}
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-
-                      setSelectedVisitors((prev) => {
-                        if (selectMultiple) {
-                          if (isChecked) {
-                            const updated = Array.from(new Set([...prev, visitor.id]));
-                            return updated;
-                          } else {
-                            const updated = prev.filter((id) => id !== visitor.id);
-                            return updated;
-                          }
-                        } else {
-                          if (isChecked) {
-                            handleSelectRelatedVisitor(visitor);
-                            return [visitor.id];
-                          } else {
-                            return [];
-                          }
-                        }
-                      });
-                    }}
-                  />
-                </Box>
-              </ListItem>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  mt: 1,
-                  px: 1,
-                  gap: 0.5,
-                }}
-              >
-                <Typography variant="body1" fontWeight="medium" sx={{ lineHeight: 1.3 }}>
-                  {visitor.agenda || '-'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2 }}>
-                  {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(visitor.visitor_period_end, visitor.extend_visitor_period)}`}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 1 }} />
-            </React.Fragment>
-          );
-        })}
-      </CardContent> */}
-
       <CardContent
         sx={{
           flex: 1,
@@ -408,7 +218,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               xs: 'repeat(2, 1fr)',
               sm: 'repeat(3, 1fr)',
               md: 'repeat(4, 1fr)',
-              xl: 'repeat(5, 1fr)',
+              xl: 'repeat(4, 1fr)',
             },
             gap: 1,
           }}
