@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Checkbox,
   Collapse,
   IconButton,
   Table,
@@ -12,10 +13,20 @@ import {
 import { Box } from '@mui/system';
 import { useState } from 'react';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
+import { CheckBox, KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
-function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
+function VisitorRow({
+  visitor,
+  index,
+  selectedVisitor,
+  setSelectedVisitor,
+}: {
+  visitor: any;
+  index: number;
+  selectedVisitor: any;
+  setSelectedVisitor: any;
+}) {
   const [open, setOpen] = useState(true);
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
@@ -27,13 +38,14 @@ function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
   };
   return (
     <>
-      <TableRow>
+      {/* <TableRow>
         <TableCell colSpan={6} sx={{ p: 0 }}>
           <Collapse in={open}>
             <Box p={2}>
-              <Table size="small">
-                <TableHead>
+              <Table size="small"> */}
+                {/* <TableHead>
                   <TableRow>
+                    <TableCell></TableCell>
                     <TableCell width="10%">Visitor Name</TableCell>
                     <TableCell width="15%">Email</TableCell>
                     <TableCell width="15%">Phone</TableCell>
@@ -42,9 +54,15 @@ function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
                     <TableCell width="15%">Site</TableCell>
                     <TableCell width="15%">Status</TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
+                </TableHead> */}
+                {/* <TableBody> */}
                   <TableRow>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedVisitor?.id === visitor.id}
+                        onChange={() => setSelectedVisitor(visitor)}
+                      />
+                    </TableCell>
                     <TableCell
                       sx={{
                         display: 'inline-flex',
@@ -82,12 +100,12 @@ function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
                       </Box>
                     </TableCell>
                   </TableRow>
-                </TableBody>
+                {/* </TableBody>
               </Table>
             </Box>
           </Collapse>
         </TableCell>
-      </TableRow>
+      </TableRow> */}
     </>
   );
 }

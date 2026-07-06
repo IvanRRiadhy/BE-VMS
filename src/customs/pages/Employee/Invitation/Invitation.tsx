@@ -25,12 +25,29 @@ import {
   TableContainer,
   Paper,
   Tooltip,
+  Avatar,
+  Tabs,
+  Tab,
+  Card,
+  Stack,
+  CardContent,
+  Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import {
+  IconTicket,
+  IconClipboardText,
+  IconUser,
+  IconCalendarEvent,
+  IconMapPin,
+  IconPhone,
+  IconMail,
+  IconCircleCheck,
+} from '@tabler/icons-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
@@ -52,6 +69,7 @@ import {
   IconFilterFilled,
   IconLink,
   IconPdf,
+  IconSearch,
   IconShare,
   IconUsers,
 } from '@tabler/icons-react';
@@ -93,6 +111,8 @@ import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
 import { IconFileSpreadsheet } from '@tabler/icons-react';
 import { cancelVisitor } from 'src/customs/api/users';
 import { useProfile } from 'src/hooks/useProfile';
+import VisitorDetailPanel from './components/VisitorDetailPanel';
+import VisitorListTable from './components/VisitorListTable';
 
 type Group = {
   id: string;
@@ -134,7 +154,7 @@ const Content = () => {
   }, [formDataAddVisitor, isFormChanged]);
 
   // const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
-
+  const [tab, setTab] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
@@ -236,7 +256,7 @@ const Content = () => {
   const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
   const [openGroup, setOpenGroup] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef<HTMLDivElement>(null);
+  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchData = async (append = false) => {
@@ -311,25 +331,6 @@ const Content = () => {
     if (!token) return;
     fetchData(false);
   }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
-
-  useEffect(() => {
-    if (!observerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && hasMore && !loadingMore) {
-          fetchData(true);
-        }
-      },
-      {
-        threshold: 0.1,
-      },
-    );
-
-    observer.observe(observerRef.current);
-
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore]);
 
   useEffect(() => {
     if (!selectedGroupId || !token) return;
@@ -768,11 +769,13 @@ const Content = () => {
     }
   };
 
+
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
         <Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard
                 cardMarginBottom={1}
@@ -904,15 +907,13 @@ const Content = () => {
                   value={searchAgenda}
                   onChange={(e) => setSearchAgenda(e.target.value)}
                   sx={{ mb: 2 }}
-                  // InputProps={{
-                  //   endAdornment: (
-                  //     <InputAdornment position="end">
-                  //       <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                  //         <IconFilterFilled />
-                  //       </IconButton>
-                  //     </InputAdornment>
-                  //   ),
-                  // }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start" style={{ paddingLeft: '0px !important' }}>
+                        <IconSearch style={{ color: 'gray' }} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
                 <Box>
                   <Box>
@@ -972,95 +973,55 @@ const Content = () => {
                             </Box>
                           </Box>
                         ))}
-                    <div
-                      ref={observerRef}
-                      style={{
-                        height: 20,
-                      }}
-                    />
+                    {hasMore && (
+                      <Box display="flex" justifyContent="center" mt={2}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => fetchData(true)}
+                          disabled={loadingMore}
+                          fullWidth
+                        >
+                          {loadingMore ? (
+                            <>
+                              <CircularProgress size={18} sx={{ mr: 1 }} />
+                              Loading...
+                            </>
+                          ) : (
+                            'Load More'
+                          )}
+                        </Button>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               </Box>
-              {/* Right */}
-              <Box flexGrow={1} p={2} sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}>
-                {selectedGroupId ? (
-                  <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
-                    <Table aria-label="collapsible table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ width: 50 }}>
-                            <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
-                              {openGroup ? (
-                                <KeyboardArrowUpOutlined />
-                              ) : (
-                                <KeyboardArrowDownOutlined />
-                              )}
-                            </IconButton>
-                          </TableCell>
-                          <TableCell colSpan={5}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={'space-between'}
-                              alignItems={'center'}
-                            >
-                              <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
-                                {groupHeader?.group_name ?? '-'}
-                              </Typography>
-                              <Box display={'flex'} gap={0.5}>
-                                <Tooltip title="Export PDF" arrow>
-                                  <Button variant="contained" color="error">
-                                    <IconPdf />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip title="Export Excel" arrow>
-                                  <Button variant="contained" color="success">
-                                    <IconFileSpreadsheet />
-                                  </Button>
-                                </Tooltip>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groupDetailLoading ? (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center">
-                              <CircularProgress size={24} />
-                            </TableCell>
-                          </TableRow>
-                        ) : groupVisitors.length > 0 ? (
-                          groupVisitors.map((visitor: any, index: number) => (
-                            <VisitorRow
-                              key={`${visitor.id}-${index}`}
-                              visitor={visitor}
-                              index={index}
-                            />
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center">
-                              <Typography color="text.secondary">No visitor data</Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Box
-                    height="100%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    flexDirection="column"
-                  >
-                    <img src={bg_nodata} width={150} />
-                    <Typography color="text.secondary" mt={2} variant="h5">
-                      Select a group from the list.
-                    </Typography>
-                  </Box>
-                )}
+              <Box
+                p={2}
+                sx={{
+                  height: { xs: 'auto', xl: '78vh' },
+                  overflow: 'auto',
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                  gap: 2,
+                }}
+              >
+                {/* List */}
+                <VisitorListTable
+                  selectedGroupId={selectedGroupId}
+                  groupHeader={groupHeader}
+                  groupVisitors={groupVisitors}
+                  groupDetailLoading={groupDetailLoading}
+                  selectedVisitor={selectedVisitor}
+                  setSelectedVisitor={setSelectedVisitor}
+                  openGroup={openGroup}
+                  setOpenGroup={setOpenGroup}
+                />
+                {/* Detail From List */}
+                <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
               </Box>
             </Box>
           </Grid>
