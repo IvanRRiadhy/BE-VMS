@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   Grid2,
@@ -46,37 +46,18 @@ const FormUser: React.FC<FormUserProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const [userGroup, setUserGroup] = useState<any[]>([]);
   const { token } = useSession();
-
   const [showPassword, setShowPassword] = useState(false);
 
   const handleTogglePassword = () => {
     setShowPassword((prev) => !prev);
   };
 
-  const DRAFT_KEY = 'unsavedUserForm';
-  const initialRef = React.useRef(formData);
+  const initialRef = useRef(formData);
 
   useEffect(() => {
-    if (!edittingId) {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-    }
-  }, [formData]);
-
-  useEffect(() => {
-    if (edittingId) return;
-
-    const draft = localStorage.getItem(DRAFT_KEY);
-
-    if (draft) {
-      const parsed = JSON.parse(draft);
-
-      setFormData(parsed);
-
-      onDirtyChange?.(true);
-    }
+    initialRef.current = formData;
   }, [edittingId]);
 
   const isDirty = useMemo(() => {
@@ -98,10 +79,6 @@ const FormUser: React.FC<FormUserProps> = ({
     };
     fetchData();
   }, []);
-  // const groupOptions = Object.entries(GroupRoleId).map(([key, value]) => ({
-  //   id: value.toLowerCase(), // ⬅ normalize ke lowercase
-  //   label: key.replace(/([A-Z])/g, ' $1'),
-  // }));
 
   const groupOptions = useMemo(() => {
     return userGroup.map((g: any) => ({
@@ -114,13 +91,6 @@ const FormUser: React.FC<FormUserProps> = ({
     const { id, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [id]: value }));
   };
-
-  // const handleChange = (e) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [e.target.id]: e.target.value,
-  //   }));
-  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,7 +111,6 @@ const FormUser: React.FC<FormUserProps> = ({
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
-      localStorage.removeItem(DRAFT_KEY);
       setTimeout(() => {
         onSuccess?.();
       }, 600);
@@ -237,39 +206,12 @@ const FormUser: React.FC<FormUserProps> = ({
             />
           </Grid2>
 
-          {/* GROUP */}
-          {/* <Grid2 size={{ xs: 12, lg: 6 }}>
-            <CustomFormLabel htmlFor="user_group_id" sx={{ mt: 0.5 }}>
-              Group
-            </CustomFormLabel>
-
-            <CustomTextField
-              id="user_group_id"
-              select
-              value={formData.user_group_id || ''}
-              onChange={(e) => handleGroupChange(e.target.value)}
-              error={Boolean(errors.user_group_id)}
-              helperText={errors.user_group_id ?? ''}
-              fullWidth
-            >
-              <MenuItem value="" disabled>
-                Select Group
-              </MenuItem>
-
-              {groupOptions.map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  {group.label}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-          </Grid2> */}
-
           <Grid2 size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel htmlFor="user_group_id" sx={{ mt: 0.5 }}>
               Group
             </CustomFormLabel>
 
-            <CustomTextField
+            {/* <CustomTextField
               id="user_group_id"
               select
               value={formData.user_group_id ?? ''}
@@ -288,7 +230,24 @@ const FormUser: React.FC<FormUserProps> = ({
                   {group.label}
                 </MenuItem>
               ))}
-            </CustomTextField>
+            </CustomTextField> */}
+            <Autocomplete
+              options={groupOptions}
+              getOptionLabel={(option) => option.label}
+              value={groupOptions.find((item) => item.id === formData.user_group_id) || null}
+              onChange={(_, value) => {
+                handleGroupChange(value?.id ?? '');
+              }}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  placeholder="Select Group"
+                  error={Boolean(errors.user_group_id)}
+                  helperText={errors.user_group_id ?? ''}
+                />
+              )}
+            />
           </Grid2>
 
           {!edittingId && (

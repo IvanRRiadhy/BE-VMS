@@ -72,6 +72,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import InvitationScheduleDetailDialog from './Dialog/InvitationScheduleDetailDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CameraDialog from './Dialog/CameraDialog';
 
 export interface CalendarEvent {
   id: number;
@@ -140,8 +141,7 @@ export default function DnDOutsideCourier({
   const [drivers, setDrivers] = useState<any[]>([]);
   const [openDialogReschedule, setOpenDialogReschedule] = useState(false);
   const [tempEvent, setTempEvent] = useState<any | null>(null);
-  // const [calendarVersion, setCalendarVersion] = useState(0);
-
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const reloadCalendar = () => {
     if (!lastRange.start || !lastRange.end) return;
 
@@ -864,10 +864,10 @@ export default function DnDOutsideCourier({
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -974,7 +974,7 @@ export default function DnDOutsideCourier({
                           ? dayjs.utc(startItem.answer_datetime).local()
                           : null
                       }
-                      format="ddd, DD - MMM - YYYY, HH:mm"
+                      format="dddd, DD MMM YYYY, HH:mm"
                       shouldDisableTime={(value) => {
                         if (!value || !timeAccess) return false;
 
@@ -1506,7 +1506,7 @@ export default function DnDOutsideCourier({
 
                           <Divider sx={{ my: 2 }} />
 
-                          <Box sx={{ textAlign: 'right' }}>
+                          <Box sx={{ textAlign: 'right', display: 'flex', gap: 1 }}>
                             <Button
                               onClick={() =>
                                 handleRemoveFileForField(
@@ -1650,28 +1650,37 @@ export default function DnDOutsideCourier({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="h6" sx={{ mt: 1 }}>
+                        <Typography variant="h6" sx={{ mt: 1, mb:2}}>
                           Upload File
                         </Typography>
-
-                        <Typography variant="caption" color="textSecondary">
-                          Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: '700' }}> 1 Mb</span>
-                        </Typography>
-
-                        <Typography
-                          variant="subtitle1"
-                          component="span"
-                          color="primary"
-                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCamera(true);
-                          }}
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          Use Camera
-                        </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            Supports: JPG, JPEG, PNG, up to
+                            <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                          </Typography>
 
+                          <Typography
+                            variant="h6"
+                            component="span"
+                            color="primary"
+                            sx={{
+                              fontWeight: 600,
+                              ml: 1,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCamera(true);
+                            }}
+                          >
+                            <IconCamera /> Use Camera
+                          </Typography>
+                        </Box>
                         <input
                           id={`file-${key}`}
                           type="file"
@@ -1731,111 +1740,24 @@ export default function DnDOutsideCourier({
                           </Box>
                         )}
                       </Box>
-
-                      <Dialog
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 3 }}>
-                          <Box>
-                            <Typography variant="h6" mb={2}>
-                              Take Photo From Camera
-                            </Typography>
-                            {/* close button */}
-                            <IconButton
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ position: 'absolute', top: 10, right: 10 }}
-                            >
-                              <IconX size={22} />
-                            </IconButton>
-                          </Box>
-
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {screenshot ? (
-                                <img
-                                  src={screenshot}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Button
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange('answer_file', url, index),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              sx={{ mr: 1 }}
-                              startIcon={<IconTrash />}
-                            >
-                              Clear Foto
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCaptureForField((url) => onChange('answer_file', url, index));
-                              }}
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </Button>
-                            <Button
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ ml: 1 }}
-                              startIcon={<IconDeviceFloppy />}
-                            >
-                              Submit
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef}
+                        screenshot={screenshot}
+                        facingMode={facingMode}
+                        onCapture={() =>
+                          handleCaptureForField((url) => onChange('answer_file', url, index))
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange('answer_file', url, index),
+                            key,
+                          )
+                        }
+                        onSubmit={() => setOpenCamera(false)}
+                      />
                     </Box>
                   );
                 }

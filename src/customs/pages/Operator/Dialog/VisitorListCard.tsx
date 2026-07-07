@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Card,
   Box,
@@ -20,6 +20,8 @@ import {
   Button,
   Tabs,
   Tab,
+  IconButton,
+  Stack,
 } from '@mui/material';
 import {
   IconChevronDown,
@@ -27,7 +29,10 @@ import {
   IconClock,
   IconCreditCard,
   IconPrinter,
+  IconFilter,
 } from '@tabler/icons-react';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { minWidth } from '@mui/system';
 
 interface AvailableAction {
   value: string;
@@ -68,6 +73,7 @@ interface VisitorListCardProps {
   setBulkAction: React.Dispatch<React.SetStateAction<string>>;
   setOpenExtendVisit: React.Dispatch<React.SetStateAction<boolean>>;
   handleSelectRelatedVisitor: (visitor: any) => void;
+  handleSelectLiveVisitor: (visitor: any) => void;
   handleApplyBulkAction: () => void;
   handleChooseCard: () => void;
   handlePrintClick: () => void;
@@ -102,21 +108,21 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   setBulkAction,
   setOpenExtendVisit,
   handleSelectRelatedVisitor,
+  handleSelectLiveVisitor,
   handleApplyBulkAction,
   handleChooseCard,
   handlePrintClick,
 }) => {
+  const ITEMS_PER_PAGE = 8;
+
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil(filteredVisitors.length / ITEMS_PER_PAGE);
+
+  const pagedVisitors = filteredVisitors.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   return (
     <Card
       sx={{
-        // flex: 1,
-        // // height: '100%',
-        // // maxHeight: isFullscreen ? '100%' : '530px',
-        // display: 'flex',
-        // flexDirection: 'column',
-        // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        // overflow: 'auto',
-        // border: '1px solid #e0e0e0',
         flex: 1,
         minHeight: 0,
         display: 'flex',
@@ -150,56 +156,97 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
         </Box>
       </Box>
 
-      <Box display={'flex'} gap={1} mt={2}>
-        <FormControl sx={{ width: '100%' }}>
+      <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
           <CustomTextField
             fullWidth
             size="medium"
             value={searchKeyword}
             onChange={(e: any) => setSearchKeyword(e.target.value)}
             placeholder="Search Visitor"
-            sx={{ mb: 0, width: '100%', p: 0 }}
+            sx={{ flex: 1 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <IconSearch fontSize="small" />
+                  <IconSearch size={18} />
                 </InputAdornment>
               ),
             }}
           />
-        </FormControl>
 
-        <Tooltip
-          title="Click and Select more than 1 visitor"
-          slotProps={{
-            tooltip: {
-              sx: {
-                fontSize: '8.7remrem',
-                padding: '8px 14px',
+          <Tooltip title="Filter">
+            <IconButton
+              color="primary"
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 2,
+                width: 48,
+                height: 48,
+                flexShrink: 0,
+              }}
+            >
+              <IconFilter size={20} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        <Box display="flex" gap={1} alignItems="center" justifyContent={'flex-end'}>
+          <Tooltip
+            title="Click and Select more than 1 visitor"
+            slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '8.7remrem',
+                  padding: '8px 14px',
+                },
               },
-            },
-            popper: {
-              container: containerRef.current,
-            },
-          }}
-          arrow
-        >
-          <FormControlLabel
-            value="end"
-            control={
-              <Checkbox
-                checked={selectMultiple}
-                onChange={(e) => {
-                  setSelectMultiple(e.target.checked);
-                  setSelectedVisitors([]);
-                }}
-              />
-            }
-            label="Select Multiple"
-            labelPlacement="end"
-            sx={{ marginRight: 0, width: '250px' }}
-          />
-        </Tooltip>
+              popper: {
+                container: containerRef.current,
+              },
+            }}
+            arrow
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectMultiple}
+                  onChange={(e) => {
+                    setSelectMultiple(e.target.checked);
+                    setSelectedVisitors([]);
+                  }}
+                />
+              }
+              label="Select Multiple"
+              sx={{
+                marginRight: 0,
+                whiteSpace: 'nowrap',
+              }}
+            />
+          </Tooltip>
+          <IconButton size="small" disabled={page === 1} onClick={() => setPage(page - 1)}>
+            <ChevronLeft />
+          </IconButton>
+
+          <Typography display={'flex'}>
+            <span> {filteredVisitors.length > 0 ? page : 0}</span> / <span>{totalPages}</span>
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setPage(page + 1)}
+            disabled={totalPages === 0 || page >= totalPages}
+          >
+            <ChevronRight />
+          </IconButton>
+        </Box>
       </Box>
 
       <Divider sx={{ mt: 1 }} />
@@ -223,7 +270,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             gap: 1,
           }}
         >
-          {filteredVisitors.map((visitor, index) => {
+          {pagedVisitors.map((visitor, index) => {
             const isDriving = visitor.is_driving === true;
             const isScanned =
               visitor.visitor_number &&
@@ -235,7 +282,13 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             return (
               <Card
                 key={visitor.id || index}
-                onClick={() => handleSelectRelatedVisitor(visitor)}
+                onClick={() => {
+                  if (typeVisitor === 'live') {
+                    handleSelectLiveVisitor(visitor);
+                  } else {
+                    handleSelectRelatedVisitor(visitor);
+                  }
+                }}
                 sx={{
                   cursor: 'pointer',
                   borderRadius: 3,
@@ -341,8 +394,18 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                             : prev.filter((id) => id !== visitor.id);
                         }
 
+                        // if (checked) {
+                        //   handleSelectRelatedVisitor(visitor);
+                        //   return [visitor.id];
+                        // }
+
                         if (checked) {
-                          handleSelectRelatedVisitor(visitor);
+                          if (typeVisitor === 'live') {
+                            handleSelectLiveVisitor(visitor);
+                          } else {
+                            handleSelectRelatedVisitor(visitor);
+                          }
+
                           return [visitor.id];
                         }
 

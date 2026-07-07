@@ -19,6 +19,7 @@ const History = () => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const[rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<any>({
     start_date: '',
     end_date: '',
@@ -94,10 +95,10 @@ const History = () => {
             <DynamicTable
               overflowX={'auto'}
               data={historyData}
-              isHavePagination={false}
+              isHavePagination={true}
               // selectedRows={selectedRows}
-              // defaultRowsPerPage={rowsPerPage}
-              // rowsPerPageOptions={[10, 20, 100]}
+              defaultRowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[10, 50, 100]}
               // onPaginationChange={(page, rowsPerPage) => {
               //   setPage(page);
               //   setRowsPerPage(rowsPerPage);

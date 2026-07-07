@@ -1,14 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Box,
-  Button,
-  Divider,
-  Card,
-  Skeleton,
-  Grid2 as Grid,
-  IconButton,
-  DialogActions,
-} from '@mui/material';
+import { Box, Button, Divider, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -35,7 +26,6 @@ import {
   apiKeyFieldMap,
 } from 'src/customs/api/models/Admin/Integration';
 import { useTheme } from '@mui/material/styles';
-import FormIntegration from './FormIntegration';
 import { IconWorldCog } from '@tabler/icons-react';
 
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
@@ -86,8 +76,6 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  // const [searchInput, setSearchInput] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
   const DRAFT_KEY = 'unsavedIntegrationData';
@@ -118,61 +106,6 @@ const Content = () => {
     ApiKey: 2,
     Bacnet: 4,
   };
-
-  // useEffect(() => {
-  //   if (!token) return;
-
-  //   let cancelled = false;
-  //   const fetchData = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const [response, availableResponse] = await Promise.all([
-  //         getAllIntegration(token),
-  //         getAvailableIntegration(token),
-  //       ]);
-
-  //       const integrations: Item[] = Array.isArray(response?.collection) ? response.collection : [];
-  //       const availables = (availableResponse.collection ?? []).map((item: any) => ({
-  //         ...item,
-  //         brand_type: normalizeBrandType(item.brand_type),
-  //         // integration_type: normalizeBrandType(item.integration_type),
-  //         // integration_type: IntegrationTypeMap[item.integration_type],
-  //         // api_type_auth: normalizeBrandType(item.api_type_auth),
-  //         api_type_auth: item.api_type_auth,
-  //       }));
-
-  //       setAvailableIntegration(availables);
-
-  //       if (cancelled) return;
-
-  //       setIntegrationData(integrations);
-  //       // setAvailableIntegration(availables);
-  //       setTotalRecords(integrations.length);
-
-  //       const rows: any[] = integrations.map((item) => ({
-  //         id: item.id,
-  //         name: item.name,
-  //         brand_name: item.brand_name,
-  //         brand_type: item.brand_type,
-  //         // integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
-  //         // api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
-  //         integration_type: item.integration_type,
-  //         api_type_auth: item.api_type_auth,
-  //         api_url: item.api_url || '',
-  //       }));
-
-  //       setTableData(rows);
-  //     } catch (error) {
-  //     } finally {
-  //       if (!cancelled) setLoading(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [token, page, rowsPerPage, search, refreshTrigger]);
 
   useEffect(() => {
     if (!token) return;
@@ -217,7 +150,7 @@ const Content = () => {
         setIntegrationData(integrations);
         setTotalRecords(integrations.length);
 
-        const rows = integrations.map((item) => ({
+        const rows: any = integrations.map((item) => ({
           id: item.id,
           name: item.name,
           brand_name: item.brand_name,
@@ -346,10 +279,7 @@ const Content = () => {
     const draft = getDraft();
 
     if (draft) {
-      // simpan dulu intent user
       setPendingIntegration(integration || null);
-
-      // tampilkan confirm dulu
       setConfirmDialogOpen(true);
       return;
     }
@@ -410,16 +340,6 @@ const Content = () => {
       }
     }
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {

@@ -2,7 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 
 import { AppState } from './store/Store';
 import router from './routes/Router';
-import { CircularProgress, CssBaseline, ThemeProvider, Box, Backdrop } from '@mui/material';
+import {  CssBaseline, ThemeProvider } from '@mui/material';
 import { useSelector } from 'src/store/Store';
 import { ThemeSettings } from './theme/Theme';
 import RTL from './layouts/full/shared/customizer/RTL';

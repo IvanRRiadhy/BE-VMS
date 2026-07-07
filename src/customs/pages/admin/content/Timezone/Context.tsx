@@ -77,13 +77,12 @@ function mapApiToDaySchedule(apiData: any) {
 const Content = () => {
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-
   const secdrawerWidth = 260;
   const [search, setSearch] = useState('');
   const debounceSearch = useDebounce(search, 500);
   const [loading, setLoading] = useState(false);
-
+  const [showForm, setShowForm] = useState(false);
+  const [mode, setMode] = useState<'create' | 'edit'>('create');
   const { token } = useSession();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
@@ -124,7 +123,6 @@ const Content = () => {
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Time Access has been deleted.');
         setSelectedTimezone(null);
-        localStorage.removeItem('selectedTimezone');
       } catch (error) {
         console.error(error);
       } finally {
@@ -139,6 +137,8 @@ const Content = () => {
       const res = await getTimezoneById(token, id);
       const mapped = mapApiToDaySchedule(res.collection);
       setSelectedTimezone(mapped);
+      setMode('edit');
+      setShowForm(true);
     } catch (err) {
       console.error(err);
     }
@@ -154,7 +154,6 @@ const Content = () => {
           sx={{
             display: 'flex',
             flexDirection: mdUp ? 'row' : 'column',
-            // backgroundColor: '#fff',
             bgcolor: 'background.paper',
             height: '100%',
             width: '100%',
@@ -179,9 +178,11 @@ const Content = () => {
                   size="small"
                   variant="contained"
                   onClick={() => {
+                    // setSelectedTimezone(null);
+                    // setRefreshTrigger((x) => x + 1);
+                    setMode('create');
                     setSelectedTimezone(null);
-                    localStorage.removeItem('timezoneFormDraft');
-                    setRefreshTrigger((x) => x + 1);
+                    setShowForm(true);
                   }}
                   startIcon={<IconPlus />}
                 >
@@ -270,7 +271,7 @@ const Content = () => {
           </Box>
 
           <Box flexGrow={1} p={3} sx={{ overflow: 'hidden', height: { xs: 'auto', xl: '88vh' } }}>
-            {selectedTimezone ? (
+            {/* {selectedTimezone ? (
               <FormTimezone
                 key={selectedTimezone.id}
                 mode="edit"
@@ -284,6 +285,20 @@ const Content = () => {
                 initialData={null}
                 onSuccess={() => setRefreshTrigger((x) => x + 1)}
               />
+            )} */}
+            {showForm ? (
+              <FormTimezone
+                key={mode === 'edit' ? selectedTimezone?.id : 'create'}
+                mode={mode}
+                initialData={mode === 'edit' ? selectedTimezone : null}
+                onSuccess={() => setRefreshTrigger((x) => x + 1)}
+              />
+            ) : (
+              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                <Typography color="text.secondary">
+                  Select a Time Access or click <b>Add</b> to create a new one.
+                </Typography>
+              </Box>
             )}
           </Box>
         </Box>

@@ -41,45 +41,13 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   mode = 'add',
   onDirtyChange,
 }) => {
-  // const [form, setForm] = useState({
-  //   name: '',
-  //   time_access: null as any,
-  //   visitor_type: null as any,
-  //   // site: null as any,
-  //   site: [] as Site[],
-  //   host: null as any,
-  //   question_page: [] as any[],
-  // });
-
-  const DRAFT_KEY = 'unsavedSchedulerData';
-
-  const getInitialForm = () => {
-    const saved = localStorage.getItem(DRAFT_KEY);
-
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
-  };
-
-  const [form, setForm] = useState(() => {
-    const saved = getInitialForm();
-
-    return (
-      saved ?? {
-        name: '',
-        time_access: null,
-        visitor_type: null,
-        site: [],
-        host: null,
-        question_page: [],
-      }
-    );
+  const [form, setForm] = useState({
+    name: '',
+    time_access: null,
+    visitor_type: null,
+    site: [] as Site[],
+    host: null,
+    question_page: [],
   });
 
   const [originalVisitorTypeId, setOriginalVisitorTypeId] = useState<string | null>(null);
@@ -112,13 +80,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   };
 
   const treeSiteOptions = useMemo(() => buildTreeOptions(siteDataQuery ?? []), [siteDataQuery]);
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem('unsavedSchedulerData', JSON.stringify(form));
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [form]);
 
   useEffect(() => {
     if (defaultValue) {
@@ -265,18 +226,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
       console.log('Payload to submit:', payload);
       await onSubmit(payload);
 
-      // if (mode === 'add') {
-      //   setForm({
-      //     name: '',
-      //     time_access: null,
-      //     visitor_type: null,
-      //     site: [] as Site[],
-      //     host: null,
-      //     question_page: [],
-      //   });
-      //   localStorage.removeItem('unsavedSchedulerData');
-      // }
-      localStorage.removeItem('unsavedSchedulerData');
     } catch (error: any) {
       const backendMessage = error.msg || error.collection;
 
@@ -421,6 +370,23 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
     }));
   }, [selectedSiteIds, siteDataQuery]);
 
+  useEffect(() => {
+    if (mode === 'add') {
+      setForm({
+        name: '',
+        time_access: null,
+        visitor_type: null,
+        site: [],
+        host: null,
+        question_page: [],
+      });
+
+      setSelectedSiteIds([]);
+      setSelectedSiteParentIds([]);
+      setSiteTree([]);
+    }
+  }, [mode]);
+
   return (
     <>
       <Grid container spacing={1}>
@@ -473,27 +439,12 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
               if (reason !== 'input') return;
               setInputValue(newValue);
             }}
-            // filterOptions={(opts, state) => {
-            //   if (state.inputValue.length < 3) return [];
-            //   return opts.filter((opt) =>
-            //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-            //   );
-            // }}
-            // filterOptions={(opts, state) => {
-            //   const input = state.inputValue.toLowerCase();
-
-            //   if (!input || input.length < 3) {
-            //     return opts.slice(0, 5);
-            //   }
-
-            //   return opts.filter((opt) => opt.name.toLowerCase().includes(input));
-            // }}
             filterOptions={(opts, state) => {
               const input = state.inputValue.toLowerCase();
 
-             if (selectedSiteParentIds.length > 0 || mode === 'edit') {
-               return opts;
-             }
+              if (selectedSiteParentIds.length > 0 || mode === 'edit') {
+                return opts;
+              }
 
               // mode normal
               if (!input) {

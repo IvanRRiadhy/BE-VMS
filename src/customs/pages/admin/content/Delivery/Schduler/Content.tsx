@@ -274,12 +274,20 @@ const Content = () => {
     }
 
     setOpenDialogScheduler(false);
+    setSelectedScheduler(null);
+    setFormMode('add');
+    setEdittingId('');
+    setIsDirty(false);
   };
 
   const handleDiscard = () => {
-    localStorage.removeItem('unsavedSchedulerData');
     setConfirmDialogOpen(false);
     setOpenDialogScheduler(false);
+
+    setSelectedScheduler(null);
+    setFormMode('add');
+    setEdittingId('');
+    setIsDirty(false);
   };
 
   return (
@@ -369,6 +377,7 @@ const Content = () => {
 
           <DialogContent dividers>
             <SchedulerForm
+              key={`${formMode}-${selectedScheduler?.id ?? 'new'}`}
               timezoneData={timezoneData ?? []}
               visitorTypeQuery={visitorTypeQuery ?? []}
               siteDataQuery={siteDataQuery ?? []}

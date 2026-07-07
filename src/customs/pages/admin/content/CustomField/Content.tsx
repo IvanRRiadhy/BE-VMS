@@ -25,6 +25,7 @@ import {
   getAllCustomField,
   getAllCustomFieldPagination,
   deleteCustomField,
+  getCustomFieldById,
 } from 'src/customs/api/admin';
 import {
   CreateCustomFieldRequest,
@@ -37,6 +38,8 @@ import FormCustomField from 'src/customs/pages/admin/content/CustomField/FormCus
 import { IconSettings } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import CustomFieldDialog from './components/CustomFIeldDialog';
 
 type CustomFieldTableRow = {
   id: string;
@@ -52,7 +55,6 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -121,46 +123,10 @@ const Content = () => {
   }, [token, refreshTrigger, search]);
 
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedCustomField');
-      return saved ? JSON.parse(saved) : {};
-    },
+    CreateCustomFieldRequestSchema.parse({}),
   );
-  const defaultFormData = CreateCustomFieldRequestSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddCustomField) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    if (!shouldTrackChanges || !initialFormSnapshot) return;
-
-    const current = JSON.stringify(formDataAddCustomField);
-
-    if (current !== initialFormSnapshot) {
-      localStorage.setItem('unsavedCustomField', current);
-    } else {
-      localStorage.removeItem('unsavedCustomField');
-    }
-  }, [formDataAddCustomField, shouldTrackChanges, initialFormSnapshot]);
-
-  useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
-        if (isFormChanged) {
-          setConfirmDialogOpen(true);
-        }
-      }
-    };
-
-    const dialogEl = dialogRef.current;
-    if (dialogEl) {
-      dialogEl.addEventListener('mouseleave', handleMouseLeave);
-    }
-
-    return () => {
-      if (dialogEl) {
-        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-  }, [isFormChanged]);
+  const isFormChanged =
+    initialFormSnapshot !== null && JSON.stringify(formDataAddCustomField) !== initialFormSnapshot;
 
   const cards = [
     {
@@ -187,8 +153,7 @@ const Content = () => {
   };
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedCustomField');
-    const data = editing ? JSON.parse(editing) : CreateCustomFieldRequestSchema.parse({});
+    const data = CreateCustomFieldRequestSchema.parse({});
 
     setFormDataAddCustomField(data);
     setInitialFormSnapshot(JSON.stringify(data));
@@ -198,33 +163,23 @@ const Content = () => {
     setTimeout(() => setShouldTrackChanges(true), 100);
   };
 
-  const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedCustomField');
-    if (editing) {
-      const parsed = JSON.parse(editing);
-      if (parsed.id === id) {
-        setEdittingId(id);
-        setFormDataAddCustomField(parsed);
-        setInitialFormSnapshot(JSON.stringify(parsed));
-        handleOpenDialog();
-        setTimeout(() => setShouldTrackChanges(true), 100);
-      } else {
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-      }
-    } else {
-      const data = tableData.find((item) => item.id === id) || {};
-      const parsed = CreateCustomFieldRequestSchema.parse(data);
-      setFormDataAddCustomField(parsed);
-      setInitialFormSnapshot(JSON.stringify(parsed));
-      setEdittingId(id);
-      handleOpenDialog();
-      setTimeout(() => setShouldTrackChanges(true), 100);
-    }
+  const handleEdit = async (id: string) => {
+    // const data = tableData.find((item) => item.id === id) || {};
+    const data = await getCustomFieldById(id, token);
+
+    const parsed = CreateCustomFieldRequestSchema.parse(data.collection);
+
+    setFormDataAddCustomField(parsed);
+    setInitialFormSnapshot(JSON.stringify(parsed));
+    setEdittingId(id);
+
+    handleOpenDialog();
+
+    setTimeout(() => setShouldTrackChanges(true), 100);
   };
+
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedCustomField');
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
@@ -237,11 +192,6 @@ const Content = () => {
 
     setPendingEditId(null);
     handleCloseDialog();
-  };
-
-  const handleCancelEdit = () => {
-    setConfirmDialogOpen(false);
-    setPendingEditId(null);
   };
 
   const handleDialogClose = (_event: object, reason: string) => {
@@ -283,7 +233,7 @@ const Content = () => {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteCustomField(row.id, token)));
-        showSwal('success', `${rows.length} items have been deleted.`);
+        showSwal('success', `${rows.length} items of custom fields have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
@@ -294,7 +244,6 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    localStorage.removeItem('unsavedCustomField');
     handleCloseDialog();
     setRefreshTrigger(refreshTrigger + 1);
     if (edittingId) {
@@ -304,24 +253,13 @@ const Content = () => {
     }
   };
 
-//   const handleSearchKeywordChange = useCallback((keyword: string) => {
-//     setSearchInput(keyword);
-//   }, []);
-
-
-// const handleSearch = useCallback((keyword: string) => {
-//   setPage(0);
-//   setSearchInput(keyword);
-//   setSearchKeyword(keyword);
-// }, []);
-
-const handleSearch = useCallback(
-  (keyword: string) => {
-    setPage(0);
-    setSearch(keyword);
-  },
-  [setPage, setSearch],
-);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   return (
     <PageContainer
@@ -342,17 +280,12 @@ const handleSearch = useCallback(
                 data={tableRowSite}
                 selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
-                // defaultRowsPerPage={rowsPerPage}
-                // rowsPerPageOptions={[ 10, 50, 100]}
-                // onPaginationChange={(page, rowsPerPage) => {
-                //   setPage(page);
-                //   setRowsPerPage(rowsPerPage);
-                // }}
                 isHaveChecked={true}
-                isHaveAction={false}
+                isHaveAction={true}
                 isHaveSearch={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
+                isNoActionTableHead={false}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
@@ -368,7 +301,6 @@ const handleSearch = useCallback(
                 onBatchDelete={handleBatchDelete}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
                 isHaveObjectData={true}
               />
@@ -376,57 +308,22 @@ const handleSearch = useCallback(
           </Grid>
         </Box>
       </Container>
-      <Dialog
+      <CustomFieldDialog
         open={openCreateCustomField}
-        onClose={handleDialogClose}
-        fullWidth
-        maxWidth={formDataAddCustomField.field_type >= 3 ? 'lg' : 'md'}
-      >
-        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          {edittingId ? 'Edit' : 'Add'} Custom Field
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                setConfirmDialogOpen(true);
-              } else {
-                handleCloseDialog();
-              }
-            }}
-            sx={{
-              position: 'absolute',
-              right: 10,
-              top: 10,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <FormCustomField
-            formData={formDataAddCustomField}
-            setFormData={setFormDataAddCustomField}
-            onSuccess={handleSuccess}
-            editingId={edittingId}
-          />
-        </DialogContent>
-      </Dialog>
-      {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent ref={dialogRef}>
-          You have unsaved changes for another Custom Field. Are you sure you want to discard them
-          and edit this Custom Field?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+        editingId={edittingId}
+        formData={formDataAddCustomField}
+        setFormData={setFormDataAddCustomField}
+        isFormChanged={isFormChanged}
+        onClose={handleCloseDialog}
+        onConfirmClose={() => setConfirmDialogOpen(true)}
+        onDialogClose={handleDialogClose}
+        onSuccess={handleSuccess}
+      />
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

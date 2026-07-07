@@ -31,19 +31,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const saveToken = (newToken: string, groupId?: string, roleAccess?: string) => {
     localStorage.setItem('session', newToken);
     // localStorage.setItem('authType', type);
-      if (groupId) {
-        const normalized = groupId.toUpperCase();
-        localStorage.setItem('groupId', normalized);
-        setGroupId(normalized);
-      }
+      // if (groupId) {
+      //   const normalized = groupId.toUpperCase();
+      //   localStorage.setItem('groupId', normalized);
+      //   setGroupId(normalized);
+      // }
 
     if (roleAccess) {
       localStorage.setItem('roleAccess', roleAccess);
       setRoleAccess(roleAccess);
     }
     setToken(newToken);
-    // setAuthType(type);
-    // setGroupId(groupId ?? null);
   };
 
   const clearToken = () => {

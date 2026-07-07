@@ -74,7 +74,6 @@ export const CustomizerSlice = createSlice({
 
     setEvacuationState: (state: StateType, action) => {
       state.evacState = action.payload;
-      // Save to localStorage for persistence
       localStorage.setItem('evacState', JSON.stringify(action.payload));
     },
     setBorderRadius: (state: StateType, action) => {

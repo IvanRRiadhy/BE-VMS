@@ -109,7 +109,7 @@ import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmpl
 import VisitorInformation from './Components/VisitorInformation';
 import HostInformation from './Components/HostInformation';
 import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
-// import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
+import Footer from './Components/Footer';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -168,7 +168,6 @@ const OperatorView = () => {
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
-  const handle = useFullScreenHandle();
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
@@ -208,6 +207,7 @@ const OperatorView = () => {
   const [openParking, setOpenParking] = useState(false);
   const [openVehicle, setOpenVehicle] = useState(false);
   const [totalCountVisitor, setTotalCountVisitor] = useState(0);
+  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
@@ -232,6 +232,9 @@ const OperatorView = () => {
   const { employee } = useInvitationHost(token);
   const [searchHost, setSearchHost] = useState<any>('');
   const debounceSearch = useDebounce(searchHost, 400);
+  const [openMore, setOpenMore] = useState(false);
+  const handleOpenMore = () => setOpenMore(true);
+  const [vtLoading, setVTLoading] = useState(false);
 
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
     useInvitationVisitorEmployee(token, {
@@ -292,33 +295,6 @@ const OperatorView = () => {
       invited_by: string;
     }[]
   >([]);
-
-  // useEffect(() => {
-  //   const socket = new WebSocket('ws://localhost:8081/ws/');
-  //   socketRef.current = socket;
-
-  //   socket.onopen = () => {
-  //     console.log('🟢 WS connected');
-  //   };
-
-  //   socket.onmessage = (event) => {
-  //     const data = event.data;
-  //     console.log('data', data);
-
-  //     if (typeof data === 'string' && data.includes('|data:image')) {
-  //       wsImageQueueRef.current.push(data);
-  //     } else {
-  //       wsOcrQueueRef.current.push(data);
-  //     }
-
-  //     forceTick((v) => v + 1);
-  //   };
-
-  //   socket.onerror = (e) => console.error('🔴 WS error', e);
-  //   socket.onclose = () => console.warn('⚠️ WS closed');
-
-  //   return () => socket.close();
-  // }, []);
 
   useEffect(() => {
     if (registerSiteOperator) {
@@ -389,7 +365,7 @@ const OperatorView = () => {
       await createMultipleGrantAccess(token as string, {
         data: payloads,
       });
-      console.log('payloads', payloads);
+      // console.log('payloads', payloads);
 
       resetSwipeStates();
       showSwal('success', 'All cards swapped successfully!');
@@ -1183,16 +1159,6 @@ const OperatorView = () => {
     assigned_card_number?: string | null;
     assigned_card_remarks?: string | null;
   };
-
-  // const filteredVisitors = useMemo(() => {
-  //   if (!debouncedKeyword.trim()) return relatedVisitors;
-
-  //   const keyword = debouncedKeyword.toLowerCase();
-
-  //   return relatedVisitors.filter((v) =>
-  //     [v.name].filter(Boolean).some((field) => field.toLowerCase().includes(keyword)),
-  //   );
-  // }, [relatedVisitors, debouncedKeyword]);
 
   const visitorsForSwipe = useMemo(() => {
     return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
@@ -2035,8 +2001,6 @@ const OperatorView = () => {
       },
     ];
   };
-
-  const asStr = (v: any) => (v == null ? '' : String(v));
 
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
@@ -2903,7 +2867,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -2938,7 +2902,6 @@ const OperatorView = () => {
     }
   };
 
-  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const handleView = async (id: string) => {
     setSelectedInvitationId(id);
     setOpenDialogInvitation(true);
@@ -3161,10 +3124,6 @@ const OperatorView = () => {
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
-
-  const [openMore, setOpenMore] = useState(false);
-  const handleOpenMore = () => setOpenMore(true);
-  const [vtLoading, setVTLoading] = useState(false);
 
   const handlePrint = () => {
     setOpenPreviewPrint(true);
@@ -3434,6 +3393,12 @@ const OperatorView = () => {
     }
   };
 
+  const handleSelectLiveVisitor = async (visitor: any) => {
+    setSelectedVisitors([visitor.id]);
+
+    await handleSubmitQRCode(visitor.invitation_code);
+  };
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3477,7 +3442,6 @@ const OperatorView = () => {
                 onOpenInfo={() => setOpenDialogInfo(true)}
                 onOpenVehicle={handleOpenVehicle}
                 isFullscreen={isFullscreen}
-                // onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
                 onToggleFullscreen={toggleFullscreen}
                 containerRef={containerRef as any}
               />
@@ -3492,10 +3456,7 @@ const OperatorView = () => {
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
-                // alignItems: 'stretch',
-                // height: '100%',
                 flexWrap: 'wrap',
-                // height: '340px',
               }}
             >
               <Grid
@@ -3593,6 +3554,7 @@ const OperatorView = () => {
                   setBulkAction={setBulkAction}
                   setOpenExtendVisit={setOpenExtendVisit}
                   handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                  handleSelectLiveVisitor={handleSelectLiveVisitor}
                   handleApplyBulkAction={handleApplyBulkAction}
                   handleChooseCard={handleChooseCard}
                   handlePrintClick={handlePrintClick}
@@ -3619,32 +3581,7 @@ const OperatorView = () => {
               </Grid>
             </Grid>
           </Grid>
-          <Box
-            sx={{
-              width: '100%',
-              bgcolor: '#fff',
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              py: 1.5,
-              px: 1,
-              // overflow: 'hidden',
-              marginTop: '5px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary" fontWeight={'bold'}>
-              Copyright © 2026{' '}
-              <span style={{ color: 'red' }}>
-                <img
-                  src={beImage}
-                  style={{ width: '15px', marginRight: '5px', marginLeft: '5px' }}
-                />
-              </span>
-              . All Rights Reserved.
-            </Typography>
-          </Box>
+          <Footer />
         </Box>
         {/* Print */}
         <PrintDialogBulk
@@ -3862,7 +3799,6 @@ const OperatorView = () => {
               setFormData={setFormDataAddVisitor}
               onSuccess={handleSuccess}
               containerRef={containerRef}
-              fullscreenHandle={handle}
               resetStep={resetStep}
               onInvitationCreated={handleInvitationCreated}
               ws={{
@@ -3870,7 +3806,6 @@ const OperatorView = () => {
                 ocrQueue: wsOcrQueueRef,
                 send: sendToScanner,
               }}
-              // ws={ws}
               setWsPayload={setWsPayload}
               registeredSite={registerSiteOperator}
               forceTick={tick}
@@ -3885,6 +3820,7 @@ const OperatorView = () => {
             />
           </DialogContent>
         </Dialog>
+        
         {/* Create Pra Registration */}
         <Dialog
           fullWidth
@@ -3975,11 +3911,6 @@ const OperatorView = () => {
           </Snackbar>
         </Portal>
         <GlobalBackdropLoading open={loadingAccess} />
-        {/* <ConfirmUnsavedDialog
-          open={confirmDialogOpen}
-          onClose={handleCancelDiscard}
-          onDiscard={confirmDiscardAndClose}
-        /> */}
       </Box>
     </PageContainer>
   );

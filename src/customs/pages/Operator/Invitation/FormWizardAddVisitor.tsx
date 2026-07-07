@@ -117,7 +117,6 @@ interface FormVisitorTypeProps {
   onSuccess?: () => void;
   formKey?: 'visit_form' | 'pra_form';
   containerRef?: any;
-  fullscreenHandle?: any;
   resetStep?: any;
   // wsPayload? : any;
   ws?: any;
@@ -195,7 +194,6 @@ type VisitorItem = {
 import { styled, keyframes } from '@mui/material/styles';
 import RenderFieldGroup from '../Components/RenderFieldGroup';
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
-import VisitorSelectDialog from '../Components/VisitorSelectDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconUsers } from '@tabler/icons-react';
 import { getVisitorTypeById } from 'src/customs/api/admin';
@@ -211,7 +209,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   onSuccess,
   formKey = 'visit_form',
   containerRef,
-  fullscreenHandle,
   resetStep,
   ws,
   setWsPayload,
@@ -390,10 +387,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
 
-  // useEffect(() => {
-  //   setActiveStep(-1);
-  // }, [resetStep]);
-
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
@@ -489,33 +482,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
-
-  // useEffect(() => {
-  //   const queue = ws?.imageQueue?.current;
-  //   console.log('🟢 Queue:', queue);
-  //   if (!queue || queue.length === 0) return;
-
-  //   const images = [...queue];
-  //   queue.length = 0;
-
-  //   const mapped = images.map((payload) => {
-  //     const [fileName, base64] = payload.split('|');
-  //     return {
-  //       id: generateUUIDv4(),
-  //       documentType: 'ktp',
-  //       selected: true,
-  //       image: { fileName, base64 },
-  //       data: {},
-  //     };
-  //   });
-
-  //   if (!scanSessionActive) {
-  //     bufferedImagesRef.current.push(...mapped);
-  //   } else {
-  //     setGroupScanPreviews((prev) => [...prev, ...mapped]);
-  //     setOpenGroupPreview(true);
-  //   }
-  // }, [scanSessionActive]);
 
   useEffect(() => {
     const processQueue = async () => {
@@ -798,59 +764,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return section;
       }),
     );
-    // setSectionsData((prev) => {
-    //   const updated = prev.map((section) => {
-    //     const sectionType = getSectionType(section);
-
-    //     if (sectionType === 'visitor_information') {
-    //       return updateSectionForm(section, (arr) =>
-    //         arr.map((item) => {
-    //           switch (item.remarks) {
-    //             case 'name':
-    //               return { ...item, answer_text: payload.name ?? '' };
-
-    //             case 'indentity_id':
-    //               return {
-    //                 ...item,
-    //                 answer_text: payload.indentity_id ?? '',
-    //               };
-
-    //             case 'gender': {
-    //               let gender = '2';
-
-    //               if (payload.gender === 'LAKI-LAKI') gender = '1';
-    //               if (payload.gender === 'PEREMPUAN') gender = '0';
-
-    //               return {
-    //                 ...item,
-    //                 answer_text: gender,
-    //               };
-    //             }
-
-    //             default:
-    //               return item;
-    //           }
-    //         }),
-    //       );
-    //     }
-
-    //     if (section.is_document === true) {
-    //       return updateSectionForm(section, (arr) =>
-    //         arr.map((item) =>
-    //           item.field_type === 12 && item.remarks === 'identity_image'
-    //             ? {
-    //                 ...item,
-    //                 answer_file: payload.document_image_url,
-    //               }
-    //             : item,
-    //         ),
-    //       );
-    //     }
-
-    //     return section;
-    //   });
-    //   return updated;
-    // });
     setTimeout(() => {
       setActiveStep((prev) => prev + 1);
     }, 100);
@@ -1957,22 +1870,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 <TableCell>
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
-
-                                {/* {(firstPage?.form || [])
-                                  .filter((field: any) => {
-                                    if (field.remarks === 'employee' && !showEmployeeSearchHeader)
-                                      return false;
-
-                                    return true;
-                                  })
-                                  .map((f: any, i: any) => (
-                                    <TableCell key={f.custom_field_id || i}>
-                                      <CustomFormLabel required={f.mandatory == true}>
-                                        {f.long_display_text}
-                                      </CustomFormLabel>
-                                    </TableCell>
-                                  ))} */}
-
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || [])
                                   .filter(
                                     (f: any) => (f.remarks || '').toLowerCase() !== 'employee',
@@ -6164,18 +6061,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </ScanContainer>
         </DialogContent>
       </Dialog>
-      {/* 
-      <VisitorSelectDialog
-        open={openVisitorDialog}
-        isEmployeeMode={isEmployeeMode}
-        token={token as string}
-        activeGroupIdx={activeGroupIdx}
-        activeStep={activeStep}
-        setOpen={setOpenVisitorDialog}
-        setActiveGroupIdx={setActiveGroupIdx as any}
-        setDataVisitor={setDataVisitor}
-      /> */}
-
+  
       <GlobalBackdropLoading open={loading} />
 
       <Portal>
@@ -6196,6 +6082,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Alert>
         </Snackbar>
       </Portal>
+
     </PageContainer>
   );
 };

@@ -52,13 +52,14 @@ import {
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import useDropPoint from 'src/hooks/useDropPoint';
+import { useOrganization } from 'src/hooks/useOrganization';
+import { useAccessControl } from 'src/hooks/useAccessControl';
+import { useVisitorType } from 'src/hooks/useVisitorType';
+import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 
 const Content = () => {
   const { token } = useSession();
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [formAddUser, setFormAddUser] = useState<any>({});
@@ -70,14 +71,9 @@ const Content = () => {
   const [siteOptions, setSiteOptions] = useState<any[]>([]);
   const { dropPoint } = useDropPoint(token);
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
-  const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
-  const [organizationSiteOptions, setOrganizationSiteOptions] = useState<any[]>([]);
-  const [accessOptions, setAccessOptions] = useState<any[]>([]);
-  const [visitorTypeOptions, setVisitorTypeOptions] = useState<any[]>([]);
   const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
   const [openPermission, setOpenPermission] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
-  // const debouncedSearch = useDebounce(searchKeyword, 400);
   const [sortDir, setSortDir] = useState('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
 
@@ -166,22 +162,15 @@ const Content = () => {
           id: site.id.toLowerCase(),
         })),
       );
-
-      const orgSites = await getAllOrganizations(token);
-      setOrganizationSiteOptions(orgSites.collection ?? []);
-
-      const regSites = await getRegisteredSite(token);
-      setRegisteredSiteOptions(regSites.collection ?? []);
-
-      const accessOpts = await getAllAccessControl(token);
-      setAccessOptions(accessOpts.collection ?? []);
-
-      const visitorTypeOpts = await getAllVisitorType(token);
-      setVisitorTypeOptions(visitorTypeOpts.collection ?? []);
     };
 
     fetchData();
   }, [token]);
+
+  const { organizations } = useOrganization();
+  const { accessData } = useAccessControl(token);
+  const { visitorType } = useVisitorType(token);
+  const { data: registeredSite } = useRegisteredSite(token);
 
   const handlePermission = async (row: any) => {
     try {
@@ -387,19 +376,19 @@ const Content = () => {
       case 'ManageSiteScope':
         return siteOptions;
       case 'OrganizationAssignment':
-        return organizationSiteOptions;
+        return organizations;
       case 'InviteWithinOwnSite':
         return siteOptions;
       case 'ManageAccessScope':
-        return accessOptions;
+        return accessData;
       case 'OperatorRegisterSite':
-        return regsiteredSiteOptions;
+        return registeredSite;
       case 'ManageVisitor':
         return MANAGE_VISITOR_PERMISSIONS;
       case 'ManageVisitorTypeScope':
-        return visitorTypeOptions;
+        return visitorType;
       case 'VisitorTypeAssignment':
-        return visitorTypeOptions;
+        return visitorType;
       case 'SiteAssignment':
         return siteOptions;
       default:
@@ -418,7 +407,6 @@ const Content = () => {
       'AllowSSOActiveDirectory',
       // 'External',
       // 'ManageTeam',
-
       'VisitorTypeAssignment',
       'OrganizationAssignment',
       'SiteAssignment',
@@ -696,8 +684,6 @@ const Content = () => {
         permission: permissionName,
       }));
 
-      // console.log('Payload Visitor Type Permission:', payload);
-
       await createPermissionVisitorType(token as string, payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update visitor type');
@@ -794,16 +780,6 @@ const Content = () => {
     setPermissionSites({});
   };
 
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
-
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -890,14 +866,14 @@ const Content = () => {
         permissionSites={permissionSites}
         setPermissionSites={setPermissionSites}
         dropPoint={dropPoint}
-        organizationSiteOptions={organizationSiteOptions}
-        regsiteredSiteOptions={regsiteredSiteOptions}
-        visitorTypeOptions={visitorTypeOptions}
+        organizationSiteOptions={organizations}
+        regsiteredSiteOptions={registeredSite ?? []}
+        visitorTypeOptions={visitorType}
         permissionNeedSite={PERMISSION_NEED_SITE}
         getDropdownOptions={getDropdownOptions}
         formatPermissionLabel={formatPermissionLabel}
         handleAddSiteAssignment={handleAddSiteAssignment}
-        accessOptions={accessOptions}
+        accessOptions={accessData}
       />
 
       <ConfirmUnsavedDialog

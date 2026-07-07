@@ -23,8 +23,6 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getProfile } from 'src/customs/api/users';
 import { useDispatch } from 'react-redux';
 import { clearUser } from 'src/store/apps/user/userSlice';
-import { persistor } from 'src/store/Store';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
@@ -41,15 +39,15 @@ const Profile = () => {
 
   const dispatch = useDispatch();
 
-  const { token, clearToken, groupId } = useSession();
+  const { token, clearToken } = useSession();
 
   const handleLogout = useCallback(async () => {
     handleClose2();
     clearToken();
 
     dispatch(clearUser());
-    await persistor.purge();
-    await persistor.flush();
+    // await persistor.purge();
+    // await persistor.flush();
 
     localStorage.clear();
     sessionStorage.clear();
@@ -75,10 +73,10 @@ const Profile = () => {
     fetchData();
   }, []);
 
-  const roleManager = groupId === GroupRoleId.Manager;
+  // const roleManager = groupId === GroupRoleId.Manager;
 
   const profileUrl = getProfilePathByRole(data.group_name);
-  const [selectedRole, setSelectedRole] = useState(groupId);
+  // const [selectedRole, setSelectedRole] = useState(groupId);
 
   return (
     <Box>
@@ -158,7 +156,7 @@ const Profile = () => {
           </Tooltip>
         </Stack>
 
-        {roleManager && (
+        {/* {roleManager && (
           <Box my={1} mx={1}>
             <Divider sx={{ my: 1 }} />
             <Typography mb={1} sx={{ fontWeight: 'semibold' }}>
@@ -175,7 +173,7 @@ const Profile = () => {
               <MenuItem value={GroupRoleId.Employee}>Employee</MenuItem>
             </Select>
           </Box>
-        )}
+        )} */}
       </Menu>
     </Box>
   );

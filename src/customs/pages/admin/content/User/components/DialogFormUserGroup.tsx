@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, IconButton, Divider, DialogActions, Button } from '@mui/material';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Divider,
+  DialogActions,
+  Button,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getUserById, getUserGroupById } from 'src/customs/api/admin';
@@ -7,6 +15,7 @@ import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from '../FormUser';
 import FormWizardUserGroup from '../UserGroup/FormWizardUserGroup';
 import { CreateUserGroupSchema } from 'src/customs/api/Admin/UserGroup';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 
 interface Props {
   open: boolean;
@@ -49,7 +58,6 @@ const DialogFormUser: React.FC<Props> = ({ open, onClose, edittingId, onSuccess 
   const handleDiscard = () => {
     setConfirmOpen(false);
     setIsDirty(false);
-    localStorage.removeItem('unsavedUserGroupForm');
     onClose();
   };
 
@@ -73,26 +81,11 @@ const DialogFormUser: React.FC<Props> = ({ open, onClose, edittingId, onSuccess 
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            onClick={() => setConfirmOpen(false)}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to continue editing or discard?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDiscard} variant="contained">
-            Yes, Discard Changes and Continue 
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onDiscard={handleDiscard}
+      />
     </>
   );
 };

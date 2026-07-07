@@ -1,22 +1,23 @@
 import { Box, Card, CardContent, CardHeader, Divider, Typography, useTheme } from '@mui/material';
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
+import { act } from 'react';
 
 interface InvitationQrCardProps {
-  invitationCode?: {
-    visitor_number?: string;
-    invitation_code?: string;
-  }[];
+  invitationCode: any;
   isFullscreen?: boolean;
   statusLabel?: string;
+  activeVisitor?: any;
 }
 
 const InvitationQrCard = ({
-  invitationCode = [],
+  invitationCode,
   isFullscreen = false,
   statusLabel = 'Match',
+  activeVisitor,
 }: InvitationQrCardProps) => {
-  const data = invitationCode[0];
+  // const data = invitationCode[0];
+  const data = activeVisitor;
 
   const theme = useTheme();
   const lg = theme.breakpoints.up('lg');
@@ -25,18 +26,7 @@ const InvitationQrCard = ({
     <Card
       sx={{
         borderRadius: 1.5,
-        // height: '250p',
         width: '100%',
-        // height: {
-        //   xs: '100%',
-        //   xl: data ? '400px' : '400px',
-        // },
-        // minHeight: 360,
-        // maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
-        // display: 'flex',
-        // justifyContent: 'center',
-        // alignItems: 'center',
-        // border: '1px solid #e0e0e0',
         backgroundColor: '#fff',
         p: 1,
         mt: 0.5,

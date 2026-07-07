@@ -78,12 +78,8 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         await updateCustomField(token as string, parsedData, editingId);
       } else {
         await createCustomField(parsedData, token as string);
-      }
-      localStorage.removeItem('unsavedCustomFieldForm');
-      showSwal(
-        'success',
-        editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
-      );
+      };
+
       setTimeout(() => {
         onSuccess?.();
       }, 600);
@@ -136,7 +132,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
               />
               <CustomFormLabel htmlFor="remarks">Remarks</CustomFormLabel>
               <CustomTextField
-                id="long_remarks"
+                id="remarks"
                 value={formData.remarks}
                 onChange={handleChange}
                 error={!!errors.emarks}

@@ -23,6 +23,7 @@ import { createVisitorType, updateVisitorType } from 'src/customs/api/admin';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useTranslation } from 'react-i18next';
 import {
   createVisitorTypeAccess,
   createVisitorTypeAccessBulk,
@@ -76,6 +77,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingName, setEditingName] = useState('');
+  const { t } = useTranslation();
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
@@ -98,16 +100,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-
-    // const numberOnlyFields = ['duration_visit', 'max_time_visit', 'grace_time', 'period'];
-
-    // if (numberOnlyFields.includes(id)) {
-    //   if (/^\d*$/.test(value)) {
-    //     setFormData((prev) => ({ ...prev, [id]: value }));
-    //   }
-    // } else {
     setFormData((prev) => ({ ...prev, [id]: value }));
-    // }
   };
 
   useEffect(() => {
@@ -299,7 +292,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         })),
         visitor_category: localForm.visitor_category ?? null,
       };
-      // console.log('Payload to submit:', data);
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
@@ -388,7 +380,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   };
 
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
-  // type SectionKey = 'visit_form' | 'pra_form';
 
   const handleAddDetail = (sectionKey: SectionKey) => {
     setSectionsData((prev) =>
@@ -582,23 +573,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     setDraggableSteps(sectionsData.map((s) => s.name));
-  }, [sectionsData]);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('unsavedVisitorTypeData');
-    let parsed = {};
-    if (stored) {
-      try {
-        parsed = JSON.parse(stored);
-      } catch {
-        parsed = {};
-      }
-    }
-    const updated = {
-      ...parsed,
-      section_page_visitor_types: sectionsData,
-    };
-    localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(updated));
   }, [sectionsData]);
 
   useEffect(() => {
@@ -915,16 +889,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               setDeletedAccessIds={setDeletedAccessIds}
             />
           </Box>
-
-          {/* <Box mt={1}>{StepContent(activeStep)}</Box> */}
-
           <Box mt={3} display="flex" justifyContent="space-between">
             <Button
               disabled={activeStep === 0}
               onClick={() => setActiveStep((prev) => prev - 1)}
               startIcon={<IconArrowLeft size={18} />}
             >
-              Back
+              {t('back')}
             </Button>
 
             {isLastStep ? (
@@ -942,7 +913,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 onClick={() => setActiveStep((prev) => prev + 1)}
                 endIcon={<IconArrowRight size={18} />}
               >
-                Next
+                {t('next')}
               </Button>
             )}
           </Box>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllAccessControl } from 'src/customs/api/admin';
 
-export const useAccessControl = (token?: string) => {
+export const useAccessControl = (token?: string | null) => {
   const [accessData, setAccessData] = useState<any[]>([]);
 
   useEffect(() => {

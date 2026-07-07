@@ -54,12 +54,16 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
+  // const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
+  //   () => {
+  //     const saved = localStorage.getItem('unsavedVisitorTypeData');
+  //     return saved ? JSON.parse(saved) : CreateVisitorTypeRequestSchema.parse({});
+  //   },
+  // );
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedVisitorTypeData');
-      return saved ? JSON.parse(saved) : CreateVisitorTypeRequestSchema.parse({});
-    },
+    CreateVisitorTypeRequestSchema.parse({}),
   );
+  const initialFormRef = useRef(CreateVisitorTypeRequestSchema.parse({}));
   const [edittingId, setEdittingId] = useState('');
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitorType) !== JSON.stringify(defaultFormData);
@@ -74,6 +78,29 @@ const Content = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [duplicatedAccess, setDuplicatedAccess] = useState<any[]>([]);
   const { t } = useTranslation();
+  const identityValueMap: Record<string, number> = {
+    NIK: 0,
+    KTP: 1,
+    Passport: 2,
+    DriverLicense: 3,
+    CardAccess: 4,
+    Face: 5,
+  };
+
+  const normalizeDetail = (d: any) => ({
+    ...d,
+    visitor_type_documents: (d.visitor_type_documents ?? []).map((x: any) => ({
+      document_id: x.document_id,
+    })),
+    section_page_visitor_types: (d.section_page_visitor_types ?? []).map((s: any, i: number) => ({
+      ...s,
+      sort: s.sort ?? i,
+      visit_form: Array.isArray(s.visit_form) ? s.visit_form : [],
+      pra_form: Array.isArray(s.pra_form) ? s.pra_form : [],
+      checkout_form: Array.isArray(s.checkout_form) ? s.checkout_form : [],
+    })),
+  });
+
   const cards = [
     {
       title: t('totalVisitorType'),
@@ -83,37 +110,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        openFormCreateVisitorType &&
-        dialogRef.current &&
-        !dialogRef.current.contains(event.target as Node)
-      ) {
-        if (isFormChanged) {
-          setConfirmDialogOpen(true);
-        } else {
-          handleCloseDialog();
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openFormCreateVisitorType, isFormChanged]);
-
-  useEffect(() => {
-    if (Object.keys(formDataAddVisitorType).length === 0) return;
-
-    const timer = setTimeout(() => {
-      localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(formDataAddVisitorType));
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [formDataAddVisitorType]);
 
   useLayoutEffect(() => {
     if (!token) return;
@@ -159,46 +155,17 @@ const Content = () => {
   };
   const handleCloseDialog = () => {
     setOpenFormCreateVisitorType(false);
-    localStorage.removeItem('unsavedVisitorTypeData');
   };
 
   const handleAdd = useCallback(() => {
-    const saved = localStorage.getItem('unsavedVisitorTypeData');
-    let freshForm;
-    if (saved) {
-      freshForm = JSON.parse(saved);
-    } else {
-      freshForm = CreateVisitorTypeRequestSchema.parse({});
-      localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(freshForm));
-    }
+    const freshForm = CreateVisitorTypeRequestSchema.parse({});
+
     setEdittingId('');
     setFormDataAddVisitorType(freshForm);
     setPendingEditId(null);
+
     handleOpenDialog();
-  }, []);
-
-  const identityValueMap: Record<string, number> = {
-    NIK: 0,
-    KTP: 1,
-    Passport: 2,
-    DriverLicense: 3,
-    CardAccess: 4,
-    Face: 5,
-  };
-
-  const normalizeDetail = (d: any) => ({
-    ...d,
-    visitor_type_documents: (d.visitor_type_documents ?? []).map((x: any) => ({
-      document_id: x.document_id,
-    })),
-    section_page_visitor_types: (d.section_page_visitor_types ?? []).map((s: any, i: number) => ({
-      ...s,
-      sort: s.sort ?? i,
-      visit_form: Array.isArray(s.visit_form) ? s.visit_form : [],
-      pra_form: Array.isArray(s.pra_form) ? s.pra_form : [],
-      checkout_form: Array.isArray(s.checkout_form) ? s.checkout_form : [],
-    })),
-  });
+  }, [handleOpenDialog]);
 
   const handleEdit = async (id: string) => {
     try {
@@ -225,14 +192,7 @@ const Content = () => {
         setDocumentIdentities([]);
       }
 
-      localStorage.setItem(
-        'unsavedVisitorTypeData',
-        JSON.stringify({
-          id,
-          ...hydrated,
-          visitor_type_documents: raw?.visitor_type_documents ?? [],
-        }),
-      );
+      initialFormRef.current = hydrated;
 
       handleOpenDialog();
     } catch (err) {
@@ -244,7 +204,6 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedVisitorTypeData');
 
     if (pendingEditId) {
       const nextItem = visitorData.find((item) => item.id === pendingEditId);
@@ -276,10 +235,7 @@ const Content = () => {
 
       setEdittingId(pendingEditId);
       setFormDataAddVisitorType(parsed);
-      localStorage.setItem(
-        'unsavedVisitorTypeData',
-        JSON.stringify({ id: pendingEditId, ...parsed }),
-      );
+      initialFormRef.current = parsed;
       setPendingEditId(null);
       handleOpenDialog();
     } else {
@@ -293,33 +249,6 @@ const Content = () => {
   const handleCancelEdit = () => {
     setConfirmDialogOpen(false);
     setPendingEditId(null);
-  };
-
-  const handleBooleanSwitch = async (
-    rowId: string,
-    col: keyof VisitorTypeTableRow,
-    checked: boolean,
-  ) => {
-    const row = tableRowVisitorType.find((r) => r.id === rowId);
-    if (!token || !row) return;
-
-    try {
-      setLoading(true);
-      const updatedData: UpdateVisitorTypeRequest = updateVisitorTypeSchmea.parse({
-        ...row,
-        [col]: checked,
-      });
-      await updateVisitorType(token, rowId, updatedData);
-
-      setTableRowVisitorType((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, [col]: checked } : r)),
-      );
-    } catch (error) {
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 800);
-    }
   };
 
   const handleDialogClose = (_event: object, reason: string) => {
@@ -399,16 +328,6 @@ const Content = () => {
     }
   };
 
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
-
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -418,7 +337,6 @@ const Content = () => {
   );
 
   const handleSuccess = () => {
-    localStorage.removeItem('unsavedVisitorTypeData');
     handleCloseDialog();
     setRefreshTrigger((prev) => prev + 1);
   };

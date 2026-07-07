@@ -3,10 +3,10 @@
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
 import ReactDOM from 'react-dom/client';
-import { store, persistor } from './store/Store';
+import { store } from './store/Store';
 import './utils/i18n';
 import { SessionProvider } from './customs/contexts/SessionContext';
-import { PersistGate } from 'redux-persist/integration/react';
+// import { PersistGate } from 'redux-persist/integration/react';
 import { AuthProvider } from './customs/contexts/AuthProvider';
 import App from './App';
 import './App.css';
@@ -32,7 +32,7 @@ loadRuntimeConfig()
     initializeAxiosBaseURL();
     root.render(
       <Provider store={store}>
-        <PersistGate loading={<Spinner />} persistor={persistor}>
+        {/* <PersistGate loading={<Spinner />}> */}
           <SessionProvider>
             <AuthProvider>
               <QueryClientProvider client={queryClient}>
@@ -42,7 +42,7 @@ loadRuntimeConfig()
               </QueryClientProvider>
             </AuthProvider>
           </SessionProvider>
-        </PersistGate>
+        {/* </PersistGate> */}
       </Provider>,
     );
   })

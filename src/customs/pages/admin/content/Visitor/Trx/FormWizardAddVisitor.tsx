@@ -109,6 +109,7 @@ import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
 import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
 import { IconRefresh } from '@tabler/icons-react';
+import CameraDialog from './components/Dialog/CameraDialog';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -4629,7 +4630,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCamera(true);
+                          }}
                         >
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                           <Box
@@ -5093,142 +5097,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
                       )}
 
-                      <Dialog
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 2 }}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            alignItems={'center'}
-                            mb={1}
-                          >
-                            <Typography variant="h6" mb={0}>
-                              Take Photo From Camera
-                            </Typography>
-                            <IconButton onClick={() => setOpenCamera(false)}>
-                              <IconX />
-                            </IconButton>
-                          </Box>
-
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Box sx={{ position: 'relative' }}>
-                                <Webcam
-                                  audio={false}
-                                  ref={webcamRef}
-                                  screenshotFormat="image/jpeg"
-                                  videoConstraints={{
-                                    facingMode,
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-
-                                <IconButton
-                                  onClick={() =>
-                                    setFacingMode((prev) =>
-                                      prev === 'environment' ? 'user' : 'environment',
-                                    )
-                                  }
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 10,
-                                    right: 10,
-                                    bgcolor: 'rgba(0,0,0,0.5)',
-                                    color: '#fff',
-                                    '&:hover': {
-                                      bgcolor: 'rgba(0,0,0,0.7)',
-                                    },
-                                  }}
-                                >
-                                  <IconRefresh />
-                                </IconButton>
-                              </Box>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {screenshot ? (
-                                <img
-                                  src={screenshot}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(originalIndex, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              sx={{ mr: 1 }}
-                              startIcon={<IconTrash />}
-                            >
-                              Clear Foto
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCaptureForField(
-                                  (url) => onChange(originalIndex, 'answer_file', url),
-                                  key,
-                                );
-                              }}
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </Button>
-                            <Button
-                              startIcon={<IconDeviceFloppy />}
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ ml: 1 }}
-                            >
-                              Submit
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef}
+                        screenshot={screenshot}
+                        facingMode={facingMode}
+                        onSwitchCamera={() =>
+                          setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                        }
+                        onCapture={() =>
+                          handleCaptureForField(
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onSubmit={() => setOpenCamera(false)}
+                      />
                     </Box>
                   );
                 }

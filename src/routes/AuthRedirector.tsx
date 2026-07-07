@@ -8,7 +8,7 @@ import { Backdrop, CircularProgress } from '@mui/material';
 
 export default function AuthRedirector() {
   const { clearToken, roleAccess } = useSession();
-  const { loading: authLoading, isAuthenticated, groupId } = useAuth();
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -20,8 +20,8 @@ export default function AuthRedirector() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (isAuthenticated && groupId) {
-      const upperGroup = groupId.toUpperCase();
+    if (isAuthenticated) {
+      // const upperGroup = groupId.toUpperCase();
       let redirectPath = '/';
 
       // if (upperGroup === GroupRoleId.Admin) redirectPath = '/admin/dashboard';
@@ -46,17 +46,12 @@ export default function AuthRedirector() {
       } else if (location.pathname === '/') {
         navigate(redirectPath, { replace: true });
       }
-      // } else if (!authLoading && !isAuthenticated) {
-      //   if (!location.pathname.startsWith('/auth')) {
-      //     navigate('/auth/login', { replace: true });
-      //   }
-      // }
     } else if (!authLoading && !isAuthenticated) {
       if (location.pathname === '/auth/login' || location.pathname === '/') {
         navigate('/auth/login', { replace: true });
       }
     }
-  }, [authLoading, isAuthenticated, groupId, location.pathname, navigate, roleAccess]);
+  }, [authLoading, isAuthenticated, location.pathname, navigate, roleAccess]);
 
 
   if (authLoading) {

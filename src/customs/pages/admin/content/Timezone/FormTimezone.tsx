@@ -33,8 +33,6 @@ const dayOrder: { abbr: string; key: string }[] = [
   { abbr: 'Sat', key: 'saturday' },
 ];
 
-const STORAGE_KEY = 'timezoneFormDraft';
-
 const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
@@ -118,13 +116,11 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
     setLoading(true);
     try {
       const payload = daysToApi(newDaysFromGrid || days);
-      console.log('Payload:', payload);
       if (mode === 'create') {
         await createTimezone(token, payload);
         setName('');
         setDescription('');
         setDays([]);
-        localStorage.removeItem(STORAGE_KEY);
 
         showSwal('success', 'Time Access successfully created');
         onSuccess?.();
@@ -145,39 +141,17 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
     }
   };
 
-  // useEffect(() => {
-  //   if (mode === 'create') {
-  //     const savedDraft = localStorage.getItem(STORAGE_KEY);
-  //     if (savedDraft) {
-  //       try {
-  //         const parsed = JSON.parse(savedDraft);
-  //         setName(parsed.name ?? '');
-  //         setDescription(parsed.description ?? '');
-  //         if (parsed.days && Array.isArray(parsed.days)) {
-  //           setDays(parsed.days);
-  //         }
-  //       } catch (err) {
-  //         console.error('Failed to parse draft:', err);
-  //       }
-  //     }
-  //   }
-  // }, [mode]);
-
-  // useEffect(() => {
-  //   if (mode === 'create') {
-  //     const draft = { name, description, days };
-  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  //   }
-  // }, [name, description, days, mode]);
-
   useEffect(() => {
     if (mode === 'edit' && initialData) {
       setName(initialData.name ?? '');
       setDescription(initialData.description ?? '');
       setDays(apiToDays(initialData));
+    } else {
+      setName('');
+      setDescription('');
+      setDays([]);
     }
-  }, [initialData, mode]);
-
+  }, [mode, initialData]);
   return (
     <form onSubmit={handleSubmit}>
       <Grid container spacing={2} overflow={'hidden'}>

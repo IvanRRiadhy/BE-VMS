@@ -2579,6 +2579,20 @@ export const getAllCustomField = async (token: string): Promise<any> => {
   }
 };
 
+export const getCustomFieldById = async (id: string, token?: string | null): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/custom-field/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const getAllCustomFieldPagination = async (
   token: string,
   start: number,

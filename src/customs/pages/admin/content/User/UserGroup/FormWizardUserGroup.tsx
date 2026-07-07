@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   Grid2,
@@ -36,7 +36,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
 
   const RoleAccess = ['Admin', 'OperatorAdmin', 'OperatorVMS', 'Employee', 'Manager', 'Visitor'];
@@ -45,38 +44,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     label: role.replace(/([a-z])([A-Z])/g, '$1 $2').trim(),
   }));
 
-  // const [groupOptions, setGroupOptions] = useState<any[]>([]);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const res = await getAllUserGroup(token as string);
-  //     setGroupOptions(res.collection);
-  //   };
-  //   fetchData();
-  // }, [token]);
-
-  const DRAFT_KEY = 'unsavedUserForm';
-  const initialRef = React.useRef(formData);
-
-  useEffect(() => {
-    if (!edittingId) {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-    }
-  }, [formData]);
-
-  useEffect(() => {
-    if (edittingId) return;
-
-    const draft = localStorage.getItem(DRAFT_KEY);
-
-    if (draft) {
-      const parsed = JSON.parse(draft);
-
-      setFormData(parsed);
-
-      onDirtyChange?.(true);
-    }
-  }, [edittingId]);
+  const initialRef = useRef(formData);
 
   const isDirty = useMemo(() => {
     return JSON.stringify(initialRef.current) !== JSON.stringify(formData);
@@ -100,16 +68,12 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       if (!token) {
         return;
       }
-      // console.log('payload submit', formData);
       const payload = {
         name: formData.name,
         description: formData.description,
         homepage: formData.homepage,
         role_access: formData.role_access,
       };
-
-      console.log('payload submit', payload);
-
       if (edittingId) {
         await updateUserGroup(token, edittingId, payload);
       } else {
@@ -117,15 +81,13 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
-      localStorage.removeItem(DRAFT_KEY);
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
+
+      onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', 'Failed to create user group');
     } finally {
-      setTimeout(() => setLoading(false), 500);
+      setLoading(false);
     }
   };
 
@@ -135,8 +97,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       role_access: value,
       permissions: [],
     }));
-
-    // setPermissionSites({});
   };
 
   return (

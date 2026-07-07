@@ -96,6 +96,7 @@ const ActionPanelCard: FC<Props> = ({
           sx={{
             flex: 1,
             p: 2,
+            paddingBottom: '5px !important',
 
             px: '5px !important',
             overflow: 'auto',
@@ -189,7 +190,7 @@ const ActionPanelCard: FC<Props> = ({
                       }}
                     >
                       <Typography variant="h6" color="white">
-                        Invitation
+                        Walk In
                       </Typography>
                     </Button>
                   </Box>

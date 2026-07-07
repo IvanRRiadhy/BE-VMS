@@ -1,4 +1,15 @@
-import { Box, Tabs, Tab, Grid2 as Grid, Typography, Button, Divider } from '@mui/material';
+import {
+  Box,
+  Tabs,
+  Tab,
+  Grid2 as Grid,
+  Typography,
+  Button,
+  Divider,
+  Paper,
+  Stack,
+  Chip,
+} from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
   IconBrandGmail,
@@ -19,6 +30,10 @@ import {
   IconCalendarTime,
   IconMapPin,
   IconIdBadge2,
+  IconBluetooth,
+  IconBarcode,
+  IconCheck,
+  IconRefresh,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
@@ -186,15 +201,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
               },
             }}
           >
-            {/* <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconUsersGroup />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invitation Code</CustomFormLabel>
-                  <Typography>{data?.invitation_code || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid> */}
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
                 <IconUsersGroup />
@@ -295,7 +301,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
 
       {/* TAB 3 — PURPOSE VISIT */}
       {tabValue === 1 && (
-        <Box sx={{ position: 'relative', mt: 2 }}>
+        <Box sx={{ position: 'relative', mt: 2, height: '230px', display: 'flex' }}>
           <Divider
             orientation="vertical"
             flexItem
@@ -309,7 +315,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
           />
           <Grid
             container
-            rowSpacing={2}
+            rowSpacing={3}
             columnSpacing={2}
             sx={{
               '& > :nth-of-type(odd)': {
@@ -376,78 +382,125 @@ const VisitorDetailTabs: React.FC<Props> = ({
       )}
 
       {tabValue === 2 && (
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: 2, height: '230px' }}>
           <Grid container spacing={2}>
             {invitationCode?.[0]?.card?.map((card: any) => (
-              <Grid size={{ xs: 12, xl: 6 }} key={card.id}>
-                <Box
+              <Grid size={{ xs: 12, md: 6 }} key={card.id}>
+                <Paper
+                  elevation={0}
                   sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '3px solid',
+                    p: 1.5,
+                    borderRadius: 3,
+                    border: '2px solid',
                     borderColor: card.current_used ? 'primary.main' : 'divider',
-                    bgcolor: card.current_used ? 'success.50' : 'background.paper',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    transition: 'all .25s',
+                    '&:hover': {
+                      boxShadow: 4,
+                      transform: 'translateY(-2px)',
+                    },
                   }}
                 >
-                  <Box>
-                    <Typography fontWeight={700}>{card.card_number}</Typography>
-
-                    <Typography variant="body2" color="text.secondary">
-                      {card.card_type}
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary">
-                      Status : {card.card_status}
-                    </Typography>
-
-                    {card.issued_at && (
-                      <Typography variant="caption" color="text.secondary">
-                        Issued : {formatDateTime(card.issued_at)}
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
-                    {card.current_used && (
+                  {/* Header */}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Stack direction="row" spacing={2} alignItems="center">
                       <Box
                         sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: 99,
-                          bgcolor: 'success.main',
-                          color: '#fff',
-                          fontSize: 12,
-                          fontWeight: 700,
+                          width: 30,
+                          height: 30,
+                          borderRadius: 2,
+                          bgcolor: 'primary.lighter',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        Current Card
+                        {card.card_type?.toLowerCase() === 'ble' ? (
+                          <IconBluetooth size={30} color="#1976d2" />
+                        ) : (
+                          <IconBarcode size={30} color="#1976d2" />
+                        )}
                       </Box>
-                    )}
 
-                    {card.is_swapcard && (
+                      <Box>
+                        <Typography variant="h5" fontWeight={700} lineHeight={1.1}>
+                          {card.card_number}
+                        </Typography>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {card.card_type}
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Stack spacing={1} alignItems="flex-end">
+                      {card.current_used && (
+                        <Chip
+                          icon={<IconCheck size={16} />}
+                          label="Current Card"
+                          color="success"
+                          sx={{
+                            fontWeight: 700,
+                            borderRadius: 999,
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Stack>
+
+                  <Divider sx={{ my: 0.5 }} />
+
+                  {/* Status */}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography color="text.secondary">Status</Typography>
+
+                    <Chip
+                      label={card.card_status}
+                      color={
+                        card.card_status === 'Issued'
+                          ? 'success'
+                          : card.card_status === 'Returned'
+                            ? 'default'
+                            : 'warning'
+                      }
+                      size="small"
+                      variant="filled"
+                    />
+                  </Stack>
+
+                  {/* Issued */}
+                  {card.issued_at && (
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1 }}>
                       <Box
                         sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: 99,
-                          bgcolor: 'warning.main',
-                          color: '#fff',
-                          fontSize: 12,
-                          fontWeight: 700,
+                          width: 42,
+                          height: 42,
+                          borderRadius: 2,
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        Swapped
+                        <IconCalendarEvent size={22} color="#1976d2" />
                       </Box>
-                    )}
-                  </Box>
-                </Box>
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Issued
+                        </Typography>
+
+                        <Typography fontWeight={600}>{formatDateTime(card.issued_at)}</Typography>
+                      </Box>
+                    </Stack>
+                  )}
+                </Paper>
               </Grid>
             ))}
           </Grid>
         </Box>
+      )}
+      {tabValue === 3 && (
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', height: '230px' }}></Box>
       )}
     </>
   );

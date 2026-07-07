@@ -52,7 +52,7 @@ interface Props {
   siteOptions: any[];
 
   permissionNeedSite: string[];
-  getDropdownOptions: (perm: string) => any[];
+  getDropdownOptions: any;
   handleAddSiteAssignment: () => void;
 
   formatPermissionLabel: (value: string) => string;

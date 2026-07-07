@@ -31,6 +31,8 @@
     "visitor_providers": "Visitor Providers"
   },
   "add": "Add",
+  "back": "Back",
+  "next": "Next",
   "delete": "Delete",
   "selectAll": "Select All",
   "removeAll": "Remove All",

@@ -167,7 +167,7 @@ const VisitorDetailCard = ({
           <CardActions sx={{ justifyContent: 'center', mt: 1 }}>{renderActions()}</CardActions>
         )}
       </Card>
-      <InvitationQrCard invitationCode={invitationCode} />
+      <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} />
     </Grid>
   );
 };
