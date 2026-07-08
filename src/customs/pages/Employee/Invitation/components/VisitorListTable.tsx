@@ -14,10 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import {
-  KeyboardArrowDownOutlined,
-  KeyboardArrowUpOutlined,
-} from '@mui/icons-material';
+import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 
 import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
 
@@ -83,24 +80,13 @@ export default function VisitorListTable({
           <TableHead>
             <TableRow>
               <TableCell sx={{ width: 50 }}>
-                <IconButton
-                  size="small"
-                  onClick={() => setOpenGroup((prev) => !prev)}
-                >
-                  {openGroup ? (
-                    <KeyboardArrowUpOutlined />
-                  ) : (
-                    <KeyboardArrowDownOutlined />
-                  )}
+                <IconButton size="small" onClick={() => setOpenGroup((prev) => !prev)}>
+                  {openGroup ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
                 </IconButton>
               </TableCell>
 
               <TableCell colSpan={7}>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
+                <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography
                     sx={{
                       fontWeight: 700,
@@ -110,7 +96,7 @@ export default function VisitorListTable({
                     {groupHeader?.group_name ?? '-'}
                   </Typography>
 
-                  <Box display="flex" gap={1}>
+                  {/* <Box display="flex" gap={1}>
                     <Tooltip title="Export PDF">
                       <Button variant="contained" color="error">
                         <IconPdf />
@@ -122,20 +108,34 @@ export default function VisitorListTable({
                         <IconFileSpreadsheet />
                       </Button>
                     </Tooltip>
-                  </Box>
+                  </Box> */}
                 </Box>
               </TableCell>
             </TableRow>
 
             <TableRow>
               <TableCell />
-              <TableCell>Visitor Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Organization</TableCell>
-              <TableCell>Host</TableCell>
-              <TableCell>Site</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell component="th" scope="row">
+                Visitor Name
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Email
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Phone
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Organization
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Host
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Site
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Status
+              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -159,9 +159,7 @@ export default function VisitorListTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={8} align="center">
-                  <Typography color="text.secondary">
-                    No visitor data
-                  </Typography>
+                  <Typography color="text.secondary">No visitor data</Typography>
                 </TableCell>
               </TableRow>
             )}

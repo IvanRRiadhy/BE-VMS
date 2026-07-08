@@ -17,30 +17,16 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
-import { IconBrandGmail, IconSettingsFilled, IconTrash, IconX } from '@tabler/icons-react';
+import { IconSettingsFilled } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Setting';
 import ApprovalWorkflow from 'src/customs/pages/admin/content/Approve/content';
-import {
-  createOperatorSettingGiveAccess,
-  createOperatorSettingRegiterSite,
-  createOperatorSiteAccess,
-  getAllAccessControl,
-  getAllOrganizations,
-  getAllSite,
-  getAllUserOperatorVms,
-  getOperatorSettingGiveAccessById,
-  getOperatorSettingRegiterSiteById,
-  getOperatorSiteAccessById,
-  getSetting,
-  updateSetting,
-} from 'src/customs/api/admin';
+import { getAllOrganizations, getSetting, updateSetting } from 'src/customs/api/admin';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 import FormSetting from './FormSetting';
-import FormSettingRegisteredSite from './FormSettingRegisteredSite';
 import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
 import VisitorCardSetting from './VisitorCardSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -53,17 +39,11 @@ type SettingSMTPRow = {
 
 const Content = () => {
   const { token } = useSession();
-
   const [settingData, setSettingData] = useState<any[]>([]);
   const [operatorSettingData, setOperatorSettingData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Form state
@@ -73,14 +53,6 @@ const Content = () => {
   };
 
   const [formData, setFormData] = useState<Item>(() => initialFormData);
-  const [formDataRegisteredSite, setFormDataRegisteredSite] = useState({
-    id: '',
-    user_id: '',
-    site_id: '',
-    can_confirmation_arrival: false,
-    can_extend_period: false,
-    can_extend_visit: false,
-  });
 
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -134,31 +106,6 @@ const Content = () => {
       console.error(error);
       // showErrorAlert('Error!', error.message);
       showSwal('error', error.message || 'Failed to update setting');
-    }
-  };
-
-  const handleSubmitRegisteredSite = async (data: any) => {
-    try {
-      const payload = {
-        // id: data.id,
-        user_id: edittingId,
-        site_id: data.site_id,
-        can_confirmation_arrival: !!data.can_confirmation_arrival,
-        can_extend_period: !!data.can_extend_period,
-        can_extend_visit: !!data.can_extend_visit,
-      };
-
-      console.log('payload', payload);
-
-      await createOperatorSettingRegiterSite(token as string, payload, edittingId);
-      showSwal('success', 'Successfully updated registered site.');
-      setRefreshTrigger((p) => p + 1);
-      setShowForm(false);
-      setEdittingId('');
-    } catch (error: any) {
-      console.error(error);
-      // showErrorAlert('Error!', error.message);
-      showSwal('error', error.message || 'Failed to update registered site.');
     }
   };
 
@@ -223,55 +170,6 @@ const Content = () => {
     setShowForm(true);
   };
 
-  const handleRegisteredSite = async (userId: string) => {
-    setEdittingId(userId);
-
-    try {
-      const res = await getOperatorSettingRegiterSiteById(token as string, userId);
-      console.log('res', res.data.collection);
-      // normalisasi response
-      const data = res.data.collection;
-      console.log('data', data);
-
-      if (data) {
-        setFormDataRegisteredSite({
-          id: data.id ?? '',
-          user_id: userId,
-          site_id: data.site_id ?? '',
-          can_confirmation_arrival: !!data.can_confirmation_arrival,
-          can_extend_period: !!data.can_extend_period,
-          can_extend_visit: !!data.can_extend_visit,
-        });
-      } else {
-        setFormDataRegisteredSite({
-          id: '',
-          user_id: userId,
-          site_id: '',
-          can_confirmation_arrival: false,
-          can_extend_period: false,
-          can_extend_visit: false,
-        });
-      }
-    } catch (error) {
-      // kalau 404 / kosong → create mode
-      setFormDataRegisteredSite({
-        id: '',
-        user_id: userId,
-        site_id: '',
-        can_confirmation_arrival: false,
-        can_extend_period: false,
-        can_extend_visit: false,
-      });
-    }
-
-    // setShowForm(true);
-    setOpenRegisteredSite(true);
-  };
-
-  const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
-  const [selectedSiteAccess, setSelectedSiteAccess] = useState<any[]>([]);
-
-  const [openRegisteredSite, setOpenRegisteredSite] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sortDir, setSortDir] = useState('desc');
@@ -332,7 +230,6 @@ const Content = () => {
               }}
             >
               <Tab label="Visitor Setting" />
-              {/* <Tab label="Operator Setting" /> */}
               <Tab label="Approval Workflow" />
               <Tab label="Visitor Card Setting" />
               <Tab label="Notification Setting" />
@@ -380,39 +277,6 @@ const Content = () => {
                 </Box>
               ) : null}
 
-              {/* {tabIndex === 1 ? (
-                <Box sx={{ overflowX: 'auto', p: 2, height: '100%' }}>
-                  {!showForm ? (
-                    <DynamicTable
-                      loading={loading}
-                      isHavePagination={false}
-                      isHaveHeaderTitle={true}
-                      titleHeader="Operator Setting"
-                      data={operatorSettingData}
-                      isHaveChecked={true}
-                      isHaveAction={false}
-                      isHaveSearch={false}
-                      isHaveFilter={false}
-                      isHaveExportPdf={false}
-                      isHaveAddData={false}
-                      isSelectedType={true}
-                      isNoActionTableHead
-                      isHaveActionOnlyEdit={false}
-                      isHaveHeader={false}
-                      isButtonRegisteredSite={false}
-                      isButtonGiveAccess={false}
-                      isButtonSiteAccess={false}
-                      // onCheckedChange={setSelectedRows}
-                      onRegisteredSite={(row) => handleRegisteredSite(row.id)}
-                      onGiveAccess={(row) => handleOpenGiveAccess(row.id)}
-                      onSiteAccess={(row) => handleSiteAccess(row.id)}
-                      // onDelete={(row) => handleDelete(row.id.toString())}
-                      onSearchKeywordChange={setSearchKeyword}
-                    />
-                  ) : null}
-                </Box>
-              ) : null} */}
-
               {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
@@ -422,8 +286,6 @@ const Content = () => {
                       setSearchKeyword={setSearch}
                       page={page}
                       setPage={setPage}
-                      // searchInput={searchInput}
-                      // setSearchInput={setSearchInput}
                       refreshTrigger={refreshTrigger}
                       setRefreshTrigger={setRefreshTrigger}
                     />

@@ -99,5 +99,7 @@
   "totalNotification": "Total Notification",
   "totalVisitorProviders": "Total Visitor Providers",
   "totalVisitor": "Total Visitor",
-  "totalScheduler": "Total Scheduler"
+  "totalScheduler": "Total Scheduler",
+  "approve": "Approve",
+  "reject": "Reject"
 }

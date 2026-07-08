@@ -2558,7 +2558,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             : f;
         });
 
-        const visibilityMap = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMap(mergedFields);
 
         mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
@@ -2581,7 +2581,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap = getVisibilityMap(details);
+          const visibilityMap: any = getVisibilityMap(details);
 
           details.forEach((item: any) => {
             if (!item?.mandatory) return;

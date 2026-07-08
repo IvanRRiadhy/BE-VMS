@@ -15,46 +15,19 @@ import {
   Typography,
   InputAdornment,
   Skeleton,
-  TableRow,
-  TableCell,
-  TableHead,
-  Table,
-  TableBody,
   Button,
   CircularProgress,
-  TableContainer,
-  Paper,
-  Tooltip,
-  Avatar,
-  Tabs,
-  Tab,
-  Card,
-  Stack,
-  CardContent,
-  Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import {
-  IconTicket,
-  IconClipboardText,
-  IconUser,
-  IconCalendarEvent,
-  IconMapPin,
-  IconPhone,
-  IconMail,
-  IconCircleCheck,
-} from '@tabler/icons-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
-import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import {
   getAllVisitorPagination,
   getEmployeeById,
@@ -63,19 +36,9 @@ import {
   getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import {
-  IconBolt,
-  IconClipboard,
-  IconFilterFilled,
-  IconLink,
-  IconPdf,
-  IconSearch,
-  IconShare,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconBolt, IconClipboard, IconSearch, IconShare, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
-import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
 import {
@@ -106,13 +69,11 @@ import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
-import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
-import { IconFileSpreadsheet } from '@tabler/icons-react';
 import { cancelVisitor } from 'src/customs/api/users';
 import { useProfile } from 'src/hooks/useProfile';
 import VisitorDetailPanel from './components/VisitorDetailPanel';
 import VisitorListTable from './components/VisitorListTable';
+import { useTranslation } from 'react-i18next';
 
 type Group = {
   id: string;
@@ -130,10 +91,9 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
+
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
   const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
 
   const [snackbar, setSnackbar] = useState<{
@@ -142,16 +102,7 @@ const Content = () => {
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
-  const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-    } else {
-      localStorage.removeItem('unsavedVisitorData');
-    }
-  }, [formDataAddVisitor, isFormChanged]);
 
   // const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
   const [tab, setTab] = useState(0);
@@ -180,7 +131,7 @@ const Content = () => {
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
-
+  const { t } = useTranslation();
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
@@ -258,7 +209,7 @@ const Content = () => {
   const [hasMore, setHasMore] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-
+  const [isDirty, setIsDirty] = useState(false);
   const fetchData = async (append = false) => {
     if (!token) return;
 
@@ -455,26 +406,22 @@ const Content = () => {
   };
 
   const handleAdd = () => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    let freshForm;
-
-    freshForm = CreateVisitorRequestSchema.parse({});
     setEdittingId('');
-    setFormDataAddVisitor(freshForm);
+    setFormDataAddVisitor(defaultFormData);
     setSelectedSite(null);
     setPendingEditId(null);
-    // setOpenDialog(true);
+    setIsDirty(false);
     setOpenPreRegistration(true);
   };
 
   const handleSuccess = () => {
     setSelectedSite(null);
-    setFormDataAddVisitor((prev: any) => ({
-      ...prev,
-      registered_site: '',
-    }));
+    setFormDataAddVisitor(defaultFormData);
+    setIsDirty(false);
+
     setRefreshTrigger((prev) => prev + 1);
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
+
     handleCloseDialog();
   };
 
@@ -488,18 +435,17 @@ const Content = () => {
   };
 
   const resetFormData = () => {
-    localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(defaultFormData);
     setEdittingId('');
+    setIsDirty(false);
   };
 
   const confirmDiscardAndClose = () => {
     resetFormData();
     setWizardKey((k) => k + 1);
     setOpenDialog(false);
-    setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
-    handleDialogClose();
+    handleCloseDialog();
   };
 
   const handleView = async (id: string) => {
@@ -769,7 +715,13 @@ const Content = () => {
     }
   };
 
-
+  const requestCloseDialog = () => {
+    if (isFormChanged) {
+      openDiscardForCloseAdd();
+    } else {
+      handleCloseDialog();
+    }
+  };
 
   return (
     <>
@@ -984,7 +936,6 @@ const Content = () => {
                           {loadingMore ? (
                             <>
                               <CircularProgress size={18} sx={{ mr: 1 }} />
-                              Loading...
                             </>
                           ) : (
                             'Load More'
@@ -1037,20 +988,11 @@ const Content = () => {
           },
         }}
         open={openPreRegistration}
-        onClose={handleDialogClose}
+        onClose={requestCloseDialog}
       >
         <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add Pra Registration
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
+          {t('add')} Pra Registration
+          <IconButton aria-label="close" onClick={requestCloseDialog}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>

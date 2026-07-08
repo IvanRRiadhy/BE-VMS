@@ -33,14 +33,14 @@ import {
   getVisitorByTickedId,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
-import { IconFilterFilled } from '@tabler/icons-react';
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 import { IconFileSpreadsheet } from '@tabler/icons-react';
 import { IconPdf } from '@tabler/icons-react';
-import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
+
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
+import VisitorRow from './components/VisitorRow';
 
 type Group = {
   id: string;
@@ -286,6 +286,25 @@ const Approval = () => {
     setTriggerCheckAll(false);
   };
 
+  const fetchGroupDetail = useCallback(async () => {
+    if (!selectedGroupId || !token) return;
+
+    setGroupDetailLoading(true);
+    try {
+      const res = await getVisitorByTickedId(token, selectedGroupId);
+      setGroupHeader(res.collection[0]);
+      setGroupVisitors(res.collection);
+    } catch {
+      setGroupVisitors([]);
+    } finally {
+      setGroupDetailLoading(false);
+    }
+  }, [selectedGroupId, token]);
+
+  useEffect(() => {
+    fetchGroupDetail();
+  }, [fetchGroupDetail]);
+
   return (
     <>
       <PageContainer title="Approval" description="Approval page">
@@ -364,7 +383,7 @@ const Approval = () => {
                             )
                             .map((group: any) => (
                               <Box
-                                key={group.ticket_id}
+                                key={group.id}
                                 sx={{
                                   backgroundColor:
                                     selectedId === group.approval_ticket_id ? '#e3f2fd' : '#f5f5f5',
@@ -558,7 +577,7 @@ const Approval = () => {
                                 <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
                                   {groupHeader?.group_name ?? '-'}
                                 </Typography>
-                                <Box display={'flex'} gap={0.5}>
+                                {/* <Box display={'flex'} gap={0.5}>
                                   <Tooltip title="Export PDF" arrow>
                                     <Button variant="contained" color="error">
                                       <IconPdf />
@@ -569,7 +588,7 @@ const Approval = () => {
                                       <IconFileSpreadsheet />
                                     </Button>
                                   </Tooltip>
-                                </Box>
+                                </Box> */}
                               </Box>
                             </TableCell>
                           </TableRow>
@@ -623,8 +642,7 @@ const Approval = () => {
                                 </Typography>
                               </Box>
                             </TableCell>
-
-                            <TableCell component="th" scope="row">
+                            <TableCell component="th" scope="row" colSpan={2}>
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                                   Visit End
@@ -635,6 +653,16 @@ const Approval = () => {
                                 </Typography>
                               </Box>
                             </TableCell>
+                            <TableCell component="th" scope="row" colSpan={2}>
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                  Host
+                                </Typography>
+
+                                <Typography variant="body1">{groupHeader?.host_name}</Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell component="th" scope="row"></TableCell>
                           </TableRow>
                           {groupDetailLoading ? (
                             <TableRow>
@@ -687,12 +715,14 @@ const Approval = () => {
         setSelectedRows={setSelectedRows}
         triggerCheckAll={triggerCheckAll}
         selectedId={selectedId ?? undefined}
-        onReject={(id) => {
-          handleActionApproval(id, 'Reject');
+        onReject={async (id) => {
+          await handleActionApproval(id, 'Reject');
+          await fetchGroupDetail();
           setOpenDialog(false);
         }}
-        onApprove={(id) => {
-          handleApproveMeetingHost(id);
+        onApprove={async (id) => {
+          await handleApproveMeetingHost(id);
+          await fetchGroupDetail();
           setOpenDialog(false);
         }}
       />

@@ -28,7 +28,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -80,6 +79,11 @@ import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import dayjs from 'dayjs';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import { useActivities } from 'src/hooks/useActivity';
+import PendingInvitationDialog from '../Components/Dialog/PendingInvitationDialog';
+import AccessPassEmployee from '../Components/AccessPassEmployee';
+import { useTranslation } from 'react-i18next';
+import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
+import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -125,9 +129,13 @@ const DashboardEmployee = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [triggerCheckAll, setTriggerCheckAll] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedApprovalTicketId, setSelectedApprovalTicketId] = useState<string | null>(null);
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
+  const { t } = useTranslation();
   const start = page * rowsPerPage;
   const navigate = useNavigate();
 
@@ -264,24 +272,6 @@ const DashboardEmployee = () => {
         ticket_id,
       }),
     ) || [];
-
-  // const approvalData =
-  //   approvalRes?.collection?.map((item: any) => {
-  //     const { ticket_id, ...rest } = item;
-
-  //     return {
-  //       id: item.entity_id,
-  //       ticket_id,
-  //       visitor_type_name: item.visitor_type_name,
-  //       agenda: item.agenda,
-  //       host_name: item.host_name,
-  //       approval_actor_status: item.approval_actor_status,
-  //       approval_workflow_type: item.approval_workflow_type,
-  //       approval_status: item.approval_status,
-  //       visitor_period_start: item.visitor_period_start,
-  //       visitor_period_end: formatDateTime(item.visitor_period_end),
-  //     };
-  //   }) || [];
 
   useEffect(() => {
     if (!token) return;
@@ -540,27 +530,6 @@ const DashboardEmployee = () => {
     setOpenDetailLink(true);
   };
 
-  const dataVisitor = [
-    {
-      id: 1,
-      name: 'Dedy',
-      agenda: 'Agenda 1',
-      visitor_type: 'Visitor',
-      destination: 'Gedung Sinergi',
-      visitor_period_start: '2023-04-01, 08:00',
-      visitor_period_end: '2023-04-01, 09:00',
-    },
-    {
-      id: 2,
-      name: 'Budi',
-      agenda: 'Agenda 2',
-      visitor_type: 'Visitor',
-      destination: 'Gedung Sinergi',
-      visitor_period_start: '2026-04-01, 10:00',
-      visitor_period_end: '2026-04-01, 11:00',
-    },
-  ];
-
   const handleDeleteLink = async (id: string) => {
     try {
       const confirm = await Swal.fire({
@@ -700,7 +669,6 @@ const DashboardEmployee = () => {
     setQuickSearch(keyword);
   }, []);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
@@ -736,13 +704,6 @@ const DashboardEmployee = () => {
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));
-
-  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState('');
-  const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
 
   const getExpireText = () => {
     if (!expiredAt) return '';
@@ -796,63 +757,27 @@ const DashboardEmployee = () => {
     end_date: endDate.toISOString().split('T')[0],
   });
 
+    const handleCloseDialog = () => {
+      setOpenDialog(false);
+      setTriggerCheckAll(false);
+    };
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
-      <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
-        <Grid
-          size={{ xs: 12, lg: 12 }}
-          display="flex"
-          justifyContent="flex-end"
-          alignItems="center"
-          gap={2}
-          sx={{ mt: 0.5 }}
-        >
-          <Button
-            size="small"
-            sx={{
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #d1d1d1',
-              ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
-            }}
-            startIcon={<IconCalendar size={18} />}
-            onClick={handleClick}
-          >
-            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
-          </Button>
-
-          <Button
-            size="small"
-            variant="contained"
-            color="error"
-            startIcon={<IconDownload />}
-            onClick={handleExportPdf}
-            disabled={isExporting}
-          >
-            {isExporting ? 'Exporting...' : 'Export '}
-          </Button>
-
-          <Drawer open={open} anchor="right" onClose={handleClose}>
-            <Box sx={{ p: 2 }}>
-              <Typography variant="h6" mb={1}>
-                Select Date Range
-              </Typography>
-              <Calendar
-                value={{ startDate, endDate }}
-                onChange={(selection: any) => {
-                  dispatch(
-                    setDateRange({
-                      startDate: selection.startDate,
-                      endDate: selection.endDate,
-                    }),
-                  );
-                  handleClose();
-                }}
-              />
-            </Box>
-          </Drawer>
-        </Grid>
-      </Grid>
+      <DashboardEmployeeActionBar
+        startDate={startDate}
+        endDate={endDate}
+        onDateChange={(startDate, endDate) => {
+          dispatch(
+            setDateRange({
+              startDate,
+              endDate,
+            }),
+          );
+        }}
+        onExport={handleExportPdf}
+        isExporting={isExporting}
+      />
       <Grid container spacing={2} sx={{ mt: 0 }} ref={exportRef}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
@@ -865,68 +790,7 @@ const DashboardEmployee = () => {
             flexDirection: 'column',
           }}
         >
-          <Card
-            sx={{
-              flex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              cursor: 'pointer',
-              gap: 1,
-            }}
-            onClick={handleOpenAccess}
-          >
-            {activeAccessPass ? (
-              <>
-                <Typography variant="h5">Access Pass</Typography>
-                <Box
-                  sx={{
-                    p: 1,
-                    backgroundColor: '#ffffff',
-                    borderRadius: 2,
-                    boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <QRCode
-                    value={activeAccessPass.visitor_number || ''}
-                    size={50}
-                    style={{
-                      height: 'auto',
-                      width: '160px',
-                    }}
-                  />
-                </Box>
-                <Typography variant="body1" fontWeight={'600'} color="primary">
-                  Tap to show detail
-                </Typography>
-              </>
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <IconCards size={40} />
-                <Typography
-                  variant="body1"
-                  color="textSecondary"
-                  fontStyle="italic"
-                  textAlign="center"
-                  mt={1}
-                >
-                  No access pass found
-                </Typography>
-              </Box>
-            )}
-          </Card>
+          <AccessPassEmployee activeAccessPass={activeAccessPass} onClick={handleOpenAccess} />
           <Button
             variant="contained"
             color="primary"
@@ -943,7 +807,7 @@ const DashboardEmployee = () => {
             onClick={() => setOpenQuickAccess(true)}
             startIcon={<IconBolt />}
           >
-            Quick Access
+            {t('quickAccess')}
           </Button>
         </Grid>
 
@@ -1023,97 +887,19 @@ const DashboardEmployee = () => {
       </Grid>
 
       {/* Dialog Praregist or Create link */}
-      <Dialog
+      <InviteOrCreateLinkDialog
         open={openInviteOrCreateLink}
         onClose={handleCloseInviteOrCreateLink}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          Invite or Create Link
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseInviteOrCreateLink}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexDirection="column"
-            textAlign="center"
-            py={3}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ mb: 2 }}
-              // onClick={() => setOpenDialogInvitation(true)}
-              onClick={() => {
-                navigate('/employee/invitation');
-              }}
-            >
-              Praregister
-            </Button>
-            <Button variant="outlined" color="primary" fullWidth onClick={handleOpenCreateLink}>
-              Share Link Invitation
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
+        onPreregister={() => navigate('/employee/invitation')}
+        onCreateLink={handleOpenCreateLink}
+      />
 
       {/* Open Alert Invitation */}
-      <Dialog
+      <PendingInvitationDialog
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenAlertInvitation(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-
-        <DialogContent>
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexDirection="column"
-            textAlign="center"
-            py={3}
-          >
-            <IconBellRingingFilled size={60} color="orange" />
-            <Typography variant="h5" mt={2} fontWeight={600}>
-              {pendingInvitationCount > 1
-                ? `${pendingInvitationCount} invitation must be completed`
-                : '1 invitation must be completed'}
-            </Typography>
-
-            <Typography variant="body1" color="text.secondary" mt={1}>
-              You must complete the invitation before it expires
-            </Typography>
-          </Box>
-        </DialogContent>
-      </Dialog>
+        pendingInvitationCount={pendingInvitationCount}
+      />
 
       <QuickAccessDialog
         open={openQuickAccess}
@@ -1236,7 +1022,7 @@ const DashboardEmployee = () => {
 
       <Dialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={handleCloseDialog}
         fullWidth
         maxWidth={false}
         PaperProps={{
@@ -1246,7 +1032,6 @@ const DashboardEmployee = () => {
         }}
       >
         <DialogTitle>
-          {/* {groupHeader?.group_name ?? 'Visitor Group'} */}
           Visitor Group
           <IconButton
             sx={{
@@ -1255,7 +1040,7 @@ const DashboardEmployee = () => {
               top: 8,
               color: (theme) => theme.palette.grey[500],
             }}
-            onClick={() => setOpenDialog(false)}
+            onClick={handleCloseDialog}
           >
             <IconX />
           </IconButton>
@@ -1280,9 +1065,7 @@ const DashboardEmployee = () => {
           <Button
             onClick={(e: any) => {
               e.stopPropagation();
-
               if (!selectedId) return;
-
               handleActionApproval(selectedId, 'Reject');
               setOpenDialog(false);
             }}
@@ -1290,20 +1073,18 @@ const DashboardEmployee = () => {
             color="error"
             variant="contained"
           >
-            Reject
+            {t('reject')}
           </Button>
           <Button
             onClick={(e: any) => {
               e.stopPropagation();
-
               if (!selectedId) return;
-
               handleApproveMeetingHost(selectedId);
             }}
             variant="contained"
             fullWidth
           >
-            Approve
+            {t('approve')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -47,12 +47,6 @@ const Content = ({
 
   const [isDirty, setIsDirty] = useState(false);
 
-  // const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
-  //   useState<CreateApprovalWorkflowRequest>(() => {
-  //     const saved = localStorage.getItem('unsavedApprovalWorkflow');
-  //     return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
-  //   });
-
   const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
     useState<CreateApprovalWorkflowRequest>(defaultApprovalWorkflow);
 
@@ -84,24 +78,6 @@ const Content = ({
     setOpenFormAddDocument(true);
   }, [isDirty]);
 
-  // const handleEdit = (id: string) => {
-  //   if (isDirty) {
-  //     setPendingEditId(id);
-  //     setConfirmDialogOpen(true);
-  //     return;
-  //   }
-
-  //   const item = tableData.find((item: any) => item.id === id);
-
-  //   setEdittingId(id);
-
-  //   if (item) {
-  //     setFormAddApprovalWorkflow(CreateApprovalWorkflowSchema.parse(item));
-  //   }
-
-  //   setOpenFormAddDocument(true);
-  // };
-
   const handleEdit = (id: string) => {
     if (isDirty) {
       setPendingEditId(id);
@@ -132,10 +108,10 @@ const Content = ({
     setPendingEditId(null);
   };
 
- const handleCancelEdit = () => {
-   setConfirmDialogOpen(false);
-   setPendingEditId(null);
- };
+  const handleCancelEdit = () => {
+    setConfirmDialogOpen(false);
+    setPendingEditId(null);
+  };
 
   const handleDelete = async (id: string) => {
     if (!token) return;

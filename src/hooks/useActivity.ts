@@ -15,6 +15,7 @@ export const useActivities = ({ token, start, length, start_date, end_date }: Ac
     queryKey: ['activities', start, length, start_date, end_date],
     queryFn: () => getActivities(token as string, start, length, start_date, end_date),
     enabled: !!token,
+    retry: false,
     select: (data) =>
       data.collection.map((item: any) => ({
         id: item.id,

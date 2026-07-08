@@ -15,7 +15,6 @@ import {
   TableCell,
   Button,
   FormGroup,
-  TextField,
   Radio,
   Button as MuiButton,
   Autocomplete,
@@ -202,6 +201,7 @@ import { IconInfoCircle } from '@tabler/icons-react';
 import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
 import { IconRefresh } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -268,7 +268,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
-
+  const { t } = useTranslation();
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
     Record<number, string[]>
   >({});
@@ -2113,7 +2113,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   return shared ? { ...f, ...pickAns(shared) } : f;
                 });
 
-                const visibilityMap = getVisibilityMap(mergedVisitForm);
+                const visibilityMap: any = getVisibilityMap(mergedVisitForm);
 
                 mergedVisitForm.forEach((item: any) => {
                   if (!item?.mandatory) return;
@@ -2699,7 +2699,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : f;
         });
 
-        const visibilityMap = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMap(mergedFields);
 
         mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
@@ -2722,7 +2722,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap = getVisibilityMap(details);
+          const visibilityMap: any = getVisibilityMap(details);
 
           details.forEach((item: any) => {
             if (!item?.mandatory) return;
@@ -5953,7 +5953,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               }}
               startIcon={<IconArrowLeft width={18} />}
             >
-              Back
+              {t('back')}
             </MuiButton>
 
             {isGroup ? (
@@ -5981,7 +5981,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   onClick={handleNext}
                   endIcon={<IconArrowRight width={18} />}
                 >
-                  Next
+                  {t('next')}
                 </Button>
               )
             ) : isLastStep ? (
@@ -6004,7 +6004,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 onClick={handleNext}
                 endIcon={<IconArrowRight width={18} />}
               >
-                Next
+                {t('next')}
               </Button>
             )}
           </Box>
@@ -6061,7 +6061,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </ScanContainer>
         </DialogContent>
       </Dialog>
-  
+
       <GlobalBackdropLoading open={loading} />
 
       <Portal>
@@ -6082,7 +6082,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Alert>
         </Snackbar>
       </Portal>
-
     </PageContainer>
   );
 };

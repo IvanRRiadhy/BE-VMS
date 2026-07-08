@@ -98,5 +98,7 @@
   "totalNotification": "Total Notifikasi",
   "totalVisitorProviders": "Total Kategori Pengunjung",
   "totalVisitor":  "Total Pengunjung",
-  "totalScheduler": "Total Jadwal"
+  "totalScheduler": "Total Jadwal",
+  "approve": "Setuju",
+  "reject": "Tolak"
 }

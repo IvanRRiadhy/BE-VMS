@@ -1,22 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid2 as Grid,
-  IconButton,
-} from '@mui/material';
+import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
 import {
   CreateDocumentRequest,
   CreateDocumentRequestSchema,
@@ -24,13 +15,14 @@ import {
 } from 'src/customs/api/models/Admin/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
-import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import PdfViewerDialog from './components/PdfViewerDialog';
+import FormAddDocumentDialog from './components/FormDocumentDialog';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -259,59 +251,20 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          {edittingId ? 'Edit Document' : 'Add New Document'}
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{
-              position: 'absolute',
-              right: 10,
-              top: 10,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <FormAddDocumentDialog
+        open={openFormAddDocument}
+        onClose={handleCloseDialog}
+        initialData={formDataAddDocument}
+        edittingId={edittingId}
+        onSuccess={handleSuccess}
+        onDirty={() => setIsDirty(true)}
+      />
 
-        <DialogContent sx={{ paddingTop: 0 }} dividers>
-          <br />
-          <FormAddDocument
-            initialData={formDataAddDocument}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            onDirty={() => setIsDirty(true)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth="lg">
-        <DialogTitle>View PDF</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenPdfDialog(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-
-        <DialogContent sx={{ height: '80vh' }} dividers>
-          <iframe
-            src={pdfUrl}
-            title="PDF Viewer"
-            width="100%"
-            height="100%"
-            style={{ border: 'none' }}
-          />
-        </DialogContent>
-      </Dialog>
+      <PdfViewerDialog
+        open={openPdfDialog}
+        onClose={() => setOpenPdfDialog(false)}
+        pdfUrl={pdfUrl}
+      />
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={handleCancelEdit}

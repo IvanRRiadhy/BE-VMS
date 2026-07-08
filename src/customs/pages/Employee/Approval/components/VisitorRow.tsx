@@ -38,12 +38,12 @@ function VisitorRow({
   };
   return (
     <>
-      {/* <TableRow>
-        <TableCell colSpan={6} sx={{ p: 0 }}>
+      <TableRow>
+        <TableCell colSpan={12} sx={{ p: 0 }}>
           <Collapse in={open}>
             <Box p={2}>
-              <Table size="small"> */}
-                {/* <TableHead>
+              <Table size="small">
+                <TableHead>
                   <TableRow>
                     <TableCell></TableCell>
                     <TableCell width="10%">Visitor Name</TableCell>
@@ -54,15 +54,16 @@ function VisitorRow({
                     <TableCell width="15%">Site</TableCell>
                     <TableCell width="15%">Status</TableCell>
                   </TableRow>
-                </TableHead> */}
-                {/* <TableBody> */}
+                </TableHead>
+                <TableBody>
                   <TableRow>
-                    <TableCell>
+                    {/* <TableCell>
                       <Checkbox
                         checked={selectedVisitor?.id === visitor.id}
                         onChange={() => setSelectedVisitor(visitor)}
                       />
-                    </TableCell>
+                    </TableCell> */}
+                    <TableCell> </TableCell>
                     <TableCell
                       sx={{
                         display: 'inline-flex',
@@ -100,12 +101,12 @@ function VisitorRow({
                       </Box>
                     </TableCell>
                   </TableRow>
-                {/* </TableBody>
+                </TableBody>
               </Table>
             </Box>
           </Collapse>
         </TableCell>
-      </TableRow> */}
+      </TableRow>
     </>
   );
 }

@@ -36,15 +36,8 @@ import {
 } from 'src/customs/api/admin';
 
 import {
-  CreateDepartmentRequest,
-  CreateDepartmentSchema,
   Item,
 } from 'src/customs/api/models/Admin/Department';
-import { CreateDistrictRequest, CreateDistrictSchema } from 'src/customs/api/models/Admin/District';
-import {
-  CreateOrganizationRequest,
-  CreateOrganizationSchema,
-} from 'src/customs/api/models/Admin/Organization';
 
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
