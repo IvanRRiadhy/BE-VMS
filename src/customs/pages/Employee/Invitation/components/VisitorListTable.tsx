@@ -20,6 +20,7 @@ import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
 
 import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/VisitorRow';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+import { exportVisitorExcel, exportVisitorPdf } from './VisitorExport';
 type Props = {
   selectedGroupId: any;
   groupHeader: any;
@@ -96,19 +97,31 @@ export default function VisitorListTable({
                     {groupHeader?.group_name ?? '-'}
                   </Typography>
 
-                  {/* <Box display="flex" gap={1}>
+                  <Box display="flex" gap={1}>
                     <Tooltip title="Export PDF">
-                      <Button variant="contained" color="error">
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() =>
+                          exportVisitorPdf(groupHeader?.group_name ?? 'Visitors', groupVisitors)
+                        }
+                      >
                         <IconPdf />
                       </Button>
                     </Tooltip>
 
                     <Tooltip title="Export Excel">
-                      <Button variant="contained" color="success">
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() =>
+                          exportVisitorExcel(groupHeader?.group_name ?? 'Visitors', groupVisitors)
+                        }
+                      >
                         <IconFileSpreadsheet />
                       </Button>
                     </Tooltip>
-                  </Box> */}
+                  </Box>
                 </Box>
               </TableCell>
             </TableRow>

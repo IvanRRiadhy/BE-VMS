@@ -757,10 +757,10 @@ const DashboardEmployee = () => {
     end_date: endDate.toISOString().split('T')[0],
   });
 
-    const handleCloseDialog = () => {
-      setOpenDialog(false);
-      setTriggerCheckAll(false);
-    };
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setTriggerCheckAll(false);
+  };
 
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
@@ -814,7 +814,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={loadingApproval}
-            height={'100%'}
+            height={'450px'}
             overflowX="auto"
             // minWidth={200}
             data={approvalData}
@@ -833,7 +833,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={'100%'}
+            height={'450px'}
             overflowX="auto"
             data={shareLinkList}
             isHaveChecked={true}

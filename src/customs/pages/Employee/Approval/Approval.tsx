@@ -41,6 +41,7 @@ import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
 import VisitorRow from './components/VisitorRow';
+import { exportVisitorExcel, exportVisitorPdf } from '../Invitation/components/VisitorExport';
 
 type Group = {
   id: string;
@@ -568,7 +569,7 @@ const Approval = () => {
                                 )}
                               </IconButton>
                             </TableCell>
-                            <TableCell colSpan={5}>
+                            <TableCell colSpan={8}>
                               <Box
                                 display={'flex'}
                                 justifyContent={'space-between'}
@@ -577,18 +578,36 @@ const Approval = () => {
                                 <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
                                   {groupHeader?.group_name ?? '-'}
                                 </Typography>
-                                {/* <Box display={'flex'} gap={0.5}>
+                                <Box display={'flex'} gap={0.5}>
                                   <Tooltip title="Export PDF" arrow>
-                                    <Button variant="contained" color="error">
+                                    <Button
+                                      variant="contained"
+                                      color="error"
+                                      onClick={() =>
+                                        exportVisitorPdf(
+                                          groupHeader?.group_name ?? 'Visitors',
+                                          groupVisitors,
+                                        )
+                                      }
+                                    >
                                       <IconPdf />
                                     </Button>
                                   </Tooltip>
                                   <Tooltip title="Export Excel" arrow>
-                                    <Button variant="contained" color="success">
+                                    <Button
+                                      variant="contained"
+                                      color="success"
+                                      onClick={() =>
+                                        exportVisitorExcel(
+                                          groupHeader?.group_name ?? 'Visitors',
+                                          groupVisitors,
+                                        )
+                                      }
+                                    >
                                       <IconFileSpreadsheet />
                                     </Button>
                                   </Tooltip>
-                                </Box> */}
+                                </Box>
                               </Box>
                             </TableCell>
                           </TableRow>
