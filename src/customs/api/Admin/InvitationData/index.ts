@@ -82,10 +82,18 @@ export const getInvitationVisitorEmployee = async (
   }
 };
 
-export const getInvitationVisitorHost = async (token: string): Promise<any> => {
+export const getInvitationVisitorHost = async (
+  token: string,
+  params?: {
+    'search[value]'?: string;
+    start?: number;
+    length?: number;
+  },
+): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor/host', {
       headers: { Authorization: `Bearer ${token}` },
+      params,
     });
     return response.data;
   } catch (error: any) {

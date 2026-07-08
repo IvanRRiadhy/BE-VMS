@@ -1298,7 +1298,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   return shared ? { ...f, ...pickAns(shared) } : f;
                 });
 
-                const visibilityMap = getVisibilityMap(mergedVisitForm);
+                const visibilityMap: any = getVisibilityMap(mergedVisitForm);
 
                 mergedVisitForm.forEach((item: any) => {
                   if (!item?.mandatory) return;
@@ -1312,7 +1312,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                   const fieldId = item.custom_field_id || item.id;
 
-                  // key HARUS sama dengan renderDetailRows
                   const key = `${activeStep - 1}:${fieldId}`;
 
                   validateField(item, key, errors);
@@ -3114,7 +3113,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       ),
                     ];
 
-                    // host yang sesuai site
                     const matchedHosts = employee
                       .filter((emp: any) => siteHostIds.includes(emp.id))
                       .map((emp: any) => ({
@@ -3123,22 +3121,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         group: 'Host Based on Destination',
                       }));
 
-                    // const otherHosts = employee
-                    //   .filter((emp: any) => !siteHostIds.includes(emp.id))
-                    //   .map((emp: any) => ({
-                    //     value: emp.id,
-                    //     name: emp.name,
-                    //     group: 'All Host',
-                    //   }));
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
-
-                    // const availableHosts = employee.filter(
-                    //   (emp: any) => !siteHostIds.includes(emp.id),
-                    // );
-
                     const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
-
                     const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
 
                     const mergedHosts = selectedHost
@@ -3152,7 +3137,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     }));
 
                     const finalOptions = [...matchedHosts, ...otherHosts];
-
+                 
                     return (
                       <Autocomplete
                         loading={isLoadingEmployee}

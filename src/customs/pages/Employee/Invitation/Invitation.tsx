@@ -506,17 +506,23 @@ const Content = () => {
     if (!token) return;
 
     const fetchSecondaryData = async () => {
-      try {
-        const [employeeRes, siteRes] = await Promise.all([
-          // getFormEmployee(token),
-          getInvitationVisitorEmployee(token),
-          getInvitationSite(token),
-        ]);
+      const [employeeResult, siteResult] = await Promise.allSettled([
+        getInvitationVisitorEmployee(token),
+        getInvitationSite(token),
+      ]);
 
-        setEmployee(employeeRes?.collection ?? []);
-        setSites(siteRes?.collection ?? []);
-      } catch (error) {
-        console.error('Error fetching secondary data:', error);
+      if (employeeResult.status === 'fulfilled') {
+        setEmployee(employeeResult.value?.collection ?? []);
+      } else {
+        console.error('Error fetching employee:', employeeResult.reason);
+        setEmployee([]);
+      }
+
+      if (siteResult.status === 'fulfilled') {
+        setSites(siteResult.value?.collection ?? []);
+      } else {
+        console.error('Error fetching site:', siteResult.reason);
+        setSites([]);
       }
     };
 
@@ -604,7 +610,7 @@ const Content = () => {
       const payload = {
         emails: emails,
       };
-      console.log('payload', payload);
+
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
@@ -1006,7 +1012,7 @@ const Content = () => {
             onSuccess={handleSuccess}
             visitorType={visitorType}
             sites={sites}
-            employee={employee}
+            employee={allVisitorEmployee}
             allVisitorEmployee={allVisitorEmployee}
             vtLoading={vtLoading}
             search={setSearchHost}
