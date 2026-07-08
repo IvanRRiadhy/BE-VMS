@@ -45,9 +45,9 @@ const DetailProfile = () => {
   const roleAccess = localStorage.getItem('roleAccess');
   const isAdmin = roleAccess === 'Admin';
   const [passwordData, setPasswordData] = useState({
-    old_password: null,
-    new_password: null,
-    con_password: null,
+    old_password: '',
+    new_password: '',
+    con_password: '',
   });
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -168,17 +168,14 @@ const DetailProfile = () => {
       });
 
       setPasswordData({
-        old_password: null,
-        new_password: null,
-        con_password: null,
+        old_password: '',
+        new_password: '',
+        con_password: '',
       });
 
       showSwal('success', 'Password updated successfully');
     } catch (error: any) {
-  
-
-      const collection =
-        error?.response?.data?.collection || error?.collection; // axios normal // custom API shape kamu
+      const collection = error?.response?.data?.collection || error?.collection; // axios normal // custom API shape kamu
 
       const messages = Array.isArray(collection)
         ? collection.join('\n')

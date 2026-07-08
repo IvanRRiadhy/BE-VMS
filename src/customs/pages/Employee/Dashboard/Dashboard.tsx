@@ -68,11 +68,8 @@ import {
   getApprovalTicket,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
-import { IconCalendar } from '@tabler/icons-react';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-import Calendar from 'src/customs/components/calendar/Calendar';
-import { IconDownload } from '@tabler/icons-react';
 
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
@@ -84,6 +81,7 @@ import AccessPassEmployee from '../Components/AccessPassEmployee';
 import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
+import { useAccessPass } from 'src/hooks/useAccessPass';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -104,7 +102,7 @@ const DashboardEmployee = () => {
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
-  const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
@@ -118,10 +116,7 @@ const DashboardEmployee = () => {
   const [sortDir, setSortDir] = useState('desc');
   const dispatch = useDispatch();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const handleClose = () => setAnchorEl(null);
+
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
@@ -317,19 +312,7 @@ const DashboardEmployee = () => {
     fetchData();
   }, [token]);
 
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      try {
-        const resAccess = await getAccessPass(token as string);
-        setActiveAccessPass(resAccess);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    fetchData();
-  }, [token]);
+  const { accessPass, loading: loadingAccessPass } = useAccessPass(token);
 
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
@@ -428,7 +411,7 @@ const DashboardEmployee = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+      pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
 
       clone.remove();
     } finally {
@@ -446,10 +429,10 @@ const DashboardEmployee = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!activeAccessPass?.id || !token) return;
+    if (!accessPass?.id || !token) return;
     setIsParkingLoading(true);
     try {
-      const res = await openParkingBlocker(token, { id: activeAccessPass.id });
+      const res = await openParkingBlocker(token, { id: accessPass.id });
       console.log('res', JSON.stringify(res, null, 2));
       setSnackbar({
         open: true,
@@ -473,13 +456,13 @@ const DashboardEmployee = () => {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       const response = await approveMeetingHost(token, id, payload);
-      console.log('response', response);
+      // console.log('response', response);
 
       const res = await handleActionApproval(id, 'Approve');
-      console.log('res', res);
+      // console.log('res', res);
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
@@ -634,7 +617,14 @@ const DashboardEmployee = () => {
         heightLeft -= pdfHeight;
       }
 
-      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      // const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+      };
       const start = formatDate(startDate);
       const end = formatDate(endDate);
 
@@ -673,7 +663,6 @@ const DashboardEmployee = () => {
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
   const handleOpenApprovalDialog = async (row: any) => {
-    // console.log('row', row);
     if (!token) return;
 
     try {
@@ -736,7 +725,7 @@ const DashboardEmployee = () => {
       const payload = {
         emails: emails,
       };
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
@@ -790,7 +779,7 @@ const DashboardEmployee = () => {
             flexDirection: 'column',
           }}
         >
-          <AccessPassEmployee activeAccessPass={activeAccessPass} onClick={handleOpenAccess} />
+          <AccessPassEmployee activeAccessPass={accessPass} onClick={handleOpenAccess} />
           <Button
             variant="contained"
             color="primary"
@@ -810,48 +799,59 @@ const DashboardEmployee = () => {
             {t('quickAccess')}
           </Button>
         </Grid>
-
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <DynamicTable
-            loading={loadingApproval}
-            height={'450px'}
-            overflowX="auto"
-            // minWidth={200}
-            data={approvalData}
-            isHaveChecked={true}
-            isHaveAction={true}
-            isActionVisitor={false}
-            isHaveHeaderTitle
-            titleHeader="Approval"
-            isHaveApproval={true}
-            onAccept={(row: any) => handleOpenApprovalDialog(row)}
-            onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
-            isHavePeriod={true}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <DynamicTable
-            loading={isFetching}
-            height={'450px'}
-            overflowX="auto"
-            data={shareLinkList}
-            isHaveChecked={true}
-            titleHeader="Link Share Visitor"
-            isHaveHeaderTitle={true}
-            isCopyLink={true}
-            isNoActionTableHead={true}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
+        <Grid container spacing={2} alignItems="stretch" width={"100%"}>
+          <Grid
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              display: 'flex',
             }}
-            isHaveAddData={true}
-            isDetailLink={true}
-            onCopyLink={(row: any) => handleCopyLink(row.url)}
-            onDetailLink={(row: any) => handleDetailLink(row)}
-            onDelete={(row: any) => handleDeleteLink(row.id)}
-            onAddData={() => setOpenCreateLink(true)}
-          />
+          >
+            <DynamicTable
+              loading={loadingApproval}
+              height={'100%'}
+              overflowX="auto"
+              // minWidth={200}
+              data={approvalData}
+              isHaveChecked={true}
+              isHaveAction={true}
+              isActionVisitor={false}
+              isHaveHeaderTitle
+              titleHeader="Approval"
+              isHaveApproval={true}
+              onAccept={(row: any) => handleOpenApprovalDialog(row)}
+              onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
+              isHavePeriod={true}
+            />
+          </Grid>
+
+          <Grid
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              display: 'flex',
+            }}
+          >
+            <DynamicTable
+              loading={isFetching}
+              height={'100%'}
+              overflowX="auto"
+              data={shareLinkList}
+              isHaveChecked={true}
+              titleHeader="Link Share Visitor"
+              isHaveHeaderTitle={true}
+              isCopyLink={true}
+              isNoActionTableHead={true}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveAddData={true}
+              isDetailLink={true}
+              onCopyLink={(row: any) => handleCopyLink(row.url)}
+              onDetailLink={(row: any) => handleDetailLink(row)}
+              onDelete={(row: any) => handleDeleteLink(row.id)}
+              onAddData={() => setOpenCreateLink(true)}
+            />
+          </Grid>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
@@ -986,11 +986,11 @@ const DashboardEmployee = () => {
       </Dialog>
 
       {/* Active Pass */}
-      {activeAccessPass && (
+      {accessPass && (
         <AccessPassDialog
           open={openAccess}
           onClose={handleCloseAccess}
-          data={activeAccessPass}
+          data={accessPass}
           isGenerating={isGenerating}
           isParkingLoading={isParkingLoading}
           onDownload={handleDownloadPDF}

@@ -100,5 +100,9 @@
   "totalVisitor":  "Total Pengunjung",
   "totalScheduler": "Total Jadwal",
   "approve": "Setuju",
-  "reject": "Tolak"
+  "reject": "Tolak",
+  "selectVisitor": "Pilih Pengunjung",
+  "insertInvitationCode": "Masukkan Kode Undangan",
+  "noAccessPass": "Tidak ada akses pass ditemukan",
+  "tapShowDetail": "Tekan untuk menampilkan detail"
 }

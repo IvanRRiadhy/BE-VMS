@@ -2,11 +2,7 @@ import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
-import {
-  IconTrendingUp,
-  IconTrendingDown,
-  IconMinus,
-} from '@tabler/icons-react';
+import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
@@ -19,8 +15,8 @@ interface VisitorStatusItem {
 }
 
 interface ApiDateGroup {
-  Date: string;
-  Status: VisitorStatusItem[];
+  date: string;
+  status: VisitorStatusItem[];
 }
 
 const TopCard = ({ items = [], size }: any) => {
@@ -42,17 +38,17 @@ const TopCard = ({ items = [], size }: any) => {
     { Date: string; StatusMap: Record<string, number> }[]
   >([]);
 
-  const normalizeCollection = (collection: ApiDateGroup[]) => {
+  const normalizeCollection = (collection: any[]) => {
     return collection.map((day) => {
       const grouped: Record<string, number> = {};
 
-      (day.Status || []).forEach((item) => {
+      (day.status || []).forEach((item: any) => {
         const key = item.visitor_status.trim();
         grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
       });
 
       return {
-        Date: day.Date.split('T')[0],
+        Date: day.date ? day.date.split('T')[0] : '',
         StatusMap: grouped,
       };
     });
@@ -82,9 +78,9 @@ const TopCard = ({ items = [], size }: any) => {
         const previousTotals: Record<string, number> = {};
 
         collection.forEach((day) => {
-          const dayDate = new Date(day.Date);
+          const dayDate = new Date(day.date);
 
-          (day.Status || []).forEach((item) => {
+          (day.status || []).forEach((item) => {
             const key = item.visitor_status.trim();
 
             if (dayDate >= currentStart && dayDate <= currentEnd) {

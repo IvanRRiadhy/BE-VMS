@@ -79,7 +79,7 @@ export const CreateEmployeeRequestSchema = z.object({
   address: z.string().default(''),
   upload_fr: z.number().default(0),
   qr_code: z.string().default(''),
-  faceimage: z.string().default(''),
+  faceimage: z.string().nullable().optional(),
   identity_type: z.string().default(''),
   birth_date: z.string().default(''),
   join_date: z.string().default(''),
@@ -90,10 +90,10 @@ export const CreateEmployeeRequestSchema = z.object({
   organization_id: z.string().default(''),
   department_id: z.string().default(''),
   district_id: z.string().default(''),
-  vendor_code: z.string().optional(),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_phone: z.string().optional(),
-  emergency_contact_relation: z.string().optional(),
+  vendor_code: z.string().nullable().optional(),
+  emergency_contact_name: z.string().nullable().optional(),
+  emergency_contact_phone: z.string().nullable().optional(),
+  emergency_contact_relation: z.string().nullable().optional(),
 });
 
 export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;

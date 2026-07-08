@@ -101,5 +101,9 @@
   "totalVisitor": "Total Visitor",
   "totalScheduler": "Total Scheduler",
   "approve": "Approve",
-  "reject": "Reject"
+  "reject": "Reject",
+  "selectVisitor": "Select Visitor",
+  "insertInvitationCode": "Insert  invitation code",
+  "noAccessPass": "No access pass found",
+  "tapShowDetail": "Tap to show detail"
 }

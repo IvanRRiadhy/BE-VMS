@@ -40,10 +40,10 @@ const AccessPassEmployee = ({ activeAccessPass, onClick }: AccessPassEmployeePro
           >
             <QRCode
               value={activeAccessPass.visitor_number || ''}
-              size={50}
+              size={40}
               style={{
                 height: 'auto',
-                width: '160px',
+                width: '130px',
               }}
             />
           </Box>

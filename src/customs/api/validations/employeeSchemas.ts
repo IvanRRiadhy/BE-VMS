@@ -14,7 +14,7 @@ export const Step0Schema = z
     gender: z.coerce
       .number({ required_error: 'Gender is required' })
       .refine((v) => v === 0 || v === 1, 'Gender is required'),
-    vendor_code: z.string().optional(),
+    vendor_code: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (['Vendor', 'Contractor'].includes(data.type || '') && !data.vendor_code?.trim()) {

@@ -112,6 +112,8 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
                 borderRadius: 2,
                 backgroundColor: 'white',
                 mt: 2,
+                border: '1px solid #fff',
+                boxShadow: 3,
               }}
             >
               <QRCode value={data.visitor_number || data.invitation_code || ''} size={180} />

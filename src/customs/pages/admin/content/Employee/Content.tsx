@@ -95,6 +95,7 @@ const Content = () => {
   const { districts } = useDistricts();
   const [loadingData, setLoadingData] = useState(false);
   const { t } = useTranslation();
+  const [isDirty, setIsDirty] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -155,9 +156,9 @@ const Content = () => {
         const rows = safeCollection.map((item: any) => ({
           id: item.id,
           name: item.name,
-          faceimage: item.faceimage,
           organization: item.organization?.name || '-',
           department: item.department?.name || '-',
+          faceimage: item.faceimage,
         }));
         setTableRowEmployee(rows);
       } catch (error: any) {
@@ -169,38 +170,14 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, refreshTrigger, search]);
 
-  const [initialFormData, setInitialFormData] = useState<CreateEmployeeRequest>(() => {
-    const saved = localStorage.getItem('unsavedEmployeeData');
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateEmployeeRequestSchema.parse(parsed);
-    } catch (e) {
-      return CreateEmployeeRequestSchema.parse({});
-    }
-  });
+  const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
 
-  const [formDataAddEmployee, setFormDataAddEmployee] = useState<CreateEmployeeRequest>(() => {
-    const saved = localStorage.getItem('unsavedEmployeeData');
-
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateEmployeeRequestSchema.parse(parsed);
-    } catch (e) {
-      return CreateEmployeeRequestSchema.parse({});
-    }
-  });
+  const [formDataAddEmployee, setFormDataAddEmployee] = useState(
+    CreateEmployeeRequestSchema.parse({}),
+  );
 
   const isFormChanged = useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
-  }, [formDataAddEmployee]);
-
-  useEffect(() => {
-    const defaultFormData = CreateEmployeeRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
-
-    if (isChanged) {
-      localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
-    }
   }, [formDataAddEmployee]);
 
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
@@ -210,20 +187,20 @@ const Content = () => {
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
   const handleCloseDialog = () => {
-    localStorage.removeItem('unsavedEmployeeData');
     setOpenFormAddEmployee(false);
     setIsBatchEdit(false);
     setEdittingId('');
   };
 
-  const handleAdd = useCallback(() => {
-    const freshForm = CreateEmployeeRequestSchema.parse({});
-    setFormDataAddEmployee(freshForm);
-    setInitialFormData(freshForm);
-    localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
-    setPendingEditId(null);
+  const handleAdd = () => {
+    const fresh = CreateEmployeeRequestSchema.parse({});
+
+    setFormDataAddEmployee(fresh);
+    setInitialFormData(fresh);
+    setIsDirty(false);
+
     handleOpenDialog();
-  }, []);
+  };
 
   const handleEdit = (id: string) => {
     const existingData = tableData.find((item) => String(item.id) === String(id));
@@ -238,12 +215,16 @@ const Content = () => {
       if (v === '' || v == null) return fallback;
       if (typeof v === 'number' && Number.isFinite(v)) return v;
       if (typeof v === 'boolean') return v ? 1 : 0;
+
       if (typeof v === 'string') {
         const t = v.trim().toLowerCase();
+
         if (t in map) return map[t];
+
         const n = Number(t);
         return Number.isFinite(n) ? n : fallback;
       }
+
       return fallback;
     };
 
@@ -253,7 +234,15 @@ const Content = () => {
 
       status_employee: toNum(
         s?.status_employee,
-        { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
+        {
+          active: 1,
+          'non active': 2,
+          nonactive: 2,
+          inactive: 2,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
         0,
       ),
 
@@ -262,33 +251,20 @@ const Content = () => {
       district_id: String(s?.district_id ?? ''),
     });
 
-    const parseSafe = (raw: any) => CreateEmployeeRequestSchema.parse(coerceEmployee(raw));
+    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData));
 
-    const editing = localStorage.getItem('unsavedEmployeeData');
-
-    if (!editing) {
-      const parsedData = parseSafe(existingData);
-      setEdittingId(id);
-      setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData);
-      localStorage.setItem('unsavedEmployeeData', JSON.stringify({ ...parsedData, id }));
-      handleOpenDialog();
+    if (isDirty) {
+      setPendingEditId(id);
+      setConfirmDialogOpen(true);
       return;
     }
 
-    const editingData = JSON.parse(editing);
+    setEdittingId(id);
+    setFormDataAddEmployee(parsedData);
+    setInitialFormData(parsedData);
+    setIsDirty(false);
 
-    if (editingData.id === id) {
-      const parsedData = parseSafe(existingData);
-      setEdittingId(id);
-      setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData);
-      handleOpenDialog();
-      return;
-    }
-
-    setPendingEditId(id);
-    setConfirmDialogOpen(true);
+    handleOpenDialog();
   };
 
   const normalizeGender = (val: any) => {
@@ -297,43 +273,88 @@ const Content = () => {
     return Number(val ?? 0);
   };
 
+  const toNum = (
+    v: unknown,
+    map: Record<string, number> = {},
+    fallback: number | undefined = 0,
+  ) => {
+    if (v === '' || v == null) return fallback;
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'boolean') return v ? 1 : 0;
+
+    if (typeof v === 'string') {
+      const t = v.trim().toLowerCase();
+
+      if (t in map) return map[t];
+
+      const n = Number(t);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    return fallback;
+  };
+
+  const coerceEmployee = (employee: Item) =>
+    CreateEmployeeRequestSchema.parse({
+      ...employee,
+
+      gender: toNum(
+        employee.gender,
+        {
+          female: 0,
+          male: 1,
+          f: 0,
+          m: 1,
+          '0': 0,
+          '1': 1,
+        },
+        0,
+      ),
+
+      status_employee: toNum(
+        employee.status_employee,
+        {
+          active: 1,
+          'non active': 2,
+          nonactive: 2,
+          inactive: 2,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
+        0,
+      ),
+
+      organization_id: String(employee.organization_id ?? ''),
+      department_id: String(employee.department_id ?? ''),
+      district_id: String(employee.district_id ?? ''),
+    });
+
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedEmployeeData');
 
-    if (pendingEditId) {
-      const existingData = tableData.find((item) => item.id === pendingEditId);
+    // Tutup form lama
+    handleCloseDialog();
 
-      if (existingData) {
-        try {
-          const normalized = {
-            ...existingData,
-            gender: normalizeGender(existingData.gender),
-          };
-
-          const parsedData = {
-            ...CreateEmployeeRequestSchema.parse(normalized),
-            id: pendingEditId,
-          };
-
-          setEdittingId(pendingEditId);
-          setFormDataAddEmployee(parsedData);
-          setInitialFormData(parsedData);
-          localStorage.setItem('unsavedEmployeeData', JSON.stringify(parsedData));
-          setPendingEditId(null);
-          setOpenFormAddEmployee(true);
-        } catch (err) {
-          console.error('Parse error:', err);
-        }
-      }
-    } else {
-      setEdittingId('');
-      const newForm = CreateEmployeeRequestSchema.parse({});
-      setFormDataAddEmployee(newForm);
-      setInitialFormData(newForm);
-      localStorage.setItem('unsavedEmployeeData', JSON.stringify(newForm));
-      handleCloseDialog();
+    if (!pendingEditId) {
+      return;
     }
+
+    const existingData = tableData.find((item) => item.id === pendingEditId);
+
+    if (!existingData) return;
+
+    const parsedData = coerceEmployee(existingData);
+
+    setEdittingId(pendingEditId);
+    setFormDataAddEmployee(parsedData);
+    setInitialFormData(parsedData);
+    setIsDirty(false);
+
+    setPendingEditId(null);
+
+    // buka form baru
+    handleOpenDialog();
   };
 
   const handleCancelEdit = () => {

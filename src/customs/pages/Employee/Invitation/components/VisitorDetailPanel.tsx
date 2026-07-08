@@ -18,6 +18,7 @@ import {
   IconMapPin,
   IconSquareRounded,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   selectedVisitor: any;
@@ -74,6 +75,8 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
     Pracheckin: '#21c45d',
   };
 
+  const { t } = useTranslation();
+
   if (!selectedVisitor) {
     return (
       <Box
@@ -103,7 +106,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
           <img src={bg_nodata} width={120} />
 
           <Typography mt={2} color="text.secondary">
-            Select visitor
+            {t('selectVisitor')}
           </Typography>
         </Box>
       </Box>
@@ -188,19 +191,16 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               value={selectedVisitor.invitation_code}
               icon={<IconTicket size={18} />}
             />
-
             <DetailItem
               label="Agenda"
               value={selectedVisitor.agenda}
               icon={<IconClipboardText size={18} />}
             />
-
             <DetailItem
               label="Host"
               value={selectedVisitor.host_name}
               icon={<IconUser size={18} />}
             />
-
             <DetailItem
               label="Visit Date"
               value={`${formatDateTime(selectedVisitor.visitor_period_start)} - ${formatDateTime(
@@ -208,25 +208,21 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               )}`}
               icon={<IconCalendarEvent size={18} />}
             />
-
             <DetailItem
               label="Location"
               value={selectedVisitor.site_place_name}
               icon={<IconMapPin size={18} />}
             />
-
             <DetailItem
               label="Phone"
               value={selectedVisitor.visitor_phone}
               icon={<IconPhone size={18} />}
             />
-
             <DetailItem
               label="Email"
               value={selectedVisitor.visitor_email}
               icon={<IconMail size={18} />}
             />
-
             <DetailItem
               label="Status"
               icon={<IconCircleCheck size={18} />}
@@ -273,18 +269,14 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
                           item.card_status === 'Issued'
                             ? 'success'
                             : item.card_status === 'Swapped'
-                            ? 'warning'
-                            : 'default'
+                              ? 'warning'
+                              : 'default'
                         }
                       />
                     </Box>
-
                     <DetailItem label="Card Type" value={item.card_type} />
-
                     <DetailItem label="Barcode" value={item.card_barcode} />
-
                     <DetailItem label="MAC Address" value={item.card_mac || '-'} />
-
                     <DetailItem
                       label="Current Used"
                       value={
@@ -295,11 +287,8 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
                         />
                       }
                     />
-
                     <DetailItem label="Issued By" value={item.issued_by} />
-
                     <DetailItem label="Issued At" value={formatDateTime(item.issued_at)} />
-
                     {item.swap_at && (
                       <>
                         <DetailItem label="Swap By" value={item.swap_by} />
@@ -319,7 +308,6 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               value={selectedVisitor.is_driving ? 'Yes' : 'No'}
               icon={<IconSteeringWheel size={18} stroke={1.9} />}
             />
-
             <DetailItem
               label="Parking Access"
               value={
@@ -331,19 +319,16 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               }
               icon={<IconParking size={18} stroke={1.9} />}
             />
-
             <DetailItem
               label="Vehicle Plate"
               value={selectedVisitor.vehicle_plate_number || '-'}
               icon={<IconCar size={18} stroke={1.9} />}
             />
-
             <DetailItem
               label="Parking Area"
               value={selectedVisitor.parking_area || '-'}
               icon={<IconMapPin size={18} stroke={1.9} />}
             />
-
             <DetailItem
               label="Parking Slot"
               value={selectedVisitor.parking_slot || '-'}

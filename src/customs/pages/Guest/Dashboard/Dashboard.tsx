@@ -37,13 +37,13 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.locale('id');
+dayjs.extend(localizedFormat);
 
-import Calendar from 'src/customs/components/calendar/Calendar';
-import { getAccessPass } from 'src/customs/api/admin';
+dayjs.locale('id');
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -53,11 +53,14 @@ import { useSelector } from 'react-redux';
 import Heatmap from './Heatmap';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import InputInvitationCodeDialog from './components/InputInvitationCodeDialog';
+import { useAccessPass } from 'src/hooks/useAccessPass';
+import VisitorActionBar from './components/VisitorActionBar';
+import GuestAccessPass from './components/GuestAccessPass';
 
 const Dashboard = () => {
   const { token } = useSession();
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
-  const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
   const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
@@ -74,11 +77,6 @@ const Dashboard = () => {
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
     { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-    // {
-    //   title: 'blacklist',
-    //   key: 'blacklist',
-    //   icon: <IconUsersGroup size={22} />,
-    // },
   ];
 
   useEffect(() => {
@@ -86,39 +84,57 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const res = await getActiveInvitation(token as string);
-
         const response = res.collection?.map((item: any) => ({
           id: item.id,
           name: item.visitor_name,
           email: item.visitor_email,
           organization: item.visitor_organization_name,
+          agenda: item.agenda,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
           visitor_status: item.visitor_status,
         }));
         setActiveVisitData(response ?? []);
-        const resAccess = await getAccessPass(token as string);
-        setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
       }
     };
-
     fetchData();
   }, [token]);
 
+  const { accessPass, loading: loadingAccessPass } = useAccessPass(token);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
+  // function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
+  //   const startLocal = moment
+  //     .utc(startUtc)
+  //     .tz(moment.tz.guess())
+  //     .format('dddd, DD MMMM YYYY HH:mm');
+  //   const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('dddd,DD MMMM YYYY HH:mm');
+  //   return `${startLocal} - ${endLocal}`;
+  // }
+
+  // function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
+  //   const timezone = 'Asia/Jakarta';
+
+  //   const startLocal = dayjs.utc(startUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
+
+  //   const endLocal = dayjs.utc(endUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
+
+  //   return `${startLocal} - ${endLocal}`;
+  // }
+
   function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-    const startLocal = moment
-      .utc(startUtc)
-      .tz(moment.tz.guess())
-      .format('dddd, DD MMMM YYYY HH:mm');
-    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('dddd,DD MMMM YYYY HH:mm');
+    const timezone = dayjs.tz.guess();
+
+    const startLocal = dayjs.utc(startUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
+
+    const endLocal = dayjs.utc(endUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
+
     return `${startLocal} - ${endLocal}`;
   }
 
@@ -155,7 +171,7 @@ const Dashboard = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+      pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
 
       clone.remove();
     } finally {
@@ -173,10 +189,10 @@ const Dashboard = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!activeAccessPass?.id || !token) return;
+    if (!accessPass?.id || !token) return;
     setIsParkingLoading(true);
     try {
-      await openParkingBlocker(token, { trx_visitor_id: activeAccessPass.id });
+      await openParkingBlocker(token, { trx_visitor_id: accessPass.id });
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');
@@ -185,55 +201,71 @@ const Dashboard = () => {
     }
   };
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const handleExportPdf = async () => {
+    if (!exportRef.current || isExporting) return;
+
+    try {
+      setIsExporting(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <PageContainer title="Dashboard">
-      <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'}>
-        <Grid
-          size={{ xs: 12, lg: 12 }}
-          display="flex"
-          justifyContent="flex-end"
-          alignItems="center"
-          gap={2}
-          sx={{ mt: 0.5 }}
-        >
-          <Button
-            size="small"
-            sx={{
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #d1d1d1',
-              ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
-            }}
-            startIcon={<IconCalendar size={18} />}
-            onClick={handleClick}
-          >
-            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
-          </Button>
-
-          <Button size="small" variant="contained" color="error" startIcon={<IconDownload />}>
-            Export
-          </Button>
-          <Drawer open={open} anchor="right" onClose={handleClose}>
-            <Box sx={{ p: 2 }}>
-              <Typography variant="h6" mb={1}>
-                Select Date Range
-              </Typography>
-              <Calendar
-                value={{ startDate, endDate }}
-                onChange={(selection: any) => {
-                  dispatch(
-                    setDateRange({
-                      startDate: selection.startDate,
-                      endDate: selection.endDate,
-                    }),
-                  );
-                  handleClose();
-                }}
-              />
-            </Box>
-          </Drawer>
-        </Grid>
+      <VisitorActionBar
+        open={open}
+        startDate={startDate}
+        endDate={endDate}
+        isExporting={isExporting}
+        onOpenCalendar={handleClick as any}
+        onCloseCalendar={handleClose}
+        onExport={handleExportPdf}
+        onDateChange={(selection) => {
+          dispatch(
+            setDateRange({
+              startDate: selection.startDate,
+              endDate: selection.endDate,
+            }),
+          );
+        }}
+      />
+      <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'} ref={exportRef}>
         <Grid size={{ xs: 12, xl: 9 }}>
           <TopCard items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
@@ -244,76 +276,11 @@ const Dashboard = () => {
             flexDirection: 'column',
           }}
         >
-          <Card
-            sx={{
-              flex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-
-              cursor: 'pointer',
-              gap: 1,
-            }}
-            onClick={handleOpenAccess}
-          >
-            {activeAccessPass ? (
-              <>
-                <Typography variant="h5">Access Pass</Typography>
-                <Box
-                  sx={{
-                    p: 1,
-                    backgroundColor: '#ffffff',
-                    borderRadius: 2,
-                    boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <QRCode
-                    value={activeAccessPass.visitor_number || ''}
-                    size={50}
-                    style={{
-                      height: 'auto',
-                      width: '150px',
-                    }}
-                  />
-                </Box>
-                <Typography variant="body1" fontWeight={'600'} color="primary">
-                  Tap to show detail
-                </Typography>
-              </>
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <IconCards size={40} />
-                <Typography
-                  variant="body1"
-                  color="textSecondary"
-                  fontStyle="italic"
-                  textAlign="center"
-                  mt={1}
-                >
-                  No access pass found
-                </Typography>
-              </Box>
-            )}
-          </Card>
-          <Button
-            variant="contained"
-            sx={{ mt: 1 }}
-            onClick={() => setOpenInputInvitationCode(true)}
-          >
-            Insert Invitation Code
-          </Button>
+          <GuestAccessPass
+            accessPass={accessPass}
+            onOpenAccess={handleOpenAccess}
+            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
@@ -358,7 +325,7 @@ const Dashboard = () => {
       <AccessPassDialog
         open={openAccess}
         onClose={handleCloseAccess}
-        data={activeAccessPass}
+        data={accessPass}
         isGenerating={isGenerating}
         isParkingLoading={isParkingLoading}
         onDownload={handleDownloadPDF}

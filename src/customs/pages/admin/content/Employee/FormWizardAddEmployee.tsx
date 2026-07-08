@@ -271,6 +271,11 @@ const FormWizardAddEmployee = ({
     }
 
     const res = schema.safeParse(payload);
+    if (!res.success) {
+      console.log('STEP', step);
+      console.log('PAYLOAD', payload);
+      console.log('ERRORS', res.error.issues);
+    }
 
     if (res.success) return true;
 
