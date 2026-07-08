@@ -170,14 +170,6 @@ const Content = () => {
   const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-    } else {
-      localStorage.removeItem('unsavedVisitorData');
-    }
-  }, [formDataAddVisitor, isFormChanged]);
-
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
@@ -377,21 +369,6 @@ const Content = () => {
 
   const isSearching = debouncedSearchAgenda.trim() !== '';
   const isFetchingRef = useRef(false);
-  useEffect(() => {
-    const target = observerRef.current;
-
-    if (!target) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && hasMore && !isSearching && !isFetchingRef.current) {
-        fetchData(true);
-      }
-    });
-
-    observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [hasMore, isSearching]);
 
   useEffect(() => {
     if (!token) return;
@@ -803,14 +780,24 @@ const Content = () => {
                           </Box>
                         </Box>
                       ))}
-                  <div
-                    ref={observerRef}
-                    style={{
-                      height: 20,
-                    }}
-                  />
-
-                  {loadingMore && <CircularProgress />}
+                  {hasMore && (
+                    <Box display="flex" justifyContent="center" mt={2}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => fetchData(true)}
+                        disabled={loadingMore}
+                        fullWidth
+                      >
+                        {loadingMore ? (
+                          <>
+                            <CircularProgress size={18} sx={{ mr: 1 }} />
+                          </>
+                        ) : (
+                          'Load More'
+                        )}
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -830,7 +817,7 @@ const Content = () => {
                             )}
                           </IconButton>
                         </TableCell>
-                        <TableCell colSpan={5}>
+                        <TableCell colSpan={8}>
                           <Box
                             display={'flex'}
                             justifyContent={'space-between'}
@@ -852,6 +839,30 @@ const Content = () => {
                               </Tooltip>
                             </Box>
                           </Box>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell />
+                        <TableCell component="th" scope="row">
+                          Visitor Name
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Email
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Phone
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Organization
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Host
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Site
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          Status
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -886,7 +897,7 @@ const Content = () => {
                 >
                   <img src={bg_nodata} width={150} />
                   <Typography color="text.secondary" mt={2} variant="h5">
-                    Select a group from the list.
+                    {t('selectGroupFromTheList')}
                   </Typography>
                 </Box>
               )}

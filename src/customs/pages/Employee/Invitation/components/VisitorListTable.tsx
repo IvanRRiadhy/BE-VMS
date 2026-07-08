@@ -21,6 +21,7 @@ import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
 import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/VisitorRow';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { exportVisitorExcel, exportVisitorPdf } from './VisitorExport';
+import { useTranslation } from 'react-i18next';
 type Props = {
   selectedGroupId: any;
   groupHeader: any;
@@ -42,6 +43,7 @@ export default function VisitorListTable({
   openGroup,
   setOpenGroup,
 }: Props) {
+  const { t } = useTranslation();
   if (!selectedGroupId) {
     return (
       <Box
@@ -54,7 +56,7 @@ export default function VisitorListTable({
         <img src={bg_nodata} width={150} />
 
         <Typography color="text.secondary" mt={2} variant="h5">
-          Select a group from the list.
+          {t('selectGroupFromTheList')}
         </Typography>
       </Box>
     );

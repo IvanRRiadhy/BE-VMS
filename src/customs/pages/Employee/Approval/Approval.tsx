@@ -42,6 +42,7 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
 import VisitorRow from './components/VisitorRow';
 import { exportVisitorExcel, exportVisitorPdf } from '../Invitation/components/VisitorExport';
+import { useTranslation } from 'react-i18next';
 
 type Group = {
   id: string;
@@ -75,6 +76,7 @@ const Approval = () => {
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const { t } = useTranslation();
   const getApprovalCounts = () => {
     const counts = {
       total: approvalData.length,
@@ -713,7 +715,7 @@ const Approval = () => {
                     >
                       <img src={bg_nodata} width={150} />
                       <Typography color="text.secondary" mt={2} variant="h5">
-                        Select a group from the list.
+                        {t('selectGroupFromTheList')}
                       </Typography>
                     </Box>
                   )}

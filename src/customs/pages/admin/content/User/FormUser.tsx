@@ -81,10 +81,12 @@ const FormUser: React.FC<FormUserProps> = ({
   }, []);
 
   const groupOptions = useMemo(() => {
-    return userGroup.map((g: any) => ({
-      id: g.id,
-      label: g.name,
-    }));
+    return userGroup
+      .filter((group: any) => group.role_access !== 'Employee')
+      .map((g: any) => ({
+        id: g.id,
+        label: g.name,
+      }));
   }, [userGroup]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -85,7 +85,7 @@ type Group = {
 const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
@@ -912,7 +912,7 @@ const Content = () => {
                             </Box>
                             <Typography>Start : {group.visitor_period_start}</Typography>
                             <Typography>End : {group.visitor_period_end}</Typography>
-                            <Box display={'flex'} justifyContent={'flex-end'}>
+                            {/* <Box display={'flex'} justifyContent={'flex-end'}>
                               {group.invited_by === profile?.user_id && (
                                 <Button
                                   variant="contained"
@@ -922,7 +922,7 @@ const Content = () => {
                                   Cancel
                                 </Button>
                               )}
-                            </Box>
+                            </Box> */}
                           </Box>
                         ))}
                     {hasMore && (

@@ -105,5 +105,6 @@
   "selectVisitor": "Select Visitor",
   "insertInvitationCode": "Insert  invitation code",
   "noAccessPass": "No access pass found",
-  "tapShowDetail": "Tap to show detail"
+  "tapShowDetail": "Tap to show detail",
+  "selectGroupFromTheList" : "Select group from the list"
 }

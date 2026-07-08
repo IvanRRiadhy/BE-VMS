@@ -49,6 +49,7 @@ const steps = ['Personal Info', 'Work Details', 'Access & Emergency', 'Other Det
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -105,6 +106,7 @@ const FormWizardAddEmployee = ({
   const [removing, setRemoving] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   const clearLocal = () => {
     setSiteImageFile(null);
@@ -1566,12 +1568,12 @@ const FormWizardAddEmployee = ({
               onClick={handleBack}
               sx={{ backgroundColor: '#edf3ff' }}
             >
-              Back
+              {t('back')}
             </Button>
             <Box flex="1 1 auto" />
             {activeStep !== steps.length - 1 ? (
               <Button onClick={handleNext} variant="contained" color="primary">
-                Next
+                {t('next')}
               </Button>
             ) : (
               <Button
