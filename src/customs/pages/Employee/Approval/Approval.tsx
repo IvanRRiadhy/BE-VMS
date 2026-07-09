@@ -19,7 +19,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Box, useTheme } from '@mui/system';
-import { IconBan, IconCheck, IconClock, IconScript, IconX } from '@tabler/icons-react';
+import { IconBan, IconCheck, IconClock, IconScript, IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -43,6 +43,10 @@ import VisitorApprovalDialog from './components/VisitorApprovalDialog';
 import VisitorRow from './components/VisitorRow';
 import { exportVisitorExcel, exportVisitorPdf } from '../Invitation/components/VisitorExport';
 import { useTranslation } from 'react-i18next';
+import { useDebounce } from 'src/hooks/useDebounce';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import ApprovalSidebar from './components/ApprovalSidebar';
+import Swal from 'sweetalert2';
 
 type Group = {
   id: string;
@@ -76,6 +80,7 @@ const Approval = () => {
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const debouncedKeyword = useDebounce(searchKeyword, 500);
   const { t } = useTranslation();
   const getApprovalCounts = () => {
     const counts = {
@@ -132,6 +137,8 @@ const Approval = () => {
     },
   ];
 
+  const hasMore = approvalData.length < totalFilteredRecords;
+
   useEffect(() => {
     if (!token) return;
 
@@ -141,9 +148,13 @@ const Approval = () => {
         const start = page * rowsPerPage;
 
         const res = await getApprovalTicket(token, {
+          start,
+          length: rowsPerPage,
           sort_dir: sortDir,
-          keyword: searchKeyword,
+          keyword: debouncedKeyword,
+          entity_type: 'Invitation',
         });
+        console.log('res', res.collection);
 
         const rows = res.collection.map((item: any) => ({
           approval_ticket_id: item.approval_ticket_id,
@@ -159,7 +170,8 @@ const Approval = () => {
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
         }));
-        setApprovalData(rows);
+        // setApprovalData(rows);
+        setApprovalData((prev) => (page === 0 ? rows : [...prev, ...rows]));
 
         setTotalFilteredRecords(res.RecordsFiltered);
         setTotalRecords(res.RecordsTotal);
@@ -171,7 +183,11 @@ const Approval = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, searchKeyword, sortDir]);
+  }, [token, refreshTrigger, debouncedKeyword, sortDir, page, rowsPerPage]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedKeyword, sortDir]);
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
     // if (!id || !token) return;
@@ -194,6 +210,24 @@ const Approval = () => {
       //     htmlContainer: 'swal2-text-custom',
       //   },
       // });
+      if (action === 'Reject') {
+        const confirm = await Swal.fire({
+          title: 'Reject Approval?',
+          text: 'Do you want to reject this approval?',
+          icon: 'warning',
+          reverseButtons: true,
+          showCancelButton: true,
+          confirmButtonText: 'Reject',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#f44336',
+          customClass: {
+            title: 'swal2-title-custom',
+            htmlContainer: 'swal2-text-custom',
+          },
+        });
+
+        if (!confirm.isConfirmed) return;
+      }
 
       // if (!confirm.isConfirmed) return;
 
@@ -229,7 +263,7 @@ const Approval = () => {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       const response = await approveMeetingHost(token, id, payload);
       // console.log('response', response);
@@ -308,6 +342,45 @@ const Approval = () => {
     fetchGroupDetail();
   }, [fetchGroupDetail]);
 
+  const handleOpenApprovalDialog = async (
+    e: React.MouseEvent,
+    group: any,
+    action: 'Approve' | 'Reject',
+  ) => {
+    e.stopPropagation();
+
+    // Reject langsung eksekusi
+    if (action === 'Reject') {
+      await handleActionApproval(group.approval_ticket_id, 'Reject');
+      return;
+    }
+
+    // Approve
+    setSelectedGroup(group);
+    setSelectedId(group.approval_ticket_id);
+    setGroupVisitors([]);
+    setGroupDetailLoading(true);
+    setOpenDialog(true);
+
+    try {
+      const res = await getVisitorTransactionByIds(token as string, group.entity_id);
+
+      setGroupHeader(res.collection[0]);
+      setGroupVisitors(res.collection);
+
+      setSelectedRows(res.collection);
+      setTriggerCheckAll(false);
+
+      setTimeout(() => {
+        setTriggerCheckAll(true);
+      }, 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGroupDetailLoading(false);
+    }
+  };
+
   return (
     <>
       <PageContainer title="Approval" description="Approval page">
@@ -345,23 +418,20 @@ const Approval = () => {
                     </Typography>
                   </Box>
 
-                  {/* Search */}
-                  <TextField
+                  <CustomTextField
                     fullWidth
                     size="small"
-                    placeholder="Search Transaksi"
-                    value={searchAgenda}
-                    onChange={(e) => setSearchAgenda(e.target.value)}
-                    sx={{ mb: 2 }}
-                    // InputProps={{
-                    //   endAdornment: (
-                    //     <InputAdornment position="end">
-                    //       <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                    //         <IconFilterFilled />
-                    //       </IconButton>
-                    //     </InputAdornment>
-                    //   ),
-                    // }}
+                    placeholder="Search Transaction"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    sx={{ mb: 2, paddingLeft: '0px !important' }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start" style={{ paddingLeft: '0px !important' }}>
+                          <IconSearch style={{ color: 'gray' }} />
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                   <Box>
                     <Box>
@@ -423,7 +493,7 @@ const Approval = () => {
                                   </Typography>
 
                                   {group.approval_status === 'Pending' && (
-                                    <Box display={'flex'} gap={0.5}>
+                                    <Box display="flex" gap={0.5}>
                                       <Tooltip title="Approve" arrow>
                                         <IconButton
                                           sx={{
@@ -437,38 +507,14 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          onClick={async (e: any) => {
-                                            e.stopPropagation();
-
-                                            setSelectedGroup(group);
-                                            setSelectedId(group.approval_ticket_id);
-                                            setGroupVisitors([]);
-                                            setGroupDetailLoading(true);
-                                            setOpenDialog(true);
-
-                                            try {
-                                              const res = await getVisitorTransactionByIds(
-                                                token as string,
-                                                group.entity_id,
-                                              );
-
-                                              setGroupHeader(res.collection[0]);
-                                              setGroupVisitors(res.collection);
-                                              setSelectedRows(res.collection);
-                                              setTriggerCheckAll(false);
-
-                                              setTimeout(() => {
-                                                setTriggerCheckAll(true);
-                                              }, 0);
-                                            } catch (err) {
-                                            } finally {
-                                              setGroupDetailLoading(false);
-                                            }
-                                          }}
+                                          onClick={(e) =>
+                                            handleOpenApprovalDialog(e, group, 'Approve')
+                                          }
                                         >
                                           <IconCheck size={16} />
                                         </IconButton>
                                       </Tooltip>
+
                                       <Tooltip title="Reject" arrow>
                                         <IconButton
                                           sx={{
@@ -482,29 +528,9 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          onClick={async (e: any) => {
-                                            e.stopPropagation();
-
-                                            setSelectedGroup(group);
-                                            setSelectedId(group.approval_ticket_id);
-                                            setGroupVisitors([]);
-                                            setGroupDetailLoading(true);
-                                            setOpenDialog(true);
-
-                                            try {
-                                              const res = await getVisitorTransactionByIds(
-                                                token as string,
-                                                group.entity_id,
-                                              );
-
-                                              setGroupHeader(res.collection[0]);
-                                              setGroupVisitors(res.collection);
-                                            } catch (err) {
-                                              // setGroupVisitors([]);
-                                            } finally {
-                                              setGroupDetailLoading(false);
-                                            }
-                                          }}
+                                          onClick={(e) =>
+                                            handleOpenApprovalDialog(e, group, 'Reject')
+                                          }
                                         >
                                           <IconX size={16} />
                                         </IconButton>
@@ -548,9 +574,41 @@ const Approval = () => {
                                 </Typography>
                               </Box>
                             ))}
+                      {hasMore && (
+                        <Box mt={2} textAlign="center">
+                          <Button
+                            variant="outlined"
+                            disabled={loading}
+                            onClick={() => setPage((prev) => prev + 1)}
+                            fullWidth
+                          >
+                            {loading ? 'Loading...' : 'Load More'}
+                          </Button>
+                        </Box>
+                      )}
                     </Box>
                   </Box>
                 </Box>
+                {/* <ApprovalSidebar
+                  mdUp={mdUp}
+                  secdrawerWidth={secdrawerWidth}
+                  loading={loading}
+                  approvalData={approvalData}
+                  selectedId={selectedId}
+                  searchKeyword={searchKeyword}
+                  setSearchKeyword={setSearchKeyword}
+                  hasMore={hasMore}
+                  setPage={setPage}
+                  setSelectedGroup={setSelectedGroup}
+                  setSelectedGroupId={setSelectedGroupId}
+                  setSelectedId={setSelectedId}
+                  setGroupVisitors={setGroupVisitors}
+                  setGroupHeader={setGroupHeader}
+                  setGroupDetailLoading={setGroupDetailLoading}
+                  setOpenDialog={setOpenDialog}
+                  setSelectedRows={setSelectedRows}
+                  setTriggerCheckAll={setTriggerCheckAll}
+                /> */}
                 {/* Right */}
                 <Box
                   flexGrow={1}

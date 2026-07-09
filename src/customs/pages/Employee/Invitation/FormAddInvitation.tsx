@@ -3102,24 +3102,35 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     );
                   }
                   if (item.remarks === 'host') {
-                    const selectedSiteIds =
-                      details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
-                    const siteHostIds = [
-                      ...new Set(
-                        sites
-                          .filter((site: any) => selectedSiteIds.includes(site.id))
-                          .map((site: any) => site.host)
-                          .filter(Boolean),
-                      ),
+                    const selectedSiteValue = details.find(
+                      (d: any) => d.remarks === 'site_place',
+                    )?.answer_text;
+
+                    const selectedSiteIds = Array.isArray(selectedSiteValue)
+                      ? selectedSiteValue.flatMap((v: string) => v.split(','))
+                      : String(selectedSiteValue || '')
+                          .split(',')
+                          .filter(Boolean);
+
+                    const selectedSites = sites.filter((site: any) =>
+                      selectedSiteIds.includes(site.id),
+                    );
+
+                    const matchedHosts = [
+                      ...new Map(
+                        selectedSites
+                          .filter((site: any) => site.Employee)
+                          .map((site: any) => [
+                            site.Employee.id,
+                            {
+                              value: site.Employee.id,
+                              name: site.Employee.name,
+                              group: 'Host Based on Destination',
+                            },
+                          ]),
+                      ).values(),
                     ];
 
-                    const matchedHosts = employee
-                      .filter((emp: any) => siteHostIds.includes(emp.id))
-                      .map((emp: any) => ({
-                        value: emp.id,
-                        name: emp.name,
-                        group: 'Host Based on Destination',
-                      }));
 
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
@@ -3137,7 +3148,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     }));
 
                     const finalOptions = [...matchedHosts, ...otherHosts];
-                 
+
                     return (
                       <Autocomplete
                         loading={isLoadingEmployee}

@@ -145,7 +145,6 @@ const Content = () => {
   const [selected, setSelected] = useState<number[]>([]);
   const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [emailInput, setEmailInput] = useState('');
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const secdrawerWidth = 300;
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
@@ -305,7 +304,6 @@ const Content = () => {
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
-  const { data: profile } = useProfile(token);
 
   const { data: quickAccessResult } = useQuery({
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
@@ -368,14 +366,14 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Visitor',
+      title: 'Total ' + t('visitor'),
       icon: IconUsers,
       subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
     {
-      title: 'Add Pre Registration',
+      title: t('add') + ' Pre Registration',
       icon: IconClipboard,
       subTitle: iconAdd,
       subTitleSetting: 'image',
@@ -489,18 +487,10 @@ const Content = () => {
     setVisitorError(null);
   };
 
-  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [vtLoading, setVtLoading] = useState(false);
   const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
-
-  // const [search, setSearch] = useState<string>('');
   const debounceSearch = useDebounce(searchHost, 400);
-  const params = {
-    'search[value]': debounceSearch,
-    start: 0,
-    length: 10,
-  };
 
   useEffect(() => {
     if (!token) return;
