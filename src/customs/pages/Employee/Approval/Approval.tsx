@@ -52,8 +52,6 @@ const Approval = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingAction, setLoadingAction] = useState(false);
-  const [searchAgenda, setSearchAgenda] = useState('');
-  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);

@@ -411,7 +411,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       visitor_type: newType,
     }));
 
-    localStorage.removeItem('unsavedVisitorData');
     setSectionsData([]);
     setDataVisitor([]);
     setGroupedPages({} as any);
@@ -1902,8 +1901,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     (f: any) => f.answer_text || f.answer_datetime || f.answer_file,
                                   );
 
-                                  const showEmployeeSearch = isEmployeeSelected(page.form as any);
-
                                   const isEmployee =
                                     dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
                                       (f) => f.remarks === 'is_employee',
@@ -1921,12 +1918,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         </TableCell>
 
                                         {form
-                                          // ?.filter((field: any) => {
-                                          //   if (field.remarks === 'employee' && !showEmployeeSearch)
-                                          //     return false;
-
-                                          //   return true;
-                                          // })
                                           .filter(
                                             (field: any) =>
                                               (field.remarks || '').toLowerCase() !== 'employee',
@@ -3254,6 +3245,34 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     );
                   }
                   if (item.remarks === 'host') {
+                    // const selectedSiteIds =
+                    //   details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+                    // const siteHostIds = [
+                    //   ...new Set(
+                    //     sites
+                    //       .filter((site: any) => selectedSiteIds.includes(site.id))
+                    //       .map((site: any) => site.host)
+                    //       .filter(Boolean),
+                    //   ),
+                    // ];
+
+                    // // host yang sesuai site
+                    // const matchedHosts = employee
+                    //   .filter((emp: any) => siteHostIds.includes(emp.id))
+                    //   .map((emp: any) => ({
+                    //     value: emp.id,
+                    //     name: emp.name,
+                    //     group: 'Host Based on Destination',
+                    //   }));
+
+                    // const otherHosts = employee
+                    //   .filter((emp: any) => !siteHostIds.includes(emp.id))
+                    //   .map((emp: any) => ({
+                    //     value: emp.id,
+                    //     name: emp.name,
+                    //     group: 'All Host',
+                    //   }));
+
                     const selectedSiteIds =
                       details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
                     const siteHostIds = [
@@ -3264,8 +3283,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           .filter(Boolean),
                       ),
                     ];
-
-                    // host yang sesuai site
                     const matchedHosts = employee
                       .filter((emp: any) => siteHostIds.includes(emp.id))
                       .map((emp: any) => ({
@@ -3273,29 +3290,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         name: emp.name,
                         group: 'Host Based on Destination',
                       }));
-
-                    // const otherHosts = employee
-                    //   .filter((emp: any) => !siteHostIds.includes(emp.id))
-                    //   .map((emp: any) => ({
-                    //     value: emp.id,
-                    //     name: emp.name,
-                    //     group: 'All Host',
-                    //   }));
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
-
-                    // const availableHosts = employee.filter(
-                    //   (emp: any) => !siteHostIds.includes(emp.id),
-                    // );
-
                     const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
-
                     const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
-
                     const mergedHosts = selectedHost
                       ? [selectedHost, ...visibleHosts.filter((x: any) => x.id !== selectedHost.id)]
                       : visibleHosts;
-
                     const otherHosts = mergedHosts.map((emp: any) => ({
                       value: emp.id,
                       name: emp.name,

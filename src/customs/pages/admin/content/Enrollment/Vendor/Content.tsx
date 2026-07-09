@@ -38,10 +38,7 @@ import {
 import { IconUsers } from '@tabler/icons-react';
 
 // Alert
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
 type EmployeesTableRow = {
@@ -163,7 +160,7 @@ const Content = () => {
             token,
             start,
             rowsPerPage,
-            sortColumn,
+            // sortColumn,
             sortDir,
             searchKeyword,
             filters.gender === 0 ? undefined : filters.gender,
@@ -186,19 +183,6 @@ const Content = () => {
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-        const isNotFound =
-          employeeRes?.status_code === 404 ||
-          employeeRes?.status === 'not_found' ||
-          safeCollection.length === 0;
-
-        if (isNotFound) {
-          setTableData([]);
-          setTableRowEmployee([]);
-          setTotalRecords(0);
-          setTotalFilteredRecords(0);
-          setIsDataReady(true);
-          return;
-        }
 
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);

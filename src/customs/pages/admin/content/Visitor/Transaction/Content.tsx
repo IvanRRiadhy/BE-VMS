@@ -1,31 +1,16 @@
 import { useState, useEffect, useRef, use } from 'react';
 import {
   Box,
-  CircularProgress,
-  Skeleton,
   Grid2 as Grid,
-  IconButton,
-  Button,
-  Typography,
   Portal,
   Snackbar,
   Alert,
-  TableRow,
-  TableCell,
-  TableHead,
-  Table,
-  TableBody,
-  TableContainer,
-  Paper,
   useTheme,
   useMediaQuery,
-  Tooltip,
-  InputAdornment,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -44,35 +29,19 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorTransactionByIds, getVisitorTransactionPagination } from 'src/customs/api/admin';
-import {
-  IconClipboard,
-  IconFileSpreadsheet,
-  IconFilterFilled,
-  IconPdf,
-  IconQrcode,
-  IconUser,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
 
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
-import {
-  ContentCopy,
-  KeyboardArrowDownOutlined,
-  KeyboardArrowUpOutlined,
-} from '@mui/icons-material';
 import { useDebounce } from 'src/hooks/useDebounce';
-import VisitorRow from './VisitorRow';
 import FilterTransaction from './FilterMoreContent';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog';
 import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useSites } from 'src/hooks/useSites';
-import { useEmployees } from 'src/hooks/useEmployees';
 import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from '../Trx/components/InvitationVisitorDialog';
 import PreRegistrationDialog from '../Trx/components/PreRegistrationDialog';
@@ -81,6 +50,12 @@ import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { cancelVisitor, getProfile } from 'src/customs/api/users';
 import { useProfile } from 'src/hooks/useProfile';
 import { useTranslation } from 'react-i18next';
+import {
+  exportVisitorExcel,
+  exportVisitorPdf,
+} from 'src/customs/pages/Employee/Invitation/components/VisitorExport';
+import TransactionVisitorDetail from './components/TransactionVisitorDetail';
+import TransactionVisitorList from './components/TransactionVisitorList';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -110,14 +85,11 @@ const Content = () => {
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  const defaultFormData = CreateVisitorRequestSchema.parse({});
+
+  const [formDataAddVisitor, setFormDataAddVisitor] =
+    useState<CreateVisitorRequest>(defaultFormData);
   const { t } = useTranslation();
-
-  // const [formDataAddVisitor, setFormDataAddVisitor] = useState<any>({});
-
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -167,7 +139,6 @@ const Content = () => {
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
 
-  const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -193,8 +164,6 @@ const Content = () => {
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
   const [groupHeader, setGroupHeader] = useState<any | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
-
-  const observerRef = useRef<HTMLDivElement>(null);
 
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
@@ -239,59 +208,6 @@ const Content = () => {
     start_date: '',
     end_date: '',
   });
-
-  // const fetchData = async () => {
-  //   if (!token) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const start = page * rowsPerPage;
-
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-  //     const res = await getVisitorTransactionPagination(
-  //       token,
-  //       start,
-  //       rowsPerPage,
-  //       sortDir,
-  //       debouncedSearchAgenda || undefined,
-  //       appliedFilters.start_date || undefined,
-  //       appliedFilters.end_date || undefined,
-  //       appliedFilters.visitor_status || undefined,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.transaction_status || undefined,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-
-  //     setTableRowVisitors(
-  //       res.collection.map((item: any) => ({
-  //         id: item.id,
-  //         agenda: item.agenda || '-',
-  //         visitor_type: item.visitor_type_name || '-',
-  //         host_name: item.host_name || '-',
-  //         visitor_period_start: formatDateTime(item.visitor_period_start),
-  //         visitor_period_end: formatDateTime(item.visitor_period_end),
-  //         invited_by: item.invited_by || '-',
-  //       })),
-  //     );
-
-  //     setTotalRecords(res.RecordsTotal);
-  //     setTotalFilteredRecords(res.RecordsFiltered);
-  //   } catch (err) {
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const fetchData = async (append = false) => {
     if (!token || isFetchingRef.current) return;
@@ -366,8 +282,7 @@ const Content = () => {
       setLoadingMore(false);
     }
   };
-
-  const isSearching = debouncedSearchAgenda.trim() !== '';
+  
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
@@ -449,7 +364,6 @@ const Content = () => {
   };
 
   const resetFormData = () => {
-    localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(defaultFormData);
     setEdittingId('');
   };
@@ -670,238 +584,36 @@ const Content = () => {
             }}
           >
             {/* Left */}
-            <Box
-              sx={{
-                width: mdUp ? secdrawerWidth : '100%',
-                borderRight: '1px solid #eee',
-                p: 2,
-                pt: 2,
-                overflow: 'auto',
-                height: { xs: '100%', md: '75vh' },
-              }}
-            >
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                <Typography variant="h6" fontSize="1rem">
-                  Transaction Visitor
-                </Typography>
-              </Box>
-
-              {/* Search */}
-              <CustomTextField
-                fullWidth
-                size="small"
-                placeholder="Search Transaction"
-                value={searchAgenda}
-                onChange={(e) => setSearchAgenda(e.target.value)}
-                sx={{ mb: 2 }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                        <IconFilterFilled />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Box>
-                <Box>
-                  {loading
-                    ? Array.from({ length: 10 }).map((_, i) => (
-                        <Box
-                          key={i}
-                          sx={{
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            mb: 1,
-                          }}
-                        >
-                          <Skeleton variant="text" width="60%" height={24} />
-                          <Skeleton variant="text" width="40%" height={20} />
-                        </Box>
-                      ))
-                    : filteredVisitors.map((group: any) => (
-                        <Box
-                          key={group.id}
-                          sx={{
-                            backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            cursor: 'pointer',
-                            mb: 1,
-                            '&:hover': {
-                              backgroundColor: '#eee',
-                            },
-                          }}
-                          onClick={() => {
-                            setSelectedGroup(group);
-                            setSelectedGroupId(group.id);
-                          }}
-                        >
-                          <Typography variant="body1" fontWeight="bold">
-                            {group.agenda}
-                          </Typography>
-                          <Box display={'flex'} justifyContent={'space-between'}>
-                            <Typography>{group.visitor_type}</Typography>
-                            <Typography>{group.host_name}</Typography>
-                          </Box>
-                          <Typography>Start : {group.visitor_period_start}</Typography>
-                          <Typography>End : {group.visitor_period_end}</Typography>
-
-                          <Box
-                            display={'flex'}
-                            justifyContent={'flex-end'}
-                            alignItems={'center'}
-                            sx={{ width: '100%' }}
-                            mt={1}
-                            gap={1}
-                          >
-                            <Button
-                              variant="outlined"
-                              sx={{ backgroundColor: 'gray', color: 'white' }}
-                              startIcon={<ContentCopy />}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDuplicate(group);
-                              }}
-                            >
-                              Duplicate
-                            </Button>
-                            {group.invited_by === profile?.user_id && (
-                              <Button
-                                variant="contained"
-                                color="error"
-                                onClick={() => handleCancel(group.id)}
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                          </Box>
-                        </Box>
-                      ))}
-                  {hasMore && (
-                    <Box display="flex" justifyContent="center" mt={2}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => fetchData(true)}
-                        disabled={loadingMore}
-                        fullWidth
-                      >
-                        {loadingMore ? (
-                          <>
-                            <CircularProgress size={18} sx={{ mr: 1 }} />
-                          </>
-                        ) : (
-                          'Load More'
-                        )}
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Box>
+            <TransactionVisitorList
+              mdUp={mdUp}
+              secdrawerWidth={secdrawerWidth}
+              loading={loading}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              profile={profile}
+              searchAgenda={searchAgenda}
+              setSearchAgenda={setSearchAgenda}
+              setShowDrawerFilterMore={setShowDrawerFilterMore}
+              filteredVisitors={filteredVisitors}
+              selectedGroup={selectedGroup}
+              setSelectedGroup={setSelectedGroup}
+              setSelectedGroupId={setSelectedGroupId}
+              handleDuplicate={handleDuplicate}
+              handleCancel={handleCancel}
+              fetchData={fetchData}
+            />
             {/* Right */}
-            <Box flexGrow={1} p={2} sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}>
-              {selectedGroupId ? (
-                <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
-                  <Table aria-label="collapsible table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ width: 50 }}>
-                          <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
-                            {openGroup ? (
-                              <KeyboardArrowUpOutlined />
-                            ) : (
-                              <KeyboardArrowDownOutlined />
-                            )}
-                          </IconButton>
-                        </TableCell>
-                        <TableCell colSpan={8}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            alignItems={'center'}
-                          >
-                            <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
-                              {groupHeader?.group_name ?? '-'}
-                            </Typography>
-                            <Box display={'flex'} gap={0.5}>
-                              <Tooltip title="Export PDF" arrow>
-                                <Button variant="contained" color="error">
-                                  <IconPdf />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip title="Export Excel" arrow>
-                                <Button variant="contained" color="success">
-                                  <IconFileSpreadsheet />
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell />
-                        <TableCell component="th" scope="row">
-                          Visitor Name
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Email
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Phone
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Organization
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Host
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Site
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          Status
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {groupDetailLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center">
-                            <CircularProgress size={24} />
-                          </TableCell>
-                        </TableRow>
-                      ) : groupVisitors.length > 0 ? (
-                        groupVisitors.map((visitor: any, index: number) => (
-                          <VisitorRow key={visitor.id} visitor={visitor} index={index} />
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center">
-                            <Typography color="text.secondary">No visitor data</Typography>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Box
-                  height="100%"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  flexDirection="column"
-                >
-                  <img src={bg_nodata} width={150} />
-                  <Typography color="text.secondary" mt={2} variant="h5">
-                    {t('selectGroupFromTheList')}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
+            <TransactionVisitorDetail
+              selectedGroupId={selectedGroupId}
+              openGroup={openGroup}
+              setOpenGroup={setOpenGroup}
+              groupHeader={groupHeader}
+              groupVisitors={groupVisitors}
+              groupDetailLoading={groupDetailLoading}
+              exportVisitorPdf={exportVisitorPdf}
+              exportVisitorExcel={exportVisitorExcel}
+              t={t}
+            />
           </Box>
         </Box>
       </Container>

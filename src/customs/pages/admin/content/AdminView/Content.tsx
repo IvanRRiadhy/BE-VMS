@@ -225,10 +225,9 @@ const Content = () => {
   const [openParking, setOpenParking] = useState(false);
   const [openVehicle, setOpenVehicle] = useState(false);
   const [totalCountVisitor, setTotalCountVisitor] = useState(0);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
+  CreateVisitorRequestSchema.parse({}),
+);
   const [swipePayload, setSwipePayload] = useState<any[]>([]);
   const parkingData = [
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
@@ -843,7 +842,6 @@ const Content = () => {
   };
 
   const handleCloseDialog = () => {
-    localStorage.removeItem('unsavedVisitorData');
     // setSelectedSite(null);
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);

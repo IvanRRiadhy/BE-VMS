@@ -55,19 +55,12 @@ const OperatorToolbar = ({
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const lg = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
 
   return (
     <Box
       display="flex"
       gap={0.5}
       alignItems="center"
-      // sx={{
-      //   mb: { xs: 2, md: '2px' },
-      //   flexWrap: { xs: 'wrap', xl: 'nowrap' },
-      //   width: '100%',
-      //   px: '5px',
-      // }}
       sx={{
         width: '100%',
         flexWrap: 'nowrap',
@@ -85,7 +78,7 @@ const OperatorToolbar = ({
             md: 150,
             lg: 200,
           },
-          backgroundColor: '#fff'
+          backgroundColor: 'background.paper'
         }}
       >
         <MenuItem value="" disabled>
@@ -104,7 +97,6 @@ const OperatorToolbar = ({
           startIcon={<IconUser size={18} />}
           onClick={handleClick}
           endIcon={<IconCaretDownFilled size={18} />}
-          // sx={{ width: '30%' }}
           size="medium"
           sx={{
             maxWidth: {

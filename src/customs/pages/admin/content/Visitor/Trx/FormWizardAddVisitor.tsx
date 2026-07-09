@@ -133,7 +133,7 @@ dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-// dayjs.locale('id');
+dayjs.locale('id');
 
 type GroupedPages = {
   single_page: any[];
@@ -788,7 +788,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       visitor_type: newType,
     }));
 
-    localStorage.removeItem('unsavedVisitorData');
     setSectionsData([]);
     setDataVisitor([]);
     setGroupedPages({} as any);
@@ -1068,8 +1067,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           ...prev,
                           is_group: false,
                         }));
-
-                        localStorage.removeItem('unsavedVisitorData');
                       }}
                     />
                   }
@@ -1101,8 +1098,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           ...prev,
                           is_group: value,
                         }));
-
-                        localStorage.removeItem('unsavedVisitorData');
                       }}
                     />
                   }

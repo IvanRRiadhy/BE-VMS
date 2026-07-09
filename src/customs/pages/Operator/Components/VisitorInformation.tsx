@@ -21,6 +21,7 @@ import {
 import { IconBuilding, IconMail } from '@tabler/icons-react';
 import PreviewImageDialog from '../Dialog/PreviewImageDialog';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const InfoRow = ({
   icon,
@@ -63,6 +64,7 @@ const VisitorInformation = ({
   faceImage,
   lgUp,
 }: any) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedTitle, setSelectedTitle] = useState('');
@@ -78,21 +80,21 @@ const VisitorInformation = ({
     setOpen(false);
   };
   return (
-    <Grid
-      container
-      spacing={2}
+    <Box
       sx={{
         p: 2.5,
         pb: 0,
         alignItems: 'flex-start',
-        backgroundColor: '#fff !important',
+        // backgroundColor: '#fff !important',
+        backgroundColor: 'background.paper',
         borderRadius: 2,
-        // height: '100%',
-        // height: '340px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
       }}
     >
       {/* IMAGE */}
-      <Grid size={{ xs: 12, xl: 4 }} sx={{}}>
+      <Grid size={{ xs: 12, xl: 4 }}>
         <Card
           sx={{
             flex: 1,
@@ -103,9 +105,12 @@ const VisitorInformation = ({
             height: '100%',
             maxHeight: isFullscreen ? '50vh' : { xs: '100%', xl: '400px' },
             boxShadow: 'none !important',
-            // backgroundColor: 'none !important',
+            backgroundColor: 'none !important',
             // py: '0 !important',
             px: { xs: '0', lg: '0px' },
+            '&.css-1o8f9r6-MuiPaper-root-MuiCard-root': {
+              backgroundColor: 'none !important',
+            },
           }}
         >
           <CardContent
@@ -131,6 +136,7 @@ const VisitorInformation = ({
                 maxHeight: '100%',
                 borderRadius: 2,
                 overflow: 'hidden',
+                backgroundColor: 'none !important',
               }}
             >
               {LprImage ? (
@@ -151,10 +157,11 @@ const VisitorInformation = ({
                     objectFit: 'cover',
                     borderRadius: '30px',
                     cursor: 'pointer',
+                    backgroundColor: 'none !important',
                   }}
                 />
               ) : (
-                <Typography color="text.secondary">No image</Typography>
+                <Typography color="text.secondary">{t('noImage')}</Typography>
               )}
             </Box>
           </CardContent>
@@ -220,11 +227,6 @@ const VisitorInformation = ({
                       color="secondary"
                     />
                   )}
-
-                  {/* 
-  <Chip size="small" label="FREQUENT VISITOR" color="primary" />
-  <Chip size="small" label="VERIFIED" color="success" />
-  */}
                 </Stack>
 
                 <Divider sx={{ mb: 1 }} />
@@ -276,7 +278,7 @@ const VisitorInformation = ({
         title={selectedTitle}
         onClose={handleClose}
       />
-    </Grid>
+    </Box>
   );
 };
 

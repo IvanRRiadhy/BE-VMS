@@ -1,19 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
   Grid2 as Grid,
-  IconButton,
 } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -59,7 +53,6 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);

@@ -70,7 +70,6 @@ import { useDebounce } from 'src/hooks/useDebounce';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { cancelVisitor } from 'src/customs/api/users';
-import { useProfile } from 'src/hooks/useProfile';
 import VisitorDetailPanel from './components/VisitorDetailPanel';
 import VisitorListTable from './components/VisitorListTable';
 import { useTranslation } from 'react-i18next';
@@ -741,85 +740,6 @@ const Content = () => {
                 size={{ xs: 12, lg: 3 }}
               />
             </Grid>
-
-            {/* <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                loading={isLoading}
-                isHavePagination={true}
-                overflowX={'auto'}
-                minWidth={2400}
-                stickyHeader={true}
-                currentPage={page}
-                data={processedData || []}
-                totalCount={totalFilteredRecords}
-                isNoActionTableHead={true}
-                selectedRows={selectedRows}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveImage={true}
-                isHaveSearch={true}
-                isHaveVip={true}
-                isHavePeriod={true}
-                // isVip={(row) => row.is_vip === true}
-                isHaveAddData={false}
-                isHaveHeader={true}
-                isHaveGender={true}
-                isHaveVisitor={true}
-                isActionVisitor={true}
-                isActionEmployee={true}
-                stickyVisitorCount={2}
-                isBlacklistPage={false}
-                isHaveEmployee={false}
-                // onEmployeeClick={(row: any) => {
-                //   handleEmployeeClick(row.host as string);
-                // }}
-                isHaveVerified={false}
-                // headerContent={{
-                //   title: '',
-                //   subTitle: 'Monitoring Data Visitor',
-                //   items: [
-                //     { name: 'All' },
-                //     { name: 'Preregis' },
-                //     { name: 'Checkin' },
-                //     { name: 'Checkout' },
-                //     { name: 'Block' },
-                //     { name: 'Denied' },
-                //     { name: 'Waiting' },
-                //   ],
-                // }}
-                // onHeaderItemClick={(item) => {
-                //   if (
-                //     item.name === 'All' ||
-                //     item.name === 'Checkin' ||
-                //     item.name === 'Checkout' ||
-                //     item.name === 'Preregis' ||
-                //     item.name === 'Denied' ||
-                //     item.name === 'Block' ||
-                //     item.name === 'Waiting'
-                //   ) {
-                //     setSelectedType(item.name);
-                //     setPage(0);
-                //     setAppliedFilters((prev: any) => ({
-                //       ...prev,
-                //       status: item.name === 'All' ? 0 : item.name,
-                //     }));
-                //   }
-                // }}
-                defaultSelectedHeaderItem="All"
-                onView={(row) => {
-                  handleView(row.id);
-                }}
-                searchKeyword={search}
-                onSearch={handleSearch}
-                onAddData={handleAdd}
-              />
-            </Grid> */}
             <Box
               sx={{
                 display: 'flex',

@@ -25,9 +25,9 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState('desc');
   const { t } = useTranslation();
+  const [loadingAction, setLoadingAction] = useState(false);
   const cards = [
     {
       title: t('totalVisitorRole'),
@@ -55,10 +55,6 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, refreshTrigger, search]);
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
-
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -66,8 +62,6 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
-
-  const [loadingAction, setLoadingAction] = useState(false);
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
     setLoadingAction(true);
@@ -124,7 +118,6 @@ const Content = () => {
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
               />

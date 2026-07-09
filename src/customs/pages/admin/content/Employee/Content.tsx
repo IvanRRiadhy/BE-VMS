@@ -432,8 +432,6 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
     setInitialFormData((_) => formDataAddEmployee);
     setOpenFormAddEmployee(false);
-
-    localStorage.removeItem('unsavedEmployeeData');
   };
 
   const handleDialogClose = (_event?: object, reason?: string) => {

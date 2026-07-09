@@ -35,12 +35,17 @@ const DialogSiteSpace = ({
   onClose,
   onConfirmClose,
 }: DialogSiteSpaceProps) => {
-  const handleClose = (_event: object, reason?: string) => {
-    if (isFormChanged) {
-      onConfirmClose();
-    } else {
-      onClose();
+  const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+      if (isFormChanged) {
+        onConfirmClose();
+      } else {
+        onClose();
+      }
+      return;
     }
+
+    onClose();
   };
 
   return (

@@ -90,10 +90,9 @@ const Content = () => {
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
+
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
 
   const { roleAccess } = useSession();
 
@@ -110,16 +109,7 @@ const Content = () => {
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
 
-  const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
-  // useEffect(() => {
-  //   if (isFormChanged) {
-  //     localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-  //   } else {
-  //     localStorage.removeItem('unsavedVisitorData');
-  //   }
-  // }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
@@ -131,14 +121,12 @@ const Content = () => {
   const [employeeDetail, setEmployeeDetail] = useState<any>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
   const navigate = useNavigate();
   const [selectedShareLink, setSelectedShareLink] = useState(null);
-  // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const queryClient = useQueryClient();
   const [qrValue, setQrValue] = useState('');
@@ -451,23 +439,9 @@ const Content = () => {
   }, []);
 
   const handleAdd = () => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    let freshForm;
-
-    // if (saved) {
-    //   try {
-    //     freshForm = JSON.parse(saved);
-    //   } catch {
-    freshForm = CreateVisitorRequestSchema.parse({});
-    //   }
-    // } else {
-    // freshForm = CreateVisitorRequestSchema.parse({});
-    // }
-
     setEdittingId('');
-    setFormDataAddVisitor(freshForm);
+    setFormDataAddVisitor(defaultFormData);
     setSelectedSite(null);
-    // setPendingEditId(null);
   };
 
   const handleSuccess = () => {
@@ -477,7 +451,6 @@ const Content = () => {
       registered_site: '',
     }));
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
-    localStorage.removeItem('unsavedVisitorData');
     closeVisitorDialog();
   };
 
@@ -491,7 +464,6 @@ const Content = () => {
   };
 
   const resetFormData = () => {
-    localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(defaultFormData);
     setEdittingId('');
   };

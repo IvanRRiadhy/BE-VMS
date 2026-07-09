@@ -105,5 +105,11 @@
   "insertInvitationCode": "Masukkan Kode Undangan",
   "noAccessPass": "Tidak ada akses pass ditemukan",
   "tapShowDetail": "Tekan untuk menampilkan detail",
-  "selectGroupFromTheList": "Pilih grup dari daftar disamping"
+  "selectGroupFromTheList": "Pilih grup dari daftar disamping",
+  "card": {
+    "number": "Nomor Kartu",
+    "inputCardNumber": "Masukkan Nomor Kartu",
+    "returnCard": "Pengembalian Kartu"
+  },
+  "noImage": "Tidak ada gambar"
 }

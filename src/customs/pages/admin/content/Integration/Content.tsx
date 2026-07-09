@@ -78,17 +78,6 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
-  const DRAFT_KEY = 'unsavedIntegrationData';
-
-  const getDraft = () => {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
 
   function normalizeBrandType(value: unknown): number {
     if (typeof value === 'number') return value;
@@ -243,11 +232,8 @@ const Content = () => {
     INTERNALMODULE: IntegrationType.InternalModule,
   };
 
-  const handleOpenDialog = () => {
-    setOpenFormAddIntegration(true);
-  };
+
   const handleCloseDialog = () => setOpenFormAddIntegration(false);
-  const [pendingIntegration, setPendingIntegration] = useState<AvailableItem | null>(null);
 
   const openForm = (integration?: AvailableItem | null) => {
     let newData = CreateIntegrationRequestSchema.parse({
@@ -276,14 +262,6 @@ const Content = () => {
   };
 
   const handleAdd = (integration?: AvailableItem) => {
-    const draft = getDraft();
-
-    if (draft) {
-      setPendingIntegration(integration || null);
-      setConfirmDialogOpen(true);
-      return;
-    }
-
     openForm(integration);
   };
 
@@ -356,7 +334,6 @@ const Content = () => {
       setConfirmDialogOpen(true);
       return;
     }
-    localStorage.removeItem(DRAFT_KEY);
     setOpenFormAddIntegration(false);
   };
 

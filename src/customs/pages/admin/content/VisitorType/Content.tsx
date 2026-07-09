@@ -10,9 +10,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
   CreateVisitorTypeRequest,
   CreateVisitorTypeRequestSchema,
-  Item,
-  updateVisitorTypeSchmea,
-  UpdateVisitorTypeRequest,
+  Item
 } from 'src/customs/api/models/Admin/VisitorType';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
@@ -466,13 +464,9 @@ const Content = () => {
                 onDuplicate={(row) => handleDuplicate(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 searchKeyword={search}
                 onSearch={handleSearch}
                 onAddData={handleAdd}
-                // onBooleanSwitchChange={(row, col, checked) =>
-                //   handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
-                // }
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
                 onQuickAccessToggle={handleQuickAccessToggle}

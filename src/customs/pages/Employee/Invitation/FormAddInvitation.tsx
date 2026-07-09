@@ -352,8 +352,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       ...prev,
       visitor_type: newType,
     }));
-
-    localStorage.removeItem('unsavedVisitorData');
     setSectionsData([]);
     setDataVisitor([]);
     setGroupedPages({} as any);
@@ -5036,7 +5034,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           sections: sectionsData,
         };
 
-    localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
   }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
 
   const handleAddDetails = () => {

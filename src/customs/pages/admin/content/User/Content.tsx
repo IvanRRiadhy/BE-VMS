@@ -381,7 +381,6 @@ const Content = () => {
         open={openFormAddDocument}
         onClose={() => {
           setOpenFormAddDocument(false);
-          localStorage.removeItem('unsavedUserForm');
         }}
         edittingId={edittingId}
         onSuccess={() => {

@@ -26,11 +26,6 @@ interface VisitorFilters {
   is_blacklist: string;
 }
 
-type OptionItem = {
-  id: string;
-  name: string;
-};
-
 type FilterMoreContentProps = {
   open: any;
   onClose: any;
@@ -38,10 +33,6 @@ type FilterMoreContentProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApply: () => void;
   onResetFilter: () => void;
-};
-const defaultFilters: VisitorFilters = {
-  is_employee: '',
-  is_blacklist: '',
 };
 
 const FilterTransaction: React.FC<FilterMoreContentProps> = ({

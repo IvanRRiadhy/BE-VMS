@@ -45,13 +45,6 @@ export default function InvitationVisitorDialog({
   vtLoading,
   isLoadingEmployee,
 }: Props) {
-  // const handleClose = () => {
-  //   if (isFormChanged) {
-  //     openDiscardForCloseAdd();
-  //   } else {
-  //     handleCloseDialog();
-  //   }
-  // };
 
   const handleClose = (_event?: object, reason?: 'backdropClick' | 'escapeKeyDown') => {
     if (isFormChanged) {

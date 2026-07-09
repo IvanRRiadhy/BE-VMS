@@ -19,7 +19,7 @@ const VisitorSearchInput = ({ onOpenSearch, onClear, containerRef }: VisitorSear
   };
 
   return (
-    <Box display="flex" alignItems="center" gap={1} sx={{ backgroundColor: '#fff' }}>
+    <Box display="flex" alignItems="center" gap={1} sx={{ backgroundColor: 'background.paper' }}>
       <CustomTextField
         fullWidth
         size="small"

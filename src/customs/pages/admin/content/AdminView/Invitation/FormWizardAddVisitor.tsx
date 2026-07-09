@@ -323,7 +323,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       visitor_type: newType,
     }));
 
-    localStorage.removeItem('unsavedVisitorData');
     setSectionsData([]);
     setDataVisitor([]);
     setGroupedPages({} as any);

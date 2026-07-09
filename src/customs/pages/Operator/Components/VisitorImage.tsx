@@ -215,7 +215,7 @@ const VisitorImage = ({
             onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
           />
         </Grid> */}{' '}
-      <Box sx={{ backgroundColor: '#fff', p: 2, borderRadius: 1.5 }}>
+      <Card sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }}>
         <Box
           sx={{
             display: 'flex',
@@ -289,7 +289,7 @@ const VisitorImage = ({
             </Grid>
           )}
         </Grid>
-      </Box>
+      </Card>
       <Grid>
         <ImageCard
           title="Identity Image"

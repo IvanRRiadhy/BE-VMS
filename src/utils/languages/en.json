@@ -106,5 +106,11 @@
   "insertInvitationCode": "Insert  invitation code",
   "noAccessPass": "No access pass found",
   "tapShowDetail": "Tap to show detail",
-  "selectGroupFromTheList" : "Select group from the list"
+  "selectGroupFromTheList": "Select group from the list",
+  "card": {
+    "number": "Card Number",
+    "inputCardNumber": "Input Card Number",
+    "returnCard": "Return Card"
+  },
+  "noImage": "No Image"
 }

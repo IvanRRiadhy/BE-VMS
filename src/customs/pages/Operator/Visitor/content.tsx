@@ -67,10 +67,9 @@ const Visitor = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
+    CreateVisitorRequestSchema.parse({}),
+  );
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
   const [resetStep, setResetStep] = useState(0);
@@ -204,7 +203,6 @@ const Visitor = () => {
   };
 
   const handleCloseDialog = () => {
-    localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);
     setOpenPreRegistration(false);
@@ -348,7 +346,7 @@ const Visitor = () => {
     }
   };
 
-  const handleOpenInviteDialog =  async (row: any) => {
+  const handleOpenInviteDialog = async (row: any) => {
     // setSelectedShareLink(row);
 
     const res = await getShareLinkById(row.id, token as string);

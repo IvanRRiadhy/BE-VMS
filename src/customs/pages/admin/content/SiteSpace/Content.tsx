@@ -78,7 +78,6 @@ const Content = () => {
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [shouldSaveToStorage, setShouldSaveToStorage] = useState(true);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [openDetailType, setOpenDetailType] = useState(false);
   const [selectedType, setSelectedType] = useState<number | null>(null);
@@ -140,10 +139,7 @@ const Content = () => {
   }, [id, wildcard, allData]);
   const { employee } = useEmployees(token);
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
-  const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
-    const saved = localStorage.getItem('unsavedSiteForm');
-    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
-  });
+  const [formDataAddSite, setFormDataAddSite] = useState<any>(CreateSiteRequestSchema.parse({}));
 
   const cards = [
     {
@@ -159,51 +155,6 @@ const Content = () => {
     if (!openFormCreateSiteSpace || !initialFormSnapshot) return false;
     return JSON.stringify(formDataAddSite) !== JSON.stringify(initialFormSnapshot);
   }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
-
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
-    } else {
-      localStorage.removeItem('unsavedSiteForm');
-    }
-  }, [
-    formDataAddSite,
-    shouldSaveToStorage,
-    openFormCreateSiteSpace,
-    initialFormSnapshot,
-    isFormChanged,
-  ]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        openFormCreateSiteSpace &&
-        dialogRef.current &&
-        !dialogRef.current.contains(event.target as Node)
-      ) {
-        if (isFormChanged) {
-          setConfirmDialogOpen(true);
-        } else {
-          handleCloseModalCreateSiteSpace();
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openFormCreateSiteSpace, isFormChanged]);
-  useEffect(() => {
-    if (!shouldSaveToStorage) return;
-
-    const isDifferentFromDefault =
-      JSON.stringify(formDataAddSite) !== JSON.stringify(CreateSiteRequestSchema.parse({}));
-
-    if (isDifferentFromDefault) {
-      localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
-    }
-  }, [formDataAddSite, shouldSaveToStorage]);
 
   const [filters, setFilters] = useState<any>({
     type: -1,
@@ -314,29 +265,14 @@ const Content = () => {
   };
 
   const handleCloseModalCreateSiteSpace = () => {
-    localStorage.removeItem('unsavedSiteForm');
     setOpenFormCreateSiteSpace(false);
     setIsBatchEdit(false);
     setInitialFormSnapshot(null);
+    setEdittingId('');
   };
 
   const handleAdd = (type?: number) => {
     handleCloseDetailType();
-    const editing = localStorage.getItem('unsavedSiteForm');
-    if (editing) {
-      const parsed = JSON.parse(editing);
-      if (!parsed.id) {
-        if (type !== undefined) parsed.type = type;
-        setFormDataAddSite(parsed);
-        setInitialFormSnapshot(parsed);
-        setEdittingId('');
-        setOpenFormCreateSiteSpace(true);
-        return;
-      }
-      setPendingEditId(null);
-      setConfirmDialogOpen(true);
-      return;
-    }
 
     const empty = {
       ...CreateSiteRequestSchema.parse({}),
@@ -347,29 +283,15 @@ const Content = () => {
       parent: null,
       type: type ?? 0,
     };
+
     setFormDataAddSite(empty);
     setInitialFormSnapshot(empty);
     setEdittingId('');
+    setPendingEditId(null);
     setOpenFormCreateSiteSpace(true);
   };
 
   const handleEdit = async (id: string) => {
-    const editing = localStorage.getItem('unsavedSiteForm');
-
-    if (editing) {
-      const parsed = JSON.parse(editing);
-
-      if (parsed.id === id) {
-        setInitialFormSnapshot(parsed);
-        setOpenFormCreateSiteSpace(true);
-        return;
-      } else {
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-        return;
-      }
-    }
-
     if (!token) return;
 
     const safeNumber = (val: any, fallback = 0) => {
@@ -400,7 +322,6 @@ const Content = () => {
       const normalized = {
         ...found,
         type: safeNumber(found.type),
-        // type_approval: safeNumber(found.type_approval),
         approval_workflow_id:
           found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
             ? String(found.approval_workflow_id)
@@ -427,52 +348,29 @@ const Content = () => {
       setEdittingId(id);
       setFormDataAddSite(parsedData);
       setInitialFormSnapshot(parsedData);
-
-      localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
-
+      setPendingEditId(null);
       setOpenFormCreateSiteSpace(true);
     } catch (error) {
       console.error('Error fetching/parsing data:', error);
     }
   };
-
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedSiteForm');
-    setShouldSaveToStorage(false);
 
-    if (pendingEditId) {
-      const found = tableData.find((item) => item.id === pendingEditId);
-      if (found) {
-        const parsedData = {
-          ...CreateSiteRequestSchema.parse(found),
-          id: pendingEditId,
-          access: [],
-          parking: [],
-          tracking: [],
-        };
-        setEdittingId(pendingEditId);
-        setFormDataAddSite(parsedData);
-        setInitialFormSnapshot(parsedData);
-        setShouldSaveToStorage(true);
-        localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
-        setOpenFormCreateSiteSpace(true);
-      }
-    } else {
-      const empty = {
-        ...CreateSiteRequestSchema.parse({}),
-        id: '',
-        access: [],
-        parking: [],
-        tracking: [],
-      };
-      setEdittingId('');
-      setFormDataAddSite(empty);
-      setInitialFormSnapshot(empty);
-      handleCloseModalCreateSiteSpace();
-    }
+    const empty = {
+      ...CreateSiteRequestSchema.parse({}),
+      id: '',
+      access: [],
+      parking: [],
+      tracking: [],
+    };
 
+    setFormDataAddSite(empty);
+    setInitialFormSnapshot(null);
+    setEdittingId('');
     setPendingEditId(null);
+
+    handleCloseModalCreateSiteSpace();
   };
 
   const handleCancelEdit = () => {
@@ -594,10 +492,10 @@ const Content = () => {
   );
 
   const handleSuccess = () => {
-    localStorage.removeItem('unsavedSiteForm');
     setSelectedRows([]);
     setRefreshTrigger((prev) => prev + 1);
     handleCloseModalCreateSiteSpace();
+
     queryClient.invalidateQueries({
       queryKey: ['registeredSites'],
     });

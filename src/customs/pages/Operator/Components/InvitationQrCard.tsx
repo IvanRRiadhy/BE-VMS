@@ -1,7 +1,6 @@
 import { Box, Card, CardContent, CardHeader, Divider, Typography, useTheme } from '@mui/material';
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
-import { act } from 'react';
 
 interface InvitationQrCardProps {
   invitationCode: any;
@@ -27,7 +26,7 @@ const InvitationQrCard = ({
       sx={{
         borderRadius: 1.5,
         width: '100%',
-        backgroundColor: '#fff',
+        backgroundColor: 'background.paper',
         p: 1,
         mt: 0.5,
       }}

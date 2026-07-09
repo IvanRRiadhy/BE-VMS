@@ -1,12 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  Divider,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -19,7 +13,6 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   getAllCustomField,
@@ -34,7 +27,6 @@ import {
   FieldType,
   CreateCustomFieldRequestSchema,
 } from 'src/customs/api/models/Admin/CustomField';
-import FormCustomField from 'src/customs/pages/admin/content/CustomField/FormCustomField';
 import { IconSettings } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -61,8 +53,6 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
 

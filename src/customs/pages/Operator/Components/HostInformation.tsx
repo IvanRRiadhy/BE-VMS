@@ -96,7 +96,7 @@ const HostInformation = ({
           // justifyContent: 'center',
           // alignItems: 'center',
           border: '1px solid #e0e0e0',
-          backgroundColor: '#fff',
+          backgroundColor: 'background.paper',
           p: 1,
           mt: 0.5,
         }}

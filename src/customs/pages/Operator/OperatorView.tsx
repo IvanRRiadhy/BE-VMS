@@ -48,7 +48,6 @@ import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
-import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
@@ -139,6 +138,8 @@ const OperatorView = () => {
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedVisitorNumber, setSelectedVisitorNumber] = useState<string | null>(null);
   const [scannedVisitorNumber, setScannedVisitorNumber] = useState<string | null>(null);
   const [selectMultiple, setSelectMultiple] = useState(false);
@@ -207,10 +208,9 @@ const OperatorView = () => {
   const [openVehicle, setOpenVehicle] = useState(false);
   const [totalCountVisitor, setTotalCountVisitor] = useState(0);
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
+    CreateVisitorRequestSchema.parse({}),
+  );
   const [swipePayload, setSwipePayload] = useState<any[]>([]);
   const parkingData = [
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
@@ -322,19 +322,6 @@ const OperatorView = () => {
   const sendToScanner = (payload: any) => {
     socketRef.current?.send(JSON.stringify(payload));
   };
-
-  const currentUsedCards = useMemo(() => {
-    if (!Array.isArray(visitorCards)) return [];
-
-    return visitorCards
-      .filter(
-        (c) =>
-          (c.is_swapcard == false || c.is_swapcard == true) &&
-          c.card_type !== 'Barcode' &&
-          c.current_used === true,
-      )
-      .sort((a, b) => Number(a.current_used) - Number(b.current_used));
-  }, [visitorCards]);
 
   const currentUsedCardsByVisitor = useMemo(() => {
     return relatedVisitors
@@ -728,8 +715,6 @@ const OperatorView = () => {
   };
 
   const handleCloseDialog = () => {
-    localStorage.removeItem('unsavedVisitorData');
-    // setSelectedSite(null);
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);
     setOpenInvitationVisitor(false);
@@ -737,6 +722,16 @@ const OperatorView = () => {
     setOpenDialogIndex(null);
     setActionButton('');
     setWizardKey((k) => k + 1);
+    setIsFormDirty(false);
+  };
+
+  const handleRequestClose = () => {
+    if (isFormDirty) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    handleCloseDialog();
   };
 
   const handleCloseScanQR = () => {
@@ -3405,7 +3400,7 @@ const OperatorView = () => {
             // overflow: 'hidden',
           }}
         >
-          <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
+          <Grid container spacing={1} mb={0.5} alignItems={{ xs: 'center', xl: 'center' }}>
             <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}
@@ -3761,17 +3756,12 @@ const OperatorView = () => {
             },
           }}
           open={openInvitationVisitor}
-          onClose={handleCloseDialog}
+          onClose={handleRequestClose}
           container={containerRef.current ?? undefined}
         >
           <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
             {t('add')} Invitation Visitor
-            <IconButton
-              aria-label="close"
-              onClick={() => {
-                handleCloseDialog();
-              }}
-            >
+            <IconButton aria-label="close" onClick={handleRequestClose}>
               <IconX />
             </IconButton>
           </DialogTitle>
@@ -3814,17 +3804,12 @@ const OperatorView = () => {
             },
           }}
           open={openPreRegistration}
-          onClose={handleCloseDialog}
+          onClose={handleRequestClose}
           container={containerRef.current ?? undefined}
         >
           <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
             {t('add')} Pra Registration
-            <IconButton
-              aria-label="close"
-              onClick={() => {
-                handleCloseDialog();
-              }}
-            >
+            <IconButton aria-label="close" onClick={handleRequestClose}>
               <IconX />
             </IconButton>
           </DialogTitle>
@@ -3872,6 +3857,16 @@ const OperatorView = () => {
           onClose={() => setOpenReturnCard(false)}
           onChange={setReturnCardNumber}
           onSubmit={handleSubmitReturnCard}
+        />
+
+        <ConfirmUnsavedDialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onDiscard={() => {
+            setConfirmDialogOpen(false);
+            setIsFormDirty(false);
+            handleCloseDialog();
+          }}
         />
 
         <Portal>

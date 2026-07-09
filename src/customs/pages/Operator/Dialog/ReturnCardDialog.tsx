@@ -9,6 +9,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 
 interface ReturnCardDialogProps {
@@ -28,10 +29,11 @@ const ReturnCardDialog = ({
   onChange,
   onSubmit,
 }: ReturnCardDialogProps) => {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        Return Card
+        {t('card.returnCard')}
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -47,11 +49,11 @@ const ReturnCardDialog = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <CustomFormLabel sx={{ mt: 0 }}>Card Number</CustomFormLabel>
+        <CustomFormLabel sx={{ mt: 0 }}>{t('card.number')}</CustomFormLabel>
         <TextField
           fullWidth
           label=""
-          placeholder="Enter card number"
+          placeholder={t('card.inputCardNumber')}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           autoFocus
@@ -60,7 +62,6 @@ const ReturnCardDialog = ({
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-
         <Button variant="contained" onClick={onSubmit} disabled={loading}>
           {loading ? <CircularProgress size={20} /> : 'Submit'}
         </Button>
