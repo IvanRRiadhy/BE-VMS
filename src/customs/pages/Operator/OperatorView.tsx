@@ -43,7 +43,6 @@ import {
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import beImage from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import frImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
@@ -1102,6 +1101,7 @@ const OperatorView = () => {
       block_by: v.block_by ?? null,
       is_block: v.is_block ?? false,
       invited_by_name: v.invited_by_name ?? '-',
+      visitor_role: v.visitor_role ?? '-',
     }));
 
     setInvitationCode((prev) =>
@@ -1628,20 +1628,28 @@ const OperatorView = () => {
       return [
         {
           ...prev[0],
+          visitor_name: visitor.name,
+          visitor_email: visitor.email,
+          visitor_phone: visitor.phone,
+          visitor_gender: visitor.gender,
+          visitor_identity_id: visitor.visitor_identity_id,
+          visitor_organization_name: visitor.organization,
+          visitor_role: visitor.visitor_role,
+          visitor_type_name: visitor.visitor_type_name,
           visitor: {
-            ...prev[0]?.visitor,
+            ...prev[0].visitor,
             ...visitor,
           },
           visitor_number: visitor.visitor_number,
           visitor_period_start: visitor.visitor_period_start,
           visitor_period_end: visitor.visitor_period_end,
           agenda: visitor.agenda,
-          selfie_image: visitor.selfie_image || null,
-          identity_image: visitor.identity_image || null,
+          selfie_image: visitor.selfie_image,
+          identity_image: visitor.identity_image,
           card: visitor.card ?? [],
-          visitor_status: visitor.visitor_status ?? '-',
-          block_by: visitor.block_by ?? null,
-          is_block: visitor.is_block ?? false,
+          visitor_status: visitor.visitor_status,
+          block_by: visitor.block_by,
+          is_block: visitor.is_block,
         },
       ];
     });
@@ -2633,7 +2641,6 @@ const OperatorView = () => {
     );
   };
 
-  const [selectedAccessIds, setSelectedAccessIds] = useState<string[]>([]);
   const getAllowedActions = (status: number, earlyAccess: boolean) => {
     if (earlyAccess) {
       switch (status) {
@@ -2729,31 +2736,6 @@ const OperatorView = () => {
       actionsList[0] || [],
     );
   };
-
-  const allowedActions = useMemo(() => {
-    if (!selectedAccessIds.length) return [];
-
-    if (selectedVisitors.length > 1) {
-      const allActions = ['Grant', 'Revoke', 'Block'];
-
-      const permissionActions = selectedAccessIds.map((id) =>
-        getAllowedActionsByPermission(id, permissionAccess),
-      );
-
-      const commonPermissionActions = allActions.filter((action) =>
-        permissionActions.every((permList) => permList.includes(action)),
-      );
-
-      return commonPermissionActions;
-    }
-
-    return getAllowedActionsForMultiple(
-      selectedAccessIds,
-      selectedVisitors,
-      accessData,
-      permissionAccess,
-    );
-  }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
 
   // Multiple
   const handleSubmitPramultiple = async () => {
@@ -3820,7 +3802,7 @@ const OperatorView = () => {
             />
           </DialogContent>
         </Dialog>
-        
+
         {/* Create Pra Registration */}
         <Dialog
           fullWidth

@@ -1,37 +1,41 @@
-import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
+import { Box, Card, CardContent, CardHeader, Divider, Typography, useTheme } from '@mui/material';
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
+import { act } from 'react';
 
 interface InvitationQrCardProps {
-  invitationCode?: {
-    visitor_number?: string;
-    invitation_code?: string;
-  }[];
+  invitationCode: any;
   isFullscreen?: boolean;
   statusLabel?: string;
+  activeVisitor?: any;
 }
 
 const InvitationQrCard = ({
-  invitationCode = [],
+  invitationCode,
   isFullscreen = false,
   statusLabel = 'Match',
+  activeVisitor,
 }: InvitationQrCardProps) => {
-  const data = invitationCode[0];
+  // const data = invitationCode[0];
+  const data = activeVisitor;
+
+  const theme = useTheme();
+  const lg = theme.breakpoints.up('lg');
 
   return (
     <Card
       sx={{
-        borderRadius: 2,
-        height: '100%',
+        borderRadius: 1.5,
         width: '100%',
-        maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        border: '1px solid #e0e0e0',
-        p: 2,
+        backgroundColor: '#fff',
+        p: 1,
+        mt: 0.5,
       }}
     >
+      <CardHeader
+        title="Visitor QR Code"
+        style={{ fontWeight: 'bold', paddingBottom: '0px !important' }}
+      />
       <CardContent
         sx={{
           flexGrow: 1,
@@ -39,26 +43,28 @@ const InvitationQrCard = ({
           flexDirection: 'column',
           justifyContent: 'center',
           pb: '0 !important',
+          pt: '0px !important',
         }}
       >
         {/* QR / Empty State */}
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: 'start',
+            // alignItems: 'center',
             minHeight: 120,
             mb: 0,
+            gap: 5,
           }}
         >
           {data?.visitor_number ? (
             <QRCode
-              size={170}
-              value={data.visitor_number}
+              size={160}
+              value={data?.visitor_number || ''}
               viewBox="0 0 256 256"
               style={{
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
-                padding: '10px',
+                padding: '8px',
                 borderRadius: '8px',
                 background: 'white',
               }}
@@ -74,49 +80,25 @@ const InvitationQrCard = ({
               </Typography>
             </Box>
           )}
-        </Box>
-
-        {/* Number */}
-        <Box mt={2}>
-          <Typography variant="h6" fontWeight="bold" mb={1}>
-            Number
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={1}>
-            {data?.visitor_number || '-'}
-          </Typography>
-        </Box>
-
-        {/* Invitation Code */}
-        <Box>
-          <Typography variant="h6" fontWeight="bold" mb={1}>
-            Invitation Code
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={1}>
-            {data?.invitation_code || '-'}
-          </Typography>
-        </Box>
-
-        <Divider sx={{ mt: 0.5 }} />
-
-        {/* Status */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt="auto" >
-          <Typography variant="h6" fontWeight="bold">
-            Status
-          </Typography>
-          <Box
-            component="span"
-            sx={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              px: 2,
-              py: 0.5,
-              mt: 0.5,
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
-          >
-            {statusLabel}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="h6" fontWeight={'semibold'}>
+              Invitation Code
+            </Typography>
+            <Typography variant="body1" fontWeight={500}>
+              {data?.invitation_code || '-'}
+            </Typography>
+            <Typography variant="h6" fontWeight={'semibold'}>
+              Check In Time
+            </Typography>
+            <Typography variant="body1" fontWeight={500}>
+              {data?.checkin_at || '-'}
+            </Typography>
+            <Typography variant="h6" fontWeight={'semibold'}>
+              Check Out Time
+            </Typography>
+            <Typography variant="body1" fontWeight={500}>
+              {data?.checkout_at || '-'}
+            </Typography>
           </Box>
         </Box>
       </CardContent>

@@ -45,12 +45,11 @@ import {
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import LprImage from 'src/assets/images/products/pic_lpr.png';
+import frImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from 'src/customs/pages/Operator/Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
-import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
@@ -85,14 +84,13 @@ import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from 'src/customs/pages/Operator/Dialog/PrintDialogBluk';
 import { getRegisteredSiteOperator, returnCard } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from 'src/customs/pages/Operator/Dialog/SwipeCardNoCodeDialog';
-import InvitationQrCard from 'src/customs/pages/Operator/Components/InvitationQrCard';
 import VisitorSearchInput from 'src/customs/pages/Operator/Components/VisitorSearchInput';
 import OperatorToolbar from 'src/customs/pages/Operator/Components/OperatorToolbar';
 import VisitorImage from 'src/customs/pages/Operator/Components/VisitorImage';
 import ReturnCardDialog from 'src/customs/pages/Operator/Dialog/ReturnCardDialog';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import ParkingDialog from 'src/customs/pages/Operator/Dialog/ParkingDialog';
-import ActionPanelCard from 'src/customs/pages/admin/content/AdminView/Components/ActionPanelCard';
+
 import {
   getInvitationSite,
   getInvitationVisitorEmployee,
@@ -101,19 +99,23 @@ import {
 } from 'src/customs/api/Admin/InvitationData';
 import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
 import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
-import LprVisitorCard from 'src/customs/pages/Operator/Components/LprVisitorCard';
 import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
 import { getPermission } from 'src/customs/api/users';
 import { usePermission } from 'src/hooks/usePermission';
-import VisitorDetailCard from 'src/customs/pages/admin/content/AdminView/Components/VisitorDetailCard';
 import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
-import VisitorListCard from 'src/customs/pages/admin/content/AdminView/Components/VisitorListCard';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
 import { getAllSite } from 'src/customs/api/admin';
+import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import VisitorInformation from 'src/customs/pages/Operator/Components/VisitorInformation';
+import HostInformation from 'src/customs/pages/Operator/Components/HostInformation';
+import Footer from 'src/customs/pages/Operator/Components/Footer';
+import ActionPanelCard from './Components/ActionPanelCard';
+import VisitorDetailCard from './Components/VisitorDetailCard';
+import VisitorListCard from './Components/VisitorListCard';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -158,7 +160,6 @@ const Content = () => {
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [activeStep, setActiveStep] = useState(0);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openSearch, setOpenSearch] = useState(false);
   const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
@@ -175,7 +176,6 @@ const Content = () => {
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
-  const handle = useFullScreenHandle();
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
@@ -183,6 +183,7 @@ const Content = () => {
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
+  const [searchHost, setSearchHost] = useState<any>('');
   const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
     return localStorage.getItem('selectedSite') || '';
   });
@@ -237,21 +238,7 @@ const Content = () => {
   const [typeVisitor, setTypeVisitor] = useState('related');
   const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
   const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
-
-  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
-    {
-      id: '1',
-      site: 'SCP 3A',
-    },
-    {
-      id: '2',
-      site: 'SPU 2B',
-    },
-    {
-      id: '3',
-      site: 'SPU 1D',
-    },
-  ]);
+  const debounceSearch = useDebounce(searchHost, 400);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -274,6 +261,32 @@ const Content = () => {
       localStorage.removeItem('selectedSite');
     }
   }, [registerSiteOperator]);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -708,10 +721,9 @@ const Content = () => {
 
     const fetchData = async () => {
       try {
-        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.allSettled([
+        const [siteRes, employeeRes] = await Promise.allSettled([
           getInvitationSite(token),
           getInvitationVisitorHost(token),
-          getInvitationVisitorEmployee(token),
         ]);
         if (siteRes.status === 'fulfilled') {
           setSites(siteRes.value?.collection ?? []);
@@ -721,9 +733,9 @@ const Content = () => {
           setEmployee(employeeRes.value?.collection ?? []);
         }
 
-        if (allVisitorEmployee.status === 'fulfilled') {
-          setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
-        }
+        // if (allVisitorEmployee.status === 'fulfilled') {
+        //   setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
+        // }
       } catch (err) {
         console.error(err);
       }
@@ -731,6 +743,13 @@ const Content = () => {
 
     fetchData();
   }, [token]);
+
+  const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
+    useInvitationVisitorEmployee(token, {
+      search: debounceSearch,
+      start: 0,
+      length: 10,
+    });
 
   const handleInvitationCreated = (invitationCode: string) => {
     handleSubmitQRCode(invitationCode);
@@ -1157,7 +1176,7 @@ const Content = () => {
         return;
       }
       handleCloseScanQR();
-
+      setTypeVisitor('related');
       showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
       showSwal('error', 'Your code does not exist.', 3000);
@@ -1212,6 +1231,8 @@ const Content = () => {
       access: v.access ?? [],
       block_by: v.block_by ?? null,
       is_block: v.is_block ?? false,
+      invited_by_name: v.invited_by_name ?? '-',
+      visitor_role: v.visitor_role ?? '-',
     }));
 
     setInvitationCode((prev) =>
@@ -1775,20 +1796,28 @@ const Content = () => {
       return [
         {
           ...prev[0],
+          visitor_name: visitor.name,
+          visitor_email: visitor.email,
+          visitor_phone: visitor.phone,
+          visitor_gender: visitor.gender,
+          visitor_identity_id: visitor.visitor_identity_id,
+          visitor_organization_name: visitor.organization,
+          visitor_role: visitor.visitor_role,
+          visitor_type_name: visitor.visitor_type_name,
           visitor: {
-            ...prev[0]?.visitor,
+            ...prev[0].visitor,
             ...visitor,
           },
           visitor_number: visitor.visitor_number,
           visitor_period_start: visitor.visitor_period_start,
           visitor_period_end: visitor.visitor_period_end,
           agenda: visitor.agenda,
-          selfie_image: visitor.selfie_image || null,
-          identity_image: visitor.identity_image || null,
+          selfie_image: visitor.selfie_image,
+          identity_image: visitor.identity_image,
           card: visitor.card ?? [],
-          visitor_status: visitor.visitor_status ?? '-',
-          block_by: visitor.block_by ?? null,
-          is_block: visitor.is_block ?? false,
+          visitor_status: visitor.visitor_status,
+          block_by: visitor.block_by,
+          is_block: visitor.is_block,
         },
       ];
     });
@@ -3503,6 +3532,120 @@ const Content = () => {
     };
   }, [currentUsedCard]);
 
+  const scanLockRef = useRef(false);
+  const lastScanRef = useRef('');
+
+  const bulkPrintingRef = useRef(false);
+
+  useEffect(() => {
+    const socket = new WebSocket('ws://localhost:3001/ws');
+
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log('🟢 WS connected');
+    };
+
+    socket.onerror = (err) => {
+      console.error('❌ WS error:', err);
+    };
+
+    socket.onclose = () => {
+      console.warn('🔌 WS disconnected');
+    };
+
+    socket.onmessage = async (event) => {
+      const raw = event.data;
+
+      console.log('📥 WS message:', raw);
+
+      try {
+        // =========================
+        // IMAGE STREAM
+        // =========================
+        if (typeof raw === 'string' && raw.includes('|data:image')) {
+          wsImageQueueRef.current.push(raw);
+
+          forceTick((v) => v + 1);
+
+          return;
+        }
+
+        // =========================
+        // JSON EVENT
+        // =========================
+        const msg = JSON.parse(raw);
+
+        console.log('💬 WS JSON:', msg);
+
+        // =========================
+        // BARCODE
+        // =========================
+        if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+          const value = String(msg.data).trim();
+
+          if (!value) return;
+          if (scanLockRef.current) return;
+          if (lastScanRef.current === value) return;
+
+          scanLockRef.current = true;
+          lastScanRef.current = value;
+
+          try {
+            await handleSubmitQRCode(value);
+          } finally {
+            setTimeout(() => {
+              scanLockRef.current = false;
+              lastScanRef.current = '';
+            }, 2000);
+          }
+
+          return;
+        }
+
+        // =========================
+        // OCR RESULT
+        // =========================
+        if (msg?.event === 'OCR_RESULT') {
+          wsOcrQueueRef.current.push(msg.data);
+
+          forceTick((v) => v + 1);
+
+          return;
+        }
+
+        // =========================
+        // PRINT RESULT
+        // =========================
+        if (msg?.event === 'PRINT_RESULT') {
+          if (bulkPrintingRef.current) {
+            return;
+          }
+
+          if (msg.success) {
+            showSwal('success', 'Printed successfully');
+          } else {
+            showSwal('error', msg.message || 'Print failed');
+          }
+
+          return;
+        }
+      } catch (err) {
+        console.error('⚠️ WS parse error:', err);
+      }
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const handleSelectLiveVisitor = async (visitor: any) => {
+    setSelectedVisitors([visitor.id]);
+
+    await handleSubmitQRCode(visitor.invitation_code);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -3514,25 +3657,22 @@ const Content = () => {
           ref={containerRef}
           sx={{
             display: 'flex',
-            // flexDirection: mdUp ? 'row' : 'column',
             flexDirection: { xs: 'column', md: 'row' },
-            backgroundColor: '#fff',
-            height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
+            // height: isFullscreen ? '100vh' : '100%',
+            height: '100%',
             width: '100%',
-            padding: '5px !important',
-
             position: 'relative',
-            overflow: 'visible',
+            overflowY: isFullscreen ? 'hidden' : 'auto',
+            // overflowX: 'hidden',
           }}
         >
           <Box
-            flexGrow={1}
             sx={{
-              // overflow: isFullscreen ? 'auto' : 'hidden',
+              flex: 1,
               display: 'flex',
-              padding: '0px !important',
               flexDirection: 'column',
-              height: isFullscreen ? '100vh' : 'auto',
+              minHeight: 0,
+              // overflow: 'hidden',
             }}
           >
             <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
@@ -3554,8 +3694,7 @@ const Content = () => {
                   onOpenInfo={() => setOpenDialogInfo(true)}
                   onOpenVehicle={handleOpenVehicle}
                   isFullscreen={isFullscreen}
-                  // onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
-                  onToggleFullscreen={onToggleFullscreen}
+                  onToggleFullscreen={toggleFullscreen}
                   containerRef={containerRef as any}
                 />
               </Grid>
@@ -3569,17 +3708,22 @@ const Content = () => {
                 sx={{
                   display: 'flex',
                   justifyContent: 'center',
-                  alignItems: 'stretch',
-                  height: '100%',
                   flexWrap: 'wrap',
                 }}
               >
                 <Grid
                   size={{ xs: 12, lg: 4.5 }}
-                  sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
+                  sx={{
+                    borderRadius: '15px',
+                    // backgroundColor: '#fff',
+                    gap: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
                 >
-                  <LprVisitorCard
-                    LprImage={LprImage}
+                  <VisitorInformation
+                    faceImage={activeSelfie}
+                    LprImage={frImage}
                     todayVisitingPurpose={upcomingPurpose}
                     invitationCode={invitationCode}
                     isFullscreen={isFullscreen}
@@ -3592,106 +3736,100 @@ const Content = () => {
                     backgroundnodata={backgroundnodata}
                     t={t}
                   />
+
+                  <VisitorDetailCard
+                    invitationCode={invitationCode}
+                    activeVisitor={activeVisitor}
+                    relatedVisitors={relatedVisitors}
+                    selectedVisitorNumber={selectedVisitorNumber}
+                    containerRef={containerRef}
+                    handleChooseCard={handleChooseCard}
+                    handleConfirmStatus={handleConfirmStatus}
+                    handleView={handleView}
+                  />
                 </Grid>
 
-                <ActionPanelCard
-                  loading={loading}
-                  permission={permissionHook}
-                  isFullscreen={isFullscreen}
-                  handleOpenScanQR={handleOpenScanQR}
-                  handleActionClick={handleActionClick as any}
-                  handleOpenAction={handleOpenAction}
-                  handlePrint={handlePrint}
-                  handleActionBlacklist={handleActionBlacklist as any}
-                  setOpenPreRegistration={setOpenPreRegistration}
-                  setOpenInvitationVisitor={setOpenInvitationVisitor}
-                  setOpenReturnCard={setOpenReturnCard}
-                  setAccessIssuance={setAccessIssuance}
-                />
+                <Grid
+                  size={{ xs: 12, lg: 4.5 }}
+                  sx={{
+                    borderRadius: '15px',
+                    // backgroundColor: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    minHeight: 0,
+                  }}
+                >
+                  <ActionPanelCard
+                    isFullscreen={isFullscreen}
+                    handleOpenScanQR={handleOpenScanQR}
+                    handleActionClick={handleActionClick as any}
+                    handleOpenAction={handleOpenAction}
+                    handlePrint={handlePrint}
+                    handleActionBlacklist={handleActionBlacklist as any}
+                    setOpenPreRegistration={setOpenPreRegistration}
+                    setOpenInvitationVisitor={setOpenInvitationVisitor}
+                    setOpenReturnCard={setOpenReturnCard}
+                    setAccessIssuance={setAccessIssuance}
+                  />
+                  <VisitorListCard
+                    isFullscreen={isFullscreen}
+                    typeVisitor={typeVisitor}
+                    anchorEl={anchorEl}
+                    searchKeyword={searchKeyword}
+                    selectMultiple={selectMultiple}
+                    bulkAction={bulkAction}
+                    selectedVisitors={selectedVisitors}
+                    scannedVisitorNumber={scannedVisitorNumber}
+                    totalVisitors={totalVisitors}
+                    filteredVisitors={filteredVisitors}
+                    relatedVisitors={relatedVisitors}
+                    invitationCode={invitationCode}
+                    availableActions={availableActions}
+                    lgUp={lgUp}
+                    theme={theme}
+                    containerRef={containerRef}
+                    CustomTextField={CustomTextField}
+                    getCdnUrl={getCdnUrl as (path?: string) => string}
+                    formatDateTime={formatDateTime}
+                    setAnchorEl={setAnchorEl}
+                    setTypeVisitor={
+                      setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
+                    }
+                    setSearchKeyword={setSearchKeyword}
+                    setSelectMultiple={setSelectMultiple}
+                    setSelectedVisitors={setSelectedVisitors}
+                    setBulkAction={setBulkAction}
+                    setOpenExtendVisit={setOpenExtendVisit}
+                    handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                    handleSelectLiveVisitor={handleSelectLiveVisitor}
+                    handleApplyBulkAction={handleApplyBulkAction}
+                    handleChooseCard={handleChooseCard}
+                    handlePrintClick={handlePrintClick}
+                  />
+                </Grid>
 
                 {/* Side Right QR Code */}
-                <Grid size={{ xs: 12, lg: 3 }}>
-                  <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
+                <Grid
+                  size={{ xs: 12, lg: 3 }}
+                  sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                >
+                  <HostInformation invitationCode={invitationCode} isFullscreen={isFullscreen} />
+                  <VisitorImage
+                    faceImage={activeSelfie}
+                    identityImage={activeKTP}
+                    isFullscreen={isFullscreen}
+                    openMore={openMore}
+                    setOpenMore={setOpenMore}
+                    handleOpenMore={handleOpenMore}
+                    handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                    getColorByName={getColorByName}
+                    todayVisitingPurpose={upcomingPurpose}
+                  />
                 </Grid>
               </Grid>
             </Grid>
-
-            <Grid
-              container
-              spacing={2}
-              mt={1}
-              sx={{
-                flex: isFullscreen ? 1 : 'unset',
-                minHeight: 0,
-                alignItems: 'stretch',
-              }}
-            >
-              <VisitorDetailCard
-                invitationCode={invitationCode}
-                activeVisitor={activeVisitor}
-                relatedVisitors={relatedVisitors}
-                selectedVisitorNumber={selectedVisitorNumber}
-                permissionHook={permissionHook}
-                containerRef={containerRef}
-                handleChooseCard={handleChooseCard}
-                handleConfirmStatus={handleConfirmStatus}
-                handleView={handleView}
-              />
-
-              {/* Related Visitor */}
-              <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-                <VisitorListCard
-                  isFullscreen={isFullscreen}
-                  typeVisitor={typeVisitor}
-                  anchorEl={anchorEl}
-                  searchKeyword={searchKeyword}
-                  selectMultiple={selectMultiple}
-                  bulkAction={bulkAction}
-                  selectedVisitors={selectedVisitors}
-                  scannedVisitorNumber={scannedVisitorNumber}
-                  totalVisitors={totalVisitors}
-                  filteredVisitors={filteredVisitors}
-                  relatedVisitors={relatedVisitors}
-                  invitationCode={invitationCode}
-                  availableActions={availableActions}
-                  lgUp={lgUp}
-                  theme={theme}
-                  permissionHook={permissionHook}
-                  containerRef={containerRef}
-                  CustomTextField={CustomTextField}
-                  getCdnUrl={getCdnUrl as (path?: string) => string}
-                  formatDateTime={formatDateTime}
-                  setAnchorEl={setAnchorEl}
-                  setTypeVisitor={
-                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
-                  }
-                  setSearchKeyword={setSearchKeyword}
-                  setSelectMultiple={setSelectMultiple}
-                  setSelectedVisitors={setSelectedVisitors}
-                  setBulkAction={setBulkAction}
-                  setOpenExtendVisit={setOpenExtendVisit}
-                  handleSelectRelatedVisitor={handleSelectRelatedVisitor}
-                  handleApplyBulkAction={handleApplyBulkAction}
-                  handleChooseCard={handleChooseCard}
-                  handlePrintClick={handlePrintClick}
-                />
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, lg: 3 }}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // height: '100%',
-                }}
-              >
-                <VisitorImage
-                  faceImage={activeSelfie}
-                  identityImage={activeKTP}
-                  isFullscreen={isFullscreen}
-                />
-              </Grid>
-            </Grid>
+            <Footer />
           </Box>
           {/* Print */}
           <PrintDialogBulk
@@ -3912,12 +4050,10 @@ const Content = () => {
             <Divider />
             <DialogContent>
               <FormWizardAddVisitor
-                // key={wizardKey}
                 formData={formDataAddVisitor}
                 setFormData={setFormDataAddVisitor}
                 onSuccess={handleSuccess}
                 containerRef={containerRef}
-                fullscreenHandle={handle}
                 resetStep={resetStep}
                 onInvitationCreated={handleInvitationCreated}
                 ws={{
@@ -3925,16 +4061,17 @@ const Content = () => {
                   ocrQueue: wsOcrQueueRef,
                   send: sendToScanner,
                 }}
-                // ws={ws}
                 setWsPayload={setWsPayload}
                 registeredSite={registerSiteOperator}
                 forceTick={tick}
                 visitorType={visitorType}
-                sites={sites}
+                sites={sitesOperator}
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
                 enableInvitationTypeStep={true}
+                search={setSearchHost}
+                isLoadingEmployee={isLoadingEmployee}
               />
             </DialogContent>
           </Dialog>
@@ -3973,12 +4110,14 @@ const Content = () => {
                 onSuccess={handleSuccess}
                 containerRef={containerRef ?? null}
                 visitorType={visitorType}
-                sites={sites}
+                sites={sitesOperator}
                 registeredSite={registerSiteOperator}
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
                 enableInvitationTypeStep={false}
+                search={setSearchHost}
+                isLoadingEmployee={isLoadingEmployee}
               />
             </DialogContent>
           </Dialog>

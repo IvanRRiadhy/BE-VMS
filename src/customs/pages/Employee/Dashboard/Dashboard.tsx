@@ -481,6 +481,24 @@ const DashboardEmployee = () => {
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
     try {
       setIsGenerating(true);
+      if (action === 'Reject') {
+        const confirm = await Swal.fire({
+          title: 'Reject Approval?',
+          text: 'Do you want to reject this approval?',
+          icon: 'warning',
+          reverseButtons: true,
+          showCancelButton: true,
+          confirmButtonText: 'Reject',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#f44336',
+          customClass: {
+            title: 'swal2-title-custom',
+            htmlContainer: 'swal2-text-custom',
+          },
+        });
+
+        if (!confirm.isConfirmed) return;
+      }
 
       if (action === 'Approve') await approveTicket(token as string, id);
       if (action === 'Reject') await rejectTicket(token as string, id);
@@ -799,7 +817,7 @@ const DashboardEmployee = () => {
             {t('quickAccess')}
           </Button>
         </Grid>
-        <Grid container spacing={2} alignItems="stretch" width={"100%"}>
+        <Grid container spacing={2} alignItems="stretch" width={'100%'}>
           <Grid
             size={{ xs: 12, lg: 6 }}
             sx={{

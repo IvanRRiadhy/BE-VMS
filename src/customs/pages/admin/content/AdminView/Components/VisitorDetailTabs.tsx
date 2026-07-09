@@ -1,4 +1,15 @@
-import { Box, Tabs, Tab, Grid2 as Grid, Typography, Button } from '@mui/material';
+import {
+  Box,
+  Tabs,
+  Tab,
+  Grid2 as Grid,
+  Typography,
+  Button,
+  Divider,
+  Paper,
+  Stack,
+  Chip,
+} from '@mui/material';
 import { useMemo, useState } from 'react';
 import {
   IconBrandGmail,
@@ -19,6 +30,10 @@ import {
   IconCalendarTime,
   IconMapPin,
   IconIdBadge2,
+  IconBluetooth,
+  IconBarcode,
+  IconCheck,
+  IconRefresh,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
@@ -26,14 +41,18 @@ interface Props {
   invitationCode: any[];
   handleChooseCard: () => void;
   activeVisitor: any;
+  tabValue: number;
+  onTabChange: (value: number) => void;
 }
 
 const VisitorDetailTabs: React.FC<Props> = ({
   invitationCode,
   handleChooseCard,
   activeVisitor,
+  tabValue,
+  onTabChange,
 }) => {
-  const [tabValue, setTabValue] = useState(0);
+  // const [tabValue, setTabValue] = useState(0);
   // const data = invitationCode?.[0];
   const data = activeVisitor;
 
@@ -50,13 +69,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
     return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
   };
 
-  const currentCard = useMemo(() => {
-    const cards = invitationCode?.[0]?.card;
-    if (!Array.isArray(cards) || cards.length === 0) return null;
-
-    return cards.find((c) => c.current_used === true) ?? cards[cards.length - 1] ?? null;
-  }, [invitationCode]);
-
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d',
     Checkout: '#F44336',
@@ -66,22 +78,27 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Pracheckin: '#21c45d',
     Preregis: '#a5a5a5ff',
     Waiting: '#4abfd4',
+    Available: 'gray',
+    Denied: '#8B0000',
   };
 
   return (
     <>
-      <Tabs value={tabValue} onChange={(e, newVal) => setTabValue(newVal)} variant="fullWidth">
-        <Tab label="Info" />
+      <Tabs value={tabValue} onChange={(_, newValue) => onTabChange(newValue)} variant="fullWidth">
+        {/* <Tab label="Info" /> */}
         <Tab label="Visit Information" />
         <Tab label="Purpose Visit" />
+        <Tab label="Card" />
+        {/* <Tab label="Parking" /> */}
+        <Tab label="History" />
         {/* <Tab label="Barcode" /> */}
       </Tabs>
 
       {/* TAB 1 — INFO */}
-      {tabValue === 0 && (
+      {/* {tabValue === 0 && (
         <Box sx={{ mt: 2 }}>
           <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
-            {/* EMAIL */}
+  
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
                 <IconBrandGmail />
@@ -100,7 +117,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
               </Box>
             </Grid>
 
-            {/* PHONE */}
+
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
                 <IconPhone />
@@ -110,17 +127,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
                 </Box>
               </Box>
             </Grid>
-
-            {/* ADDRESS */}
-            {/* <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2} alignItems="flex-start">
-                <IconHome />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
-                  <Typography>{data?.visitor?.address || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid> */}
 
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
@@ -141,7 +147,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
               </Box>
             </Grid>
 
-            {/* ORGANIZATION */}
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
                 <IconBuildingSkyscraper />
@@ -152,7 +157,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
               </Box>
             </Grid>
 
-            {/* CARD */}
+  
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" justifyContent="space-between">
                 <Box display="flex" gap={2} alignItems={'center'}>
@@ -161,101 +166,43 @@ const VisitorDetailTabs: React.FC<Props> = ({
                 </Box>
 
                 <Box>
-                  {/* {data?.card?.length > 0 && data.card[0]?.card_number?.trim() ? (
-                    <Typography fontWeight={600}>{data.card[0].card_number}</Typography>
-                  // ) 
-                  
-                  // : data?.visitor_status === 'Checkin' ? (
-                  //   <Button variant="contained" onClick={handleChooseCard}>
-                  //     Choose Card
-                  //   </Button>
-                  ) : null} */}
-                  {/* {data?.card?.length > 0 &&
-                  data.card[data.card.length - 1]?.card_number?.trim() ? (
-                    <Typography fontWeight={600}>
-                      {data.card[data.card.length - 1].card_number}
-                    </Typography>
-                  ) : null} */}
                   {currentCard?.card_number?.trim() && (
                     <Typography fontWeight={600}>{currentCard.card_number}</Typography>
                   )}
-
-                  {/* <Grid size={{ xs: 6, md: 6 }}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={'space-between'}
-                              flexWrap={'wrap'}
-                              // alignItems={'center'}
-                            >
-                              <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
-                                <IconCards />
-                                <Box>
-                                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
-                                </Box>
-                              </Box>
-                              <Box>
-                                {!invitationCode || invitationCode.length === 0 ? (
-                                  <></>
-                                ) : data?.card && data.card.length > 0 ? (
-                                  data.card[0]?.card_number?.trim() ? (
-                                    <Box>
-                                      <Typography sx={{ fontWeight: 600 }}>
-                                        {data.card[0].card_number}
-                                      </Typography> */}
-
-                  {/* {data?.tracking_ble?.length > 0 &&
-                                      data.tracking_ble[0]?.visitor_give_access ===
-                                        0 && (
-                                        <Button
-                                          sx={{ mt: 1 }}
-                                          variant="contained"
-                                          color="primary"
-                                          startIcon={<IconSend width={18} />}
-                                        >
-                                          Send Tracking
-                                        </Button>
-                                      )} */}
-                  {/* </Box>
-                                  ) : (
-                                    <></>
-                                  )
-                                ) : data?.visitor_status === 'Checkin' ? (
-                                  <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="large"
-                                    onClick={handleChooseCard}
-                                    sx={{ mt: 0.5 }}
-                                  >
-                                    Choose Card
-                                  </Button>
-                                ) : (
-                                  <></>
-                                )}
-                              </Box>
-                            </Box>
-                          </Grid>
-                        </Grid> */}
                 </Box>
               </Box>
             </Grid>
           </Grid>
         </Box>
-      )}
+      )} */}
 
       {/* TAB 2 — VISIT INFORMATION */}
-      {tabValue === 1 && (
-        <Box sx={{ mt: 2 }}>
-          <Grid container rowSpacing={4} columnSpacing={2}>
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconUsersGroup />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Code</CustomFormLabel>
-                  <Typography>{data?.group_code || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
+      {tabValue === 0 && (
+        <Box sx={{ position: 'relative', mt: 2 }}>
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              transform: 'translateX(-50%)',
+            }}
+          />
+          <Grid
+            container
+            rowSpacing={2}
+            columnSpacing={2}
+            sx={{
+              '& > :nth-of-type(odd)': {
+                pr: 4,
+              },
+              '& > :nth-of-type(even)': {
+                pl: 4,
+              },
+            }}
+          >
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
                 <IconUsersGroup />
@@ -271,6 +218,16 @@ const VisitorDetailTabs: React.FC<Props> = ({
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity ID</CustomFormLabel>
                   <Typography>{data?.visitor_identity_id || '-'}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 6, md: 6 }}>
+              <Box display="flex" gap={2}>
+                <IconUser />
+                <Box>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invited By</CustomFormLabel>
+                  <Typography>{data?.invited_by_name || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -345,9 +302,32 @@ const VisitorDetailTabs: React.FC<Props> = ({
       )}
 
       {/* TAB 3 — PURPOSE VISIT */}
-      {tabValue === 2 && (
-        <Box sx={{ mt: 2 }}>
-          <Grid container rowSpacing={4} columnSpacing={2}>
+      {tabValue === 1 && (
+        <Box sx={{ position: 'relative', mt: 2, height: '230px', display: 'flex' }}>
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              transform: 'translateX(-50%)',
+            }}
+          />
+          <Grid
+            container
+            rowSpacing={3}
+            columnSpacing={2}
+            sx={{
+              '& > :nth-of-type(odd)': {
+                pr: 4,
+              },
+              '& > :nth-of-type(even)': {
+                pl: 4,
+              },
+            }}
+          >
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
                 <IconCalendarEvent />
@@ -401,6 +381,128 @@ const VisitorDetailTabs: React.FC<Props> = ({
             </Grid>
           </Grid>
         </Box>
+      )}
+
+      {tabValue === 2 && (
+        <Box sx={{ mt: 2, height: '230px' }}>
+          <Grid container spacing={2}>
+            {invitationCode?.[0]?.card?.map((card: any) => (
+              <Grid size={{ xs: 12, md: 6 }} key={card.id}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 3,
+                    border: '2px solid',
+                    borderColor: card.current_used ? 'primary.main' : 'divider',
+                    transition: 'all .25s',
+                    '&:hover': {
+                      boxShadow: 4,
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
+                  {/* Header */}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 2,
+                          bgcolor: 'primary.lighter',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {card.card_type?.toLowerCase() === 'ble' ? (
+                          <IconBluetooth size={30} color="#1976d2" />
+                        ) : (
+                          <IconBarcode size={30} color="#1976d2" />
+                        )}
+                      </Box>
+
+                      <Box>
+                        <Typography variant="h5" fontWeight={700} lineHeight={1.1}>
+                          {card.card_number}
+                        </Typography>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {card.card_type}
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Stack spacing={1} alignItems="flex-end">
+                      {card.current_used && (
+                        <Chip
+                          icon={<IconCheck size={16} />}
+                          label="Current Card"
+                          color="success"
+                          sx={{
+                            fontWeight: 700,
+                            borderRadius: 999,
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Stack>
+
+                  <Divider sx={{ my: 0.5 }} />
+
+                  {/* Status */}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography color="text.secondary">Status</Typography>
+
+                    <Chip
+                      label={card.card_status}
+                      color={
+                        card.card_status === 'Issued'
+                          ? 'success'
+                          : card.card_status === 'Returned'
+                            ? 'default'
+                            : 'warning'
+                      }
+                      size="small"
+                      variant="filled"
+                    />
+                  </Stack>
+
+                  {/* Issued */}
+                  {card.issued_at && (
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1 }}>
+                      <Box
+                        sx={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 2,
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <IconCalendarEvent size={22} color="#1976d2" />
+                      </Box>
+
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Issued
+                        </Typography>
+
+                        <Typography fontWeight={600}>{formatDateTime(card.issued_at)}</Typography>
+                      </Box>
+                    </Stack>
+                  )}
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+      {tabValue === 3 && (
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', height: '230px' }}></Box>
       )}
     </>
   );

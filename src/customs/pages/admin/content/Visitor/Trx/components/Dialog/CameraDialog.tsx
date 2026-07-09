@@ -2,6 +2,7 @@ import { Box, Button, Dialog, Divider, Grid2 as Grid, IconButton, Typography } f
 import Webcam from 'react-webcam';
 import { IconCamera, IconDeviceFloppy, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { RefObject } from 'react';
+import { IconX } from '@tabler/icons-react';
 
 interface CameraDialogProps {
   open: boolean;
@@ -29,6 +30,18 @@ const CameraDialog = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <Box p={3}>
+        <Box>
+          <Typography variant="h6" mb={2}>
+            Take Photo From Camera
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            sx={{ position: 'absolute', top: 10, right: 10 }}
+          >
+            <IconX size={22} />
+          </IconButton>
+        </Box>
+        <Divider sx={{ mb: 2 }} />
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ position: 'relative' }}>

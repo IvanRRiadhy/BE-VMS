@@ -78,6 +78,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Pracheckin: '#21c45d',
     Preregis: '#a5a5a5ff',
     Waiting: '#4abfd4',
+    Available: 'gray',
   };
 
   return (

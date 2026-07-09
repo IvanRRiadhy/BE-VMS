@@ -5,6 +5,7 @@ import {
   IconClipboard,
   IconClock,
   IconDoor,
+  IconHttpConnect,
   IconKey,
   IconLockAccess,
   IconLogin,
@@ -12,6 +13,8 @@ import {
   IconMapPinCheck,
   IconParking,
   IconPencil,
+  IconPlugConnected,
+  IconPlugConnectedX,
   IconPrinter,
   IconQrcode,
   IconUser,
@@ -20,8 +23,6 @@ import { FC } from 'react';
 import { Skeleton } from '@mui/material';
 
 interface Props {
-  permission: any;
-  loading: boolean;
   isFullscreen: boolean;
   handleOpenScanQR: () => void;
   handleActionClick: (type: string) => void;
@@ -39,8 +40,6 @@ const ButtonSkeleton = () => (
 );
 
 const ActionPanelCard: FC<Props> = ({
-  permission,
-  loading,
   isFullscreen,
   handleOpenScanQR,
   handleActionClick,
@@ -54,11 +53,12 @@ const ActionPanelCard: FC<Props> = ({
 }) => {
   return (
     <Grid
-      size={{ xs: 12, lg: 4.5 }}
+      size={{ xs: 12 }}
       sx={{
         display: 'flex',
         justifyContent: isFullscreen ? 'center' : 'flex-start',
         alignItems: isFullscreen ? 'center' : 'stretch',
+        // height: '350px',
       }}
     >
       <Card
@@ -70,7 +70,7 @@ const ActionPanelCard: FC<Props> = ({
           maxHeight: isFullscreen
             ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
             : { xs: '100%', sm: '100%', xl: '400px' },
-          overflow: isFullscreen ? 'auto' : 'visible',
+          overflow: isFullscreen ? 'hidden' : 'visible',
           //   display: 'flex',
           //   flexDirection: 'column',
         }}
@@ -79,6 +79,8 @@ const ActionPanelCard: FC<Props> = ({
           sx={{
             flex: 1,
             p: 2,
+            paddingBottom: '5px !important',
+
             px: '5px !important',
             overflow: 'auto',
           }}
@@ -116,15 +118,16 @@ const ActionPanelCard: FC<Props> = ({
                     },
                     zIndex: 999,
                     width: '100%',
-                    height: '55px',
+                    height: '50px',
                     p: 0,
                   }}
                 >
                   <Typography variant="h5" color="white">
-                    Scan
+                    Scan QR
                   </Typography>
                 </Button>
               </Tooltip>
+
               <Box display={'flex'} mt={0.5} gap={1}>
                 <Button
                   variant="contained"
@@ -166,12 +169,14 @@ const ActionPanelCard: FC<Props> = ({
                   }}
                 >
                   <Typography variant="h6" color="white">
-                    Invitation
+                    Walk In
                   </Typography>
                 </Button>
               </Box>
 
               <Grid container spacing={isFullscreen ? 1 : 1.5}>
+                {/* Checkin */}
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -224,6 +229,8 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+
+                {/* Card */}
 
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
@@ -281,6 +288,8 @@ const ActionPanelCard: FC<Props> = ({
                   </Button>
                 </Grid>
               </Grid>
+              {/* Access */}
+
               <Grid size={{ xs: 6, lg: 6 }}>
                 <Button
                   variant="contained"
@@ -335,6 +344,8 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+
+                {/* Report */}
 
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
@@ -432,6 +443,7 @@ const ActionPanelCard: FC<Props> = ({
                     Print
                   </Button>
                 </Grid>
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"

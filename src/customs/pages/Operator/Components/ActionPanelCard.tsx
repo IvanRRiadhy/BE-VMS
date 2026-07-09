@@ -24,7 +24,7 @@ import { Skeleton } from '@mui/material';
 
 interface Props {
   permission: any;
-  loading: boolean;
+  loading?: boolean | undefined;
   isFullscreen: boolean;
   handleOpenScanQR: () => void;
   handleActionClick: (type: string) => void;
@@ -35,8 +35,6 @@ interface Props {
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
   setAccessIssuance: (value: boolean) => void;
-  // connect: any;
-  // disconnect: any;
 }
 
 const ButtonSkeleton = () => (

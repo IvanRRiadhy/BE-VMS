@@ -3,19 +3,6 @@ import {
   Button,
   CircularProgress,
   Grid2 as Grid,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
   useMediaQuery,
 } from '@mui/material';
 import { Box, useTheme } from '@mui/system';
@@ -33,10 +20,6 @@ import {
   getVisitorByTickedId,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
-import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
-import { IconFileSpreadsheet } from '@tabler/icons-react';
-import { IconPdf } from '@tabler/icons-react';
-
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
@@ -44,9 +27,9 @@ import VisitorRow from './components/VisitorRow';
 import { exportVisitorExcel, exportVisitorPdf } from '../Invitation/components/VisitorExport';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'src/hooks/useDebounce';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import ApprovalSidebar from './components/ApprovalSidebar';
 import Swal from 'sweetalert2';
+import GroupVisitorTable from './components/GroupVisitorTable';
 
 type Group = {
   id: string;
@@ -154,7 +137,6 @@ const Approval = () => {
           keyword: debouncedKeyword,
           entity_type: 'Invitation',
         });
-        console.log('res', res.collection);
 
         const rows = res.collection.map((item: any) => ({
           approval_ticket_id: item.approval_ticket_id,
@@ -402,194 +384,7 @@ const Approval = () => {
                 }}
               >
                 {/* Left */}
-                <Box
-                  sx={{
-                    width: mdUp ? secdrawerWidth : '100%',
-                    borderRight: '1px solid #eee',
-                    p: 2,
-                    pt: 2,
-                    overflow: 'auto',
-                    height: { xs: '100%', md: '75vh' },
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                    <Typography variant="h6" fontSize="1rem">
-                      Transaction Visitor
-                    </Typography>
-                  </Box>
-
-                  <CustomTextField
-                    fullWidth
-                    size="small"
-                    placeholder="Search Transaction"
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    sx={{ mb: 2, paddingLeft: '0px !important' }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start" style={{ paddingLeft: '0px !important' }}>
-                          <IconSearch style={{ color: 'gray' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <Box>
-                    <Box>
-                      {loading
-                        ? Array.from({ length: 10 }).map((_, i) => (
-                            <Box
-                              key={i}
-                              sx={{
-                                backgroundColor: '#f5f5f5',
-                                borderRadius: '8px',
-                                padding: '10px',
-                                mb: 1,
-                              }}
-                            >
-                              <Skeleton variant="text" width="60%" height={24} />
-                              <Skeleton variant="text" width="40%" height={20} />
-                            </Box>
-                          ))
-                        : approvalData
-                            .filter((group: any) =>
-                              group.agenda?.toLowerCase().includes(searchAgenda.toLowerCase()),
-                            )
-                            .map((group: any) => (
-                              <Box
-                                key={group.id}
-                                sx={{
-                                  backgroundColor:
-                                    selectedId === group.approval_ticket_id ? '#e3f2fd' : '#f5f5f5',
-                                  borderRadius: '8px',
-                                  padding: '10px',
-                                  cursor: 'pointer',
-                                  mb: 1,
-                                  '&:hover': {
-                                    backgroundColor: '#eee',
-                                  },
-                                }}
-                                onClick={() => {
-                                  setSelectedGroup(group);
-                                  setSelectedGroupId(group.ticket_id);
-                                  setSelectedId(group.approval_ticket_id);
-                                }}
-                              >
-                                <Box
-                                  display={'flex'}
-                                  justifyContent={'space-between'}
-                                  alignItems={'center'}
-                                >
-                                  <Typography
-                                    variant="body1"
-                                    fontWeight="bold"
-                                    sx={{
-                                      width: '150px',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                    }}
-                                  >
-                                    {group.agenda}
-                                  </Typography>
-
-                                  {group.approval_status === 'Pending' && (
-                                    <Box display="flex" gap={0.5}>
-                                      <Tooltip title="Approve" arrow>
-                                        <IconButton
-                                          sx={{
-                                            backgroundColor: '#4CAF50',
-                                            borderRadius: '50%',
-                                            width: 30,
-                                            height: 30,
-                                            color: '#fff',
-                                            '&:hover': {
-                                              backgroundColor: '#388E3C',
-                                              color: '#fff',
-                                            },
-                                          }}
-                                          onClick={(e) =>
-                                            handleOpenApprovalDialog(e, group, 'Approve')
-                                          }
-                                        >
-                                          <IconCheck size={16} />
-                                        </IconButton>
-                                      </Tooltip>
-
-                                      <Tooltip title="Reject" arrow>
-                                        <IconButton
-                                          sx={{
-                                            backgroundColor: '#f44336',
-                                            color: '#fff',
-                                            borderRadius: '50%',
-                                            width: 30,
-                                            height: 30,
-                                            '&:hover': {
-                                              backgroundColor: '#d32f2f',
-                                              color: '#fff',
-                                            },
-                                          }}
-                                          onClick={(e) =>
-                                            handleOpenApprovalDialog(e, group, 'Reject')
-                                          }
-                                        >
-                                          <IconX size={16} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    </Box>
-                                  )}
-                                </Box>
-
-                                <Box display={'flex'} justifyContent={'space-between'}>
-                                  <Typography>{group.visitor_type_name}</Typography>
-                                  <Typography>{group.host_name}</Typography>
-                                </Box>
-                                <Typography>Start : {group.visitor_period_start}</Typography>
-                                <Typography>End : {group.visitor_period_end}</Typography>
-                                <Typography
-                                  sx={{
-                                    width: 'fit-content',
-                                    px: 1.2,
-                                    py: 0.3,
-                                    marginLeft: 'auto',
-                                    marginTop: '5px',
-                                    borderRadius: '12px',
-                                    fontSize: '14px',
-                                    fontWeight: 600,
-                                    whiteSpace: 'nowrap',
-                                    ...(group.approval_status === 'Pending' && {
-                                      backgroundColor: '#E0E0E0',
-                                      color: '#616161',
-                                    }),
-                                    ...(group.approval_status === 'Approved' && {
-                                      backgroundColor: '#4CAF50',
-                                      color: '#fff',
-                                    }),
-                                    ...(group.approval_status === 'Rejected' && {
-                                      backgroundColor: '#f44336',
-                                      color: '#fff',
-                                    }),
-                                  }}
-                                >
-                                  {group.approval_status}
-                                </Typography>
-                              </Box>
-                            ))}
-                      {hasMore && (
-                        <Box mt={2} textAlign="center">
-                          <Button
-                            variant="outlined"
-                            disabled={loading}
-                            onClick={() => setPage((prev) => prev + 1)}
-                            fullWidth
-                          >
-                            {loading ? 'Loading...' : 'Load More'}
-                          </Button>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </Box>
-                {/* <ApprovalSidebar
+                <ApprovalSidebar
                   mdUp={mdUp}
                   secdrawerWidth={secdrawerWidth}
                   loading={loading}
@@ -599,185 +394,28 @@ const Approval = () => {
                   setSearchKeyword={setSearchKeyword}
                   hasMore={hasMore}
                   setPage={setPage}
-                  setSelectedGroup={setSelectedGroup}
-                  setSelectedGroupId={setSelectedGroupId}
-                  setSelectedId={setSelectedId}
-                  setGroupVisitors={setGroupVisitors}
-                  setGroupHeader={setGroupHeader}
-                  setGroupDetailLoading={setGroupDetailLoading}
-                  setOpenDialog={setOpenDialog}
-                  setSelectedRows={setSelectedRows}
-                  setTriggerCheckAll={setTriggerCheckAll}
-                /> */}
+                  onSelectGroup={(group) => {
+                    setSelectedGroup(group);
+                    setSelectedGroupId(group.ticket_id);
+                    setSelectedId(group.approval_ticket_id);
+                  }}
+                  onOpenApprovalDialog={handleOpenApprovalDialog}
+                />
                 {/* Right */}
-                <Box
-                  flexGrow={1}
-                  p={2}
-                  sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}
-                >
-                  {selectedGroupId ? (
-                    <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
-                      <Table aria-label="collapsible table">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ width: 50 }}>
-                              <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
-                                {openGroup ? (
-                                  <KeyboardArrowUpOutlined />
-                                ) : (
-                                  <KeyboardArrowDownOutlined />
-                                )}
-                              </IconButton>
-                            </TableCell>
-                            <TableCell colSpan={8}>
-                              <Box
-                                display={'flex'}
-                                justifyContent={'space-between'}
-                                alignItems={'center'}
-                              >
-                                <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
-                                  {groupHeader?.group_name ?? '-'}
-                                </Typography>
-                                <Box display={'flex'} gap={0.5}>
-                                  <Tooltip title="Export PDF" arrow>
-                                    <Button
-                                      variant="contained"
-                                      color="error"
-                                      onClick={() =>
-                                        exportVisitorPdf(
-                                          groupHeader?.group_name ?? 'Visitors',
-                                          groupVisitors,
-                                        )
-                                      }
-                                    >
-                                      <IconPdf />
-                                    </Button>
-                                  </Tooltip>
-                                  <Tooltip title="Export Excel" arrow>
-                                    <Button
-                                      variant="contained"
-                                      color="success"
-                                      onClick={() =>
-                                        exportVisitorExcel(
-                                          groupHeader?.group_name ?? 'Visitors',
-                                          groupVisitors,
-                                        )
-                                      }
-                                    >
-                                      <IconFileSpreadsheet />
-                                    </Button>
-                                  </Tooltip>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow
-                            sx={{
-                              backgroundColor: '#f7faff',
-                            }}
-                          >
-                            <TableCell width={50}>
-                              <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
-                                {openGroup ? (
-                                  <KeyboardArrowUpOutlined />
-                                ) : (
-                                  <KeyboardArrowDownOutlined />
-                                )}
-                              </IconButton>
-                            </TableCell>
-
-                            <TableCell component="th" scope="row">
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                  Agenda
-                                </Typography>
-
-                                <Typography variant="body1">{groupHeader?.agenda}</Typography>
-                              </Box>
-                            </TableCell>
-
-                            <TableCell component="th" scope="row">
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                  Visitor Type
-                                </Typography>
-
-                                <Typography variant="body1">
-                                  {groupHeader?.visitor_type_name}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-
-                            <TableCell component="th" scope="row">
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                  Visit Start
-                                </Typography>
-
-                                <Typography variant="body1">
-                                  {formatDateTime(groupHeader?.visitor_period_start)}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell component="th" scope="row" colSpan={2}>
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                  Visit End
-                                </Typography>
-
-                                <Typography variant="body1">
-                                  {formatDateTime(groupHeader?.visitor_period_end)}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell component="th" scope="row" colSpan={2}>
-                              <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                  Host
-                                </Typography>
-
-                                <Typography variant="body1">{groupHeader?.host_name}</Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell component="th" scope="row"></TableCell>
-                          </TableRow>
-                          {groupDetailLoading ? (
-                            <TableRow>
-                              <TableCell colSpan={6} align="center">
-                                <CircularProgress size={24} />
-                              </TableCell>
-                            </TableRow>
-                          ) : groupVisitors.length > 0 ? (
-                            groupVisitors.map((visitor: any, index: number) => (
-                              <VisitorRow key={visitor.id} visitor={visitor} index={index} />
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={6} align="center">
-                                <Typography color="text.secondary">No visitor data</Typography>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Box
-                      height="100%"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      flexDirection="column"
-                    >
-                      <img src={bg_nodata} width={150} />
-                      <Typography color="text.secondary" mt={2} variant="h5">
-                        {t('selectGroupFromTheList')}
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
+                <GroupVisitorTable
+                  selectedGroupId={selectedGroupId}
+                  openGroup={openGroup}
+                  setOpenGroup={setOpenGroup}
+                  groupHeader={groupHeader}
+                  groupVisitors={groupVisitors}
+                  groupDetailLoading={groupDetailLoading}
+                  exportVisitorPdf={exportVisitorPdf}
+                  exportVisitorExcel={exportVisitorExcel}
+                  formatDateTime={formatDateTime}
+                  VisitorRow={VisitorRow}
+                  bgNoData={bg_nodata}
+                  t={t}
+                />
               </Box>
             </Grid>
           </Grid>

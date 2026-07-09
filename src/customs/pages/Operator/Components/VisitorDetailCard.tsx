@@ -43,7 +43,7 @@ const VisitorDetailCard = ({
       return null;
     }
 
-    if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
+    if (!['Checkin', 'Checkout', 'Block', 'Unblock', 'Denied'].includes(status || '')) {
       return (
         <Box display="flex" gap={1}>
           {permissionHook.canCheckin && (

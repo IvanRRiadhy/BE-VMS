@@ -24,7 +24,6 @@ import {
   Stack,
 } from '@mui/material';
 import {
-  IconChevronDown,
   IconSearch,
   IconClock,
   IconCreditCard,
@@ -32,7 +31,6 @@ import {
   IconFilter,
 } from '@tabler/icons-react';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { minWidth } from '@mui/system';
 
 interface AvailableAction {
   value: string;

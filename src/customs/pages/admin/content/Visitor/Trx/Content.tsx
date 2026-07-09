@@ -76,6 +76,7 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
+import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 
 const Content = () => {
   const { token } = useSession();
@@ -148,7 +149,6 @@ const Content = () => {
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
   const [vtLoading, setVTLoading] = useState(false);
-  const [emailInput, setEmailInput] = useState('');
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openCreateLink, setOpenCreateLink] = useState(false);
@@ -156,9 +156,8 @@ const Content = () => {
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [emails, setEmails] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
@@ -170,8 +169,13 @@ const Content = () => {
 
   const debouncedSearch = useDebounce(hostSearch, 400);
 
-  const { allVisitorEmployee } = useVisitorEmployees(token as string);
-  const [openQuickAccess, setOpenQuickAccess] = useState(false);
+  // const { allVisitorEmployee } = useVisitorEmployees(token as string);
+  const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =
+    useInvitationVisitorEmployee(token, {
+      search: debouncedSearch,
+      start: 0,
+      length: 10,
+    });
 
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination(token, {
     'search[value]': debouncedSearch,

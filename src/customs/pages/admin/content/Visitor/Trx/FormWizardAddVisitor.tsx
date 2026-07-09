@@ -1737,7 +1737,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   return shared ? { ...f, ...pickAns(shared) } : f;
                 });
 
-                const visibilityMap = getVisibilityMap(mergedVisitForm);
+                const visibilityMap: any = getVisibilityMap(mergedVisitForm);
 
                 mergedVisitForm.forEach((item: any) => {
                   if (!item?.mandatory) return;
@@ -1748,10 +1748,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     : true;
 
                   if (!isVisible) return;
-
                   const fieldId = item.custom_field_id || item.id;
-
-                  // key HARUS sama dengan renderDetailRows
                   const key = `${activeStep - 1}:${fieldId}`;
 
                   validateField(item, key, errors);
@@ -3148,7 +3145,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : f;
         });
 
-        const visibilityMap = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMap(mergedFields);
 
         mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
@@ -3171,7 +3168,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap = getVisibilityMap(details);
+          const visibilityMap: any = getVisibilityMap(details);
 
           details.forEach((item: any) => {
             if (!item?.mandatory) return;
@@ -3702,6 +3699,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     );
                   }
                   if (item.remarks === 'host') {
+                    // const selectedSiteIds =
+                    //   details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+                    // const siteHostIds = [
+                    //   ...new Set(
+                    //     sites
+                    //       .filter((site: any) => selectedSiteIds.includes(site.id))
+                    //       .map((site: any) => site.host)
+                    //       .filter(Boolean),
+                    //   ),
+                    // ];
+
+                    // // host yang sesuai site
+                    // const matchedHosts = employee
+                    //   .filter((emp: any) => siteHostIds.includes(emp.id))
+                    //   .map((emp: any) => ({
+                    //     value: emp.id,
+                    //     name: emp.name,
+                    //     group: 'Host Based on Destination',
+                    //   }));
+
                     const selectedSiteIds =
                       details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
                     const siteHostIds = [
@@ -3712,7 +3729,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           .filter(Boolean),
                       ),
                     ];
-
                     // host yang sesuai site
                     const matchedHosts = employee
                       .filter((emp: any) => siteHostIds.includes(emp.id))
@@ -3721,25 +3737,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         name: emp.name,
                         group: 'Host Based on Destination',
                       }));
-
-                    // const otherHosts = employee
-                    //   .filter((emp: any) => !siteHostIds.includes(emp.id))
-                    //   .map((emp: any) => ({
-                    //     value: emp.id,
-                    //     name: emp.name,
-                    //     group: 'All Host',
-                    //   }));
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
-
-                    // const availableHosts = employee.filter(
-                    //   (emp: any) => !siteHostIds.includes(emp.id),
-                    // );
-
                     const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
-
                     const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
-
                     const mergedHosts = selectedHost
                       ? [selectedHost, ...visibleHosts.filter((x: any) => x.id !== selectedHost.id)]
                       : visibleHosts;
@@ -4483,6 +4484,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               </IconButton>
                             </Box>
 
+                            <Divider sx={{ mb: 2 }} />
+
                             <Grid container spacing={2}>
                               <Grid size={{ xs: 12, sm: 6 }}>
                                 <Box sx={{ position: 'relative' }}>
@@ -5100,7 +5103,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        webcamRef={webcamRef}
+                        webcamRef={webcamRef as any}
                         screenshot={screenshot}
                         facingMode={facingMode}
                         onSwitchCamera={() =>
