@@ -38,10 +38,7 @@ import {
 import { IconStars, IconUsers } from '@tabler/icons-react';
 
 // Alert
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
 type EmployeesTableRow = {
@@ -163,7 +160,6 @@ const Content = () => {
             token,
             start,
             rowsPerPage,
-            sortColumn,
             sortDir,
             searchKeyword,
             filters.gender === 0 ? undefined : filters.gender,
@@ -175,13 +171,6 @@ const Content = () => {
             String(filters.department),
           );
         } catch (err: any) {
-          if (err?.response?.status === 404 || err?.status === 404) {
-            setTableData([]);
-            setTableRowEmployee([]);
-            setTotalRecords(0);
-            setTotalFilteredRecords(0);
-            return;
-          }
           throw err;
         }
 
@@ -190,15 +179,6 @@ const Content = () => {
           employeeRes?.status_code === 404 ||
           employeeRes?.status === 'not_found' ||
           safeCollection.length === 0;
-
-        if (isNotFound) {
-          setTableData([]);
-          setTableRowEmployee([]);
-          setTotalRecords(0);
-          setTotalFilteredRecords(0);
-          setIsDataReady(true);
-          return;
-        }
 
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);

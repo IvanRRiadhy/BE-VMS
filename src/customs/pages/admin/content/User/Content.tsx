@@ -28,7 +28,7 @@ import {
   unassignAccount,
 } from 'src/customs/api/Admin/User';
 import { useEmployees } from 'src/hooks/useEmployees';
-import { useOrganization } from 'src/hooks/useOrganization';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
 

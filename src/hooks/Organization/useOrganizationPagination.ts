@@ -17,7 +17,7 @@ export const useOrganizationPagination = ({
   searchKeyword,
 }: Props) => {
   return useQuery({
-    queryKey: ['organizations', page, rowsPerPage, sortDir, searchKeyword],
+    queryKey: ['organizations', 'pagination', page, rowsPerPage, sortDir, searchKeyword],
     enabled: !!token,
     queryFn: () =>
       getAllOrganizationPagination(token, page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),

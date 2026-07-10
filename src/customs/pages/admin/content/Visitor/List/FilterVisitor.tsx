@@ -12,9 +12,9 @@ import {
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useDepartment } from 'src/hooks/useDepartment';
-import { useDistricts } from 'src/hooks/useDistricts';
-import { useOrganization } from 'src/hooks/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useDistricts } from 'src/hooks/District/useDistricts';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
 
 type FilterMoreContentProps = {
   filters: any;

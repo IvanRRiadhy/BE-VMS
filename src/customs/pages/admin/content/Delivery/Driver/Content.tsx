@@ -34,9 +34,9 @@ import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Driver/F
 import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
 import FormDriver from 'src/customs/pages/admin/content/Delivery/Driver/FormDriver';
 import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
-import { useDistricts } from 'src/hooks/useDistricts';
-import { useDepartment } from 'src/hooks/useDepartment';
-import { useOrganization } from 'src/hooks/useOrganization';
+import { useDistricts } from 'src/hooks/District/useDistricts';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 

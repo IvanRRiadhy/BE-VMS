@@ -29,16 +29,6 @@ import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
-  createEmployee,
-  updateEmployee,
-  getEmployeeById,
-  uploadImageEmployee,
-  getAllOrganizations,
-  getAllDepartments,
-  getAllDistricts,
-} from 'src/customs/api/admin';
-
-import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   CreateEmployeeSubmitSchema,
@@ -50,6 +40,8 @@ import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employe
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
+import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -69,6 +61,9 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  organizations?: any;
+  department?: any;
+  districts?: any;
 }
 
 const BASE_URL = axiosInstance2.defaults.baseURL;
@@ -82,10 +77,11 @@ const FormWizardAddEmployee = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
-  // setIsFormChanged,
+  organizations,
+  department,
+  districts,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
@@ -93,9 +89,6 @@ const FormWizardAddEmployee = ({
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const { token } = useSession();
-  const [organization, setOrganization] = useState<any[]>([]);
-  const [department, setDepartment] = useState<any[]>([]);
-  const [district, setDistrict] = useState<any[]>([]);
   const isStepSkipped = (step: number) => skipped.has(step);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,7 +100,8 @@ const FormWizardAddEmployee = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
-
+  const { create, update, uploadImage, isPending } = useEmployeeMutation();
+  const loading = isPending;
   const clearLocal = () => {
     setSiteImageFile(null);
     setPreviewUrl(null);
@@ -162,47 +156,30 @@ const FormWizardAddEmployee = ({
     }
   };
 
+  const { data: employee } = useEmployeeDetail({
+    id: edittingId,
+    enabled: !!edittingId && !isBatchEdit,
+  });
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
+    if (!employee) return;
 
-      const [orgRes, deptRes, distRes] = await Promise.allSettled([
-        getAllOrganizations(token),
-        getAllDepartments(token),
-        getAllDistricts(token),
-      ]);
+    const normalizedGender =
+      typeof employee.gender === 'string'
+        ? employee.gender === 'Female'
+          ? 0
+          : 1
+        : Number(employee.gender ?? 0);
 
-      setOrganization(orgRes.status === 'fulfilled' ? (orgRes.value.collection ?? []) : []);
-
-      setDepartment(deptRes.status === 'fulfilled' ? (deptRes.value.collection ?? []) : []);
-
-      setDistrict(distRes.status === 'fulfilled' ? (distRes.value.collection ?? []) : []);
-
-      if (edittingId && !isBatchEdit) {
-        const employeeRes = await getEmployeeById(edittingId, token);
-        const employee = employeeRes?.collection ?? null;
-        if (employee) {
-          const normalizedGender =
-            typeof employee.gender === 'string'
-              ? employee.gender === 'Female'
-                ? 0
-                : 1
-              : Number(employee.gender ?? 0);
-
-          setFormData((prev) => ({
-            ...prev,
-            ...employee,
-            gender: normalizedGender,
-            organization_id: String(employee.organization_id ?? ''),
-            department_id: String(employee.department_id ?? ''),
-            district_id: String(employee.district_id ?? ''),
-          }));
-        }
-      }
-    };
-
-    fetchData();
-  }, [token, edittingId, isBatchEdit]);
+    setFormData((prev) => ({
+      ...prev,
+      ...employee,
+      gender: normalizedGender,
+      organization_id: String(employee.organization_id ?? ''),
+      department_id: String(employee.department_id ?? ''),
+      district_id: String(employee.district_id ?? ''),
+    }));
+  }, [employee]);
 
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
     const out: Record<string, any> = {};
@@ -273,11 +250,6 @@ const FormWizardAddEmployee = ({
     }
 
     const res = schema.safeParse(payload);
-    if (!res.success) {
-      console.log('STEP', step);
-      console.log('PAYLOAD', payload);
-      console.log('ERRORS', res.error.issues);
-    }
 
     if (res.success) return true;
 
@@ -381,7 +353,7 @@ const FormWizardAddEmployee = ({
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
     setErrors({});
 
     try {
@@ -392,7 +364,6 @@ const FormWizardAddEmployee = ({
 
         if (enabledKeys.length === 0) {
           showSwal('error', 'Please enable at least one field to update.');
-          setLoading(false);
           return;
         }
 
@@ -409,21 +380,19 @@ const FormWizardAddEmployee = ({
           showSwal('error', 'Please complete the required fields.');
           const firstKey = Object.keys(em)[0];
           if (firstKey) scrollToField(firstKey);
-          setLoading(false);
+
           return;
         }
 
         for (const row of selectedRows) {
-          await updateEmployee(
-            row.id,
-            {
+          await update.mutateAsync({
+            id: row.id,
+            token: token!,
+            data: {
               ...row,
               ...payload,
-              vehicle_plate_number: payload.vehicle_plate_number,
-              vehicle_type: payload.vehicle_type,
             },
-            token as string,
-          );
+          });
         }
 
         showSwal('success', 'Batch update successfully!');
@@ -474,13 +443,21 @@ const FormWizardAddEmployee = ({
           exit_date: data.exit_date || null,
         };
 
-        await updateEmployee(edittingId, editData, token as string);
+        await update.mutateAsync({
+          id: edittingId,
+          token: token!,
+          data: editData,
+        });
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
         showSwal('success', 'Employee successfully updated!');
       } else {
-        const created = await createEmployee(data, token as string);
+        // const created = await createEmployee(data, token as string);
+        const created = await create.mutateAsync({
+          token: token!,
+          data,
+        });
         const employeeId = created?.collection.employee_id;
         if (hasNewImage) {
           await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
@@ -501,8 +478,6 @@ const FormWizardAddEmployee = ({
           err?.message ??
           'Failed to submit. Please try again.',
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -514,13 +489,27 @@ const FormWizardAddEmployee = ({
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      tasks.push(uploadImageEmployee(employeeId, fileFromInput, token as string));
+      // tasks.push(uploadImageEmployee(employeeId, fileFromInput, token as string));
+      tasks.push(
+        uploadImage.mutateAsync({
+          employeeId,
+          file: fileFromInput,
+          token: token!,
+        }),
+      );
     }
 
     if (faceImage && isDataUrl(faceImage)) {
       const blob = await fetch(faceImage).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      tasks.push(uploadImageEmployee(employeeId, file, token as string));
+      // tasks.push(uploadImageEmployee(employeeId, file, token as string));
+      tasks.push(
+        uploadImage.mutateAsync({
+          employeeId,
+          file,
+          token: token!,
+        }),
+      );
     }
 
     if (tasks.length === 0) return;
@@ -905,13 +894,13 @@ const FormWizardAddEmployee = ({
                 fullWidth
                 autoHighlight
                 disablePortal
-                options={district.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
+                options={districts.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
                   const cur = String(localForm.district_id ?? '');
                   return (
-                    district
+                    districts
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
-                      .find((opt) => opt.id === cur) || null
+                      .find((opt: any) => opt.id === cur) || null
                   );
                 })()}
                 onChange={(_, newVal) => {
@@ -971,16 +960,16 @@ const FormWizardAddEmployee = ({
                 fullWidth
                 autoHighlight
                 disablePortal
-                options={organization.map((o: any) => ({
+                options={organizations.map((o: any) => ({
                   id: String(o.id),
                   label: o.name ?? '',
                 }))}
                 value={(() => {
                   const currentId = String(localForm.organization_id ?? '');
                   return (
-                    organization
+                    organizations
                       .map((o: any) => ({ id: String(o.id), label: o.name ?? '' }))
-                      .find((opt) => opt.id === currentId) || null
+                      .find((opt: any) => opt.id === currentId) || null
                   );
                 })()}
                 onChange={(_, newVal) => {
@@ -1046,7 +1035,7 @@ const FormWizardAddEmployee = ({
                   return (
                     department
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
-                      .find((opt) => opt.id === cur) || null
+                      .find((opt: any) => opt.id === cur) || null
                   );
                 })()}
                 onChange={(_, newVal) => {
@@ -1546,17 +1535,6 @@ const FormWizardAddEmployee = ({
             ))}
           </Stepper>
         )}
-
-        {/* {activeStep === steps.length ? (
-          <Stack spacing={2} mt={3}>
-            <Alert severity="success">All steps completed - you're finished</Alert>
-            <Box textAlign="right">
-              <Button onClick={handleReset} variant="contained" color="error">
-                Reset
-              </Button>
-            </Box>
-          </Stack>
-        ) : ( */}
         <>
           <Box mt={1}>{StepContent(activeStep)}</Box>
           <Divider sx={{ mt: 2 }} />

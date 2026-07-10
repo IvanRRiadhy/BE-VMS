@@ -17,7 +17,7 @@ export const useDistrictPagination = ({
   searchKeyword,
 }: Props) => {
   return useQuery({
-    queryKey: ['districts', page, rowsPerPage, sortDir, searchKeyword],
+    queryKey: ['districts', 'pagination', page, rowsPerPage, sortDir, searchKeyword],
     enabled: !!token,
     queryFn: () =>
       getAllDistrictsPagination(token, page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),

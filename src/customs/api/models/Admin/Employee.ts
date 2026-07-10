@@ -89,6 +89,7 @@ export const CreateEmployeeRequestSchema = z.object({
   head_employee_2: z.string().default(''),
   organization_id: z.string().default(''),
   department_id: z.string().default(''),
+  
   district_id: z.string().default(''),
   vendor_code: z.string().nullable().optional(),
   emergency_contact_name: z.string().nullable().optional(),

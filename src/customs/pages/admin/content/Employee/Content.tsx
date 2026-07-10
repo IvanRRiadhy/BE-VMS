@@ -38,12 +38,14 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import FilterMoreContent from './FilterMoreContent';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import { useOrganization } from 'src/hooks/useOrganization';
-import { useDepartment } from 'src/hooks/useDepartment';
-import { useDistricts } from 'src/hooks/useDistricts';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useDistricts } from 'src/hooks/District/useDistricts';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination';
+import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 
 type EmployeesTableRow = {
   id: string;
@@ -72,25 +74,18 @@ interface Filters {
 }
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const [edittingId, setEdittingId] = useState('');
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { organizations } = useOrganization();
   const { department } = useDepartment();
   const { districts } = useDistricts();
   const [loadingData, setLoadingData] = useState(false);
-  const { t } = useTranslation();
-  const [isDirty, setIsDirty] = useState(false);
-
+  const { remove } = useEmployeeMutation();
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
     // joinEnd: '',
@@ -102,7 +97,21 @@ const Content = () => {
     department: '',
     district: '',
   });
-
+  const { t } = useTranslation();
+  const [isDirty, setIsDirty] = useState(false);
+  const employeeQuery = useEmployeePagination({
+    token: token!,
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+    filters,
+  });
+  const tableData = useMemo<Item[]>(() => {
+    return employeeQuery.data?.collection ?? [];
+  }, [employeeQuery.data]);
+  const totalRecords = employeeQuery.data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = employeeQuery.data?.RecordsFiltered ?? 0;
   const cards = [
     {
       title: t('total_employee'),
@@ -112,56 +121,18 @@ const Content = () => {
       color: 'none',
     },
   ];
+  const loading = employeeQuery.isPending;
+  const tableRowEmployee = useMemo(() => {
+    const collection = employeeQuery.data?.collection ?? [];
 
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-
-        let employeeRes: any;
-        try {
-          employeeRes = await getAllEmployeePaginationFilterMore(
-            token,
-            start,
-            rowsPerPage,
-            sortDir,
-            search,
-            filters.gender === 0 ? undefined : filters.gender,
-            filters.joinStart,
-            filters.exitEnd,
-            filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
-            String(filters.organization),
-            String(filters.district),
-            String(filters.department),
-          );
-        } catch (err: any) {
-          throw err;
-        }
-
-        const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-
-        setTableData(safeCollection);
-        setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
-        setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
-
-        const rows = safeCollection.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          organization: item.organization?.name || item.Organization?.name || '-',
-          department: item.department?.name || item.Department?.name || '-',
-          faceimage: item.faceimage,
-        }));
-        setTableRowEmployee(rows);
-      } catch (error: any) {
-        console.error('Error fetching data:', error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+    return collection.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      organization: item.organization?.name ?? item.Organization?.name ?? '-',
+      department: item.department?.name ?? item.Department?.name ?? '-',
+      faceimage: item.faceimage,
+    }));
+  }, [employeeQuery.data]);
 
   const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
 
@@ -360,15 +331,15 @@ const Content = () => {
     );
 
     if (confirmed) {
-      setLoading(true);
       try {
-        await deleteEmployee(row.id, token);
-        setRefreshTrigger((prev) => prev + 1);
+        await remove.mutateAsync({
+          id: row.id,
+          token: token!,
+        });
+
         showSwal('success', `Successfully deleted employee "${name}".`);
       } catch (error) {
         showSwal('error', `Failed to delete employee "${name}".`);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
       }
     }
   };
@@ -380,25 +351,20 @@ const Content = () => {
 
     if (!confirmed) return false;
 
-    setLoading(true);
     try {
       await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
-      setRefreshTrigger((prev) => prev + 1);
+
       showSwal('success', `Succesfully deleted ${rows.length} employees.`);
       setSelectedRows([]);
       return true;
     } catch (error) {
       showSwal('error', 'Failed to delete some employees.');
       return false;
-    } finally {
-      setLoading(false);
     }
-    // }
   };
 
   const handleApplyFilter = () => {
     setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   const [enabledFields, setEnabledFields] = useState<EnableField>({
@@ -416,7 +382,6 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
     setInitialFormData((_) => formDataAddEmployee);
     setOpenFormAddEmployee(false);
   };
@@ -489,8 +454,6 @@ const Content = () => {
           ? 'Successfully blacklisted employee'
           : 'Successfully whitelisted employee',
       );
-
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist employee.');
     } finally {
@@ -615,6 +578,9 @@ const Content = () => {
             selectedRows={selectedRows}
             enabledFields={enabledFields}
             setEnabledFields={setEnabledFields}
+            organizations={organizations}
+            department={department}
+            districts={districts}
           />
         </DialogContent>
       </Dialog>

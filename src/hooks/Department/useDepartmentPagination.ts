@@ -17,7 +17,7 @@ export const useDepartmentPagination = ({
   searchKeyword,
 }: Props) => {
   return useQuery({
-    queryKey: ['departments', page, rowsPerPage, sortDir, searchKeyword],
+    queryKey: ['departments', 'pagination', page, rowsPerPage, sortDir, searchKeyword],
     enabled: !!token,
     queryFn: () =>
       getAllDepartmentsPagination(token, page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),

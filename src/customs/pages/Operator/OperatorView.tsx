@@ -3390,7 +3390,7 @@ const OperatorView = () => {
             // overflow: 'hidden',
           }}
         >
-          <Grid container spacing={1} mb={0.5} alignItems={{ xs: 'center', xl: 'center' }}>
+          <Grid container spacing={1} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
             <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}

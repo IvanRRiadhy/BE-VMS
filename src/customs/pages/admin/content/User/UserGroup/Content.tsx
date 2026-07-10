@@ -52,7 +52,7 @@ import {
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import useDropPoint from 'src/hooks/useDropPoint';
-import { useOrganization } from 'src/hooks/useOrganization';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import { useAccessControl } from 'src/hooks/useAccessControl';
 import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
