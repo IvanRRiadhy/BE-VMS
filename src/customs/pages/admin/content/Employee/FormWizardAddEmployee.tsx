@@ -462,7 +462,7 @@ const FormWizardAddEmployee = ({
       const rawFaceImage = localForm.faceimage;
       const rawFileImage = siteImageFile;
 
-      const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
+      const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage as string);
 
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;

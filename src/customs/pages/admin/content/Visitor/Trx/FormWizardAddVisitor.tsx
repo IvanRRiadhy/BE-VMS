@@ -110,6 +110,7 @@ import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
 import { IconRefresh } from '@tabler/icons-react';
 import CameraDialog from './components/Dialog/CameraDialog';
+import { useTranslation } from 'react-i18next';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -225,12 +226,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
 
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
-
+  const { t } = useTranslation();
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
     [FORM_KEY]: updater(formsOf(sec)),
   });
-
   const [selfOnlyOpen, setSelfOnlyOpen] = useState(false);
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
@@ -5849,9 +5849,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           setSectionsData(groupSections);
           setDraggableSteps(groupSections.map((s) => s.name));
           seedDataVisitorFromSections(groupSections);
-
-          // seedDataVisitorFromSections(groupSections);
-
           setGroupedPages(buildGroupedPages(groupSections));
         }
       } else {
@@ -5873,11 +5870,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setSelectedSiteIds([]);
       setSiteTree([]);
     }
-
-    // setInputValues({});
-    // // setSelectedSiteParentIds([]);
-    // setSelectedSiteIds([]);
-    // setSiteTree([]);
     if (isGroup) {
       if (!duplicateData) {
         const groupSections = buildGroupSections(rawSections);
@@ -5953,6 +5945,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
 
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
+
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
       <form onSubmit={handleOnSubmit}>
@@ -6141,7 +6134,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               }}
               startIcon={<IconArrowLeft width={18} />}
             >
-              Back
+              {t('back')}
             </MuiButton>
 
             {isGroup ? (
@@ -6169,7 +6162,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   onClick={handleNext}
                   endIcon={<IconArrowRight width={18} />}
                 >
-                  Next
+                  {t('next')}
                 </Button>
               )
             ) : isLastStep ? (
@@ -6192,7 +6185,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 onClick={handleNext}
                 endIcon={<IconArrowRight width={18} />}
               >
-                Next
+                {t('next')}
               </Button>
             )}
           </Box>

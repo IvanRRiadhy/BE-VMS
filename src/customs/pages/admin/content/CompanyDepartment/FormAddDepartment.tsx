@@ -12,18 +12,17 @@ import { Box } from '@mui/system';
 import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDepartment, getVisitorEmployee, updateDepartment } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
 } from 'src/customs/api/models/Admin/Department';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
-
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFormAutoSave } from 'src/hooks/useFormAutoSave';
+import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -47,13 +46,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   onDirtyChange,
 }) => {
   const { token } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [allEmployes, setAllEmployees] = useState<any[]>([]);
-
   const schema =
     mode === 'batch' ? CreateDepartementSubmitSchema.partial() : CreateDepartementSubmitSchema;
-
-  // ✅ RHF setup
   const {
     control,
     handleSubmit,
@@ -67,7 +61,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       name: '',
       code: '',
       host: '',
-      // is_internal: undefined,
     },
   });
 
@@ -76,21 +69,10 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   }, [isDirty, onDirtyChange]);
 
   // fetch employee
-  useEffect(() => {
-    if (!token) return;
+  const { allVisitorEmployee } = useVisitorEmployees(token);
+  const { create, update } = useDepartmentMutation();
 
-    const fetchEmployees = async () => {
-      try {
-        const res = await getVisitorEmployee(token);
-        setAllEmployees(res?.collection ?? []);
-      } catch (error) {
-        console.error('Failed to fetch employees:', error);
-        setAllEmployees([]);
-      }
-    };
-
-    fetchEmployees();
-  }, [token]);
+  const loading = create.isPending || update.isPending;
 
   useEffect(() => {
     if (mode === 'edit' && data) {
@@ -98,7 +80,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         name: data.name || '',
         code: data.code || '',
         host: String(data.host || ''),
-        // is_internal: data.is_internal ?? undefined,
       });
     }
 
@@ -107,27 +88,32 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         name: '',
         code: '',
         host: '',
-        // is_internal: undefined,
       });
     }
   }, [mode, data, reset]);
 
   const employeeOptions = useMemo(
-    () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
-    [allEmployes],
+    () => allVisitorEmployee.map((emp: any) => ({ id: emp.id, label: emp.name })),
+    [allVisitorEmployee],
   );
 
   const onSubmit = async (form: CreateDepartmentRequest) => {
-    setLoading(true);
     try {
       if (!token) return;
       if (mode === 'create') {
-        await createDepartment(form, token);
+        await create.mutateAsync({
+          token,
+          data: form,
+        });
         showSwal('success', 'Department successfully created!');
       }
 
       if (mode === 'edit' && data) {
-        await updateDepartment(data.id, form, token);
+        await update.mutateAsync({
+          id: data.id,
+          token,
+          data: form,
+        });
         showSwal('success', 'Department successfully updated!');
       }
 
@@ -141,10 +127,13 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
                 typeof item.host === 'object'
                   ? String(item.host?.id || '')
                   : String(item.host || ''),
-              // is_internal: item.is_internal,
             };
 
-            return updateDepartment(item.id, payload, token);
+            return update.mutateAsync({
+              id: item.id,
+              token,
+              data: payload,
+            });
           }),
         );
 
@@ -153,10 +142,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
       reset();
       onSuccess?.();
-    } catch (err) {
-      showSwal('error', 'Failed to create department.', 3000);
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to update', 3000);
     }
   };
 
@@ -260,41 +247,13 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           </>
         )}
 
-        {/* TYPE */}
-        {/* {mode === 'batch' ? (
-          <>
-            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
-            <CustomTextField value="" disabled fullWidth />
-          </>
-        ) : (
-          <>
-            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
-            <Controller
-              name="is_internal"
-              control={control}
-              render={({ field }) => (
-                <RadioGroup
-                  row
-                  value={field.value === undefined ? '' : String(field.value)}
-                  onChange={(e) => field.onChange(e.target.value === 'true')}
-                >
-                  <FormControlLabel value="true" control={<Radio />} label="Internal" />
-                  <FormControlLabel value="false" control={<Radio />} label="External" />
-                </RadioGroup>
-              )}
-            />
-          </>
-        )} */}
-
-        {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
+          <Button sx={{ mt: 2 }} variant="contained" type="submit">
             Submit
           </Button>
         </Box>
       </form>
 
-      {/* LOADING */}
       <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress />
       </Backdrop>

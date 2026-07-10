@@ -36,7 +36,7 @@ import {
   showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
-import { IconCards, IconUserCheck, IconCircleCheck, IconUserOff, IconX, IconCreditCardOff, IconCreditCard } from '@tabler/icons-react';
+import { IconCards, IconUserCheck, IconUserOff, IconCreditCardOff, IconCreditCard } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
 import FilterMoreContent from './FilterMoreContent';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -81,7 +81,6 @@ const typeMap: Record<string, number> = {
 const Content = () => {
   const { token } = useSession();
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -153,7 +152,6 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          // sortColumn,
           search,
           sortDir,
           filters.type === -1 ? undefined : filters.type,
@@ -199,9 +197,6 @@ const Content = () => {
         }
       } catch (error: any) {
         if (error?.response?.status === 404) {
-          // setTableVisitorCard([]);
-          // setTotalRecords(0);
-          // setTotalFilteredRecords(0);
         } else {
           console.error('Error fetching data:', error);
         }
@@ -210,7 +205,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorCard(true);
@@ -231,14 +226,7 @@ const Content = () => {
   );
 
   const handleAddVisitorCard = useCallback(() => {
-    let saved = localStorage.getItem('unsavedVisitorCardData');
     let freshForm;
-    // if (saved) {
-    //   freshForm = JSON.parse(saved);
-    // } else {
-    //   freshForm = CreateVisitorCardRequestSchema.parse({});
-    //   localStorage.setItem('unsavedVisitorCardData', JSON.stringify(freshForm));
-    // }
 
     freshForm = CreateVisitorCardRequestSchema.parse({});
 
@@ -318,12 +306,6 @@ const Content = () => {
     }
   };
 
-  // const handleBatchEdit = (rows: any[]) => {
-  //   const selectedId = rows[0]?.id;
-  //   setEdittingId(selectedId);
-  //   setIsBatchEdit(true);
-  //   handleOpenDialog();
-  // };
 
   const handleBatchEdit = (rows: Item[]) => {
     if (!rows.length) return;

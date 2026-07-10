@@ -78,7 +78,7 @@ const OperatorToolbar = ({
             md: 150,
             lg: 200,
           },
-          backgroundColor: 'background.paper'
+          backgroundColor: 'background.paper',
         }}
       >
         <MenuItem value="" disabled>
@@ -95,21 +95,43 @@ const OperatorToolbar = ({
         <Button
           variant="contained"
           startIcon={<IconUser size={18} />}
-          onClick={handleClick}
           endIcon={<IconCaretDownFilled size={18} />}
+          onClick={handleClick}
           size="medium"
           sx={{
-            maxWidth: {
-              sm: 250,
-              md: 150,
-              lg: 200,
+            width: {
+              xs: '100%',
+              sm: 220,
+              md: 180,
+              lg: 180,
             },
-            whiteSpace: 'nowrap',
+            minWidth: 0,
+            justifyContent: 'space-between',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
+
+            '& .MuiButton-startIcon, & .MuiButton-endIcon': {
+              flexShrink: 0,
+            },
+
+            '& .MuiButton-label': {
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            },
           }}
         >
-          Visitor Site
+          <Box
+            component="span"
+            sx={{
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+            }}
+          >
+            Visitor Site
+          </Box>
         </Button>
       </Tooltip>
 
@@ -142,7 +164,7 @@ const OperatorToolbar = ({
         <IconButton
           onClick={onToggleFullscreen}
           sx={{
-            backgroundColor:'primary.main',
+            backgroundColor: 'primary.main',
             color: '#fff',
             width: 36,
             height: 36,

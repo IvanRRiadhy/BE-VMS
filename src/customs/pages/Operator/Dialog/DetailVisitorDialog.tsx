@@ -165,7 +165,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconHome />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visitor Type</CustomFormLabel>
                           <Typography
                             sx={{
                               wordBreak: 'break-word',
@@ -173,7 +173,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor_address || '-'}
+                            {visitorData[0]?.visitor_type_name || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -184,8 +184,8 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconGenderMale />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                          <Typography>{visitorData[0]?.visitor_gender || '-'}</Typography>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Id</CustomFormLabel>
+                          <Typography>{visitorData[0]?.visitor_identity_id || '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>
@@ -279,6 +279,17 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
                             Visitor Status
                             <Typography>{visitorData[0]?.visitor_status || '-'}</Typography>
+                          </CustomFormLabel>
+                        </Box>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={2} alignItems="flex-start">
+                        <IconCheckupList />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                            Invited By
+                            <Typography>{visitorData[0]?.invited_by_name || '-'}</Typography>
                           </CustomFormLabel>
                         </Box>
                       </Box>

@@ -24,26 +24,25 @@ import FormAddOrganization from './FormAddOrganization';
 import {
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
-  deleteDepartment,
-  deleteDistrict,
-  deleteOrganization,
   getOrganizationById,
   getDepartmentById,
   getDistrictById,
-  getAllEmployee,
   getAllOrganizationPagination,
   getVisitorEmployee,
 } from 'src/customs/api/admin';
-
-import {
-  Item,
-} from 'src/customs/api/models/Admin/Department';
-
+import { Item } from 'src/customs/api/models/Admin/Department';
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
+import { useDepartmentPagination } from 'src/hooks/Department/useDepartmentPagination';
+import { useDistrictPagination } from 'src/hooks/District/useDistrictPagination';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
+import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
+import { useDistrictMutation } from 'src/hooks/District/useDistrictMutation';
 
 type EnableField = {
   name: boolean;
@@ -71,54 +70,23 @@ const entityLabel = (e?: DialogEntity) =>
     : '';
 
 const Content = () => {
-  const [totals, setTotals] = useState({ organization: 0, department: 0, district: 0 });
   const { t } = useTranslation();
-  const cards = [
-    {
-      title: t('total_organization'),
-      subTitle: totals.organization.toString(),
-      subTitleSetting: totals.organization,
-      icon: IconBuildingSkyscraper,
-      color: 'none',
-    },
-    {
-      title: t('total_department'),
-      subTitle: totals.department.toString(),
-      subTitleSetting: totals.department,
-      icon: IconBuilding,
-      color: 'none',
-    },
-    {
-      title: t('total_district'),
-      subTitle: totals.district.toString(),
-      subTitleSetting: totals.district,
-      icon: IconMapPins,
-      color: 'none',
-    },
-  ];
-
   const { token } = useSession();
   const [selectedType, setSelectedType] = useState<'organization' | 'department' | 'district'>(
     'organization',
   );
-  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
-
+  const [pendingAdd, setPendingAdd] = useState<DialogEntity | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [searchKeyword, setSearchKeyword] = useState(initialSearch);
   const initialPage = Number(searchParams.get('page') || 0);
   const [page, setPage] = useState(initialPage);
-  const [hasFetched, setHasFetched] = useState(false);
-
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
-
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   useEffect(() => {
     if (!token) return;
 
@@ -144,105 +112,104 @@ const Content = () => {
     setPage(0);
   }, [selectedType]);
 
-  useEffect(() => {
-    if (!token) return;
+  const organizationQuery = useOrganizationPagination({
+    token: token!,
+    page,
+    rowsPerPage,
+    sortDir,
+    searchKeyword,
+  });
 
-    let cancelled = false;
+  const departmentQuery = useDepartmentPagination({
+    token: token!,
+    page,
+    rowsPerPage,
+    sortDir,
+    searchKeyword,
+  });
 
-    const fetchTableData = async () => {
-      setLoading(true);
+  const districtQuery = useDistrictPagination({
+    token: token!,
+    page,
+    rowsPerPage,
+    sortDir,
+    searchKeyword,
+  });
 
-      try {
-        const start = page * rowsPerPage;
-        let response: any;
+  const { remove } = useDepartmentMutation();
+  const { removeOrganization: deleteOrganization } = useOrganizationMutation();
+  const { remove: deleteDistrict } = useDistrictMutation();
 
-        switch (selectedType) {
-          case 'organization':
-            response = await getAllOrganizationPagination(
-              token,
-              start,
-              rowsPerPage,
-              sortDir,
-              searchKeyword,
-            );
-            break;
+  const currentQuery =
+    selectedType === 'organization'
+      ? organizationQuery
+      : selectedType === 'department'
+        ? departmentQuery
+        : districtQuery;
+  const loading = currentQuery.isLoading || currentQuery.isFetching;
+  const response = currentQuery.data;
+  const tableData = useMemo(
+    () =>
+      (response?.collection ?? []).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        code: item.code,
+        host: employeeMap[item.host] || item.host,
+      })),
+    [response, employeeMap],
+  );
 
-          case 'department':
-            response = await getAllDepartmentsPagination(
-              token,
-              start,
-              rowsPerPage,
-              sortDir,
-              searchKeyword,
-            );
-            break;
+  const totalRecords = response?.RecordsTotal ?? 0;
+  const hasFetched = currentQuery.isSuccess;
 
-          default:
-            response = await getAllDistrictsPagination(
-              token,
-              start,
-              rowsPerPage,
-              sortDir,
-              searchKeyword,
-            );
-        }
+  const totalsQueries = useQueries({
+    queries: [
+      {
+        queryKey: ['organization-total'],
+        queryFn: () => getAllOrganizationPagination(token!, 0, 1, sortDir),
+        enabled: !!token,
+      },
+      {
+        queryKey: ['department-total'],
+        queryFn: () => getAllDepartmentsPagination(token!, 0, 1, sortDir),
+        enabled: !!token,
+      },
+      {
+        queryKey: ['district-total'],
+        queryFn: () => getAllDistrictsPagination(token!, 0, 1, sortDir),
+        enabled: !!token,
+      },
+    ],
+  });
+  const totals = {
+    organization: totalsQueries[0].data?.RecordsTotal ?? 0,
+    department: totalsQueries[1].data?.RecordsTotal ?? 0,
+    district: totalsQueries[2].data?.RecordsTotal ?? 0,
+  };
 
-        if (cancelled) return;
-
-        const mapped = (response?.collection ?? []).map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          code: item.code,
-          host: employeeMap[item.host] || item.host,
-        }));
-
-        setTableData(mapped);
-        setTotalRecords(response?.RecordsTotal ?? 0);
-
-        setHasFetched(true);
-      } catch (err: any) {
-        if (!cancelled) {
-          console.error('Fetch error:', err.message);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchTableData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token, selectedType, page, rowsPerPage, sortDir, searchKeyword, refreshTrigger, employeeMap]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchTotals = async () => {
-      try {
-        const results = await Promise.allSettled([
-          getAllOrganizationPagination(token, 0, 1, sortDir),
-          getAllDepartmentsPagination(token, 0, 1, sortDir),
-          getAllDistrictsPagination(token, 0, 1, sortDir),
-        ]);
-
-        const orgRes = results[0].status === 'fulfilled' ? results[0].value : null;
-        const depRes = results[1].status === 'fulfilled' ? results[1].value : null;
-        const distRes = results[2].status === 'fulfilled' ? results[2].value : null;
-
-        setTotals({
-          organization: orgRes?.RecordsTotal ?? 0,
-          department: depRes?.RecordsTotal ?? 0,
-          district: distRes?.RecordsTotal ?? 0,
-        });
-      } catch (err) {
-        console.error('Failed to fetch totals:', err);
-      }
-    };
-
-    fetchTotals();
-  }, [token, refreshTrigger]);
+  const cards = [
+    {
+      title: t('total_organization'),
+      subTitle: totals.organization.toString(),
+      subTitleSetting: totals.organization,
+      icon: IconBuildingSkyscraper,
+      color: 'none',
+    },
+    {
+      title: t('total_department'),
+      subTitle: totals.department.toString(),
+      subTitleSetting: totals.department,
+      icon: IconBuilding,
+      color: 'none',
+    },
+    {
+      title: t('total_district'),
+      subTitle: totals.district.toString(),
+      subTitleSetting: totals.district,
+      icon: IconMapPins,
+      color: 'none',
+    },
+  ];
 
   const [dialog, setDialog] = useState<DialogState>(null);
   const editTokenRef = useRef(0);
@@ -300,8 +267,6 @@ const Content = () => {
     setEnabledFields({ name: false, code: false, host: false });
   };
 
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-
   const attemptCloseDialog = () => {
     if ((dialog?.mode === 'add' || dialog?.mode === 'edit') && isDirty) {
       setIsAttemptingClose(true);
@@ -325,23 +290,32 @@ const Content = () => {
 
       switch (selectedType) {
         case 'department':
-          await deleteDepartment(row.id, token);
+          await remove.mutateAsync({
+            id: row.id,
+            token,
+          });
           successText = `Department "${row.name}" has been successfully deleted.`;
           break;
 
         case 'district':
-          await deleteDistrict(row.id, token);
+          await deleteDistrict.mutateAsync({
+            id: row.id,
+            token,
+          });
           successText = `District "${row.name}" has been successfully deleted.`;
           break;
 
         case 'organization':
         default:
-          await deleteOrganization(row.id, token);
+          await deleteOrganization.mutateAsync({
+            id: row.id,
+            token,
+          });
+
           successText = `Organization "${row.name}" has been successfully deleted.`;
           break;
       }
 
-      setRefreshTrigger((p) => p + 1);
       showSwal('success', successText);
     } catch (error) {
       showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
@@ -350,25 +324,40 @@ const Content = () => {
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
+
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+
     if (!confirmed) return;
 
     try {
-      setLoading(true);
       await Promise.all(
         rows.map((row) => {
-          if (selectedType === 'department') return deleteDepartment(row.id, token);
-          if (selectedType === 'district') return deleteDistrict(row.id, token);
-          return deleteOrganization(row.id, token);
+          switch (selectedType) {
+            case 'department':
+              return remove.mutateAsync({
+                id: row.id,
+                token,
+              });
+
+            case 'district':
+              return deleteDistrict.mutateAsync({
+                id: row.id,
+                token,
+              });
+
+            default:
+              return deleteOrganization.mutateAsync({
+                id: row.id,
+                token,
+              });
+          }
         }),
       );
-      setRefreshTrigger((p) => p + 1);
+
       showSwal('success', `${rows.length} items have been deleted.`);
       setSelectedRows([]);
-    } catch (error) {
-      showSwal('error', 'Failed to delete some items.');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      showSwal('error', err.message || 'Failed to delete some items.');
     }
   };
 
@@ -389,11 +378,7 @@ const Content = () => {
     }
 
     setIsDirty(false);
-    setRefreshTrigger((p) => p + 1);
   };
-
-  const [pendingAdd, setPendingAdd] = useState<DialogEntity | null>(null);
-  const [formKey, setFormKey] = useState(0);
 
   const handleDiscard = () => {
     if (isAttemptingClose) {
@@ -406,7 +391,6 @@ const Content = () => {
     }
 
     if (pendingAdd) {
-      setFormKey((k) => k + 1);
       setDialog({ mode: 'add', entity: pendingAdd });
     }
 
@@ -443,10 +427,6 @@ const Content = () => {
 
   const [tableKey, setTableKey] = useState(0);
 
-  // useEffect(() => {
-  //   setPage(0);
-  // }, [selectedType]);
-
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -472,12 +452,12 @@ const Content = () => {
                     setPage(newPage);
                     setRowsPerPage(newRowsPerPage);
 
-                    setSearchParams((prev) => {
-                      const params = new URLSearchParams(prev);
+                    // setSearchParams((prev) => {
+                    //   const params = new URLSearchParams(prev);
 
-                      params.set('page', String(newPage));
-                      return params;
-                    });
+                    //   params.set('page', String(newPage));
+                    //   return params;
+                    // });
                   }}
                   overflowX="auto"
                   data={tableData}
@@ -508,15 +488,10 @@ const Content = () => {
                     ) {
                       setSelectedType(item.name);
                       setPage(0);
-
-                      // force rerender table
                       setTableKey((prev) => prev + 1);
-
                       setSearchParams((prev) => {
                         const params = new URLSearchParams(prev);
-
                         params.set('page', '0');
-
                         return params;
                       });
                     }
@@ -529,7 +504,6 @@ const Content = () => {
                   onSearch={handleSearch}
                   onSearchKeywordChange={handleSearchKeywordChange}
                   onAddData={() => handleAdd(mapSelectedToEntity)}
-                  // onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
               </Grid>
             </Grid>

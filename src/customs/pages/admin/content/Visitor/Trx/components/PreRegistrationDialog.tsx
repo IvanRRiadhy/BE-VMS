@@ -2,6 +2,7 @@ import { Dialog, DialogTitle, DialogContent, Divider, IconButton } from '@mui/ma
 import CloseIcon from '@mui/icons-material/Close';
 
 import FormWizardAddInvitation from '../FormWizardAddInvitation';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -53,6 +54,7 @@ export default function PreRegistrationDialog({
       handleCloseDialog();
     }
   };
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -63,7 +65,7 @@ export default function PreRegistrationDialog({
       PaperProps={{ sx: { width: '100vw' } }}
     >
       <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
-        Add Pre Registration
+        {t('add')} Pre Registration
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>

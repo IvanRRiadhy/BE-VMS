@@ -18,9 +18,14 @@ import { initializeAxiosBaseURL } from './customs/api/interceptor';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 1,
+      staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 1,
+      retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: false,
     },
   },
 });
@@ -33,15 +38,15 @@ loadRuntimeConfig()
     root.render(
       <Provider store={store}>
         {/* <PersistGate loading={<Spinner />}> */}
-          <SessionProvider>
-            <AuthProvider>
-              <QueryClientProvider client={queryClient}>
-                <Suspense fallback={null}>
-                  <App />
-                </Suspense>
-              </QueryClientProvider>
-            </AuthProvider>
-          </SessionProvider>
+        <SessionProvider>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <Suspense fallback={null}>
+                <App />
+              </Suspense>
+            </QueryClientProvider>
+          </AuthProvider>
+        </SessionProvider>
         {/* </PersistGate> */}
       </Provider>,
     );

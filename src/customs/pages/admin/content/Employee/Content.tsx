@@ -61,11 +61,6 @@ type EnableField = {
   district_id: boolean;
 };
 
-interface OptionItem {
-  id: string;
-  name: string;
-}
-
 interface Filters {
   gender: number;
   organization: string;
@@ -82,7 +77,6 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
@@ -132,7 +126,6 @@ const Content = () => {
             token,
             start,
             rowsPerPage,
-            // sortColumn,
             sortDir,
             search,
             filters.gender === 0 ? undefined : filters.gender,
@@ -156,8 +149,8 @@ const Content = () => {
         const rows = safeCollection.map((item: any) => ({
           id: item.id,
           name: item.name,
-          organization: item.organization?.name || '-',
-          department: item.department?.name || '-',
+          organization: item.organization?.name || item.Organization?.name || '-',
+          department: item.department?.name || item.Department?.name || '-',
           faceimage: item.faceimage,
         }));
         setTableRowEmployee(rows);
@@ -265,12 +258,6 @@ const Content = () => {
     setIsDirty(false);
 
     handleOpenDialog();
-  };
-
-  const normalizeGender = (val: any) => {
-    if (val === 'Female') return 0;
-    if (val === 'Male') return 1;
-    return Number(val ?? 0);
   };
 
   const toNum = (

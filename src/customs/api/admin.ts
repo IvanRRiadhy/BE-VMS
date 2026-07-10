@@ -1438,8 +1438,7 @@ export const getAllDistrictsPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
-    'search[value]': keyword, // tetap ada untuk search
+    'search[value]': keyword, 
   };
 
   if (sortDir) {
@@ -1613,7 +1612,6 @@ export const getAllOrganizationPagination = async (
   token: string,
   start: number,
   length: number,
-  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllOrganizationPaginationResponse> => {
@@ -1621,11 +1619,9 @@ export const getAllOrganizationPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
     'search[value]': keyword,
   };
 
-  // tambahkan sortDir hanya kalau ada
   if (sortDir) {
     params.sort_dir = sortDir;
   }
@@ -1801,7 +1797,6 @@ export const getFormEmployee = async (
   try {
     const params: Record<string, any> = {};
 
-    // ✅ hanya tambahkan jika ada nilainya
     if (status_employee) params['status-employee'] = status_employee;
 
     const response = await axiosInstance.get(`/employee`, {
@@ -1897,7 +1892,6 @@ export const getAllEmployeePaginationFilterMore = async (
   token: string,
   start: number,
   length: number,
-  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
   gender?: number,
@@ -1911,7 +1905,6 @@ export const getAllEmployeePaginationFilterMore = async (
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
     sort_dir: sortDir,
   };
 
@@ -1936,7 +1929,6 @@ export const getAllEmployeePaginationFilterMore = async (
 
 export const createEmployee = async (data: CreateEmployeeRequest, token: string): Promise<any> => {
   try {
-    console.log(data);
     const response = await axiosInstance.post(`/employee`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -2040,7 +2032,6 @@ export const getAllSitePagination = async (
   token: string,
   start: number,
   length: number,
-  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
   type?: number,
@@ -2051,7 +2042,6 @@ export const getAllSitePagination = async (
     params: {
       start,
       length,
-      // sort_column: sortColumn,
       sort_dir: sortDir,
       'search[value]': keyword,
       ...(type !== undefined ? { type } : {}),
@@ -2060,7 +2050,6 @@ export const getAllSitePagination = async (
     },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
-  // console.log(response.data);
   return response.data;
 };
 

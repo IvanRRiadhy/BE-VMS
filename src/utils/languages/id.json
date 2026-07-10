@@ -111,5 +111,9 @@
     "inputCardNumber": "Masukkan Nomor Kartu",
     "returnCard": "Pengembalian Kartu"
   },
-  "noImage": "Tidak ada gambar"
+  "noImage": "Tidak ada gambar",
+  "searchVisitor": "Cari Pengunjung",
+  "name": "Nama",
+  "code": "Kode",
+  "vehiclePlateNumber": "Nomor Plat Kendaraan"
 }

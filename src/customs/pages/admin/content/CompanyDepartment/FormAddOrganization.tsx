@@ -9,7 +9,7 @@ import {
   Switch,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { createOrganization, getVisitorEmployee, updateOrganization } from 'src/customs/api/admin';
@@ -24,6 +24,8 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormAutoSave } from 'src/hooks/useFormAutoSave';
+import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -47,9 +49,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
   onDirtyChange,
 }) => {
   const { token } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [allEmployes, setAllEmployees] = useState<any[]>([]);
-
   const schema =
     mode === 'batch' ? CreateOrganizationSubmitSchema.partial() : CreateOrganizationSubmitSchema;
 
@@ -93,44 +92,30 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
     }
   }, [mode, data, reset]);
 
-  useEffect(() => {
-    if (!token) return;
+  const { allVisitorEmployee } = useVisitorEmployees(token);
+  const { create, update } = useOrganizationMutation();
 
-    const fetchEmployees = async () => {
-      try {
-        const res = await getVisitorEmployee(token);
-        setAllEmployees(res?.collection ?? []);
-      } catch (error) {
-        setAllEmployees([]);
-      }
-    };
-
-    fetchEmployees();
-  }, [token]);
+  const loading = create.isPending || update.isPending;
 
   const employeeOptions = useMemo(
-    () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
-    [allEmployes],
+    () => allVisitorEmployee.map((emp: any) => ({ id: emp.id, label: emp.name })),
+    [allVisitorEmployee],
   );
 
   const onSubmit = async (form: CreateOrganizationRequest) => {
-    setLoading(true);
     try {
       if (!token) return;
 
-      // ✅ CREATE
       if (mode === 'create') {
-        await createOrganization(form, token);
+        await create.mutateAsync({ token, data: form });
         showSwal('success', 'Organization successfully created!');
       }
 
-      // ✅ EDIT
       if (mode === 'edit' && data) {
-        await updateOrganization(data.id, form, token);
+        await update.mutateAsync({ id: data.id, token, data: form });
         showSwal('success', 'Organization successfully updated!');
       }
 
-      // ✅ BATCH
       if (mode === 'batch' && selectedRows.length > 0) {
         await Promise.all(
           selectedRows.map((item) => {
@@ -144,7 +129,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
               is_internal: item.is_internal,
             };
 
-            return updateOrganization(item.id, payload, token);
+            return update.mutateAsync({ id: item.id, token, data: payload });
           }),
         );
 
@@ -155,8 +140,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
       onSuccess?.();
     } catch {
       showSwal('error', 'Failed to process organization.');
-    } finally {
-      setLoading(false);
     }
   };
   return (

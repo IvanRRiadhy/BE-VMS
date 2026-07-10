@@ -2,6 +2,7 @@ import { Dialog, DialogTitle, DialogContent, Divider, IconButton } from '@mui/ma
 import CloseIcon from '@mui/icons-material/Close';
 
 import FormWizardAddVisitor from '../FormWizardAddVisitor';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -45,7 +46,6 @@ export default function InvitationVisitorDialog({
   vtLoading,
   isLoadingEmployee,
 }: Props) {
-
   const handleClose = (_event?: object, reason?: 'backdropClick' | 'escapeKeyDown') => {
     if (isFormChanged) {
       openDiscardForCloseAdd();
@@ -54,6 +54,8 @@ export default function InvitationVisitorDialog({
 
     handleCloseDialog();
   };
+
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -65,7 +67,7 @@ export default function InvitationVisitorDialog({
       PaperProps={{ sx: { width: '100vw' } }}
     >
       <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
-        Add Invitation Visitor
+        {t('add')} Invitation Visitor
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>

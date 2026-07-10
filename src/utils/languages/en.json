@@ -112,5 +112,9 @@
     "inputCardNumber": "Input Card Number",
     "returnCard": "Return Card"
   },
-  "noImage": "No Image"
+  "noImage": "No Image",
+  "searchVisitor": "Search Visitor",
+  "name": "Name",
+  "code": "Code",
+  "vehiclePlateNumber": "Vehicle Plate Number"
 }

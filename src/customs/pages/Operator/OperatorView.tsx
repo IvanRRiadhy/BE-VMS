@@ -396,10 +396,8 @@ const OperatorView = () => {
       const currentUsed = (visitor?.card ?? []).find((c: any) => c.current_used === true);
 
       const currentUsedCardNumber = String(currentUsed?.card_number || '').trim();
-      // console.log('currentUsedCardNumber', currentUsedCardNumber);
 
       const newCardNumber = selectedCards[visitorIndex];
-      // console.log('newCardNumber', newCardNumber);
 
       if (!newCardNumber) {
         showSwal('error', 'New card not found');
@@ -497,10 +495,6 @@ const OperatorView = () => {
     } catch (err: any) {
       showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
     }
-
-    // finally {
-    //   setLoadingAccess(false);
-    // }
   };
 
   type CardActionType = 'Swipe' | 'Give';
@@ -747,10 +741,6 @@ const OperatorView = () => {
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
-  };
-
-  const resetSelections = () => {
-    setSelectedCards([]);
   };
 
   const handleCloseChooseCard = () => {

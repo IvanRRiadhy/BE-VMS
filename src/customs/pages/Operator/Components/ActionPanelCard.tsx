@@ -340,12 +340,12 @@ const ActionPanelCard: FC<Props> = ({
                       startIcon={<IconLockAccess size={25} />}
                       onClick={() => handleOpenAction('access')}
                       // onClick={() => setAccessIssuance(true)}
-
                       size="large"
                       sx={{
                         textTransform: 'none',
                         fontWeight: 600,
-                        px: 2.5,
+                        px: '10px !important',
+                        // px: 2.5,
                         background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
                         boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
                         '&:hover': {

@@ -83,7 +83,6 @@ const Content = () => {
 
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  // Visitor Detail
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
@@ -106,7 +105,6 @@ const Content = () => {
       setLoading(true);
 
       try {
-        // const limit = rowsPerPage === -1 ? undefined : rowsPerPage;
         const start = page * rowsPerPage;
         const response = await getListVisitorPagination(token, start, rowsPerPage, sortDir, search);
         let rows = response.collection.map((item: any) => {
@@ -119,7 +117,7 @@ const Content = () => {
             is_email_verified: item.is_email_verified || false,
             is_vip: item.is_vip || false,
             // organization: item.organization || '-',
-            gender: item.gender || '-',
+            // gender: item.gender || '-',
             phone: item.phone || '-',
             is_employee: item.is_employee || false,
             is_blacklist: item.is_blacklist,

@@ -13,6 +13,7 @@ import { IconSearch, IconTrash, IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { searchVisitor } from 'src/customs/api/operator';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -29,9 +30,10 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!open) {
-      // Reset semua field dan error ketika dialog ditutup
       setName('');
       setCode('');
       setPlateNumber('');
@@ -49,7 +51,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
     setLoading(true);
 
     try {
-      // kirim semua parameter ke API
       const res = await searchVisitor(token as string, {
         code: code.trim(),
         name: name.trim(),
@@ -57,7 +58,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
       });
 
       const data = res.collection?.data ?? [];
-      console.log('data', data);
 
       if (data.length === 0) {
         setErrorMsg('No visitor found with the given criteria.');
@@ -66,7 +66,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
         onClose();
       }
     } catch (error) {
-      console.error('Error fetching visitor:', error);
       setErrorMsg('Failed to fetch visitor.');
     } finally {
       setLoading(false);
@@ -89,10 +88,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
       container={container ?? undefined}
       PaperProps={{
         sx: (theme) => ({
-          // default (untuk semua ukuran selain XL)
           position: 'relative',
-
-          // hanya XL
           [theme.breakpoints.up('xl')]: {
             position: 'absolute',
             top: '15%',
@@ -104,7 +100,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconSearch size={20} stroke={1.5} />
-        Search Visitor
+        {t('searchVisitor')}
       </DialogTitle>
 
       <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
@@ -115,7 +111,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
         <Box display="flex" flexDirection="column" gap={1.5}>
           <Box>
             <CustomFormLabel htmlFor="name" sx={{ mt: 0, mb: 0.5 }}>
-              Name
+              {t('name')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -129,7 +125,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
 
           <Box>
             <CustomFormLabel htmlFor="code" sx={{ mt: 0, mb: 0.5 }}>
-              Code
+              {t('code')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -143,7 +139,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
 
           <Box>
             <CustomFormLabel htmlFor="plate" sx={{ mt: 0, mb: 0.5 }}>
-              Vehicle Plate Number
+              {t('vehiclePlateNumber')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -168,7 +164,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
               disabled={loading}
               startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <IconSearch />}
             >
-              {loading ? 'Searching...' : 'Search'}
+              {loading ? 'Searching...' : t('search')}
             </Button>
           </Box>
         </Box>

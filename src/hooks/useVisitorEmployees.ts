@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 
-export const useVisitorEmployees = (token?: string) => {
+export const useVisitorEmployees = (token?: string | null) => {
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
 
   useEffect(() => {
