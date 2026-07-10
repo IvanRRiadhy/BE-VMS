@@ -303,7 +303,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
 
         <Box display="flex" justifyContent="flex-end" mt={2}>
           <Button type="submit" variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={20} /> : 'Submit'}
+            Submit
           </Button>
         </Box>
       </form>

@@ -290,20 +290,14 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-
-    // Tutup form lama
     handleCloseDialog();
-
     if (!pendingEditId) {
       return;
     }
-
     const existingData = tableData.find((item) => item.id === pendingEditId);
-
     if (!existingData) return;
 
     const parsedData = coerceEmployee(existingData);
-
     setEdittingId(pendingEditId);
     setFormDataAddEmployee(parsedData);
     setInitialFormData(parsedData);
@@ -338,8 +332,8 @@ const Content = () => {
         });
 
         showSwal('success', `Successfully deleted employee "${name}".`);
-      } catch (error) {
-        showSwal('error', `Failed to delete employee "${name}".`);
+      } catch (error: any) {
+        showSwal('error', error.message || `Failed to delete employee "${name}".`);
       }
     }
   };
@@ -352,13 +346,20 @@ const Content = () => {
     if (!confirmed) return false;
 
     try {
-      await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
+      await Promise.all(
+        rows.map((row) =>
+          remove.mutateAsync({
+            id: row.id,
+            token: token!,
+          }),
+        ),
+      );
 
       showSwal('success', `Succesfully deleted ${rows.length} employees.`);
       setSelectedRows([]);
       return true;
-    } catch (error) {
-      showSwal('error', 'Failed to delete some employees.');
+    } catch (error: any) {
+      showSwal('error', error.message || 'Failed to delete some employees.');
       return false;
     }
   };

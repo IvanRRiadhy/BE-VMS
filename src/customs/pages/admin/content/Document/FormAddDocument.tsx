@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Button,
   Grid2,
-  Alert,
   Typography,
   CircularProgress,
   FormControl,
-  FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -21,13 +19,13 @@ import { IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import axios from 'axios';
-import { createDocument, updateDocument } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 
-import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
+import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
 
 interface FormAddDocumentProps {
   initialData: CreateDocumentRequest;
@@ -36,7 +34,7 @@ interface FormAddDocumentProps {
   onDirty?: () => void;
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 5MB
 
 const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   initialData,
@@ -55,6 +53,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { create, update } = useDocumentMutation();
 
   const resetFileState = () => {
     setFile(null);
@@ -80,7 +79,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
 
     if (f.size > MAX_FILE_SIZE) {
-      alert('File is too large. Max size is 5MB.');
+      alert('File is too large. Max size is 1MB.');
       resetFileState();
       return;
     }
@@ -148,20 +147,23 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       let docId: string;
 
       if (edittingId) {
-        // Edit
         docId = edittingId;
-        await updateDocument(docId, payload, token);
+        await update.mutateAsync({
+          id: docId,
+          token,
+          data: payload,
+        });
       } else {
-        // Create
-        const res = await createDocument(payload, token);
-        console.log('res create : ', res);
+        const res = await create.mutateAsync({
+          token,
+          data: payload,
+        });
 
         if (!res?.collection?.id) {
           throw new Error('Document ID not returned from API');
         }
 
         docId = res?.collection?.id;
-        console.log('Document ID:', docId);
       }
 
       if (localForm.document_type === 1 && file) {
@@ -177,16 +179,10 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         'success',
         edittingId ? 'Document updated successfully!' : 'Document created successfully!',
       );
-      // setTimeout(() => {
       onSuccess?.();
-      // }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message || 'Failed to create document.');
-    } finally {
-      // setTimeout(() => {
-      setLoading(false);
-      // }, 600);
     }
   };
 
@@ -481,7 +477,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         </Grid2>
       </form>
 
-      {/* Loading overlay */}
       <Portal>
         <Backdrop
           open={loading}

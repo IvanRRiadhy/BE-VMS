@@ -23,15 +23,15 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import PdfViewerDialog from './components/PdfViewerDialog';
 import FormAddDocumentDialog from './components/FormDocumentDialog';
+import { useDocumentPagination } from 'src/hooks/Documents/useDocumentPagination';
+import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
-  const [totalRecords, setTotalRecords] = useState(0);
+
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir] = useState('desc');
-  const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -45,6 +45,18 @@ const Content = () => {
     CreateDocumentRequestSchema.parse({}),
   );
   const { t } = useTranslation();
+  const documentQuery = useDocumentPagination({
+    token: token!,
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+  });
+
+  const tableData = documentQuery.data?.collection ?? [];
+  const totalRecords = documentQuery.data?.RecordsTotal ?? 0;
+  const loading = documentQuery.isPending;
+  const { remove } = useDocumentMutation();
 
   const cards = [
     {
@@ -55,29 +67,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getAllDocumentPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-        );
-        setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   const handleCloseDialog = () => {
     if (isDirty) {
@@ -105,7 +94,7 @@ const Content = () => {
       setConfirmDialogOpen(true);
     } else {
       setFormDataAddDocument(
-        CreateDocumentRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+        CreateDocumentRequestSchema.parse(tableData.find((item: any) => item.id === id) || {}),
       );
       setOpenFormAddDocument(true);
     }
@@ -117,7 +106,7 @@ const Content = () => {
 
     if (pendingEditId) {
       setFormDataAddDocument(
-        tableData.find((item) => item.id === pendingEditId) ||
+        tableData.find((item: any) => item.id === pendingEditId) ||
           CreateDocumentRequestSchema.parse({}),
       );
 
@@ -143,14 +132,14 @@ const Content = () => {
 
     if (!confirm) return;
     try {
-      setLoading(true);
-      await deleteDocument(id, token);
+      await remove.mutateAsync({
+        id,
+        token,
+      });
       showSwal('success', 'Successfully deleted document!');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       showSwal('error', 'Failed to delete document.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -160,16 +149,20 @@ const Content = () => {
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
-      setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteDocument(row.id, token)));
+        await Promise.all(
+          rows.map((row) => {
+            remove.mutateAsync({
+              id: row.id,
+              token,
+            });
+          }),
+        );
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
       }
     }
   };
