@@ -44,16 +44,15 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllDocumentPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          searchKeyword,
-        );
+        // const response = await getAllDocumentPagination(
+        //   token,
+        //   start,
+        //   rowsPerPage,
+        //   sortDir,
+        //   searchKeyword,
+        // );
         setTableData([]);
-        setTotalRecords(response.RecordsTotal);
+        // setTotalRecords(response.RecordsTotal);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

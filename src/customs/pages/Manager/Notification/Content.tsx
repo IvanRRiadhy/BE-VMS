@@ -21,7 +21,6 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -44,16 +43,15 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllDocumentPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          searchKeyword,
-        );
-        setTableData([]);
-        setTotalRecords(response.RecordsTotal);
+        // const response = await getAllDocumentPagination(
+        //   token,
+        //   start,
+        //   rowsPerPage,
+        //   sortDir,
+        //   searchKeyword,
+        // );
+        // setTableData([]);
+        // setTotalRecords(response.RecordsTotal);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -61,7 +59,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);

@@ -30,7 +30,6 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn] = useState('id');
   const [sortDir] = useState('desc');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -67,7 +66,6 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          sortColumn,
           sortDir,
           search,
         );
@@ -79,7 +77,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, search]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   const handleCloseDialog = () => {
     if (isDirty) {

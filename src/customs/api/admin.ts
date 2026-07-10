@@ -31,14 +31,12 @@ import {
 import axiosInstance from './interceptor';
 import {
   CreateEmployeeRequest,
-  CreateEmployeeResponse,
   GetAllEmployeePaginationResponse,
   UpdateEmployeeRequest,
   UpdateEmployeeResponse,
   DeleteEmployeeResponse,
   UploadImageEmployeeResponse,
   GetAllEmployeeResponse,
-  GetAllEmployeeByIdResponse,
 } from './models/Admin/Employee';
 import {
   CreateDocumentRequest,
@@ -1706,7 +1704,7 @@ export const getAllDocumentPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn?: string,
+  // sortColumn?: string,
   sortDir?: string,
   keyword?: string,
 ): Promise<any> => {
@@ -1715,7 +1713,7 @@ export const getAllDocumentPagination = async (
       params: {
         start,
         length,
-        sort_column: sortColumn,
+        // sort_column: sortColumn,
         'search[value]': keyword,
         sort_dir: sortDir,
       },
@@ -2464,7 +2462,7 @@ export const getAllAccessControl = async (token: string): Promise<any> => {
 
 export const getAccessControlsById = async (
   id: string,
-  token: string,
+  token?: string | null,
 ): Promise<GetAccessControlByIdResponse> => {
   try {
     const response = await axiosInstance.get(`/access-control/${id}`, {

@@ -497,7 +497,7 @@ const Content = () => {
       <Backdrop
         open={loadingData}
         sx={{
-          color: '#fff',
+          color: 'primary',
           zIndex: 999999,
         }}
       >

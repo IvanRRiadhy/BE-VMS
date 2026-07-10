@@ -1,8 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-} from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
 
@@ -12,7 +9,12 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import { getAllAccessControlPagination, deleteAccessControl } from 'src/customs/api/admin';
+import {
+  getAllAccessControlPagination,
+  deleteAccessControl,
+  getAccessControlById,
+  getAccessControlsById,
+} from 'src/customs/api/admin';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
@@ -146,23 +148,26 @@ const Content = () => {
     setOpenCreateAccessControl(false);
   };
 
-const handleAdd = () => {
-  setIsDirty(false); 
-  setPendingEditId(null);
-  setEdittingId('');
-  setFormDataAddAccessControl(defaultFormData);
-  handleOpenDialog();
-};
+  const handleAdd = () => {
+    setIsDirty(false);
+    setPendingEditId(null);
+    setEdittingId('');
+    setFormDataAddAccessControl(defaultFormData);
+    handleOpenDialog();
+  };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
+    if (!token) return;
+
     if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
     }
 
-    const data = tableData.find((item) => item.id === id);
-    setFormDataAddAccessControl(mapItemToFormData(data));
+    const res = await getAccessControlsById(id, token);
+
+    setFormDataAddAccessControl(mapItemToFormData(res.collection));
     setEdittingId(id);
     handleOpenDialog();
   };
@@ -172,14 +177,8 @@ const handleAdd = () => {
     setIsDirty(false);
 
     if (pendingEditId) {
-      const data = tableData.find((item) => item.id === pendingEditId);
-      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || defaultFormData);
       setEdittingId(pendingEditId);
       handleOpenDialog();
-    } else {
-      setFormDataAddAccessControl(defaultFormData);
-      setEdittingId('');
-      setOpenCreateAccessControl(false);
     }
 
     setPendingEditId(null);

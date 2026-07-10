@@ -57,6 +57,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   };
   const {
     control,
+    setValue,
     handleSubmit,
     reset,
     formState: { errors, isDirty },
@@ -117,7 +118,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         });
       }
     })();
-  }, [editingId, token]);
+  }, [editingId, token, reset]);
 
   const onSubmit = async (data: FormType) => {
     setLoading(true);
@@ -130,7 +131,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
           brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
-
         await updateAccessControl(editingId, payload, token);
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
@@ -141,6 +141,8 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         await createAccessControl(payload, token);
       }
 
+      reset(data);
+      onDirty?.(false);
       showSwal(
         'success',
         editingId ? 'Updated successfully Access Control' : 'Created successfully Access Control',
@@ -250,17 +252,25 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
               control={control}
               render={({ field }) => (
                 <FormControl fullWidth error={!!errors.integration_id}>
-                  <Select {...field}>
+                  <Select
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      field.onChange(id);
+                      const selected = integrationList.find((x) => x.id === id);
+                      setValue('integration_name', selected?.name ?? '');
+                    }}
+                  >
                     <MenuItem value="">Select Integration</MenuItem>
+
                     {integrationList.map((i) => (
                       <MenuItem key={i.id} value={i.id}>
                         {i.name}
                       </MenuItem>
                     ))}
                   </Select>
-                  <FormHelperText sx={{ marginLeft: '0 !important' }}>
-                    {errors.integration_id?.message}
-                  </FormHelperText>
+
+                  <FormHelperText>{errors.integration_id?.message}</FormHelperText>
                 </FormControl>
               )}
             />
