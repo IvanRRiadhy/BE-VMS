@@ -25,7 +25,7 @@ import { createDocument, updateDocument } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 
-import axiosInstance from 'src/customs/api/interceptor';
+import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
 
@@ -119,7 +119,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
   };
 
-  const API_BASE = axiosInstance.defaults.baseURL || '';
+  const API_BASE = axiosInstance2.defaults.baseURL || '';
   useEffect(() => {
     setLocalForm(initialData);
   }, [initialData]);

@@ -119,7 +119,6 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          sortColumn,
           sortDir,
           search,
         );

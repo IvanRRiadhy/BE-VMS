@@ -167,7 +167,7 @@ const Content = () => {
 
     const res = await getAccessControlsById(id, token);
 
-    setFormDataAddAccessControl(mapItemToFormData(res.collection));
+    setFormDataAddAccessControl(mapItemToFormData(res.collection as any));
     setEdittingId(id);
     handleOpenDialog();
   };

@@ -1348,7 +1348,6 @@ export const getAllVisitorTypePagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
   sort_dir: string,
   keyword: string = '',
   // gender?: number,
@@ -1371,7 +1370,6 @@ export const getAllVisitorTypePagination = async (
     params: {
       start,
       length,
-      sort_column: sortColumn,
       sort_dir: sort_dir,
       'search[value]': keyword,
     },

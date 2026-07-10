@@ -711,7 +711,6 @@ const TableRowItem = React.memo(
         </TableCell>
         {columns.map((col: any, idx: any) => {
           const makeSticky = isStickyVisitorCol(idx);
-
           return (
             <TableCell
               key={col}
@@ -738,6 +737,25 @@ const TableRowItem = React.memo(
                     <IconStarFilled color="lightgray" />
                   </Tooltip>
                 )
+              ) : isHavePdf &&
+                col === 'document_text' &&
+                typeof row.file === 'string' &&
+                row.file.trim() !== '' ? (
+                <Tooltip title="View File">
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => onFileClick?.(row)}
+                    sx={{
+                      borderRadius: '50%',
+                      width: 30,
+                      height: 30,
+                      backgroundColor: (theme) => theme.palette.grey[100],
+                    }}
+                  >
+                    <IconFileText />
+                  </IconButton>
+                </Tooltip>
               ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
                 <RichHtmlCell
                   html={String(row[col] ?? '')}
@@ -992,22 +1010,6 @@ const TableRowItem = React.memo(
                     </Box>
                   </Tooltip>
                 </Box>
-              ) : isHavePdf && col == 'document_text' ? (
-                <Tooltip title="View File">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => onFileClick?.(row)}
-                    sx={{
-                      borderRadius: '50%',
-                      width: 30,
-                      height: 30,
-                      backgroundColor: (theme) => theme.palette.grey[100],
-                    }}
-                  >
-                    <IconFileText />
-                  </IconButton>
-                </Tooltip>
               ) : col === 'email' ? (
                 <Box
                   display="inline-flex"
