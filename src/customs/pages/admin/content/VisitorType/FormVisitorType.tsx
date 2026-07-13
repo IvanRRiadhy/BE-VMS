@@ -93,7 +93,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const { visitorRole } = useVisitorRoles(token as string);
   const { accessData } = useAccessControl(token as string);
   const { documents } = useDocument(token as string);
-  const { customField } = useCustomField(token as string);
+  const { customField } = useCustomField();
   const { analyticCctv } = useCameraAnalytics(
     formData.can_track_cctv ? (token as string) : undefined,
   );

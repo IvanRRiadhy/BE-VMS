@@ -64,23 +64,6 @@ export function initializeAxiosBaseURL() {
   axiosInstance2.defaults.baseURL = BASE_URL;
 }
 
-// export const BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
-
-// const axiosInstance = axios.create({
-//   baseURL: `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
-
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
-// const axiosInstance2 = axios.create({
-//   baseURL: `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
 let clearTokenCallback: (() => void) | null = null;
 
 export const setClearTokenCallback = (callback: () => void) => {
@@ -105,9 +88,39 @@ const errorInterceptor = (error: any) => {
   return Promise.reject(error);
 };
 
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    console.log('TOKEN:', token);
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+axiosInstance2.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    console.log('TOKEN:', token);
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 axiosInstance.interceptors.response.use(responseInterceptor, errorInterceptor);
 axiosInstance2.interceptors.response.use(responseInterceptor, errorInterceptor);
-// axiosInstance2.interceptors.response.use(requestInterceptor, errorInterceptor);
 
 export default axiosInstance;
-// export { axiosInstance2 };

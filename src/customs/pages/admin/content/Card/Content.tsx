@@ -36,7 +36,13 @@ import {
   showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
-import { IconCards, IconUserCheck, IconUserOff, IconCreditCardOff, IconCreditCard } from '@tabler/icons-react';
+import {
+  IconCards,
+  IconUserCheck,
+  IconUserOff,
+  IconCreditCardOff,
+  IconCreditCard,
+} from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
 import FilterMoreContent from './FilterMoreContent';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -147,9 +153,8 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const res = await getAllVisitorCard(token);
+        const res = await getAllVisitorCard();
         const response = await getAllVisitorCardPagination(
-          token,
           start,
           rowsPerPage,
           search,
@@ -259,7 +264,7 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteVisitorCard(token as string, id);
+        await deleteVisitorCard(id);
         setRefreshTrigger(refreshTrigger + 1);
         showSwal('success', 'Successfully deleted card!');
       } catch (error: any) {
@@ -289,7 +294,7 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteVisitorCard(token as string, row.id)));
+        await Promise.all(rows.map((row) => deleteVisitorCard(row.id)));
 
         setSelectedRows([]);
 
@@ -297,15 +302,14 @@ const Content = () => {
         showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
         return true;
       } catch (error) {
-        console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        // showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
         return false;
       } finally {
         setLoading(false);
       }
     }
   };
-
 
   const handleBatchEdit = (rows: Item[]) => {
     if (!rows.length) return;

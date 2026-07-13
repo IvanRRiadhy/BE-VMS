@@ -44,7 +44,7 @@ type CustomFieldTableRow = {
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<CustomFieldTableRow[]>([]);
-  const { token } = useSession();
+
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -57,12 +57,12 @@ const Content = () => {
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const responseGet = await getAllCustomField(token);
+        const responseGet = await getAllCustomField();
         // const response = await getAllCustomFieldPagination(
         //   token,
         //   start,
@@ -110,7 +110,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, refreshTrigger, search]);
+  }, [ refreshTrigger, search]);
 
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     CreateCustomFieldRequestSchema.parse({}),
@@ -155,7 +155,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     // const data = tableData.find((item) => item.id === id) || {};
-    const data = await getCustomFieldById(id, token);
+    const data = await getCustomFieldById(id);
 
     const parsed = CreateCustomFieldRequestSchema.parse(data.collection);
 
@@ -195,14 +195,14 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
+
 
     const confirm = await showConfirmDelete('Are you sure you want to delete this custom field? ');
 
     if (confirm) {
       setLoading(true);
       try {
-        await deleteCustomField(id, token);
+        await deleteCustomField(id);
         showSwal('success', 'Custom Field has been deleted.');
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {
@@ -215,14 +215,14 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
-    if (!token || rows.length === 0) return;
+    if ( rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteCustomField(row.id, token)));
+        await Promise.all(rows.map((row) => deleteCustomField(row.id)));
         showSwal('success', `${rows.length} items of custom fields have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {

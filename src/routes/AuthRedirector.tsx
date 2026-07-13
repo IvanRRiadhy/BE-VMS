@@ -24,12 +24,6 @@ export default function AuthRedirector() {
       // const upperGroup = groupId.toUpperCase();
       let redirectPath = '/';
 
-      // if (upperGroup === GroupRoleId.Admin) redirectPath = '/admin/dashboard';
-      // else if (upperGroup === GroupRoleId.Manager) redirectPath = '/manager/dashboard';
-      // else if (upperGroup === GroupRoleId.Employee) redirectPath = '/employee/dashboard';
-      // else if (upperGroup === GroupRoleId.OperatorVMS) redirectPath = '/operator/view';
-      // else if (upperGroup === GroupRoleId.OperatorAdmin) redirectPath = '/operator-admin/dashboard';
-      // else if (upperGroup === GroupRoleId.Visitor) redirectPath = '/guest/dashboard';
       if (roleAccess === 'Admin') redirectPath = '/admin/dashboard';
       else if (roleAccess === 'Manager') redirectPath = '/manager/dashboard';
       else if (roleAccess === 'Employee') redirectPath = '/employee/dashboard';

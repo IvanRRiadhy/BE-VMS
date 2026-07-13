@@ -65,8 +65,8 @@ const entityLabel = (e?: DialogEntity) =>
     ? e === 'Organizations'
       ? 'Organization'
       : e === 'Departments'
-        ? 'Department'
-        : 'District'
+      ? 'Department'
+      : 'District'
     : '';
 
 const Content = () => {
@@ -113,7 +113,6 @@ const Content = () => {
   }, [selectedType]);
 
   const organizationQuery = useOrganizationPagination({
-    token: token!,
     page,
     rowsPerPage,
     sortDir,
@@ -121,7 +120,6 @@ const Content = () => {
   });
 
   const departmentQuery = useDepartmentPagination({
-    token: token!,
     page,
     rowsPerPage,
     sortDir,
@@ -129,7 +127,6 @@ const Content = () => {
   });
 
   const districtQuery = useDistrictPagination({
-    token: token!,
     page,
     rowsPerPage,
     sortDir,
@@ -144,8 +141,8 @@ const Content = () => {
     selectedType === 'organization'
       ? organizationQuery
       : selectedType === 'department'
-        ? departmentQuery
-        : districtQuery;
+      ? departmentQuery
+      : districtQuery;
   const loading = currentQuery.isLoading || currentQuery.isFetching;
   const response = currentQuery.data;
   const tableData = useMemo(
@@ -166,17 +163,17 @@ const Content = () => {
     queries: [
       {
         queryKey: ['organization-total'],
-        queryFn: () => getAllOrganizationPagination(token!, 0, 1, sortDir),
+        queryFn: () => getAllOrganizationPagination(0, 1, sortDir),
         enabled: !!token,
       },
       {
         queryKey: ['department-total'],
-        queryFn: () => getAllDepartmentsPagination(token!, 0, 1, sortDir),
+        queryFn: () => getAllDepartmentsPagination(0, 1, sortDir),
         enabled: !!token,
       },
       {
         queryKey: ['district-total'],
-        queryFn: () => getAllDistrictsPagination(token!, 0, 1, sortDir),
+        queryFn: () => getAllDistrictsPagination(0, 1, sortDir),
         enabled: !!token,
       },
     ],
@@ -277,50 +274,56 @@ const Content = () => {
     closeDialog();
   };
 
-  const handleDelete = async (row: Item) => {
-    if (!token) return;
+  const handleDelete = useCallback(
+    async (row: Item) => {
+      if (!token) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure you want to delete ${selectedType} "${row.name}"?`,
-    );
-    if (!confirmed) return;
+      const confirmed = await showConfirmDelete(
+        `Are you sure you want to delete ${selectedType} "${row.name}"?`,
+      );
 
-    try {
-      let successText = '';
+      if (!confirmed) return;
 
-      switch (selectedType) {
-        case 'department':
-          await remove.mutateAsync({
-            id: row.id,
-            token,
-          });
-          successText = `Department "${row.name}" has been successfully deleted.`;
-          break;
+      try {
+        let successText = '';
 
-        case 'district':
-          await deleteDistrict.mutateAsync({
-            id: row.id,
-            token,
-          });
-          successText = `District "${row.name}" has been successfully deleted.`;
-          break;
+        switch (selectedType) {
+          case 'department':
+            await remove.mutateAsync({
+              id: row.id,
+              token,
+            });
 
-        case 'organization':
-        default:
-          await deleteOrganization.mutateAsync({
-            id: row.id,
-            token,
-          });
+            successText = `Department "${row.name}" has been successfully deleted.`;
+            break;
 
-          successText = `Organization "${row.name}" has been successfully deleted.`;
-          break;
+          case 'district':
+            await deleteDistrict.mutateAsync({
+              id: row.id,
+              token,
+            });
+
+            successText = `District "${row.name}" has been successfully deleted.`;
+            break;
+
+          case 'organization':
+          default:
+            await deleteOrganization.mutateAsync({
+              id: row.id,
+              token,
+            });
+
+            successText = `Organization "${row.name}" has been successfully deleted.`;
+            break;
+        }
+
+        showSwal('success', successText);
+      } catch (error) {
+        showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
       }
-
-      showSwal('success', successText);
-    } catch (error) {
-      showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
-    }
-  };
+    },
+    [token, selectedType, remove, deleteDistrict, deleteOrganization],
+  );
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
@@ -498,7 +501,7 @@ const Content = () => {
                   }}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
                   onEdit={(row) => openEdit(mapSelectedToEntity, row)}
-                  onDelete={(row) => handleDelete(row)}
+                  onDelete={handleDelete}
                   onBatchDelete={handleBatchDelete}
                   searchKeyword={searchInput}
                   onSearch={handleSearch}

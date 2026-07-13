@@ -2,25 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { getAllOrganizationPagination } from 'src/customs/api/admin';
 
 interface Props {
-  token: string;
   page: number;
   rowsPerPage: number;
   sortDir: string;
   searchKeyword: string;
 }
 
-export const useOrganizationPagination = ({
-  token,
-  page,
-  rowsPerPage,
-  sortDir,
-  searchKeyword,
-}: Props) => {
+export const useOrganizationPagination = ({ page, rowsPerPage, sortDir, searchKeyword }: Props) => {
   return useQuery({
     queryKey: ['organizations', 'pagination', page, rowsPerPage, sortDir, searchKeyword],
-    enabled: !!token,
+    // enabled: !!token,
     queryFn: () =>
-      getAllOrganizationPagination(token, page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),
+      getAllOrganizationPagination(page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),
     placeholderData: (previousData) => previousData,
   });
 };

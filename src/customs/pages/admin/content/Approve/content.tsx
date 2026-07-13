@@ -32,7 +32,6 @@ const Content = ({
   refreshTrigger,
 }: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -114,8 +113,6 @@ const Content = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirm = await showConfirmDelete(
       'Are you sure you want to delete this approval workflow?',
     );
@@ -123,7 +120,7 @@ const Content = ({
     if (!confirm) return;
     try {
       setLoading(true);
-      await deleteApprovalWorkflow(token, id);
+      await deleteApprovalWorkflow(id);
       showSwal('success', 'Successfully deleted approval workflow!');
       setRefreshTrigger((prev: any) => prev + 1);
     } catch (error) {
@@ -134,14 +131,14 @@ const Content = ({
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteApprovalWorkflow(row.id, token)));
+        await Promise.all(rows.map((row) => deleteApprovalWorkflow(row.id)));
         setRefreshTrigger((prev: any) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);

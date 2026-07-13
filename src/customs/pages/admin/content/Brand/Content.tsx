@@ -9,7 +9,6 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteBrand, getAllBrandPagination } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Admin/Brand';
 
@@ -18,7 +17,6 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -36,12 +34,11 @@ const Content = () => {
     },
   ];
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllBrandPagination(token, start, rowsPerPage, searchKeyword);
+        const response = await getAllBrandPagination(start, rowsPerPage, searchKeyword);
         setTableData(response.collection.map(({ integration_list_id, ...rest }) => rest));
         setTotalRecords(response.collection.length);
       } catch (error) {
@@ -51,17 +48,17 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
+  }, [page, rowsPerPage, refreshTrigger, searchKeyword]);
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} brands?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteBrand(row.id, token)));
+        await Promise.all(rows.map((row) => deleteBrand(row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
@@ -77,12 +74,11 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback((keyword: string) => {
+    setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <PageContainer

@@ -9,10 +9,8 @@ export const getAllApprovalWorkflow = async (token: string): Promise<any> => {
 };
 
 // by id
-export const getApprovalWorkflowById = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.get(`/approval-workflow/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getApprovalWorkflowById = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/approval-workflow/${id}`);
   return response.data;
 };
 
@@ -44,30 +42,20 @@ export const getApprovalWorkflowByDt = async (
   return response.data;
 };
 // create
-export const createApprovalWorkflow = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/approval-workflow', data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createApprovalWorkflow = async (data: any): Promise<any> => {
+  const response = await axiosInstance.post('/approval-workflow', data);
   return response.data;
 };
 
 // update
-export const updateApprovalWorkflow = async (
-  token: string,
-  id: string,
-  data: any,
-): Promise<any> => {
-  const response = await axiosInstance.put(`/approval-workflow/${id}`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const updateApprovalWorkflow = async (id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/approval-workflow/${id}`, data);
   return response.data;
 };
 
 // delete
-export const deleteApprovalWorkflow = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/approval-workflow/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteApprovalWorkflow = async (id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/approval-workflow/${id}`);
   return response.data;
 };
 
@@ -157,7 +145,7 @@ export const approveMeetingHost = async (
   return response.data;
 };
 
-export const getVisitorByTickedId= async (token: string, id: string): Promise<any> => {
+export const getVisitorByTickedId = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });

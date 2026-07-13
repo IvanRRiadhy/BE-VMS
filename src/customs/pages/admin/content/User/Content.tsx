@@ -49,7 +49,7 @@ const Content = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['users', token],
     queryFn: async () => {
-      const response = await getAllUser(token as string);
+      const response = await getAllUser();
       return {
         collection: response.collection,
       };

@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
 import { getAllCustomField } from 'src/customs/api/admin';
 
-export const useCustomField = (token?: string) => {
+export const useCustomField = () => {
   const [customField, setCustomField] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchCustomFields = async () => {
       try {
-        const res = await getAllCustomField(token);
+        const res = await getAllCustomField();
         setCustomField(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch custom fields', err);
@@ -17,7 +15,7 @@ export const useCustomField = (token?: string) => {
     };
 
     fetchCustomFields();
-  }, [token]);
+  }, []);
 
   return {
     customField,

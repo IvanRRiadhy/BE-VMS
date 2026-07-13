@@ -45,7 +45,7 @@ import { useTranslation } from 'react-i18next';
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
+
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -71,13 +71,11 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
         const response = await getAllAccessControlPagination(
-          token,
           start,
           rowsPerPage,
           sortColumn,
@@ -109,7 +107,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
+  }, [page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
   const defaultFormData: CreateAccessControlRequest = {
     brand_id: null,
@@ -157,15 +155,13 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
-    if (!token) return;
-
     if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
     }
 
-    const res = await getAccessControlsById(id, token);
+    const res = await getAccessControlsById(id);
 
     setFormDataAddAccessControl(mapItemToFormData(res.collection as any));
     setEdittingId(id);
@@ -191,15 +187,13 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirmed = await showConfirmDelete(
       'Are you sure you want to delete this Access Control?',
     );
 
     if (confirmed) {
       try {
-        await deleteAccessControl(id, token);
+        await deleteAccessControl(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted Access Control!');
       } catch (error) {
@@ -212,14 +206,14 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteAccessControl(row.id, token)));
+        await Promise.all(rows.map((row) => deleteAccessControl(row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);

@@ -46,7 +46,6 @@ interface Props {
 }
 
 const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
   // const [brandList, setBrandList] = useState<any[]>([]);
   const [integrationList, setIntegrationList] = useState<any[]>([]);
@@ -82,25 +81,23 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   }, [isDirty, onDirty]);
 
   useEffect(() => {
-    if (!token) return;
-
     (async () => {
       const [integrationRes] = await Promise.allSettled([
         // getAllBrand(token),
-        getAllIntegration(token),
+        getAllIntegration(),
       ]);
 
       // if (brandRes.status === 'fulfilled') setBrandList(brandRes.value?.collection ?? []);
       if (integrationRes.status === 'fulfilled')
         setIntegrationList(integrationRes.value?.collection ?? []);
     })();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
-    if (!token || !editingId) return;
+    if (!editingId) return;
 
     (async () => {
-      const res = await getAccessControlsById(editingId, token);
+      const res = await getAccessControlsById(editingId);
       const d = res?.collection;
 
       if (d) {
@@ -118,27 +115,25 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         });
       }
     })();
-  }, [editingId, token, reset]);
+  }, [editingId, reset]);
 
   const onSubmit = async (data: FormType) => {
     setLoading(true);
     try {
-      if (!token) return;
-
       if (editingId) {
         const payload = UpdateAccessControlRequestSchema.parse({
           ...data,
           brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
-        await updateAccessControl(editingId, payload, token);
+        await updateAccessControl(editingId, payload);
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
           ...data,
           brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
-        await createAccessControl(payload, token);
+        await createAccessControl(payload);
       }
 
       reset(data);

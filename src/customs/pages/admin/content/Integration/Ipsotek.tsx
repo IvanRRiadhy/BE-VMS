@@ -119,7 +119,7 @@ const Ipsotek = ({ id: string }: any) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAllIntegration(token as string);
+        const res = await getAllIntegration();
         setIntegration(res.collection ?? []);
       } catch (error) {
         console.error('Error fetching data:', error);

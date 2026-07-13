@@ -9,7 +9,6 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
-  const { groupId } = useSession();
   const { roleAccess } = useSession();
 
   if (loading)

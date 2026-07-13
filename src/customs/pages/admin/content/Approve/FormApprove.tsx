@@ -17,7 +17,6 @@ import { IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import {
@@ -56,7 +55,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [users, setUsers] = useState<any[]>([]);
   const roleOptions = [
     { label: 'Host', value: 'Host' },
@@ -67,7 +65,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   const [expanded, setExpanded] = useState<string[]>([]);
   // const [employees, setEmployees] = useState<any[]>([]);
 
-  const { employee } = useEmployees(token);
+  const { employee } = useEmployees();
 
   const createId = () => Math.random().toString(36).substring(2, 9);
   const [rules, setRules] = useState<RuleNode[]>([]);
@@ -109,9 +107,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
       try {
         // setLoading(true);
 
-        const res = await getApprovalWorkflowById(token as string, edittingId);
+        const res = await getApprovalWorkflowById(edittingId);
         const data = res.collection;
-        // console.log('data', data);
 
         setFormData({
           name: data.name,
@@ -171,9 +168,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
       console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
-        await updateApprovalWorkflow(token as string, edittingId, payload);
+        await updateApprovalWorkflow(edittingId, payload);
       } else {
-        await createApprovalWorkflow(token as string, payload);
+        await createApprovalWorkflow(payload);
       }
 
       setLoading(false);
@@ -258,7 +255,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
       if (!node.role) return [];
 
       return {
-        logic: parentLogic === rootLogic ? 'NONE' : (parentLogic ?? 'NONE'),
+        logic: parentLogic === rootLogic ? 'NONE' : parentLogic ?? 'NONE',
         // logic: parentLogic ?? 'NONE',
         approver_type: roleMap[node.role] ?? null,
         entity_id: node.entity_id ?? null,
@@ -380,7 +377,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await getAllUser(token as string);
+        const res = await getAllUser();
         setUsers(res.collection || []);
       } catch (err) {
         console.error(err);

@@ -299,8 +299,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-          ? false
-          : status;
+        ? false
+        : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -425,10 +425,8 @@ export const getAllUserOperatorVms = async (token: string): Promise<any> => {
   return response.data;
 };
 
-export const getAllUser = async (token: string): Promise<any> => {
-  const response = await axiosInstance.get('/user', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getAllUser = async (): Promise<any> => {
+  const response = await axiosInstance.get('/user');
   return response.data;
 };
 
@@ -954,9 +952,9 @@ export const deleteTimezone = async (
 //#endregion
 
 //#region Card
-export const getAllVisitorCard = async (token: string): Promise<GetAllVisitorCardResponse> => {
+export const getAllVisitorCard = async (): Promise<GetAllVisitorCardResponse> => {
   const response = await axiosInstance.get('/card', {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };
@@ -987,10 +985,8 @@ export const getAvailableCard = async (
 };
 
 export const getAllVisitorCardPagination = async (
-  token: string,
   start: number,
   length: number,
-  // sortColumn: string,
   keyword: string = '',
   sort_dir?: string,
   type?: number | null,
@@ -999,7 +995,6 @@ export const getAllVisitorCardPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
     sort_dir,
   };
 
@@ -1015,7 +1010,6 @@ export const getAllVisitorCardPagination = async (
 
   const response = await axiosInstance.get('/card/dt', {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
     },
     params,
@@ -1057,12 +1051,9 @@ export const updateVisitorCard = async (
   return response.data;
 };
 
-export const deleteVisitorCard = async (
-  token: string,
-  id: string,
-): Promise<DeleteVisitorResponse> => {
+export const deleteVisitorCard = async (id: string): Promise<DeleteVisitorResponse> => {
   const response = await axiosInstance.delete(`/card/${id}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };
@@ -1424,7 +1415,6 @@ export const getAllDistricts = async (
   return response.data;
 };
 export const getAllDistrictsPagination = async (
-  token: string,
   start: number,
   length: number,
   // sortColumn: string,
@@ -1434,7 +1424,7 @@ export const getAllDistrictsPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    'search[value]': keyword, 
+    'search[value]': keyword,
   };
 
   if (sortDir) {
@@ -1444,7 +1434,6 @@ export const getAllDistrictsPagination = async (
   const response = await axiosInstance.get(`/district/dt`, {
     params,
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
     },
   });
@@ -1516,17 +1505,14 @@ export const getAllDepartments = async (
   return response.data;
 };
 export const getAllDepartmentsPagination = async (
-  token: string,
   start: number,
   length: number,
-  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
     'search[value]': keyword,
   };
 
@@ -1537,7 +1523,6 @@ export const getAllDepartmentsPagination = async (
   const response = await axiosInstance.get(`/department/dt`, {
     params,
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
     },
   });
@@ -1605,7 +1590,6 @@ export const getAllOrganizations = async (token: string): Promise<GetAllOrganiza
   return response.data;
 };
 export const getAllOrganizationPagination = async (
-  token: string,
   start: number,
   length: number,
   sortDir?: string,
@@ -1625,7 +1609,6 @@ export const getAllOrganizationPagination = async (
   const response = await axiosInstance.get(`/organization/dt`, {
     params,
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
     },
   });
@@ -1772,9 +1755,9 @@ export const deleteDocument = async (
 
 //#region Employee API
 
-export const getAllEmployee = async (token: string): Promise<GetAllEmployeeResponse> => {
+export const getAllEmployee = async (): Promise<GetAllEmployeeResponse> => {
   const response = await axiosInstance.get(`/employee`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };
@@ -2436,7 +2419,6 @@ export const getAllBrand = async (token: string): Promise<GetAllBrandResponse> =
   }
 };
 export const getAllBrandPagination = async (
-  token: string,
   start: number,
   length: number,
   // sortColumn: string,
@@ -2445,7 +2427,7 @@ export const getAllBrandPagination = async (
   try {
     const response = await axiosInstance.get(`/brand/dt`, {
       params: { start, length, 'search[value]': keyword },
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -2456,11 +2438,9 @@ export const getAllBrandPagination = async (
   }
 };
 
-export const deleteBrand = async (brandId: string, token: string): Promise<UpdateBrandResponse> => {
+export const deleteBrand = async (brandId: string): Promise<UpdateBrandResponse> => {
   try {
-    const response = await axiosInstance.delete(`/brand/${brandId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.delete(`/brand/${brandId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2486,14 +2466,9 @@ export const getAllAccessControl = async (token: string): Promise<any> => {
   }
 };
 
-export const getAccessControlsById = async (
-  id: string,
-  token?: string | null,
-): Promise<GetAccessControlByIdResponse> => {
+export const getAccessControlsById = async (id: string): Promise<GetAccessControlByIdResponse> => {
   try {
-    const response = await axiosInstance.get(`/access-control/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/access-control/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2504,7 +2479,6 @@ export const getAccessControlsById = async (
 };
 
 export const getAllAccessControlPagination = async (
-  token: string,
   start: number,
   length: number,
   sortColumn: string,
@@ -2513,7 +2487,7 @@ export const getAllAccessControlPagination = async (
   try {
     const response = await axiosInstance.get(`/access-control/dt`, {
       params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -2526,12 +2500,9 @@ export const getAllAccessControlPagination = async (
 
 export const createAccessControl = async (
   data: CreateAccessControlRequest,
-  token: string,
 ): Promise<CreateAccessControlResponse> => {
   try {
-    const response = await axiosInstance.post(`/access-control`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.post(`/access-control`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2543,12 +2514,9 @@ export const createAccessControl = async (
 
 export const deleteAccessControl = async (
   accessControlId: string,
-  token: string,
 ): Promise<DeleteIntegrationResponse> => {
   try {
-    const response = await axiosInstance.delete(`/access-control/${accessControlId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.delete(`/access-control/${accessControlId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2561,12 +2529,9 @@ export const deleteAccessControl = async (
 export const updateAccessControl = async (
   accessControlId: string,
   data: UpdateAccessControlRequest,
-  token: string,
 ): Promise<UpdateAccessControlResponse> => {
   try {
-    const response = await axiosInstance.put(`/access-control/${accessControlId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/access-control/${accessControlId}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2578,10 +2543,10 @@ export const updateAccessControl = async (
 //#endregion
 
 //#region Custom Field API
-export const getAllCustomField = async (token: string): Promise<any> => {
+export const getAllCustomField = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/custom-field`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -2592,11 +2557,9 @@ export const getAllCustomField = async (token: string): Promise<any> => {
   }
 };
 
-export const getCustomFieldById = async (id: string, token?: string | null): Promise<any> => {
+export const getCustomFieldById = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/custom-field/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/custom-field/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2672,10 +2635,9 @@ export const updateCustomField = async (
 
 export const deleteCustomField = async (
   customFieldId: string,
-  token: string,
 ): Promise<DeleteVisitorTypeResponse> => {
   const response = await axiosInstance.delete(`/custom-field/${customFieldId}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };
@@ -2784,10 +2746,10 @@ export const createEmail = async (
 //#endregion
 
 //#region Integration API
-export const getAllIntegration = async (token: string): Promise<GetAllIntegrationResponse> => {
+export const getAllIntegration = async (): Promise<GetAllIntegrationResponse> => {
   try {
     const response = await axiosInstance.get(`/integration`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {

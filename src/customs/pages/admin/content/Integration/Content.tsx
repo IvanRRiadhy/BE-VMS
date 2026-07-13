@@ -106,7 +106,7 @@ const Content = () => {
 
       try {
         const [responseResult, availableResponseResult] = await Promise.allSettled([
-          getAllIntegration(token),
+          getAllIntegration(),
           getAvailableIntegration(token),
         ]);
 

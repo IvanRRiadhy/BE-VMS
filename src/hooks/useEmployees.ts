@@ -6,13 +6,11 @@ export const useEmployees = (token?: string | null) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchEmployees = async () => {
       try {
         setLoading(true);
 
-        const res = await getAllEmployee(token);
+        const res = await getAllEmployee();
 
         setEmployee(res?.collection ?? []);
       } catch (err) {
@@ -23,7 +21,7 @@ export const useEmployees = (token?: string | null) => {
     };
 
     fetchEmployees();
-  }, [token]);
+  }, []);
 
   return {
     employee,

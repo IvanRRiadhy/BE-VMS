@@ -21,7 +21,7 @@ export const useSession = (): SessionContextType => {
 };
 
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('session'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [authType, setAuthType] = useState<AuthType>(
     (localStorage.getItem('authType') as AuthType) || null,
   );
@@ -29,13 +29,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [roleAccess, setRoleAccess] = useState<string | null>(localStorage.getItem('roleAccess'));
 
   const saveToken = (newToken: string, groupId?: string, roleAccess?: string) => {
-    localStorage.setItem('session', newToken);
+    localStorage.setItem('token', newToken);
     // localStorage.setItem('authType', type);
-      // if (groupId) {
-      //   const normalized = groupId.toUpperCase();
-      //   localStorage.setItem('groupId', normalized);
-      //   setGroupId(normalized);
-      // }
+    // if (groupId) {
+    //   const normalized = groupId.toUpperCase();
+    //   localStorage.setItem('groupId', normalized);
+    //   setGroupId(normalized);
+    // }
 
     if (roleAccess) {
       localStorage.setItem('roleAccess', roleAccess);
@@ -45,7 +45,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const clearToken = () => {
-    localStorage.removeItem('session');
+    localStorage.removeItem('token');
     localStorage.removeItem('authType');
     localStorage.removeItem('groupId');
     setToken(null);
@@ -55,7 +55,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <SessionContext.Provider value={{ token, authType, groupId, saveToken, clearToken, roleAccess }}>
+    <SessionContext.Provider
+      value={{ token, authType, groupId, saveToken, clearToken, roleAccess }}
+    >
       {children}
     </SessionContext.Provider>
   );
