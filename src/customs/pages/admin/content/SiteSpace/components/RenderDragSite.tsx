@@ -61,6 +61,18 @@ const RenderDragSite: React.FC<Props> = ({
     return 'name';
   };
 
+  const selectList = React.useMemo(() => {
+    if (sectionKey === "access") return accessControlList ?? [];
+    if (sectionKey === "parking") return parkingList ?? [];
+    if (sectionKey === "tracking") return trackingList ?? [];
+    return [];
+}, [
+    sectionKey,
+    accessControlList,
+    parkingList,
+    trackingList,
+]);
+
   return (
     // <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
     <SortableContext
@@ -83,7 +95,8 @@ const RenderDragSite: React.FC<Props> = ({
               sectionKey={sectionKey}
               onChange={onChange}
               onDelete={onDelete}
-              selectList={getSelectList()}
+              // selectList={getSelectList()}
+              selectList={selectList}
               fieldName={getFieldName()}
             />
           );
@@ -94,7 +107,7 @@ const RenderDragSite: React.FC<Props> = ({
   );
 };
 
-const SortableRow = ({
+const SortableRow = React.memo(({
   id,
   item,
   items,
@@ -104,7 +117,7 @@ const SortableRow = ({
   onDelete,
   selectList,
   fieldName,
-}: any) => {
+}:any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -216,6 +229,6 @@ const SortableRow = ({
       )}
     </TableRow>
   );
-};
+});
 
 export default RenderDragSite;

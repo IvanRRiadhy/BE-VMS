@@ -5,7 +5,6 @@ import FormSite from '../../FormSite';
 interface DialogSiteSpaceProps {
   open: boolean;
   editingId?: string | null;
-  isFormChanged: boolean;
   isBatchEdit: boolean;
   selectedRows: any[];
   enabledFields: any;
@@ -18,12 +17,13 @@ interface DialogSiteSpaceProps {
   onSuccess: () => void;
   onClose: () => void;
   onConfirmClose: () => void;
+  isDirty?: boolean;
+  setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DialogSiteSpace = ({
   open,
   editingId,
-  isFormChanged,
   isBatchEdit,
   selectedRows,
   enabledFields,
@@ -34,19 +34,25 @@ const DialogSiteSpace = ({
   onSuccess,
   onClose,
   onConfirmClose,
+  isDirty,
+  setIsDirty,
 }: DialogSiteSpaceProps) => {
-  const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
-    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
-      if (isFormChanged) {
-        onConfirmClose();
-      } else {
-        onClose();
-      }
-      return;
+const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
+  if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+    if (isDirty) {
+      onConfirmClose();
+    } else {
+      onClose();
     }
+    return;
+  }
 
+  if (isDirty) {
+    onConfirmClose();
+  } else {
     onClose();
-  };
+  }
+};
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xl">
@@ -78,6 +84,7 @@ const DialogSiteSpace = ({
           enabledFields={enabledFields}
           setEnabledFields={setEnabledFields}
           employee={employee}
+          setIsDirty={setIsDirty}
         />
       </DialogContent>
     </Dialog>

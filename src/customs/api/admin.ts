@@ -2039,7 +2039,7 @@ export const getAllSitePagination = async (
       start,
       length,
       sort_dir: sortDir,
-      'search[value]': keyword,
+      ...(keyword ? { 'search[value]': keyword } : {}),
       ...(type !== undefined ? { type } : {}),
       ...(parent ? { parent } : {}),
       ...(is_child !== undefined ? { 'is-child': is_child } : {}),
@@ -2244,6 +2244,20 @@ export const updateSiteTracking = async (
   }
 };
 
+export const deleteSiteTracking = async (id: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/site-tracking/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const updateSiteAccess = async (
   id: string,
   data: any,
@@ -2269,6 +2283,20 @@ export const updateSiteParking = async (
 ): Promise<UpdateSiteParkingResponse> => {
   try {
     const response = await axiosInstance.put(`/site-parking/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteSiteParking = async (id: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/site-parking/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

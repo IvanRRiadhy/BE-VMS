@@ -63,6 +63,8 @@ import {
   getSitesAccessById,
   deleteSiteDocument,
   getSiteDocumentBySiteId,
+  deleteSiteTracking,
+  deleteSiteParking,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
@@ -78,6 +80,15 @@ import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from 
 import { arrayMove } from '@dnd-kit/sortable';
 import { getAllApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
 import imageCompression from 'browser-image-compression';
+import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
+import { useDocuments } from 'src/hooks/Documents/useDocument';
+import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
+import { useSiteParking } from 'src/hooks/Sites/useSiteParking';
+import { useSiteTracking } from 'src/hooks/Sites/useSiteTracking';
+import { useSiteAccess } from 'src/hooks/Sites/useSiteAccess';
+import { useSitesParking } from 'src/hooks/Sites/useSitesParking';
+import { useSitesTracking } from 'src/hooks/Sites/useSitesTracking';
+import { useSiteDocuments } from 'src/hooks/Sites/useSiteDocuments';
 
 type EnabledFields = {
   type: boolean;
@@ -103,6 +114,7 @@ interface FormSiteProps {
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
   employee?: any;
+  setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const FormSite = ({
@@ -115,6 +127,7 @@ const FormSite = ({
   enabledFields,
   setEnabledFields,
   employee,
+  setIsDirty,
 }: FormSiteProps) => {
   const { token } = useSession();
   const location = useLocation();
@@ -122,7 +135,7 @@ const FormSite = ({
   const parentRouteId = segments[segments.length - 1] || null;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   const [siteTypes] = useState<{ label: string; value: number }[]>([
     { label: 'Site', value: 0 },
@@ -136,10 +149,10 @@ const FormSite = ({
     { value: 'Asia/Makassar', label: '(UTC+08:00) WITA (Waktu Indonesia Tengah)' },
     { value: 'Asia/Jayapura', label: '(UTC+09:00) WIT (Waktu Indonesia Timur)' },
   ];
-  const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
+  // const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<any[]>([]);
-  const [siteParking, setSiteParking] = useState<Parking[]>([]);
-  const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
+  // const [siteParking, setSiteParking] = useState<Parking[]>([]);
+  // const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
   const [newDocument, setNewDocument] = useState<SiteDocumentItem>({
     id: '',
     site_id: '',
@@ -148,8 +161,7 @@ const FormSite = ({
     retentionTime: 0,
   });
   const [deletedSiteDocuments, setDeletedSiteDocuments] = useState<any[]>([]);
-  const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
-
+  // const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
   const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -159,213 +171,281 @@ const FormSite = ({
   const [newSiteDocuments, setNewSiteDocuments] = useState<any[]>([]);
   const [retentionInput, setRetentionInput] = useState('0');
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
+  const [initialTracking, setInitialTracking] = useState([]);
+  const [initialParking, setInitialParking] = useState([]);
 
   useEffect(() => {
     setRetentionInput(newDocument.retentionTime.toString());
   }, [newDocument.retentionTime]);
 
+  // useEffect(() => {
+  //   if (!editingId || !token) return;
+
+  //   (async () => {
+  //     try {
+  //       const results = await Promise.allSettled([
+  //         getSitesAccessById(token, editingId),
+  //         getAllAccessControl(token),
+  //         getSiteParking(token),
+  //         getSiteTracking(token),
+  //         getSitesParking(token),
+  //         getSitesTracking(token),
+  //         getAllDocument(token),
+  //         getSiteDocumentBySiteId(token, editingId),
+  //       ]);
+
+  //       const [
+  //         siteRes,
+  //         accessControlRes,
+  //         parkingMasterRes,
+  //         trackingMasterRes,
+  //         parkingRelationRes,
+  //         trackingRelationRes,
+  //         documentRes,
+  //         siteDocumentRes,
+  //       ] = results;
+
+  //       const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
+  //       // console.log('site', site);
+  //       const accessControlList =
+  //         accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
+
+  //       setAccessControl(accessControlList);
+
+  //       if (documentRes.status === 'fulfilled') {
+  //         setDocumentList(documentRes.value.collection ?? []);
+  //       }
+
+  //       const parkingMaster =
+  //         parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
+
+  //       const trackingMaster =
+  //         trackingMasterRes.status === 'fulfilled'
+  //           ? (trackingMasterRes.value.collection ?? [])
+  //           : [];
+
+  //       // RELATION
+  //       const parkingRelation =
+  //         parkingRelationRes.status === 'fulfilled'
+  //           ? (parkingRelationRes.value.collection ?? [])
+  //           : [];
+
+  //       const trackingRelation =
+  //         trackingRelationRes.status === 'fulfilled'
+  //           ? (trackingRelationRes.value.collection ?? [])
+  //           : [];
+
+  //       const siteDocumentRelations =
+  //         siteDocumentRes.status === 'fulfilled' ? (siteDocumentRes.value.collection ?? []) : [];
+
+  //       setSiteParking(parkingMaster);
+  //       setSiteTracking(trackingMaster);
+
+  //       const normalizedId = editingId.toLowerCase();
+
+  //       const filteredParking = parkingRelation.filter(
+  //         (p: any) => String(p.site_id).toLowerCase() === normalizedId,
+  //       );
+
+  //       const filteredTracking = trackingRelation.filter(
+  //         (t: any) => String(t.site_id).toLowerCase() === normalizedId,
+  //       );
+
+  //       const mappedParking = filteredParking.map((p: any, idx: number) => {
+  //         const master = parkingMaster.find(
+  //           (x: any) => String(x.id).toLowerCase() === String(p.prk_area_parking_id).toLowerCase(),
+  //         );
+
+  //         return {
+  //           id: p.id,
+  //           sort: idx,
+  //           site_id: p.site_id,
+  //           prk_area_parking_id: p.prk_area_parking_id,
+  //           name: master?.name ?? '',
+  //           early_access: p.early_access ?? false,
+  //         };
+  //       });
+
+  //       const mappedAccess = Array.isArray(site)
+  //         ? site.map((a: any, idx: number) => {
+  //             const master = accessControlList.find(
+  //               (x: any) =>
+  //                 String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
+  //             );
+
+  //             return {
+  //               id: a.id,
+  //               sort: idx,
+  //               access_control_id: a.access_control_id,
+  //               name: master?.name ?? a.name ?? '',
+  //               early_access: a.early_access ?? false,
+  //             };
+  //           })
+  //         : site?.access_control_id
+  //           ? [
+  //               {
+  //                 id: site.id,
+  //                 sort: site.sort ?? 0,
+  //                 access_control_id: site.access_control_id,
+  //                 name: site.name ?? '',
+  //                 early_access: site.early_access ?? false,
+  //               },
+  //             ]
+  //           : [];
+
+  //       const mappedTracking = filteredTracking.map((t: any, idx: number) => {
+  //         const master = trackingMaster.find(
+  //           (x: any) =>
+  //             String(x.id).toLowerCase() === String(t.trk_ble_card_access_id).toLowerCase(),
+  //         );
+
+  //         return {
+  //           id: t.id,
+  //           sort: idx,
+  //           site_id: t.site_id,
+  //           trk_ble_card_access_id: t.trk_ble_card_access_id,
+  //           name: master?.masked_area_name ?? master?.name ?? '',
+  //           early_access: t.early_access ?? false,
+  //         };
+  //       });
+
+  //       setInitialTracking(mappedTracking);
+  //       setInitialParking(mappedParking);
+
+  //       setFilteredSiteDocumentList(siteDocumentRelations);
+
+  //       setLocalForm((prev) => ({
+  //         ...prev,
+  //         ...site,
+  //         type: site?.type !== undefined ? Number(site.type) : prev.type,
+  //         access: mappedAccess,
+  //         parking: mappedParking,
+  //         tracking: mappedTracking,
+  //       }));
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   })();
+  // }, [editingId, token]);
+
+  const { data: documents } = useDocuments();
+  // const { data: siteById } = useSiteById(editingId);
+  const { data: accessControl } = useAccessControl();
+  const { data: siteParking } = useSiteParking();
+  const { data: siteTracking } = useSiteTracking();
+  const { data: siteAccess } = useSiteAccess(editingId);
+  const { data: parkingRelations } = useSitesParking();
+  const { data: trackingRelations } = useSitesTracking();
+  const { data: siteDocuments } = useSiteDocuments(editingId);
+
   useEffect(() => {
-    if (!editingId || !token) return;
+    if (!editingId) return;
+    // if (
+    //   !siteAccess ||
+    //   !accessControl ||
+    //   !siteParking ||
+    //   !siteTracking ||
+    //   !parkingRelations ||
+    //   !trackingRelations ||
+    //   !documents ||
+    //   !siteDocuments
+    // ) {
+    //   return;
+    // }
 
-    (async () => {
-      try {
-        const results = await Promise.allSettled([
-          getSitesAccessById(token, editingId),
-          getAllAccessControl(token),
-          getSiteParking(token),
-          getSiteTracking(token),
-          getSitesParking(token),
-          getSitesTracking(token),
-          getAllDocument(token),
-          getSiteDocumentBySiteId(token, editingId),
-        ]);
+    const site = siteAccess?.collection;
+    const accessControlList = accessControl?.collection ?? [];
+    const parkingMaster = siteParking?.collection ?? [];
+    const trackingMaster = siteTracking?.collection ?? [];
+    const parkingRelation = parkingRelations?.collection ?? [];
+    const trackingRelation = trackingRelations?.collection ?? [];
+    const siteDocumentRelations = siteDocuments?.collection ?? [];
 
-        const [
-          siteRes,
-          accessControlRes,
-          parkingMasterRes,
-          trackingMasterRes,
-          parkingRelationRes,
-          trackingRelationRes,
-          documentRes,
-          siteDocumentRes,
-        ] = results;
+    const normalizedId = editingId.toLowerCase();
 
-        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
-        // console.log('site', site);
-        const accessControlList =
-          accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
+    const filteredParking = parkingRelation.filter(
+      (p: any) => p.site_id.toLowerCase() === normalizedId,
+    );
 
-        setAccessControl(accessControlList);
+    const filteredTracking = trackingRelation.filter(
+      (t: any) => t.site_id.toLowerCase() === normalizedId,
+    );
 
-        if (documentRes.status === 'fulfilled') {
-          setDocumentList(documentRes.value.collection ?? []);
-        }
+    const mappedParking = filteredParking.map((p: any, idx: number) => {
+      const master = parkingMaster.find(
+        (x: any) => x.id.toLowerCase() === p.prk_area_parking_id.toLowerCase(),
+      );
 
-        const parkingMaster =
-          parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
+      return {
+        id: p.id,
+        sort: idx,
+        site_id: p.site_id,
+        prk_area_parking_id: p.prk_area_parking_id,
+        name: master?.name ?? '',
+        early_access: p.early_access ?? false,
+      };
+    });
 
-        const trackingMaster =
-          trackingMasterRes.status === 'fulfilled'
-            ? (trackingMasterRes.value.collection ?? [])
-            : [];
+    const mappedTracking = filteredTracking.map((t: any, idx: number) => {
+      const master = trackingMaster.find(
+        (x: any) => x.id.toLowerCase() === t.trk_ble_card_access_id.toLowerCase(),
+      );
 
-        // RELATION
-        const parkingRelation =
-          parkingRelationRes.status === 'fulfilled'
-            ? (parkingRelationRes.value.collection ?? [])
-            : [];
+      return {
+        id: t.id,
+        sort: idx,
+        site_id: t.site_id,
+        trk_ble_card_access_id: t.trk_ble_card_access_id,
+        name: master?.masked_area_name ?? master?.name ?? '',
+        early_access: t.early_access ?? false,
+      };
+    });
 
-        const trackingRelation =
-          trackingRelationRes.status === 'fulfilled'
-            ? (trackingRelationRes.value.collection ?? [])
-            : [];
-
-        const siteDocumentRelations =
-          siteDocumentRes.status === 'fulfilled' ? (siteDocumentRes.value.collection ?? []) : [];
-
-        setSiteParking(parkingMaster);
-        setSiteTracking(trackingMaster);
-
-        const normalizedId = editingId.toLowerCase();
-
-        const filteredParking = parkingRelation.filter(
-          (p: any) => String(p.site_id).toLowerCase() === normalizedId,
-        );
-
-        const filteredTracking = trackingRelation.filter(
-          (t: any) => String(t.site_id).toLowerCase() === normalizedId,
-        );
-
-        const mappedParking = filteredParking.map((p: any, idx: number) => {
-          const master = parkingMaster.find(
-            (x: any) => String(x.id).toLowerCase() === String(p.prk_area_parking_id).toLowerCase(),
+    const mappedAccess = Array.isArray(site)
+      ? site.map((a: any, idx: number) => {
+          const master = accessControlList.find(
+            (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
           );
 
           return {
-            id: p.id,
+            id: a.id,
             sort: idx,
-            site_id: p.site_id,
-            prk_area_parking_id: p.prk_area_parking_id,
+            access_control_id: a.access_control_id,
             name: master?.name ?? '',
-            early_access: p.early_access ?? false,
+            early_access: a.early_access ?? false,
           };
-        });
+        })
+      : [];
 
-        const mappedAccess = Array.isArray(site)
-          ? site.map((a: any, idx: number) => {
-              const master = accessControlList.find(
-                (x: any) =>
-                  String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
-              );
+    setInitialTracking(mappedTracking);
+    setInitialParking(mappedParking);
 
-              return {
-                id: a.id,
-                sort: idx,
-                access_control_id: a.access_control_id,
-                name: master?.name ?? a.name ?? '',
-                early_access: a.early_access ?? false,
-              };
-            })
-          : site?.access_control_id
-            ? [
-                {
-                  id: site.id,
-                  sort: site.sort ?? 0,
-                  access_control_id: site.access_control_id,
-                  name: site.name ?? '',
-                  early_access: site.early_access ?? false,
-                },
-              ]
-            : [];
+    setFilteredSiteDocumentList(siteDocumentRelations);
 
-        const mappedTracking = filteredTracking.map((t: any, idx: number) => {
-          const master = trackingMaster.find(
-            (x: any) =>
-              String(x.id).toLowerCase() === String(t.trk_ble_card_access_id).toLowerCase(),
-          );
+    setLocalForm((prev) => ({
+      ...prev,
+      ...site,
+      // type: Number(site.type),
+      // type: site?.type !== undefined ? Number(site.type) : prev.type,
+      access: mappedAccess,
+      parking: mappedParking,
+      tracking: mappedTracking,
+    }));
+  }, [
+    editingId,
+    siteAccess,
+    accessControl,
+    siteParking,
+    siteTracking,
+    parkingRelations,
+    trackingRelations,
+    siteDocuments,
+  ]);
 
-          return {
-            id: t.id,
-            sort: idx,
-            site_id: t.site_id,
-            trk_ble_card_access_id: t.trk_ble_card_access_id,
-            name: master?.masked_area_name ?? master?.name ?? '',
-            early_access: t.early_access ?? false,
-          };
-        });
+  const handleChange = (e: any) => {
+    const { id, name, value, type } = e.target;
 
-        // setFilteredSiteDocumentList(siteDocumentRelations);
-        // setSiteDocuments(
-        //   siteDocumentRelations.map((item: any) => ({
-        //     site_id: item.site_id,
-        //     document_id: item.documents?.id ?? item.document_id,
-        //     retention_time: item.retentionTime ?? item.retention_time ?? 0,
-        //   })),
-        // );
-
-        setFilteredSiteDocumentList(siteDocumentRelations);
-
-        setLocalForm((prev) => ({
-          ...prev,
-          ...site,
-          type: site?.type !== undefined ? Number(site.type) : prev.type,
-          access: mappedAccess,
-          parking: mappedParking,
-          tracking: mappedTracking,
-        }));
-      } catch (err) {
-        console.error(err);
-      }
-    })();
-  }, [editingId, token]);
-
-  useEffect(() => {
-    if (!token || editingId) return;
-
-    const fetchData = async () => {
-      try {
-        const [docRes, accessControlRes, siteParkingRes, siteTrackingRes] =
-          await Promise.allSettled([
-            getAllDocument(token),
-            getAllAccessControl(token),
-            getSiteParking(token),
-            getSiteTracking(token),
-          ]);
-
-        if (docRes.status === 'fulfilled') setDocumentList(docRes.value.collection ?? []);
-        if (accessControlRes.status === 'fulfilled')
-          setAccessControl(accessControlRes.value.collection);
-        if (siteParkingRes.status === 'fulfilled') setSiteParking(siteParkingRes.value.collection);
-        if (siteTrackingRes.status === 'fulfilled')
-          setSiteTracking(siteTrackingRes.value.collection);
-      } catch (error) {
-        console.error('Unexpected error during data fetching:', error);
-      }
-    };
-
-    fetchData();
-  }, [token, editingId]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const current = JSON.stringify(localForm);
-
-      if (current !== lastSentRef.current) {
-        lastSentRef.current = current;
-        setFormData(localForm);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [localForm]);
-
-  const handleChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      | React.ChangeEvent<{ name?: string; value: unknown }>,
-  ) => {
-    const { id, name, value, type } = e.target as any;
+    setIsDirty(true);
 
     setLocalForm((prev) => ({
       ...prev,
@@ -438,6 +518,8 @@ const FormSite = ({
     return date.toISOString().slice(11, 16);
   };
 
+  const { create, update, isPending } = useSiteMutation();
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // setErrors({});
@@ -447,7 +529,6 @@ const FormSite = ({
     }
 
     try {
-      setLoading(true);
       if (!token) {
         showSwal('error', 'Session expired!');
         return;
@@ -461,7 +542,7 @@ const FormSite = ({
 
         if (Object.keys(updatedFields).length === 0) {
           showSwal('error', 'Please enable at least one field to update.');
-          setLoading(false);
+
           return;
         }
 
@@ -491,10 +572,21 @@ const FormSite = ({
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
         });
 
-        console.log('updateData', updateData);
+        // const res = await updateSite(editingId, updateData, token);
+        const res = await update.mutateAsync({
+          id: editingId,
+          token,
+          data: updateData,
+        });
+        const deletedTracking = initialTracking.filter(
+          (old) => !(localForm.tracking ?? []).some((cur: any) => cur.id === old.id),
+        );
 
-        const res = await updateSite(editingId, updateData, token);
-        console.log('res', JSON.stringify(res, null, 2));
+        const deletedParking = initialParking.filter(
+          (old) => !(localForm.parking ?? []).some((cur: any) => cur.id === old.id),
+        );
+        await Promise.all(deletedTracking.map((item) => deleteSiteTracking(item.id, token)));
+        await Promise.all(deletedParking.map((item) => deleteSiteParking(item.id, token)));
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {
@@ -583,7 +675,11 @@ const FormSite = ({
         };
         // console.log('finalFormData', JSON.stringify(finalFormData, null, 2));
         const createData = CreateSiteRequestSchema.parse(finalFormData);
-        const res = await createSite(createData, token);
+        // const res = await createSite(createData, token);
+        const res = await create.mutateAsync({
+          token,
+          data: createData,
+        });
         const newSiteId = res.collection?.id as string;
         const trackingPayload = normalizeTrackingPayloads(localForm.tracking ?? [], newSiteId);
         if (trackingPayload.data.length > 0) {
@@ -606,8 +702,6 @@ const FormSite = ({
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err.message || 'Failed to create site');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -1813,7 +1907,7 @@ const FormSite = ({
                                 const documentId = doc.documents?.id ?? doc.documentId;
 
                                 // Cari nama dokumen dari master document
-                                const docInfo = documentlist.find((d) => d.id === documentId);
+                                const docInfo = documents?.find((d) => d.id === documentId);
 
                                 return (
                                   <TableRow key={doc.id + idx}>
@@ -1882,7 +1976,7 @@ const FormSite = ({
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const selectedId = e.target.value;
 
-                          const selectedDoc = documentlist.find(
+                          const selectedDoc = documents?.find(
                             (doc) => doc.id.toString() === selectedId.toString(),
                           );
 
@@ -1900,7 +1994,7 @@ const FormSite = ({
                         <MenuItem value="" disabled>
                           Select Document
                         </MenuItem>
-                        {documentlist.map((doc) => (
+                        {documents?.map((doc) => (
                           <MenuItem key={doc.id} value={doc.id}>
                             {doc.name}
                           </MenuItem>
@@ -2086,7 +2180,7 @@ const FormSite = ({
             color="primary"
             variant="contained"
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             size="medium"
           >
             Submit
@@ -2095,7 +2189,7 @@ const FormSite = ({
       </form>
 
       <Backdrop
-        open={loading}
+        open={isPending}
         sx={{
           color: '#fff',
           zIndex: 999999,

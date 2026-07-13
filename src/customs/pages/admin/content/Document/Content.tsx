@@ -14,7 +14,6 @@ import {
   Item,
 } from 'src/customs/api/models/Admin/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';

@@ -31,6 +31,9 @@ import { updateSiteActive } from 'src/customs/api/Admin/Site';
 import DialogSiteSpace from './components/Dialog/DialogSiteSpace';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
+import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
+import { useSites } from 'src/hooks/useSites';
 
 type SiteTableRow = {
   id: string;
@@ -57,17 +60,14 @@ type EnableField = {
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
-  const [allData, setAllData] = useState<any[]>([]);
+  // const [allData, setAllData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [tableRowSite, setTableRowSite] = useState<SiteTableRow[]>([]);
+  // const [tableRowSite, setTableRowSite] = useState<SiteTableRow[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +110,19 @@ const Content = () => {
     2: [3], // Floor → Room
     3: [], // Room →
   };
+
+  // const { sites } = useSites(token);
+  // const allData = sites?.collection ?? [];
+
+  const [allData, setAllData] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getAllSite(token);
+      setAllData(res.collection);
+    };
+    fetchData();
+  }, []);
+
   useEffect(() => {
     // if (!allData) return;
     if (!allData || allData.length === 0) return;
@@ -140,25 +153,7 @@ const Content = () => {
   const { employee } = useEmployees(token);
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<any>(CreateSiteRequestSchema.parse({}));
-
-  const cards = [
-    {
-      title: `Total ${t('navigation.site_space')}`,
-      subTitle: `${totalFilteredRecords}`,
-      icon: IconSitemap,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
-
-  const isFormChanged = useMemo(() => {
-    if (!openFormCreateSiteSpace || !initialFormSnapshot) return false;
-    return JSON.stringify(formDataAddSite) !== JSON.stringify(initialFormSnapshot);
-  }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
-
-  const [filters, setFilters] = useState<any>({
-    type: -1,
-  });
+  const [isDirty, setIsDirty] = useState(false);
 
   const getHierarchyParams = (wildcard?: string) => {
     if (!wildcard) {
@@ -176,65 +171,55 @@ const Content = () => {
     };
   };
 
-  useEffect(() => {
-    if (!token) return;
+  const { parent, is_child } = getHierarchyParams(wildcard);
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
+  const {
+    data: sitePagination,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useSitePagination({
+    token,
+    page,
+    rowsPerPage,
+    sortDir,
+    searchKeyword: search,
+    type: appliedType !== -1 ? appliedType : undefined,
+    parent,
+    isChild: is_child,
+  });
 
-        const { parent, is_child } = getHierarchyParams(wildcard);
+  const totalRecords = sitePagination?.RecordsTotal ?? 0;
+  const totalFilteredRecords = sitePagination?.RecordsFiltered ?? 0;
 
-        const response = await getAllSitePagination(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-          appliedType !== -1 ? appliedType : undefined,
-          parent,
-          is_child,
-        );
-        const res = await getAllSite(token);
-        // setAllData(res.collection);
-        setAllData(
-          res.collection.map((item: any) => ({
-            ...item,
-            type:
-              item.type === 'Site'
-                ? 0
-                : item.type === 'Building'
-                  ? 1
-                  : item.type === 'Floor'
-                    ? 2
-                    : item.type === 'Room'
-                      ? 3
-                      : 0,
-          })),
-        );
-        setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
+  const cards = [
+    {
+      title: `Total ${t('navigation.site_space')}`,
+      subTitle: `${totalFilteredRecords}`,
+      icon: IconSitemap,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
 
-        const tableRows = response.collection.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          type: item.type,
-          description: item.description || '',
-          image: item.image || '',
-          active: item.is_active,
-        }));
+  const { remove, updateActive } = useSiteMutation();
 
-        setTableRowSite(tableRows);
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [filters, setFilters] = useState<any>({
+    type: -1,
+  });
 
-    fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search, appliedType, wildcard]);
+  const tableRowSite = useMemo(() => {
+    return (
+      sitePagination?.collection?.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        description: item.description || '',
+        image: item.image || '',
+        active: item.is_active,
+      })) ?? []
+    );
+  }, [sitePagination]);
 
   useEffect(() => {
     if (!allData?.length) {
@@ -288,7 +273,16 @@ const Content = () => {
     setInitialFormSnapshot(empty);
     setEdittingId('');
     setPendingEditId(null);
+    setIsDirty(false);
+
     setOpenFormCreateSiteSpace(true);
+  };
+
+  const siteTypeMap: Record<string, number> = {
+    Site: 0,
+    Building: 1,
+    Floor: 2,
+    Room: 3,
   };
 
   const handleEdit = async (id: string) => {
@@ -321,7 +315,8 @@ const Content = () => {
 
       const normalized = {
         ...found,
-        type: safeNumber(found.type),
+        // type: safeNumber(found.type),
+        type: typeof found.type === 'string' ? (siteTypeMap[found.type] ?? 0) : Number(found.type),
         approval_workflow_id:
           found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
             ? String(found.approval_workflow_id)
@@ -349,6 +344,7 @@ const Content = () => {
       setFormDataAddSite(parsedData);
       setInitialFormSnapshot(parsedData);
       setPendingEditId(null);
+      setIsDirty(false);
       setOpenFormCreateSiteSpace(true);
     } catch (error) {
       console.error('Error fetching/parsing data:', error);
@@ -386,16 +382,15 @@ const Content = () => {
     if (!confirm) return;
 
     if (confirm) {
-      setLoading(true);
       try {
-        await deleteSiteSpace(id, token);
-        setRefreshTrigger((prev) => prev + 1);
+        await remove.mutateAsync({
+          id,
+          token,
+        });
+
         showSwal('success', 'Successfully deleted site space!');
       } catch (error: any) {
         showSwal('error', error.response?.data?.msg || 'Failed to delete site space.');
-        setTimeout(() => setLoading(false), 500);
-      } finally {
-        setTimeout(() => setLoading(false), 600);
       }
     }
   };
@@ -405,32 +400,31 @@ const Content = () => {
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
     if (!confirmed) return false;
-    setLoading(true);
+
     try {
-      await Promise.all(rows.map((row) => deleteSiteSpace(row.id, token)));
-      setRefreshTrigger((prev) => prev + 1);
+      await Promise.all(rows.map((row) => remove.mutateAsync({ id: row.id, token })));
+
       setSelectedRows([]);
       showSwal('success', `${rows.length} site space have been deleted.`);
       return true;
     } catch (error) {
       showSwal('error', 'Failed to delete some items.');
-      setLoading(false);
+
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
-        if (isFormChanged) {
+        if (isDirty) {
           setConfirmDialogOpen(true);
         }
       }
     };
 
     const dialogEl = dialogRef.current;
+
     if (dialogEl) {
       dialogEl.addEventListener('mouseleave', handleMouseLeave);
     }
@@ -440,7 +434,7 @@ const Content = () => {
         dialogEl.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, [isFormChanged]);
+  }, [isDirty]);
 
   const [enabledFields, setEnabledFields] = useState<EnableField>({
     type: false,
@@ -466,7 +460,6 @@ const Content = () => {
   const handleApplyFilter = () => {
     setPage(0);
     setAppliedType(filters.type);
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleOpenType = () => {
@@ -476,12 +469,6 @@ const Content = () => {
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
   }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -493,12 +480,12 @@ const Content = () => {
 
   const handleSuccess = () => {
     setSelectedRows([]);
-    setRefreshTrigger((prev) => prev + 1);
     handleCloseModalCreateSiteSpace();
 
     queryClient.invalidateQueries({
       queryKey: ['registeredSites'],
     });
+    setIsDirty(false);
   };
 
   const [loadingBackdrop, setLoadingBackdrop] = useState(false);
@@ -506,11 +493,14 @@ const Content = () => {
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingBackdrop(true);
-      await updateSiteActive(token as string, row.id, checked);
+      // await updateSiteActive(token as string, row.id, checked);
+      await updateActive.mutateAsync({
+        token,
+        id: row.id,
+        active: checked,
+      });
 
       showSwal('success', 'Site space successfully updated');
-
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
     } finally {
@@ -531,7 +521,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading || isFetching}
                 isHavePagination={true}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
@@ -591,7 +581,7 @@ const Content = () => {
                 onSearchKeywordChange={handleSearchKeywordChange}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleOpenType}
               />
             </Grid>
@@ -602,7 +592,6 @@ const Content = () => {
       <DialogSiteSpace
         open={openFormCreateSiteSpace}
         editingId={edittingId}
-        isFormChanged={isFormChanged}
         isBatchEdit={isBatchEdit}
         selectedRows={selectedRows}
         enabledFields={enabledFields}
@@ -613,6 +602,8 @@ const Content = () => {
         onSuccess={handleSuccess}
         onClose={handleCloseModalCreateSiteSpace}
         onConfirmClose={() => setConfirmDialogOpen(true)}
+        isDirty={isDirty}
+        setIsDirty={setIsDirty}
       />
 
       <SelectSiteTypeDialog
