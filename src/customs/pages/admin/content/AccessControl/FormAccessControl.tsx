@@ -14,8 +14,6 @@ import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { useSession } from 'src/customs/contexts/SessionContext';
-
 import {
   CreateAccessControlRequestSchema,
   UpdateAccessControlRequestSchema,
@@ -36,6 +34,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
 
 type FormType = z.infer<typeof CreateAccessControlRequestSchema>;
 
@@ -86,7 +85,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         // getAllBrand(),
         getAllIntegration(),
       ]);
-
       // if (brandRes.status === 'fulfilled') setBrandList(brandRes.value?.collection ?? []);
       if (integrationRes.status === 'fulfilled')
         setIntegrationList(integrationRes.value?.collection ?? []);
@@ -117,6 +115,8 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
     })();
   }, [editingId, reset]);
 
+  const { createMutation, updateMutation } = useAccessControlMutation();
+
   const onSubmit = async (data: FormType) => {
     setLoading(true);
     try {
@@ -126,14 +126,16 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
           brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
-        await updateAccessControl(editingId, payload);
+        // await updateAccessControl(editingId, payload);
+        await updateMutation.mutateAsync({ id: editingId, data: payload });
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
           ...data,
           brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
           brand_name: null,
         });
-        await createAccessControl(payload);
+        // await createAccessControl(payload);
+        await createMutation.mutateAsync(payload);
       }
 
       reset(data);

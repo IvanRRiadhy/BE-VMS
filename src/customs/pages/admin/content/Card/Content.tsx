@@ -49,6 +49,9 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import ImportErrorDialog from './components/ImportErroDialog';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTranslation } from 'react-i18next';
+import { useVisitorCardPagination } from 'src/hooks/Card/useVisitorCard';
+import { useVisitorCardSummary } from 'src/hooks/Card/useVisitorCardSummary';
+import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
 
 type EnableField = {
   employee_id: boolean;
@@ -87,13 +90,12 @@ const typeMap: Record<string, number> = {
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
+  // const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -104,12 +106,55 @@ const Content = () => {
   const [importErrorTitle, setImportErrorTitle] = useState<string>('');
   const [importErrorMsg, setImportErrorMsg] = useState<string>('');
   const [importErrorRows, setImportErrorRows] = useState<ImportErrorRow[]>([]);
-  const [cardActiveCount, setCardActiveCount] = useState(0);
-  const [cardInactiveCount, setCardInactiveCount] = useState(0);
-  const [usedCard, setUsedCard] = useState(0);
-  const [unUsedCard, setUnUsedCard] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
   const { t } = useTranslation();
+
+  const [filters, setFilters] = useState<Filters>({
+    type: -1,
+    card_status: -1,
+  });
+  const [appliedFilters, setAppliedFilters] = useState<Filters>({
+    type: -1,
+    card_status: -1,
+  });
+
+  const { data, isLoading } = useVisitorCardPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+    filters: appliedFilters,
+  });
+
+  const { deleteMutation } = useVisitorCardMutation();
+  const { data: summary } = useVisitorCardSummary();
+
+  const tableVisitorCard =
+    data?.collection.map((x: any) => ({
+      id: x.id,
+      name: x.name,
+      card_number: x.card_number,
+      card_mac: x.card_mac,
+      card_barcode: x.card_barcode,
+      card_status: x.card_status,
+      remarks: x.remarks,
+      employee_name: x.employee_name,
+      type: x.type,
+      site_name: x.site_name,
+      registered_site: x.registered_site,
+      is_used: x.is_used,
+      is_employee_used: x.is_employee_used,
+      is_multi_site: x.is_multi_site,
+    })) ?? [];
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+
+  const cardActiveCount = summary?.cardActiveCount ?? 0;
+  const cardInactiveCount = summary?.cardInactiveCount ?? 0;
+  const usedCard = summary?.usedCard ?? 0;
+  const unUsedCard = summary?.unusedCard ?? 0;
+
   const cards = [
     {
       title: t('totalCards'),
@@ -145,70 +190,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const res = await getAllVisitorCard();
-        const response = await getAllVisitorCardPagination(
-          start,
-          rowsPerPage,
-          search,
-          sortDir,
-          filters.type === -1 ? undefined : filters.type,
-          filters.card_status === -1 ? undefined : filters.card_status,
-        );
-
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-
-        if (response) {
-          const mapped = response.collection.map((x: any) => ({
-            id: x.id,
-            name: x.name,
-            card_number: x.card_number,
-            card_mac: x.card_mac,
-            card_barcode: x.card_barcode,
-            card_status: x.card_status,
-            remarks: x.remarks,
-            // employee_id: x.employee_id,
-            employee_name: x.employee_name,
-            type: x.type,
-            site_name: x.site_name,
-            registered_site: x.registered_site,
-            is_used: x.is_used,
-            is_employee_used: x.is_employee_used,
-            is_multi_site: x.is_multi_site,
-            // checkin_at: x.checkin_at,
-            // checkout_at: x.checkout_at,
-          }));
-          setTableVisitorCard(mapped);
-
-          const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
-          const nonActiveCount = res.collection.filter(
-            (item: any) => item.card_status === 0,
-          ).length;
-          const isUsedCount = res.collection.filter((item: any) => item.is_used === true).length;
-          const isUnusedCount = res.collection.filter((item: any) => item.is_used === false).length;
-
-          setCardActiveCount(activeCount);
-          setCardInactiveCount(nonActiveCount);
-          setUsedCard(isUsedCount);
-          setUnUsedCard(isUnusedCount);
-        }
-      } catch (error: any) {
-        if (error?.response?.status === 404) {
-        } else {
-          console.error('Error fetching data:', error);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorCard(true);
@@ -262,21 +243,19 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteVisitorCard(id);
-        setRefreshTrigger(refreshTrigger + 1);
+        await deleteMutation.mutateAsync(id);
+
         showSwal('success', 'Successfully deleted card!');
       } catch (error: any) {
         showSwal('error', error?.response?.data?.msg || 'Failed to delete card.');
-        setTimeout(() => setLoading(false), 500);
+        setLoading(false);
       } finally {
-        setTimeout(() => setLoading(false), 500);
+        setLoading(false);
       }
     }
   };
 
   const handleSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
-
     if (!edittingId) {
       setFormAddVisitorCard(CreateVisitorCardRequestSchema.parse({}));
     }
@@ -292,15 +271,12 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteVisitorCard(row.id)));
-
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
         setSelectedRows([]);
 
-        setRefreshTrigger((prev) => prev + 1);
         showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
         return true;
       } catch (error) {
-        // showErrorAlert('Error!', 'Failed to delete some items.');
         showSwal('error', 'Failed to delete some items.');
         return false;
       } finally {
@@ -376,7 +352,6 @@ const Content = () => {
       }
 
       showSuccessAlert('Success', 'Visitor Card imported successfully');
-      setRefreshTrigger((p) => p + 1);
     } catch (err: any) {
       showErrorAlert('Error', err?.message ?? 'Failed to import');
     } finally {
@@ -424,15 +399,20 @@ const Content = () => {
     handleCloseModalCreateVisitorCard();
   };
 
-  const [filters, setFilters] = useState<Filters>({
-    type: -1,
-    card_status: -1,
-  });
+ const handleApplyFilter = () => {
+   setPage(0);
+   setAppliedFilters(filters);
+ };
+ const handleResetFilter = () => {
+   const initial = {
+     type: -1,
+     card_status: -1,
+   };
 
-  const handleApplyFilter = () => {
-    setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
+   setPage(0);
+   setFilters(initial);
+   setAppliedFilters(initial);
+ };
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -455,7 +435,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 overflowX={'auto'}
                 data={tableVisitorCard}
                 selectedRows={selectedRows}
@@ -490,10 +470,8 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDeleteVisitorCard(row.id)}
                 onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAddVisitorCard}
                 isHaveFilterMore={true}
                 filterMoreContent={
@@ -501,6 +479,7 @@ const Content = () => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
+                    onReset={handleResetFilter}
                   />
                 }
               />

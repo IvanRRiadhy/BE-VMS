@@ -41,6 +41,7 @@ import {
   UpdateVisitorCardRequest,
 } from 'src/customs/api/models/Admin/VisitorCard';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
 const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
@@ -149,6 +150,8 @@ const FormWizardAddVisitorCard = ({
     }
   }, [localForm.is_employee_used]);
 
+  const { createMutation, updateMutation } = useVisitorCardMutation();
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -219,7 +222,11 @@ const FormWizardAddVisitorCard = ({
 
                 employee_name: updatedFields.employee_name ?? (row.employee_name as string),
               };
-              await updateVisitorCard(row.id, mergedPayload);
+              // await updateVisitorCard(row.id, mergedPayload);
+              await updateMutation.mutateAsync({
+                id: row.id,
+                data: mergedPayload,
+              });
             }),
           );
 
@@ -244,23 +251,25 @@ const FormWizardAddVisitorCard = ({
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         } as UpdateVisitorCardRequest;
 
-        console.log('📤 Updating card ID:', edittingId, updatedData);
-
-        await updateVisitorCard(edittingId, updatedData);
+        // console.log('📤 Updating card ID:', edittingId, updatedData);
+        // await updateVisitorCard(edittingId, updatedData);
+        await updateMutation.mutateAsync({
+          id: edittingId,
+          data: updatedData,
+        });
         showSwal('success', 'Card updated successfully');
       } else {
         const createdData: CreateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         };
-        await createVisitorCard(createdData);
+        // await createVisitorCard(createdData);
+        await createMutation.mutateAsync(createdData);
         showSwal('success', 'Card created successfully');
       }
 
-      setTimeout(() => {
-        setLoading(false);
-        onSuccess?.();
-      }, 600);
+      setLoading(false);
+      onSuccess?.();
     } catch (error: any) {
       setLoading(false);
       const messages: string[] =

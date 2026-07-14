@@ -44,6 +44,7 @@ import { useDocument } from 'src/hooks/useDocument';
 import { useCustomField } from 'src/hooks/useCustomField';
 import NewSectionDialog from './components/NewSectionDialog';
 import { useCameraAnalytics } from 'src/hooks/useCameraAnalaytics';
+import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -94,6 +95,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const { documents } = useDocument();
   const { customField } = useCustomField();
   const { analyticCctv } = useCameraAnalytics();
+
+  const { createMutation, updateMutation } = useVisitorTypeMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -288,7 +291,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
-        await updateVisitorType(edittingId, parseData);
+        // await updateVisitorType(edittingId, parseData);
+        await updateMutation.mutateAsync({
+          id: edittingId,
+          data: parseData,
+        });
 
         if (deletedAccessIds.length > 0) {
           await Promise.all(deletedAccessIds.map((id) => deleteVisitorTypeAccess(id)));
@@ -320,7 +327,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           edittingId ? 'Visitor type updated successfully!' : 'Visitor type updated successfully!',
         );
       } else {
-        const res = await createVisitorType(parseData);
+        // const res = await createVisitorType(parseData);
+        const res = await createMutation.mutateAsync(parseData);
 
         const visitorTypeId = res.collection?.id;
 

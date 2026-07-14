@@ -9,6 +9,7 @@ import {
   useMediaQuery,
   Tooltip,
   useTheme,
+  Skeleton,
 } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
@@ -88,21 +89,20 @@ const Content = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-  
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-    try {
-      setLoading(true);
-      const fetchData = async () => {
         const res = await getAllTimezone();
         setTimezoneData(res.collection ?? []);
-      };
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      fetchData();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
+    fetchData();
   }, [refreshTrigger]);
 
   const filtered = timezoneData?.filter((v) =>
@@ -196,7 +196,31 @@ const Content = () => {
             />
 
             <Box>
-              {filtered && filtered.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      p: 1.5,
+                      mb: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Skeleton variant="circular" width={36} height={36} />
+
+                      <Box flex={1}>
+                        <Skeleton width="60%" height={22} />
+                        <Skeleton width="90%" height={18} />
+                      </Box>
+
+                      <Skeleton variant="circular" width={32} height={32} />
+                    </Box>
+                  </Box>
+                ))
+              ) : filtered && filtered.length > 0 ? (
                 filtered.map((v) => {
                   const isActive = selectedTimezone?.id === v.id;
                   return (

@@ -98,7 +98,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [ page, rowsPerPage, refreshTrigger, search]);
+  }, [page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -188,8 +188,6 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      // setLoading(true);
-
       setEditingId(id);
       const res = await getVisitorProvidersById( id);
       setLocalForm(res.collection);

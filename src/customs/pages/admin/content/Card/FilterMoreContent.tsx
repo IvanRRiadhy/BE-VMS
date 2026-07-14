@@ -13,6 +13,7 @@ type Props = {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   onApplyFilter: () => void;
+  onReset: () => void;
 };
 
 const typeOptions = [
@@ -34,12 +35,7 @@ const cardStatusOptions = [
 const getOption = (options: any[], val: number) =>
   options.find((o) => o.value === val) || options[0];
 
-const FilterMoreContent: React.FC<Props> = ({ filters, setFilters, onApplyFilter }) => {
-  const initialFilters: Filters = {
-    type: -1,
-    card_status: -1,
-  };
-
+const FilterMoreContent: React.FC<Props> = ({ filters, setFilters, onApplyFilter, onReset }) => {
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h5" gutterBottom>
@@ -96,7 +92,7 @@ const FilterMoreContent: React.FC<Props> = ({ filters, setFilters, onApplyFilter
               mt: 2,
             }}
           >
-            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
+            <Button variant="outlined" onClick={onReset}>
               Reset
             </Button>
             <Button variant="contained" onClick={onApplyFilter}>

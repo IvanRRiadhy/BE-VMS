@@ -210,7 +210,7 @@ const Content = () => {
   });
 
   const fetchData = async (append = false) => {
-    if ( isFetchingRef.current) return;
+    if (isFetchingRef.current) return;
 
     isFetchingRef.current = true;
 
@@ -271,9 +271,9 @@ const Content = () => {
       setTotalRecords(res.RecordsTotal);
       setTotalFilteredRecords(res.RecordsFiltered);
     } catch {
-      setTableRowVisitors([]);
-      setTotalRecords(0);
-      setTotalFilteredRecords(0);
+      // setTableRowVisitors([]);
+      // setTotalRecords(0);
+      // setTotalFilteredRecords(0);
       setHasMore(false);
     } finally {
       isFetchingRef.current = false;
@@ -285,13 +285,11 @@ const Content = () => {
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
-
-
     setSelectedGroupId(null);
     setGroupVisitors([]);
 
     fetchData(false);
-  }, [ page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
+  }, [page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   const { data: siteData } = useRegisteredSite();
   const { data: profile } = useProfile();
@@ -403,7 +401,7 @@ const Content = () => {
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
-        const res = await getVisitorTransactionByIds( selectedGroupId);
+        const res = await getVisitorTransactionByIds(selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -459,7 +457,7 @@ const Content = () => {
 
   const { visitorType } = useVisitorType();
   const { sites } = useSites();
-  const { data, isLoading: isLoadingEmployee } = useEmployeePagination( {
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
     sortDir: 'desc',
   });
@@ -508,7 +506,7 @@ const Content = () => {
 
   const handleDuplicate = async (group: any) => {
     try {
-      const res = await getVisitorTransactionByIds( group.id);
+      const res = await getVisitorTransactionByIds(group.id);
 
       const visitors = res.collection;
 

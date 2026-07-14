@@ -10,7 +10,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
   CreateVisitorTypeRequest,
   CreateVisitorTypeRequestSchema,
-  Item
+  Item,
 } from 'src/customs/api/models/Admin/VisitorType';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
@@ -32,6 +32,8 @@ import VisitorTypeDialog from './components/VisitorTypeDialog';
 import { updateQuickVisitorType, updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useVisitorTypePagination } from 'src/hooks/VisitorType/useVisitorTypePagination';
+import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -44,19 +46,12 @@ const Content = () => {
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
+  // const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
+  // const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
-  // const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
-  //   () => {
-  //     const saved = localStorage.getItem('unsavedVisitorTypeData');
-  //     return saved ? JSON.parse(saved) : CreateVisitorTypeRequestSchema.parse({});
-  //   },
-  // );
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     CreateVisitorTypeRequestSchema.parse({}),
   );
@@ -72,7 +67,7 @@ const Content = () => {
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [duplicatedAccess, setDuplicatedAccess] = useState<any[]>([]);
   const { t } = useTranslation();
   const identityValueMap: Record<string, number> = {
@@ -98,6 +93,29 @@ const Content = () => {
     })),
   });
 
+  const { data, isLoading } = useVisitorTypePagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+  });
+
+  const { deleteMutation, activeMutation, quickAccessMutation } = useVisitorTypeMutation();
+
+  const tableRowVisitorType =
+    data?.collection.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      period: item.period,
+      grace_time: item.grace_time,
+      active: item.is_enable,
+      quick_access: item.is_quick_access,
+    })) ?? [];
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+
   const cards = [
     {
       title: t('totalVisitorType'),
@@ -107,42 +125,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useLayoutEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getAllVisitorTypePagination(
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-        );
-        setVisitorData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-
-        const rows = response.collection.map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          period: item.period,
-          grace_time: item.grace_time,
-          active: item.is_enable,
-          quick_access: item.is_quick_access,
-        }));
-        if (rows) {
-          setTableRowVisitorType(rows);
-        }
-      } catch (error) {
-      } finally {
-        setTimeout(() => setLoading(false), 300);
-      }
-    };
-
-    fetchData();
-  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);
@@ -164,7 +146,7 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       setLoading(true);
-      const resp = await getVisitorTypeById( id);
+      const resp = await getVisitorTypeById(id);
       const raw = resp?.collection;
 
       const hydrated = normalizeDetail(raw);
@@ -277,14 +259,13 @@ const Content = () => {
   }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
-
     const confirmed = await showConfirmDelete('Are you sure to delete this visitor type?');
     if (!confirmed) return;
     try {
       setLoadingData(true);
-      await deleteVisitorType( id);
+      // await deleteVisitorType(id);
+      await deleteMutation.mutateAsync(id);
 
-      setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted visitor type!');
     } catch (error: any) {
       showSwal('error', error.response.data.msg || 'Failed to delete visitor type.');
@@ -296,7 +277,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
-    if ( rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const result = await Swal.fire({
       title: `Are you sure to delete ${rows.length} items?`,
@@ -309,8 +290,7 @@ const Content = () => {
     if (result.isConfirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteVisitorType(row.id)));
-        setRefreshTrigger((prev) => prev + 1);
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
         showSwal('success', 'Successfully deleted selected items!');
         setSelectedRows([]);
       } catch (error) {
@@ -331,14 +311,13 @@ const Content = () => {
 
   const handleSuccess = () => {
     handleCloseDialog();
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleDuplicate = async (id: string) => {
     try {
       setLoadingData(true);
 
-      const resp = await getVisitorTypeById( id);
+      const resp = await getVisitorTypeById(id);
       const raw = resp?.collection;
       const hydrated = normalizeDetail(raw);
       if (Array.isArray(raw?.visitor_type_documents)) {
@@ -389,9 +368,12 @@ const Content = () => {
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      await updateVisitorTypeActive( row.id, checked);
+      // await updateVisitorTypeActive(row.id, checked);
+      await activeMutation.mutateAsync({
+        id: row.id,
+        active: checked,
+      });
       showSwal('success', 'Visitor Type successfully updated');
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
     } finally {
@@ -402,9 +384,12 @@ const Content = () => {
   const handleQuickAccessToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      await updateQuickVisitorType( row.id, checked);
+      // await updateQuickVisitorType(row.id, checked);
+      await quickAccessMutation.mutateAsync({
+        id: row.id,
+        quickAccess: checked,
+      });
       showSwal('success', 'Quick Access successfully updated');
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
     } finally {
@@ -425,7 +410,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 overflowX={'auto'}
                 data={tableRowVisitorType}
                 selectedRows={selectedRows}

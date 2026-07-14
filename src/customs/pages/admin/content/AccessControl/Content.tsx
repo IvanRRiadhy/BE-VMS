@@ -15,10 +15,7 @@ import {
   getAccessControlById,
   getAccessControlsById,
 } from 'src/customs/api/admin';
-import {
-  CreateAccessControlRequest,
-  CreateAccessControlRequestSchema,
-} from 'src/customs/api/models/Admin/AccessControl';
+import { CreateAccessControlRequest } from 'src/customs/api/models/Admin/AccessControl';
 
 interface Item {
   brand_id: string;
@@ -36,29 +33,52 @@ interface Item {
 
 import { IconAccessible } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import AccessControlDialog from './AccessControlDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useAccessControlPagination } from 'src/hooks/AccessControl/useAccessControlPagination';
+import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
+  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
 
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const { t } = useTranslation();
+
+  const { data, isLoading } = useAccessControlPagination({
+    page,
+    rowsPerPage,
+    sortColumn,
+    search,
+  });
+
+  const { deleteMutation } = useAccessControlMutation();
+
+  const tableData: any =
+    data?.collection.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      description: item.description,
+      channel: item.channel,
+      door_id: item.door_id,
+      integration_name: item.integration_name,
+    })) ?? [];
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
   const cards = [
     {
@@ -69,45 +89,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getAllAccessControlPagination(
-          start,
-          rowsPerPage,
-          sortColumn,
-          search,
-        );
-
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-
-        const rows: any[] = response.collection.map((item: any) => ({
-          // brand_name: item.brand_name,
-          id: item.id,
-          name: item.name,
-          type: item.type,
-          description: item.description,
-          channel: item.channel,
-          door_id: item.door_id,
-          // raw: item.raw,
-          integration_name: item.integration_name,
-          // integration_id: item.integration_id,
-        }));
-        if (response) {
-          setTableData(rows);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
   const defaultFormData: CreateAccessControlRequest = {
     brand_id: null,
@@ -193,8 +174,8 @@ const Content = () => {
 
     if (confirmed) {
       try {
-        await deleteAccessControl(id);
-        setRefreshTrigger((prev) => prev + 1);
+        // await deleteAccessControl(id);
+        await deleteMutation.mutateAsync(id);
         showSwal('success', 'Successfully deleted Access Control!');
       } catch (error) {
         console.error(error);
@@ -213,8 +194,7 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteAccessControl(row.id)));
-        setRefreshTrigger((prev) => prev + 1);
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
@@ -229,7 +209,6 @@ const Content = () => {
   const handleSuccess = () => {
     setIsDirty(false);
     handleCloseDialog();
-    setRefreshTrigger((prev) => prev + 1);
 
     showSwal(
       'success',
@@ -258,7 +237,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 isHavePagination={true}
                 isAccessControlType={true}
                 selectedRows={selectedRows}

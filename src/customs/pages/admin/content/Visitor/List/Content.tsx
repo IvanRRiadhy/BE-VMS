@@ -15,7 +15,6 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { createBlacklist, getListVisitorPagination, getVisitorById } from 'src/customs/api/admin';
 
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
@@ -26,6 +25,8 @@ import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
+import { useListVisitorMutation } from 'src/hooks/Visitor/useListVisitorMutation';
 
 type VisitorTableRow = {
   id: string;
@@ -59,26 +60,10 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingData, setLoadingData] = useState(false);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
+
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const { t } = useTranslation();
-
-  const cards = useMemo(
-    () => [
-      {
-        title: t('totalVisitor'),
-        icon: IconUsers,
-        subTitle: `${totalRecords}`,
-        subTitleSetting: 10,
-        color: 'none',
-      },
-    ],
-    [totalRecords],
-  );
 
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -98,42 +83,44 @@ const Content = () => {
     is_blacklist: null,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const { data, isLoading } = useListVisitorPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+    filters,
+  });
 
-      try {
-        const start = page * rowsPerPage;
-        const response = await getListVisitorPagination(start, rowsPerPage, sortDir, search);
-        let rows = response.collection.map((item: any) => {
-          return {
-            id: item.id,
-            // visitor_type: item.visitor_type_name || '-',
-            name: item.name || '-',
-            identity_id: item.identity_id || '-',
-            email: item.email || '-',
-            is_email_verified: item.is_email_verified || false,
-            is_vip: item.is_vip || false,
-            // organization: item.organization || '-',
-            // gender: item.gender || '-',
-            phone: item.phone || '-',
-            is_employee: item.is_employee || false,
-            is_blacklist: item.is_blacklist,
-          };
-        });
+  const { blacklistMutation } = useListVisitorMutation();
 
-        // setTableRowVisitors(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-        setTableCustomVisitor(rows);
-      } catch (err) {
-        setTableCustomVisitor([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [ page, rowsPerPage, refreshTrigger, search]);
+  const tableCustomVisitor =
+    data?.collection.map((item: any) => ({
+      id: item.id,
+      name: item.name || '-',
+      identity_id: item.identity_id || '-',
+      email: item.email || '-',
+      is_email_verified: item.is_email_verified || false,
+      is_vip: item.is_vip || false,
+      phone: item.phone || '-',
+      is_employee: item.is_employee || false,
+      is_blacklist: item.is_blacklist,
+    })) ?? [];
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalVisitor'),
+        icon: IconUsers,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalRecords],
+  );
 
   const handleView = async (id: string) => {
     if (!id) return;
@@ -144,7 +131,7 @@ const Content = () => {
     setVisitorDetail(null);
 
     try {
-      const res = await getVisitorById( id);
+      const res = await getVisitorById(id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -164,7 +151,6 @@ const Content = () => {
 
   const handleApplyFilter = () => {
     setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleBlacklist = async (id: string, isBlacklist?: boolean) => {
@@ -203,14 +189,13 @@ const Content = () => {
         action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
-      await createBlacklist( payload);
+      // await createBlacklist(payload);
+      await blacklistMutation.mutateAsync(payload);
 
       showSwal(
         'success',
         isBlacklistAction ? 'Successfully blacklisted visitor' : 'Successfully whitelisted visitor',
       );
-
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist visitor.');
     } finally {
@@ -281,7 +266,7 @@ const Content = () => {
 
               <Grid size={{ xs: 12, lg: 12 }}>
                 <DynamicTable
-                  loading={loading}
+                  loading={isLoading}
                   isHavePagination={true}
                   overflowX={'auto'}
                   minWidth={2400}
@@ -326,7 +311,6 @@ const Content = () => {
                       setStartDate(ranges.startDate.toISOString());
                       setEndDate(ranges.endDate.toISOString());
                       setPage(0);
-                      setRefreshTrigger((prev) => prev + 1);
                     }
                   }}
                   isHaveFilterMore={true}
