@@ -1,13 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProfile } from 'src/customs/api/users';
 
-export const useProfile = (token?: string | null) => {
+export const useProfile = () => {
   return useQuery({
-    queryKey: ['profile', token],
-    enabled: !!token,
-
+    queryKey: ['profile'],
     queryFn: async () => {
-      const response = await getProfile(token!);
+      const response = await getProfile();
       return response;
     },
 

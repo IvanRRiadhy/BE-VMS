@@ -38,11 +38,10 @@ type OptionType = {
 
 type Props = {
   onSelect: (visitor: Visitor & { faceimage: string }) => void;
-  token: string;
   isEmployee?: boolean;
 };
 
-const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
+const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
   const BASE_URL = axiosInstance2.defaults.baseURL;
 
   const [selectedOption, setSelectedOption] = React.useState<OptionType | null>(null);
@@ -55,11 +54,11 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
 
       if (isEmployee) {
         // const res = await getAllEmployee(token);
-        const res = await getVisitorEmployee(token);
+        const res = await getVisitorEmployee();
         list = res?.collection ?? [];
       } else {
         // const res = await getInvitationVisitor(token);
-        const res = await getListVisitor(token);
+        const res = await getListVisitor();
         list = res?.collection ?? [];
       }
 
@@ -190,12 +189,10 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
       isClearable
       menuPortalTarget={document.body}
       styles={{
-
         menuPortal: (base) => ({
           ...base,
           zIndex: 1300,
         }),
-        
       }}
     />
   );

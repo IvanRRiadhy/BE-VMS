@@ -35,7 +35,6 @@ interface Props {
 const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const { token } = useSession();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
@@ -95,13 +94,13 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      tasks.push(uploadLogoVisitorProvider(id, fileFromInput, token as string));
+      tasks.push(uploadLogoVisitorProvider(id, fileFromInput));
     }
 
     if (image && isDataUrl(image)) {
       const blob = await fetch(image).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      tasks.push(uploadLogoVisitorProvider(id, file, token as string));
+      tasks.push(uploadLogoVisitorProvider(id, file));
     }
 
     if (tasks.length === 0) return;
@@ -147,9 +146,9 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
       let id = editingId;
 
       if (editingId) {
-        await updateVisitorProviders(token as string, editingId, payload);
+        await updateVisitorProviders(editingId, payload);
       } else {
-        const response = await createVisitorProvider(token as string, payload);
+        const response = await createVisitorProvider(payload);
         id = response?.data?.id ?? response?.id ?? response?.visitor_provider_id;
       }
 

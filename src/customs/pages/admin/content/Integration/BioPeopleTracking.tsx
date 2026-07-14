@@ -43,19 +43,15 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 const BioPeopleTracking = ({ id }: { id: string }) => {
-  const { token } = useSession();
 
   const handleTrackingBleSyncIntegration = async () => {
-    if (!id || !token) {
+    if (!id) {
       return;
     }
 
     try {
       setSyncing(true);
-
-      // await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const res = await syncTrackingBleIntegration(id as string, token as string);
+      const res = await syncTrackingBleIntegration(id as string);
 
       if (res.status !== 'success') {
         setSyncing(false);
@@ -198,9 +194,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   };
 
   const loadTotals = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
-    const settled = await Promise.allSettled([getCardAccessTracking(id as string, token)]);
+    const settled = await Promise.allSettled([getCardAccessTracking(id as string)]);
 
     const countOf = (i: number) =>
       settled[i].status === 'fulfilled'
@@ -214,15 +210,15 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     loadTotals();
-  }, [id, token]);
+  }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if (!token || !id) return;
+    if ( !id) return;
     setLoading(true);
     try {
       if (type === 'card_access') {
-        const res = await getCardAccessTracking(id as string, token);
-        const resAllSite = await getAllSite(token);
+        const res = await getCardAccessTracking(id as string);
+        const resAllSite = await getAllSite();
         const rows = res.collection.map((item: any) => ({
           id: item.id,
           trx_card_access_id: item.trk_card_access_id,
@@ -246,7 +242,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-  }, [selectedType, token, id]);
+  }, [selectedType, id]);
 
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
@@ -265,7 +261,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   });
 
   const handleEditRow = async (row: any) => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     setIsBatchEdit(false);
     setEnabled({
@@ -277,10 +273,10 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     setEditDialogType(TYPE_MAP[selectedType] ?? null);
     try {
       if (selectedType === 'floor_plan_masked_area') {
-        const res = await getFloorPlanMaskedAreaById(id as string, String(row.id), token);
+        const res = await getFloorPlanMaskedAreaById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'card_access') {
-        const res = await getCardAccessTrackingById(id as string, String(row.id), token);
+        const res = await getCardAccessTrackingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else {
         setDetailData(row);
@@ -337,15 +333,15 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-    if (!token) return;
+ 
 
     let cancelled = false;
 
     const loadOptions = async () => {
       try {
         if (editDialogType === 'Card Access') {
-          const res = await getAllSite(token);
-          const resVisitorType = await getAllVisitorType(token);
+          const res = await getAllSite();
+          const resVisitorType = await getAllVisitorType();
           if (cancelled) return;
 
           const items =
@@ -371,7 +367,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     loadOptions();
 
     return () => {};
-  }, [editDialogType, token]);
+  }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
     Object.fromEntries(
@@ -381,7 +377,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   const accessType = cardAccessForm?.access_tracking_type;
 
   const handleSaveCardAccess = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -405,7 +401,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           active: cardAccessForm.active,
         });
 
-        await updateCardAccessTracking(areaId, payload, token);
+        await updateCardAccessTracking(areaId, payload);
 
         setListData((prev) => {
           const updated = prev.map((item) =>

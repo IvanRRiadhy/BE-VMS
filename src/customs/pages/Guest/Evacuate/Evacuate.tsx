@@ -4,12 +4,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconHistory, IconMail, IconX } from '@tabler/icons-react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
-// import FilterMoreContent from './FilterMoreContent';
-// import FilterMoreContent from './FilterMoreContent';
-// import FilterMoreContent from './Invitation/FilterMoreContent';
+
 const Evacuate = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDataReady, setIsDataReady] = useState(false);
@@ -99,7 +94,6 @@ const Evacuate = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 overflowX={'auto'}
                 data={tableDataVisitor}
@@ -142,13 +136,6 @@ const Evacuate = () => {
                 //   handleAdd();
                 // }}
               />
-              {/* // ) : (
-              //   <Card sx={{ width: '100%' }}>
-              //     <Skeleton />
-              //     <Skeleton animation="wave" />
-              //     <Skeleton animation={false} />
-              //   </Card>
-              // )} */}
             </Grid>
           </Grid>
         </Box>

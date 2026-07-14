@@ -1,12 +1,10 @@
 import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
-import BlankCard from 'src/components/shared/BlankCard';
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 
@@ -22,7 +20,6 @@ interface ApiDateGroup {
 
 const TopCards = ({ items = [], size }: any) => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
@@ -59,11 +56,11 @@ const TopCards = ({ items = [], size }: any) => {
   };
 
   useEffect(() => {
-    if (!token) return;
+ 
 
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(token as any, start, end);
+        const res = await getVisitorChart( start, end);
 
         const collection: ApiDateGroup[] = res.collection ?? [];
 
@@ -110,8 +107,8 @@ const TopCards = ({ items = [], size }: any) => {
       }
     };
 
-    if (token) fetchData();
-  }, [token, startDate, endDate]);
+     fetchData();
+  }, [ startDate, endDate]);
 
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;

@@ -48,7 +48,6 @@ import {
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 
 const Visitor = () => {
-  const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -82,19 +81,12 @@ const Visitor = () => {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      const res = await getShareLinkByDt(
-        token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
-      );
+      const res = await getShareLinkByDt(start, rowsPerPage, searchKeyword, sortDir);
 
       return res;
     },
 
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
     placeholderData: (previousData) => previousData,
   });
 
@@ -141,20 +133,12 @@ const Visitor = () => {
     queryKey: ['visitor', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
       //   const res = await getInvitationVisitor(token as string);
-      const res = await getAllVisitorPagination(
-        // draw,
-        token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
-      );
+      const res = await getAllVisitorPagination(start, rowsPerPage, searchKeyword, sortDir);
 
       return res;
     },
 
     staleTime: 1000 * 60 * 5,
-    enabled: !!token,
     gcTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
   });
@@ -221,7 +205,7 @@ const Visitor = () => {
   const fetchVisitorType = async () => {
     try {
       setVTLoading(true);
-      const res = await getAllVisitorType(token as string);
+      const res = await getAllVisitorType();
       setVisitorType(res?.collection || []);
     } catch (err) {
       console.error(err);
@@ -231,29 +215,27 @@ const Visitor = () => {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-    }
-  }, [token]);
+    fetchVisitorType();
+  }, []);
 
   const { data: sites = [] } = useQuery({
     queryKey: ['sites'],
-    queryFn: () => getInvitationSite(token as string),
-    enabled: !!token,
+    queryFn: () => getInvitationSite(),
+
     staleTime: 1000 * 60 * 1,
   });
 
   const { data: employee = [] } = useQuery({
     queryKey: ['employee'],
-    queryFn: () => getAllEmployee(token as string),
-    enabled: !!token,
+    queryFn: () => getAllEmployee(),
+
     staleTime: 1000 * 60 * 1,
   });
 
   const { data: allVisitorEmployee = [] } = useQuery({
     queryKey: ['all-visitor-employee'],
-    queryFn: () => getInvitationVisitorEmployee(token as string),
-    enabled: !!token,
+    queryFn: () => getInvitationVisitorEmployee(),
+
     staleTime: 1000 * 60 * 1,
   });
 
@@ -275,7 +257,7 @@ const Visitor = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(token as string, id);
+      await deleteShareLink(id);
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
       });
@@ -336,7 +318,7 @@ const Visitor = () => {
         emails: finalEmails,
       };
       console.log('payload', payload);
-      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
+      await createShareLinkByEmailById(payload, selectedShareLinkId);
       showSwal('success', 'Invitation sent successfully');
 
       setEmails([]);
@@ -349,7 +331,7 @@ const Visitor = () => {
   const handleOpenInviteDialog = async (row: any) => {
     // setSelectedShareLink(row);
 
-    const res = await getShareLinkById(row.id, token as string);
+    const res = await getShareLinkById(row.id);
     setSelectedShareLink(res.collection);
 
     setSelectedShareLinkId(row.id);
@@ -369,7 +351,7 @@ const Visitor = () => {
         emails: emails,
       };
 
-      await createShareLink(token as string, finalPayload);
+      await createShareLink(finalPayload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
@@ -390,7 +372,7 @@ const Visitor = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(token as string, payload);
+      await createShareLink(payload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],

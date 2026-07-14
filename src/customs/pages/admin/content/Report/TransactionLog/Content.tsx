@@ -70,8 +70,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import axiosInstance from 'src/customs/api/interceptor';
 
 const Content = () => {
-  const { token } = useSession();
-
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -129,17 +127,17 @@ const Content = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-      const resSite = await getAllSite(token);
+
+      const resSite = await getAllSite();
       setSiteOptions(resSite.collection);
-      const resEmployeee = await getVisitorEmployee(token);
+      const resEmployeee = await getVisitorEmployee();
       setEmployeeOptions(resEmployeee.collection);
-      const resVisitor = await getAllVisitor(token);
+      const resVisitor = await getAllVisitor();
       setVisitorOptions(resVisitor.collection);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const getSiteNames = (ids: string[]) => {
     if (!ids || !siteOptions.length) return '-';
@@ -172,14 +170,14 @@ const Content = () => {
   }, [searchKeyword]);
 
   const fetchReports = async (reset = false) => {
-    if (!token || loadingReports) return;
+    if ( loadingReports) return;
 
     setLoadingReports(true);
 
     try {
       const start = reset ? 0 : reports.length;
 
-      const res = await getReportVisitorTransactionDt(token, {
+      const res = await getReportVisitorTransactionDt( {
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
@@ -205,11 +203,11 @@ const Content = () => {
   useEffect(() => {
     setHasMore(true);
     fetchReports(true);
-  }, [debouncedKeyword, sortDir, token]);
+  }, [debouncedKeyword, sortDir]);
 
   const refreshReportList = async () => {
     const start = page * rowsPerPage;
-    const res = await getReportVisitorTransactionDt(token as string, {
+    const res = await getReportVisitorTransactionDt( {
       start,
       length: rowsPerPage,
       sort_dir: sortDir,
@@ -236,7 +234,7 @@ const Content = () => {
 
   const handlePostReport = async (rep?: any) => {
     try {
-      if (!token) return;
+ 
 
       if (!rep) {
         setSelectedReport(null);
@@ -256,8 +254,8 @@ const Content = () => {
       }
 
       const res = rep
-        ? await generateReportVisitorById(token, rep)
-        : await generateReport(token, formData);
+        ? await generateReportVisitorById( rep)
+        : await generateReport( formData);
       console.log('res', res);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
@@ -304,7 +302,7 @@ const Content = () => {
 
   const exportToExcel = async () => {
     try {
-      if (!token) return;
+  
 
       // Validasi CustomDate
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
@@ -321,7 +319,7 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-        headers: { Authorization: `Bearer ${token}` },
+    
         responseType: 'blob',
       });
 
@@ -420,7 +418,7 @@ const Content = () => {
   const handleConfirmSaveReport = async () => {
     setLoading(true);
     try {
-      await createReportVisitorTransaction(token as string, formData);
+      await createReportVisitorTransaction( formData);
       await refreshReportList();
       await new Promise((res) => setTimeout(res, 600));
 
@@ -456,9 +454,9 @@ const Content = () => {
   };
 
   const handleEditReport = async (rep: any) => {
-    if (!token) return;
+  
 
-    const res = await getReportVisitorTransactionById(token as string, rep.id);
+    const res = await getReportVisitorTransactionById( rep.id);
     const d = res.collection;
 
     setFormData({
@@ -483,12 +481,12 @@ const Content = () => {
   const [loadingView, setLoadingView] = useState(false);
 
   const handleViewReport = async (rep: any) => {
-    if (!token) return;
+ 
 
     setLoadingView(true);
 
     try {
-      const res = await getReportVisitorTransactionById(token as string, rep.id);
+      const res = await getReportVisitorTransactionById( rep.id);
       const d = res.collection;
 
       setFormData({
@@ -519,7 +517,7 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await updateReportVisitorTransaction(token as string, selectedReport.id, formData);
+      await updateReportVisitorTransaction( selectedReport.id, formData);
       // await refreshReportList();
       await fetchReports(true);
       setEditingId(null);
@@ -543,7 +541,7 @@ const Content = () => {
     if (isConfirmed) {
       setLoading(true);
       try {
-        await deleteReportVisitorTransaction(token as string, id);
+        await deleteReportVisitorTransaction( id);
         await fetchReports(true);
 
         showSwal('success', 'Report deleted successfully!');

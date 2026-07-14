@@ -47,9 +47,7 @@ const DashboardEmployee = () => {
     { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
   ];
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
-  const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -66,14 +64,13 @@ const DashboardEmployee = () => {
   } = useQuery({
     queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      return await getApprovalTicket(token, {
+      return await getApprovalTicket({
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
         keyword: searchKeyword,
       });
     },
-    enabled: !!token,
   });
 
   const approvalData =
@@ -112,7 +109,7 @@ const DashboardEmployee = () => {
   };
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    if (!id || !token) return;
+    if (!id) return;
 
     try {
       const confirm = await Swal.fire({
@@ -137,8 +134,8 @@ const DashboardEmployee = () => {
       setTimeout(() => setLoading(true), 800);
 
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(token, id);
-      if (action === 'Reject') await rejectTicket(token, id);
+      if (action === 'Approve') await approveTicket( id);
+      if (action === 'Reject') await rejectTicket( id);
       setTimeout(() => {
         showSwal(
           'success',
@@ -214,7 +211,7 @@ const DashboardEmployee = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess(token, payload);
+      await createQuickAccess( payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -235,7 +232,6 @@ const DashboardEmployee = () => {
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
     queryFn: async () => {
       const res = await getAllVisitorPagination(
-        token as string,
         quickPage * quickRowsPerPage,
         quickRowsPerPage,
         quickSearch || undefined,
@@ -246,7 +242,7 @@ const DashboardEmployee = () => {
 
       return res;
     },
-    enabled: !!token && openQuickAccess,
+    enabled: openQuickAccess,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -293,7 +289,6 @@ const DashboardEmployee = () => {
     isLoading,
     error,
   } = useActivities({
-    token,
     start: 0,
     length: 5,
     start_date: startDate.toISOString().split('T')[0],

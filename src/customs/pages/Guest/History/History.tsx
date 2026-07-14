@@ -2,20 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid2 as Grid,
-  Skeleton,
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  RadioGroup,
-  Autocomplete,
-  Divider,
-  IconButton,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -26,24 +12,15 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconHistory, IconMail, IconX } from '@tabler/icons-react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
-import FilterMoreContent from './FilterMoreContent';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getHistory, getListSite } from 'src/customs/api/visitor';
-import { getAllSite } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-// import FilterMoreContent from './Invitation/FilterMoreContent';
+
 const History = () => {
-  const { token } = useSession();
   const [selectedRows, setSelectedRows] = useState([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [edittingId, setEdittingId] = useState<string | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const cards = [
@@ -60,15 +37,7 @@ const History = () => {
     site_id: '',
   });
 
-  const [siteOptions, setSiteOptions] = useState<any[]>([]);
-
-  const handleApplyFilter = () => {
-    setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   useEffect(() => {
-    if (!token) return;
 
     const fetchData = async () => {
       try {
@@ -76,7 +45,7 @@ const History = () => {
         const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
         const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
 
-        const res = await getHistory(token as string, start_date, end_date, filters.site_id ?? '');
+        const res = await getHistory( start_date, end_date, filters.site_id ?? '');
         const rows = res.collection.map((item: any) => {
           return {
             id: item.id,
@@ -101,7 +70,7 @@ const History = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <>

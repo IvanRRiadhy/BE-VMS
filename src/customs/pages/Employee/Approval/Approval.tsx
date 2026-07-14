@@ -1,10 +1,4 @@
-import {
-  Backdrop,
-  Button,
-  CircularProgress,
-  Grid2 as Grid,
-  useMediaQuery,
-} from '@mui/material';
+import { Backdrop, Button, CircularProgress, Grid2 as Grid, useMediaQuery } from '@mui/material';
 import { Box, useTheme } from '@mui/system';
 import { IconBan, IconCheck, IconClock, IconScript, IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -41,7 +35,6 @@ type Group = {
 const Approval = () => {
   const [approvalData, setApprovalData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
@@ -121,14 +114,12 @@ const Approval = () => {
   const hasMore = approvalData.length < totalFilteredRecords;
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
 
-        const res = await getApprovalTicket(token, {
+        const res = await getApprovalTicket({
           start,
           length: rowsPerPage,
           sort_dir: sortDir,
@@ -163,7 +154,7 @@ const Approval = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, debouncedKeyword, sortDir, page, rowsPerPage]);
+  }, [refreshTrigger, debouncedKeyword, sortDir, page, rowsPerPage]);
 
   useEffect(() => {
     setPage(0);
@@ -215,8 +206,8 @@ const Approval = () => {
       // console.log('Performing action:', action, 'on approval ticket ID:', id);
 
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(token as string, id);
-      if (action === 'Reject') await rejectTicket(token as string, id);
+      if (action === 'Approve') await approveTicket(id);
+      if (action === 'Reject') await rejectTicket(id);
 
       showSwal(
         'success',
@@ -245,7 +236,7 @@ const Approval = () => {
 
       // console.log('payload', payload);
 
-      const response = await approveMeetingHost(token, id, payload);
+      const response = await approveMeetingHost(id, payload);
       // console.log('response', response);
 
       const res = await handleActionApproval(id, 'Approve');
@@ -263,13 +254,13 @@ const Approval = () => {
   };
 
   useEffect(() => {
-    if (!selectedGroupId || !token) return;
+    if (!selectedGroupId) return;
 
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
         // const res = await getVisitorTransactionByIds(token, selectedGroupId);
-        const res = await getVisitorByTickedId(token, selectedGroupId);
+        const res = await getVisitorByTickedId(selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -280,7 +271,7 @@ const Approval = () => {
     };
 
     fetchDetail();
-  }, [selectedGroupId, token]);
+  }, [selectedGroupId]);
 
   const visitorTableData = groupVisitors.map((item: any) => ({
     id: item.id,
@@ -304,11 +295,11 @@ const Approval = () => {
   };
 
   const fetchGroupDetail = useCallback(async () => {
-    if (!selectedGroupId || !token) return;
+    if (!selectedGroupId) return;
 
     setGroupDetailLoading(true);
     try {
-      const res = await getVisitorByTickedId(token, selectedGroupId);
+      const res = await getVisitorByTickedId(selectedGroupId);
       setGroupHeader(res.collection[0]);
       setGroupVisitors(res.collection);
     } catch {
@@ -316,7 +307,7 @@ const Approval = () => {
     } finally {
       setGroupDetailLoading(false);
     }
-  }, [selectedGroupId, token]);
+  }, [selectedGroupId]);
 
   useEffect(() => {
     fetchGroupDetail();
@@ -343,7 +334,7 @@ const Approval = () => {
     setOpenDialog(true);
 
     try {
-      const res = await getVisitorTransactionByIds(token as string, group.entity_id);
+      const res = await getVisitorTransactionByIds(group.entity_id);
 
       setGroupHeader(res.collection[0]);
       setGroupVisitors(res.collection);

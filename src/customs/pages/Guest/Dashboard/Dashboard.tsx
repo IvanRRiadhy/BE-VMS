@@ -58,9 +58,7 @@ import VisitorActionBar from './components/VisitorActionBar';
 import GuestAccessPass from './components/GuestAccessPass';
 
 const Dashboard = () => {
-  const { token } = useSession();
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
-  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
   const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
@@ -80,10 +78,9 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       try {
-        const res = await getActiveInvitation(token as string);
+        const res = await getActiveInvitation();
         const response = res.collection?.map((item: any) => ({
           id: item.id,
           name: item.visitor_name,
@@ -101,9 +98,9 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
-  const { accessPass, loading: loadingAccessPass } = useAccessPass(token);
+  const { accessPass, loading: loadingAccessPass } = useAccessPass();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
@@ -189,10 +186,10 @@ const Dashboard = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!accessPass?.id || !token) return;
+    if (!accessPass?.id) return;
     setIsParkingLoading(true);
     try {
-      await openParkingBlocker(token, { trx_visitor_id: accessPass.id });
+      await openParkingBlocker( { trx_visitor_id: accessPass.id });
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');

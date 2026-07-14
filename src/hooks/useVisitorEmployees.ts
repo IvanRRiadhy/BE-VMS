@@ -3,17 +3,16 @@
 import { useEffect, useState } from 'react';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 
-export const useVisitorEmployees = (token?: string | null) => {
+export const useVisitorEmployees = () => {
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!token) return;
 
     let isMounted = true;
 
     const fetchVisitorEmployees = async () => {
       try {
-        const res = await getVisitorEmployee(token);
+        const res = await getVisitorEmployee();
 
         if (!isMounted) return;
 
@@ -28,7 +27,7 @@ export const useVisitorEmployees = (token?: string | null) => {
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, []);
 
   return {
     allVisitorEmployee,

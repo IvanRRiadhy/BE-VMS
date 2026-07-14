@@ -29,12 +29,9 @@ export const getVisitorTypeAnalyticsById = async (id: string, token: string): Pr
 // get visitor by id
 export const getVisitorTypeAnalyticsByVisitorId = async (
   id: string,
-  token: string,
 ): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/visitor-type-analytics/visitor-type/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/visitor-type-analytics/visitor-type/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -43,11 +40,9 @@ export const getVisitorTypeAnalyticsByVisitorId = async (
 };
 
 // create
-export const createVisitorTypeAnalytics = async (data: any, token: string): Promise<any> => {
+export const createVisitorTypeAnalytics = async (data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(`/visitor-type-analytics`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.post(`/visitor-type-analytics`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -56,11 +51,9 @@ export const createVisitorTypeAnalytics = async (data: any, token: string): Prom
 };
 
 // create bulk
-export const createVisitorTypeAnalyticsBulk = async (data: any, token: string): Promise<any> => {
+export const createVisitorTypeAnalyticsBulk = async (data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(`/visitor-type-analytics/bulk`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.post(`/visitor-type-analytics/bulk`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -72,12 +65,9 @@ export const createVisitorTypeAnalyticsBulk = async (data: any, token: string): 
 export const updateVisitorTypeAnalytics = async (
   id: string,
   data: any,
-  token: string,
 ): Promise<any> => {
   try {
-    const response = await axiosInstance.put(`/visitor-type-analytics/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/visitor-type-analytics/${id}`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);

@@ -19,28 +19,27 @@ export const useSiteMutation = () => {
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateSiteRequest }) =>
-      createSite(data, token),
+    mutationFn: ({ data }: { data: CreateSiteRequest }) => createSite(data),
 
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, token, data }: { id: string; token: string; data: UpdateSiteRequest }) =>
-      updateSite(id, data, token),
+    mutationFn: ({ id, data }: { id: string; data: UpdateSiteRequest }) =>
+      updateSite(id, data),
 
     onSuccess: invalidate,
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteSiteSpace(id, token),
+    mutationFn: ({ id }: { id: string; }) => deleteSiteSpace(id),
 
     onSuccess: invalidate,
   });
 
   const updateActive = useMutation({
-    mutationFn: ({ id, token, active }: { id: string; token?: string | null; active: boolean }) =>
-      updateSiteActive(token as string, id, active),
+    mutationFn: ({ id, active }: { id: string;active: boolean }) =>
+      updateSiteActive(id, active),
 
     onSuccess: invalidate,
   });

@@ -1,11 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  Portal,
-  Snackbar,
-  Alert,
-} from '@mui/material';
+import { Box, Grid2 as Grid, Portal, Snackbar, Alert } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -64,7 +58,6 @@ import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useSites } from 'src/hooks/useSites';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -76,7 +69,6 @@ import { useTranslation } from 'react-i18next';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 
 const Content = () => {
-  const { token } = useSession();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -143,11 +135,11 @@ const Content = () => {
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
-  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
+  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite();
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
-  const { visitorType } = useVisitorType(token as string);
-  const { sites } = useSites(token as string);
+  const { visitorType } = useVisitorType();
+  const { sites } = useSites();
   // const { employee } = useEmployees(token as string);
 
   const [hostSearch, setHostSearch] = useState('');
@@ -156,13 +148,13 @@ const Content = () => {
 
   // const { allVisitorEmployee } = useVisitorEmployees(token as string);
   const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =
-    useInvitationVisitorEmployee(token, {
+    useInvitationVisitorEmployee({
       search: debouncedSearch,
       start: 0,
       length: 10,
     });
 
-  const { data, isLoading: isLoadingEmployee } = useEmployeePagination(token, {
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
     sortDir: 'desc',
   });
@@ -175,15 +167,13 @@ const Content = () => {
   };
 
   const handleEmployeeClick = async (employeeId: string) => {
-    if (!token) return;
-
     setOpenEmployeeDialog(true);
     setEmployeeLoading(true);
     setEmployeeError(null);
     setEmployeeDetail(null);
 
     try {
-      const res = await getEmployeeById(employeeId, token);
+      const res = await getEmployeeById(employeeId);
       setEmployeeDetail(res?.collection ?? null);
     } catch (err: any) {
       setEmployeeError(err?.message || 'Failed to fetch employee details.');
@@ -247,7 +237,6 @@ const Content = () => {
         appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
       const res = await getAllVisitorPagination(
-        token as string,
         0,
         -1,
         search || undefined,
@@ -266,8 +255,7 @@ const Content = () => {
 
       return res.collection;
     },
-    enabled: !!token,
-    staleTime: 1000 * 60 * 1,
+    staleTime: 1000 * 60 * 2,
   });
 
   const processedData = useMemo(() => {
@@ -320,7 +308,6 @@ const Content = () => {
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
     queryFn: async () => {
       const res = await getAllVisitorPagination(
-        token as string,
         quickPage * quickRowsPerPage,
         quickRowsPerPage,
         quickSearch || undefined,
@@ -331,7 +318,7 @@ const Content = () => {
 
       return res;
     },
-    enabled: !!token && openQuickAccess,
+    enabled:  openQuickAccess,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -477,15 +464,13 @@ const Content = () => {
   };
 
   const handleView = async (id: string) => {
-    if (!token) return;
-
     setOpenVisitorDialog(true);
     setVisitorLoading(true);
     setVisitorError(null);
     setVisitorDetail(null);
 
     try {
-      const res = await getVisitorById(token, id);
+      const res = await getVisitorById(id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -506,7 +491,7 @@ const Content = () => {
   const handleSubmitQRCode = async (value: string) => {
     try {
       setLoading(true);
-      const res = await getInvitationCode(token as string, value);
+      const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
       setVisitorData(data);
@@ -565,7 +550,7 @@ const Content = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(token as string, id);
+      await deleteShareLink(id);
       setRefreshKey((prev) => prev + 1);
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
@@ -574,7 +559,7 @@ const Content = () => {
   };
 
   const handleOpenInviteDialog = async (row: any) => {
-    const res = await getShareLinkById(row.id, token as string);
+    const res = await getShareLinkById(row.id);
     setSelectedShareLink(res.collection);
     setSelectedShareLinkId(row.id);
     setGeneratedLink(row.shorten_url || row.url);
@@ -632,7 +617,7 @@ const Content = () => {
       const payload = {
         emails: emails,
       };
-      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
+      await createShareLinkByEmailById(payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -644,7 +629,7 @@ const Content = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(token as string, payload);
+      await createShareLink(payload);
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
@@ -664,7 +649,7 @@ const Content = () => {
         emails: emails,
       };
 
-      await createShareLink(token as string, finalPayload);
+      await createShareLink(finalPayload);
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
@@ -707,7 +692,7 @@ const Content = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess(token, payload);
+      await createQuickAccess( payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -972,7 +957,6 @@ const Content = () => {
         refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
-        token={token as string}
         onCopyLink={(row) => handleOpenInviteDialog(row)}
         onDetailLink={handleDetailLink}
         onDelete={handleDeleteLink}

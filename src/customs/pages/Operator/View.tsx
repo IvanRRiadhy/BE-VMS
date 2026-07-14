@@ -115,7 +115,6 @@ dayjs.locale('id');
 
 type DocumentType = 'CardAccess' | 'Other';
 const View = () => {
-  const { token } = useSession();
   const dataImage = [infoPic];
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -212,7 +211,7 @@ const View = () => {
   const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
   const [openAccessIssuance, setAccessIssuance] = useState(false);
   const fetchUpcomingPurpose = async () => {
-    const res = await getUpComingPurpose(token as string, {
+    const res = await getUpComingPurpose({
       today: 'true',
       all_visitor_type: 'true',
     });
@@ -221,14 +220,13 @@ const View = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchUpcomingPurpose();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getInvitationSite(token as string);
+        const res = await getInvitationSite();
         const filteredSites =
           res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
         setSitesOperator(filteredSites);
@@ -237,12 +235,12 @@ const View = () => {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getRegisteredSiteOperator(token as string);
+        const res = await getRegisteredSiteOperator();
         const firstSite = res?.collection?.[0];
         setRegisterSiteOperator(firstSite?.id ?? '');
       } catch (error) {
@@ -251,7 +249,7 @@ const View = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -274,15 +272,13 @@ const View = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
-      const res = await getPrintBadgeConfig(token);
+      const res = await getPrintBadgeConfig();
       setPrintData(res?.collection ?? []);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
     CreateVisitorRequestSchema.parse({}),
@@ -313,7 +309,7 @@ const View = () => {
       setOpenChooseCardDialog(false);
       setSearchTerm('');
 
-      await createMultipleGrantAccess(token as string, {
+      await createMultipleGrantAccess({
         data: payloads,
       });
 
@@ -438,7 +434,7 @@ const View = () => {
         payload.swap_card_from_site_id = registerSiteOperator;
       }
 
-      await createGrandAccessOperator(token as string, payload);
+      await createGrandAccessOperator(payload);
 
       showSwal(
         'success',
@@ -483,11 +479,9 @@ const View = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-
       try {
         const [vtRes] = await Promise.allSettled([
-          getInvitationVisitorType(token),
+          getInvitationVisitorType(),
           // getPermission(token),
         ]);
 
@@ -502,9 +496,9 @@ const View = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
-  const { permission, loading: loadingPermission } = useDataPermission(token);
+  const { permission, loading: loadingPermission } = useDataPermission();
 
   const permissionHook = usePermission(permission);
 
@@ -541,7 +535,7 @@ const View = () => {
         apply_to_all: applyToAll,
       };
 
-      await extendPeriodOperator(token as string, payload);
+      await extendPeriodOperator(payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -599,16 +593,14 @@ const View = () => {
   }, [containerRef]);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
         const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
           // getVisitorEmployee(token),
-          getInvitationSite(token),
-          getInvitationVisitorHost(token),
-          // getVisitorEmployee(token),
-          getInvitationVisitorEmployee(token),
+          getInvitationSite(),
+          getInvitationVisitorHost(),
+          // getVisitorEmployee(),
+          getInvitationVisitorEmployee(),
         ]);
 
         setSites(siteRes?.collection ?? []);
@@ -620,7 +612,7 @@ const View = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleInvitationCreated = (invitationCode: string) => {
     handleSubmitQRCode(invitationCode);
@@ -758,19 +750,19 @@ const View = () => {
   useEffect(() => {
     const fetchDataPermission = async () => {
       try {
-        const res = await getPermissionOperator(token as string);
+        const res = await getPermissionOperator();
         setPermissionAccess(res?.collection ?? []);
       } catch (e) {
         console.error(e);
       }
     };
     fetchDataPermission();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAvailableCardOperator(token as string);
+        const res = await getAvailableCardOperator();
         setAvailableCards(res?.collection ?? []);
       } catch (e) {
         console.error(e);
@@ -778,7 +770,7 @@ const View = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (!openSwipeDialogNoInvitation) return;
@@ -802,7 +794,7 @@ const View = () => {
     availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
   const fetchAvailableCards = async () => {
-    const res = await getAvailableCardOperator(token as string);
+    const res = await getAvailableCardOperator();
     setAvailableCards(res.collection);
   };
 
@@ -919,7 +911,7 @@ const View = () => {
   // const [activeVisitor, setActiveVisitor] = useState<any | null>(null);
   const handleSubmitQRCode = async (value: string) => {
     try {
-      const res = await getInvitationCode(token as string, value);
+      const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
       if (data.length === 0) {
@@ -938,7 +930,7 @@ const View = () => {
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-      const freshVisitors = await getInvitationOperatorRelated(invitationId, token as string);
+      const freshVisitors = await getInvitationOperatorRelated(invitationId);
 
       const scannedNumber = data[0]?.visitor_number;
 
@@ -984,7 +976,7 @@ const View = () => {
       // setAccessData([...mergedAccess]);
       setAccessData(mergedAccess);
 
-      // const resAccess = await getInvitationAccessControl(token as string);
+      // const resAccess = await getInvitationAccessControl();
       // const rowsAccess = resAccess.collection.map((item: any) => ({
       //   id: item.Id,
       //   name: item.Name ?? '-',
@@ -1049,7 +1041,7 @@ const View = () => {
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
-    const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
+    const relatedRes = await getInvitationOperatorRelated(invitationId);
     const relatedData = relatedRes.collection ?? [];
 
     const mappedVisitors = relatedData.map((v: any) => ({
@@ -1328,12 +1320,12 @@ const View = () => {
         return;
       }
       if (payloads.length > 1) {
-        await createMultipleGrantAccess(token as string, {
+        await createMultipleGrantAccess({
           data: payloads.map(({ visitorName, ...p }) => p),
         });
       } else {
         const { visitorName, ...payload } = payloads[0];
-        await createGrandAccessOperator(token as string, payload);
+        await createGrandAccessOperator(payload);
       }
 
       const invitationId = invitationCode?.[0]?.id;
@@ -1435,7 +1427,7 @@ const View = () => {
         reason: res.value,
       };
 
-      await createOperatorBlacklist(token as string, payload);
+      await createOperatorBlacklist(payload);
 
       showSwal('success', 'Visitor has been successfully blacklisted.');
     } catch (err) {
@@ -1527,7 +1519,7 @@ const View = () => {
         payload.reason = reason;
       }
 
-      const res = await createInvitationActionOperator(token as string, id!, payload);
+      const res = await createInvitationActionOperator(id!, payload);
 
       console.log('Action Response:', res);
 
@@ -1752,7 +1744,7 @@ const View = () => {
       setLoadingAccess(true);
 
       if (validForApi.length > 0) {
-        await createMultipleInvitationActionOperator(token as string, payload);
+        await createMultipleInvitationActionOperator(payload);
       }
 
       setRelatedVisitors((prev) =>
@@ -2078,9 +2070,7 @@ const View = () => {
         return;
       }
 
-      const results = await Promise.all(
-        visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
-      );
+      const results = await Promise.all(visitorList.map((v) => getDetailInvitationForm(v.id)));
 
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
@@ -2934,7 +2924,7 @@ const View = () => {
 
       const payload = { list_group: dataList };
       console.log(' Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-      const result = await createSubmitCompletePraMultiple(token as string, payload);
+      const result = await createSubmitCompletePraMultiple(payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -3131,7 +3121,7 @@ const View = () => {
 
         // console.log('📦 Final Payload:', payload);
 
-        const res = await createGiveAccessOperator(token as string, payload);
+        const res = await createGiveAccessOperator(payload);
         // console.log('Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
@@ -3264,7 +3254,7 @@ const View = () => {
       };
 
       // console.log('return card payload', payload);
-      await returnCard(token as string, payload);
+      await returnCard(payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
@@ -3325,7 +3315,7 @@ const View = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getUpComingVisitors(token as string, {
+      const res = await getUpComingVisitors({
         today: 'true',
         all_visitor_type: 'true',
       });
@@ -3333,7 +3323,7 @@ const View = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const currentUsedCard = useMemo(() => {
     if (!Array.isArray(visitorCards)) return null;
@@ -3810,7 +3800,6 @@ const View = () => {
               setFormData={setFormDataAddVisitor}
               onSuccess={handleSuccess}
               containerRef={containerRef}
-              fullscreenHandle={handle}
               resetStep={resetStep}
               onInvitationCreated={handleInvitationCreated}
               ws={{

@@ -1,28 +1,21 @@
 import axiosInstance from '../../interceptor';
 
-export const getAllVisitorProviders = async (token: string) => {
-  const response = await axiosInstance.get('/visitor-provider', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getAllVisitorProviders = async () => {
+  const response = await axiosInstance.get('/visitor-provider');
   return response.data;
 };
 
-export const getVisitorProviders = async (token: string) => {
-  const response = await axiosInstance.get(`/visitor-provider`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getVisitorProviders = async () => {
+  const response = await axiosInstance.get(`/visitor-provider`);
   return response.data;
 };
 
-export const getVisitorProvidersById = async (token: string | null, id: string) => {
-  const response = await axiosInstance.get(`/visitor-provider/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getVisitorProvidersById = async (id: string) => {
+  const response = await axiosInstance.get(`/visitor-provider/${id}`);
   return response.data;
 };
 
 export const getVisitorProvidersByDt = async (
-  token: string,
   start: number,
   length: number,
   sort_dir: string,
@@ -30,9 +23,6 @@ export const getVisitorProvidersByDt = async (
   role?: string,
 ) => {
   const response = await axiosInstance.get(`/visitor-provider/dt`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     params: {
       start,
       length,
@@ -45,31 +35,22 @@ export const getVisitorProvidersByDt = async (
   return response.data;
 };
 
-export const updateVisitorProviders = async (token: string, id: string, data: any) => {
-  const response = await axiosInstance.put(`/visitor-provider/${id}`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const updateVisitorProviders = async (id: string, data: any) => {
+  const response = await axiosInstance.put(`/visitor-provider/${id}`, data);
   return response.data;
 };
 
-export const createVisitorProvider = async (token: string, data: any) => {
-  const response = await axiosInstance.post(`/visitor-provider`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createVisitorProvider = async (data: any) => {
+  const response = await axiosInstance.post(`/visitor-provider`, data);
   return response.data;
 };
 
-export const uploadLogoVisitorProvider = async (
-  id: string,
-  data: any,
-  token: string,
-): Promise<any> => {
+export const uploadLogoVisitorProvider = async (id: string, data: any): Promise<any> => {
   try {
     const formData = new FormData();
     formData.append('faceimage', data);
     const response = await axiosInstance.post(`/visitor-provider/upload/${id}`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',
       },
     });
@@ -80,9 +61,7 @@ export const uploadLogoVisitorProvider = async (
   }
 };
 
-export const deleteVisitorProvider = async (token: string, id: string) => {
-  const response = await axiosInstance.delete(`/visitor-provider/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteVisitorProvider = async (id: string) => {
+  const response = await axiosInstance.delete(`/visitor-provider/${id}`);
   return response.data;
 };

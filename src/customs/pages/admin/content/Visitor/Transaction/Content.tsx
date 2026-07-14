@@ -68,7 +68,7 @@ type Group = {
 };
 
 const Content = () => {
-  const { token, roleAccess } = useSession();
+  const { roleAccess } = useSession();
   const isOperatorAdmin = roleAccess === 'OperatorAdmin';
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -210,7 +210,7 @@ const Content = () => {
   });
 
   const fetchData = async (append = false) => {
-    if (!token || isFetchingRef.current) return;
+    if ( isFetchingRef.current) return;
 
     isFetchingRef.current = true;
 
@@ -232,7 +232,6 @@ const Content = () => {
         appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
       const res = await getVisitorTransactionPagination(
-        token,
         start,
         rowsPerPage,
         sortDir,
@@ -282,20 +281,20 @@ const Content = () => {
       setLoadingMore(false);
     }
   };
-  
+
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
+
 
     setSelectedGroupId(null);
     setGroupVisitors([]);
 
     fetchData(false);
-  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
+  }, [ page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
-  const { data: siteData } = useRegisteredSite(token);
-  const { data: profile } = useProfile(token);
+  const { data: siteData } = useRegisteredSite();
+  const { data: profile } = useProfile();
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -381,7 +380,7 @@ const Content = () => {
   const handleSubmitQRCode = async (value: string) => {
     try {
       setLoading(true);
-      const res = await getInvitationCode(token as string, value);
+      const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
       setVisitorData(data);
@@ -399,12 +398,12 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!selectedGroupId || !token) return;
+    if (!selectedGroupId) return;
 
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
-        const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        const res = await getVisitorTransactionByIds( selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -415,7 +414,7 @@ const Content = () => {
     };
 
     fetchDetail();
-  }, [selectedGroupId, token]);
+  }, [selectedGroupId]);
 
   const handleResetFilter = () => {
     const empty = {
@@ -458,16 +457,15 @@ const Content = () => {
 
   const debouncedSearch = useDebounce(hostSearch, 800);
 
-  const { visitorType } = useVisitorType(token as string);
-  const { sites } = useSites(token as string);
-  // const { employee } = useEmployees(token as string);
-  const { data, isLoading: isLoadingEmployee } = useEmployeePagination(token, {
+  const { visitorType } = useVisitorType();
+  const { sites } = useSites();
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination( {
     'search[value]': debouncedSearch,
     sortDir: 'desc',
   });
 
   const employeeData = data?.collection ?? [];
-  const { allVisitorEmployee } = useVisitorEmployees(token as string);
+  const { allVisitorEmployee } = useVisitorEmployees();
   const [vtLoading, setVtLoading] = useState(false);
 
   const handleSelectSite = (site: any) => {
@@ -487,7 +485,7 @@ const Content = () => {
 
   const handleCancel = async (id: string) => {
     try {
-      await cancelVisitor(token as string, id);
+      await cancelVisitor(id);
 
       showSwal('success', 'Transaction successfully cancelled');
 
@@ -510,7 +508,7 @@ const Content = () => {
 
   const handleDuplicate = async (group: any) => {
     try {
-      const res = await getVisitorTransactionByIds(token as string, group.id);
+      const res = await getVisitorTransactionByIds( group.id);
 
       const visitors = res.collection;
 

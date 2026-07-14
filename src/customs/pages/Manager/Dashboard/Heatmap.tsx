@@ -14,7 +14,6 @@ HC_heatmap(Highcharts);
 const Heatmap = () => {
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [hours, setHours] = useState<string[]>([]);
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   const start = startDate?.toISOString().split('T')[0];
@@ -42,9 +41,6 @@ const Heatmap = () => {
     const fetchHeatmap = async () => {
       try {
         const res = await getHeatmaps(
-          token!,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
           start,
           end,
         );
@@ -72,8 +68,8 @@ const Heatmap = () => {
       } catch (err) {}
     };
 
-    if (token) fetchHeatmap();
-  }, [token, start, end]);
+  fetchHeatmap();
+  }, [ start, end]);
 
   const options: Highcharts.Options = {
     chart: {

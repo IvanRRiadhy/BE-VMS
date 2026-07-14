@@ -150,9 +150,9 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               borderRadius: 0,
               background: '#ebedefff',
               // bgcolor: 'background.paper',
+              paddingTop: '5px !important',
               p: {
                 xs: '10px',
-
                 // md: '15px',
               },
               width: '100%',

@@ -20,7 +20,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateDriverRequest,
   CreateDriverRequestSchema,
@@ -30,13 +29,9 @@ import { deleteDriver } from 'src/customs/api/Delivery/Driver';
 import { IconUsers } from '@tabler/icons-react';
 
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Driver/FilterMoreContent';
+import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Staff/FilterMoreContent';
 import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
-import FormDriver from 'src/customs/pages/admin/content/Delivery/Driver/FormDriver';
-import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
-import { useDistricts } from 'src/hooks/District/useDistricts';
-import { useDepartment } from 'src/hooks/Department/useDepartment';
-import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import FormDriver from 'src/customs/pages/admin/content/Delivery/Staff/FormDriver';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
@@ -74,7 +69,7 @@ interface Filters {
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
+
   const [totalRecords, setTotalRecords] = useState(0);
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -82,8 +77,6 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -111,12 +104,7 @@ const Content = () => {
     },
   ];
 
-  const { organizations } = useOrganization();
-  const { department } = useDepartment();
-  const { districts } = useDistricts();
-
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -125,7 +113,6 @@ const Content = () => {
         let employeeRes: any;
         try {
           employeeRes = await getAllDriverPaginationFilterMore(
-            token,
             start,
             rowsPerPage,
             sortColumn,
@@ -156,14 +143,6 @@ const Content = () => {
           employeeRes?.status === 'not_found' ||
           safeCollection.length === 0;
 
-        if (isNotFound) {
-          setTableData([]);
-          setTableRowEmployee([]);
-          setTotalRecords(0);
-          setTotalFilteredRecords(0);
-          return;
-        }
-
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
         setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
@@ -185,46 +164,20 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
+  }, [page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
-  const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(() => {
-    const saved = localStorage.getItem('unsavedDriverData');
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateDriverRequestSchema.parse(parsed);
-    } catch (e) {
-      return CreateDriverRequestSchema.parse({});
-    }
-  });
+  const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(
+    CreateDriverRequestSchema.parse({}),
+  );
 
-  const [formDataDriver, setFormDataDriver] = useState<CreateDriverRequest>(() => {
-    const saved = localStorage.getItem('unsavedDriverData');
-
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateDriverRequestSchema.parse(parsed);
-    } catch (e) {
-      console.error('Invalid saved data, fallback to default schema.');
-      return CreateDriverRequestSchema.parse({});
-    }
-  });
+  const [formDataDriver, setFormDataDriver] = useState<CreateDriverRequest>(
+    CreateDriverRequestSchema.parse({}),
+  );
 
   const [isEditing, setIsEditing] = useState(false);
 
   const isFormChanged = useMemo(() => {
     return JSON.stringify(formDataDriver) !== JSON.stringify(initialFormData);
-  }, [formDataDriver]);
-
-  useEffect(() => {
-    // if (Object.keys(formDataDriver).length > 0 && !isEditing && isFormChanged) {
-    //   localStorage.setItem('unsavedDriverData', JSON.stringify(formDataDriver));
-    // }
-    const defaultFormData = CreateDriverRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataDriver) !== JSON.stringify(defaultFormData);
-
-    if (isChanged) {
-      localStorage.setItem('unsavedDriverData', JSON.stringify(formDataDriver));
-    }
   }, [formDataDriver]);
 
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
@@ -234,7 +187,6 @@ const Content = () => {
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
   const handleCloseDialog = () => {
-    localStorage.removeItem('unsavedDriverData');
     setOpenFormAddEmployee(false);
     setIsBatchEdit(false);
     setIsEditing(false);
@@ -242,10 +194,12 @@ const Content = () => {
 
   const handleAdd = useCallback(() => {
     const freshForm = CreateDriverRequestSchema.parse({});
+
+    setEdittingId('');
     setFormDataDriver(freshForm);
     setInitialFormData(freshForm);
-    localStorage.setItem('unsavedDriverData', JSON.stringify(freshForm));
     setPendingEditId(null);
+
     handleOpenDialog();
   }, []);
 
@@ -261,22 +215,45 @@ const Content = () => {
       if (v === '' || v == null) return fallback;
       if (typeof v === 'number' && Number.isFinite(v)) return v;
       if (typeof v === 'boolean') return v ? 1 : 0;
+
       if (typeof v === 'string') {
         const t = v.trim().toLowerCase();
+
         if (t in map) return map[t];
+
         const n = Number(t);
         return Number.isFinite(n) ? n : fallback;
       }
+
       return fallback;
     };
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
+      gender: toNum(
+        s?.gender,
+        {
+          female: 0,
+          male: 1,
+          f: 0,
+          m: 1,
+          '0': 0,
+          '1': 1,
+        },
+        0,
+      ),
 
       status_employee: toNum(
         s?.status_employee,
-        { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
+        {
+          active: 1,
+          'non active': 2,
+          nonactive: 2,
+          inactive: 2,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
         0,
       ),
 
@@ -285,63 +262,109 @@ const Content = () => {
       district_id: String(s?.district_id ?? ''),
     });
 
-    const parseSafe = (raw: any) => CreateDriverRequestSchema.parse(coerceEmployee(raw));
+    const parsedData = CreateDriverRequestSchema.parse(coerceEmployee(existingData));
 
-    const editing = localStorage.getItem('unsavedDriverData');
-
-    if (!editing) {
-      const parsedData = parseSafe(existingData);
-      setEdittingId(id);
-      setFormDataDriver(parsedData);
-      setInitialFormData(parsedData);
-      localStorage.setItem('unsavedDriverData', JSON.stringify({ ...parsedData, id }));
-      handleOpenDialog();
+    // Kalau sedang ada dialog terbuka dan form berubah,
+    // tampilkan confirm terlebih dahulu
+    if (openFormAddEmployee && isFormChanged) {
+      setPendingEditId(id);
+      setConfirmDialogOpen(true);
       return;
     }
 
-    const editingData = JSON.parse(editing);
-
-    if (editingData.id === id) {
-      const parsedData = parseSafe(existingData);
-      setEdittingId(id);
-      setFormDataDriver(parsedData);
-      setInitialFormData(parsedData);
-      handleOpenDialog();
-      return;
-    }
-
-    setPendingEditId(id);
-    setConfirmDialogOpen(true);
+    setEdittingId(id);
+    setFormDataDriver(parsedData);
+    setInitialFormData(parsedData);
+    setOpenFormAddEmployee(true);
+    setIsEditing(true);
   };
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedDriverData');
 
+    // pindah edit ke data lain
     if (pendingEditId) {
-      const existingData = tableData.find((item) => item.id === pendingEditId);
-      if (existingData) {
-        const parsedData = {
-          ...CreateDriverRequestSchema.parse(existingData),
-          id: pendingEditId,
-        };
-        setEdittingId(pendingEditId);
-        setFormDataDriver(parsedData);
-        setInitialFormData(parsedData);
-        localStorage.setItem('unsavedDriverData', JSON.stringify(parsedData));
-        setPendingEditId(null);
-        setOpenFormAddEmployee(true);
-        setIsEditing(true);
-      }
-    } else {
-      setEdittingId('');
-      const newForm = CreateDriverRequestSchema.parse({});
-      setFormDataDriver(newForm);
-      setInitialFormData(newForm);
-      localStorage.setItem('unsavedDriverData', JSON.stringify(newForm));
-      handleCloseDialog();
-      setIsEditing(false);
+      const existingData = tableData.find((item) => String(item.id) === String(pendingEditId));
+
+      if (!existingData) return;
+
+      const toNum = (
+        v: unknown,
+        map: Record<string, number> = {},
+        fallback: number | undefined = 0,
+      ) => {
+        if (v === '' || v == null) return fallback;
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (typeof v === 'boolean') return v ? 1 : 0;
+
+        if (typeof v === 'string') {
+          const t = v.trim().toLowerCase();
+
+          if (t in map) return map[t];
+
+          const n = Number(t);
+          return Number.isFinite(n) ? n : fallback;
+        }
+
+        return fallback;
+      };
+
+      const coerceEmployee = (s: any) => ({
+        ...s,
+        gender: toNum(
+          s?.gender,
+          {
+            female: 0,
+            male: 1,
+            f: 0,
+            m: 1,
+            '0': 0,
+            '1': 1,
+          },
+          0,
+        ),
+
+        status_employee: toNum(
+          s?.status_employee,
+          {
+            active: 1,
+            'non active': 2,
+            nonactive: 2,
+            inactive: 2,
+            '0': 0,
+            '1': 1,
+            '2': 2,
+          },
+          0,
+        ),
+
+        organization_id: String(s?.organization_id ?? ''),
+        department_id: String(s?.department_id ?? ''),
+        district_id: String(s?.district_id ?? ''),
+      });
+
+      const parsedData = CreateDriverRequestSchema.parse(coerceEmployee(existingData));
+
+      setEdittingId(pendingEditId);
+      setFormDataDriver(parsedData);
+      setInitialFormData(parsedData);
+
+      setPendingEditId(null);
+      setOpenFormAddEmployee(true);
+      setIsEditing(true);
+
+      return;
     }
+
+    // discard lalu tutup dialog
+    const empty = CreateDriverRequestSchema.parse({});
+
+    setEdittingId('');
+    setFormDataDriver(empty);
+    setInitialFormData(empty);
+
+    handleCloseDialog();
+    setIsEditing(false);
   };
 
   const handleCancelEdit = () => {
@@ -351,18 +374,15 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirmed = await showConfirmDelete('Are you sure to delete this delivery staff?');
 
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteDriver(id, token);
+        await deleteDriver(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted delivery staff!');
       } catch (error) {
-        console.error(error);
         showSwal('error', 'Failed to delete staff.');
         setTimeout(() => setLoading(false), 500);
       } finally {
@@ -372,7 +392,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: DriverTableRows[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
       `Are you sure to delete ${rows.length} items?`,
@@ -382,7 +402,7 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteDriver(row.id, token)));
+        await Promise.all(rows.map((row) => deleteDriver(row.id)));
         setRefreshTrigger((prev) => prev + 1);
 
         showSwal('success', `${rows.length} items have been deleted.`);
@@ -419,8 +439,6 @@ const Content = () => {
 
     setInitialFormData((_) => formDataDriver);
     setOpenFormAddEmployee(false);
-
-    localStorage.removeItem('unsavedDriverData');
   };
 
   const handleDialogClose = (_event?: object, reason?: string) => {
@@ -438,16 +456,6 @@ const Content = () => {
       handleCloseDialog();
     }
   };
-
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -498,9 +506,6 @@ const Content = () => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
-                    organizationData={organizations}
-                    departmentData={department}
-                    districtData={districts}
                   />
                 }
                 isHaveHeader={false}

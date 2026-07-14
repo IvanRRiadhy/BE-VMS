@@ -4,16 +4,15 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 
 import { useEffect, useState } from 'react';
 
-export const useVisitorType = (token?: string | null) => {
+export const useVisitorType = () => {
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchVisitorTypes = async () => {
       try {
-        const res = await getAllVisitorType(token);
+        const res = await getAllVisitorType();
 
         setVisitorType(res?.collection ?? []);
       } catch (err) {
@@ -22,7 +21,7 @@ export const useVisitorType = (token?: string | null) => {
     };
 
     fetchVisitorTypes();
-  }, [token]);
+  }, []);
 
   return {
     visitorType,

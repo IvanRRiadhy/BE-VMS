@@ -62,8 +62,6 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const BioPeopleParking = ({ id }: { id: string }) => {
-  const { token } = useSession();
-
   const [totals, setTotals] = useState<{ [key: string]: number }>({
     visitor_type: 0,
     area: 0,
@@ -73,14 +71,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   });
 
   const handleParkingSyncIntegration = async () => {
-    if (!id || !token) {
+    if (!id) {
       setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
       return;
     }
 
     try {
       setSyncing(true);
-      const res = await syncParkingIntegration(id as string, token as string);
+      const res = await syncParkingIntegration(id as string);
       setSyncing(false);
 
       if (res.status !== 'success') {
@@ -210,14 +208,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   };
 
   const loadTotals = async () => {
-    if (!token || !id) return;
+    if (!id) return;
 
     const settled = await Promise.allSettled([
-      getVisitorTypeParking(id as string, token), // 0
-      getAreaParking(id as string, token), // 1
-      getBlockParking(id as string, token), // 2
-      getSlotParking(id as string, token), // 3
-      getVehicleParking(id as string, token), // 4
+      getVisitorTypeParking(id as string), // 0
+      getAreaParking(id as string), // 1
+      getBlockParking(id as string), // 2
+      getSlotParking(id as string), // 3
+      getVehicleParking(id as string), // 4
     ]);
 
     const countOf = (i: number) =>
@@ -236,14 +234,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     loadTotals();
-  }, [id, token]);
+  }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if (!token || !id) return;
+    if ( !id) return;
     setLoading(true);
     try {
       if (type === 'visitor_type') {
-        const res = await getVisitorTypeParking(id as string, token);
+        const res = await getVisitorTypeParking(id as string);
         setListData(
           (res.collection ?? []).map((item: any) => ({
             ...item,
@@ -254,16 +252,16 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           })),
         );
       } else if (type === 'area') {
-        const res = await getAreaParking(id as string, token);
+        const res = await getAreaParking(id as string);
         setListData(res.collection ?? []);
       } else if (type === 'block') {
-        const res = await getBlockParking(id as string, token);
+        const res = await getBlockParking(id as string);
         setListData(res.collection ?? []);
       } else if (type === 'slot') {
-        const res = await getSlotParking(id as string, token);
+        const res = await getSlotParking(id as string);
         setListData(res.collection ?? []);
       } else if (type === 'vehicle') {
-        const res = await getVehicleParking(id as string, token);
+        const res = await getVehicleParking(id as string);
         setListData(
           (res.collection ?? []).map((item: any) => ({
             ...item,
@@ -282,7 +280,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-  }, [selectedType, token, id]);
+  }, [selectedType, id]);
 
   useEffect(() => {
     if (!editingRow) return;
@@ -307,7 +305,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   });
 
   const handleEditRow = async (row: any) => {
-    if (!token || !id) return;
+    if (!id) return;
 
     setIsBatchEdit(false);
     setEnabled({
@@ -320,7 +318,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     setEditDialogType(TYPE_MAP[selectedType] ?? null);
     try {
       if (selectedType === 'visitor_type') {
-        const res = await getVisitorTypeParkingById(id as string, String(row.id), token);
+        const res = await getVisitorTypeParkingById(id as string, String(row.id));
 
         const data = res.collection ?? row;
 
@@ -329,17 +327,17 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           visitor_type_id: data.visitor_types?.map((v: any) => v.visitor_type_id) ?? [],
         });
       } else if (selectedType === 'slot') {
-        const res = await getSlotParkingById(id as string, String(row.id), token);
+        const res = await getSlotParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'area') {
-        const res = await getAreaParkingById(id as string, String(row.id), token);
+        const res = await getAreaParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'vehicle') {
         // belum ada API by id → pakai row dulu
-        const res = await getVehicleParkingById(id as string, String(row.id), token);
+        const res = await getVehicleParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'block') {
-        const res = await getBlockParkingById(id as string, String(row.id), token);
+        const res = await getBlockParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else {
         setDetailData(row);
@@ -453,14 +451,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-    if (!token) return;
 
     let cancelled = false;
 
     const loadOptions = async () => {
       try {
         if (editDialogType === 'Visitor Type') {
-          const res = await getAllVisitorType(token);
+          const res = await getAllVisitorType();
           if (cancelled) return;
 
           const items =
@@ -485,7 +482,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     loadOptions();
 
     return () => {};
-  }, [editDialogType, token]);
+  }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
     Object.fromEntries(
@@ -493,7 +490,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     );
 
   const handleSaveVisitorType = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -513,7 +510,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           active: organizationForm?.active,
         });
 
-        await updateVisitorTypeParking(visitorTypeId, payload, token as string);
+        await updateVisitorTypeParking(visitorTypeId, payload);
         await fetchListByType(selectedType);
         loadTotals();
 
@@ -534,7 +531,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       });
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateVisitorTypeParking(it, payload, token as string))); //
+      await Promise.all(ids.map((it) => updateVisitorTypeParking(it, payload))); 
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -552,7 +549,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   };
 
   const handleSaveVehicle = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -572,7 +569,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         console.log('Payload:', payload);
 
-        await updateVehicleParking(vehicleId, payload, token as string);
+        await updateVehicleParking(vehicleId, payload);
         await fetchListByType(selectedType);
 
         loadTotals();
@@ -588,7 +585,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       if (enabled.active) payload.active = cardForm?.active ?? false;
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateVehicleParking(it, payload, token as string)));
+      await Promise.all(ids.map((it) => updateVehicleParking(it, payload)));
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -604,7 +601,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Block
   const handleSaveBlock = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -618,7 +615,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         }
 
         const payload = { active: memberForm?.active };
-        await updateBlockParking(blockId, payload, token as string);
+        await updateBlockParking(blockId, payload);
 
         await fetchListByType(selectedType);
         loadTotals();
@@ -635,7 +632,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       }
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateBlockParking(it, payload, token as string)));
+      await Promise.all(ids.map((it) => updateBlockParking(it, payload)));
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -654,7 +651,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Area
   const handleSaveArea = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -670,7 +667,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         const payload = { active: districtForm?.active };
 
-        await updateAreaParking(areaId, payload, token as string);
+        await updateAreaParking(areaId, payload);
 
         await fetchListByType(selectedType);
 
@@ -693,7 +690,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       });
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateAreaParking(it, payload, token as string))); //
+      await Promise.all(ids.map((it) => updateAreaParking(it, payload))); //
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -712,7 +709,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Slot
   const handleSaveSlot = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     try {
       setSaving(true);
@@ -727,7 +724,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         const payload = { active: departmentForm?.active };
 
-        await updateSlotParking(slotId, payload, token as string);
+        await updateSlotParking(slotId, payload);
 
         setListData((prev) =>
           prev.map((it) => (String(it.id) === slotId ? { ...it, ...payload } : it)),
@@ -749,7 +746,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       });
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateSlotParking(it, payload, token as string))); //
+      await Promise.all(ids.map((it) => updateSlotParking(it, payload))); 
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),

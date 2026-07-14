@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -38,12 +37,12 @@ const Content = () => {
     },
   ];
   useEffect(() => {
-    if (!token) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getVisitorRoleByDt(token, start, rowsPerPage, sortDir, search);
+        const response = await getVisitorRoleByDt(start, rowsPerPage, sortDir, search);
         setTableData(response.collection);
         setTotalRecords(response.collection.length);
       } catch (error) {
@@ -53,7 +52,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -72,7 +71,7 @@ const Content = () => {
         active: checked,
       };
 
-      await updateVisitorRole(token as string, row.id, payload);
+      await updateVisitorRole( row.id, payload);
 
       showSwal('success', 'Visitor Role successfully updated');
       setRefreshTrigger((prev) => prev + 1);

@@ -229,7 +229,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [activeStep, setActiveStep] = useState(enableInvitationTypeStep ? -1 : 0);
   const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
@@ -1532,7 +1531,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   <>
                     <VisitorSelect
                       key={String(isEmployee)}
-                      token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
@@ -1730,7 +1728,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                          token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -1911,7 +1908,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         <TableCell sx={{ minWidth: 250 }}>
                                           <VisitorSelect
                                             key={String(isEmployee)}
-                                            token={token as string}
                                             isEmployee={isEmployee}
                                             onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                           />
@@ -4985,7 +4981,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!validateCurrentStep()) {
       return;
     }
-    if (!token) return;
     try {
       setLoading(true);
 
@@ -5162,7 +5157,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
         const submitFn =
           TYPE_REGISTERED === 0 ? createPraRegisterGroupOperator : createVisitorsGroupOperator;
-        await submitFn(token, parsed as any);
+        await submitFn(parsed as any);
         showSwal('success', 'Group visitor created successfully.', 3000);
         resetMediaState();
         clearAnswerFiles();
@@ -5196,7 +5191,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
-        const backendResponse = await submitFn(token, parsed);
+        const backendResponse = await submitFn(parsed);
         // console.log('Payload Single:', backendResponse);
 
         const successMessage =
@@ -5604,11 +5599,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!formData.visitor_type) return;
 
     const fetchVisitorTypeDetails = async () => {
-      // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const resVisitorType = await getVisitorTypeById(
-        token as string,
-        formData.visitor_type as string,
-      );
+      const resVisitorType = await getVisitorTypeById(formData.visitor_type as string);
 
       let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
       const roles = resVisitorType?.collection?.visitor_roles ?? [];

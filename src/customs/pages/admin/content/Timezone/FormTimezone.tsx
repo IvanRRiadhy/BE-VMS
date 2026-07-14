@@ -34,7 +34,6 @@ const dayOrder: { abbr: string; key: string }[] = [
 ];
 
 const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState(initialData?.name ?? '');
@@ -112,12 +111,11 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
   };
 
   const handleSubmit = async (newDaysFromGrid?: any) => {
-    if (!token) return;
     setLoading(true);
     try {
       const payload = daysToApi(newDaysFromGrid || days);
       if (mode === 'create') {
-        await createTimezone(token, payload);
+        await createTimezone(payload);
         setName('');
         setDescription('');
         setDays([]);
@@ -128,7 +126,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         // edit
         const id = initialData?.id;
         if (!id) throw new Error('Missing timezone id for update');
-        await updateTimezone(token, id, payload);
+        await updateTimezone(id, payload);
 
         showSwal('success', 'Time Access successfully updated');
         onSuccess?.();

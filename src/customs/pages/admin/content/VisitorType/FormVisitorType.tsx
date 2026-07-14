@@ -64,7 +64,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
   const [activeStep, setActiveStep] = useState(0);
   const [selectedAnalytics, setSelectedAnalytics] = useState<any | null>(null);
@@ -90,13 +89,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }[]
   >([]);
 
-  const { visitorRole } = useVisitorRoles(token as string);
-  const { accessData } = useAccessControl(token as string);
-  const { documents } = useDocument(token as string);
+  const { visitorRole } = useVisitorRoles();
+  const { accessData } = useAccessControl();
+  const { documents } = useDocument();
   const { customField } = useCustomField();
-  const { analyticCctv } = useCameraAnalytics(
-    formData.can_track_cctv ? (token as string) : undefined,
-  );
+  const { analyticCctv } = useCameraAnalytics();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -120,10 +117,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   }, [initialAccess, edittingId]);
 
   useEffect(() => {
-    if (!edittingId || !token || accessData.length === 0) return;
+    if (!edittingId || accessData.length === 0) return;
 
     const fetchVisitorTypeAccess = async () => {
-      const res = await getVisitorTypeAccessByVisitorId(edittingId, token);
+      const res = await getVisitorTypeAccessByVisitorId(edittingId);
 
       setSelectedAccess(
         res.collection.map((a: any) => {
@@ -142,7 +139,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     };
 
     fetchVisitorTypeAccess();
-  }, [edittingId, token, accessData]);
+  }, [edittingId, accessData]);
 
   useEffect(() => {
     if (!edittingId || !formData.can_track_cctv) {
@@ -151,7 +148,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }
     const fetchVisitorTypeAnalytics = async () => {
       try {
-        const res = await getVisitorTypeAnalyticsByVisitorId(edittingId, token as string);
+        const res = await getVisitorTypeAnalyticsByVisitorId(edittingId);
 
         const existing = res?.collection?.[0];
 
@@ -171,7 +168,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     };
 
     fetchVisitorTypeAnalytics();
-  }, [edittingId, token, formData.can_track_cctv]);
+  }, [edittingId, formData.can_track_cctv]);
 
   const buildUpdateAccessPayload = (visitorTypeId: string) =>
     selectedAccess.map((a, index) => ({
@@ -200,10 +197,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setErrors({});
 
     try {
-      if (!token) {
-        return;
-      }
-
       const transformedSections = sectionsData.map((section) => ({
         sort: section.sort,
         name: section.name,
@@ -295,19 +288,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
-        await updateVisitorType(token, edittingId, parseData);
+        await updateVisitorType(edittingId, parseData);
 
         if (deletedAccessIds.length > 0) {
-          await Promise.all(deletedAccessIds.map((id) => deleteVisitorTypeAccess(id, token)));
+          await Promise.all(deletedAccessIds.map((id) => deleteVisitorTypeAccess(id)));
         }
 
         const accessPayloads = buildUpdateAccessPayload(edittingId);
 
         for (const payload of accessPayloads) {
           if (payload.id) {
-            await updateVisitorTypeAccess(payload.id, payload, token);
+            await updateVisitorTypeAccess(payload.id, payload);
           } else {
-            await createVisitorTypeAccess(payload, token);
+            await createVisitorTypeAccess(payload);
           }
         }
 
@@ -316,9 +309,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
         for (const payload of analyticsPayloads) {
           if (edittingId) {
-            await updateVisitorTypeAnalytics(payload.id, payload, token);
+            await updateVisitorTypeAnalytics(payload.id, payload);
           } else {
-            await createVisitorTypeAnalytics(payload, token);
+            await createVisitorTypeAnalytics(payload);
           }
         }
 
@@ -327,18 +320,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           edittingId ? 'Visitor type updated successfully!' : 'Visitor type updated successfully!',
         );
       } else {
-        const res = await createVisitorType(token, parseData);
+        const res = await createVisitorType(parseData);
 
         const visitorTypeId = res.collection?.id;
 
         if (selectedAccess.length > 0) {
           const accessPayload = buildCreateAccessPayload(visitorTypeId as string);
-          await createVisitorTypeAccessBulk(accessPayload, token);
+          await createVisitorTypeAccessBulk(accessPayload);
         }
 
         if (formData.can_track_cctv && selectedAnalytics) {
           const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
-          await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics, token);
+          await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics);
         }
         showSwal('success', 'Visitor type created successfully!');
       }

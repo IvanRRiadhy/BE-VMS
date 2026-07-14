@@ -44,11 +44,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
   };
 
   const visitorRoleOptions = Object.values(visitorRole);
-
   const statusOptions = Object.values(statusMap);
-
-  const { token } = useSession();
-  const { sites = [] } = useSites(token as string);
+  const { sites = [] } = useSites();
   const { data: host = [] } = useHost();
 
   return (

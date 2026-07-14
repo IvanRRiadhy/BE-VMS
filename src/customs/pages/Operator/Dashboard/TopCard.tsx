@@ -34,7 +34,6 @@ interface ApiDateGroup {
 
 const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   const [stats, setStats] = useState<Record<string, number>>({});

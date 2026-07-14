@@ -1,13 +1,12 @@
 import axiosInstance from '../interceptor';
 
 export const getPublicSite = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-site/public', {
-      headers: { Authorization: `Bearer ${token}` },
+
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -20,13 +19,12 @@ export const getPublicSite = async (
 };
 
 export const getPublicAccessControl = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-ac/public', {
-      headers: { Authorization: `Bearer ${token}` },
+   
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -39,13 +37,11 @@ export const getPublicAccessControl = async (
 };
 
 export const getPublicVisitorType = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor-type/public', {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -58,14 +54,13 @@ export const getPublicVisitorType = async (
 };
 
 export const getPublicVisitorTypeById = async (
-  token: string,
   tokens: string,
   dataType: string,
   entityId: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor-type/public', {
-      headers: { Authorization: `Bearer ${token}` },
+
       params: { token: tokens, 'data-type': dataType, 'entity-id': entityId },
     });
     return response.data;
@@ -78,13 +73,11 @@ export const getPublicVisitorTypeById = async (
 };
 
 export const getPublicVisitor = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor/public', {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -97,13 +90,11 @@ export const getPublicVisitor = async (
 };
 
 export const getPublicVisitorEmployee = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor/public/employee', {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -116,13 +107,11 @@ export const getPublicVisitorEmployee = async (
 };
 
 export const getPublicVisitorHost = async (
-  token: string,
   tokens: string,
   dataType: string,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor/public/host', {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, 'data-type': dataType },
     });
     return response.data;
@@ -135,14 +124,12 @@ export const getPublicVisitorHost = async (
 };
 
 export const createSubmitShareLink = async (
-  token: string,
   tokens: string,
   timestamp: string,
   data: any,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.post('/on-portal/submit/invitation-link', data, {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, timestamp },
     });
     return response.data;
@@ -152,14 +139,12 @@ export const createSubmitShareLink = async (
 };
 
 export const createSubmitGroupShareLink = async (
-  token: string,
   tokens: string,
   timestamp: string,
   data: any,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.post('/on-portal/submit/bulk/invitation-link', data, {
-      headers: { Authorization: `Bearer ${token}` },
       params: { token: tokens, timestamp },
     });
     return response.data;
@@ -169,11 +154,9 @@ export const createSubmitGroupShareLink = async (
 };
 
 // get inviation site drop point
-export const getInvitationSiteDropPoint = async (token: string): Promise<any> => {
+export const getInvitationSiteDropPoint = async (): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/invitation-site/drop-point', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get('/invitation-site/drop-point');
     return response.data;
   } catch (error: any) {
     throw error;
@@ -181,11 +164,9 @@ export const getInvitationSiteDropPoint = async (token: string): Promise<any> =>
 };
 
 // get visitor provider
-export const getVisitorProvider = async (token: string): Promise<any> => {
+export const getVisitorProvider = async (): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/invitation-visitor-provider', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get('/invitation-visitor-provider');
     return response.data;
   } catch (error: any) {
     throw error;

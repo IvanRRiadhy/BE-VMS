@@ -1,14 +1,8 @@
 import {
   Avatar,
   Checkbox,
-  Collapse,
-  IconButton,
-  Table,
-  TableBody,
   TableCell,
-  TableHead,
   TableRow,
-  Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { useState } from 'react';

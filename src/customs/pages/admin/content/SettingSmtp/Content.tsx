@@ -42,7 +42,6 @@ type SettingSMTPRow = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [smtpData, setSmtpData] = useState<SettingSMTPRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -90,14 +89,12 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchData = async () => {
       const start = page * rowsPerPage;
       setLoading(true);
       try {
         const res = await getAllPaginationSettingSmtp(
-          token,
           start,
           rowsPerPage,
           sortColumn,
@@ -126,17 +123,17 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
+  }, [ page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
+
 
     const confirmed = await showConfirmDelete('Are you sure to delete this smtp provider?');
     if (!confirmed) return;
     try {
       if (confirmed) {
         setLoading(true);
-        await deleteSmtp(id, token);
+        await deleteSmtp(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted smtp provider!');
       }
@@ -166,10 +163,10 @@ const Content = () => {
       const validated = CreateSettingSmtpSchema.parse(data);
 
       if (edittingId) {
-        await updateSmtp(token as string, validated, edittingId);
+        await updateSmtp( validated, edittingId);
         showSwal('success', 'SMTP updated.');
       } else {
-        await createSmtp(validated, token as string);
+        await createSmtp(validated);
         showSwal('success', 'SMTP created.');
       }
 
@@ -183,7 +180,7 @@ const Content = () => {
 
   const handleBooleanSwitchChange = async (id: number | string, field: string, value: boolean) => {
     if (field !== 'selected_email') return;
-    if (!token) return;
+  
 
     try {
       // setBusyId(id);
@@ -207,7 +204,7 @@ const Content = () => {
 
       const validated = CreateSettingSmtpSchema.parse(payload);
 
-      await updateSmtp(token, validated, row.id.toString());
+      await updateSmtp( validated, row.id.toString());
 
       if (value) {
         const prev = smtpData.find((x) => x.selected_email && x.id !== row.id);
@@ -224,7 +221,7 @@ const Content = () => {
             secure: prev.secure,
             selected_email: false,
           };
-          await updateSmtp(token, CreateSettingSmtpSchema.parse(offPayload), prev.id.toString());
+          await updateSmtp( CreateSettingSmtpSchema.parse(offPayload), prev.id.toString());
         }
       }
 
@@ -244,7 +241,7 @@ const Content = () => {
   };
 
   const handleSubmitEmail = async (data: ItemEmail) => {
-    if (!token) return;
+  
 
     try {
       setLoading(true);
@@ -254,7 +251,7 @@ const Content = () => {
       const provider = smtpData.find((x) => String(x.id) === String(validated.setting_smtp_id));
       const providerName = provider?.name ?? 'provider yang dipilih';
 
-      await createEmail(validated, token as string);
+      await createEmail(validated);
 
       setFormEmailData(initialFormEmailData);
 

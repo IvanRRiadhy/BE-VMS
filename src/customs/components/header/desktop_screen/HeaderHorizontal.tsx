@@ -66,7 +66,13 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
           paddingLeft: '10px !important',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* {!isMobile && (
               <Box sx={{ width: xl ? '0px' : 'none', overflow: 'hidden' }}>

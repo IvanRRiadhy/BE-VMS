@@ -23,7 +23,6 @@ interface Props {
 }
 
 const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, container }) => {
-  const { token } = useSession();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [plateNumber, setPlateNumber] = useState('');
@@ -51,7 +50,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
     setLoading(true);
 
     try {
-      const res = await searchVisitor(token as string, {
+      const res = await searchVisitor( {
         code: code.trim(),
         name: name.trim(),
         vehicle_plate_number: plateNumber.trim(),

@@ -184,9 +184,6 @@ const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
 
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-
-  const { token } = useSession();
-
   const [openQRCode, setOpenQRCode] = useState(false);
 
   const handleCloseScanQR = () => {
@@ -199,7 +196,7 @@ const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
 
   const handleSubmitQRCode = async (value: string) => {
     try {
-      const res = await getInvitationCode(token as string, value);
+      const res = await getInvitationCode( value);
       const data = res.collection?.data ?? [];
       console.log('data', res.collection?.data);
 
@@ -215,7 +212,7 @@ const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
       setInvitationCode(data);
 
       // await fetchRelatedVisitorsByInvitationId(invitationId);
-      const relatedVisitor = await getInvitationOperatorRelated(invitationId, token as string);
+      const relatedVisitor = await getInvitationOperatorRelated(invitationId);
       console.log('relatedVisitor', relatedVisitor);
       setRelatedVisitors(relatedVisitor.collection ?? []);
       setOpenQRCode(false);

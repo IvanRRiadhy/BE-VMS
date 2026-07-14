@@ -25,7 +25,6 @@ const Content = () => {
 
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -77,8 +76,6 @@ const Content = () => {
 
     localStorage.removeItem('unsavedZoneData');
   };
-
-  useEffect(() => {}, []);
 
   return (
     <PageContainer

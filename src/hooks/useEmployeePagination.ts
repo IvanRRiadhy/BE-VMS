@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { getAllEmployeePagination } from 'src/customs/api/admin';
 
 export const useEmployeePagination = (
-  token: string | null,
   params?: {
     start?: number;
     length?: number;
@@ -22,7 +21,6 @@ export const useEmployeePagination = (
     queryKey: ['employees-pagi', params],
     queryFn: () =>
       getAllEmployeePagination(
-        token as string,
         params?.start,
         params?.length,
         params?.sortColumn,
@@ -36,6 +34,5 @@ export const useEmployeePagination = (
         params?.district,
         params?.department,
       ),
-    enabled: !!token,
   });
 };

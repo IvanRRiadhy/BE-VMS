@@ -34,17 +34,13 @@ type ApiResponse = {
 
 export const syncParkingIntegration = async (
   integrationId: string,
-  token: string,
 ): Promise<ApiResponse> => {
 
   try {
     const { data, status } = await axiosInstance.post(
       `/integration-parking/sync/${integrationId}`,
       {}, // body kosong
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        // timeout: 60000, 
-      },
+    
     );
 
     console.log('✅ [SYNC] Success:', status, data);
@@ -81,12 +77,9 @@ export const syncParkingIntegration = async (
 
 export const getVisitorTypeParking = async (
   integrationId: string,
-  token: string,
 ): Promise<GetVisitorTypeParkingResponse> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/visitor-type/${integrationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/integration-parking/visitor-type/${integrationId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -99,13 +92,12 @@ export const getVisitorTypeParking = async (
 export const getVisitorTypeParkingById = async (
   integrationId: string,
   id: string,
-  token: string,
 ): Promise<GetVisitorTypeParkingResponseById> => {
   try {
     const response = await axiosInstance.get(
       `/integration-parking/visitor-type/${integrationId}/${id}`,
       {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        headers: {Accept: 'application/json' },
       },
     );
     return response.data;
@@ -120,12 +112,9 @@ export const getVisitorTypeParkingById = async (
 export const updateVisitorTypeParking = async (
   id: string,
   data: UpdateVisitorTypeParkingRequest,
-  token: string,
 ): Promise<UpdateVisitorTypeParkingResponse> => {
   try {
-    const response = await axiosInstance.put(`/integration-parking/visitor-type/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/integration-parking/visitor-type/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -137,12 +126,9 @@ export const updateVisitorTypeParking = async (
 
 export const getBlockParking = async (
   integrationId: string,
-  token: string,
 ): Promise<GetBlockParkingResponse> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/block/${integrationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/integration-parking/block/${integrationId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -155,12 +141,9 @@ export const getBlockParking = async (
 export const getBlockParkingById = async (
   integrationId: string,
   id: string,
-  token: string,
 ): Promise<GetBlockParkingResponseById> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/block/${integrationId}/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
+    const response = await axiosInstance.get(`/integration-parking/block/${integrationId}/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -173,12 +156,9 @@ export const getBlockParkingById = async (
 export const updateBlockParking = async (
   id: string,
   data: UpdateBlockParkingRequest,
-  token: string,
 ): Promise<UpdateBlockParkingResponse> => {
   try {
-    const response = await axiosInstance.put(`/integration-parking/block/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/integration-parking/block/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -190,12 +170,9 @@ export const updateBlockParking = async (
 
 export const getAreaParking = async (
   integrationId: string,
-  token: string,
 ): Promise<GetAreaParkingResponse> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/area/${integrationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/integration-parking/area/${integrationId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -208,12 +185,9 @@ export const getAreaParking = async (
 export const getAreaParkingById = async (
   integrationId: string,
   id: string,
-  token: string,
 ): Promise<GetAreaParkingResponseById> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/area/${integrationId}/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
+    const response = await axiosInstance.get(`/integration-parking/area/${integrationId}/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -226,12 +200,9 @@ export const getAreaParkingById = async (
 export const updateAreaParking = async (
   id: string,
   data: UpdateAreaParkingRequest,
-  token: string,
 ): Promise<UpdateAreaParkingResponse> => {
   try {
-    const response = await axiosInstance.put(`/integration-parking/area/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/integration-parking/area/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -243,12 +214,9 @@ export const updateAreaParking = async (
 
 export const getSlotParking = async (
   integrationId: string,
-  token: string,
 ): Promise<GetSlotParkingResponse> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/slot/${integrationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/integration-parking/slot/${integrationId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -261,11 +229,11 @@ export const getSlotParking = async (
 export const getSlotParkingById = async (
   integrationId: string,
   id: string,
-  token: string,
+
 ): Promise<GetSlotParkingResponseById> => {
   try {
     const response = await axiosInstance.get(`/integration-parking/slot/${integrationId}/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -279,12 +247,10 @@ export const getSlotParkingById = async (
 export const updateSlotParking = async (
   id: string,
   data: UpdateSlotParkingRequest,
-  token: string,
+
 ): Promise<UpdateSlotParkingResponse> => {
   try {
-    const response = await axiosInstance.put(`/integration-parking/slot/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/integration-parking/slot/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -296,12 +262,9 @@ export const updateSlotParking = async (
 
 export const getVehicleParking = async (
   integrationId: string,
-  token: string,
 ): Promise<GetVehicleParkingResponse> => {
   try {
-    const response = await axiosInstance.get(`/integration-parking/vehicle/${integrationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/integration-parking/vehicle/${integrationId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -314,13 +277,12 @@ export const getVehicleParking = async (
 export const getVehicleParkingById = async (
   integrationId: string,
   id: string,
-  token: string,
 ): Promise<GetVehicleParkingResponseById> => {
   try {
     const response = await axiosInstance.get(
       `/integration-parking/vehicle/${integrationId}/${id}`,
       {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        headers: {Accept: 'application/json' },
       },
     );
     return response.data;
@@ -335,12 +297,9 @@ export const getVehicleParkingById = async (
 export const updateVehicleParking = async (
   id: string,
   data: UpdateVehicleParkingRequest,
-  token: string,
 ): Promise<UpdateVehicleParkingResponse> => {
   try {
-    const response = await axiosInstance.put(`/integration-parking/vehicle/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/integration-parking/vehicle/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {

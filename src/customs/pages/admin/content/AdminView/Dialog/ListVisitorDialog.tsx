@@ -6,7 +6,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export default function ListVisitorDialog({ open, onClose }: any) {
-  const { token } = useSession();
   // const visitorData = [
   //   {
   //     id: 1,
@@ -58,7 +57,7 @@ export default function ListVisitorDialog({ open, onClose }: any) {
   const { data: visitorData = [], isLoading } = useQuery({
     queryKey: ['invitation-visitors'],
     queryFn: async () => {
-      const res = await getInvitationVisitor(token as string);
+      const res = await getInvitationVisitor();
 
       return res?.collection?.map((item: any) => ({
         id: item.id,
@@ -72,8 +71,8 @@ export default function ListVisitorDialog({ open, onClose }: any) {
       }));
     },
 
-    enabled: !!token && open,
-    staleTime: 30000,
+    enabled:  open,
+    staleTime: 3000,
     placeholderData: (prev) => prev,
   });
 

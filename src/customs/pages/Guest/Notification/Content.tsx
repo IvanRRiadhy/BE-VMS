@@ -19,7 +19,6 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -52,21 +51,6 @@ const Content = () => {
     setSearchKeyword(keyword);
   }, []);
 
-  useEffect(() => {
-    setTableData(notifications);
-    setTotalRecords(notifications.length);
-  }, [notifications]);
-
-  const rows = notifications.map((item: any, index: number) => ({
-    id: item.id,
-    visitor_name: item.visitor_name,
-    visitor_type: item.visitor_type,
-    title: item.title,
-    message: item.message,
-    visitor_period_end: formatDateTime(item.visit_end, item.extend_visitor_period),
-    site_name: item.site_name,
-    status: item.is_read ? 'Read' : 'Unread',
-  }));
 
   return (
     <Container title="Notification" description="Notification page">

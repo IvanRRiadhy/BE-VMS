@@ -27,8 +27,6 @@ import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
-
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir] = useState('desc');
   const [edittingId, setEdittingId] = useState('');
@@ -45,7 +43,6 @@ const Content = () => {
   );
   const { t } = useTranslation();
   const documentQuery = useDocumentPagination({
-    token: token!,
     page,
     rowsPerPage,
     sortDir,
@@ -125,15 +122,12 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirm = await showConfirmDelete('Are you sure you want to delete this document?');
 
     if (!confirm) return;
     try {
       await remove.mutateAsync({
         id,
-        token,
       });
       showSwal('success', 'Successfully deleted document!');
       setRefreshTrigger((prev) => prev + 1);
@@ -143,7 +137,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
@@ -153,7 +147,6 @@ const Content = () => {
           rows.map((row) => {
             remove.mutateAsync({
               id: row.id,
-              token,
             });
           }),
         );

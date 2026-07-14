@@ -16,7 +16,6 @@ type VisitorSeries = {
 };
 
 const VisitorFluctuationChart = () => {
-  const { token } = useSession();
   const [dates, setDates] = useState<number[]>([]);
   const [series, setSeries] = useState<VisitorSeries[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
@@ -25,11 +24,11 @@ const VisitorFluctuationChart = () => {
   const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
-    if (!token) return;
+
 
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(token, start, end);
+        const res = await getVisitorChart( start, end);
         const rows = res?.collection ?? [];
 
         setDates(rows.map((item: any) => new Date(item.date).getTime()));
@@ -73,7 +72,7 @@ const VisitorFluctuationChart = () => {
     };
 
     fetchData();
-  }, [token, start, end]);
+  }, [ start, end]);
 
   return (
     <>

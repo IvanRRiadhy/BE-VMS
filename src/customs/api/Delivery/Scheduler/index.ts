@@ -15,10 +15,10 @@ export const getAllSchedulerDelivery = async (token: string): Promise<any> => {
   }
 };
 
-export const getSchedulerDeliveryById = async (token: string, id: string): Promise<any> => {
+export const getSchedulerDeliveryById = async ( id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/delivery-schedule/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: {  Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -30,7 +30,6 @@ export const getSchedulerDeliveryById = async (token: string, id: string): Promi
 };
 
 export const getSchedulerDeliveryPagination = async (
-  token: string,
   start: number,
   length: number,
   sortColumn?: string,
@@ -57,7 +56,7 @@ export const getSchedulerDeliveryPagination = async (
 
     const response = await axiosInstance.get(`/delivery-schedule/dt`, {
       params,
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
 
     return response.data;
@@ -69,10 +68,10 @@ export const getSchedulerDeliveryPagination = async (
   }
 };
 
-export const createSchedulerDelivery = async (token: string, data: any): Promise<any> => {
+export const createSchedulerDelivery = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/delivery-schedule`, data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -84,14 +83,10 @@ export const createSchedulerDelivery = async (token: string, data: any): Promise
 };
 
 // Update
-export const updateSchedulerDelivery = async (
-  token: string,
-  id: string,
-  data: any,
-): Promise<any> => {
+export const updateSchedulerDelivery = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put(`/delivery-schedule/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -102,10 +97,10 @@ export const updateSchedulerDelivery = async (
   }
 };
 
-export const deleteSchedulerDelivery = async (token: string, id: string): Promise<any> => {
+export const deleteSchedulerDelivery = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.delete(`/delivery-schedule/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -116,10 +111,10 @@ export const deleteSchedulerDelivery = async (token: string, id: string): Promis
   }
 };
 
-export const createPrainvitationDelivery = async (token: string, data: any): Promise<any> => {
+export const createPrainvitationDelivery = async ( data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post('/delivery-schedule/new-invite', data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -130,7 +125,6 @@ export const createPrainvitationDelivery = async (token: string, data: any): Pro
   }
 };
 export const getCalendarSchedule = async (
-  token: string,
   deliveryScheduleId: string,
   startDate: string,
   endDate: string,
@@ -138,7 +132,6 @@ export const getCalendarSchedule = async (
   try {
     const response = await axiosInstance.get('/delivery-schedule/calendar', {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
       params: {
@@ -157,13 +150,10 @@ export const getCalendarSchedule = async (
   }
 };
 
-export const getDeliveryScheduleInvitationById = async (
-  token: string,
-  id: string,
-): Promise<any> => {
+export const getDeliveryScheduleInvitationById = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get('/delivery-schedule/invitation' + `/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -174,10 +164,10 @@ export const getDeliveryScheduleInvitationById = async (
   }
 };
 
-export const updateReschduleInvitation = async (token: string, data: any): Promise<any> => {
+export const updateReschduleInvitation = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put('/delivery-schedule/reschedule-invite', data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {

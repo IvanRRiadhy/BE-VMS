@@ -7,10 +7,10 @@ import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
 import { GroupRoleId } from '../constant/GroupRoleId';
 import AuthRedirector from './AuthRedirector';
 import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
-import Register from 'src/views/authentication/auth2/Register';
-import ForgotPassword from 'src/views/authentication/auth2/ForgotPassword';
-import ExpiredPage from 'src/views/authentication/auth2/ExpiredPage';
-import LimitedInvitation from 'src/views/authentication/auth2/LimitedInvitation';
+import Register from 'src/views/authentication/auth/Register';
+import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
+import ExpiredPage from 'src/views/authentication/auth/ExpiredPage';
+import LimitedInvitation from 'src/views/authentication/auth/LimitedInvitation';
 import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
 import View from 'src/customs/pages/Operator/View';
 // import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
@@ -27,7 +27,7 @@ const ManagerLayout = Loadable(
 const BlankLayout = Loadable(lazy(() => import('src/layouts/blank/BlankLayout')));
 
 /* Auth Pages */
-const Login = Loadable(lazy(() => import('src/views/authentication/auth2/Login')));
+const Login = Loadable(lazy(() => import('src/views/authentication/auth/Login')));
 const UnauthorizedPage = Loadable(
   lazy(() => import('src/customs/components/page/UnauthorizedPage')),
 );
@@ -149,7 +149,7 @@ const ManageSettingVisitor = Loadable(
   lazy(() => import('src/customs/pages/admin/content/SettingVisitorOperator/Content')),
 );
 const ManageDelivery = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/Delivery/Driver/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Staff/Content')),
 );
 const ManageDeliveryScheduler = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/Content')),

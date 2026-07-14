@@ -30,7 +30,6 @@ const DetailProfile = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { token } = useSession();
   const { user } = useAuth();
 
   const [formData, setFormData] = useState<Item>({
@@ -41,6 +40,7 @@ const DetailProfile = () => {
     group_name: '',
     gender: '',
     address: '',
+    password: '',
     phone: '',
     is_vip: false,
     is_email_verified: false,
@@ -52,30 +52,30 @@ const DetailProfile = () => {
   // 🔹 Ambil data profil dari API
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!token) return;
 
       try {
         setLoading(true);
-        const res = await getProfile(token);
+        const res = await getProfile();
 
         const d = res?.collection;
         if (!d) return;
 
-        setFormData({
-          id: d.id || '',
-          fullname: d.fullname || '',
-          username: d.username || '',
-          email: d.email || '',
-          group_name: d.group_name || '',
-          gender: d.gender || (d as any).Gender || '',
-          address: d.address || '',
-          phone: d.phone || '',
-          is_vip: d.is_vip ?? false,
-          is_email_verified: d.is_email_verified ?? false,
-          organization_name: d.organization_name || '',
-          district_name: d.district_name || '',
-          department_name: d.department_name || '',
-        });
+         setFormData({
+           id: d.id || '',
+           fullname: d.fullname || '',
+           username: d.username || '',
+           email: d.email || '',
+           group_name: d.group_name || '',
+           gender: d.gender || '',
+           address: d.address || '',
+           phone: d.phone || '',
+           password: d.password || '',
+           is_vip: d.is_vip ?? false,
+           is_email_verified: d.is_email_verified ?? false,
+           organization_name: d.organization_name || '',
+           district_name: d.district_name || '',
+           department_name: d.department_name || '',
+         });
       } catch (err) {
         console.error('Gagal mengambil data profil:', err);
       } finally {
@@ -84,7 +84,7 @@ const DetailProfile = () => {
     };
 
     fetchProfile();
-  }, [token]);
+  }, []);
 
   // 🔹 Simpan perubahan ke API
   const handleSave = async () => {
@@ -102,7 +102,7 @@ const DetailProfile = () => {
           department_name: formData.department_name,
           district_name: formData.district_name,
         },
-        { headers: { Authorization: `Bearer ${token}` } },
+    
       );
       setIsEditing(false);
     } catch (err) {

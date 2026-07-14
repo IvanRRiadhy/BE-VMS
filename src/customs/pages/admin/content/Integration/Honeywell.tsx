@@ -63,7 +63,6 @@ import { checkConnection } from 'src/customs/api/Admin/Integration';
 import SyncBadgeDialog from './components/SyncBadgeDialog';
 
 const Honeywell = ({ id }: { id: string }) => {
-  const { token } = useSession();
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -115,14 +114,14 @@ const Honeywell = ({ id }: { id: string }) => {
   });
 
   const handleSyncIntegration = async () => {
-    if (!id || !token) {
+    if (!id) {
       showSwal('error', 'Session expired / Invalid ID.');
       return;
     }
 
     try {
       setSyncing(true);
-      const res = await syncHoneywellIntegration(id as string, token as string);
+      const res = await syncHoneywellIntegration(id as string);
       setSyncing(false);
 
       if (res.status !== 'success') {
@@ -145,7 +144,7 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const handleSyncBadge = async () => {
-    if (!id || !token) {
+    if (!id) {
       showSwal('error', 'Session expired / Invalid ID.');
       return;
     }
@@ -153,7 +152,7 @@ const Honeywell = ({ id }: { id: string }) => {
     try {
       setSyncing(true);
 
-      const res = await syncHoneywellBadge(id as string, token as string);
+      const res = await syncHoneywellBadge(id as string);
 
       setSyncing(false);
 
@@ -240,13 +239,13 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const loadTotals = async () => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     const [cRes, btRes, ccRes, bsRes] = await Promise.allSettled([
-      getCompanies(id as string, token),
-      getBadgeType(id as string, token),
-      getClearcodes(id as string, token),
-      getBadgeStatus(id as string, token),
+      getCompanies(id as string),
+      getBadgeType(id as string),
+      getClearcodes(id as string),
+      getBadgeStatus(id as string),
     ]);
 
     setTotals({
@@ -259,17 +258,17 @@ const Honeywell = ({ id }: { id: string }) => {
 
   useEffect(() => {
     loadTotals();
-  }, [id, token]);
+  }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if (!token || !id) return;
+    if ( !id) return;
     setLoading(true);
     try {
       if (type === 'companies') {
-        const res = await getCompanies(id as string, token);
+        const res = await getCompanies(id as string);
         setListData(res.collection ?? []);
       } else if (type === 'badge_type' || type === 'badge_types') {
-        const res = await getBadgeType(id as string, token);
+        const res = await getBadgeType(id as string);
         const rows = res?.collection?.map((item: any) => ({
           id: String(item.id),
           name: item.name ?? '',
@@ -282,10 +281,10 @@ const Honeywell = ({ id }: { id: string }) => {
         }));
         setListData(rows ?? []);
       } else if (type === 'clear_codes') {
-        const res = await getClearcodes(id as string, token);
+        const res = await getClearcodes(id as string);
         setListData(res.collection ?? []);
       } else if (type === 'badge_status') {
-        const res = await getBadgeStatus(id as string, token);
+        const res = await getBadgeStatus(id as string);
         setListData(res.collection ?? []);
       } else {
         setListData([]);
@@ -298,7 +297,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-  }, [selectedType, token, id]);
+  }, [selectedType, id]);
 
   const [editDialogType, setEditDialogType] = useState<
     'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | null
@@ -348,7 +347,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [selectedType, editingRow]);
 
   const handleEditRow = async (row: any) => {
-    if (!token || !id) return;
+    if ( !id) return;
 
     setIsBatchEdit(false);
     setEnabled({
@@ -362,16 +361,16 @@ const Honeywell = ({ id }: { id: string }) => {
     setEditDialogType(TYPE_MAP[selectedType] ?? null);
     try {
       if (selectedType === 'companies') {
-        const res = await getCompaniesById(id as string, String(row.id), token);
+        const res = await getCompaniesById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'badge_type') {
-        const res = await getBadgeTypeById(id as string, String(row.id), token);
+        const res = await getBadgeTypeById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'clear_codes') {
-        const res = await getClearcodesById(id as string, String(row.id), token);
+        const res = await getClearcodesById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'badge_status') {
-        const res = await getBadgeStatusById(id as string, String(row.id), token);
+        const res = await getBadgeStatusById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else {
         setDetailData(row);
@@ -450,7 +449,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-    if (!token) return;
+ 
 
     let cancelled = false;
 
@@ -458,7 +457,7 @@ const Honeywell = ({ id }: { id: string }) => {
       try {
         if (editDialogType === 'Companies') {
           // Load organizations
-          const res = await getAllOrganizations(token);
+          const res = await getAllOrganizations();
           if (cancelled) return;
 
           const items =
@@ -472,7 +471,7 @@ const Honeywell = ({ id }: { id: string }) => {
           setVisitorTypeOptions([]);
         } else if (editDialogType === 'Badge Type') {
           // Load visitor types
-          const res = await getAllVisitorType(token);
+          const res = await getAllVisitorType();
           if (cancelled) return;
 
           const items =
@@ -485,7 +484,7 @@ const Honeywell = ({ id }: { id: string }) => {
           setOrgOptions([]);
         } else if (editDialogType === 'Clearcodes') {
           // Load visitor types
-          const res = await getAllAccessControl(token);
+          const res = await getAllAccessControl();
           if (cancelled) return;
 
           const items =
@@ -519,7 +518,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
     loadOptions();
     return () => {};
-  }, [editDialogType, token]);
+  }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
     Object.fromEntries(
@@ -547,7 +546,7 @@ const Honeywell = ({ id }: { id: string }) => {
             : undefined,
         });
 
-        await updateCompany(companyId, payload, token as string);
+        await updateCompany(companyId, payload);
 
         setListData((prev) =>
           prev.map((it) => (String(it.id) === companyId ? { ...it, ...payload } : it)),
@@ -585,7 +584,7 @@ const Honeywell = ({ id }: { id: string }) => {
       }
 
       const ids = selectedRows.map((r) => String(r.id));
-      await Promise.all(ids.map((id) => updateCompany(id, payload, token as string)));
+      await Promise.all(ids.map((id) => updateCompany(id, payload)));
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -635,7 +634,7 @@ const Honeywell = ({ id }: { id: string }) => {
             : undefined,
         });
 
-        await updateBadgeType(btId, payload, token as string);
+        await updateBadgeType(btId, payload);
         setListData((prev) =>
           prev.map((it) => (String(it.id) === btId ? { ...it, ...payload } : it)),
         );
@@ -665,7 +664,7 @@ const Honeywell = ({ id }: { id: string }) => {
       }
 
       const ids = selectedRows.map((r) => String(r.id));
-      await Promise.all(ids.map((id) => updateBadgeType(id, payload, token as string)));
+      await Promise.all(ids.map((id) => updateBadgeType(id, payload)));
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
@@ -703,7 +702,7 @@ const Honeywell = ({ id }: { id: string }) => {
             : undefined,
         });
 
-        await updateClearcodes(ccId, payload, token as string);
+        await updateClearcodes(ccId, payload);
         setListData((prev) =>
           prev.map((it) => (String(it.id) === ccId ? { ...it, ...payload } : it)),
         );
@@ -732,7 +731,7 @@ const Honeywell = ({ id }: { id: string }) => {
       }
 
       const ids = selectedRows.map((r) => String(r.id));
-      await Promise.all(ids.map((id) => updateClearcodes(id, payload, token as string)));
+      await Promise.all(ids.map((id) => updateClearcodes(id, payload)));
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
@@ -752,10 +751,7 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
-    if (!token) {
-      setSyncMsg({ open: true, text: 'Session habis.', severity: 'error' });
-      return;
-    }
+ 
     const prev = listData;
 
     setListData((p) =>
@@ -765,11 +761,11 @@ const Honeywell = ({ id }: { id: string }) => {
     try {
       const payload: any = { [field]: value };
       if (selectedType === 'companies')
-        await updateCompany(String(rowId), payload, token as string);
+        await updateCompany(String(rowId), payload);
       else if (selectedType === 'badge_type' || selectedType === 'badge_types')
-        await updateBadgeType(String(rowId), payload as any, token as string);
+        await updateBadgeType(String(rowId), payload as any);
       else if (selectedType === 'clear_codes')
-        await updateClearcodes(String(rowId), payload as any, token as string);
+        await updateClearcodes(String(rowId), payload as any);
       else if (selectedType === 'badge_status') {
         showSwal('error', 'Failed to update badge status');
         setListData(prev);
@@ -861,7 +857,7 @@ const Honeywell = ({ id }: { id: string }) => {
         })),
       };
 
-      await addBadgeEmployee(token as string, id as string, payload);
+      await addBadgeEmployee( id as string, payload);
 
       showSwal('success', 'Selected badges imported successfully');
 
@@ -879,13 +875,10 @@ const Honeywell = ({ id }: { id: string }) => {
   const [openConnection, setOpenConnection] = useState(false);
 
   const handleCheckConnection = async () => {
-    if (!token) {
-      showSwal('error', 'Session expired.');
-      return;
-    }
+    
 
     try {
-      const res = await checkConnection(token as string, id);
+      const res = await checkConnection( id);
       console.log('id', id);
 
       if (res.status === 'success') {

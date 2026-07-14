@@ -82,7 +82,6 @@ type Group = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
@@ -163,10 +162,10 @@ const Content = () => {
   } = useQuery({
     queryKey: ['employee', selectedEmployeeId],
     queryFn: async () => {
-      const res = await getEmployeeById(selectedEmployeeId!, token as string);
+      const res = await getEmployeeById(selectedEmployeeId!);
       return res.collection ?? [];
     },
-    enabled: !!selectedEmployeeId && !!token,
+    enabled: !!selectedEmployeeId ,
     staleTime: 1 * 60 * 1000,
     retry: 1,
   });
@@ -209,7 +208,6 @@ const Content = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const fetchData = async (append = false) => {
-    if (!token) return;
 
     if (append) {
       setLoadingMore(true);
@@ -228,7 +226,6 @@ const Content = () => {
         appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
       const res = await getVisitorTransactionPagination(
-        token,
         start,
         rowsPerPage,
         sortDir,
@@ -277,17 +274,17 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
+
     fetchData(false);
-  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
+  }, [ page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
 
   useEffect(() => {
-    if (!selectedGroupId || !token) return;
+    if (!selectedGroupId) return;
 
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
-        const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        const res = await getVisitorTransactionByIds( selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -298,7 +295,7 @@ const Content = () => {
     };
 
     fetchDetail();
-  }, [selectedGroupId, token]);
+  }, [selectedGroupId]);
 
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
@@ -308,7 +305,6 @@ const Content = () => {
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
     queryFn: async () => {
       const res = await getAllVisitorPagination(
-        token as string,
         quickPage * quickRowsPerPage,
         quickRowsPerPage,
         quickSearch || undefined,
@@ -319,7 +315,7 @@ const Content = () => {
 
       return res;
     },
-    enabled: !!token && openQuickAccess,
+    enabled: openQuickAccess,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -446,13 +442,13 @@ const Content = () => {
   };
 
   const handleView = async (id: string) => {
-    if (!id || !token) return;
+    if (!id ) return;
 
     setOpenRelatedInvitation(true);
 
     try {
       // const res = await getInvitationRelatedVisitor(id, token);
-      const res = await getVisitorTransactionByIds(token, id);
+      const res = await getVisitorTransactionByIds( id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -492,12 +488,12 @@ const Content = () => {
   const debounceSearch = useDebounce(searchHost, 400);
 
   useEffect(() => {
-    if (!token) return;
+   
 
     const fetchSecondaryData = async () => {
       const [employeeResult, siteResult] = await Promise.allSettled([
-        getInvitationVisitorEmployee(token),
-        getInvitationSite(token),
+        getInvitationVisitorEmployee(),
+        getInvitationSite(),
       ]);
 
       if (employeeResult.status === 'fulfilled') {
@@ -516,16 +512,16 @@ const Content = () => {
     };
 
     fetchSecondaryData();
-  }, [token]);
+  }, []);
 
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
-    useInvitationVisitorEmployee(token, {
+    useInvitationVisitorEmployee( {
       search: debounceSearch,
       start: 0,
       length: 10,
     });
 
-  const { visitorType } = useInvitationVisitorType(token);
+  const { visitorType } = useInvitationVisitorType();
 
   const handleDeleteLink = async (id: string) => {
     try {
@@ -545,7 +541,7 @@ const Content = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(token as string, id);
+      await deleteShareLink( id);
       showSwal('success', 'Link deleted successfully.');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -600,7 +596,7 @@ const Content = () => {
         emails: emails,
       };
 
-      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
+      await createShareLinkByEmailById( payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -611,7 +607,7 @@ const Content = () => {
   const handleOpenInviteDialog = async (row: any) => {
     // setSelectedShareLink(row);
 
-    const res = await getShareLinkById(row.id, token as string);
+    const res = await getShareLinkById(row.id);
     setSelectedShareLink(res.collection);
 
     setSelectedShareLinkId(row.id);
@@ -631,7 +627,7 @@ const Content = () => {
         emails: emails,
       };
 
-      await createShareLink(token as string, finalPayload);
+      await createShareLink( finalPayload);
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
@@ -649,7 +645,7 @@ const Content = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(token as string, payload);
+      await createShareLink( payload);
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
@@ -663,7 +659,7 @@ const Content = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess(token, payload);
+      await createQuickAccess( payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -700,7 +696,7 @@ const Content = () => {
 
   const handleCancel = async (id: string) => {
     try {
-      await cancelVisitor(token as string, id);
+      await cancelVisitor( id);
 
       showSwal('success', 'Transaction successfully cancelled');
 
@@ -971,7 +967,6 @@ const Content = () => {
         refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
-        token={token as string}
         onCopyLink={(row) => handleOpenInviteDialog(row)}
         onDetailLink={handleDetailLink}
         onDelete={handleDeleteLink}

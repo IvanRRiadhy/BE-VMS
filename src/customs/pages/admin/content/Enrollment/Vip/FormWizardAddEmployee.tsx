@@ -101,7 +101,6 @@ const FormWizardAddEmployee = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const { token } = useSession(); // Assuming you have a session context to get the token
   const [organization, setOrganization] = useState<any[]>([]);
   const [department, setDepartment] = useState<any[]>([]);
   const [district, setDistrict] = useState<any[]>([]);
@@ -171,24 +170,23 @@ const FormWizardAddEmployee = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
 
       const [orgRes, deptRes, distRes] = await Promise.all([
-        getAllOrganizations(token),
-        getAllDepartments(token),
-        getAllDistricts(token),
+        getAllOrganizations(),
+        getAllDepartments(),
+        getAllDistricts(),
       ]);
 
       setOrganization(orgRes.collection ?? []);
       setDepartment(deptRes.collection ?? []);
       setDistrict(distRes.collection ?? []);
 
-      const employeeAll = await getAllEmployee(token);
+      const employeeAll = await getAllEmployee();
       setEmployeeAllRes(employeeAll.collection ?? []);
 
       // ⛔ JANGAN load detail karyawan ketika batch edit
       if (edittingId && !isBatchEdit) {
-        const employeeRes = await getEmployeeById(edittingId, token);
+        const employeeRes = await getEmployeeById(edittingId);
         const employee = employeeRes?.collection ?? null;
         if (employee) {
           const normalizedGender =
@@ -211,7 +209,7 @@ const FormWizardAddEmployee = ({
     };
 
     fetchData();
-  }, [token, edittingId, isBatchEdit]);
+  }, [ edittingId, isBatchEdit]);
 
   // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
@@ -389,14 +387,7 @@ const FormWizardAddEmployee = ({
     setErrors({});
 
     try {
-      if (!token) {
-        showSwal('error', 'Something went wrong. Please try again later.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
+    
 
       /** 🧩 Batch Edit Mode */
       if (isBatchEdit && selectedRows.length > 0) {
@@ -436,7 +427,7 @@ const FormWizardAddEmployee = ({
               vehicle_plate_number: payload.vehicle_plate_number,
               vehicle_type: payload.vehicle_type,
             },
-            token,
+       
           );
         }
 
@@ -485,10 +476,7 @@ const FormWizardAddEmployee = ({
           is_email_verify: false,
         };
 
-        console.log('Updating employee with data:', editData);
-
-        const res = await updateEmployee(edittingId, editData, token);
-        console.log('Update result:', res);
+        const res = await updateEmployee(edittingId, editData);
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
@@ -496,7 +484,7 @@ const FormWizardAddEmployee = ({
 
         showSwal('success', 'Employee successfully updated!');
       } else {
-        const created = await createEmployee(data, token);
+        const created = await createEmployee(data);
         const employeeId = created?.collection.employee_id;
 
         if (hasNewImage) {
@@ -552,13 +540,13 @@ const FormWizardAddEmployee = ({
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      tasks.push(uploadImageEmployee(employeeId, fileFromInput, token as string));
+      tasks.push(uploadImageEmployee(employeeId, fileFromInput));
     }
 
     if (faceImage && isDataUrl(faceImage)) {
       const blob = await fetch(faceImage).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      tasks.push(uploadImageEmployee(employeeId, file, token as string));
+      tasks.push(uploadImageEmployee(employeeId, file));
     }
 
     if (tasks.length === 0) return;

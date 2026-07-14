@@ -18,7 +18,6 @@ const COLORS = [
 ];
 
 const TopVisitingPurposeChart = () => {
-  const { token } = useSession();
   const { t } = useTranslation();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const [chartData, setChartData] = useState<{
@@ -35,11 +34,11 @@ const TopVisitingPurposeChart = () => {
   const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
-    if (!token) return;
+ 
 
     const fetchData = async () => {
       try {
-        const res = await getTopVisitingPurpose(token, start, end);
+        const res = await getTopVisitingPurpose( start, end);
 
         const labels = res.collection.map((item: any) => item.name);
         const values = res.collection.map((item: any) => item.count);
@@ -52,7 +51,7 @@ const TopVisitingPurposeChart = () => {
     };
 
     fetchData();
-  }, [token, start, end]);
+  }, [ start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {

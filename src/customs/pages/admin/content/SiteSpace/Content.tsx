@@ -11,7 +11,6 @@ import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   deleteSiteSpace,
   getAllEmployee,
@@ -27,13 +26,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import SelectSiteTypeDialog from './components/Dialog/SelectSiteTypeDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { useEmployees } from 'src/hooks/useEmployees';
-import { updateSiteActive } from 'src/customs/api/Admin/Site';
 import DialogSiteSpace from './components/Dialog/DialogSiteSpace';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
 import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
-import { useSites } from 'src/hooks/useSites';
 
 type SiteTableRow = {
   id: string;
@@ -59,15 +56,9 @@ type EnableField = {
 };
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
-  // const [allData, setAllData] = useState<any[]>([]);
+  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
-  // const [totalRecords, setTotalRecords] = useState(0);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // const [tableRowSite, setTableRowSite] = useState<SiteTableRow[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -111,13 +102,10 @@ const Content = () => {
     3: [], // Room →
   };
 
-  // const { sites } = useSites(token);
-  // const allData = sites?.collection ?? [];
-
   const [allData, setAllData] = useState<any[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getAllSite(token);
+      const res = await getAllSite();
       setAllData(res.collection);
     };
     fetchData();
@@ -150,7 +138,7 @@ const Content = () => {
 
     setAllowedTypes(filtered);
   }, [id, wildcard, allData]);
-  const { employee } = useEmployees(token);
+  const { employee } = useEmployees();
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<any>(CreateSiteRequestSchema.parse({}));
   const [isDirty, setIsDirty] = useState(false);
@@ -179,7 +167,6 @@ const Content = () => {
     isFetching,
     refetch,
   } = useSitePagination({
-    token,
     page,
     rowsPerPage,
     sortDir,
@@ -286,15 +273,13 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
-    if (!token) return;
-
     const safeNumber = (val: any, fallback = 0) => {
       const n = Number(val);
       return Number.isFinite(n) ? n : fallback;
     };
 
     try {
-      const res = await getSiteById(id, token);
+      const res = await getSiteById(id);
       const found = res?.collection ?? null;
 
       if (!found) return;
@@ -375,7 +360,7 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
+  
 
     const confirm = await showConfirmDelete('Are you sure you want to delete this site space?');
 
@@ -385,7 +370,6 @@ const Content = () => {
       try {
         await remove.mutateAsync({
           id,
-          token,
         });
 
         showSwal('success', 'Successfully deleted site space!');
@@ -396,13 +380,13 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: SiteTableRow[]) => {
-    if (!token || rows.length === 0) return false;
+    if ( rows.length === 0) return false;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
     if (!confirmed) return false;
 
     try {
-      await Promise.all(rows.map((row) => remove.mutateAsync({ id: row.id, token })));
+      await Promise.all(rows.map((row) => remove.mutateAsync({ id: row.id })));
 
       setSelectedRows([]);
       showSwal('success', `${rows.length} site space have been deleted.`);
@@ -492,10 +476,8 @@ const Content = () => {
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
-      setLoadingBackdrop(true);
-      // await updateSiteActive(token as string, row.id, checked);
+      setLoadingBackdrop(true);;
       await updateActive.mutateAsync({
-        token,
         id: row.id,
         active: checked,
       });
@@ -558,7 +540,7 @@ const Content = () => {
                 isHaveHeader={false}
                 isSiteSpaceType={true}
                 onCheckedChange={(selected) => {
-                  const fullSelectedItems = tableData.filter((item) =>
+                  const fullSelectedItems = tableRowSite.filter((item: any) =>
                     selected.some((row: SiteTableRow) => row.id === item.id),
                   );
                   setSelectedRows(fullSelectedItems);

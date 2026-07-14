@@ -31,7 +31,6 @@ import autoTable from 'jspdf-autotable';
 
 import { IconDeviceFloppy, IconReport, IconTrash, IconX } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { Snackbar, Alert } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
 import {
@@ -43,8 +42,6 @@ import {
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Content = () => {
-  const { token } = useSession();
-
   const [formData, setFormData] = useState({
     start_date: null,
     end_date: null,
@@ -88,28 +85,22 @@ const Content = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-      const resSite = await getAllSite(token);
+
+      const resSite = await getAllSite();
       setSiteOptions(resSite.collection);
-      const resEmployeee = await getVisitorEmployee(token);
+      const resEmployeee = await getVisitorEmployee();
       setEmployeeOptions(resEmployeee.collection);
-      const resVisitor = await getAllVisitor(token);
+      const resVisitor = await getAllVisitor();
       setVisitorOptions(resVisitor.collection);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const [reportData, setReportData] = useState<any[]>([]);
 
   const handlePostReport = async () => {
     try {
-      if (!token) return;
-
-      // if (!reportData || reportData.length === 0) {
-      //   showSnackbar('No data found.', 'info');
-      //   return;
-      // }
 
       setLoading(true);
 
@@ -119,7 +110,7 @@ const Content = () => {
         return;
       }
 
-      const res = await generateReport(token, formData);
+      const res = await generateReport(formData);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,
@@ -234,8 +225,7 @@ const Content = () => {
   };
 
   const handleConfirmSaveReport = async () => {
-
-    setLoading(true); 
+    setLoading(true);
     try {
       const siteSelected = siteOptions.find((s: any) => s.id === formData.sites?.[0]);
       const siteName = siteSelected ? siteSelected.name : '';

@@ -4,8 +4,6 @@ import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react
 import { useEffect, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
-import { useSession } from 'src/customs/contexts/SessionContext';
-
 interface VisitorStatusItem {
   visitor_status: string;
   Count: number;
@@ -18,7 +16,6 @@ interface ApiDateGroup {
 
 const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
@@ -53,11 +50,9 @@ const TopCard = ({ items = [], size }: any) => {
   };
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(token as any, start, end);
+        const res = await getVisitorChart(start, end);
         const collection: ApiDateGroup[] = res.collection ?? [];
 
         // const today = new Date();
@@ -117,8 +112,8 @@ const TopCard = ({ items = [], size }: any) => {
       }
     };
 
-    if (token) fetchData();
-  }, [token, startDate, endDate]);
+    fetchData();
+  }, [startDate, endDate]);
 
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;
@@ -196,10 +191,10 @@ const TopCard = ({ items = [], size }: any) => {
       days.push(dateStr);
 
       // cari data di collection (harus simpan raw collection dulu)
-      const found = rawCollection.find((x) => x.Date.startsWith(dateStr));
+      const found = rawCollection.find((x) => x.date.startsWith(dateStr));
 
       if (found) {
-        const status = found.Status.find((s) => s.visitor_status.trim() === key);
+        const status = found.status.find((s) => s.visitor_status.trim() === key);
         values.push(status?.Count ?? 0);
       } else {
         values.push(0);

@@ -40,13 +40,10 @@ const DashboardOperator = () => {
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const { token } = useSession();
-
   const { data: quickAccessResult } = useQuery({
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
     queryFn: async () => {
       const res = await getAllVisitorPagination(
-        token as string,
         quickPage * quickRowsPerPage,
         quickRowsPerPage,
         quickSearch || undefined,
@@ -57,7 +54,6 @@ const DashboardOperator = () => {
 
       return res;
     },
-    enabled: !!token,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -100,7 +96,7 @@ const DashboardOperator = () => {
     try {
       // setIsGenerating(true);
       setLoadingAccess(true);
-      await createQuickAccess(token, payload);
+      await createQuickAccess( payload);
 
       showSwal('success', 'Quick access created successfully');
 

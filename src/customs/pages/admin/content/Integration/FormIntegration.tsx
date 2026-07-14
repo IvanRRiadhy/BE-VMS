@@ -32,7 +32,6 @@ interface FormIntegrationProps {
 const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -51,9 +50,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     setLoading(true);
     setErrors({});
     try {
-      if (!token) {
-        return;
-      }
+     
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
       const payload: any = {
         ...data,
@@ -61,12 +58,11 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       };
 
       if (editingId && editingId !== '') {
-        await updateIntegration(editingId, payload, token);
+        await updateIntegration(editingId, payload);
       } else {
-        await createIntegration(payload, token);
+        await createIntegration(payload);
       }
 
-      localStorage.removeItem('unsavedIntegrationData');
 
       showSwal(
         'success',

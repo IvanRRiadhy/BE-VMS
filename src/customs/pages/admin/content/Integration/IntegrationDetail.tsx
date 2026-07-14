@@ -9,20 +9,18 @@ import Ipsotek from './Ipsotek';
 
 const IntegrationDetail = () => {
   const { id } = useParams();
-  const { token } = useSession();
   const [integration, setIntegration] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id || !token) return;
+    if (!id) return;
     const ac = new AbortController();
 
     (async () => {
       try {
         setLoading(true);
         const res = await axiosInstance.get(`/integration/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
           signal: ac.signal,
         });
 
@@ -36,7 +34,7 @@ const IntegrationDetail = () => {
     })();
 
     return () => ac.abort();
-  }, [id, token]);
+  }, [id]);
 
   if (loading) return <p></p>;
   if (err) return <p style={{ color: 'tomato' }}>{err}</p>;
@@ -45,12 +43,12 @@ const IntegrationDetail = () => {
   const brand = String(integration.brand_name || '').toLowerCase();
   const brandType = String(integration.brand_type || '');
   const fullName = String(integration.name || '').toLowerCase();
-  const name = fullName.split(' - ')[0].trim(); 
+  const name = fullName.split(' - ')[0].trim();
 
   switch (true) {
     case brand === 'honeywell' && brandType === 'CameraAnalytics':
       return <Ipsotek id={integration.id} />;
-      
+
     case brand === 'honeywell' || name === 'honeywell':
       return <Honeywell id={integration.id} />;
 

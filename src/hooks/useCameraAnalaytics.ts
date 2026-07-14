@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import { getCameraAnalytics } from "src/customs/api/admin";
 
-export const useCameraAnalytics = (token?: string) => {
+export const useCameraAnalytics = () => {
   const [analyticCctv, setAnalyticCctv] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchAnalytics = async () => {
       try {
-        const res = await getCameraAnalytics(token);
+        const res = await getCameraAnalytics();
         setAnalyticCctv(res?.collection ?? []);
       } catch (err) {
         console.error(err);
@@ -17,7 +15,7 @@ export const useCameraAnalytics = (token?: string) => {
     };
 
     fetchAnalytics();
-  }, [token]);
+  }, []);
 
   return {
     analyticCctv,

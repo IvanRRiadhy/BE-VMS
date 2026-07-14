@@ -91,7 +91,7 @@ const errorInterceptor = (error: any) => {
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('TOKEN:', token);
+    // console.log('TOKEN:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -107,7 +107,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance2.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('TOKEN:', token);
+    // console.log('TOKEN:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

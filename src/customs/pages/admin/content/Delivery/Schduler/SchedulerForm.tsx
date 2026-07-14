@@ -236,7 +236,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   useEffect(() => {
     if (!form.visitor_type) return;
 
-    const selectedType = visitorTypeQuery.find((v) => v.id === form.visitor_type.id);
+    const selectedType = visitorTypeQuery.find((v) => v.id === form?.visitor_type?.id);
 
     if (selectedType?.section_page_visitor_types?.length) {
       const mappedQuestionPage = selectedType.section_page_visitor_types.map((section: any) => ({

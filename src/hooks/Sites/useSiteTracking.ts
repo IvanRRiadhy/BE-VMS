@@ -3,13 +3,11 @@ import { getSiteTracking } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export const useSiteTracking = () => {
-  const { token } = useSession();
 
   const query = useQuery({
     queryKey: ['site-trackings'],
-    enabled: !!token,
     queryFn: async () => {
-      const res = await getSiteTracking(token!);
+      const res = await getSiteTracking();
       return res.collection ?? [];
     },
   });

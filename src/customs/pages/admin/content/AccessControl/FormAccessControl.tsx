@@ -83,7 +83,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   useEffect(() => {
     (async () => {
       const [integrationRes] = await Promise.allSettled([
-        // getAllBrand(token),
+        // getAllBrand(),
         getAllIntegration(),
       ]);
 

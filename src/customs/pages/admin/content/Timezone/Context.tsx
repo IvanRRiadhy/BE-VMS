@@ -83,18 +83,17 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
-  const { token } = useSession();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!token) return;
+  
 
     try {
       setLoading(true);
       const fetchData = async () => {
-        const res = await getAllTimezone(token);
+        const res = await getAllTimezone();
         setTimezoneData(res.collection ?? []);
       };
 
@@ -104,7 +103,7 @@ const Content = () => {
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
-  }, [token, refreshTrigger]);
+  }, [refreshTrigger]);
 
   const filtered = timezoneData?.filter((v) =>
     v.name.toLowerCase().includes(debounceSearch.toLowerCase()),
@@ -113,13 +112,11 @@ const Content = () => {
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirmed = await showConfirmDelete('Are you sure you want to delete this time access?');
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteTimezone(token, id);
+        await deleteTimezone(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Time Access has been deleted.');
         setSelectedTimezone(null);
@@ -132,9 +129,8 @@ const Content = () => {
   };
 
   const handleSelect = async (id: string) => {
-    if (!token) return;
     try {
-      const res = await getTimezoneById(token, id);
+      const res = await getTimezoneById(id);
       const mapped = mapApiToDaySchedule(res.collection);
       setSelectedTimezone(mapped);
       setMode('edit');
@@ -271,21 +267,6 @@ const Content = () => {
           </Box>
 
           <Box flexGrow={1} p={3} sx={{ overflow: 'hidden', height: { xs: 'auto', xl: '88vh' } }}>
-            {/* {selectedTimezone ? (
-              <FormTimezone
-                key={selectedTimezone.id}
-                mode="edit"
-                initialData={selectedTimezone}
-                onSuccess={() => setRefreshTrigger((x) => x + 1)}
-              />
-            ) : (
-              <FormTimezone
-                key={'create'}
-                mode="create"
-                initialData={null}
-                onSuccess={() => setRefreshTrigger((x) => x + 1)}
-              />
-            )} */}
             {showForm ? (
               <FormTimezone
                 key={mode === 'edit' ? selectedTimezone?.id : 'create'}

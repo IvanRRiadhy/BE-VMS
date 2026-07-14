@@ -179,7 +179,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [activeStep, setActiveStep] = useState(enableInvitationTypeStep ? -1 : 0);
   const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
@@ -1252,7 +1251,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   <>
                     <VisitorSelect
                       key={String(isEmployee)}
-                      token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
@@ -1447,7 +1445,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                          token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -1588,7 +1585,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <TableCell sx={{ minWidth: 250 }}>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                          token={token as string}
+                                    
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -5287,7 +5284,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!validateCurrentStep()) {
       return;
     }
-    if (!token) return;
     try {
       setLoading(true);
       const tz =
@@ -5431,7 +5427,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-        await submitFn(token, parsed as any);
+        await submitFn( parsed as any);
         showSwal('success', 'Group visitor created successfully.');
         resetMediaState();
         clearAnswerFiles();
@@ -5464,7 +5460,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        await submitFn(token, parsed);
+        await submitFn(parsed);
 
         const successMessage =
           TYPE_REGISTERED === 0
@@ -5816,21 +5812,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   useEffect(() => {
-    // if (!formData.visitor_type || !token) return;
     if (!duplicateData) {
       setInputValues({});
       setSelectedSiteParentIds([]);
       setSelectedSiteIds([]);
       setSiteTree([]);
     }
-    // setInputValues({});
-    // // setSelectedSiteParentIds([]);
-    // setSelectedSiteIds([]);
-    // setSiteTree([]);
     if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
-      // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const res = await getVisitorTypeById(token as string, formData.visitor_type as string);
+      const res = await getVisitorTypeById(formData.visitor_type as string);
 
       let sections = res?.collection?.section_page_visitor_types ?? [];
       const roles = res?.collection?.visitor_roles ?? [];
@@ -5860,7 +5850,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
     setInputValues({});
     fetchVisitorTypeDetails();
-  }, [formData.visitor_type, visitorType, token]);
+  }, [formData.visitor_type, visitorType]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;

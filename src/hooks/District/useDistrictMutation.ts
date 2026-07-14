@@ -17,21 +17,20 @@ export const useDistrictMutation = () => {
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateDistrictRequest }) =>
-      createDistrict(data, token),
+    mutationFn: ({ data }: { data: CreateDistrictRequest }) => createDistrict(data),
 
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, token, data }: { id: string; token: string; data: CreateDistrictRequest }) =>
-      updateDistrict(id, data, token),
+    mutationFn: ({ id, data }: { id: string; data: CreateDistrictRequest }) =>
+      updateDistrict(id, data),
 
     onSuccess: invalidate,
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteDistrict(id, token),
+    mutationFn: ({ id }: { id: string }) => deleteDistrict(id),
 
     onSuccess: invalidate,
   });

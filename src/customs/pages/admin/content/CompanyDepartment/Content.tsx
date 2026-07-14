@@ -71,7 +71,6 @@ const entityLabel = (e?: DialogEntity) =>
 
 const Content = () => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const [selectedType, setSelectedType] = useState<'organization' | 'department' | 'district'>(
     'organization',
   );
@@ -88,11 +87,11 @@ const Content = () => {
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   useEffect(() => {
-    if (!token) return;
+   
 
     const fetchEmployees = async () => {
       try {
-        const res = await getVisitorEmployee(token);
+        const res = await getVisitorEmployee();
         const map = Array.isArray(res?.collection)
           ? res.collection.reduce((acc: any, emp: any) => {
               acc[emp.id] = emp.name;
@@ -106,7 +105,7 @@ const Content = () => {
     };
 
     fetchEmployees();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     setPage(0);
@@ -164,17 +163,14 @@ const Content = () => {
       {
         queryKey: ['organization-total'],
         queryFn: () => getAllOrganizationPagination(0, 1, sortDir),
-        enabled: !!token,
       },
       {
         queryKey: ['department-total'],
         queryFn: () => getAllDepartmentsPagination(0, 1, sortDir),
-        enabled: !!token,
       },
       {
         queryKey: ['district-total'],
         queryFn: () => getAllDistrictsPagination(0, 1, sortDir),
-        enabled: !!token,
       },
     ],
   });
@@ -237,14 +233,14 @@ const Content = () => {
   };
 
   const openEdit = async (entity: DialogEntity, row: Item) => {
-    if (!token) return;
+    
     // setLoading(true);
     const myToken = ++editTokenRef.current;
     try {
       let res: any;
-      if (entity === 'Organizations') res = await getOrganizationById(row.id, token);
-      else if (entity === 'Departments') res = await getDepartmentById(row.id, token);
-      else res = await getDistrictById(row.id, token);
+      if (entity === 'Organizations') res = await getOrganizationById(row.id);
+      else if (entity === 'Departments') res = await getDepartmentById(row.id);
+      else res = await getDistrictById(row.id);
 
       if (myToken !== editTokenRef.current) return;
 
@@ -276,7 +272,7 @@ const Content = () => {
 
   const handleDelete = useCallback(
     async (row: Item) => {
-      if (!token) return;
+  
 
       const confirmed = await showConfirmDelete(
         `Are you sure you want to delete ${selectedType} "${row.name}"?`,
@@ -291,7 +287,7 @@ const Content = () => {
           case 'department':
             await remove.mutateAsync({
               id: row.id,
-              token,
+     
             });
 
             successText = `Department "${row.name}" has been successfully deleted.`;
@@ -300,7 +296,7 @@ const Content = () => {
           case 'district':
             await deleteDistrict.mutateAsync({
               id: row.id,
-              token,
+        
             });
 
             successText = `District "${row.name}" has been successfully deleted.`;
@@ -310,7 +306,7 @@ const Content = () => {
           default:
             await deleteOrganization.mutateAsync({
               id: row.id,
-              token,
+       
             });
 
             successText = `Organization "${row.name}" has been successfully deleted.`;
@@ -322,11 +318,11 @@ const Content = () => {
         showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
       }
     },
-    [token, selectedType, remove, deleteDistrict, deleteOrganization],
+    [ selectedType, remove, deleteDistrict, deleteOrganization],
   );
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if (!token || rows.length === 0) return;
+    if ( rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
@@ -339,19 +335,19 @@ const Content = () => {
             case 'department':
               return remove.mutateAsync({
                 id: row.id,
-                token,
+             
               });
 
             case 'district':
               return deleteDistrict.mutateAsync({
                 id: row.id,
-                token,
+            
               });
 
             default:
               return deleteOrganization.mutateAsync({
                 id: row.id,
-                token,
+             
               });
           }
         }),

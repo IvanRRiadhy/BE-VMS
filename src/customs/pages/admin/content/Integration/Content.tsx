@@ -68,7 +68,6 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<IntegrationTableRow[]>([]);
   const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
   const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -97,7 +96,6 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
 
     let cancelled = false;
 
@@ -107,7 +105,7 @@ const Content = () => {
       try {
         const [responseResult, availableResponseResult] = await Promise.allSettled([
           getAllIntegration(),
-          getAvailableIntegration(token),
+          getAvailableIntegration(),
         ]);
 
         const integrations: Item[] =
@@ -162,7 +160,7 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, page, rowsPerPage, search, refreshTrigger]);
+  }, [ page, rowsPerPage, search, refreshTrigger]);
 
   const filteredData = useMemo(() => {
     if (!search) return tableData;
@@ -277,7 +275,6 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
 
     const isConfirmed = await showConfirmDelete(
       'Are you sure you want to delete this integration?',
@@ -288,7 +285,7 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await deleteIntegration(id, token);
+      await deleteIntegration(id);
       setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted integration');
     } catch (error) {
@@ -300,14 +297,14 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: any[]) => {
-    if (!token || rows.length === 0) return;
+    if ( rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteIntegration(row.id, token)));
+        await Promise.all(rows.map((row) => deleteIntegration(row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
@@ -410,7 +407,6 @@ const Content = () => {
                 }}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
               />
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>

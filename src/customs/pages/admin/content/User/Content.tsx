@@ -33,8 +33,6 @@ import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
 
 const Content = () => {
-  const { token } = useSession();
-
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
@@ -47,14 +45,13 @@ const Content = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['users', token],
+    queryKey: ['users'],
     queryFn: async () => {
       const response = await getAllUser();
       return {
         collection: response.collection,
       };
     },
-    enabled: !!token,
   });
 
   const filteredData = React.useMemo(() => {
@@ -93,7 +90,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      const response = await getUserById(id, token as string);
+      const response = await getUserById(id);
       const rawGroup = response?.collection?.user_group_id;
 
       const matched = Object.values(GroupRoleId).find(
@@ -117,7 +114,7 @@ const Content = () => {
     if (!confirmed) return;
 
     try {
-      await deleteUser(token as string, id);
+      await deleteUser(id);
       showSwal('success', 'Successfully deleted user!');
 
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -126,7 +123,7 @@ const Content = () => {
     }
   };
 
-  const { employee } = useEmployees(token);
+  const { employee } = useEmployees();
 
   const { organizations } = useOrganization();
 
@@ -161,7 +158,7 @@ const Content = () => {
     }
 
     try {
-      await assignEmployee(token as string, selectedUser.id, {
+      await assignEmployee(selectedUser.id, {
         link_type: 'Employee',
         employee_id: selectedEmployeeId,
       });
@@ -184,7 +181,7 @@ const Content = () => {
     if (!confirmed) return;
 
     try {
-      await unassignAccount(token as string, row.id);
+      await unassignAccount(row.id);
 
       showSwal('success', 'Employee unassigned successfully');
 
@@ -205,7 +202,7 @@ const Content = () => {
   const [selectedAssigned, setSelectedAssigned] = useState<any | null>(null);
 
   const handleAssignTracking = async (row: any) => {
-    const res = await getLinkAccountTracking(token as string, row.id);
+    const res = await getLinkAccountTracking(row.id);
     setSelectedUser(row);
 
     const assigned = res?.collection?.has_data || [];
@@ -245,7 +242,7 @@ const Content = () => {
         })),
       };
 
-      const res = await createLinkAccountTracking(token as string, selectedUser.id, payload);
+      const res = await createLinkAccountTracking(selectedUser.id, payload);
 
       showSwal('success', 'Tracking assigned successfully');
 

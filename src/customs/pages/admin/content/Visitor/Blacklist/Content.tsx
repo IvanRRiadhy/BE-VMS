@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -57,13 +56,11 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
         const response = await getBlacklistDt(
-          token,
           start,
           sortDir,
           rowsPerPage,
@@ -99,16 +96,16 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
+  }, [ page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getListVisitor(token as any);
+      const res = await getListVisitor();
       setVisitors(res.collection);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const [filters, setFilters] = useState<any>({
     start_date: '',

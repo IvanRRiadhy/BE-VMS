@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRegisteredSite } from "src/customs/api/admin";
 
-export const useRegisteredSite = (token?: string | null) => {
+export const useRegisteredSite = () => {
   return useQuery({
-    queryKey: ['registeredSites', token],
+    queryKey: ['registeredSites'],
     queryFn: async () => {
-      const res = await getRegisteredSite(token as string);
+      const res = await getRegisteredSite();
       return res.collection;
     },
-    enabled: !!token,
     staleTime: 1 * 60 * 1000,
   });
 };

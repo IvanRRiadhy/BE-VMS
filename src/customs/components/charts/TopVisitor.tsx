@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 const TopVisitor = () => {
-  const { token } = useSession();
   const { t } = useTranslation();
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
@@ -19,9 +18,9 @@ const TopVisitor = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
+   
       try {
-        const res = await getTopVisitors(token, start, end);
+        const res = await getTopVisitors( start, end);
 
         const sliced = res.collection.slice(0, 5);
         setLabels(sliced.map((item: any) => item.name));
@@ -32,7 +31,7 @@ const TopVisitor = () => {
     };
 
     fetchData();
-  }, [token, start, end]);
+  }, [ start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {

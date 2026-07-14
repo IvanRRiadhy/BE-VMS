@@ -117,7 +117,6 @@ const FormSelfPraregistration = ({
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
-  const { token } = useSession();
   const [formData, setFormData] = useState<any>({});
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -506,7 +505,7 @@ const FormSelfPraregistration = ({
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-        await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
+        await createSubmitGroupShareLink(code, timestamp, parsed);
         setLoading(false);
         // showSwal('success', 'Group visitor created successfully.', 1000);
         resetGroupFormState();
@@ -716,7 +715,7 @@ const FormSelfPraregistration = ({
             : f;
         });
 
-        const visibilityMap = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMap(mergedFields);
 
         mergedFields.forEach((item: any) => {
           if (!item?.mandatory) return;
@@ -739,7 +738,7 @@ const FormSelfPraregistration = ({
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap = getVisibilityMap(details);
+          const visibilityMap: any = getVisibilityMap(details);
 
           details.forEach((item: any) => {
             if (!item?.mandatory) return;
@@ -2119,12 +2118,7 @@ const FormSelfPraregistration = ({
     if (!formData.visitor_type) return;
 
     const fetchDetail = async () => {
-      const res = await getPublicVisitorTypeById(
-        token as string,
-        code,
-        'InvitationLink',
-        formData.visitor_type,
-      );
+      const res = await getPublicVisitorTypeById(code, 'InvitationLink', formData.visitor_type);
       const sections = res?.collection?.section_page_visitor_types ?? [];
       const roles = res?.collection?.visitor_roles ?? [];
       // console.log('sections', roles);
@@ -2184,7 +2178,7 @@ const FormSelfPraregistration = ({
       try {
         setVtLoading(true);
 
-        const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
+        const res = await getPublicVisitorType(code, 'InvitationLink');
         setVisitorType(res?.collection || []);
       } catch (err) {
         console.error('VT ERROR:', err);
@@ -2769,7 +2763,7 @@ const FormSelfPraregistration = ({
                     : f;
                 });
 
-                const visibilityMap = getVisibilityMap(mergedVisitForm);
+                const visibilityMap: any = getVisibilityMap(mergedVisitForm);
 
                 mergedVisitForm.forEach((item: any) => {
                   if (!item?.mandatory) return;
@@ -3063,7 +3057,7 @@ const FormSelfPraregistration = ({
             },
           ]),
         };
-    return [vi,pv];
+    return [vi, pv];
   };
 
   const isPurposeVisit = (section: any) => {
@@ -3141,12 +3135,11 @@ const FormSelfPraregistration = ({
       await sleep(100);
 
       if (isGroup) {
-        await createSubmitGroupShareLink(token as string, code, timestamp, previewPayload);
+        await createSubmitGroupShareLink(code, timestamp, previewPayload);
         // toast('Group visitor created successfully.', 'success');
         showSwal('success', 'Group visitor created successfully.');
       } else {
-        await createSubmitShareLink(token as string, code, timestamp, previewPayload);
-        // console.log('preview payload', previewPayload);
+        await createSubmitShareLink(code, timestamp, previewPayload);
         // const successMessage =
         //   TYPE_REGISTERED === 0
         //     ? 'Pre-registration created successfully.'
@@ -3567,20 +3560,6 @@ const FormSelfPraregistration = ({
               }}
             >
               <Button
-                // onClick={() => {
-                //   if (activeStep === 0) {
-                //     setPicCompleted(false);
-
-                //     window.scrollTo({
-                //       top: 0,
-                //       behavior: 'smooth',
-                //     });
-
-                //     return;
-                //   }
-
-                //   setActiveStep((prev) => prev - 1);
-                // }}
                 disabled={activeStep === 0}
                 onClick={() => {
                   setActiveStep((prev) => prev - 1);

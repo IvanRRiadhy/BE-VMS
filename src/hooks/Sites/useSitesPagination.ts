@@ -13,7 +13,6 @@ interface Props {
 }
 
 export const useSitePagination = ({
-  token,
   page,
   rowsPerPage,
   sortDir,
@@ -24,14 +23,10 @@ export const useSitePagination = ({
 }: Props) => {
   return useQuery({
     queryKey: ['sites', page, rowsPerPage, sortDir, searchKeyword, type, parent, isChild],
-
-    enabled: !!token,
-
     queryFn: async () => {
       try {
 
         const result = await getAllSitePagination(
-          token as string,
           page * rowsPerPage,
           rowsPerPage,
           sortDir,

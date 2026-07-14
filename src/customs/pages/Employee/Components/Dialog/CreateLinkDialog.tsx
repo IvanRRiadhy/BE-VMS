@@ -18,7 +18,6 @@ import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -51,10 +50,9 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
-  const { token } = useSession();
-  const { employee } = useEmployees(token);
-  const { sitesOperator } = useInvitationSite(token);
-  const { visitorType } = useInvitationVisitorType(token);
+  const { employee } = useEmployees();
+  const { sitesOperator } = useInvitationSite();
+  const { visitorType } = useInvitationVisitorType();
 
   const initialEnabledState = {
     visitorType: false,

@@ -11,7 +11,6 @@ type Props = {
   refreshKey: any;
   open: boolean;
   onClose: () => void;
-  token: string;
   onCopyLink: (row: any) => void;
   onDetailLink: (row: any) => void;
   onDelete: (id: string) => void;
@@ -22,7 +21,6 @@ const ShareLinkDialog: React.FC<Props> = ({
   refreshKey,
   open,
   onClose,
-  token,
   onCopyLink,
   onDetailLink,
   onDelete,
@@ -43,7 +41,7 @@ const ShareLinkDialog: React.FC<Props> = ({
     try {
       setLoading(true);
 
-      const res = await getShareLinkByDt(token, startPage, rowsPerPage, searchKeyword, sortDir);
+      const res = await getShareLinkByDt( startPage, rowsPerPage, searchKeyword, sortDir);
       const mapped =
         res?.collection?.map((item: any) => ({
           id: item.id,
@@ -85,13 +83,13 @@ const ShareLinkDialog: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
-  }, [token, startPage, rowsPerPage, searchKeyword, sortDir]);
+  }, [ startPage, rowsPerPage, searchKeyword, sortDir]);
 
   useEffect(() => {
-    if (open && token) {
+    if (open ) {
       fetchData();
     }
-  }, [fetchData, open, token, refreshKey]);
+  }, [fetchData, open, refreshKey]);
 
   const handleSearch = useCallback(
     (keyword: string) => {

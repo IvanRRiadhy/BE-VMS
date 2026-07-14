@@ -41,7 +41,6 @@ type VisitorTypeTableRow = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -110,13 +109,11 @@ const Content = () => {
   ];
 
   useLayoutEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
         const response = await getAllVisitorTypePagination(
-          token,
           start,
           rowsPerPage,
           sortDir,
@@ -145,7 +142,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);
@@ -167,7 +164,7 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       setLoading(true);
-      const resp = await getVisitorTypeById(token as string, id);
+      const resp = await getVisitorTypeById( id);
       const raw = resp?.collection;
 
       const hydrated = normalizeDetail(raw);
@@ -280,13 +277,12 @@ const Content = () => {
   }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
 
     const confirmed = await showConfirmDelete('Are you sure to delete this visitor type?');
     if (!confirmed) return;
     try {
       setLoadingData(true);
-      await deleteVisitorType(token, id);
+      await deleteVisitorType( id);
 
       setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted visitor type!');
@@ -300,7 +296,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
-    if (!token || rows.length === 0) return;
+    if ( rows.length === 0) return;
 
     const result = await Swal.fire({
       title: `Are you sure to delete ${rows.length} items?`,
@@ -313,7 +309,7 @@ const Content = () => {
     if (result.isConfirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteVisitorType(token, row.id)));
+        await Promise.all(rows.map((row) => deleteVisitorType(row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted selected items!');
         setSelectedRows([]);
@@ -342,7 +338,7 @@ const Content = () => {
     try {
       setLoadingData(true);
 
-      const resp = await getVisitorTypeById(token as string, id);
+      const resp = await getVisitorTypeById( id);
       const raw = resp?.collection;
       const hydrated = normalizeDetail(raw);
       if (Array.isArray(raw?.visitor_type_documents)) {
@@ -362,7 +358,7 @@ const Content = () => {
       let mappedAccess: any[] = [];
 
       try {
-        const accessRes = await getVisitorTypeAccessByVisitorId(id, token as string);
+        const accessRes = await getVisitorTypeAccessByVisitorId(id);
         mappedAccess = (accessRes?.collection ?? []).map((a: any, index: number) => ({
           access_control_id: a.access_control_id ?? '',
           early_access: a.early_access ?? false,
@@ -393,7 +389,7 @@ const Content = () => {
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      await updateVisitorTypeActive(token as string, row.id, checked);
+      await updateVisitorTypeActive( row.id, checked);
       showSwal('success', 'Visitor Type successfully updated');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
@@ -406,7 +402,7 @@ const Content = () => {
   const handleQuickAccessToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      await updateQuickVisitorType(token as string, row.id, checked);
+      await updateQuickVisitorType( row.id, checked);
       showSwal('success', 'Quick Access successfully updated');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {

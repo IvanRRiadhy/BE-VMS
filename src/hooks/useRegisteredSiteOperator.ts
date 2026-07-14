@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getRegisteredSiteOperator } from 'src/customs/api/Admin/SwapCard';
 
-const useRegisteredSiteOperator = (token?: string | null) => {
+const useRegisteredSiteOperator = () => {
   const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
     return localStorage.getItem('selectedSite') || '';
@@ -9,13 +9,11 @@ const useRegisteredSiteOperator = (token?: string | null) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        const res = await getRegisteredSiteOperator(token);
+        const res = await getRegisteredSiteOperator();
 
         const firstSite = res?.collection?.[0];
 
@@ -29,7 +27,7 @@ const useRegisteredSiteOperator = (token?: string | null) => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return {
     registeredSite,

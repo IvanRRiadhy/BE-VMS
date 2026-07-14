@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAccessPass } from 'src/customs/api/admin';
 
-export const useAccessPass = (token?: string | null) => {
+export const useAccessPass = () => {
   const query = useQuery({
     queryKey: ['access-pass'],
     queryFn: async () => {
-      const res = await getAccessPass(token as string);
+      const res = await getAccessPass();
       return res ?? [];
     },
-    enabled: !!token,
     staleTime: 1 * 60 * 1000,
   });
 

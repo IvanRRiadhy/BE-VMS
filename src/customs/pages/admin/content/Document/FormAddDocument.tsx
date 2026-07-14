@@ -48,7 +48,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
   );
-  const { token } = useSession();
   const [localForm, setLocalForm] = useState(initialData);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -129,12 +128,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     setErrors({});
 
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
-        return;
-      }
-
       const payload = {
         name: localForm.name,
         document_text: localForm.document_text,
@@ -150,12 +143,11 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         docId = edittingId;
         await update.mutateAsync({
           id: docId,
-          token,
+
           data: payload,
         });
       } else {
         const res = await create.mutateAsync({
-          token,
           data: payload,
         });
 
@@ -171,7 +163,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
           baseUrl: API_BASE,
           docId,
           file,
-          token,
           // onProgress: (p) => console.log('Upload:', p, '%'),
         });
       }
@@ -498,13 +489,11 @@ async function uploadDocumentFile({
   baseUrl,
   docId,
   file,
-  token,
   onProgress,
 }: {
   baseUrl: string;
   docId: string;
   file: File;
-  token: string;
   onProgress?: (pct: number) => void;
 }) {
   const url = `${baseUrl}/api/document/upload/${docId}`;
@@ -513,9 +502,6 @@ async function uploadDocumentFile({
   form.append('file', file);
 
   const res = await axios.post(url, form, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     // onUploadProgress: (evt) => {
     //   if (!onProgress || !evt.total) return;
     //   const pct = Math.round((evt.loaded * 100) / evt.total);

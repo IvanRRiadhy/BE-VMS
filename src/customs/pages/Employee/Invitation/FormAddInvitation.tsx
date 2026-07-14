@@ -173,7 +173,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
@@ -835,7 +834,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   <>
                     <VisitorSelectEmployee
                       key={String(isEmployee)}
-                      token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
@@ -1029,7 +1027,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                          token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -1158,7 +1155,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       <TableCell sx={{ minWidth: 250 }}>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                          token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -3129,7 +3125,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       ).values(),
                     ];
 
-
                     const searchText = (inputValues[originalIndex] || '').trim();
                     const isSearchActive = searchText.length >= 3;
                     const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
@@ -4801,9 +4796,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     if (!validateCurrentStep()) {
       return;
     }
-
-    if (!token) return;
-
     try {
       setLoading(true);
 
@@ -4942,7 +4934,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-        await submitFn(token, parsed as any);
+        await submitFn(parsed as any);
         showSwal('success', 'Group visitor created successfully.', 3000);
         resetMediaState();
         clearAnswerFiles();
@@ -4973,8 +4965,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        await submitFn(token, parsed);
-        // console.log('Visitor created:', backendResponse);
+        await submitFn(parsed);
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
@@ -5033,7 +5024,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page: sectionsData }],
           sections: sectionsData,
         };
-
   }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
 
   const handleAddDetails = () => {
@@ -5360,10 +5350,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const resVisitorType = await getVisitorTypeById(
-        token as string,
-        formData.visitor_type as string,
-      );
+      const resVisitorType = await getVisitorTypeById(formData.visitor_type as string);
 
       let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
       const roles = resVisitorType?.collection?.visitor_roles ?? [];

@@ -19,8 +19,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export default function BlacklistVisitorDialog({ open, onClose }: any) {
-
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -73,7 +71,6 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
       queryKey: ['operator-blacklist', page, rowsPerPage, sortDir, searchKeyword],
       queryFn: async () => {
         const res = await getOperatorBlacklist(
-          token as string,
           start,
           sortDir,
           rowsPerPage,
@@ -89,7 +86,7 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
           approved_by: item.approved_by_name || '-',
         }));
       },
-      enabled: !!token && open,
+      enabled:  open,
       placeholderData: (previousData) => previousData,
     });
 

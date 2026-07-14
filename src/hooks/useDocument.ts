@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
 import { getAllDocument } from 'src/customs/api/admin';
 
-export const useDocument = (token?: string) => {
+export const useDocument = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchDocuments = async () => {
       setLoading(true);
 
       try {
-        const res = await getAllDocument(token);
+        const res = await getAllDocument();
         setDocuments(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch documents', err);
@@ -22,7 +20,7 @@ export const useDocument = (token?: string) => {
     };
 
     fetchDocuments();
-  }, [token]);
+  }, []);
 
   return {
     documents,

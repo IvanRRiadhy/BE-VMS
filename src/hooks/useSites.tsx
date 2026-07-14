@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import { getAllSite } from 'src/customs/api/admin';
 
-export const useSites = (token?: string | null) => {
+export const useSites = () => {
   const [sites, setSites] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchSites = async () => {
       try {
         setLoading(true);
 
-        const res = await getAllSite(token);
+        const res = await getAllSite();
         setSites(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch sites', err);
@@ -22,7 +21,7 @@ export const useSites = (token?: string | null) => {
     };
 
     fetchSites();
-  }, [token]);
+  }, []);
 
   return {
     sites,

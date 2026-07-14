@@ -9,7 +9,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconHistory } from '@tabler/icons-react';
 const AlarmPage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -94,7 +93,7 @@ const AlarmPage = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
+
               <DynamicTable
                 overflowX={'auto'}
                 data={tableDataVisitor}
@@ -137,13 +136,6 @@ const AlarmPage = () => {
                 //   handleAdd();
                 // }}
               />
-              {/* // ) : (
-              //   <Card sx={{ width: '100%' }}>
-              //     <Skeleton />
-              //     <Skeleton animation="wave" />
-              //     <Skeleton animation={false} />
-              //   </Card>
-              // )} */}
             </Grid>
           </Grid>
         </Box>

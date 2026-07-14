@@ -17,8 +17,8 @@ export const useOrganizationMutation = () => {
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateOrganizationRequest }) =>
-      createOrganization(data, token),
+    mutationFn: ({ data }: { data: CreateOrganizationRequest }) =>
+      createOrganization(data),
 
     onSuccess: invalidate,
   });
@@ -26,19 +26,17 @@ export const useOrganizationMutation = () => {
   const update = useMutation({
     mutationFn: ({
       id,
-      token,
       data,
     }: {
       id: string;
-      token: string;
       data: CreateOrganizationRequest;
-    }) => updateOrganization(id, data, token),
+    }) => updateOrganization(id, data),
 
     onSuccess: invalidate,
   });
 
   const removeOrganization = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteOrganization(id, token),
+    mutationFn: ({ id }: { id: string}) => deleteOrganization(id),
 
     onSuccess: invalidate,
   });

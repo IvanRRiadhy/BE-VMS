@@ -3,13 +3,12 @@ import { getAllDistricts } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export const useDistricts = () => {
-  const { token } = useSession();
+
 
   const query = useQuery({
     queryKey: ['districts', 'options'],
-    enabled: !!token,
     queryFn: async () => {
-      const res = await getAllDistricts(token!);
+      const res = await getAllDistricts();
       return res?.collection ?? [];
     },
   });

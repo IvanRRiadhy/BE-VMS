@@ -19,11 +19,7 @@ interface ApiDateGroup {
 
 const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-
-  // const start = startDate?.toISOString().split('T')[0];
-  // const end = endDate?.toISOString().split('T')[0];
 
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
@@ -58,13 +54,10 @@ const TopCard = ({ items = [], size }: any) => {
   };
 
   useEffect(() => {
-    if (!token) return;
-
-    // fetched.current = true;
 
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(token as any, start, end);
+        const res = await getVisitorChart( start, end);
         const collection: ApiDateGroup[] = res.collection ?? [];
 
         const currentStart = new Date(startDate);
@@ -108,8 +101,8 @@ const TopCard = ({ items = [], size }: any) => {
       }
     };
 
-    if (token) fetchData();
-  }, [token, startDate, endDate]);
+     fetchData();
+  }, [ startDate, endDate]);
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;
     const previous = statsYesterday[key] ?? 0;

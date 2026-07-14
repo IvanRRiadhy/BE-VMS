@@ -1,10 +1,8 @@
 import { start } from 'repl';
 import axiosInstance from 'src/customs/api/interceptor';
 
-export const getAllApprovalWorkflow = async (token: string): Promise<any> => {
-  const response = await axiosInstance.get('/approval-workflow', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getAllApprovalWorkflow = async (): Promise<any> => {
+  const response = await axiosInstance.get('/approval-workflow');
   return response.data;
 };
 
@@ -16,7 +14,6 @@ export const getApprovalWorkflowById = async (id: string): Promise<any> => {
 
 // by dt
 export const getApprovalWorkflowByDt = async (
-  token: string,
   start: number,
   length: number,
   sort_dir?: string,
@@ -35,7 +32,6 @@ export const getApprovalWorkflowByDt = async (
   }
 
   const response = await axiosInstance.get('/approval-workflow/dt', {
-    headers: { Authorization: `Bearer ${token}` },
     params,
   });
 
@@ -61,18 +57,15 @@ export const deleteApprovalWorkflow = async (id: string): Promise<any> => {
 
 // Get Approval Manager and Employee
 
-export const getApprovalTicket = async (
-  token: string | null,
-  options?: {
-    start?: number;
-    length?: number;
-    sort_dir?: string;
-    keyword?: string;
-    entity_type?: string;
-    approval_status?: string;
-    entity_id?: string;
-  },
-): Promise<any> => {
+export const getApprovalTicket = async (options?: {
+  start?: number;
+  length?: number;
+  sort_dir?: string;
+  keyword?: string;
+  entity_type?: string;
+  approval_status?: string;
+  entity_id?: string;
+}): Promise<any> => {
   const params: any = {
     'entity-type': options?.entity_type ?? 'Invitation',
   };
@@ -102,9 +95,6 @@ export const getApprovalTicket = async (
   }
 
   const response = await axiosInstance.get(`/approval-ticket/with-actors/dt`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     params,
   });
 
@@ -112,42 +102,37 @@ export const getApprovalTicket = async (
 };
 
 // Approve
-export const approveTicket = async (token: string, id: string): Promise<any> => {
+export const approveTicket = async (id: string): Promise<any> => {
   const response = await axiosInstance.post(
     '/approval-ticket/' + id + '/approve',
     // {},
     // null,
     null,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
   );
   return response.data;
 };
 
 // Reject
-export const rejectTicket = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.post(`/approval-ticket/${id}/reject`, null, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const rejectTicket = async (id: string): Promise<any> => {
+  const response = await axiosInstance.post(`/approval-ticket/${id}/reject`, null);
   return response.data;
 };
 
 // Approve meeting host
 export const approveMeetingHost = async (
-  token: string | null,
   id: string,
   payload: any,
 ): Promise<any> => {
-  const response = await axiosInstance.post(`/approval-ticket/${id}/approve-meetinghost`, payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await axiosInstance.post(
+    `/approval-ticket/${id}/approve-meetinghost`,
+    payload,
+  );
   return response.data;
 };
 
-export const getVisitorByTickedId = async (token: string, id: string): Promise<any> => {
+export const getVisitorByTickedId = async ( id: string): Promise<any> => {
   const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };

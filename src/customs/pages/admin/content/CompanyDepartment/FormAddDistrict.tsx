@@ -37,8 +37,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
   onSuccess,
   onDirtyChange,
 }) => {
-  const { token } = useSession();
-  const { allVisitorEmployee } = useVisitorEmployees(token);
+  const { allVisitorEmployee } = useVisitorEmployees();
   const schema =
     mode === 'batch' ? CreateDistrictSubmitSchema.partial() : CreateDistrictSubmitSchema;
 
@@ -86,14 +85,14 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
 
   const onSubmit = async (form: CreateDistrictRequest) => {
     try {
-      if (!token) return;
+      
 
       if (mode === 'create') {
-        await create.mutateAsync({ token, data: form });
+        await create.mutateAsync({ data: form });
         showSwal('success', 'District successfully created!');
       }
       if (mode === 'edit' && data) {
-        await update.mutateAsync({ id: data.id, token, data: form });
+        await update.mutateAsync({ id: data.id, data: form });
         showSwal('success', 'District successfully updated!');
       }
       if (mode === 'batch' && selectedRows.length > 0) {
@@ -108,7 +107,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
                   : String(item.host || ''),
             };
 
-            return update.mutateAsync({ id: item.id, token, data: payload });
+            return update.mutateAsync({ id: item.id, data: payload });
           }),
         );
 

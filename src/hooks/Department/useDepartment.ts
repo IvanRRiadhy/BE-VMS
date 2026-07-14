@@ -3,13 +3,10 @@ import { getAllDepartments } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export const useDepartment = () => {
-  const { token } = useSession();
-
   const query = useQuery({
     queryKey: ['departments', 'options'],
-    enabled: !!token,
     queryFn: async () => {
-      const res = await getAllDepartments(token!);
+      const res = await getAllDepartments();
       return res?.collection ?? [];
     },
   });

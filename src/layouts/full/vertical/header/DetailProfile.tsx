@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getProfile, updatePasswordUser, updateProfile } from 'src/customs/api/users';
 import type { GetProfileResponse, Item } from 'src/customs/api/models/profile';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -37,10 +36,8 @@ const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
   // const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { token } = useSession();
   const { user } = useAuth();
   const roleAccess = localStorage.getItem('roleAccess');
   const isAdmin = roleAccess === 'Admin';
@@ -75,12 +72,10 @@ const DetailProfile = () => {
   });
 
   const fetchProfile = async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
 
-      const res = await getProfile(token);
+      const res = await getProfile();
 
       const d = res?.collection;
 
@@ -108,19 +103,18 @@ const DetailProfile = () => {
   };
   const prevToken = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    if (prevToken.current === token) return;
+  // useEffect(() => {
+  //   if (!token) return;
+  //   if (prevToken.current === token) return;
 
-    prevToken.current = token;
+  //   prevToken.current = token;
 
-    fetchProfile();
-  }, [token]);
+  //   fetchProfile();
+  // }, [token]);
 
-  // 🔹 Simpan perubahan ke API
   const handleUpdate = async () => {
     try {
-      if (!token) return;
+    
 
       // setLoading(true);
 
@@ -133,7 +127,7 @@ const DetailProfile = () => {
         phone: formData.phone,
       };
 
-      await updateProfile(token, payload);
+      await updateProfile(payload);
 
       await fetchProfile();
 
@@ -154,14 +148,14 @@ const DetailProfile = () => {
 
   const handleChangePassword = async () => {
     try {
-      if (!token) return;
+    
 
       if (passwordData.new_password !== passwordData.con_password) {
         showSwal('error', 'Password confirmation does not match');
         return;
       }
 
-      await updatePasswordUser(token, {
+      await updatePasswordUser( {
         old_password: passwordData.old_password,
         new_password: passwordData.new_password,
         con_password: passwordData.con_password,

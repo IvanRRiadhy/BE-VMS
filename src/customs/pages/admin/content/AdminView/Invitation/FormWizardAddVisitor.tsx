@@ -220,7 +220,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
@@ -1273,7 +1272,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 return (
                   <>
                     <VisitorSelect
-                      token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v: any) => {
                         if (!v) {
@@ -1524,7 +1522,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <Box sx={{ width: '100%', mb: 2 }}>
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
-                                          token={token as string}
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -1723,7 +1720,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <TableRow key={gIdx}>
                                         <TableCell sx={{ minWidth: 250 }}>
                                           <VisitorSelect
-                                            token={token as string}
                                             isEmployee={isEmployee}
                                             onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                           />
@@ -4053,8 +4049,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!token) return;
-
     try {
       setLoading(true);
 
@@ -4221,7 +4215,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createPraRegisterGroupOperator : createVisitorsGroupOperator;
-        const backendResponse = await submitFn(token, parsed as any);
+        const backendResponse = await submitFn(parsed as any);
         console.log('Payload', backendResponse);
         showSwal('success', 'Group visitor created successfully.');
         resetMediaState();
@@ -4258,7 +4252,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
-        const backendResponse = await submitFn(token, parsed);
+        const backendResponse = await submitFn( parsed);
         console.log('Payload Single:', backendResponse);
 
         const successMessage =
@@ -4656,7 +4650,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
       const resVisitorType = await getVisitorTypeById(
-        token as string,
         formData.visitor_type as string,
       );
 
@@ -5125,7 +5118,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       <VisitorSelectDialog
         open={openVisitorDialog}
         isEmployeeMode={isEmployeeMode}
-        token={token as string}
         activeGroupIdx={activeGroupIdx}
         activeStep={activeStep}
         setOpen={setOpenVisitorDialog}

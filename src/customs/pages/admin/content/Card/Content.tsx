@@ -85,7 +85,6 @@ const typeMap: Record<string, number> = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -148,7 +147,6 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -210,7 +208,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorCard(true);
@@ -353,7 +351,6 @@ const Content = () => {
       setLoading(true);
       const resp = await fetch(`${BASE_URL}/card/create-batch`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 

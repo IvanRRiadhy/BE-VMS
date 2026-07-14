@@ -1,8 +1,6 @@
 import axiosInstance from '../../interceptor';
 
-export const checkConnection = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.get(`/integration-honeywell/check-connection/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const checkConnection = async ( id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/integration-honeywell/check-connection/${id}`);
   return response.data;
 };

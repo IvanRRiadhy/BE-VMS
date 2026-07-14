@@ -38,7 +38,6 @@ const VisitorSelectDialog: React.FC<Props> = ({
 
       <DialogContent dividers>
         <VisitorSelect
-          token={token}
           isEmployee={isEmployeeMode}
           onSelect={(v: any) => {
             if (activeGroupIdx == null) return;

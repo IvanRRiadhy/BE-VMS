@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -12,7 +12,6 @@ import {
   Card,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -57,8 +56,6 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
   createReportVisitorTransaction,
   generateReportVisitorById,
-  generateReportVisitorWithExcel,
-  getReportVisitorTransaction,
   getReportVisitorTransactionById,
   getReportVisitorTransactionDt,
   updateReportVisitorTransaction,
@@ -67,8 +64,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import axiosInstance from 'src/customs/api/interceptor';
 
 const Content = () => {
-  const { token } = useSession();
-
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -121,17 +116,16 @@ const Content = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-      const resSite = await getAllSite(token);
+      const resSite = await getAllSite();
       setSiteOptions(resSite.collection);
-      const resEmployeee = await getVisitorEmployee(token);
+      const resEmployeee = await getVisitorEmployee();
       setEmployeeOptions(resEmployeee.collection);
-      const resVisitor = await getAllVisitor(token);
+      const resVisitor = await getAllVisitor();
       setVisitorOptions(resVisitor.collection);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const getSiteNames = (ids: string[]) => {
     if (!ids || !siteOptions.length) return '-';
@@ -168,7 +162,7 @@ const Content = () => {
       setLoadingReports(true);
       try {
         const start = page * rowsPerPage;
-        const res = await getReportVisitorTransactionDt(token as string, {
+        const res = await getReportVisitorTransactionDt({
           start,
           length: rowsPerPage,
           sort_dir: sortDir,
@@ -190,11 +184,11 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, debouncedKeyword]);
+  }, [page, rowsPerPage, sortDir, debouncedKeyword]);
 
   const refreshReportList = async () => {
     const start = page * rowsPerPage;
-    const res = await getReportVisitorTransactionDt(token as string, {
+    const res = await getReportVisitorTransactionDt({
       start,
       length: rowsPerPage,
       sort_dir: sortDir,
@@ -233,8 +227,6 @@ const Content = () => {
 
   const handlePostReport = async (rep: any) => {
     try {
-      if (!token) return;
-
       if (isFormDataEmpty(formData)) {
         showSwal('error', 'Please select at least one filter.');
         return;
@@ -249,7 +241,7 @@ const Content = () => {
       }
 
       // const res = await generateReport(token, formData);
-      const res = await generateReportVisitorById(token, rep);
+      const res = await generateReportVisitorById(rep);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,
@@ -300,8 +292,6 @@ const Content = () => {
 
   const exportToExcel = async () => {
     try {
-      if (!token) return;
-
       // Validasi CustomDate
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
         showSwal('error', 'Please select start and end date for CustomDate report');
@@ -317,7 +307,6 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-        headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob',
       });
 
@@ -412,27 +401,27 @@ const Content = () => {
     const printWindow = window.open('', '_blank');
     const tableHtml = document.getElementById('print-report-area')?.innerHTML;
 
-  //   printWindow!.document.write(`
-  //   <html>
-  //     <head>
-  //       <title>Visitor Report</title>
-  //     </head>
-  //     <body>
-  //       ${tableHtml}
-  //     </body>
-  //   </html>
-  // `);
+    //   printWindow!.document.write(`
+    //   <html>
+    //     <head>
+    //       <title>Visitor Report</title>
+    //     </head>
+    //     <body>
+    //       ${tableHtml}
+    //     </body>
+    //   </html>
+    // `);
 
-  //   printWindow!.document.close();
-  //   printWindow!.focus();
-  //   printWindow!.print();
-  //   printWindow!.close();
+    //   printWindow!.document.close();
+    //   printWindow!.focus();
+    //   printWindow!.print();
+    //   printWindow!.close();
   };
 
   const handleConfirmSaveReport = async () => {
     setLoading(true);
     try {
-      await createReportVisitorTransaction(token as string, formData);
+      await createReportVisitorTransaction(formData);
       await refreshReportList();
       await new Promise((res) => setTimeout(res, 600));
 
@@ -469,22 +458,9 @@ const Content = () => {
   };
 
   const [openSaveDialog, setOpenSaveDialog] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [templateDescription, setTemplateDescription] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleOpenSaveDialog = () => {
-    // if (!reportData || reportData.length === 0) {
-    //   showSnackbar('No report data to save. Please generate the report first.', 'info');
-    //   return;
-    // }
-    setOpenSaveDialog(true);
-  };
 
   const handleEditReport = async (rep: any) => {
-    if (!token) return;
-
-    const res = await getReportVisitorTransactionById(token as string, rep.id);
+    const res = await getReportVisitorTransactionById(rep.id);
     const d = res.collection;
 
     setFormData({
@@ -509,12 +485,10 @@ const Content = () => {
   const [loadingView, setLoadingView] = useState(false);
 
   const handleViewReport = async (rep: any) => {
-    if (!token) return;
-
     setLoadingView(true);
 
     try {
-      const res = await getReportVisitorTransactionById(token as string, rep.id);
+      const res = await getReportVisitorTransactionById(rep.id);
       const d = res.collection;
 
       setFormData({
@@ -546,7 +520,7 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await updateReportVisitorTransaction(token as string, selectedReport.id, formData);
+      await updateReportVisitorTransaction(selectedReport.id, formData);
       await refreshReportList();
       // const reload = await getReportVisitorTransaction(token as string);
       // setSavedReports(reload.collection);

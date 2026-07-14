@@ -3,10 +3,10 @@ import axiosInstance from './interceptor';
 
 // #region Invitation
 
-export const getActiveInvitation = async (token: string): Promise<any> => {
+export const getActiveInvitation = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation/active-invitation', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -18,7 +18,6 @@ export const getActiveInvitation = async (token: string): Promise<any> => {
 };
 
 export const getInvitation = async (
-  token: string,
   start_date?: string,
   end_date?: string,
   is_praregister_done: boolean = false,
@@ -32,7 +31,6 @@ export const getInvitation = async (
   try {
     const response = await axiosInstance.get('/invitation/invitation-onschedule', {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
       params,
@@ -47,7 +45,6 @@ export const getInvitation = async (
 };
 
 export const getInvitations = async (
-  token: string,
   start_date?: string,
   end_date?: string,
   // is_praregister_done: boolean = false,
@@ -61,7 +58,6 @@ export const getInvitations = async (
   try {
     const response = await axiosInstance.get('/invitation/invitation-onschedule', {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
       params,
@@ -154,13 +150,10 @@ export type GetInvitationResponse = {
   };
 };
 
-export const getInvitationById = async (
-  id: string,
-  token: string,
-): Promise<GetInvitationResponse> => {
+export const getInvitationById = async (id: string): Promise<GetInvitationResponse> => {
   try {
     const response = await axiosInstance.get(`/invitation/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -171,10 +164,10 @@ export const getInvitationById = async (
   }
 };
 
-export const getInvitationRelatedVisitor = async (id: string, token: string): Promise<any> => {
+export const getInvitationRelatedVisitor = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/invitation/invitation-related-visitor/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -186,7 +179,6 @@ export const getInvitationRelatedVisitor = async (id: string, token: string): Pr
 };
 
 export const getHistory = async (
-  token: string,
   start_date?: string,
   end_date?: string,
   site_id?: string,
@@ -199,7 +191,7 @@ export const getHistory = async (
 
   try {
     const response = await axiosInstance.get('invitation/history', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
       params,
     });
     return response.data;
@@ -211,10 +203,10 @@ export const getHistory = async (
   }
 };
 
-export const getListSite = async (token: string): Promise<any> => {
+export const getListSite = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get('/site', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -227,10 +219,10 @@ export const getListSite = async (token: string): Promise<any> => {
 
 //endregion
 
-export const getOngoingInvitation = async (token: string): Promise<any> => {
+export const getOngoingInvitation = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation/ongoing-invitation', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -241,10 +233,10 @@ export const getOngoingInvitation = async (token: string): Promise<any> => {
   }
 };
 
-export const getDetailInvitationForm = async (token: string, id: string): Promise<any> => {
+export const getDetailInvitationForm = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/invitation/detail-invitations-form/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -255,10 +247,10 @@ export const getDetailInvitationForm = async (token: string, id: string): Promis
   }
 };
 
-export const updateExtendPeriod = async (token: string, id: string, data: any): Promise<any> => {
+export const updateExtendPeriod = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put(`/invitation/extend-period/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -269,14 +261,10 @@ export const updateExtendPeriod = async (token: string, id: string, data: any): 
   }
 };
 
-export const createVisitorInvitation = async (
-  token: string,
-  id: string,
-  data: any,
-): Promise<any> => {
+export const createVisitorInvitation = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/invitation/send-invitations/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -287,10 +275,10 @@ export const createVisitorInvitation = async (
   }
 };
 
-export const openParkingBlocker = async (token: string, data: any): Promise<any> => {
+export const openParkingBlocker = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post('/dashboard/parking/open-blocker', data, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -301,11 +289,10 @@ export const openParkingBlocker = async (token: string, data: any): Promise<any>
   }
 };
 
-export const submitPraFormEmployee = async (token: string, data: any): Promise<any> => {
+export const submitPraFormEmployee = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/invitation/submit/pra-form`, data, {
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
     });

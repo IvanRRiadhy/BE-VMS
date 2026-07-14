@@ -29,7 +29,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-
 import { v4 as uuidv4 } from 'uuid';
 import {
   CreateSiteRequest,
@@ -129,7 +128,6 @@ const FormSite = ({
   employee,
   setIsDirty,
 }: FormSiteProps) => {
-  const { token } = useSession();
   const location = useLocation();
   const segments = location.pathname.split('/');
   const parentRouteId = segments[segments.length - 1] || null;
@@ -178,158 +176,7 @@ const FormSite = ({
     setRetentionInput(newDocument.retentionTime.toString());
   }, [newDocument.retentionTime]);
 
-  // useEffect(() => {
-  //   if (!editingId || !token) return;
-
-  //   (async () => {
-  //     try {
-  //       const results = await Promise.allSettled([
-  //         getSitesAccessById(token, editingId),
-  //         getAllAccessControl(token),
-  //         getSiteParking(token),
-  //         getSiteTracking(token),
-  //         getSitesParking(token),
-  //         getSitesTracking(token),
-  //         getAllDocument(token),
-  //         getSiteDocumentBySiteId(token, editingId),
-  //       ]);
-
-  //       const [
-  //         siteRes,
-  //         accessControlRes,
-  //         parkingMasterRes,
-  //         trackingMasterRes,
-  //         parkingRelationRes,
-  //         trackingRelationRes,
-  //         documentRes,
-  //         siteDocumentRes,
-  //       ] = results;
-
-  //       const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
-  //       // console.log('site', site);
-  //       const accessControlList =
-  //         accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
-
-  //       setAccessControl(accessControlList);
-
-  //       if (documentRes.status === 'fulfilled') {
-  //         setDocumentList(documentRes.value.collection ?? []);
-  //       }
-
-  //       const parkingMaster =
-  //         parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
-
-  //       const trackingMaster =
-  //         trackingMasterRes.status === 'fulfilled'
-  //           ? (trackingMasterRes.value.collection ?? [])
-  //           : [];
-
-  //       // RELATION
-  //       const parkingRelation =
-  //         parkingRelationRes.status === 'fulfilled'
-  //           ? (parkingRelationRes.value.collection ?? [])
-  //           : [];
-
-  //       const trackingRelation =
-  //         trackingRelationRes.status === 'fulfilled'
-  //           ? (trackingRelationRes.value.collection ?? [])
-  //           : [];
-
-  //       const siteDocumentRelations =
-  //         siteDocumentRes.status === 'fulfilled' ? (siteDocumentRes.value.collection ?? []) : [];
-
-  //       setSiteParking(parkingMaster);
-  //       setSiteTracking(trackingMaster);
-
-  //       const normalizedId = editingId.toLowerCase();
-
-  //       const filteredParking = parkingRelation.filter(
-  //         (p: any) => String(p.site_id).toLowerCase() === normalizedId,
-  //       );
-
-  //       const filteredTracking = trackingRelation.filter(
-  //         (t: any) => String(t.site_id).toLowerCase() === normalizedId,
-  //       );
-
-  //       const mappedParking = filteredParking.map((p: any, idx: number) => {
-  //         const master = parkingMaster.find(
-  //           (x: any) => String(x.id).toLowerCase() === String(p.prk_area_parking_id).toLowerCase(),
-  //         );
-
-  //         return {
-  //           id: p.id,
-  //           sort: idx,
-  //           site_id: p.site_id,
-  //           prk_area_parking_id: p.prk_area_parking_id,
-  //           name: master?.name ?? '',
-  //           early_access: p.early_access ?? false,
-  //         };
-  //       });
-
-  //       const mappedAccess = Array.isArray(site)
-  //         ? site.map((a: any, idx: number) => {
-  //             const master = accessControlList.find(
-  //               (x: any) =>
-  //                 String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
-  //             );
-
-  //             return {
-  //               id: a.id,
-  //               sort: idx,
-  //               access_control_id: a.access_control_id,
-  //               name: master?.name ?? a.name ?? '',
-  //               early_access: a.early_access ?? false,
-  //             };
-  //           })
-  //         : site?.access_control_id
-  //           ? [
-  //               {
-  //                 id: site.id,
-  //                 sort: site.sort ?? 0,
-  //                 access_control_id: site.access_control_id,
-  //                 name: site.name ?? '',
-  //                 early_access: site.early_access ?? false,
-  //               },
-  //             ]
-  //           : [];
-
-  //       const mappedTracking = filteredTracking.map((t: any, idx: number) => {
-  //         const master = trackingMaster.find(
-  //           (x: any) =>
-  //             String(x.id).toLowerCase() === String(t.trk_ble_card_access_id).toLowerCase(),
-  //         );
-
-  //         return {
-  //           id: t.id,
-  //           sort: idx,
-  //           site_id: t.site_id,
-  //           trk_ble_card_access_id: t.trk_ble_card_access_id,
-  //           name: master?.masked_area_name ?? master?.name ?? '',
-  //           early_access: t.early_access ?? false,
-  //         };
-  //       });
-
-  //       setInitialTracking(mappedTracking);
-  //       setInitialParking(mappedParking);
-
-  //       setFilteredSiteDocumentList(siteDocumentRelations);
-
-  //       setLocalForm((prev) => ({
-  //         ...prev,
-  //         ...site,
-  //         type: site?.type !== undefined ? Number(site.type) : prev.type,
-  //         access: mappedAccess,
-  //         parking: mappedParking,
-  //         tracking: mappedTracking,
-  //       }));
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   })();
-  // }, [editingId, token]);
-
   const { data: documents } = useDocuments();
-  // const { data: siteById } = useSiteById(editingId);
   const { data: accessControl } = useAccessControl();
   const { data: siteParking } = useSiteParking();
   const { data: siteTracking } = useSiteTracking();
@@ -340,19 +187,7 @@ const FormSite = ({
 
   useEffect(() => {
     if (!editingId) return;
-    // if (
-    //   !siteAccess ||
-    //   !accessControl ||
-    //   !siteParking ||
-    //   !siteTracking ||
-    //   !parkingRelations ||
-    //   !trackingRelations ||
-    //   !documents ||
-    //   !siteDocuments
-    // ) {
-    //   return;
-    // }
-
+    
     const site = siteAccess?.collection;
     const accessControlList = accessControl?.collection ?? [];
     const parkingMaster = siteParking?.collection ?? [];
@@ -529,10 +364,7 @@ const FormSite = ({
     }
 
     try {
-      if (!token) {
-        showSwal('error', 'Session expired!');
-        return;
-      }
+    
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
 
@@ -547,7 +379,7 @@ const FormSite = ({
         }
 
         for (const row of selectedRows) {
-          await updateSite(row.id, { ...row, ...updatedFields }, token);
+          await updateSite(row.id, { ...row, ...updatedFields });
         }
 
         showSwal('success', 'Batch update successful!');
@@ -575,7 +407,7 @@ const FormSite = ({
         // const res = await updateSite(editingId, updateData, token);
         const res = await update.mutateAsync({
           id: editingId,
-          token,
+      
           data: updateData,
         });
         const deletedTracking = initialTracking.filter(
@@ -585,8 +417,8 @@ const FormSite = ({
         const deletedParking = initialParking.filter(
           (old) => !(localForm.parking ?? []).some((cur: any) => cur.id === old.id),
         );
-        await Promise.all(deletedTracking.map((item) => deleteSiteTracking(item.id, token)));
-        await Promise.all(deletedParking.map((item) => deleteSiteParking(item.id, token)));
+        await Promise.all(deletedTracking.map((item) => deleteSiteTracking(item.id)));
+        await Promise.all(deletedParking.map((item) => deleteSiteParking(item.id)));
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {
@@ -598,8 +430,8 @@ const FormSite = ({
             };
 
             return t.id
-              ? updateSiteTracking(t.id, payload, token)
-              : createSiteTracking(payload, token);
+              ? updateSiteTracking(t.id, payload)
+              : createSiteTracking(payload);
           }),
         );
 
@@ -613,8 +445,8 @@ const FormSite = ({
             };
 
             return p.id
-              ? updateSiteParking(p.id, payload, token)
-              : createSiteParking(payload, token);
+              ? updateSiteParking(p.id, payload)
+              : createSiteParking(payload);
           }),
         );
 
@@ -622,9 +454,9 @@ const FormSite = ({
 
         if (!localForm.need_document) {
           try {
-            const { collection = [] } = await getSiteDocumentBySiteId(token, editingId);
+            const { collection = [] } = await getSiteDocumentBySiteId(editingId);
 
-            await Promise.all(collection.map((doc: any) => deleteSiteDocument(doc.id, token)));
+            await Promise.all(collection.map((doc: any) => deleteSiteDocument(doc.id)));
           } catch (err: any) {
             const status = err?.response?.status;
 
@@ -636,7 +468,7 @@ const FormSite = ({
         } else {
           // Hapus document yang memang dihapus user
           await Promise.all(
-            deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id, token)),
+            deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)),
           );
 
           // Tambah document baru
@@ -648,7 +480,7 @@ const FormSite = ({
                   document_id: doc.document_id,
                   retention_time: doc.retention_time,
                 },
-                token,
+            
               ),
             ),
           );
@@ -677,19 +509,19 @@ const FormSite = ({
         const createData = CreateSiteRequestSchema.parse(finalFormData);
         // const res = await createSite(createData, token);
         const res = await create.mutateAsync({
-          token,
+    
           data: createData,
         });
         const newSiteId = res.collection?.id as string;
         const trackingPayload = normalizeTrackingPayloads(localForm.tracking ?? [], newSiteId);
         if (trackingPayload.data.length > 0) {
-          await createSiteTrackingBulk(trackingPayload, token);
+          await createSiteTrackingBulk(trackingPayload);
         }
 
         const parkingPayload = normalizeParkingPayloads(localForm.parking ?? [], newSiteId);
 
         if (parkingPayload.data.length > 0) {
-          await createSiteParkingBulk(parkingPayload, token);
+          await createSiteParkingBulk(parkingPayload);
         }
 
         await createSiteDocumentsForNewSite();
@@ -736,18 +568,18 @@ const FormSite = ({
   };
 
   const handleFileUpload = async (siteId: string) => {
-    if (!token || !siteImageFile) return;
+    if ( !siteImageFile) return;
     try {
-      await uploadImageSite(siteId, siteImageFile, token);
+      await uploadImageSite(siteId, siteImageFile);
     } catch (err) {
       console.error('Image upload failed', err);
     }
   };
 
   const createSiteDocumentsForNewSite = async () => {
-    if (!token) return;
+ 
 
-    const allSitesRes = await getAllSite(token);
+    const allSitesRes = await getAllSite();
     const newSite = allSitesRes.collection.find(
       (site: any) => site.name === localForm.name && site.description === localForm.description,
     );
@@ -764,7 +596,7 @@ const FormSite = ({
       console.log('docWithSiteId', docWithSiteId);
 
       try {
-        await createSiteDocument(docWithSiteId, token);
+        await createSiteDocument(docWithSiteId);
       } catch (error) {
         console.error('Error creating site document:', error);
       }
@@ -908,7 +740,7 @@ const FormSite = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAllApprovalWorkflow(token!);
+        const res = await getAllApprovalWorkflow();
         const data = res.collection.map((item: any) => ({
           label: item.name,
           value: item.id,
@@ -920,7 +752,7 @@ const FormSite = ({
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <>

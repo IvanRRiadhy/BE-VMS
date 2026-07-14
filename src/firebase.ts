@@ -25,7 +25,7 @@ export const messaging = getMessaging(app);
 
 export const generateToken = async() => {
   const permission = await Notification.requestPermission();
-  console.log('permission', permission);
+  // console.log('permission', permission);
   if (permission !== 'granted') {
     console.log('Notification permission denied');
     return;
@@ -33,5 +33,5 @@ export const generateToken = async() => {
   const token = await getToken(messaging, {
     vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
   });
-  console.log('FCM TOKEN:', token);
+  // console.log('FCM TOKEN:', token);
 }

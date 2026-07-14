@@ -25,7 +25,6 @@ const History = () => {
     },
   ];
 
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [filters, setFilters] = useState<any>({
@@ -33,15 +32,13 @@ const History = () => {
   });
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
         setLoading(true);
         const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
         const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
 
-        const res = await getHistory(token as string, start_date, end_date, filters.site_id ?? '');
+        const res = await getHistory(start_date, end_date, filters.site_id ?? '');
         const rows = res.collection.map((item: any) => {
           return {
             id: item.id,
@@ -65,7 +62,7 @@ const History = () => {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <PageContainer title="History" description="History page">

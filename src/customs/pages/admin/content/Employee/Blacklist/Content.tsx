@@ -43,7 +43,6 @@ interface Filters {
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -65,7 +64,6 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -74,7 +72,6 @@ const Content = () => {
         let employeeRes: any;
         try {
           employeeRes = await getAllEmployeeBlacklistPagination(
-            token,
             start,
             rowsPerPage,
             sortDir,
@@ -107,7 +104,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearch = useCallback(
     (keyword: string) => {

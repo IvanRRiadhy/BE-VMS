@@ -20,7 +20,6 @@ const FormSetting: React.FC<FormSettingSmtpProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const { token } = useSession();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -30,12 +29,12 @@ const FormSetting: React.FC<FormSettingSmtpProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getAllOrganizations(token as string);
+      const res = await getAllOrganizations();
       setAllOrganization(res?.collection ?? []);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <form onSubmit={handleSubmit} style={{ height: '100%' }}>

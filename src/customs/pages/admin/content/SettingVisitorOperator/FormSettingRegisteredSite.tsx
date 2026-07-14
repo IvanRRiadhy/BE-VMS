@@ -29,7 +29,6 @@ const FormSettingRegisteredSite: React.FC<FormSettingRegisteredSiterops> = ({
   onSubmit,
   onCancel,
 }) => {
-  const { token } = useSession();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -40,12 +39,12 @@ const FormSettingRegisteredSite: React.FC<FormSettingRegisteredSiterops> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getRegisteredSite(token as string);
+      const res = await getRegisteredSite();
       setAllOrganization(res?.collection ?? []);
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <form onSubmit={handleSubmit} style={{ height: '100%' }}>

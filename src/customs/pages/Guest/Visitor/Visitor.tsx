@@ -4,11 +4,8 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconHistory, IconMail, IconX } from '@tabler/icons-react';
-// import FilterMoreContent from './FilterMoreContent';
-// import FilterMoreContent from './Invitation/FilterMoreContent';
 const Visitor = () => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

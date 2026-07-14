@@ -68,13 +68,11 @@ export const QuickAccessDialog = ({
     setOpenQuickAccess(true);
   };
 
-  const { token } = useSession();
-
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const [openQrQuickAccess, setOpenQrQuickAccess] = useState(false);
-  const { visitorProviders } = useVisitorProvider(token);
-  const { dropPoint } = useDropPoint(token);
-const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token);
+  const { visitorProviders } = useVisitorProvider();
+  const { dropPoint } = useDropPoint();
+  const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee();
 
   const initialFormState: QuickAccessFormData = {
     visitorProviderId: '',
@@ -188,7 +186,7 @@ const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token);
 
   const handleDetailQuickAccess = async (id: string) => {
     try {
-      const res = await getVisitorById(token as string, id);
+      const res = await getVisitorById(id);
       setVisitorDetail(res?.collection ?? res ?? null);
       setOpenQrQuickAccess(true);
     } catch (error) {

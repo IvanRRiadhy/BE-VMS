@@ -16,7 +16,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const History = () => {
-  const { token } = useSession();
+
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const[rowsPerPage, setRowsPerPage] = useState(10);
@@ -42,7 +42,7 @@ const History = () => {
 
       const end_date = endDate || dayjs().format('YYYY-MM-DD');
 
-      const res = await getHistory(token as string, start_date, end_date, '');
+      const res = await getHistory(start_date, end_date, '');
 
       const rows = res.collection.map((item: any) => ({
         id: item.id,
@@ -66,10 +66,10 @@ const History = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
+
 
     fetchHistory();
-  }, [token]);
+  }, []);
 
   const handleApplyFilter = () => {
     fetchHistory(filters.start_date, filters.end_date);

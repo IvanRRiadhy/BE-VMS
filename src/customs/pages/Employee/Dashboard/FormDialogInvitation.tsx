@@ -77,7 +77,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   onSubmitting,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
-  const { token } = useSession();
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [invitationData, setInvitationData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,8 +86,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
     if (!dateStr) return '-';
@@ -107,10 +104,10 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !token) return;
+      if (!id) return;
       setLoading(true);
       try {
-        const res = await getDetailInvitationForm(token, id);
+        const res = await getDetailInvitationForm(id);
         const data = res.collection;
         setInvitationData(data);
 
@@ -131,7 +128,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       }
     };
     fetchData();
-  }, [id, token]);
+  }, [id]);
 
   // const validateStep = (section: any) => {
   //   const newErrors: Record<string, string> = {};
@@ -746,11 +743,11 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getVisitorEmployee(token as string);
+      const res = await getVisitorEmployee();
       setAllVisitorEmployee(res?.collection ?? []);
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   // ✅ render field per section
   const StepContent = (section: any) => (
@@ -1085,8 +1082,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      console.log('payload:', JSON.stringify(payload, null, 2));
-      const res = await submitPraFormEmployee(token as string, payload);
+      // console.log('payload:', JSON.stringify(payload, null, 2));
+      const res = await submitPraFormEmployee( payload);
 
       const ok =
         res &&

@@ -38,16 +38,11 @@ import { Snackbar, Alert } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
 import {
   generateReport,
-  getAllSite,
-  getAllVisitor,
-  getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Content = () => {
-  const { token } = useSession();
-
   const [formData, setFormData] = useState({
     start_date: null,
     end_date: null,
@@ -69,7 +64,7 @@ const Content = () => {
   const [summary, setSummary] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10); // 👈 default 10
+  const [rowsPerPage, setRowsPerPage] = useState(10); 
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -89,21 +84,6 @@ const Content = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // useEffect(() => {
-  //   // Fetch initial data if needed
-
-  //   const fetchData = async () => {
-  //     if (!token) return;
-  //     const resSite = await getAllSite(token);
-  //     setSiteOptions(resSite.collection);
-  //     const resEmployeee = await getVisitorEmployee(token);
-  //     setEmployeeOptions(resEmployeee.collection);
-  //     const resVisitor = await getAllVisitor(token);
-  //     setVisitorOptions(resVisitor.collection);
-  //   };
-
-  //   fetchData();
-  // }, [token]);
 
   const [reportData, setReportData] = useState<any[]>([]);
   const emptyFilter = {
@@ -135,8 +115,7 @@ const Content = () => {
 
   const handlePostReport = async () => {
     try {
-      if (!token) return;
-
+   
       if (isFormDataEmpty(formData)) {
         showSwal('error', 'Please select at least one filter.');
         return;
@@ -150,7 +129,7 @@ const Content = () => {
         return;
       }
 
-      const res = await generateReport(token, formData);
+      const res = await generateReport( formData);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,

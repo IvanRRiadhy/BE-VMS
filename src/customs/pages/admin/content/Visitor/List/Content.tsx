@@ -54,7 +54,6 @@ interface VisitorFilters {
 }
 
 const Content = () => {
-  const { token } = useSession();
   const navigate = useNavigate();
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -100,13 +99,12 @@ const Content = () => {
   });
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
 
       try {
         const start = page * rowsPerPage;
-        const response = await getListVisitorPagination(token, start, rowsPerPage, sortDir, search);
+        const response = await getListVisitorPagination(start, rowsPerPage, sortDir, search);
         let rows = response.collection.map((item: any) => {
           return {
             id: item.id,
@@ -135,10 +133,10 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleView = async (id: string) => {
-    if (!id || !token) return;
+    if (!id) return;
 
     setOpenVisitorDialog(true);
     setVisitorLoading(true);
@@ -146,7 +144,7 @@ const Content = () => {
     setVisitorDetail(null);
 
     try {
-      const res = await getVisitorById(token, id);
+      const res = await getVisitorById( id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -205,7 +203,7 @@ const Content = () => {
         action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
-      await createBlacklist(token as string, payload);
+      await createBlacklist( payload);
 
       showSwal(
         'success',

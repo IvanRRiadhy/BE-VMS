@@ -45,7 +45,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   onSuccess,
   onDirtyChange,
 }) => {
-  const { token } = useSession();
   const schema =
     mode === 'batch' ? CreateDepartementSubmitSchema.partial() : CreateDepartementSubmitSchema;
   const {
@@ -69,7 +68,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   }, [isDirty, onDirtyChange]);
 
   // fetch employee
-  const { allVisitorEmployee } = useVisitorEmployees(token);
+  const { allVisitorEmployee } = useVisitorEmployees();
   const { create, update } = useDepartmentMutation();
 
   const loading = create.isPending || update.isPending;
@@ -99,10 +98,10 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
   const onSubmit = async (form: CreateDepartmentRequest) => {
     try {
-      if (!token) return;
+    
       if (mode === 'create') {
         await create.mutateAsync({
-          token,
+        
           data: form,
         });
         showSwal('success', 'Department successfully created!');
@@ -111,7 +110,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       if (mode === 'edit' && data) {
         await update.mutateAsync({
           id: data.id,
-          token,
+        
           data: form,
         });
         showSwal('success', 'Department successfully updated!');
@@ -131,7 +130,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
             return update.mutateAsync({
               id: item.id,
-              token,
+       
               data: payload,
             });
           }),

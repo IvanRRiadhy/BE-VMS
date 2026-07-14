@@ -3,18 +3,14 @@
 import { useEffect, useState } from 'react';
 import { getAllVisitorProviders } from 'src/customs/api/Admin/VisitorProviders';
 
-export const useVisitorProvider = (token?: string | null) => {
+export const useVisitorProvider = () => {
   const [visitorProviders, setVisitorProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-
-    // setLoading(true);
-
     const fetchVisitorProviders = async () => {
       try {
-        const res = await getAllVisitorProviders(token);
+        const res = await getAllVisitorProviders();
 
           setVisitorProviders(
             (res?.collection ?? []).filter((item: any) => item.is_quick_access === true),
@@ -27,7 +23,7 @@ export const useVisitorProvider = (token?: string | null) => {
     };
 
     fetchVisitorProviders();
-  }, [token]);
+  }, []);
 
   return {
     visitorProviders,

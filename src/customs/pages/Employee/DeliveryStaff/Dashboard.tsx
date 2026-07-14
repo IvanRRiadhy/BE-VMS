@@ -68,14 +68,7 @@ const DashboardDeliveryStaff = () => {
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
     { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-    // {
-    //   title: 'blacklist',
-    //   key: 'blacklist',
-    //   icon: <IconUsersGroup size={22} />,
-    // },
   ];
-
-  const { token } = useSession();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
@@ -134,19 +127,12 @@ const DashboardDeliveryStaff = () => {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      const res = await getShareLinkByDt(
-        token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
-      );
+      const res = await getShareLinkByDt(start, rowsPerPage, searchKeyword, sortDir);
 
       return res;
     },
 
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
     placeholderData: (previousData) => previousData,
   });
 
@@ -182,7 +168,7 @@ const DashboardDeliveryStaff = () => {
   useEffect(() => {
     const fetchDataActiveInvtiation = async () => {
       try {
-        const response = await getActiveInvitation(token as string);
+        const response = await getActiveInvitation();
         let rows = response.collection.map((item: any) => ({
           id: item.id,
           name: item.visitor.name,
@@ -198,7 +184,7 @@ const DashboardDeliveryStaff = () => {
     };
 
     fetchDataActiveInvtiation();
-  }, [token]);
+  }, []);
 
   const {
     data: approvalRes,
@@ -207,9 +193,13 @@ const DashboardDeliveryStaff = () => {
   } = useQuery({
     queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      return await getApprovalTicket(token as string, start, rowsPerPage, sortDir, searchKeyword);
+      return await getApprovalTicket({
+        start,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        keyword: searchKeyword,
+      });
     },
-    enabled: !!token,
   });
 
   const approvalData =
@@ -240,11 +230,9 @@ const DashboardDeliveryStaff = () => {
     ) || [];
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
-        const res = await getOngoingInvitation(token as string);
+        const res = await getOngoingInvitation();
         const data = res?.collection ?? [];
 
         const filtered = data
@@ -281,13 +269,12 @@ const DashboardDeliveryStaff = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       try {
-        const resAccess = await getAccessPass(token as string);
+        const resAccess = await getAccessPass();
         setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
@@ -295,7 +282,7 @@ const DashboardDeliveryStaff = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleView = (row: any) => {
     setSelectedInvitationId(row.id);
@@ -356,10 +343,10 @@ const DashboardDeliveryStaff = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!activeAccessPass?.id || !token) return;
+    if (!activeAccessPass?.id) return;
     setIsParkingLoading(true);
     try {
-      await openParkingBlocker(token, { id: activeAccessPass.id });
+      await openParkingBlocker({ id: activeAccessPass.id });
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');
@@ -369,7 +356,7 @@ const DashboardDeliveryStaff = () => {
   };
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    if (!id || !token) return;
+    if (!id) return;
 
     try {
       const confirm = await Swal.fire({
@@ -394,8 +381,8 @@ const DashboardDeliveryStaff = () => {
       setTimeout(() => setLoading(true), 800);
 
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(token, id);
-      if (action === 'Reject') await rejectTicket(token, id);
+      if (action === 'Approve') await approveTicket(id);
+      if (action === 'Reject') await rejectTicket(id);
       setTimeout(() => {
         showSwal(
           'success',
@@ -463,7 +450,7 @@ const DashboardDeliveryStaff = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(token as string, id);
+      await deleteShareLink(id);
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
       });
@@ -477,7 +464,7 @@ const DashboardDeliveryStaff = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(token as string, payload);
+      await createShareLink(payload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
@@ -501,7 +488,7 @@ const DashboardDeliveryStaff = () => {
         emails: emails,
       };
 
-      await createShareLink(token as string, finalPayload);
+      await createShareLink(finalPayload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],

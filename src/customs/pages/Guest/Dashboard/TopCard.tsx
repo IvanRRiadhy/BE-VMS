@@ -21,7 +21,6 @@ interface ApiDateGroup {
 
 const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
@@ -55,11 +54,10 @@ const TopCard = ({ items = [], size }: any) => {
   };
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(token as any, start, end);
+        const res = await getVisitorChart( start, end);
         const collection: ApiDateGroup[] = res.collection ?? [];
 
         const currentStart = new Date(startDate);
@@ -104,8 +102,8 @@ const TopCard = ({ items = [], size }: any) => {
       }
     };
 
-    if (token) fetchData();
-  }, [token, startDate, endDate]);
+     fetchData();
+  }, [ startDate, endDate]);
 
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;
@@ -176,10 +174,10 @@ const TopCard = ({ items = [], size }: any) => {
 
       const dateStr = d.toISOString().split('T')[0];
       days.push(dateStr);
-      const found = rawCollection.find((x) => x.Date.startsWith(dateStr));
+      const found = rawCollection.find((x) => x.date.startsWith(dateStr));
 
       if (found) {
-        const status = found.Status.find((s) => s.visitor_status.trim() === key);
+        const status = found.status.find((s) => s.visitor_status.trim() === key);
         values.push(status?.Count ?? 0);
       } else {
         values.push(0);

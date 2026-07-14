@@ -40,7 +40,6 @@ interface Filters {
 const Approval = () => {
   const [approvalData, setApprovalData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -114,14 +113,13 @@ const Approval = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
 
-        const res = await getApprovalTicket(token, {
+        const res = await getApprovalTicket({
           start,
           length: rowsPerPage,
           sort_dir: sortDir,
@@ -152,16 +150,16 @@ const Approval = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, page, rowsPerPage, searchKeyword, sortDir]);
+  }, [ refreshTrigger, page, rowsPerPage, searchKeyword, sortDir]);
 
   const [dataVisitor, setDataVisitor] = useState<any[]>([]);
   const [selectedApprovalId, setSelectedApprovalId] = useState<string>('');
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    if (!id || !token) return;
+    if (!id) return;
 
     try {
-      const res = await getVisitorByTickedId(token, id);
+      const res = await getVisitorByTickedId( id);
       setSelectedApprovalId(id);
       setDataVisitor(
         (res?.collection || []).map((item: any) => ({
@@ -201,9 +199,9 @@ const Approval = () => {
         // setLoadingAction(true);
 
         if (action === 'Approve') {
-          await approveTicket(token, id);
+          await approveTicket( id);
         } else {
-          await rejectTicket(token, id);
+          await rejectTicket( id);
         }
 
         showSwal(
@@ -278,11 +276,8 @@ const Approval = () => {
       const payload = {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
-
-      // console.log('payload', payload);
-
-      const response = await approveMeetingHost(token, id, payload);
-      const res = await approveTicket(token as string, id);
+      const response = await approveMeetingHost( id, payload);
+      const res = await approveTicket(id);
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 

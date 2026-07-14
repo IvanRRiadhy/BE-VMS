@@ -12,7 +12,6 @@ import { Box } from '@mui/system';
 import React, { use, useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createOrganization, getVisitorEmployee, updateOrganization } from 'src/customs/api/admin';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
@@ -23,7 +22,6 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFormAutoSave } from 'src/hooks/useFormAutoSave';
 import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 
@@ -48,7 +46,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
   onSuccess,
   onDirtyChange,
 }) => {
-  const { token } = useSession();
   const schema =
     mode === 'batch' ? CreateOrganizationSubmitSchema.partial() : CreateOrganizationSubmitSchema;
 
@@ -92,7 +89,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
     }
   }, [mode, data, reset]);
 
-  const { allVisitorEmployee } = useVisitorEmployees(token);
+  const { allVisitorEmployee } = useVisitorEmployees();
   const { create, update } = useOrganizationMutation();
 
   const loading = create.isPending || update.isPending;
@@ -104,15 +101,13 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
 
   const onSubmit = async (form: CreateOrganizationRequest) => {
     try {
-      if (!token) return;
-
       if (mode === 'create') {
-        await create.mutateAsync({ token, data: form });
+        await create.mutateAsync({ data: form });
         showSwal('success', 'Organization successfully created!');
       }
 
       if (mode === 'edit' && data) {
-        await update.mutateAsync({ id: data.id, token, data: form });
+        await update.mutateAsync({ id: data.id, data: form });
         showSwal('success', 'Organization successfully updated!');
       }
 
@@ -129,7 +124,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
               is_internal: item.is_internal,
             };
 
-            return update.mutateAsync({ id: item.id, token, data: payload });
+            return update.mutateAsync({ id: item.id, data: payload });
           }),
         );
 

@@ -13,21 +13,20 @@ export const useDocumentMutation = () => {
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateDocumentRequest }) =>
-      createDocument(data, token),
+    mutationFn: ({ data }: { data: CreateDocumentRequest }) => createDocument(data),
 
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, token, data }: { id: string; token: string; data: CreateDocumentRequest }) =>
-      updateDocument(id, data, token),
+    mutationFn: ({ id, data }: { id: string; data: CreateDocumentRequest }) =>
+      updateDocument(id, data),
 
     onSuccess: invalidate,
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteDocument(id, token),
+    mutationFn: ({ id }: { id: string }) => deleteDocument(id),
 
     onSuccess: invalidate,
   });

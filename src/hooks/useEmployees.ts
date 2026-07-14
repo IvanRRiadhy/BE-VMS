@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllEmployee } from 'src/customs/api/admin';
 
-export const useEmployees = (token?: string | null) => {
+export const useEmployees = () => {
   const [employee, setEmployee] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 

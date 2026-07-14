@@ -2,12 +2,6 @@ import { Avatar } from '@mui/material';
 import { debounce } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import AsyncSelect from 'react-select/async';
-import {
-  getAllEmployee,
-  getListVisitor,
-  getVisitorEmployee,
-  getVisitorInvitation,
-} from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import {
   getInvitationVisitor,
@@ -43,11 +37,10 @@ type OptionType = {
 
 type Props = {
   onSelect: (visitor: Visitor & { faceimage: string }) => void;
-  token: string;
   isEmployee?: boolean;
 };
 
-const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
+const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, isEmployee }) => {
   const BASE_URL = axiosInstance2.defaults.baseURL;
 
   const [selectedOption, setSelectedOption] = React.useState<OptionType | null>(null);
@@ -66,10 +59,10 @@ const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, token, isEmployee })
 
       if (isEmployee) {
         // const res = await getAllEmployee(token);
-        const res = await getInvitationVisitorEmployee(token, params);
+        const res = await getInvitationVisitorEmployee(params);
         list = res?.collection ?? [];
       } else {
-        const res = await getInvitationVisitor(token, params);
+        const res = await getInvitationVisitor(params);
         // const res = await getListVisitor(token);
         list = res?.collection ?? [];
       }

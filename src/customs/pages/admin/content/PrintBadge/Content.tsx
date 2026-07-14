@@ -34,7 +34,6 @@ type PrintBadgeForm = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [formData, setFormData] = useState<PrintBadgeForm>({
     logo: null,
     footer_text: '',
@@ -51,30 +50,7 @@ const Content = () => {
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  // const uploadFileToCDN = async (file: File, id: string, token: string): Promise<string | null> => {
-  //   if (!(file instanceof File)) return null;
-
-  //   const formData = new FormData();
-  //   formData.append('logo', file);
-
-  //   try {
-  //     const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, formData, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     const fileUrl = response.data?.collection?.file_url;
-  //     if (!fileUrl) return null;
-
-  //     return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl;
-  //   } catch (error) {
-  //     console.error('Upload failed:', error);
-  //     return null;
-  //   }
-  // };
-
-  const uploadFileToCDN = async (file: File, id: string, token: string): Promise<string | null> => {
+  const uploadFileToCDN = async (file: File, id: string): Promise<string | null> => {
     if (!(file instanceof File)) return null;
 
     const uploadFormData = new FormData();
@@ -83,7 +59,6 @@ const Content = () => {
     try {
       const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, uploadFormData, {
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': undefined,
         },
         transformRequest: [(data) => data],
@@ -100,12 +75,9 @@ const Content = () => {
     }
   };
 
-  const deleteCDN = async (fileUrl: string, token: string) => {
+  const deleteCDN = async (fileUrl: string) => {
     try {
       await axiosInstance2.delete(`/cdn${fileUrl}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         data: {
           file_url: fileUrl,
         },
@@ -147,11 +119,7 @@ const Content = () => {
       let logoUrl: string | null = oldLogo;
 
       if (formData.logo instanceof File) {
-        const uploadedUrl = await uploadFileToCDN(
-          formData.logo,
-          printBadgeConfig.id,
-          token as string,
-        );
+        const uploadedUrl = await uploadFileToCDN(formData.logo, printBadgeConfig.id);
 
         if (!uploadedUrl) {
           setErrors({ logo: 'Upload failed' });
@@ -169,11 +137,11 @@ const Content = () => {
         printer_paper_size: result.data.printer_paper_size,
       };
 
-      await updatePrintBadgeConfig(printBadgeConfig.id, payload, token as string);
+      await updatePrintBadgeConfig(printBadgeConfig.id, payload);
 
       if (oldLogo && oldLogo !== logoUrl) {
         try {
-          await deleteCDN(oldLogo, token as string);
+          await deleteCDN(oldLogo);
         } catch (err) {
           console.error(err);
         }
@@ -200,7 +168,7 @@ const Content = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getPrintBadgeConfig(token as string);
+        const res = await getPrintBadgeConfig();
         const config = res?.collection;
 
         setPrintBadgeConfig(config);
@@ -219,7 +187,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   return (
     <PageContainer

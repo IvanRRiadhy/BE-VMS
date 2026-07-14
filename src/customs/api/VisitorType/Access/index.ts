@@ -1,11 +1,9 @@
 import axios from 'axios';
 import axiosInstance from '../../interceptor';
 
-export const getVisitorTypeAccess = async (token: string): Promise<any> => {
+export const getVisitorTypeAccess = async (): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/visitor-type-access`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/visitor-type-access`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -14,11 +12,9 @@ export const getVisitorTypeAccess = async (token: string): Promise<any> => {
 };
 
 // get by id
-export const getVisitorTypeAccessById = async (id: string, token: string): Promise<any> => {
+export const getVisitorTypeAccessById = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/visitor-type-access/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/visitor-type-access/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -27,11 +23,9 @@ export const getVisitorTypeAccessById = async (id: string, token: string): Promi
 };
 
 // get visitor by id
-export const getVisitorTypeAccessByVisitorId = async (id: string, token: string): Promise<any> => {
+export const getVisitorTypeAccessByVisitorId = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/visitor-type-access/visitor-type/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/visitor-type-access/visitor-type/${id}`);
     return response.data;
   } catch (error: any) {
     if (error?.response?.status === 404) {
@@ -43,11 +37,9 @@ export const getVisitorTypeAccessByVisitorId = async (id: string, token: string)
 };
 
 // create
-export const createVisitorTypeAccess = async (data: any, token: string): Promise<any> => {
+export const createVisitorTypeAccess = async (data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(`/visitor-type-access`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.post(`/visitor-type-access`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -56,11 +48,9 @@ export const createVisitorTypeAccess = async (data: any, token: string): Promise
 };
 
 // create bulk
-export const createVisitorTypeAccessBulk = async (data: any, token: string): Promise<any> => {
+export const createVisitorTypeAccessBulk = async (data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(`/visitor-type-access/bulk`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.post(`/visitor-type-access/bulk`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -69,15 +59,9 @@ export const createVisitorTypeAccessBulk = async (data: any, token: string): Pro
 };
 
 // update
-export const updateVisitorTypeAccess = async (
-  id: string,
-  data: any,
-  token: string,
-): Promise<any> => {
+export const updateVisitorTypeAccess = async (id: string, data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.put(`/visitor-type-access/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.put(`/visitor-type-access/${id}`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -86,11 +70,9 @@ export const updateVisitorTypeAccess = async (
 };
 
 // Delete
-export const deleteVisitorTypeAccess = async (id: string, token: string): Promise<any> => {
+export const deleteVisitorTypeAccess = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.delete(`/visitor-type-access/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.delete(`/visitor-type-access/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -99,11 +81,9 @@ export const deleteVisitorTypeAccess = async (id: string, token: string): Promis
 };
 
 // Delete bulk
-export const deleteVisitorTypeAccessBulk = async (id: string, token: string): Promise<any> => {
+export const deleteVisitorTypeAccessBulk = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.delete(`/visitor-type-access/bulk/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.delete(`/visitor-type-access/bulk/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);

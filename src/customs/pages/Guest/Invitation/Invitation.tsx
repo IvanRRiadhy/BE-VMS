@@ -86,7 +86,6 @@ import SelectAgendaInvitationDialog from './components/Dialog/SelectAgendaInvita
 import InvitationDialog from './components/Dialog/InvitationDialog';
 
 const Invitation = () => {
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [page, setPage] = useState(0);
@@ -153,7 +152,6 @@ const Invitation = () => {
   const [detailVisitorInvitation, setDetailVisitorInvitation] = useState([]);
 
   useEffect(() => {
-    if (!token) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -161,7 +159,7 @@ const Invitation = () => {
         const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
         const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
 
-        const res = await getInvitation(token as string, start_date, end_date);
+        const res = await getInvitation(start_date, end_date);
         const rows = res.collection.map((item: any) => {
           return {
             id: item.id,
@@ -188,42 +186,40 @@ const Invitation = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger]);
+  }, [ refreshTrigger]);
 
   const handleView = async (id: string) => {
-    if (!id || !token) return;
+    if (!id) return;
 
     setOpenInvitationDialog(true);
     setInvitationDetail([]);
     setDetailVisitorInvitation([]);
 
     try {
-      const res = await getInvitationById(id, token);
+      const res = await getInvitationById(id);
       console.log('res', res);
       setInvitationDetail(res?.collection ?? {});
 
       try {
-        const resAnotherVisitor = await getInvitationRelatedVisitor(id, token);
+        const resAnotherVisitor = await getInvitationRelatedVisitor(id);
         setDetailVisitorInvitation(resAnotherVisitor?.collection ?? []);
-      } catch (relatedErr) {
-      }
+      } catch (relatedErr) {}
     } catch (err: any) {
       console.error(err?.message || 'Failed to fetch invitation detail.');
     }
   };
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       try {
-        const res = await getOngoingInvitation(token as string);
+        const res = await getOngoingInvitation();
         setInvitationDetailVisitor(res?.collection ?? []);
       } catch (error) {
         // console.error('Error fetching data:', error);
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleSelectInvitation = async (_: any, selected: any) => {
     if (!selected || !selected.id) return;
@@ -231,7 +227,7 @@ const Invitation = () => {
     // console.log('Selected invitation:', selected);
 
     try {
-      const detail = await getDetailInvitationForm(token as string, selected.id);
+      const detail = await getDetailInvitationForm(selected.id);
       setInvitationData(detail);
     } catch (error) {
       console.error('Error fetching invitation detail:', error);
@@ -344,7 +340,6 @@ const Invitation = () => {
   }, [invitationData]);
 
   const steps = groupedSections.map((s) => s.label);
-
 
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
@@ -954,7 +949,7 @@ const Invitation = () => {
     try {
       const id = source.id;
 
-      const res = await createVisitorInvitation(token as string, id, payload);
+      const res = await createVisitorInvitation(id, payload);
       console.log('Success:', JSON.stringify(res, null, 2));
       showSwal('success', 'Visitor has been invited.');
     } catch (err) {
@@ -1267,14 +1262,14 @@ const Invitation = () => {
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !selectedMinutes) return;
+    if ( !selectedMinutes) return;
 
     try {
       setLoadingAccess(true);
 
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      await updateExtend(token, {
+      await updateExtend({
         id: invitationDetail?.id,
         period: selectedMinutes,
         apply_to_all: applyToAll,
@@ -1324,7 +1319,6 @@ const Invitation = () => {
     setSelectedMinutes(null);
     setOpenExtendVisit(false);
   };
-
 
   return (
     <>

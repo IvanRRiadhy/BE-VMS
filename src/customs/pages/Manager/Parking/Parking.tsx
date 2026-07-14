@@ -25,7 +25,6 @@ const Parking = () => {
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
           <Grid size={{ xs: 12, lg: 12 }}>
-            {/* {isDataReady ? ( */}
             <DynamicTable
               overflowX={'auto'}
               data={[]}
@@ -65,13 +64,6 @@ const Parking = () => {
               htmlClampLines={4}
               htmlMaxWidth={500}
             />
-            {/* ) : (
-              <Card sx={{ width: '100%' }}>
-                <Skeleton />
-                <Skeleton animation="wave" />
-                <Skeleton animation={false} />
-              </Card>
-            )} */}
           </Grid>
         </Grid>
       </Box>

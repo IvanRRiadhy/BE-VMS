@@ -18,9 +18,7 @@ import {
 } from '@mui/material';
 import moment from 'moment-timezone';
 import {
-  IconBellRingingFilled,
   IconBolt,
-  IconCards,
   IconCircleMinus,
   IconLogin,
   IconLogout,
@@ -31,7 +29,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
 import {
   getActiveInvitation,
@@ -90,8 +87,6 @@ const DashboardEmployee = () => {
     { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
   ];
-
-  const { token } = useSession();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
@@ -116,7 +111,6 @@ const DashboardEmployee = () => {
   const [sortDir, setSortDir] = useState('desc');
   const dispatch = useDispatch();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
@@ -158,19 +152,12 @@ const DashboardEmployee = () => {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      const res = await getShareLinkByDt(
-        token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
-      );
+      const res = await getShareLinkByDt(start, rowsPerPage, searchKeyword, sortDir);
 
       return res;
     },
 
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
     placeholderData: (previousData) => previousData,
   });
 
@@ -206,7 +193,7 @@ const DashboardEmployee = () => {
   useEffect(() => {
     const fetchDataActiveInvtiation = async () => {
       try {
-        const response = await getActiveInvitation(token as string);
+        const response = await getActiveInvitation();
         let rows = response.collection.map((item: any) => ({
           id: item.id,
           name: item.visitor.name,
@@ -222,7 +209,7 @@ const DashboardEmployee = () => {
     };
 
     fetchDataActiveInvtiation();
-  }, [token]);
+  }, []);
 
   const {
     data: approvalRes,
@@ -231,14 +218,13 @@ const DashboardEmployee = () => {
   } = useQuery({
     queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      return await getApprovalTicket(token, {
+      return await getApprovalTicket({
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
         keyword: searchKeyword,
       });
     },
-    enabled: !!token,
   });
 
   const approvalData =
@@ -269,11 +255,9 @@ const DashboardEmployee = () => {
     ) || [];
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
       try {
-        const res = await getOngoingInvitation(token as string);
+        const res = await getOngoingInvitation();
         const data = res?.collection ?? [];
 
         const filtered = data
@@ -310,9 +294,9 @@ const DashboardEmployee = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
-  const { accessPass, loading: loadingAccessPass } = useAccessPass(token);
+  const { accessPass, loading: loadingAccessPass } = useAccessPass();
 
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
@@ -322,7 +306,6 @@ const DashboardEmployee = () => {
     queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
     queryFn: async () => {
       const res = await getAllVisitorPagination(
-        token as string,
         quickPage * quickRowsPerPage,
         quickRowsPerPage,
         quickSearch || undefined,
@@ -333,7 +316,7 @@ const DashboardEmployee = () => {
 
       return res;
     },
-    enabled: !!token && openQuickAccess,
+    enabled: openQuickAccess,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -429,10 +412,10 @@ const DashboardEmployee = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!accessPass?.id || !token) return;
+    if (!accessPass?.id) return;
     setIsParkingLoading(true);
     try {
-      const res = await openParkingBlocker(token, { id: accessPass.id });
+      const res = await openParkingBlocker({ id: accessPass.id });
       console.log('res', JSON.stringify(res, null, 2));
       setSnackbar({
         open: true,
@@ -449,20 +432,12 @@ const DashboardEmployee = () => {
   const handleApproveMeetingHost = async (id: string) => {
     try {
       setLoading(true);
-      console.log('id', id);
-      console.log('selectedRows', selectedRows);
 
       const payload = {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
-
-      // console.log('payload', payload);
-
-      const response = await approveMeetingHost(token, id, payload);
-      // console.log('response', response);
-
+      const response = await approveMeetingHost(id, payload);
       const res = await handleActionApproval(id, 'Approve');
-      // console.log('res', res);
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
@@ -500,8 +475,8 @@ const DashboardEmployee = () => {
         if (!confirm.isConfirmed) return;
       }
 
-      if (action === 'Approve') await approveTicket(token as string, id);
-      if (action === 'Reject') await rejectTicket(token as string, id);
+      if (action === 'Approve') await approveTicket(id);
+      if (action === 'Reject') await rejectTicket(id);
 
       queryClient.invalidateQueries({
         queryKey: ['approval-ticket'],
@@ -549,7 +524,7 @@ const DashboardEmployee = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(token as string, id);
+      await deleteShareLink(id);
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
       });
@@ -563,7 +538,7 @@ const DashboardEmployee = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(token as string, payload);
+      await createShareLink(payload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
@@ -587,7 +562,7 @@ const DashboardEmployee = () => {
         emails: emails,
       };
 
-      await createShareLink(token as string, finalPayload);
+      await createShareLink(finalPayload);
 
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
@@ -657,7 +632,7 @@ const DashboardEmployee = () => {
   const handleCreateQuickAccess = async (payload: any) => {
     try {
       setIsGenerating(true);
-      await createQuickAccess(token, payload);
+      await createQuickAccess(payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -681,14 +656,12 @@ const DashboardEmployee = () => {
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
   const handleOpenApprovalDialog = async (row: any) => {
-    if (!token) return;
-
     try {
       setSelectedId(row.ticket_id);
       setOpenDialog(true);
       setGroupDetailLoading(true);
 
-      const res = await getVisitorTransactionByIds(token, row.id);
+      const res = await getVisitorTransactionByIds(row.id);
 
       setGroupVisitors(res?.collection ?? []);
       setTriggerCheckAll(true);
@@ -744,7 +717,7 @@ const DashboardEmployee = () => {
         emails: emails,
       };
       // console.log('payload', payload);
-      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
+      await createShareLinkByEmailById(payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -757,7 +730,6 @@ const DashboardEmployee = () => {
     isLoading: isLoadingActivities,
     error,
   } = useActivities({
-    token,
     start: 0,
     length: 5,
     start_date: startDate.toISOString().split('T')[0],

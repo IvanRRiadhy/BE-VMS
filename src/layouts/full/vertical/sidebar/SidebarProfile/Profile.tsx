@@ -17,9 +17,7 @@ export const Profile = () => {
 
   // Fungsi logout
   const handleLogout = useCallback(() => {
-    // Bersihkan storage
     clearToken();
-    // Redirect ke login page
     navigate('/', { replace: true });
   }, [navigate]);
 

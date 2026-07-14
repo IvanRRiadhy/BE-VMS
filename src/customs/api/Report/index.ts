@@ -1,10 +1,10 @@
 import axios from 'axios';
 import axiosInstance from '../interceptor';
 
-export const getReportVisitorTransaction = async (token: string): Promise<any> => {
+export const getReportVisitorTransaction = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/report/visitor-transaction`, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -16,10 +16,10 @@ export const getReportVisitorTransaction = async (token: string): Promise<any> =
 };
 
 // by id
-export const getReportVisitorTransactionById = async (token: string, id: string): Promise<any> => {
+export const getReportVisitorTransactionById = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/report/visitor-transaction` + `/${id}`, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -31,20 +31,17 @@ export const getReportVisitorTransactionById = async (token: string, id: string)
 };
 
 // get dt
-export const getReportVisitorTransactionDt = async (
-  token: string,
-  filters?: {
-    // draw?: number;
-    start?: number;
-    length?: number;
-    // sort_column?: string;
-    sort_dir?: string;
-    search?: string;
-    // name?: string;
-    host?: string;
-    user?: string;
-  },
-): Promise<any> => {
+export const getReportVisitorTransactionDt = async (filters?: {
+  // draw?: number;
+  start?: number;
+  length?: number;
+  // sort_column?: string;
+  sort_dir?: string;
+  search?: string;
+  // name?: string;
+  host?: string;
+  user?: string;
+}): Promise<any> => {
   try {
     const params: any = {
       // draw: filters?.draw ?? 1,
@@ -63,7 +60,6 @@ export const getReportVisitorTransactionDt = async (
     const response = await axiosInstance.get(`/report/visitor-transaction/dt`, {
       headers: {
         Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
       },
       params,
     });
@@ -75,14 +71,10 @@ export const getReportVisitorTransactionDt = async (
 };
 
 // update
-export const updateReportVisitorTransaction = async (
-  token: string,
-  id: string,
-  data: any,
-): Promise<any> => {
+export const updateReportVisitorTransaction = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put(`/report/visitor-transaction` + `/${id}`, data, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error: any) {
@@ -97,10 +89,10 @@ export const updateReportVisitorTransaction = async (
   }
 };
 
-export const createReportVisitorTransaction = async (token: string, data: any): Promise<any> => {
+export const createReportVisitorTransaction = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/report/visitor-transaction`, data, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -111,7 +103,7 @@ export const createReportVisitorTransaction = async (token: string, data: any): 
   }
 };
 
-export const generateReportVisitorById = async (token: string, id: string): Promise<any> => {
+export const generateReportVisitorById = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.post(
       `/report/visitor-transaction/generate/${id}`,
@@ -119,7 +111,6 @@ export const generateReportVisitorById = async (token: string, id: string): Prom
       {
         headers: {
           Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -155,10 +146,10 @@ export const generateReportVisitorById = async (token: string, id: string): Prom
 // };
 
 // generate export with excel
-export const generateReportVisitorWithExcel = async (token: string, data: any): Promise<any> => {
+export const generateReportVisitorWithExcel = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/report/visitor-transaction/generate`, data, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
@@ -167,10 +158,10 @@ export const generateReportVisitorWithExcel = async (token: string, data: any): 
 };
 
 // Delete
-export const deleteReportVisitorTransaction = async (token: string, id: string): Promise<any> => {
+export const deleteReportVisitorTransaction = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.delete(`/report/visitor-transaction/${id}`, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {

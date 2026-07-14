@@ -76,7 +76,6 @@ const FormWizardAddVisitorCard = ({
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set());
   const isStepSkipped = (step: any) => skipped.has(step);
-  const { token } = useSession();
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
@@ -119,11 +118,10 @@ const FormWizardAddVisitorCard = ({
   };
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       try {
-        const employeeRes = await getVisitorEmployee(token);
-        const siteSpaceRes = await getRegisteredSite(token);
+        const employeeRes = await getVisitorEmployee();
+        const siteSpaceRes = await getRegisteredSite();
         setEmployeeRes(employeeRes.collection);
         setSiteSpaceRes(siteSpaceRes.collection);
       } catch (error) {
@@ -131,7 +129,7 @@ const FormWizardAddVisitorCard = ({
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (localForm.is_multi_site) {
@@ -171,15 +169,6 @@ const FormWizardAddVisitorCard = ({
     };
 
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
       if (isBatchEdit && selectedRows.length > 0) {
         setLoading(true);
 
@@ -230,7 +219,7 @@ const FormWizardAddVisitorCard = ({
 
                 employee_name: updatedFields.employee_name ?? (row.employee_name as string),
               };
-              await updateVisitorCard(token as string, row.id, mergedPayload);
+              await updateVisitorCard(row.id, mergedPayload);
             }),
           );
 
@@ -257,14 +246,14 @@ const FormWizardAddVisitorCard = ({
 
         console.log('📤 Updating card ID:', edittingId, updatedData);
 
-        await updateVisitorCard(token as string, edittingId, updatedData);
+        await updateVisitorCard(edittingId, updatedData);
         showSwal('success', 'Card updated successfully');
       } else {
         const createdData: CreateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         };
-        await createVisitorCard(token as string, createdData);
+        await createVisitorCard(createdData);
         showSwal('success', 'Card created successfully');
       }
 

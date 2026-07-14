@@ -19,7 +19,6 @@ import { IconUsers } from '@tabler/icons-react';
 export default function InvitationShare() {
   const [searchParams] = useSearchParams();
   const [error, setError] = useState(false);
-  const { token } = useSession();
   const navigate = useNavigate();
 
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -51,13 +50,7 @@ export default function InvitationShare() {
     sig: string;
   }) => {
     try {
-      const res = await getInvitationLink(
-        token as string,
-        payload.d,
-        payload.code,
-        payload.timestamp,
-        payload.sig,
-      );
+      const res = await getInvitationLink(payload.d, payload.code, payload.timestamp, payload.sig);
 
       setInvitation(res.collection);
     } catch (err: any) {
@@ -91,9 +84,9 @@ export default function InvitationShare() {
         setLoading(true);
 
         const results = await Promise.allSettled([
-          getPublicSite(token as string, code, 'InvitationLink'),
-          getPublicVisitorEmployee(token as string, code, 'InvitationLink'),
-          getPublicVisitorHost(token as string, code, 'InvitationLink'),
+          getPublicSite(code, 'InvitationLink'),
+          getPublicVisitorEmployee(code, 'InvitationLink'),
+          getPublicVisitorHost(code, 'InvitationLink'),
         ]);
 
         const [sitesRes, visitorEmployeeRes, employeeRes] = results;
@@ -122,10 +115,10 @@ export default function InvitationShare() {
       }
     };
 
-    if (token && code) {
+    if (code) {
       fetchData();
     }
-  }, [token, code]);
+  }, [code]);
 
   if (error)
     return (
@@ -133,7 +126,7 @@ export default function InvitationShare() {
         <Box
           sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <CircularProgress color='primary' />
+          <CircularProgress color="primary" />
         </Box>
       </div>
     );

@@ -88,7 +88,6 @@ const FormWizardAddEmployee = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const { token } = useSession();
   const isStepSkipped = (step: number) => skipped.has(step);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -387,7 +386,7 @@ const FormWizardAddEmployee = ({
         for (const row of selectedRows) {
           await update.mutateAsync({
             id: row.id,
-            token: token!,
+
             data: {
               ...row,
               ...payload,
@@ -445,7 +444,7 @@ const FormWizardAddEmployee = ({
 
         await update.mutateAsync({
           id: edittingId,
-          token: token!,
+
           data: editData,
         });
         if (hasNewImage) {
@@ -455,7 +454,6 @@ const FormWizardAddEmployee = ({
       } else {
         // const created = await createEmployee(data, token as string);
         const created = await create.mutateAsync({
-          token: token!,
           data,
         });
         const employeeId = created?.collection.employee_id;
@@ -494,7 +492,6 @@ const FormWizardAddEmployee = ({
         uploadImage.mutateAsync({
           employeeId,
           file: fileFromInput,
-          token: token!,
         }),
       );
     }
@@ -507,7 +504,6 @@ const FormWizardAddEmployee = ({
         uploadImage.mutateAsync({
           employeeId,
           file,
-          token: token!,
         }),
       );
     }

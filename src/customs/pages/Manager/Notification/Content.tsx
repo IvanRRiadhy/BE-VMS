@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Grid2 as Grid, IconButton } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
-import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
-
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 
 import { IconBell, IconScript } from '@tabler/icons-react';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -38,7 +29,6 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -59,7 +49,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
+  }, [ page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);

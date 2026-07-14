@@ -38,10 +38,7 @@ type SettingSMTPRow = {
 };
 
 const Content = () => {
-  const { token } = useSession();
   const [settingData, setSettingData] = useState<any[]>([]);
-  const [operatorSettingData, setOperatorSettingData] = useState<any[]>([]);
-  const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -95,7 +92,7 @@ const Content = () => {
     try {
       // const validated = CreateSettingSmtpSchema.parse(data);
       if (edittingId) {
-        await updateSetting(token as string, edittingId, formData);
+        await updateSetting(edittingId, formData);
         showSwal('success', 'Setting updated successfully!');
       }
 
@@ -114,15 +111,13 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
-
     setLoading(true);
 
     const fetchData = async () => {
       try {
         const [settingRes, orgRes] = await Promise.allSettled([
-          getSetting(token as string),
-          getAllOrganizations(token as string),
+          getSetting(),
+          getAllOrganizations(),
         ]);
         let raw: any = null;
         if (settingRes.status === 'fulfilled') {
@@ -160,7 +155,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleEdit = (id: number) => {
     const row = settingData.find((x) => x.id === id);
@@ -177,12 +172,11 @@ const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getApprovalWorkflowByDt(token, start, rowsPerPage, sortDir, search);
+        const response = await getApprovalWorkflowByDt(start, rowsPerPage, sortDir, search);
         setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
         setTotalRecords(response.RecordsTotal);
       } catch (error) {
@@ -194,7 +188,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
+  }, [page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   return (
     <PageContainer
@@ -229,6 +223,7 @@ const Content = () => {
                 minWidth: isMobile ? '100%' : 180,
               }}
             >
+              <Tab label="Configuration" />
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
               <Tab label="Visitor Card Setting" />
@@ -241,7 +236,13 @@ const Content = () => {
                 mt: isMobile ? 2 : 0,
               }}
             >
-              {tabIndex === 0 ? (
+              {/* vms configuration */}
+              {tabIndex === 0 && <Box>
+                <form>
+                  
+                </form>
+                </Box>}
+              {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
                     <DynamicTable
@@ -277,7 +278,7 @@ const Content = () => {
                 </Box>
               ) : null}
 
-              {tabIndex === 1 ? (
+              {tabIndex === 2 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
                     <ApprovalWorkflow
@@ -293,12 +294,12 @@ const Content = () => {
                 </Box>
               ) : null}
 
-              {tabIndex === 2 ? (
+              {tabIndex === 3 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <VisitorCardSetting /> : null}
                 </Box>
               ) : null}
-              {tabIndex === 3 ? (
+              {tabIndex === 4 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <NotificationSetting /> : null}
                 </Box>

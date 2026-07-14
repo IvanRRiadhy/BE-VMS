@@ -48,7 +48,6 @@ interface VisitorProviderForm {
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -71,12 +70,11 @@ const Content = () => {
     },
   ];
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getVisitorProvidersByDt(token, start, rowsPerPage, sortDir, search);
+        const response = await getVisitorProvidersByDt( start, rowsPerPage, sortDir, search);
         const rows = response.collection.map((item: any) => {
           return {
             id: item.id,
@@ -100,7 +98,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, search]);
+  }, [ page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -136,7 +134,7 @@ const Content = () => {
         active: checked,
       };
 
-      await updateVisitorProviders(token as string, row.id, payload);
+      await updateVisitorProviders( row.id, payload);
 
       showSwal('success', 'Visitor Provider successfully updated');
       setRefreshTrigger((prev) => prev + 1);
@@ -169,7 +167,6 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
 
     const confirmed = await showConfirmDelete(
       `Are you sure you want to delete this Visitor Provider?`,
@@ -178,7 +175,7 @@ const Content = () => {
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteVisitorProvider(token, id);
+        await deleteVisitorProvider( id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `Successfully deleted Visitor Provider.`);
       } catch (error) {
@@ -194,7 +191,7 @@ const Content = () => {
       // setLoading(true);
 
       setEditingId(id);
-      const res = await getVisitorProvidersById(token, id);
+      const res = await getVisitorProvidersById( id);
       setLocalForm(res.collection);
       setInitialForm(res.collection);
 

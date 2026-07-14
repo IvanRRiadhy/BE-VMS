@@ -46,9 +46,7 @@ const Profile = () => {
     clearToken();
 
     dispatch(clearUser());
-    // await persistor.purge();
-    // await persistor.flush();
-
+    
     localStorage.clear();
     sessionStorage.clear();
 
@@ -66,7 +64,7 @@ const Profile = () => {
     fetchedRef.current = true;
 
     const fetchData = async () => {
-      const res = await getProfile(token);
+      const res = await getProfile();
       setData(res?.collection || {});
     };
 

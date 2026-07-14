@@ -8,14 +8,13 @@ interface Props {
 }
 
 export const useEmployeeDetail = ({ id, enabled = true }: Props) => {
-  const { token } = useSession();
 
   return useQuery({
     queryKey: ['employees-detail', id],
-    enabled: !!token && !!id && enabled,
+    enabled:  !!id && enabled,
 
     queryFn: async () => {
-      const res = await getEmployeeById(id!, token!);
+      const res = await getEmployeeById(id!);
       return res.collection;
     },
   });

@@ -54,9 +54,7 @@ export default function InvitationVisitorDialog({
 
     handleCloseDialog();
   };
-
   const { t } = useTranslation();
-
   return (
     <Dialog
       fullWidth

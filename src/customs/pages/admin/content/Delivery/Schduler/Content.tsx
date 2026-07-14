@@ -52,7 +52,6 @@ interface Filters {
 }
 
 const Content = () => {
-  const { token } = useSession();
   const [openDialogScheduler, setOpenDialogScheduler] = useState(false);
   const [schedulerData, setSchedulerData] = useState<any[]>([]);
   // const [page, setPage] = useState(0);
@@ -110,43 +109,39 @@ const Content = () => {
   ];
 
   const { data: timezoneData, isLoading: loadingTimezone } = useQuery({
-    queryKey: ['timezones', token],
+    queryKey: ['timezones'],
     queryFn: async () => {
-      const res = await getAllTimezone(token as string);
+      const res = await getAllTimezone();
       return res.collection;
     },
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
   });
 
   const { data: hostDataQuery, isLoading: loadingHost } = useQuery({
-    queryKey: ['hosts', token],
+    queryKey: ['hosts'],
     queryFn: async () => {
-      const res = await getVisitorEmployee(token as string);
+      const res = await getVisitorEmployee();
       return res.collection;
     },
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
   });
 
   const { data: siteDataQuery, isLoading: loadingSite } = useQuery({
-    queryKey: ['sites', token],
+    queryKey: ['sites'],
     queryFn: async () => {
-      const res = await getAllSite(token as string);
+      const res = await getAllSite();
       return res.collection;
     },
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
   });
 
   const { data: visitorTypeQuery, isLoading: loadingVisitorType } = useQuery({
-    queryKey: ['visitorTypes', token],
+    queryKey: ['visitorTypes'],
     queryFn: async () => {
-      const res = await getAllVisitorType(token as string);
+      const res = await getAllVisitorType();
       return res.collection;
     },
     staleTime: 1000 * 60 * 1,
-    enabled: !!token,
   });
 
   const [rawSchedulerData, setRawSchedulerData] = useState<any[]>([]);
@@ -161,7 +156,6 @@ const Content = () => {
 
         const start = page * rowsPerPage;
         const res = await getSchedulerDeliveryPagination(
-          token as string,
           start,
           rowsPerPage,
           sortColumn,
@@ -195,7 +189,7 @@ const Content = () => {
     };
 
     fetchDataSchduler();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, search, refreshTrigger, filters]);
+  }, [page, rowsPerPage, sortColumn, sortDir, search, refreshTrigger, filters]);
 
   const handleSubmitScheduler = async (payload: any) => {
     setLoadingData(true);
@@ -203,10 +197,10 @@ const Content = () => {
       console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
 
       if (formMode === 'edit' && edittingId) {
-        await updateSchedulerDelivery(token as string, edittingId, payload);
+        await updateSchedulerDelivery(edittingId, payload);
         showSwal('success', 'Scheduler updated successfully!');
       } else {
-        await createSchedulerDelivery(token as string, payload);
+        await createSchedulerDelivery(payload);
         showSwal('success', 'Scheduler added successfully!');
       }
 
@@ -236,7 +230,7 @@ const Content = () => {
     if (!confirmed) return;
     if (confirmed) {
       try {
-        await deleteSchedulerDelivery(token as string, id);
+        await deleteSchedulerDelivery(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted scheduler!');
       } catch (error) {

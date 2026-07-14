@@ -12,7 +12,6 @@ import { useSelector } from 'react-redux';
 HC_heatmap(Highcharts);
 
 const VisitorHeatMap = () => {
-  const { token } = useSession();
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [hours, setHours] = useState<string[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
@@ -32,64 +31,54 @@ const VisitorHeatMap = () => {
     return `${shift(start)}-${shift(end)}`;
   };
 
-    const convertUtcHoursToLocal = (hours: any[], offset: number) => {
-      const localHours = Array.from({ length: 24 }, (_, i) => ({
-        hour: `${i.toString().padStart(2, '0')}:00-${((i + 1) % 24).toString().padStart(2, '0')}:00`,
-        count: 0,
-      }));
+  const convertUtcHoursToLocal = (hours: any[], offset: number) => {
+    const localHours = Array.from({ length: 24 }, (_, i) => ({
+      hour: `${i.toString().padStart(2, '0')}:00-${((i + 1) % 24).toString().padStart(2, '0')}:00`,
+      count: 0,
+    }));
 
-      hours.forEach((h) => {
-        const utcHour = parseInt(h.hour.split(':')[0], 10);
+    hours.forEach((h) => {
+      const utcHour = parseInt(h.hour.split(':')[0], 10);
 
-        const localHour = (utcHour + offset + 24) % 24;
+      const localHour = (utcHour + offset + 24) % 24;
 
-        localHours[localHour].count = h.count;
-      });
+      localHours[localHour].count = h.count;
+    });
 
-      return localHours;
-    };
+    return localHours;
+  };
 
   useEffect(() => {
     const fetchHeatmap = async () => {
       try {
-        // const end = new Date();
-        // const start = new Date();
-        // start.setDate(end.getDate() - 6);
-
-        const res = await getHeatmaps(
-          token!,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
-          start,
-          end,
-        );
+        const res = await getHeatmaps(start, end);
 
         const collection = res.collection ?? [];
         if (collection.length > 0) {
           // const hourLabels = collection[0].hours.map((h: any) => h.hour);
-           const transformedCollection = collection.map((d: any) => ({
-             ...d,
-             hours: convertUtcHoursToLocal(d.hours, 7),
-           }));
+          const transformedCollection = collection.map((d: any) => ({
+            ...d,
+            hours: convertUtcHoursToLocal(d.hours, 7),
+          }));
 
-           const hourLabels = transformedCollection[0].hours.map((h: any) => h.hour);
+          const hourLabels = transformedCollection[0].hours.map((h: any) => h.hour);
           setHours(hourLabels);
 
-              const data = transformedCollection.flatMap((d: any) =>
-                d.hours.map((h: any, idx: number) => ({
-                  x: idx,
-                  y: d.day_of_week,
-                  value: h.count,
-                  color: h.count === 0 ? '#e5e7eb' : undefined,
-                })),
-              );
+          const data = transformedCollection.flatMap((d: any) =>
+            d.hours.map((h: any, idx: number) => ({
+              x: idx,
+              y: d.day_of_week,
+              value: h.count,
+              color: h.count === 0 ? '#e5e7eb' : undefined,
+            })),
+          );
           setHeatmapData(data);
         }
       } catch (err) {}
     };
 
-    if (token) fetchHeatmap();
-  }, [token, start, end]);
+    fetchHeatmap();
+  }, [start, end]);
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

@@ -38,7 +38,6 @@ interface FormCustomFieldProps {
 const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCustomFieldProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { token } = useSession();
 
   const [multiOptionList, setMultiOptionList] = useState<multiOptField[]>(
     formData.multiple_option_fields,
@@ -75,10 +74,10 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
 
       if (editingId && editingId !== '') {
-        await updateCustomField(token as string, parsedData, editingId);
+        await updateCustomField(parsedData, editingId);
       } else {
-        await createCustomField(parsedData, token as string);
-      };
+        await createCustomField(parsedData);
+      }
 
       setTimeout(() => {
         onSuccess?.();

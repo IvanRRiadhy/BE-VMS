@@ -47,7 +47,6 @@ const FormUser: React.FC<FormUserProps> = ({
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [userGroup, setUserGroup] = useState<any[]>([]);
-  const { token } = useSession();
   const [showPassword, setShowPassword] = useState(false);
 
   const handleTogglePassword = () => {
@@ -71,7 +70,7 @@ const FormUser: React.FC<FormUserProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAllUserGroup(token as string);
+        const res = await getAllUserGroup();
         setUserGroup(res?.collection ?? []);
       } catch (error) {
         console.log(error);
@@ -100,16 +99,14 @@ const FormUser: React.FC<FormUserProps> = ({
     setErrors({});
 
     try {
-      if (!token) {
-        return;
-      }
+    
 
       const { application_id, ...payload } = formData;
 
       if (edittingId) {
-        await updateUser(token, edittingId, payload);
+        await updateUser( edittingId, payload);
       } else {
-        await createUser(token, payload);
+        await createUser(payload);
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');

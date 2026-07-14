@@ -14,7 +14,6 @@ type VisitorTypeData = {
 };
 
 const VisitingTypeChart = () => {
-  const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const { t, i18n } = useTranslation();
   const [data, setData] = useState<VisitorTypeData[]>([
@@ -28,9 +27,9 @@ const VisitingTypeChart = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
+    
       try {
-        const res = await getRepeatsVisitor(token, start, end);
+        const res = await getRepeatsVisitor( start, end);
 
         if (res?.collection) {
           setData([
@@ -44,7 +43,7 @@ const VisitingTypeChart = () => {
     };
 
     fetchData();
-  }, [token, start, end]);
+  }, [ start, end]);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const repeatPercentage = total > 0 ? ((data[0].value / total) * 100).toFixed(1) : '0';

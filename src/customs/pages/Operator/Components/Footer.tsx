@@ -11,8 +11,9 @@ const Footer = () => {
         borderColor: 'divider',
         py: 1.5,
         px: 1,
+
         // overflow: 'hidden',
-        marginTop: '5px',
+        marginTop: '2px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',

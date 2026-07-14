@@ -6,8 +6,6 @@ import VisitorSelect from 'src/customs/components/select2/VisitorSelect';
 type Props = {
   open: boolean;
   isEmployeeMode: boolean;
-  token: string;
-
   activeGroupIdx: number | null;
   activeStep: number;
 
@@ -19,7 +17,6 @@ type Props = {
 const VisitorSelectDialog: React.FC<Props> = ({
   open,
   isEmployeeMode,
-  token,
   activeGroupIdx,
   activeStep,
   setOpen,
@@ -38,7 +35,6 @@ const VisitorSelectDialog: React.FC<Props> = ({
 
       <DialogContent dividers>
         <VisitorSelect
-          token={token}
           isEmployee={isEmployeeMode}
           onSelect={(v: any) => {
             if (activeGroupIdx == null) return;

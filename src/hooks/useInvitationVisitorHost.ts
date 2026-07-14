@@ -8,13 +8,12 @@ type InvitationVisitorEmployeeParams = {
 };
 
 export const useInvitationVisitorEmployee = (
-  token: string | null,
   params?: InvitationVisitorEmployeeParams,
 ) => {
   return useQuery({
     queryKey: ['invitation-visitor-host', params],
     queryFn: async () => {
-      const res = await getInvitationVisitorHost(token as string, {
+      const res = await getInvitationVisitorHost( {
         'search[value]': params?.search,
         start: params?.start,
         length: params?.length,
@@ -22,6 +21,5 @@ export const useInvitationVisitorEmployee = (
 
       return res?.collection ?? [];
     },
-    enabled: !!token,
   });
 };

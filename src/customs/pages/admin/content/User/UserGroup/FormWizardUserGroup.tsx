@@ -13,7 +13,7 @@ import { Box } from '@mui/system';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { createUserGroup, updateUserGroup } from 'src/customs/api/admin';
-import { useSession } from 'src/customs/contexts/SessionContext';
+
 
 import { showSwal } from 'src/customs/components/alerts/alerts';
 interface FormWizardUserGroupProps {
@@ -36,8 +36,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const { token } = useSession();
-
   const RoleAccess = ['Admin', 'OperatorAdmin', 'OperatorVMS', 'Employee', 'Manager', 'Visitor'];
   const groupOptions = RoleAccess.map((role) => ({
     id: role,
@@ -65,9 +63,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     setErrors({});
 
     try {
-      if (!token) {
-        return;
-      }
+      
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -75,9 +71,9 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
         role_access: formData.role_access,
       };
       if (edittingId) {
-        await updateUserGroup(token, edittingId, payload);
+        await updateUserGroup( edittingId, payload);
       } else {
-        await createUserGroup(token, payload);
+        await createUserGroup (payload);
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');

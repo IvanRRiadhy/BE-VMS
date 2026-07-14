@@ -121,7 +121,6 @@ export default function DnDOutsideCourier({
   loadSchedule,
   lastRange,
 }: DnDOutsideCourierProps) {
-  const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
   // const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -154,7 +153,7 @@ export default function DnDOutsideCourier({
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const res = await getAllDriver(token as string);
+        const res = await getAllDriver();
         setDrivers(res.collection ?? []);
       } catch (e) {
         console.error(e);
@@ -162,7 +161,7 @@ export default function DnDOutsideCourier({
     };
 
     fetchDrivers();
-  }, [token]);
+  }, []);
 
   const [dragKey, setDragKey] = useState(0);
 
@@ -260,7 +259,7 @@ export default function DnDOutsideCourier({
     try {
       setRescheduleVisitorId(event.id);
 
-      const res = await getDeliveryScheduleInvitationById(token as string, event.id);
+      const res = await getDeliveryScheduleInvitationById(event.id);
 
       const oldStart = res.collection.visitor_period_start ?? null;
       const oldEnd = res.collection.visitor_period_end ?? null;
@@ -290,7 +289,7 @@ export default function DnDOutsideCourier({
 
     try {
       setRescheduleVisitorId(event.id);
-      const res = await getDeliveryScheduleInvitationById(token as string, event.id);
+      const res = await getDeliveryScheduleInvitationById(event.id);
 
       const oldStart = res.collection.visitor_period_start;
       const oldEnd = res.collection.visitor_period_end;
@@ -328,7 +327,7 @@ export default function DnDOutsideCourier({
         visitor_period_start: dayjs(rescheduleData.newStart).utc().format(),
       };
 
-      await updateReschduleInvitation(token as string, payload);
+      await updateReschduleInvitation(payload);
 
       await new Promise((res) => setTimeout(res, 600));
 
@@ -575,7 +574,7 @@ export default function DnDOutsideCourier({
       setLoading(true);
 
       // ambil data detail by ID
-      const res = await getDeliveryScheduleInvitationById(token as string, event.id);
+      const res = await getDeliveryScheduleInvitationById(event.id);
       setDetailDataInvitation(res.collection);
     } catch (err) {
       console.log(err);
@@ -602,7 +601,7 @@ export default function DnDOutsideCourier({
     // console.log(localizer);
     const fetchData = async () => {
       try {
-        const res = await getSchedulerDeliveryById(token as string, id as string);
+        const res = await getSchedulerDeliveryById(id as string);
         const pages = res.collection.need_question_page ?? [];
         setDeliveryData(res.collection);
         // console.log('res', res);
@@ -613,7 +612,7 @@ export default function DnDOutsideCourier({
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const buildSubmitPayload = () => {
     if (!deliveryData) return null;
@@ -722,18 +721,18 @@ export default function DnDOutsideCourier({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAllDriver(token as string);
+        const res = await getAllDriver();
         setAllVisitorEmployee(res?.collection ?? []);
-        const resSite = await getAllSite(token as string);
+        const resSite = await getAllSite();
         setSites(resSite.collection);
-        const resEmployeee = await getVisitorEmployee(token as string);
+        const resEmployeee = await getVisitorEmployee();
         setEmployee(resEmployeee.collection);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const getColour = (event: any) => {
     // warna sebenarnya ada di members
@@ -1650,7 +1649,7 @@ export default function DnDOutsideCourier({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="h6" sx={{ mt: 1, mb:2}}>
+                        <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
                           Upload File
                         </Typography>
                         <Box
@@ -1845,7 +1844,7 @@ export default function DnDOutsideCourier({
           };
         });
 
-        await createPrainvitationDelivery(token as string, payload);
+        await createPrainvitationDelivery( payload);
 
         setEvents((prev) => [...prev, ...groupEvents]);
       } else {
@@ -1888,7 +1887,7 @@ export default function DnDOutsideCourier({
           colour,
         };
 
-        await createPrainvitationDelivery(token as string, payload);
+        await createPrainvitationDelivery( payload);
         setEvents((prev) => [...prev, finalEvent]);
         console.log('event', finalEvent);
       }
@@ -2492,7 +2491,7 @@ export default function DnDOutsideCourier({
     useEffect(() => {
       const loadAgenda = async () => {
         try {
-          const data = await getDeliveryScheduleInvitationById(token as string, event.id);
+          const data = await getDeliveryScheduleInvitationById(event.id);
           setAgendaName(data?.collection || 'No Agenda');
         } catch (err) {
           setAgendaName('No Agenda');

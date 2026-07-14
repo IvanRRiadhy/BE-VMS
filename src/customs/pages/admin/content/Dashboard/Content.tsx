@@ -43,7 +43,6 @@ const Content = () => {
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
   const exportRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const { token } = useSession();
 
   const handleExportPdf = async () => {
     if (!exportRef.current || isExporting) return;
@@ -91,7 +90,7 @@ const Content = () => {
     const fetchData = async () => {
       try {
         const response = await getTodayPraregister(
-          token as any,
+  
           dayjs(startDate).format('YYYY-MM-DD'),
           dayjs(endDate).format('YYYY-MM-DD'),
         );
@@ -114,7 +113,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);

@@ -21,8 +21,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { useHost } from 'src/hooks/useHost';
-
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
@@ -53,10 +51,9 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
-  const { token } = useSession();
-  const { employee } = useEmployees(token);
-  const { visitorType } = useVisitorType(token);
-  const { sites } = useSites(token);
+  const { employee } = useEmployees();
+  const { visitorType } = useVisitorType();
+  const { sites } = useSites();
 
   const initialEnabledState = {
     visitorType: false,

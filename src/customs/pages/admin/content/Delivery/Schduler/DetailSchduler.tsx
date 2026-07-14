@@ -84,7 +84,6 @@ export interface CourierGroup {
 }
 
 const ManageDetailScheduler: FC = () => {
-  const { token } = useSession();
   const { id } = useParams();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -111,15 +110,15 @@ const ManageDetailScheduler: FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getAllDriver(token as string);
+      const res = await getAllDriver();
       setAllStaff(res.collection);
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const loadRegisteredCouriers = async () => {
     try {
-      const res = await getDeliveryStaffRegister(token as string, id);
+      const res = await getDeliveryStaffRegister(id);
       const withColors = res.collection.map((c: any) => ({
         ...c,
         colour: c.colour || '#000',
@@ -157,7 +156,7 @@ const ManageDetailScheduler: FC = () => {
 
   const loadDeliveryStaff = async () => {
     try {
-      const res = await getVisitorDriver(token as string, id as string);
+      const res = await getVisitorDriver(id as string);
       setDeliveryStaff(res.collection);
     } catch (err) {
       console.error(err);
@@ -169,18 +168,13 @@ const ManageDetailScheduler: FC = () => {
 
   const loadSchedule = async (startDate: any, endDate: any) => {
     // Ambil detail scheduler (bukan range-based)
-    const res = await getSchedulerDeliveryById(token as string, id as string);
+    const res = await getSchedulerDeliveryById(id as string);
     const timeAccessId = res.collection.time_access_id;
-    const resTA = await getTimezoneById(token as string, timeAccessId);
+    const resTA = await getTimezoneById(timeAccessId);
     setTimeAccess(resTA.collection);
 
     // Ambil data schedule sesuai range
-    const scheduleRes = await getCalendarSchedule(
-      token as string,
-      id as string,
-      startDate,
-      endDate,
-    );
+    const scheduleRes = await getCalendarSchedule(id as string, startDate, endDate);
 
     const colourMap: Record<string, string> = {};
     couriers.forEach((c) => {
@@ -286,7 +280,7 @@ const ManageDetailScheduler: FC = () => {
   useEffect(() => {
     loadDeliveryStaff();
     loadRegisteredCouriers();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (couriers.length > 0) {
@@ -331,10 +325,10 @@ const ManageDetailScheduler: FC = () => {
       console.log('payload', payload);
 
       if (isEditMode && editingId) {
-        await updateDeliveryStaffRegister(token as string, payload, editingId);
+        await updateDeliveryStaffRegister(payload, editingId);
         showSwal('success', 'Delivery Staff updated successfully!');
       } else {
-        await createDeliveryStaffRegister(token as string, payload);
+        await createDeliveryStaffRegister(payload);
         showSwal('success', 'Delivery Staff added successfully!');
       }
 
@@ -360,7 +354,7 @@ const ManageDetailScheduler: FC = () => {
     if (!confirmed) return;
 
     try {
-      await deleteDeliveryStaffRegister(token as string, staffId);
+      await deleteDeliveryStaffRegister(staffId);
       await loadRegisteredCouriers();
       showSwal('success', 'Delivery Staff deleted successfully!');
     } catch (error) {
@@ -417,8 +411,8 @@ const ManageDetailScheduler: FC = () => {
 
       return {
         id: group.id,
-        colour: head.colour, 
-        groupName: head.employee.name, 
+        colour: head.colour,
+        groupName: head.employee.name,
         items: [head, ...group.items.filter((x) => x !== head)],
       };
     });

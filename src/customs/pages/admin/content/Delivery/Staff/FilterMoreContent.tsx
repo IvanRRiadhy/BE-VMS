@@ -13,6 +13,9 @@ import {
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useDistricts } from 'src/hooks/District/useDistricts';
 
 interface Filters {
   gender: number;
@@ -33,18 +36,12 @@ type FilterMoreContentProps = {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   onApplyFilter: () => void;
-  organizationData: OptionItem[];
-  departmentData: OptionItem[];
-  districtData: OptionItem[];
 };
 
 const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
   filters,
   setFilters,
   onApplyFilter,
-  organizationData,
-  departmentData,
-  districtData,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, name } = e.target as any;
@@ -65,6 +62,10 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
     exitEnd: '',
     statusEmployee: -1,
   };
+
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
 
   return (
     <Box
@@ -114,8 +115,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
           </CustomFormLabel>
           <Autocomplete
             id="organization"
-            options={organizationData}
-            value={organizationData.find((o) => o.id === filters.organization) || null}
+            options={organizations}
+            value={organizations.find((o) => o.id === filters.organization) || null}
             onChange={(_, val) =>
               setFilters((prev) => ({ ...prev, organization: val ? val.id : '' }))
             }
@@ -140,8 +141,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
           </CustomFormLabel>
           <Autocomplete
             id="department"
-            options={departmentData}
-            value={departmentData.find((o) => o.id === filters.department) || null}
+            options={department}
+            value={department.find((o) => o.id === filters.department) || null}
             onChange={(_, val) =>
               setFilters((prev) => ({ ...prev, department: val ? val.id : '' }))
             }
@@ -166,8 +167,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
           </CustomFormLabel>
           <Autocomplete
             id="district"
-            options={districtData}
-            value={districtData.find((o) => o.id === filters.district) || null}
+            options={districts}
+            value={districts.find((o) => o.id === filters.district) || null}
             onChange={(_, val) => setFilters((prev) => ({ ...prev, district: val ? val.id : '' }))}
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
             getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}

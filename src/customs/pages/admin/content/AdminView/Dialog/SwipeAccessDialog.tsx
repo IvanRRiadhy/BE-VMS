@@ -55,7 +55,6 @@ const SwipeAccessDialog = ({
   setLoadingAccess,
 }: SwipeAccessDialogProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const { token } = useSession();
 
   useEffect(() => {
     if (open) {
@@ -97,10 +96,10 @@ const SwipeAccessDialog = ({
         swap_card_in_name: site.name,
       })),
     };
-    console.log('📤 GIVE ACCESS PAYLOAD', payloads);
+    // console.log('📤 GIVE ACCESS PAYLOAD', payloads);
     setLoadingAccess(true);
     try {
-      await createMultipleGrantAccess(token as string, payloads);
+      await createMultipleGrantAccess( payloads);
       showSwal('success', 'Successfully granted access');
       if (onSuccessRefresh) {
         await onSuccessRefresh();

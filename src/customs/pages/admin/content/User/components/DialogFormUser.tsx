@@ -29,15 +29,14 @@ const DialogFormUser: React.FC<Props> = ({
   onSuccess,
   organizationRes,
 }) => {
-  const { token } = useSession();
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     if (!open) return;
 
     const loadData = async () => {
-      if (edittingId && token) {
-        const response = await getUserById(edittingId, token);
+      if (edittingId) {
+        const response = await getUserById(edittingId);
 
         setFormData({
           ...response.collection,
@@ -49,7 +48,7 @@ const DialogFormUser: React.FC<Props> = ({
     };
 
     loadData();
-  }, [open, edittingId, token]);
+  }, [open, edittingId]);
 
   const [isDirty, setIsDirty] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);

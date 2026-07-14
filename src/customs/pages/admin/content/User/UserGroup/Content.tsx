@@ -18,16 +18,12 @@ import {
   deletePermissionRegisterSite,
   deletePermissionSite,
   deleteUserGroup,
-  getAllAccessControl,
-  getAllOrganizations,
   getAllPermission,
   getAllPermissionManageVisitor,
   getAllPermissionOrganization,
   getAllPermissionRegisterSite,
   getAllPermissionSite,
   getAllSite,
-  getAllVisitorType,
-  getRegisteredSite,
   getUserGroupById,
   getUserGroupDt,
 } from 'src/customs/api/admin';
@@ -58,7 +54,6 @@ import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 
 const Content = () => {
-  const { token } = useSession();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
@@ -69,7 +64,7 @@ const Content = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [siteOptions, setSiteOptions] = useState<any[]>([]);
-  const { dropPoint } = useDropPoint(token);
+  const { dropPoint } = useDropPoint();
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
   const [openPermission, setOpenPermission] = useState(false);
@@ -78,10 +73,10 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users-group', token, page, rowsPerPage, sortDir, search],
+    queryKey: ['users-group', page, rowsPerPage, sortDir, search],
     queryFn: async () => {
       const start = page * rowsPerPage;
-      const response = await getUserGroupDt(token as string, start, rowsPerPage, search, sortDir);
+      const response = await getUserGroupDt(start, rowsPerPage, search, sortDir);
 
       const filteredData = response.collection.map((item: any) => ({
         id: item.id,
@@ -99,7 +94,6 @@ const Content = () => {
         totalFiltered: response.RecordsFiltered,
       };
     },
-    enabled: !!token,
   });
 
   const collection = data?.collection || [];
@@ -123,7 +117,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      const response = await getUserGroupById(id, token as string);
+      const response = await getUserGroupById(id);
       setFormAddUser({
         ...response.collection,
       });
@@ -140,7 +134,7 @@ const Content = () => {
 
     setLoading(true);
     try {
-      await deleteUserGroup(token as string, id);
+      await deleteUserGroup(id);
       showSwal('success', 'Successfully deleted user group!');
       refetch();
     } catch (error) {
@@ -152,9 +146,7 @@ const Content = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-
-      const siteRes = await getAllSite(token);
+      const siteRes = await getAllSite();
 
       setSiteOptions(
         (siteRes.collection ?? []).map((site: any) => ({
@@ -165,28 +157,26 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
 
   const { organizations } = useOrganization();
-  const { accessData } = useAccessControl(token);
-  const { visitorType } = useVisitorType(token);
-  const { data: registeredSite } = useRegisteredSite(token);
+  const { accessData } = useAccessControl();
+  const { visitorType } = useVisitorType();
+  const { data: registeredSite } = useRegisteredSite();
 
   const handlePermission = async (row: any) => {
     try {
-      if (!token) return;
-
       setEdittingId(row.id);
       setSelectedRoleAccess(row.role_access?.toLowerCase() ?? '');
 
       const results = await Promise.allSettled([
-        getAllPermission(token, row.id),
-        getAllPermissionOrganization(token, row.id),
-        getAllPermissionRegisterSite(token, row.id),
-        getAllPermissionManageVisitor(token, row.id),
-        getAllPermissionSite(token, row.id),
-        getAllPermissionVisitorType(token, row.id),
-        getAllPermissionAccessControl(token, row.id),
+        getAllPermission(row.id),
+        getAllPermissionOrganization(row.id),
+        getAllPermissionRegisterSite(row.id),
+        getAllPermissionManageVisitor(row.id),
+        getAllPermissionSite(row.id),
+        getAllPermissionVisitorType(row.id),
+        getAllPermissionAccessControl(row.id),
       ]);
 
       const permissionCollection =
@@ -466,8 +456,6 @@ const Content = () => {
   });
 
   const handleSubmitPermission = async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
 
@@ -533,7 +521,7 @@ const Content = () => {
         user_group_id: edittingId,
         permission: perm,
       }));
-      await createPermission(token as string, payload, edittingId);
+      await createPermission(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
     }
@@ -559,31 +547,31 @@ const Content = () => {
 
     // BASIC PERMISSION
     if (originalData.permissions?.length) {
-      promises.push(deletePermission(token as string, edittingId));
+      promises.push(deletePermission(edittingId));
     }
 
     if (originalData.manageSite?.length) {
-      promises.push(deletePermissionSite(token as string, edittingId));
+      promises.push(deletePermissionSite(edittingId));
     }
 
     // ORGANIZATION
     if (originalData.organization?.length) {
-      promises.push(deletePermissionOrganization(token as string, edittingId));
+      promises.push(deletePermissionOrganization(edittingId));
     }
 
     // REGISTERED SITE
     if (originalData.registeredSite?.length) {
-      promises.push(deletePermissionRegisterSite(token as string, edittingId));
+      promises.push(deletePermissionRegisterSite(edittingId));
     }
 
     // MANAGE VISITOR
     if (originalData.manageVisitor?.length) {
-      promises.push(deletePermissionManageVisitor(token as string, edittingId));
+      promises.push(deletePermissionManageVisitor(edittingId));
     }
 
     // MANAGE VISITOR TYPE
     if (originalData.visitorType?.length) {
-      promises.push(deletePermissionVisitorType(token as string, edittingId));
+      promises.push(deletePermissionVisitorType(edittingId));
     }
 
     await Promise.all(promises);
@@ -591,8 +579,6 @@ const Content = () => {
 
   const handleSubmitManageVisitor = async () => {
     try {
-      if (!token) return;
-
       const selectedVisitorPermissions = permissionSites['ManageVisitor'] ?? [];
 
       if (!selectedVisitorPermissions.length) return;
@@ -602,7 +588,7 @@ const Content = () => {
         permission: permId,
       }));
 
-      await createPermissionManageVisitor(token, payload, edittingId);
+      await createPermissionManageVisitor(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
     }
@@ -618,7 +604,7 @@ const Content = () => {
         permission: 'ManageSiteScope',
       }));
 
-      await createPermissionSite(token as string, payload, edittingId);
+      await createPermissionSite(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update site permission');
     }
@@ -634,7 +620,7 @@ const Content = () => {
         permission: 'SiteAssignment',
       }));
 
-      await createPermissionSite(token as string, payload, edittingId);
+      await createPermissionSite(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update site permission');
     }
@@ -650,7 +636,7 @@ const Content = () => {
         organization_type: 'Organization',
       }));
 
-      await createPermissionOrganization(token as string, payload, edittingId);
+      await createPermissionOrganization(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update organization');
     }
@@ -668,7 +654,7 @@ const Content = () => {
         permission: 'OperatorRegisterSite',
       }));
 
-      await createPermissionRegisterSite(token as string, payload, edittingId);
+      await createPermissionRegisterSite(payload, edittingId);
     } catch (error: any) {
       throw error;
     }
@@ -684,17 +670,15 @@ const Content = () => {
         permission: permissionName,
       }));
 
-      await createPermissionVisitorType(token as string, payload, edittingId);
+      await createPermissionVisitorType(payload, edittingId);
     } catch (error: any) {
       showSwal('error', error.response?.data?.msg ?? 'Failed update visitor type');
     }
   };
 
   const handleAccessScope = async () => {
-    if (!token) return;
-
     try {
-      await deletePermissionAccessControl(token, edittingId);
+      await deletePermissionAccessControl(edittingId);
 
       if (formData.accesses.length) {
         const payload = formData.accesses.map((access: any) => ({
@@ -706,7 +690,7 @@ const Content = () => {
           permission: 'ManageAccessScope',
         }));
 
-        await createPermissionAccessControl(token, payload, edittingId);
+        await createPermissionAccessControl(payload, edittingId);
       }
     } catch (error) {
       console.error(error);

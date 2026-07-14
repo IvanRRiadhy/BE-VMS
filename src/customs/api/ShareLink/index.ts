@@ -1,10 +1,8 @@
 import axiosInstance from '../interceptor';
 
-export const getShareLink = async (token: string): Promise<any> => {
+export const getShareLink = async (): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/visitor-share-link', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get('/visitor-share-link');
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 404) {
@@ -15,23 +13,20 @@ export const getShareLink = async (token: string): Promise<any> => {
 };
 
 // get by id
-export const getShareLinkById = async (id: string, token: string): Promise<any> => {
-  const response = await axiosInstance.get(`/visitor-share-link/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getShareLinkById = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor-share-link/${id}`);
   return response.data;
 };
 
 // get by dt
 export const getShareLinkByDt = async (
-  token: string,
   start: number,
   length: number,
   keyword: string = '',
   sortDir: string,
 ): Promise<any> => {
   const response = await axiosInstance.get(`/visitor-share-link/dt`, {
-    headers: { Authorization: `Bearer ${token}` },
+
     params: {
       start,
       length,
@@ -45,36 +40,28 @@ export const getShareLinkByDt = async (
   return response.data;
 };
 
-export const createShareLink = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/visitor-share-link/new', data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createShareLink = async ( data: any): Promise<any> => {
+  const response = await axiosInstance.post('/visitor-share-link/new', data);
   return response.data;
 };
 
 // create by email
-export const createShareLinkByEmail = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/visitor-share-link/new/send-email', data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createShareLinkByEmail = async ( data: any): Promise<any> => {
+  const response = await axiosInstance.post('/visitor-share-link/new/send-email', data);
   return response.data;
 };
 
 export const createShareLinkByEmailById = async (
-  token: string,
+
   data: any,
   id: string,
 ): Promise<any> => {
-  const response = await axiosInstance.post(`/visitor-share-link/send-email/${id}`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await axiosInstance.post(`/visitor-share-link/send-email/${id}`, data);
   return response.data;
 };
 
 // Delete
-export const deleteShareLink = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete('/visitor-share-link/' + id, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteShareLink = async ( id: string): Promise<any> => {
+  const response = await axiosInstance.delete('/visitor-share-link/' + id);
   return response.data;
 };

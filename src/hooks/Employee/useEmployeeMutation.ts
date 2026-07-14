@@ -16,51 +16,48 @@ export const useEmployeeMutation = () => {
       queryClient.invalidateQueries({
         queryKey: ['employees'],
       }),
-    //   queryClient.invalidateQueries({
-    //     queryKey: ['employee-total'],
-    //   }),
+      //   queryClient.invalidateQueries({
+      //     queryKey: ['employee-total'],
+      //   }),
     ]);
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateEmployeeRequest }) =>
-      createEmployee(data, token),
+    mutationFn: ({ data }: { data: CreateEmployeeRequest }) => createEmployee(data),
 
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, token, data }: { id: string; token: string; data: CreateEmployeeRequest }) =>
-      updateEmployee(id, data as any, token),
+    mutationFn: ({ id, data }: { id: string; data: CreateEmployeeRequest }) =>
+      updateEmployee(id, data as any),
 
     onSuccess: invalidate,
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteEmployee(id, token),
+    mutationFn: ({ id }: { id: string }) => deleteEmployee(id),
 
     onSuccess: invalidate,
   });
 
   const uploadImage = useMutation({
-    mutationFn: ({ employeeId, file, token }: { employeeId: string; file: File; token: string }) =>
-      uploadImageEmployee(employeeId, file, token),
+    mutationFn: ({ employeeId, file }: { employeeId: string; file: File }) =>
+      uploadImageEmployee(employeeId, file),
 
     onSuccess: invalidate,
   });
 
   const blacklist = useMutation({
     mutationFn: ({
-      token,
       data,
     }: {
-      token: string;
       data: {
         employee_id: string;
         action: 'blacklist' | 'whitelist';
         reason: string;
       };
-    }) => createEmployeeBlacklist(token, data),
+    }) => createEmployeeBlacklist(data),
 
     onSuccess: invalidate,
   });

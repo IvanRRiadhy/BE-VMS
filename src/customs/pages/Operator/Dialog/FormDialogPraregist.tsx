@@ -51,7 +51,6 @@ import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import { useSelector } from 'src/store/Store';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -77,7 +76,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 }) => {
   const [activeStep, setActiveStep] = useState(-1);
   const [isSelfInvitation, setIsSelfInvitation] = useState<boolean | null>(null);
-  const { token } = useSession();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [formValues, setFormValues] = useState<Record<string, any>>({});
@@ -98,10 +96,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !token) return;
+      if (!id) return;
       setLoading(true);
       try {
-        const res = await getDetailInvitationForm(token, id);
+        const res = await getDetailInvitationForm(id);
         console.log('res', res);
         const data = res.collection;
         setInvitationData(data);
@@ -121,7 +119,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       }
     };
     fetchData();
-  }, [id, token]);
+  }, [id]);
 
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
@@ -765,11 +763,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getVisitorEmployee(token as string);
+      const res = await getVisitorEmployee();
       setAllVisitorEmployee(res?.collection ?? []);
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleRadioToggle = (remarks: string, value: any) => {
     setFormValues((prev) => ({
@@ -1122,8 +1120,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      console.log('Payload response:', JSON.stringify(payload, null, 2));
-      const res = await createSubmitCompletePra(token as string, payload);
+      // console.log('Payload response:', JSON.stringify(payload, null, 2));
+      const res = await createSubmitCompletePra(payload);
 
       const ok =
         res &&

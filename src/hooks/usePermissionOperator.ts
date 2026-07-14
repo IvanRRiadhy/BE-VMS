@@ -2,18 +2,16 @@ import { useEffect, useState } from 'react';
 import { getPermissionOperator } from 'src/customs/api/operator';
 
 
-const usePermissionOperator = (token?: string | null) => {
+const usePermissionOperator = () => {
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-
     const fetchDataPermission = async () => {
       try {
         setLoading(true);
 
-        const res = await getPermissionOperator(token);
+        const res = await getPermissionOperator();
         setPermissionAccess(res?.collection ?? []);
       } catch (e) {
         console.error(e);
@@ -23,7 +21,7 @@ const usePermissionOperator = (token?: string | null) => {
     };
 
     fetchDataPermission();
-  }, [token]);
+  }, []);
 
   return {
     permissionAccess,

@@ -17,8 +17,7 @@ export const useDepartmentMutation = () => {
   };
 
   const create = useMutation({
-    mutationFn: ({ token, data }: { token: string; data: CreateDepartmentRequest }) =>
-      createDepartment(data, token),
+    mutationFn: ({ data }: { data: CreateDepartmentRequest }) => createDepartment(data),
 
     onSuccess: invalidate,
   });
@@ -26,19 +25,19 @@ export const useDepartmentMutation = () => {
   const update = useMutation({
     mutationFn: ({
       id,
-      token,
+
       data,
     }: {
       id: string;
-      token: string;
+
       data: CreateDepartmentRequest;
-    }) => updateDepartment(id, data, token),
+    }) => updateDepartment(id, data),
 
     onSuccess: invalidate,
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, token }: { id: string; token: string }) => deleteDepartment(id, token),
+    mutationFn: ({ id }: { id: string }) => deleteDepartment(id),
 
     onSuccess: invalidate,
   });

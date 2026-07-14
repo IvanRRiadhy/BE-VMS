@@ -25,15 +25,14 @@ interface Props {
 }
 
 const DialogFormUser: React.FC<Props> = ({ open, onClose, edittingId, onSuccess }) => {
-  const { token } = useSession();
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     if (!open) return;
 
     const loadData = async () => {
-      if (edittingId && token) {
-        const response = await getUserGroupById(edittingId, token);
+      if (edittingId) {
+        const response = await getUserGroupById(edittingId);
         setFormData({
           ...response.collection,
         });
@@ -43,7 +42,7 @@ const DialogFormUser: React.FC<Props> = ({ open, onClose, edittingId, onSuccess 
     };
 
     loadData();
-  }, [open, edittingId, token]);
+  }, [open, edittingId]);
 
   const [isDirty, setIsDirty] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);

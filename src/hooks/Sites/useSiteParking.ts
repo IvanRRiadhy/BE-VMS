@@ -3,13 +3,10 @@ import { getSiteParking } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 export const useSiteParking = () => {
-  const { token } = useSession();
-
   const query = useQuery({
     queryKey: ['site-parkings'],
-    enabled: !!token,
     queryFn: async () => {
-      const res = await getSiteParking(token!);
+      const res = await getSiteParking();
       return res.collection ?? [];
     },
   });

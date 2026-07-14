@@ -39,7 +39,6 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 const Ipsotek = ({ id: string }: any) => {
-  const { token } = useSession();
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
   const [visitorType, setVisitorType] = useState<any[]>([]);
@@ -81,11 +80,10 @@ const Ipsotek = ({ id: string }: any) => {
   }, [integration]);
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await getIntegrationIpsotekCategory(token as string);
+        const res = await getIntegrationIpsotekCategory();
 
         // const mapped = (res.collection ?? []).map((item: any) => ({
         //   ...item,
@@ -102,19 +100,19 @@ const Ipsotek = ({ id: string }: any) => {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getAllVisitorType(token as string);
+        const res = await getAllVisitorType();
         setVisitorType(res.collection ?? []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,21 +124,19 @@ const Ipsotek = ({ id: string }: any) => {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const handleCloseDialogCategory = () => {
     setOpenDialogCategory(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirmed = await showConfirmDelete('Are you sure you want to delete this category?');
 
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteIpsotekCategory(id, token);
+        await deleteIpsotekCategory(id);
         showSwal('success', 'Successfully deleted integration!');
         setOpenDialogCategory(false);
       } catch (error) {
@@ -174,8 +170,6 @@ const Ipsotek = ({ id: string }: any) => {
     setOpenDialogCategory(true);
   };
   const handleOnSubmit = async () => {
-    if (!token) return;
-
     setLoading(true);
     try {
       const payload = {
@@ -186,17 +180,17 @@ const Ipsotek = ({ id: string }: any) => {
       };
 
       if (editingId) {
-        await updateIpsotekCategory(editingId, payload, token);
+        await updateIpsotekCategory(editingId, payload);
         showSwal('success', 'Category successfully updated');
       } else {
-        await createIpsotekCategory(payload, id as string, token);
+        await createIpsotekCategory(payload, id as string);
         showSwal('success', 'Category successfully created');
       }
 
       setOpenDialogCategory(false);
 
       // refresh list
-      const res = await getIntegrationIpsotekCategory(token);
+      const res = await getIntegrationIpsotekCategory();
       setCategoryAll(res.collection ?? []);
     } catch (error: any) {
       console.error(error);

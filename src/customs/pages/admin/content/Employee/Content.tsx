@@ -25,14 +25,7 @@ import {
   CreateEmployeeRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/Employee';
-import {
-  getAllEmployeePaginationFilterMore,
-  getAllEmployee,
-  deleteEmployee,
-  createBlacklist,
-  createEmployeeBlacklist,
-} from 'src/customs/api/admin';
-
+import { createEmployeeBlacklist } from 'src/customs/api/admin';
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
@@ -75,9 +68,7 @@ interface Filters {
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const { token } = useSession();
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const [edittingId, setEdittingId] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -100,7 +91,6 @@ const Content = () => {
   const { t } = useTranslation();
   const [isDirty, setIsDirty] = useState(false);
   const employeeQuery = useEmployeePagination({
-    token: token!,
     page,
     rowsPerPage,
     sortDir,
@@ -316,8 +306,6 @@ const Content = () => {
   };
 
   const handleDelete = async (row: EmployeesTableRow) => {
-    if (!token) return;
-
     const name = row.name || '-';
 
     const confirmed = await showConfirmDelete(
@@ -328,7 +316,6 @@ const Content = () => {
       try {
         await remove.mutateAsync({
           id: row.id,
-          token: token!,
         });
 
         showSwal('success', `Successfully deleted employee "${name}".`);
@@ -339,7 +326,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
-    if (!token || rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} employees?`);
 
@@ -350,7 +337,6 @@ const Content = () => {
         rows.map((row) =>
           remove.mutateAsync({
             id: row.id,
-            token: token!,
           }),
         ),
       );
@@ -447,7 +433,7 @@ const Content = () => {
         action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
-      await createEmployeeBlacklist(token as string, payload);
+      await createEmployeeBlacklist(payload);
 
       showSwal(
         'success',

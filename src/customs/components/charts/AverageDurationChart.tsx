@@ -13,7 +13,6 @@ type PurposeData = {
 };
 
 const AvarageDurationChart = () => {
-  const { token } = useSession();
   const { t } = useTranslation();
   const [data, setData] = useState<PurposeData[]>([]);
   const [avgMinutes, setAvgMinutes] = useState<number>(0);
@@ -24,10 +23,9 @@ const AvarageDurationChart = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
 
       try {
-        const res = await getAvarageDuration(token, start, end);
+        const res = await getAvarageDuration( start, end);
 
         if (Array.isArray(res?.collection)) {
           const buckets: Record<string, number> = {};
@@ -60,7 +58,7 @@ const AvarageDurationChart = () => {
     };
 
     fetchData();
-  }, [token, start, end]);
+  }, [ start, end]);
 
   return (
     <>

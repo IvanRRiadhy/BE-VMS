@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { getInvitationSiteDropPoint } from 'src/customs/api/Public';
 
-const useDropPoint = (token?: string | null) => {
+const useDropPoint = () => {
   const [dropPoint, setDropPoint] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+
 
     const fetchDropPoint = async () => {
       try {
         setLoading(true);
 
-        const res = await getInvitationSiteDropPoint(token);
+        const res = await getInvitationSiteDropPoint();
         setDropPoint(res?.collection ?? []);
       } catch (err) {
       } finally {
@@ -21,7 +21,7 @@ const useDropPoint = (token?: string | null) => {
     };
 
     fetchDropPoint();
-  }, [token]);
+  }, []);
 
   return {
     dropPoint,

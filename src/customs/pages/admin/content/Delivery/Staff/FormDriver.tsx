@@ -31,9 +31,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
-
 import {
   CreateDriverRequest,
   UpdateDriverRequest,
@@ -75,6 +72,9 @@ import {
   updateDriver,
   uploadImageDriver,
 } from 'src/customs/api/Delivery/Driver';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useDistricts } from 'src/hooks/District/useDistricts';
 
 const FormDriver = ({
   formData,
@@ -95,10 +95,6 @@ const FormDriver = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const { token } = useSession();
-  const [organization, setOrganization] = useState<any[]>([]);
-  const [department, setDepartment] = useState<any[]>([]);
-  const [district, setDistrict] = useState<any[]>([]);
   const isStepSkipped = (step: number) => skipped.has(step);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -168,25 +164,17 @@ const FormDriver = ({
     }
   };
 
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
+
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
-
-      const [orgRes, deptRes, distRes] = await Promise.all([
-        getAllOrganizations(token),
-        getAllDepartments(token),
-        getAllDistricts(token),
-      ]);
-
-      setOrganization(orgRes.collection ?? []);
-      setDepartment(deptRes.collection ?? []);
-      setDistrict(distRes.collection ?? []);
-
-      const employeeAll = await getAllDriver(token);
+      const employeeAll = await getAllDriver();
       setEmployeeAllRes(employeeAll.collection ?? []);
 
       if (edittingId && !isBatchEdit) {
-        const employeeRes = await getDriverById(edittingId, token);
+        const employeeRes = await getDriverById(edittingId);
         const employee = employeeRes?.collection ?? null;
         if (employee) {
           const normalizedGender =
@@ -209,7 +197,7 @@ const FormDriver = ({
     };
 
     fetchData();
-  }, [token, edittingId, isBatchEdit]);
+  }, [edittingId, isBatchEdit]);
 
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
     const out: Record<string, any> = {};
@@ -396,16 +384,6 @@ const FormDriver = ({
     setErrors({});
 
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
-
       if (isBatchEdit && selectedRows.length > 0) {
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
           (k) => (enabledFields as any)[k] === true,
@@ -435,16 +413,12 @@ const FormDriver = ({
         }
 
         for (const row of selectedRows) {
-          await updateDriver(
-            row.id,
-            {
-              ...row,
-              ...payload,
-              vehicle_plate_number: payload.vehicle_plate_number ?? '',
-              vehicle_type: payload.vehicle_type ?? '',
-            },
-            token,
-          );
+          await updateDriver(row.id, {
+            ...row,
+            ...payload,
+            vehicle_plate_number: payload.vehicle_plate_number ?? '',
+            vehicle_type: payload.vehicle_type ?? '',
+          });
         }
 
         showSwal('success', 'Batch data driver updated successfully!');
@@ -473,8 +447,7 @@ const FormDriver = ({
       }
 
       const data = result.data;
-      console.log(data);
-      // const hasNewImage = Boolean(siteImageFile) || isDataUrl(localForm.faceimage);
+
       const rawFaceImage = localForm.faceimage;
       const rawFileImage = siteImageFile;
 
@@ -489,8 +462,7 @@ const FormDriver = ({
           is_email_verify: false,
         };
 
-        const res = await updateDriver(edittingId, editData, token);
-        console.log(res);
+        const res = await updateDriver(edittingId, editData);
 
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
@@ -498,7 +470,7 @@ const FormDriver = ({
 
         showSwal('success', 'Driver successfully updated!');
       } else {
-        const created = await createDriver(data, token);
+        const created = await createDriver(data);
         const newDriverId = created?.collection?.employee_id;
 
         if (newDriverId && hasNewImage) {
@@ -509,7 +481,6 @@ const FormDriver = ({
           showSwal('success', 'Driver successfully created!');
         }, 750);
         setLocalForm(CreateDriverRequestSchema.parse({}));
-        // localStorage.removeItem('unsavedDriverData');
       }
 
       setTimeout(() => onSuccess?.(), 600);
@@ -523,16 +494,15 @@ const FormDriver = ({
 
   const handleFileUploads = async (driverId: any, fileFromInput: any, faceImage: any) => {
     try {
-      //  console.log('UPLOAD START', { fileFromInput, faceImage });
       if (fileFromInput) {
-        await uploadImageDriver(driverId, fileFromInput, token as string);
+        await uploadImageDriver(driverId, fileFromInput);
         return;
       }
 
       if (faceImage) {
         const blob = await fetch(faceImage).then((res) => res.blob());
         const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-        await uploadImageDriver(driverId, file, token as string);
+        await uploadImageDriver(driverId, file);
         return;
       }
 
@@ -545,7 +515,6 @@ const FormDriver = ({
   // Handle Change Image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    console.log(selectedFile);
     if (selectedFile) {
       setSiteImageFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
@@ -567,7 +536,6 @@ const FormDriver = ({
     }
     const rel = v.startsWith('/') ? v : `/${v}`;
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
-    console.log('Preview URL:', url);
 
     setPreviewUrl(url);
   }, [localForm.faceimage, siteImageFile]);
@@ -844,11 +812,11 @@ const FormDriver = ({
                 fullWidth
                 autoHighlight
                 disablePortal
-                options={district.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
+                options={districts.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
                   const cur = String(localForm.district_id ?? '');
                   return (
-                    district
+                    districts
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
                       .find((opt) => opt.id === cur) || null
                   );
@@ -911,14 +879,14 @@ const FormDriver = ({
                 fullWidth
                 autoHighlight
                 disablePortal
-                options={organization.map((o: any) => ({
+                options={organizations.map((o: any) => ({
                   id: String(o.id),
                   label: o.name ?? '',
                 }))}
                 value={(() => {
                   const currentId = String(localForm.organization_id ?? '');
                   return (
-                    organization
+                    organizations
                       .map((o: any) => ({ id: String(o.id), label: o.name ?? '' }))
                       .find((opt) => opt.id === currentId) || null
                   );
@@ -1037,83 +1005,7 @@ const FormDriver = ({
                 }}
               />
             </Grid2>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head_employee_1">
-                <Typography variant="caption">Employee Head - 1</Typography>
-              </CustomFormLabel>
-              <Autocomplete
-                fullWidth
-                autoHighlight
-                // disablePortal
-                options={employeeAllRes}
-                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_2)}
-                getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === localForm.head_employee_1) || null}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                onChange={(_, newVal) => {
-                  setLocalForm((prev) => ({
-                    ...prev,
-                    head_employee_1: newVal ? newVal.id : '',
-                  }));
-                }}
-                disabled={isBatchEdit}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    id="head_employee_1"
-                    placeholder="Search employee…"
-                    variant="outlined"
-                  />
-                )}
-                // optional: tampilkan nama + email di dropdown
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body2">{option.name}</Typography>
-                    </Box>
-                  </li>
-                )}
-              />
-            </Grid2>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head2">
-                <Typography variant="caption">Employee Head - 2</Typography>
-              </CustomFormLabel>
-              <Autocomplete
-                fullWidth
-                autoHighlight
-                // disablePortal
-                options={employeeAllRes}
-                // cegah pilih orang yg sama dgn Head-1
-                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_1)}
-                getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === localForm.head_employee_2) || null}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                onChange={(_, newVal) => {
-                  setLocalForm((prev) => ({
-                    ...prev,
-                    head_employee_2: newVal ? newVal.id : '',
-                  }));
-                }}
-                disabled={isBatchEdit}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    id="head_employee_2"
-                    placeholder="Search employee…"
-                    variant="outlined"
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body2">{option.name}</Typography>
-                      
-                    </Box>
-                  </li>
-                )}
-              />
-            </Grid2> */}
+
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
                 <Typography variant="caption">Card Access</Typography>
@@ -1267,6 +1159,8 @@ const FormDriver = ({
                         <Typography variant="h6" mb={2}>
                           Take Photo From Camera
                         </Typography>
+
+                        <Divider sx={{ mb: 2 }} />
 
                         <Grid2 container spacing={2}>
                           <Grid2 size={{ xs: 6, sm: 6 }}>

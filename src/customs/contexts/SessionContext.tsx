@@ -51,7 +51,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setAuthType(null);
     setGroupId(null);
-    revokeToken(token!);
+    revokeToken();
   };
 
   return (

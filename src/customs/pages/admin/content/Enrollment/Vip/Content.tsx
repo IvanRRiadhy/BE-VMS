@@ -76,7 +76,6 @@ const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
-  const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -116,7 +115,7 @@ const Content = () => {
 
   const fetchDataOrganization = async () => {
     try {
-      const res = await getAllOrganizations(token as string);
+      const res = await getAllOrganizations();
       setOrganizationData(res?.collection ?? []);
     } catch (error) {
       console.error(error);
@@ -125,7 +124,7 @@ const Content = () => {
 
   const fetchDataDepartment = async () => {
     try {
-      const res = await getAllDepartments(token as string);
+      const res = await getAllDepartments();
       setDepartmentData(res?.collection ?? []);
     } catch (error) {
       console.error(error);
@@ -134,7 +133,7 @@ const Content = () => {
 
   const fetchDataDistrict = async () => {
     try {
-      const res = await getAllDistricts(token as string);
+      const res = await getAllDistricts();
       setDistrictData(res?.collection ?? []);
     } catch (error) {
       console.error(error);
@@ -145,10 +144,9 @@ const Content = () => {
     fetchDataOrganization();
     fetchDataDepartment();
     fetchDataDistrict();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -157,7 +155,6 @@ const Content = () => {
         let employeeRes: any;
         try {
           employeeRes = await getAllEmployeePaginationFilterMore(
-            token,
             start,
             rowsPerPage,
             sortDir,
@@ -200,7 +197,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [ page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const [initialFormData, setInitialFormData] = useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
@@ -366,14 +363,12 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return;
-
     const confirmed = await showConfirmDelete('Are you sure delete this employee?');
 
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteEmployee(id, token);
+        await deleteEmployee(id);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Succesfully deleted employee.');
       } catch (error) {
@@ -385,14 +380,14 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
-    if (!token || rows.length === 0) return;
+    if ( rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} employees?`);
 
     if (confirmed) {
       setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
+        await Promise.all(rows.map((row) => deleteEmployee(row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `Succesfully deleted ${rows.length} employees.`);
         setSelectedRows([]);

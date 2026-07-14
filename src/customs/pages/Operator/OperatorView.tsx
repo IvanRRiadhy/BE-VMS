@@ -119,7 +119,6 @@ dayjs.locale('id');
 const OperatorView = () => {
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-  const { token } = useSession();
   const { t } = useTranslation();
 
   const dataImage = [infoPic];
@@ -220,15 +219,15 @@ const OperatorView = () => {
   const [typeVisitor, setTypeVisitor] = useState('live');
   const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
   const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
-  const { sitesOperator } = useInvitationSite(token);
+  const { sitesOperator } = useInvitationSite();
   const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
-    useRegisteredSiteOperator(token);
-  const { printData } = usePrintBadgeConfig(token as string);
-  const { permission, loading: loadingPermission } = useDataPermission(token);
-  const { permissionAccess } = usePermissionOperator(token);
-  const { availableCards, setAvailableCards } = useAvailableCardOperator(token);
-  const { visitorType } = useInvitationVisitorType(token);
-  const { employee } = useInvitationHost(token);
+    useRegisteredSiteOperator();
+  const { printData } = usePrintBadgeConfig();
+  const { permission, loading: loadingPermission } = useDataPermission();
+  const { permissionAccess } = usePermissionOperator();
+  const { availableCards, setAvailableCards } = useAvailableCardOperator();
+  const { visitorType } = useInvitationVisitorType();
+  const { employee } = useInvitationHost();
   const [searchHost, setSearchHost] = useState<any>('');
   const debounceSearch = useDebounce(searchHost, 400);
   const [openMore, setOpenMore] = useState(false);
@@ -236,7 +235,7 @@ const OperatorView = () => {
   const [vtLoading, setVTLoading] = useState(false);
 
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
-    useInvitationVisitorEmployee(token, {
+    useInvitationVisitorEmployee({
       search: debounceSearch,
       start: 0,
       length: 10,
@@ -348,7 +347,7 @@ const OperatorView = () => {
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
 
-      await createMultipleGrantAccess(token as string, {
+      await createMultipleGrantAccess({
         data: payloads,
       });
       // console.log('payloads', payloads);
@@ -529,7 +528,7 @@ const OperatorView = () => {
         payload.swap_card_from_site_id = registerSiteOperator;
       }
 
-      await createGrandAccessOperator(token as string, payload);
+      await createGrandAccessOperator(payload);
 
       showSwal(
         'success',
@@ -604,7 +603,7 @@ const OperatorView = () => {
         apply_to_all: applyToAll,
       };
 
-      await extendPeriodOperator(token as string, payload);
+      await extendPeriodOperator(payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -794,7 +793,7 @@ const OperatorView = () => {
     availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
   const fetchAvailableCards = async () => {
-    const res = await getAvailableCardOperator(token as string);
+    const res = await getAvailableCardOperator();
     setAvailableCards(res.collection);
   };
 
@@ -920,7 +919,7 @@ const OperatorView = () => {
 
   const handleSubmitQRCode = async (value: string) => {
     try {
-      const res = await getInvitationCode(token as string, value);
+      const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
       // if (data.length === 0) {
@@ -939,7 +938,7 @@ const OperatorView = () => {
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-      const freshVisitors = await getInvitationOperatorRelated(invitationId, token as string);
+      const freshVisitors = await getInvitationOperatorRelated(invitationId);
       const scannedNumber = data[0]?.visitor_number;
 
       const matchedIds = freshVisitors.collection
@@ -1048,7 +1047,7 @@ const OperatorView = () => {
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
-    const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
+    const relatedRes = await getInvitationOperatorRelated(invitationId);
     const relatedData = relatedRes.collection ?? [];
 
     const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
@@ -1292,7 +1291,7 @@ const OperatorView = () => {
         return;
       }
       if (payloads.length > 1) {
-        await createMultipleGrantAccess(token as string, {
+        await createMultipleGrantAccess({
           data: payloads.map(({ visitorName, ...p }) => p),
         });
       } else {
@@ -1300,7 +1299,7 @@ const OperatorView = () => {
           visitorName?: string;
         } & (typeof payloads)[0];
 
-        await createGrandAccessOperator(token as string, payload);
+        await createGrandAccessOperator(payload);
       }
 
       setVisitorCards((prev) =>
@@ -1403,7 +1402,7 @@ const OperatorView = () => {
         reason: res.value,
       };
 
-      await createOperatorBlacklist(token as string, payload);
+      await createOperatorBlacklist(payload);
 
       showSwal('success', 'Visitor has been successfully blacklisted.');
     } catch (err) {
@@ -1493,7 +1492,7 @@ const OperatorView = () => {
         payload.reason = reason;
       }
 
-      await createInvitationActionOperator(token as string, id!, payload);
+      await createInvitationActionOperator(id!, payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1729,7 +1728,7 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       if (validForApi.length > 0) {
-        await createMultipleInvitationActionOperator(token as string, payload);
+        await createMultipleInvitationActionOperator(payload);
       }
 
       setRelatedVisitors((prev) =>
@@ -2022,9 +2021,7 @@ const OperatorView = () => {
         return;
       }
 
-      const results = await Promise.all(
-        visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
-      );
+      const results = await Promise.all(visitorList.map((v) => getDetailInvitationForm(v.id)));
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
 
@@ -2835,7 +2832,7 @@ const OperatorView = () => {
 
       const payload = { list_group: dataList };
       // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-      await createSubmitCompletePraMultiple(token as string, payload);
+      await createSubmitCompletePraMultiple(payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -3032,7 +3029,7 @@ const OperatorView = () => {
 
         // console.log('Final Payload:', payload);
 
-        const res = await createGiveAccessOperator(token as string, payload);
+        const res = await createGiveAccessOperator(payload);
         // console.log('Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
@@ -3119,7 +3116,7 @@ const OperatorView = () => {
         registered_site_id: registerSiteOperator,
       };
 
-      await returnCard(token as string, payload);
+      await returnCard(payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
@@ -3159,7 +3156,7 @@ const OperatorView = () => {
   };
 
   const fetchUpcomingPurpose = async () => {
-    const res = await getUpComingPurpose(token as string, {
+    const res = await getUpComingPurpose({
       today: 'true',
       all_visitor_type: 'true',
     });
@@ -3168,13 +3165,12 @@ const OperatorView = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
     fetchUpcomingPurpose();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getUpComingVisitors(token as string, {
+      const res = await getUpComingVisitors({
         today: 'true',
         // all_visitor_type: 'true',
         visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
@@ -3196,7 +3192,7 @@ const OperatorView = () => {
       setUpcomingVisitors(rows ?? []);
     };
     fetchData();
-  }, [token, selectedPurpose]);
+  }, [selectedPurpose]);
 
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
