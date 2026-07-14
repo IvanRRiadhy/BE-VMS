@@ -24,6 +24,7 @@ const NotificationSetting = () => {
 
   const [initialCardAccessEnabled, setInitialCardAccessEnabled] = useState(false);
   const [giveCardSettingEnabled, setGiveCardSettingEnabled] = useState(false);
+  const [notificationWalletEnabled, setNotificationWalletEnabled] = useState(false);
   const navigate = useNavigate();
 
   const handleAdd = () => {
@@ -202,12 +203,12 @@ const NotificationSetting = () => {
                 </Typography>
 
                 <Switch
-                  checked={giveCardSettingEnabled}
-                  onChange={(e) => setGiveCardSettingEnabled(e.target.checked)}
+                  checked={notificationWalletEnabled}
+                  onChange={(e) => setNotificationWalletEnabled(e.target.checked)}
                 />
               </Box>
 
-              {giveCardSettingEnabled && (
+              {notificationWalletEnabled && (
                 <Select fullWidth value="old">
                   <MenuItem value="old">Disabled Access Old Card</MenuItem>
                 </Select>

@@ -10,6 +10,18 @@ import {
   Portal,
   useTheme,
   useMediaQuery,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  FormControlLabel,
+  Stack,
+  Switch,
+  Tooltip,
+  Divider,
 } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -17,7 +29,7 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
-import { IconSettingsFilled } from '@tabler/icons-react';
+import { IconInfoCircle, IconSettingsFilled } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -190,6 +202,21 @@ const Content = () => {
     fetchData();
   }, [page, rowsPerPage, sortDir, refreshTrigger, search]);
 
+  const [configuration, setConfiguration] = useState({
+    employeeInvitationMode: '',
+    visitorInvitationMode: '',
+    defaultCredentialMode: '',
+    grantAccessWhen: '',
+    temporaryAccessBeforeMinutes: '',
+    temporaryAccessAfterMinutes: '',
+    needHostApproval: false,
+    autoCheckout: false,
+    autoCheckoutAfterMinutes: '',
+  });
+
+  const [initialCardAccessEnabled, setInitialCardAccessEnabled] = useState(false);
+  const [giveCardSettingEnabled, setGiveCardSettingEnabled] = useState(false);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -226,7 +253,7 @@ const Content = () => {
               <Tab label="Configuration" />
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
-              <Tab label="Visitor Card Setting" />
+              {/* <Tab label="Visitor Card Setting" /> */}
               <Tab label="Notification Setting" />
             </Tabs>
 
@@ -237,11 +264,267 @@ const Content = () => {
               }}
             >
               {/* vms configuration */}
-              {tabIndex === 0 && <Box>
-                <form>
-                  
-                </form>
-                </Box>}
+              {tabIndex === 0 && (
+                <Box sx={{ p: { xs: 1, md: 3 } }}>
+                  <Grid container spacing={3}>
+                    {/* Employee */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Employee Configuration
+                        </Typography>
+
+                        <FormControl fullWidth>
+                          <InputLabel>Invitation Mode</InputLabel>
+                          <Select
+                            label="Invitation Mode"
+                            value={configuration.employeeInvitationMode}
+                            onChange={(e) =>
+                              setConfiguration((prev) => ({
+                                ...prev,
+                                employeeInvitationMode: e.target.value,
+                              }))
+                            }
+                          >
+                            <MenuItem value="DirectAccess">Direct Access</MenuItem>
+                            <MenuItem value="NeedCheckIn">Need Check In</MenuItem>
+                            <MenuItem value="NeedVisitorCard">Need Visitor Card</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Paper>
+                    </Grid>
+
+                    {/* Visitor */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Visitor Configuration
+                        </Typography>
+
+                        <FormControl fullWidth>
+                          <InputLabel>Invitation Mode</InputLabel>
+                          <Select
+                            label="Invitation Mode"
+                            value={configuration.visitorInvitationMode}
+                            onChange={(e) =>
+                              setConfiguration((prev) => ({
+                                ...prev,
+                                visitorInvitationMode: e.target.value,
+                              }))
+                            }
+                          >
+                            <MenuItem value="QRCode">QR Code</MenuItem>
+                            <MenuItem value="TemporaryCard">Temporary Card</MenuItem>
+                            <MenuItem value="FaceRecognition">Face Recognition</MenuItem>
+                            <MenuItem value="ManualRegistration">Manual Registration</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Paper>
+                    </Grid>
+
+                    {/* Credential */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Credential
+                        </Typography>
+
+                        <FormControl fullWidth>
+                          <InputLabel>Default Credential</InputLabel>
+                          <Select
+                            label="Default Credential"
+                            value={configuration.defaultCredentialMode}
+                            onChange={(e) =>
+                              setConfiguration((prev) => ({
+                                ...prev,
+                                defaultCredentialMode: e.target.value,
+                              }))
+                            }
+                          >
+                            <MenuItem value="ExistingCard">Existing Card</MenuItem>
+                            <MenuItem value="VisitorCard">Visitor Card</MenuItem>
+                            <MenuItem value="QRCode">QR Code</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Paper>
+                    </Grid>
+
+                    {/* Access */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Access Configuration
+                        </Typography>
+
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <FormControl fullWidth>
+                              <InputLabel>Grant Access</InputLabel>
+                              <Select
+                                label="Grant Access"
+                                value={configuration.grantAccessWhen}
+                                onChange={(e) =>
+                                  setConfiguration((prev) => ({
+                                    ...prev,
+                                    grantAccessWhen: e.target.value,
+                                  }))
+                                }
+                              >
+                                <MenuItem value="TimeVisit">Time Visit</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Before (Minutes)"
+                              value={configuration.temporaryAccessBeforeMinutes}
+                              onChange={(e) =>
+                                setConfiguration((prev) => ({
+                                  ...prev,
+                                  temporaryAccessBeforeMinutes: e.target.value,
+                                }))
+                              }
+                            />
+                          </Grid>
+
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="After (Minutes)"
+                              value={configuration.temporaryAccessAfterMinutes}
+                              onChange={(e) =>
+                                setConfiguration((prev) => ({
+                                  ...prev,
+                                  temporaryAccessAfterMinutes: e.target.value,
+                                }))
+                              }
+                            />
+                          </Grid>
+                        </Grid>
+                      </Paper>
+                    </Grid>
+
+                    {/* Automation */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Automation
+                        </Typography>
+
+                        <Stack spacing={2}>
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={configuration.needHostApproval}
+                                onChange={(e) =>
+                                  setConfiguration((prev) => ({
+                                    ...prev,
+                                    needHostApproval: e.target.checked,
+                                  }))
+                                }
+                              />
+                            }
+                            label="Need Host Approval"
+                          />
+
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={configuration.autoCheckout}
+                                onChange={(e) =>
+                                  setConfiguration((prev) => ({
+                                    ...prev,
+                                    autoCheckout: e.target.checked,
+                                  }))
+                                }
+                              />
+                            }
+                            label="Enable Auto Checkout"
+                          />
+
+                          {configuration.autoCheckout && (
+                            <TextField
+                              sx={{ maxWidth: 300 }}
+                              type="number"
+                              label="Auto Checkout After (Minutes)"
+                              value={configuration.autoCheckoutAfterMinutes}
+                              onChange={(e) =>
+                                setConfiguration((prev) => ({
+                                  ...prev,
+                                  autoCheckoutAfterMinutes: e.target.value,
+                                }))
+                              }
+                            />
+                          )}
+                        </Stack>
+                      </Paper>
+                    </Grid>
+
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3 }}>
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          Visitor Card Setting
+                        </Typography>
+                        <Divider />
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography
+                            variant="h6"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
+                            Initial Card Access
+                            <Tooltip title="Initial Card Access" arrow placement="bottom">
+                              <IconInfoCircle />
+                            </Tooltip>
+                          </Typography>
+
+                          <Switch
+                            checked={initialCardAccessEnabled}
+                            onChange={(e) => setInitialCardAccessEnabled(e.target.checked)}
+                          />
+                        </Box>
+
+                        {initialCardAccessEnabled && (
+                          <Select fullWidth value="QR">
+                            <MenuItem value="QR">Card Access (QR)</MenuItem>
+                          </Select>
+                        )}
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography
+                            variant="h6"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
+                            Give Card Setting
+                            <Tooltip title="Give Card Setting" arrow placement="bottom">
+                              <IconInfoCircle />
+                            </Tooltip>
+                          </Typography>
+
+                          <Switch
+                            checked={giveCardSettingEnabled}
+                            onChange={(e) => setGiveCardSettingEnabled(e.target.checked)}
+                          />
+                        </Box>
+
+                        {giveCardSettingEnabled && (
+                          <Select fullWidth value="old">
+                            <MenuItem value="old">Disabled Access Old Card</MenuItem>
+                          </Select>
+                        )}
+                      </Paper>
+                    </Grid>
+
+                    <Grid size={12} display="flex" justifyContent="flex-end">
+                      <Button variant="contained" size="large">
+                        Save Configuration
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
               {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
@@ -293,13 +576,13 @@ const Content = () => {
                   ) : null}
                 </Box>
               ) : null}
-
+              {/* 
               {tabIndex === 3 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <VisitorCardSetting /> : null}
                 </Box>
-              ) : null}
-              {tabIndex === 4 ? (
+              ) : null} */}
+              {tabIndex === 3 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <NotificationSetting /> : null}
                 </Box>
