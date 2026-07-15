@@ -45,7 +45,7 @@ import {
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import frImage from 'src/assets/images/products/pic_fr.png';
+import frImage from 'src/assets/images/products/pic_fr.webp';
 import SearchVisitorDialog from 'src/customs/pages/Operator/Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';

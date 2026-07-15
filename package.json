@@ -11,21 +11,6 @@
     "preview": "vite preview",
     "start": "vite preview --port 3001"
   },
-  "build": {
-    "appId": "com.vms.app",
-    "productName": "BI VMS",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "dist/**",
-      "electron/**"
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "electron/icon.ico"
-    }
-  },
   "dependencies": {
     "@casl/ability": "^6.3.3",
     "@casl/react": "^3.1.0",
@@ -155,9 +140,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/chance": "^1.1.6",
-    "@types/crypto-js": "^4.2.2",
-    "@types/electron": "^1.4.38",
     "@types/fslightbox-react": "^1.7.8",
     "@types/highcharts": "^5.0.44",
     "@types/jquery": "^3.5.32",
@@ -173,11 +155,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/video.js": "^7.3.58",
     "@vitejs/plugin-react": "^4.3.4",
-    "concurrently": "^9.2.1",
-    "electron-builder": "^26.0.12",
-    "electron-rebuild": "^3.2.9",
     "eslint": "latest",
-    "eslint-config-next": "latest",
     "typescript": "5.7.2",
     "vite": "6.0.3"
   }

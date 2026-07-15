@@ -21,7 +21,7 @@ import {
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import FRImage from 'src/assets/images/products/pic_fr.png';
+import FRImage from 'src/assets/images/products/pic_fr.webp';
 import QRCode from 'react-qr-code';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 

@@ -32,7 +32,7 @@ import {
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
-import FRImage from 'src/assets/images/products/pic_fr.png';
+import FRImage from 'src/assets/images/products/pic_fr.webp';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import ScanQrVisitorDialog from '../Operator/Dialog/ScanQrVisitorDialog';
 import { getInvitationCode, getInvitationOperatorRelated } from 'src/customs/api/operator';

@@ -6,15 +6,29 @@ import Loadable from 'src/layouts/full/shared/loadable/Loadable';
 import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
 import { GroupRoleId } from '../constant/GroupRoleId';
 import AuthRedirector from './AuthRedirector';
-import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
-import Register from 'src/views/authentication/auth/Register';
-import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
-import ExpiredPage from 'src/views/authentication/auth/ExpiredPage';
-import LimitedInvitation from 'src/views/authentication/auth/LimitedInvitation';
-import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
-import View from 'src/customs/pages/Operator/View';
+// import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
+// import Register from 'src/views/authentication/auth/Register';
+// import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
+// import ExpiredPage from 'src/views/authentication/auth/ExpiredPage';
+// import LimitedInvitation from 'src/views/authentication/auth/LimitedInvitation';
+// import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
+// import View from 'src/customs/pages/Operator/View';
+
 // import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
 
+const StaffLayout = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/StaffLayout')),
+);
+const Register = Loadable(lazy(() => import('src/views/authentication/auth/Register')));
+const ForgotPassword = Loadable(lazy(() => import('src/views/authentication/auth/ForgotPassword')));
+const ExpiredPage = Loadable(lazy(() => import('src/views/authentication/auth/ExpiredPage')));
+const LimitedInvitation = Loadable(
+  lazy(() => import('src/views/authentication/auth/LimitedInvitation')),
+);
+const SuccessPage = Loadable(
+  lazy(() => import('src/customs/pages/Guest/SelfPraregistration/components/SuccessPage')),
+);
+const View = Loadable(lazy(() => import('src/customs/pages/Operator/View')));
 /* ***Layouts**** */
 const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/layout/GuestLayout')));
 const EmployeeLayout = Loadable(

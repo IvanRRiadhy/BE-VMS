@@ -19,6 +19,11 @@ export default defineConfig({
     //   },
     // },
   },
+  build: {
+    outDir: 'dist',
+    minify: 'esbuild',
+    cssMinify: true,
+  },
   resolve: {
     alias: {
       src: resolve(__dirname, 'src'),
