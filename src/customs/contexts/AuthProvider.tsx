@@ -3,14 +3,12 @@ import { jwtDecode } from 'jwt-decode';
 import { refreshToken } from '../api/users';
 import { useSession } from './SessionContext';
 
-type JwtPayload = { exp: number; [key: string]: any; email: string; username: string };
+type JwtPayload = { exp: number;[key: string]: any; email: string; username: string };
 
 interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
-  authType: 'admin' | 'guest' | null;
   user: JwtPayload | null;
-  groupId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,7 +24,7 @@ const isTokenValid = (token: string | null): boolean => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, authType, saveToken, clearToken, groupId, roleAccess } = useSession();
+  const { token, saveToken, clearToken } = useSession();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<JwtPayload | null>(null);
@@ -40,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (token) {
         try {
           const res = await refreshToken({ token });
-          saveToken(res.collection.token, groupId ?? undefined, res.collection.role_access);
+          saveToken(res.collection.token);
           const newDecoded = jwtDecode<JwtPayload>(res.collection.token);
           setUser(newDecoded);
           setIsAuthenticated(true);
@@ -57,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [token]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, authType, user, groupId }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, user }}>
       {children}
     </AuthContext.Provider>
   );

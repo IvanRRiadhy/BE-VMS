@@ -1,14 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { revokeToken } from '../api/users';
 
-export type AuthType = 'admin' | 'guest' | null;
-
 interface SessionContextType {
   token: string | null;
-  authType: AuthType;
-  groupId: string | null;
-  roleAccess: string | null;
-  saveToken: (token: string, groupId?: string, roleAccess?: string) => void;
+  saveToken: (token: string) => void;
   clearToken: () => void;
 }
 
@@ -22,41 +17,21 @@ export const useSession = (): SessionContextType => {
 
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [authType, setAuthType] = useState<AuthType>(
-    (localStorage.getItem('authType') as AuthType) || null,
-  );
-  const [groupId, setGroupId] = useState<string | null>(localStorage.getItem('groupId'));
-  const [roleAccess, setRoleAccess] = useState<string | null>(localStorage.getItem('roleAccess'));
 
-  const saveToken = (newToken: string, groupId?: string, roleAccess?: string) => {
+  const saveToken = (newToken: string) => {
     localStorage.setItem('token', newToken);
-    // localStorage.setItem('authType', type);
-    // if (groupId) {
-    //   const normalized = groupId.toUpperCase();
-    //   localStorage.setItem('groupId', normalized);
-    //   setGroupId(normalized);
-    // }
-
-    if (roleAccess) {
-      localStorage.setItem('roleAccess', roleAccess);
-      setRoleAccess(roleAccess);
-    }
     setToken(newToken);
   };
 
   const clearToken = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('authType');
-    localStorage.removeItem('groupId');
     setToken(null);
-    setAuthType(null);
-    setGroupId(null);
-    revokeToken();
+    revokeToken(token);
   };
 
   return (
     <SessionContext.Provider
-      value={{ token, authType, groupId, saveToken, clearToken, roleAccess }}
+      value={{ token, saveToken, clearToken }}
     >
       {children}
     </SessionContext.Provider>

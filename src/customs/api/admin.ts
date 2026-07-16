@@ -712,19 +712,22 @@ export const getAllTimezone = async (): Promise<GetAllTimezoneResponse> => {
 export const getAllTimezonePagination = async (
   start: number,
   length: number,
-  sortColumn: string,
-  keyword: string = '',
-): Promise<GetAllTimezonePaginationResponse> => {
+  keyword?: string,
+): Promise<any> => {
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
-    'search[value]': keyword,
   };
+
+  if (keyword?.trim()) {
+    params['search[value]'] = keyword;
+  }
+
   const response = await axiosInstance.get('/time-access/dt', {
     headers: { Accept: 'application/json' },
     params,
   });
+
   return response.data;
 };
 
@@ -928,10 +931,8 @@ export const getVisitorById = async (id: string): Promise<GetAllVisitorTypePagin
 
 // Pagination
 export const getAllVisitorPagination = async (
-  // draw: number,
   start: number,
   length: number,
-  // sortColumn: string,
   // sortDir = '',
   keyword?: string,
   start_date?: string,

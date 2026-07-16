@@ -23,11 +23,13 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getProfile } from 'src/customs/api/users';
 import { useDispatch } from 'react-redux';
 import { clearUser } from 'src/store/apps/user/userSlice';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProfile } from 'src/hooks/useProfile';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
-  const [data, setData] = useState<any>({});
+  // const [data, setData] = useState<any>({});
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
@@ -38,7 +40,7 @@ const Profile = () => {
   };
 
   const dispatch = useDispatch();
-
+  const queryClient = useQueryClient();
   const { token, clearToken } = useSession();
 
   const handleLogout = useCallback(async () => {
@@ -46,35 +48,21 @@ const Profile = () => {
     clearToken();
 
     dispatch(clearUser());
-    
+
     localStorage.clear();
     sessionStorage.clear();
-
+    queryClient.removeQueries({
+      queryKey: ['profile'],
+    });
     sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
-
     navigate('/', { replace: true });
   }, [navigate, clearToken]);
 
   const fetchedRef = useRef(false);
 
-  useEffect(() => {
-    if (!token) return;
-    if (fetchedRef.current) return;
+  const { data: profile } = useProfile();
 
-    fetchedRef.current = true;
-
-    const fetchData = async () => {
-      const res = await getProfile();
-      setData(res?.collection || {});
-    };
-
-    fetchData();
-  }, []);
-
-  // const roleManager = groupId === GroupRoleId.Manager;
-
-  const profileUrl = getProfilePathByRole(data.group_name);
-  // const [selectedRole, setSelectedRole] = useState(groupId);
+  const profileUrl = getProfilePathByRole(profile?.group_name);
 
   return (
     <Box>
@@ -126,7 +114,7 @@ const Profile = () => {
               color="textPrimary"
               fontWeight={600}
             >
-              {data.fullname || 'John Does'}
+              {profile?.fullname || 'John Does'}
             </Typography>
 
             <Typography
@@ -137,7 +125,7 @@ const Profile = () => {
               alignItems="center"
               gap={1}
             >
-              {data.email || 'morV0@example.com'}
+              {profile?.email || 'morV0@example.com'}
             </Typography>
 
             <Link to={profileUrl} onClick={handleClose2}>
@@ -182,13 +170,13 @@ export default Profile;
 export const getProfilePathByRole = (groupName?: string): string => {
   if (!groupName) return '/profile';
 
-  const lower = groupName.toLowerCase();
+  const lower = groupName;
 
-  if (lower.includes('admin')) return '/admin/profile';
-  if (lower.includes('manager')) return '/manager/profile';
-  if (lower.includes('employee')) return '/employee/profile';
-  if (lower.includes('operator')) return '/operator/profile';
-  if (lower.includes('visitor') || lower.includes('guest')) return '/guest/profile';
+  if (lower.includes('Admin')) return '/admin/profile';
+  if (lower.includes('Manager')) return '/manager/profile';
+  if (lower.includes('Employee')) return '/employee/profile';
+  if (lower.includes('OperatorVMS')) return '/operator/profile';
+  if (lower.includes('Visitor') || lower.includes('guest')) return '/guest/profile';
 
   return '/profile';
 };

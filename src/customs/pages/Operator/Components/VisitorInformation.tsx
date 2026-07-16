@@ -170,25 +170,9 @@ const VisitorInformation = ({
       <Grid size={{ xs: 12, xl: 8 }}>
         <Card
           elevation={0}
-          sx={
-            {
-              //   borderRadius: 3,
-              //   border: '1px solid',
-              //   borderColor: 'divider',
-            }
-          }
         >
           <CardContent sx={{ padding: '0px !important' }}>
             <Stack direction="row" spacing={2}>
-              {/* <Avatar
-                  sx={{
-                    width: 64,
-                    height: 64,
-                  }}
-                  src={invitationCode?.photo}
-                >
-                  {invitationCode?.nama?.charAt(0)}
-                </Avatar> */}
               <Box flex={1}>
                 <Typography
                   variant="h6"
@@ -196,6 +180,7 @@ const VisitorInformation = ({
                   display="flex"
                   alignItems="center"
                   gap={1}
+                  sx={{ textTransform: 'capitalize'}}
                 >
                   {invitationCode[0]?.visitor_name ?? 'Name'}
                   {invitationCode[0]?.visitor_name && (

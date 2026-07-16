@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
-import { getShareLinkByDt } from 'src/customs/api/ShareLink';
-import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
 
 type Props = {
   refreshKey: any;
@@ -31,65 +28,20 @@ const ShareLinkDialog: React.FC<Props> = ({
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortDir, setSortDir] = useState('desc');
 
-  const startPage = page * rowsPerPage;
+  const {
+    data,
+    isLoading,
+  } = useShareLinkPagination({
+    page,
+    rowsPerPage,
+    search: searchKeyword,
+    sortDir,
+  });
 
-  const [shareLinkList, setShareLinkList] = useState<any[]>([]);
-  const [totalFilterRecords, setTotalFilterRecords] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const shareLinkList = data?.collection ?? [];
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const res = await getShareLinkByDt( startPage, rowsPerPage, searchKeyword, sortDir);
-      const mapped =
-        res?.collection?.map((item: any) => ({
-          id: item.id,
-          agenda: item.agenda,
-          url: item.url,
-          current_usage: item.current_usage,
-          shorten_url: item.shorten_url,
-          max_usage: item.max_usage,
-          visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
-          expired_at: (() => {
-            const date = new Date(item.expired_at + 'Z');
-
-            const formattedDate = date.toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            });
-
-            const formattedTime = date
-              .toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              })
-              .replace(':', '.');
-
-            return `${formattedDate}, ${formattedTime}`;
-          })(),
-
-          link_status: item.link_status,
-        })) || [];
-
-
-      setShareLinkList(mapped);
-      setTotalFilterRecords(res?.RecordsFiltered || 0);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [ startPage, rowsPerPage, searchKeyword, sortDir]);
-
-  useEffect(() => {
-    if (open ) {
-      fetchData();
-    }
-  }, [fetchData, open, refreshKey]);
+  const totalFilterRecords =
+    data?.RecordsFiltered ?? 0;
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -119,7 +71,7 @@ const ShareLinkDialog: React.FC<Props> = ({
       <DialogContent dividers>
         <DynamicTable
           data={shareLinkList}
-          loading={loading}
+          loading={isLoading}
           isHaveHeaderTitle={false}
           isHaveSearch={true}
           onSearch={handleSearch}

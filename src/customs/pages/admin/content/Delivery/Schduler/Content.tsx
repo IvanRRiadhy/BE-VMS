@@ -20,21 +20,15 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 
 import {
-  getAllSite,
   getAllTimezone,
-  getAllVisitorType,
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import {
-  createSchedulerDelivery,
-  deleteSchedulerDelivery,
-  getSchedulerDeliveryPagination,
-  updateSchedulerDelivery,
+  getSchedulerDeliveryById,
 } from 'src/customs/api/Delivery/Scheduler';
 
 import SchedulerForm from './SchedulerForm';
@@ -43,6 +37,11 @@ import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import SchedulerErrorDialog from './Dialog/SchedulerErrorDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useSites } from 'src/hooks/useSites';
+import { useVisitorType } from 'src/hooks/useVisitorType';
+import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useSchedulerPagination } from 'src/hooks/Scheduler/useSchedulerPagination';
+import { useSchedulerMutation } from 'src/hooks/Scheduler/useSchedulerMutation';
 
 interface Filters {
   visitor_type_id: string | null;
@@ -53,22 +52,14 @@ interface Filters {
 
 const Content = () => {
   const [openDialogScheduler, setOpenDialogScheduler] = useState(false);
-  const [schedulerData, setSchedulerData] = useState<any[]>([]);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('name');
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const handleOpenDialog = () => setOpenDialogScheduler(true);
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [selectedScheduler, setSelectedScheduler] = useState<any>(null);
   const navigate = useNavigate();
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [loadingData, setLoadingData] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -98,6 +89,56 @@ const Content = () => {
       showSwal('error', 'Failed to view scheduler.');
     }
   };
+
+
+  const { data: timezoneData, isLoading: loadingTimezone } = useQuery({
+    queryKey: ['timezones'],
+    queryFn: async () => {
+      const res = await getAllTimezone();
+      return res.collection;
+    },
+
+  });
+
+
+  const { allVisitorEmployee: hostDataQuery } = useVisitorEmployees();
+  const { sites: siteDataQuery } = useSites();
+  const { visitorType: visitorTypeQuery } = useVisitorType();
+  // const [rawSchedulerData, setRawSchedulerData] = useState<any[]>([]);
+
+  const { data, isLoading } = useSchedulerPagination({
+    page,
+    rowsPerPage,
+    sortColumn,
+    sortDir,
+    search,
+    filters,
+  });
+
+  const {
+    createMutation,
+    updateMutation,
+    deleteMutation,
+  } = useSchedulerMutation();
+
+  const rawSchedulerData = data?.collection ?? [];
+
+  const schedulerData =
+    rawSchedulerData.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      time: item.time_access_name,
+      visitor_type: item.visitor_type_name,
+      site: item.site_name,
+      host: item.host_name,
+    })) ?? [];
+
+  const totalRecords =
+    data?.RecordsTotal ?? 0;
+
+  const totalFilteredRecords =
+    data?.RecordsFiltered ?? 0;
+
   const cards = [
     {
       title: t('totalScheduler'),
@@ -108,104 +149,23 @@ const Content = () => {
     },
   ];
 
-  const { data: timezoneData, isLoading: loadingTimezone } = useQuery({
-    queryKey: ['timezones'],
-    queryFn: async () => {
-      const res = await getAllTimezone();
-      return res.collection;
-    },
-    staleTime: 1000 * 60 * 1,
-  });
-
-  const { data: hostDataQuery, isLoading: loadingHost } = useQuery({
-    queryKey: ['hosts'],
-    queryFn: async () => {
-      const res = await getVisitorEmployee();
-      return res.collection;
-    },
-    staleTime: 1000 * 60 * 1,
-  });
-
-  const { data: siteDataQuery, isLoading: loadingSite } = useQuery({
-    queryKey: ['sites'],
-    queryFn: async () => {
-      const res = await getAllSite();
-      return res.collection;
-    },
-    staleTime: 1000 * 60 * 1,
-  });
-
-  const { data: visitorTypeQuery, isLoading: loadingVisitorType } = useQuery({
-    queryKey: ['visitorTypes'],
-    queryFn: async () => {
-      const res = await getAllVisitorType();
-      return res.collection;
-    },
-    staleTime: 1000 * 60 * 1,
-  });
-
-  const [rawSchedulerData, setRawSchedulerData] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchDataSchduler = async () => {
-      setLoading(true);
-
-      try {
-        setSchedulerData([]);
-        setRawSchedulerData([]);
-
-        const start = page * rowsPerPage;
-        const res = await getSchedulerDeliveryPagination(
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          search,
-          filters.visitor_type_id ?? undefined,
-          filters.host_id ?? undefined,
-          filters.time_access_id ?? undefined,
-          filters.site_id ?? undefined,
-        );
-
-        const collection = res?.collection ?? [];
-
-        const rows = collection.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          time: item.time_access_name,
-          visitor_type: item.visitor_type_name,
-          site: item.site_name,
-          host: item.host_name,
-        }));
-
-        setRawSchedulerData(collection);
-        setSchedulerData(rows);
-        setTotalFilteredRecords(res.RecordsFiltered ?? collection.length);
-        setTotalRecords(res.RecordsTotal ?? collection.length);
-      } catch (error) {
-      } finally {
-        setTimeout(() => setLoading(false), 500);
-      }
-    };
-
-    fetchDataSchduler();
-  }, [page, rowsPerPage, sortColumn, sortDir, search, refreshTrigger, filters]);
-
   const handleSubmitScheduler = async (payload: any) => {
     setLoadingData(true);
     try {
-      console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
 
       if (formMode === 'edit' && edittingId) {
-        await updateSchedulerDelivery(edittingId, payload);
+        await updateMutation.mutateAsync({
+          id: selectedScheduler.id,
+          data: payload,
+        });
         showSwal('success', 'Scheduler updated successfully!');
       } else {
-        await createSchedulerDelivery(payload);
+        await createMutation.mutateAsync(payload);
         showSwal('success', 'Scheduler added successfully!');
       }
 
       setOpenDialogScheduler(false);
-      setRefreshTrigger((prev) => prev + 1);
+
     } catch (error: any) {
       const errData = error?.response?.data;
 
@@ -224,33 +184,29 @@ const Content = () => {
   };
 
   const handleDeleteSchduler = async (id: string) => {
-    // setLoading(true);
-
     const confirmed = await showConfirmDelete('Are you sure to delete this scheduler?');
     if (!confirmed) return;
     if (confirmed) {
       try {
-        await deleteSchedulerDelivery(id);
-        setRefreshTrigger((prev) => prev + 1);
+        await deleteMutation.mutateAsync(id);
+
         showSwal('success', 'Successfully deleted scheduler!');
       } catch (error) {
         showSwal('error', 'Failed to delete scheduler.');
-      } finally {
-        // setTimeout(() => setLoading(false), 500);
       }
     }
   };
 
-  const handleEdit = (id: string) => {
-    const data = rawSchedulerData.find((item) => item.id === id);
-    setSelectedScheduler(data);
+  const handleEdit = async (id: string) => {
+    const data = await getSchedulerDeliveryById(id);
+    setSelectedScheduler(data.collection);
     setFormMode('edit');
     setOpenDialogScheduler(true);
   };
 
   const handleApplyFilter = () => {
     setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
+
   };
 
   const handleSearch = useCallback(
@@ -296,15 +252,15 @@ const Content = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <DynamicTable
-              loading={loading}
+              loading={isLoading}
               overflowX={'auto'}
               data={schedulerData ?? []}
-              // selectedRows={selectedRows}
               isNoActionTableHead={true}
               totalCount={totalFilteredRecords}
               isHaveChecked={true}
               isHaveAction={true}
               isActionEmployee={false}
+              currentPage={page}
               isHaveSearch={true}
               isHaveFilter={false}
               isHaveExportPdf={false}
@@ -336,12 +292,10 @@ const Content = () => {
               }
               onEdit={(row) => {
                 handleEdit(row.id);
-                // setEdittingId(row.id);
               }}
               onDelete={(row) => handleDeleteSchduler(row.id)}
               searchKeyword={search}
               onSearch={handleSearch}
-              // onSearchKeywordChange={handleSearchKeywordChange}
               onAddData={handleAdd}
             />
           </Grid>

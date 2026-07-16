@@ -56,7 +56,7 @@ import {
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,
-} from 'src/customs/api/ShareLink';
+} from 'src/customs/api/Admin/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -79,6 +79,7 @@ import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
 import { useAccessPass } from 'src/hooks/useAccessPass';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -97,7 +98,6 @@ const DashboardEmployee = () => {
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
-  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
@@ -127,7 +127,10 @@ const DashboardEmployee = () => {
   const { t } = useTranslation();
   const start = page * rowsPerPage;
   const navigate = useNavigate();
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
+  
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
   };
@@ -205,7 +208,7 @@ const DashboardEmployee = () => {
           // visitor_status: item.visitor_status,
         }));
         setActiveInvitation(rows || []);
-      } catch (error) {}
+      } catch (error) { }
     };
 
     fetchDataActiveInvtiation();
@@ -652,8 +655,6 @@ const DashboardEmployee = () => {
     setQuickSearch(keyword);
   }, []);
 
-  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
-  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
   const handleOpenApprovalDialog = async (row: any) => {
     try {
@@ -717,7 +718,7 @@ const DashboardEmployee = () => {
         emails: emails,
       };
       // console.log('payload', payload);
-      await createShareLinkByEmailById(payload, selectedShareLinkId as string);
+      await createShareLinkByEmailById(selectedShareLinkId as string, payload);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -1095,19 +1096,7 @@ const DashboardEmployee = () => {
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            margin: '0 auto',
-            color: 'primary',
-          }}
-          open={isGenerating}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={isGenerating} />
     </PageContainer>
   );
 };

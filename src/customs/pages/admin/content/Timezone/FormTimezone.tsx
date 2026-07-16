@@ -3,25 +3,14 @@ import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { TimeGridSelector } from 'src/customs/components/GridSelector/TimeGridSelector';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { createTimezone, updateTimezone } from 'src/customs/api/admin';
 import { showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { useTimezoneMutation } from 'src/hooks/Timezone/useTimezoneMutation';
 
 interface FormTimezoneProps {
   mode: 'create' | 'edit';
   initialData?: any;
   onSuccess?: () => void;
 }
-
-const dayMapReverse: Record<string, string> = {
-  Sun: 'sunday',
-  Mon: 'monday',
-  Tue: 'tuesday',
-  Wed: 'wednesday',
-  Thu: 'thursday',
-  Fri: 'friday',
-  Sat: 'saturday',
-};
 
 const dayOrder: { abbr: string; key: string }[] = [
   { abbr: 'Sun', key: 'sunday' },
@@ -34,11 +23,14 @@ const dayOrder: { abbr: string; key: string }[] = [
 ];
 
 const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
-  const [loading, setLoading] = useState(false);
-
   const [name, setName] = useState(initialData?.name ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [days, setDays] = useState<any[]>([]);
+
+  const {
+    createMutation,
+    updateMutation,
+  } = useTimezoneMutation();
 
   const apiToDays = (api: any): any[] => {
     if (!api) return [];
@@ -111,11 +103,10 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
   };
 
   const handleSubmit = async (newDaysFromGrid?: any) => {
-    setLoading(true);
     try {
       const payload = daysToApi(newDaysFromGrid || days);
       if (mode === 'create') {
-        await createTimezone(payload);
+        await createMutation.mutateAsync(payload);
         setName('');
         setDescription('');
         setDays([]);
@@ -126,16 +117,16 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         // edit
         const id = initialData?.id;
         if (!id) throw new Error('Missing timezone id for update');
-        await updateTimezone(id, payload);
+        await updateMutation.mutateAsync({
+          id,
+          data: payload,
+        });
 
         showSwal('success', 'Time Access successfully updated');
         onSuccess?.();
       }
     } catch (err: any) {
-      console.error(err);
-      showErrorAlert('Error', 'Gagal menyimpan timezone');
-    } finally {
-      setLoading(false);
+      showSwal('error', err?.response?.data?.message || 'Failed to create timezone');
     }
   };
 
@@ -180,8 +171,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         <Grid size={{ xs: 12, lg: 10 }}>
           <TimeGridSelector
             onSelectionChange={handleSelectionChange}
-            // initialData={days}
-            // initialData={apiToDays(initialData)}
             initialData={days}
             onSubmit={(newDays: any) => handleSubmit(newDays)}
           />
@@ -189,7 +178,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
       </Grid>
 
       <Backdrop
-        open={loading}
+        open={createMutation.isPending || updateMutation.isPending}
         sx={{
           color: '#fff',
           zIndex: 99999,

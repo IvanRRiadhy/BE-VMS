@@ -59,7 +59,7 @@ import {
   getReportVisitorTransactionById,
   getReportVisitorTransactionDt,
   updateReportVisitorTransaction,
-} from 'src/customs/api/Report';
+} from 'src/customs/api/Admin/Report';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import axiosInstance from 'src/customs/api/interceptor';
 

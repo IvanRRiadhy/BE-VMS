@@ -14,13 +14,12 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
-  CircularProgress,
   MenuItem,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { getProfile, updatePasswordUser, updateProfile } from 'src/customs/api/users';
-import type { GetProfileResponse, Item } from 'src/customs/api/models/profile';
+import { updatePasswordUser, updateProfile } from 'src/customs/api/users';
+import type { Item } from 'src/customs/api/models/profile';
 import PageContainer from 'src/customs/components/container/PageContainer';
 
 import {
@@ -31,16 +30,15 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { InputAdornment, IconButton } from '@mui/material';
+import { useProfile } from 'src/hooks/useProfile';
 
 const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
-  // const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useAuth();
-  const roleAccess = localStorage.getItem('roleAccess');
-  const isAdmin = roleAccess === 'Admin';
+  const { data: profile, refetch } = useProfile();
+  const isAdmin = profile?.group_name === 'Admin';
   const [passwordData, setPasswordData] = useState({
     old_password: '',
     new_password: '',
@@ -71,53 +69,31 @@ const DetailProfile = () => {
     department_name: '',
   });
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
 
-      const res = await getProfile();
+  useEffect(() => {
+    if (!profile) return;
 
-      const d = res?.collection;
+    setFormData({
+      id: profile.id ?? '',
+      fullname: profile.fullname ?? '',
+      username: profile.username ?? '',
+      email: profile.email ?? '',
+      group_name: profile.group_name ?? '',
+      gender: profile.gender ?? '',
+      address: profile.address ?? '',
+      phone: profile.phone ?? '',
+      password: profile.password ?? '',
+      is_vip: profile.is_vip ?? false,
+      is_email_verified: profile.is_email_verified ?? false,
+      organization_name: profile.organization_name ?? '',
+      district_name: profile.district_name ?? '',
+      department_name: profile.department_name ?? '',
+    });
+  }, [profile]);
 
-      if (!d) return;
-
-      setFormData({
-        id: d.id || '',
-        fullname: d.fullname || '',
-        username: d.username || '',
-        email: d.email || '',
-        group_name: d.group_name || '',
-        gender: d.gender || '',
-        address: d.address || '',
-        phone: d.phone || '',
-        password: d.password || '',
-        is_vip: d.is_vip ?? false,
-        is_email_verified: d.is_email_verified ?? false,
-        organization_name: d.organization_name || '',
-        district_name: d.district_name || '',
-        department_name: d.department_name || '',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  const prevToken = useRef<string | null>(null);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   if (prevToken.current === token) return;
-
-  //   prevToken.current = token;
-
-  //   fetchProfile();
-  // }, [token]);
 
   const handleUpdate = async () => {
     try {
-    
-
-      // setLoading(true);
-
       const payload = {
         group_name: formData.group_name,
         email: formData.email,
@@ -126,13 +102,9 @@ const DetailProfile = () => {
         address: formData.address,
         phone: formData.phone,
       };
-
       await updateProfile(payload);
-
-      await fetchProfile();
-
+      await refetch();
       showSwal('success', 'Successfully updated profile');
-      // setIsEditing(false);
     } catch (error) {
       showSwal('error', 'Failed to update profile');
     }
@@ -148,14 +120,12 @@ const DetailProfile = () => {
 
   const handleChangePassword = async () => {
     try {
-    
-
       if (passwordData.new_password !== passwordData.con_password) {
         showSwal('error', 'Password confirmation does not match');
         return;
       }
 
-      await updatePasswordUser( {
+      await updatePasswordUser({
         old_password: passwordData.old_password,
         new_password: passwordData.new_password,
         con_password: passwordData.con_password,
@@ -169,8 +139,7 @@ const DetailProfile = () => {
 
       showSwal('success', 'Password updated successfully');
     } catch (error: any) {
-      const collection = error?.response?.data?.collection || error?.collection; // axios normal // custom API shape kamu
-
+      const collection = error?.response?.data?.collection || error?.collection;
       const messages = Array.isArray(collection)
         ? collection.join('\n')
         : error?.message || 'Failed to update password';
@@ -336,6 +305,7 @@ const DetailProfile = () => {
                             name="organization_name"
                             value={formData.organization_name}
                             onChange={handleInputChange}
+                            disabled
                           />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -346,6 +316,7 @@ const DetailProfile = () => {
                             name="department_name"
                             value={formData.department_name}
                             onChange={handleInputChange}
+                            disabled
                           />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -356,6 +327,7 @@ const DetailProfile = () => {
                             name="district_name"
                             value={formData.district_name}
                             onChange={handleInputChange}
+                            disabled
                           />
                         </Grid>
                         {/* Tombol aksi */}
@@ -472,13 +444,6 @@ const DetailProfile = () => {
     </Container>
   );
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
   if (isAdmin) {
     return (
       <PageContainer

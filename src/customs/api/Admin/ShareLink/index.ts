@@ -1,4 +1,5 @@
-import axiosInstance from '../interceptor';
+import axiosInstance from "../../interceptor";
+
 
 export const getShareLink = async (): Promise<any> => {
   try {
@@ -40,28 +41,27 @@ export const getShareLinkByDt = async (
   return response.data;
 };
 
-export const createShareLink = async ( data: any): Promise<any> => {
+export const createShareLink = async (data: any): Promise<any> => {
   const response = await axiosInstance.post('/visitor-share-link/new', data);
   return response.data;
 };
 
 // create by email
-export const createShareLinkByEmail = async ( data: any): Promise<any> => {
+export const createShareLinkByEmail = async (data: any): Promise<any> => {
   const response = await axiosInstance.post('/visitor-share-link/new/send-email', data);
   return response.data;
 };
 
 export const createShareLinkByEmailById = async (
-
-  data: any,
   id: string,
+  data: any,
 ): Promise<any> => {
   const response = await axiosInstance.post(`/visitor-share-link/send-email/${id}`, data);
   return response.data;
 };
 
 // Delete
-export const deleteShareLink = async ( id: string): Promise<any> => {
+export const deleteShareLink = async (id: string): Promise<any> => {
   const response = await axiosInstance.delete('/visitor-share-link/' + id);
   return response.data;
 };

@@ -12,6 +12,8 @@ import {
   MenuItem,
   Typography,
   Autocomplete,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -30,6 +32,7 @@ import utc from 'dayjs/plugin/utc';
 import { useVisitorType } from 'src/hooks/useVisitorType';
 import { useSites } from 'src/hooks/useSites';
 import { useEmployees } from 'src/hooks/useEmployees';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 dayjs.extend(utc);
 
@@ -38,6 +41,7 @@ interface Props {
   onClose: () => void;
   onCreateLink: (payload: any) => void;
   onSendEmail: (payload: any) => void;
+  loading?: any;
 }
 
 type FieldKey =
@@ -50,7 +54,7 @@ type FieldKey =
   | 'site'
   | 'host';
 
-const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
+const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }: Props) => {
   const { employee } = useEmployees();
   const { visitorType } = useVisitorType();
   const { sites } = useSites();
@@ -547,6 +551,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
           Create Link And Send Email
         </Button>
       </DialogActions>
+      <GlobalBackdropLoading open={loading} />
     </Dialog>
   );
 };

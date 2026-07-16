@@ -10,6 +10,8 @@ import {
   Tooltip,
   useTheme,
   Skeleton,
+  CircularProgress,
+  InputAdornment,
 } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
@@ -17,7 +19,6 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
@@ -28,6 +29,9 @@ import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { IconClock } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useTranslation } from 'react-i18next';
+import { useTimezone } from 'src/hooks/Timezone/useTimezone';
+import { useTimezoneMutation } from 'src/hooks/Timezone/useTimezoneMutation';
+import { IconSearch } from '@tabler/icons-react';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 const dayKeyMap: Record<string, string> = {
@@ -40,40 +44,7 @@ const dayKeyMap: Record<string, string> = {
   Sat: 'saturday',
 };
 
-function mapApiToDaySchedule(apiData: any) {
-  if (!apiData) return null;
 
-  return {
-    id: apiData.id,
-    name: apiData.name,
-    description: apiData.description,
-    days: daysOfWeek.map((day) => {
-      const key = dayKeyMap[day];
-      const start = apiData[key];
-      const end = apiData[key + '_end'];
-
-      if (typeof start !== 'string' || typeof end !== 'string') {
-        return {
-          id: `day-${day}`,
-          day,
-          hours: [],
-        };
-      }
-
-      return {
-        id: `day-${day}`,
-        day,
-        hours: [
-          {
-            id: `block-${day}`,
-            startTime: start.substring(0, 5),
-            endTime: end.substring(0, 5),
-          },
-        ],
-      };
-    }),
-  };
-}
 
 const Content = () => {
   const theme = useTheme();
@@ -81,49 +52,61 @@ const Content = () => {
   const secdrawerWidth = 260;
   const [search, setSearch] = useState('');
   const debounceSearch = useDebounce(search, 500);
-  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
+
+  // const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const res = await getAllTimezone();
+  //       setTimezoneData(res.collection ?? []);
+  //     } catch (error) {
+  //       console.error(error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-        const res = await getAllTimezone();
-        setTimezoneData(res.collection ?? []);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //   fetchData();
+  // }, [refreshTrigger]);
 
-    fetchData();
-  }, [refreshTrigger]);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTimezone({
+    search: debounceSearch,
+  });
 
-  const filtered = timezoneData?.filter((v) =>
-    v.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-  );
+  // const filtered = data?.filter((v) =>
+  //   v.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+  // );
+
+  const timezoneData =
+    data?.pages.flatMap((page) => page.collection) ?? [];
 
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
+
+  const { deleteMutation } = useTimezoneMutation();
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirmDelete('Are you sure you want to delete this time access?');
     if (confirmed) {
-      setLoading(true);
+
       try {
-        await deleteTimezone(id);
-        setRefreshTrigger((prev) => prev + 1);
+        // await deleteTimezone(id);
+        await deleteMutation.mutateAsync(id);
+
         showSwal('success', 'Time Access has been deleted.');
         setSelectedTimezone(null);
       } catch (error) {
         console.error(error);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
       }
     }
   };
@@ -151,7 +134,10 @@ const Content = () => {
             display: 'flex',
             flexDirection: mdUp ? 'row' : 'column',
             bgcolor: 'background.paper',
-            height: '100%',
+            height: {
+              xs: 'auto',
+              md: 'calc(100vh - 140px)',
+            },
             width: '100%',
             overflow: 'hidden',
           }}
@@ -162,7 +148,9 @@ const Content = () => {
               borderRight: '1px solid #eee',
               p: 2,
               pt: 2,
-              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -174,8 +162,6 @@ const Content = () => {
                   size="small"
                   variant="contained"
                   onClick={() => {
-                    // setSelectedTimezone(null);
-                    // setRefreshTrigger((x) => x + 1);
                     setMode('create');
                     setSelectedTimezone(null);
                     setShowForm(true);
@@ -193,10 +179,29 @@ const Content = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               sx={{ mb: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} />
+                  </InputAdornment>
+                ),
+              }}
             />
 
-            <Box>
-              {loading ? (
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                pr: 1,
+                maxHeight: {
+                  xs: 320,
+                  sm: 400,
+                  md: 'calc(100vh - 220px)',
+                },
+              }}
+            >
+              {isLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <Box
                     key={index}
@@ -220,8 +225,8 @@ const Content = () => {
                     </Box>
                   </Box>
                 ))
-              ) : filtered && filtered.length > 0 ? (
-                filtered.map((v) => {
+              ) : timezoneData && timezoneData.length > 0 ? (
+                timezoneData.map((v) => {
                   const isActive = selectedTimezone?.id === v.id;
                   return (
                     <Box
@@ -287,6 +292,36 @@ const Content = () => {
                   </Typography>
                 </Box>
               )}
+              {hasNextPage && (
+                <Box display="flex" justifyContent="center" py={2}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    fullWidth
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+
+                      </>
+                    ) : (
+                      'Load More'
+                    )}
+                  </Button>
+                </Box>
+              )}
+              {/* {!hasNextPage && timezoneData.length > 0 && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  textAlign="center"
+                  py={2}
+                >
+                  No more data
+                </Typography>
+              )} */}
             </Box>
           </Box>
 
@@ -296,7 +331,9 @@ const Content = () => {
                 key={mode === 'edit' ? selectedTimezone?.id : 'create'}
                 mode={mode}
                 initialData={mode === 'edit' ? selectedTimezone : null}
-                onSuccess={() => setRefreshTrigger((x) => x + 1)}
+                onSuccess={() => {
+
+                }}
               />
             ) : (
               <Box display="flex" justifyContent="center" alignItems="center" height="100%">
@@ -313,3 +350,38 @@ const Content = () => {
 };
 
 export default Content;
+
+function mapApiToDaySchedule(apiData: any) {
+  if (!apiData) return null;
+
+  return {
+    id: apiData.id,
+    name: apiData.name,
+    description: apiData.description,
+    days: daysOfWeek.map((day) => {
+      const key = dayKeyMap[day];
+      const start = apiData[key];
+      const end = apiData[key + '_end'];
+
+      if (typeof start !== 'string' || typeof end !== 'string') {
+        return {
+          id: `day-${day}`,
+          day,
+          hours: [],
+        };
+      }
+
+      return {
+        id: `day-${day}`,
+        day,
+        hours: [
+          {
+            id: `block-${day}`,
+            startTime: start.substring(0, 5),
+            endTime: end.substring(0, 5),
+          },
+        ],
+      };
+    }),
+  };
+}

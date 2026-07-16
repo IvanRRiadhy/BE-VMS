@@ -19,19 +19,17 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconCategory, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import {
-  deleteVisitorProvider,
-  getVisitorProvidersByDt,
   getVisitorProvidersById,
-  updateVisitorProviders,
 } from 'src/customs/api/Admin/VisitorProviders';
 import FormVisitorProvider from './FormVisitorProvider';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTranslation } from 'react-i18next';
+import { useVisitorProviderPagination } from 'src/hooks/VisitorProvider/useVisitorProviderPagination';
+import { useVisitorProviderMutation } from 'src/hooks/VisitorProvider/useVisitorProviderMutation';
 interface VisitorProviderForm {
   name: string;
   code: string;
@@ -46,12 +44,8 @@ interface VisitorProviderForm {
   is_quick_access: boolean;
 }
 const Content = () => {
-  const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [sortDir, setSortDir] = useState('desc');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,6 +53,21 @@ const Content = () => {
   const [openUnsavedDialog, setOpenUnsavedDialog] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const { t } = useTranslation();
+
+  const { data, isLoading } = useVisitorProviderPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+  });
+
+  const {
+    deleteMutation,
+    updateMutation,
+  } = useVisitorProviderMutation();
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
   const cards = [
     {
@@ -69,36 +78,20 @@ const Content = () => {
       color: 'none',
     },
   ];
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getVisitorProvidersByDt( start, rowsPerPage, sortDir, search);
-        const rows = response.collection.map((item: any) => {
-          return {
-            id: item.id,
-            name: item.name,
-            code: item.code,
-            visitor_category: item.visitor_category,
-            max_duration: item.max_duration_minutes,
-            need_plate_number: item.need_plate_number,
-            support_vehicle: item.support_vehicle,
-            auto_approve: item.auto_approve,
-            is_quick_access: item.is_quick_access,
-            active: item.active,
-          };
-        });
-        setTableData(rows);
-        setTotalRecords(response.collection.length);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [page, rowsPerPage, refreshTrigger, search]);
+
+  const tableData =
+    data?.collection.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      code: item.code,
+      visitor_category: item.visitor_category,
+      max_duration: item.max_duration_minutes,
+      need_plate_number: item.need_plate_number,
+      support_vehicle: item.support_vehicle,
+      auto_approve: item.auto_approve,
+      is_quick_access: item.is_quick_access,
+      active: item.active,
+    })) ?? [];
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -108,7 +101,7 @@ const Content = () => {
     [setPage, setSearch],
   );
 
-  const [loadingAction, setLoadingAction] = useState(false);
+
   const defaultForm = {
     name: '',
     code: '',
@@ -124,24 +117,26 @@ const Content = () => {
   };
   const [localForm, setLocalForm] = useState<VisitorProviderForm>(defaultForm);
   const [initialForm, setInitialForm] = useState<VisitorProviderForm>(defaultForm);
+  const actionLoading =
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
-    setLoadingAction(true);
     try {
       const payload = {
         name: row.name,
         role: row.role,
         active: checked,
       };
-
-      await updateVisitorProviders( row.id, payload);
+      await updateMutation.mutateAsync({
+        id: row.id,
+        data: payload,
+      });
 
       showSwal('success', 'Visitor Provider successfully updated');
-      setRefreshTrigger((prev) => prev + 1);
+
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
-    } finally {
-      setLoadingAction(false);
     }
   };
 
@@ -154,7 +149,6 @@ const Content = () => {
 
   const handleSuccess = () => {
     setOpenDialogVisitorProvider(false);
-    setRefreshTrigger((prev) => prev + 1);
     setLocalForm(defaultForm);
     setIsDirty(false);
   };
@@ -173,15 +167,12 @@ const Content = () => {
     );
 
     if (confirmed) {
-      setLoading(true);
+
       try {
-        await deleteVisitorProvider( id);
-        setRefreshTrigger((prev) => prev + 1);
+        await deleteMutation.mutateAsync(id);
         showSwal('success', `Successfully deleted Visitor Provider.`);
       } catch (error) {
         showSwal('error', `Failed to delete Visitor Provider.`);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
       }
     }
   };
@@ -189,7 +180,7 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       setEditingId(id);
-      const res = await getVisitorProvidersById( id);
+      const res = await getVisitorProvidersById(id);
       setLocalForm(res.collection);
       setInitialForm(res.collection);
 
@@ -235,7 +226,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 overflowX={'auto'}
                 data={tableData}
                 selectedRows={selectedRows}
@@ -303,7 +294,7 @@ const Content = () => {
         onDiscard={handleDiscard}
       />
       <Portal>
-        <Backdrop open={loadingAction} style={{ zIndex: 99999 }}>
+        <Backdrop open={actionLoading} style={{ zIndex: 99999 }}>
           <CircularProgress color="primary" />
         </Backdrop>
       </Portal>

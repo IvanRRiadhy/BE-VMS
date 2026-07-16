@@ -28,7 +28,6 @@ import { Box } from '@mui/system';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { v4 as uuidv4 } from 'uuid';
 import {
   CreateSiteRequest,
@@ -46,10 +45,6 @@ import {
   getAllSite,
   createSiteDocument,
   updateSite,
-  getAllSiteDocument,
-  getAllAccessControl,
-  getSiteParking,
-  getSiteTracking,
   createSiteParking,
   createSiteTracking,
   updateSiteTracking,
@@ -58,8 +53,6 @@ import {
   getSitesTracking,
   createSiteTrackingBulk,
   createSiteParkingBulk,
-  getAllDocument,
-  getSitesAccessById,
   deleteSiteDocument,
   getSiteDocumentBySiteId,
   deleteSiteTracking,
@@ -70,7 +63,6 @@ import {
   Item as SiteDocumentItem,
 } from 'src/customs/api/models/Admin/SiteDocument';
 import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
-import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessControl';
 import { BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import RenderDragSite from './components/RenderDragSite';

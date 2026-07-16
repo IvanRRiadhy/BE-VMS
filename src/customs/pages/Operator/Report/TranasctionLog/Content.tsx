@@ -65,7 +65,7 @@ import {
   getReportVisitorTransactionById,
   getReportVisitorTransactionDt,
   updateReportVisitorTransaction,
-} from 'src/customs/api/Report';
+} from 'src/customs/api/Admin/Report';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import axiosInstance from 'src/customs/api/interceptor';
 
@@ -177,7 +177,7 @@ const Content = () => {
     try {
       const start = reset ? 0 : reports.length;
 
-      const res = await getReportVisitorTransactionDt( {
+      const res = await getReportVisitorTransactionDt({
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
@@ -252,8 +252,8 @@ const Content = () => {
       }
 
       const res = rep
-        ? await generateReportVisitorById( rep)
-        : await generateReport( formData);
+        ? await generateReportVisitorById(rep)
+        : await generateReport(formData);
       console.log('res', res);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
@@ -316,7 +316,7 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-   
+
         responseType: 'blob',
       });
 
@@ -446,7 +446,7 @@ const Content = () => {
   const [openSaveDialog, setOpenSaveDialog] = useState(false);
 
   const handleEditReport = async (rep: any) => {
-    const res = await getReportVisitorTransactionById( rep.id);
+    const res = await getReportVisitorTransactionById(rep.id);
     const d = res.collection;
 
     setFormData({
@@ -508,7 +508,7 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await updateReportVisitorTransaction( selectedReport.id, formData);
+      await updateReportVisitorTransaction(selectedReport.id, formData);
       // await refreshReportList();
       await fetchReports(true);
       setEditingId(null);
@@ -534,7 +534,7 @@ const Content = () => {
     if (isConfirmed) {
       setLoading(true);
       try {
-        await deleteReportVisitorTransaction( id);
+        await deleteReportVisitorTransaction(id);
         await fetchReports(true);
 
         showSwal('success', 'Report deleted successfully!');

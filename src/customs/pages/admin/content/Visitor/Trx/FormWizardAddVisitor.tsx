@@ -111,6 +111,7 @@ import { IconPlus } from '@tabler/icons-react';
 import { IconRefresh } from '@tabler/icons-react';
 import CameraDialog from './components/Dialog/CameraDialog';
 import { useTranslation } from 'react-i18next';
+import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -178,7 +179,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(enableInvitationTypeStep ? -1 : 0);
   const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
@@ -830,20 +831,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           sectionIndex !== currentStep
             ? section
             : updateSectionForm(section, (arr) =>
-                arr.map((item) => {
-                  if (resetKeys.includes(item.remarks)) {
-                    const fieldKey = item.custom_field_id || item.id;
-                    const errorKey = `${currentStep}:${fieldKey}`;
+              arr.map((item) => {
+                if (resetKeys.includes(item.remarks)) {
+                  const fieldKey = item.custom_field_id || item.id;
+                  const errorKey = `${currentStep}:${fieldKey}`;
 
-                    return {
-                      ...item,
-                      answer_text: '',
-                    };
-                  }
+                  return {
+                    ...item,
+                    answer_text: '',
+                  };
+                }
 
-                  return item;
-                }),
-              ),
+                return item;
+              }),
+            ),
         ),
       );
 
@@ -871,22 +872,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         sectionIndex !== currentStep
           ? section
           : updateSectionForm(section, (arr) =>
-              arr.map((item) => {
-                if (mapping[item.remarks] !== undefined) {
-                  const fieldKey = item.custom_field_id || item.id;
-                  const errorKey = `${currentStep}:${fieldKey}`;
+            arr.map((item) => {
+              if (mapping[item.remarks] !== undefined) {
+                const fieldKey = item.custom_field_id || item.id;
+                const errorKey = `${currentStep}:${fieldKey}`;
 
-                  clearFieldError(errorKey);
+                clearFieldError(errorKey);
 
-                  return {
-                    ...item,
-                    answer_text: mapping[item.remarks]!,
-                  };
-                }
+                return {
+                  ...item,
+                  answer_text: mapping[item.remarks]!,
+                };
+              }
 
-                return item;
-              }),
-            ),
+              return item;
+            }),
+          ),
       ),
     );
   };
@@ -1265,10 +1266,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   sIdx !== activeStep - 1
                                     ? s
                                     : updateSectionForm(s, (arr) =>
-                                        arr.map((item, i) =>
-                                          i === index ? { ...item, [field]: value } : item,
-                                        ),
+                                      arr.map((item, i) =>
+                                        i === index ? { ...item, [field]: value } : item,
                                       ),
+                                    ),
                                 ),
                               );
                             })}
@@ -1288,10 +1289,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
+                                arr.map((item, i) =>
+                                  i === index ? { ...item, [field]: value } : item,
                                 ),
+                              ),
                           ),
                         );
                       })}
@@ -1308,10 +1309,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
+                                arr.map((item, i) =>
+                                  i === index ? { ...item, [field]: value } : item,
                                 ),
+                              ),
                           ),
                         );
                       })}
@@ -1328,10 +1329,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
+                                arr.map((item, i) =>
+                                  i === index ? { ...item, [field]: value } : item,
                                 ),
+                              ),
                           ),
                         );
                       })}
@@ -1348,10 +1349,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
+                                arr.map((item, i) =>
+                                  i === index ? { ...item, [field]: value } : item,
                                 ),
+                              ),
                           ),
                         );
                       })}
@@ -1368,10 +1369,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
+                                arr.map((item, i) =>
+                                  i === index ? { ...item, [field]: value } : item,
                                 ),
+                              ),
                           ),
                         );
                       })}
@@ -1484,7 +1485,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                     const s = activeStep - 1;
                                                     if (
                                                       !next[gIdx]?.question_page?.[s]?.form?.[
-                                                        originalIndex || fIdx
+                                                      originalIndex || fIdx
                                                       ]
                                                     )
                                                       return prev;
@@ -1492,7 +1493,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                       originalIndex || fIdx
                                                     ] = {
                                                       ...next[gIdx].question_page[s].form[
-                                                        originalIndex || fIdx
+                                                      originalIndex || fIdx
                                                       ],
                                                       [fieldKey]: value,
                                                     };
@@ -1503,9 +1504,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 {
                                                   showLabel: true,
                                                   // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
-                                                    field.custom_field_id
-                                                  }`,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id
+                                                    }`,
                                                 },
                                               )}
                                             </Box>
@@ -1585,7 +1585,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <TableCell sx={{ minWidth: 250 }}>
                                         <VisitorSelect
                                           key={String(isEmployee)}
-                                    
+
                                           isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
@@ -1638,9 +1638,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 },
                                                 {
                                                   showLabel: false,
-                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
-                                                    field.custom_field_id
-                                                  }`,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id
+                                                    }`,
                                                   details: page.form || [],
                                                 },
                                               )}
@@ -1842,8 +1841,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => {})
-            .catch((err) => {}),
+            .then(() => { })
+            .catch((err) => { }),
         ),
       );
 
@@ -2727,15 +2726,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path);
+        const path = await uploadFileToCDN(file);
+        if (path) onChange(idx, 'answer_file', path);
 
-      e.target.value = '';
-    };
+        e.target.value = '';
+      };
 
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
@@ -2914,10 +2913,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const setter = isSelfOnly
       ? (callback: any) =>
-          setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-            ...prevMap,
-            [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-          }))
+        setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+          ...prevMap,
+          [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+        }))
       : setSelectedSiteIds;
 
     setter((prev: string[]) => {
@@ -3129,11 +3128,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           return shared
             ? {
-                ...f,
-                answer_text: shared.answer_text,
-                answer_datetime: shared.answer_datetime,
-                answer_file: shared.answer_file,
-              }
+              ...f,
+              answer_text: shared.answer_text,
+              answer_datetime: shared.answer_datetime,
+              answer_file: shared.answer_file,
+            }
             : f;
         });
 
@@ -3678,15 +3677,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
                           .length > 0 && (
-                          <SimpleTreeView>
-                            {(isSelfOnly
-                              ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
-                              : siteTree
-                            ).map((node) =>
-                              renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
-                            )}
-                          </SimpleTreeView>
-                        )}
+                            <SimpleTreeView>
+                              {(isSelfOnly
+                                ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                                : siteTree
+                              ).map((node) =>
+                                renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
+                              )}
+                            </SimpleTreeView>
+                          )}
                       </>
                     );
                   }
@@ -3873,38 +3872,38 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               sIdx !== activeStep - 1
                                 ? s
                                 : updateSectionForm(s, (arr) =>
-                                    arr.map((item) => {
-                                      switch (item.remarks) {
-                                        case 'name':
-                                          return { ...item, answer_text: selected.name || '' };
+                                  arr.map((item) => {
+                                    switch (item.remarks) {
+                                      case 'name':
+                                        return { ...item, answer_text: selected.name || '' };
 
-                                        case 'email':
-                                          return { ...item, answer_text: selected?.email ?? '' };
+                                      case 'email':
+                                        return { ...item, answer_text: selected?.email ?? '' };
 
-                                        case 'phone':
-                                          return { ...item, answer_text: selected?.phone || '' };
+                                      case 'phone':
+                                        return { ...item, answer_text: selected?.phone || '' };
 
-                                        case 'organization':
-                                          return {
-                                            ...item,
-                                            answer_text:
-                                              selected.Organization?.name ||
-                                              selected.organization ||
-                                              '',
-                                          };
+                                      case 'organization':
+                                        return {
+                                          ...item,
+                                          answer_text:
+                                            selected.Organization?.name ||
+                                            selected.organization ||
+                                            '',
+                                        };
 
-                                        case 'identity_id':
-                                        case 'indentity_id':
-                                          return {
-                                            ...item,
-                                            answer_text: selected?.identity_id || '',
-                                          };
+                                      case 'identity_id':
+                                      case 'indentity_id':
+                                        return {
+                                          ...item,
+                                          answer_text: selected?.identity_id || '',
+                                        };
 
-                                        default:
-                                          return item;
-                                      }
-                                    }),
-                                  ),
+                                      default:
+                                        return item;
+                                    }
+                                  }),
+                                ),
                             ),
                           );
                         }}
@@ -4119,7 +4118,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     remark === 'visitor_period_start' &&
                     filteredDetails[originalIndex + 1] &&
                     (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
-                      'visitor_period_end'
+                    'visitor_period_end'
                   ) {
                     const startItem = item;
                     const endItem = filteredDetails[originalIndex + 1];
@@ -4614,7 +4613,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           pointerEvents: 'auto',
                           opacity: 1,
                         }}
-                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                      // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                       >
                         <Box
                           sx={{
@@ -5278,6 +5277,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return obj;
   };
 
+  const {
+    createVisitorMutation,
+    createPraRegisterMutation,
+    createVisitorsGroupMutation,
+    createPraRegisterGroupMutation,
+  } = useVisitorMutation();
+  const loading =
+    createVisitorMutation.isPending ||
+    createPraRegisterMutation.isPending ||
+    createVisitorsGroupMutation.isPending ||
+    createPraRegisterGroupMutation.isPending;
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -5285,7 +5296,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return;
     }
     try {
-      setLoading(true);
+
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
       const mapField = (field: FormVisitor, sortIdx: number) => {
@@ -5426,8 +5437,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-        await submitFn( parsed as any);
+        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
+        // await submitFn( parsed as any);
+        if (TYPE_REGISTERED === 0) {
+          await createPraRegisterGroupMutation.mutateAsync(parsed);
+        } else {
+          await createVisitorsGroupMutation.mutateAsync(parsed);
+        }
         showSwal('success', 'Group visitor created successfully.');
         resetMediaState();
         clearAnswerFiles();
@@ -5455,12 +5471,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
 
         // console.log('Payload :', JSON.stringify(payload, null, 2));
-
         const parsed = CreateVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        await submitFn(parsed);
+        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
+        // await submitFn(parsed);
+        if (TYPE_REGISTERED === 0) {
+          await createPraRegisterMutation.mutateAsync(parsed);
+        } else {
+          await createVisitorMutation.mutateAsync(parsed);
+        }
 
         const successMessage =
           TYPE_REGISTERED === 0
@@ -5471,20 +5491,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
       }
-      setLoading(false);
+
       setActiveStep(0);
       onSuccess?.();
     } catch (err: any) {
       setTimeout(() => {
-        setLoading(false);
         setNextDialogOpen(false);
       }, 700);
 
       showSwal(
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
-          err.response?.data?.message ||
-          'Failed to create visitor.',
+        err.response?.data?.message ||
+        'Failed to create visitor.',
       );
 
       if (err?.name === 'ZodError') {
@@ -5494,8 +5513,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       } else if (err?.errors) {
         setErrors(err.errors);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -5537,18 +5554,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const cloneForms = (forms?: any[]) =>
     Array.isArray(forms)
       ? forms.map((f, idx) => ({
-          ...f,
-          sort: f.sort ?? idx,
-          foreign_id: asStr(f.foreign_id),
-          answer_text: '',
-          answer_datetime: '',
-          answer_file: '',
-          multiple_option_fields: Array.isArray(f.multiple_option_fields)
-            ? f.multiple_option_fields.map((opt: any) =>
-                typeof opt === 'object' ? { ...opt } : opt,
-              )
-            : [],
-        }))
+        ...f,
+        sort: f.sort ?? idx,
+        foreign_id: asStr(f.foreign_id),
+        answer_text: '',
+        answer_datetime: '',
+        answer_file: '',
+        multiple_option_fields: Array.isArray(f.multiple_option_fields)
+          ? f.multiple_option_fields.map((opt: any) =>
+            typeof opt === 'object' ? { ...opt } : opt,
+          )
+          : [],
+      }))
       : [];
 
   const DOC_REMARKS = new Set(['selfie_image', 'identity_image', 'nda']);
@@ -5676,112 +5693,112 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const vi = viSrc
       ? {
-          ...viSrc,
-          name: 'Visitor Information (Group)',
-          can_multiple_used: true,
-          is_document: false,
+        ...viSrc,
+        name: 'Visitor Information (Group)',
+        can_multiple_used: true,
+        is_document: false,
 
-          [FORM_KEY]: (() => {
-            const base = cloneForms(formsOf(viSrc));
-            const extra = cloneForms(otherSingles);
-            const startExtra = base.length;
-            const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
+        [FORM_KEY]: (() => {
+          const base = cloneForms(formsOf(viSrc));
+          const extra = cloneForms(otherSingles);
+          const startExtra = base.length;
+          const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
 
-            const startDocs = startExtra + extraWithSort.length;
-            const docsWithSort = docForms.map((f, i) => ({ ...f, sort: f.sort ?? startDocs + i }));
+          const startDocs = startExtra + extraWithSort.length;
+          const docsWithSort = docForms.map((f, i) => ({ ...f, sort: f.sort ?? startDocs + i }));
 
-            return [...base, ...extraWithSort, ...docsWithSort];
-          })(),
-        }
+          return [...base, ...extraWithSort, ...docsWithSort];
+        })(),
+      }
       : {
-          Id: 'visitor_info_group',
-          sort: 0,
-          name: 'Visitor Information (Group)',
-          is_document: false,
-          can_multiple_used: true,
-          [FORM_KEY]: cloneForms([
-            {
-              short_name: 'Full Name',
-              long_display_text: 'Full Name',
-              field_type: 0,
-              remarks: 'name',
-            },
-            { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
-            {
-              short_name: 'Organization',
-              long_display_text: 'Organization',
-              field_type: 0,
-              remarks: 'organization',
-            },
-            {
-              short_name: 'Selfie Image',
-              long_display_text: 'Selfie Image',
-              field_type: 10,
-              remarks: 'selfie_image',
-            },
-            {
-              short_name: 'Upload Identity',
-              long_display_text: 'Upload Identity',
-              field_type: 12,
-              remarks: 'identity_image',
-            },
-            {
-              short_name: 'Sign NDA',
-              long_display_text: 'Sign NDA',
-              field_type: 11,
-              remarks: 'nda',
-            },
-          ]),
-        };
+        Id: 'visitor_info_group',
+        sort: 0,
+        name: 'Visitor Information (Group)',
+        is_document: false,
+        can_multiple_used: true,
+        [FORM_KEY]: cloneForms([
+          {
+            short_name: 'Full Name',
+            long_display_text: 'Full Name',
+            field_type: 0,
+            remarks: 'name',
+          },
+          { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
+          {
+            short_name: 'Organization',
+            long_display_text: 'Organization',
+            field_type: 0,
+            remarks: 'organization',
+          },
+          {
+            short_name: 'Selfie Image',
+            long_display_text: 'Selfie Image',
+            field_type: 10,
+            remarks: 'selfie_image',
+          },
+          {
+            short_name: 'Upload Identity',
+            long_display_text: 'Upload Identity',
+            field_type: 12,
+            remarks: 'identity_image',
+          },
+          {
+            short_name: 'Sign NDA',
+            long_display_text: 'Sign NDA',
+            field_type: 11,
+            remarks: 'nda',
+          },
+        ]),
+      };
 
     // Purpose Visit
     const pv = pvSrc
       ? {
-          ...pvSrc,
-          name: 'Purpose Visit',
-          can_multiple_used: false,
-          is_document: false,
-          [FORM_KEY]: cloneForms(formsOf(pvSrc)),
-        }
+        ...pvSrc,
+        name: 'Purpose Visit',
+        can_multiple_used: false,
+        is_document: false,
+        [FORM_KEY]: cloneForms(formsOf(pvSrc)),
+      }
       : {
-          Id: 'purpose_visit',
-          sort: 1,
-          name: 'Purpose Visit',
-          is_document: false,
-          can_multiple_used: true,
-          [FORM_KEY]: cloneForms([
-            {
-              short_name: 'Host PIC Visit',
-              long_display_text: 'Host PIC Visit',
-              field_type: 3,
-              remarks: 'host',
-            },
-            {
-              short_name: 'Agenda',
-              long_display_text: 'Agenda',
-              field_type: 0,
-              remarks: 'agenda',
-            },
-            {
-              short_name: 'Site Place',
-              long_display_text: 'Site Place',
-              field_type: 0,
-              remarks: 'site_place',
-            },
-            {
-              short_name: 'Visit Start',
-              long_display_text: 'Visit Start',
-              field_type: 9,
-              remarks: 'visitor_period_start',
-            },
-            {
-              short_name: 'Visit End',
-              long_display_text: 'Visit End',
-              field_type: 9,
-              remarks: 'visitor_period_end',
-            },
-          ]),
-        };
+        Id: 'purpose_visit',
+        sort: 1,
+        name: 'Purpose Visit',
+        is_document: false,
+        can_multiple_used: true,
+        [FORM_KEY]: cloneForms([
+          {
+            short_name: 'Host PIC Visit',
+            long_display_text: 'Host PIC Visit',
+            field_type: 3,
+            remarks: 'host',
+          },
+          {
+            short_name: 'Agenda',
+            long_display_text: 'Agenda',
+            field_type: 0,
+            remarks: 'agenda',
+          },
+          {
+            short_name: 'Site Place',
+            long_display_text: 'Site Place',
+            field_type: 0,
+            remarks: 'site_place',
+          },
+          {
+            short_name: 'Visit Start',
+            long_display_text: 'Visit Start',
+            field_type: 9,
+            remarks: 'visitor_period_start',
+          },
+          {
+            short_name: 'Visit End',
+            long_display_text: 'Visit End',
+            field_type: 9,
+            remarks: 'visitor_period_end',
+          },
+        ]),
+      };
     return [pv, vi];
   };
 
@@ -5941,7 +5958,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
           {!isMobile ? (
-            <DragDropContext onDragEnd={() => {}}>
+            <DragDropContext onDragEnd={() => { }}>
               <Droppable
                 droppableId="stepper"
                 direction="horizontal"

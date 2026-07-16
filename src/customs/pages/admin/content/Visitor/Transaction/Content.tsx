@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef, use, useMemo } from 'react';
 import {
   Box,
   Grid2 as Grid,
@@ -56,6 +56,9 @@ import {
 } from 'src/customs/pages/Employee/Invitation/components/VisitorExport';
 import TransactionVisitorDetail from './components/TransactionVisitorDetail';
 import TransactionVisitorList from './components/TransactionVisitorList';
+import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTransactionVisitorDetail';
+import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
+import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -68,21 +71,20 @@ type Group = {
 };
 
 const Content = () => {
-  const { roleAccess } = useSession();
-  const isOperatorAdmin = roleAccess === 'OperatorAdmin';
+  const { data: profile } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-
   const [edittingId, setEdittingId] = useState('');
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
+  // const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = CreateVisitorRequestSchema.parse({});
@@ -93,40 +95,7 @@ const Content = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const cards = [
-    {
-      title: t('totalVisitor'),
-      icon: IconUsers,
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Scan QR ' + t('navigation.visitor'),
-      icon: IconQrcode,
-      subTitle: iconScanQR,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    ...(!isOperatorAdmin
-      ? [
-          {
-            title: t('add') + ' Invitation',
-            icon: IconUser,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('add') + ' Pre Registration',
-            icon: IconClipboard,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-        ]
-      : []),
-  ];
+
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -161,9 +130,9 @@ const Content = () => {
   const [openGroup, setOpenGroup] = useState(true);
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
-  const [groupHeader, setGroupHeader] = useState<any | null>(null);
-  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+  // const [groupDetailLoading, setGroupDetailLoading] = useState(false);
+  // const [groupHeader, setGroupHeader] = useState<any | null>(null);
+  // const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
@@ -209,90 +178,183 @@ const Content = () => {
     end_date: '',
   });
 
-  const fetchData = async (append = false) => {
-    if (isFetchingRef.current) return;
+  // const fetchData = async (append = false) => {
+  //   if (isFetchingRef.current) return;
 
-    isFetchingRef.current = true;
+  //   isFetchingRef.current = true;
 
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
+  //   if (append) {
+  //     setLoadingMore(true);
+  //   } else {
+  //     setLoading(true);
+  //   }
 
-    try {
-      const start = append ? tableRowVisitors.length : 0;
+  //   try {
+  //     const start = append ? tableRowVisitors.length : 0;
 
-      const isEmergencyParam =
-        appliedFilters.emergency_situation === ''
-          ? undefined
-          : appliedFilters.emergency_situation === 'true';
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
 
-      const isBlockParam =
-        appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
-      const res = await getVisitorTransactionPagination(
-        start,
-        rowsPerPage,
-        sortDir,
-        debouncedSearchAgenda || undefined,
-        appliedFilters.start_date || undefined,
-        appliedFilters.end_date || undefined,
-        appliedFilters.visitor_status || undefined,
-        appliedFilters.data_filter,
-        appliedFilters.transaction_status || undefined,
-        appliedFilters.site_id || undefined,
-        appliedFilters.visitor_role || undefined,
-        isEmergencyParam,
-        isBlockParam,
-        appliedFilters.host_id || undefined,
-      );
+  //     const res = await getVisitorTransactionPagination(
+  //       start,
+  //       rowsPerPage,
+  //       sortDir,
+  //       debouncedSearchAgenda || undefined,
+  //       appliedFilters.start_date || undefined,
+  //       appliedFilters.end_date || undefined,
+  //       appliedFilters.visitor_status || undefined,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.transaction_status || undefined,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
 
-      const newRows = res.collection.map((item: any) => ({
-        id: item.id,
-        agenda: item.agenda || '-',
-        visitor_type_id: item.visitor_type_id,
-        visitor_type: item.visitor_type_name || '-',
-        site_id: item.site_id,
-        host_name: item.host_name || '-',
-        visitor_period_start: formatDateTime(item.visitor_period_start),
-        visitor_period_end: formatDateTime(item.visitor_period_end),
-        invited_by: item.invited_by || '-',
-      }));
+  //     const newRows = res.collection.map((item: any) => ({
+  //       id: item.id,
+  //       agenda: item.agenda || '-',
+  //       visitor_type_id: item.visitor_type_id,
+  //       visitor_type: item.visitor_type_name || '-',
+  //       site_id: item.site_id,
+  //       host_name: item.host_name || '-',
+  //       visitor_period_start: formatDateTime(item.visitor_period_start),
+  //       visitor_period_end: formatDateTime(item.visitor_period_end),
+  //       invited_by: item.invited_by || '-',
+  //     }));
 
-      if (append) {
-        setTableRowVisitors((prev) => [...prev, ...newRows]);
-      } else {
-        setTableRowVisitors(newRows);
-      }
+  //     if (append) {
+  //       setTableRowVisitors((prev) => [...prev, ...newRows]);
+  //     } else {
+  //       setTableRowVisitors(newRows);
+  //     }
 
-      setHasMore(start + newRows.length < res.RecordsFiltered);
+  //     setHasMore(start + newRows.length < res.RecordsFiltered);
 
-      setTotalRecords(res.RecordsTotal);
-      setTotalFilteredRecords(res.RecordsFiltered);
-    } catch {
-      // setTableRowVisitors([]);
-      // setTotalRecords(0);
-      // setTotalFilteredRecords(0);
-      setHasMore(false);
-    } finally {
-      isFetchingRef.current = false;
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+  //     setTotalRecords(res.RecordsTotal);
+  //     setTotalFilteredRecords(res.RecordsFiltered);
+  //   } catch {
+  //     setHasMore(false);
+  //   } finally {
+  //     isFetchingRef.current = false;
+  //     setLoading(false);
+  //     setLoadingMore(false);
+  //   }
+  // };
 
   const isFetchingRef = useRef(false);
 
-  useEffect(() => {
-    setSelectedGroupId(null);
-    setGroupVisitors([]);
+  // useEffect(() => {
+  //   setSelectedGroupId(null);
+  //   setGroupVisitors([]);
 
-    fetchData(false);
-  }, [page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
+  //   fetchData(false);
+  // }, [page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   const { data: siteData } = useRegisteredSite();
-  const { data: profile } = useProfile();
+
+  // const {
+  //   data: tableTransaction,
+  //   isLoading,
+  // } = useTransactionVisitorPagination({
+  //   page,
+  //   rowsPerPage,
+  //   sortDir,
+  //   search: debouncedSearchAgenda,
+  //   filters: appliedFilters,
+  // });
+
+  const {
+    data: tableTransaction,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTransactionVisitorPagination({
+    rowsPerPage,
+    sortDir,
+    search: debouncedSearchAgenda,
+    filters: appliedFilters,
+  });
+
+  // const tableRowVisitors =
+  //   tableTransaction?.collection.map((item: any) => ({
+  //     id: item.id,
+  //     agenda: item.agenda || '-',
+  //     visitor_type_id: item.visitor_type_id,
+  //     visitor_type: item.visitor_type_name || '-',
+  //     site_id: item.site_id,
+  //     host_name: item.host_name || '-',
+  //     visitor_period_start: formatDateTime(item.visitor_period_start),
+  //     visitor_period_end: formatDateTime(item.visitor_period_end),
+  //     invited_by: item.invited_by || '-',
+  //   })) ?? [];
+
+  const tableRowVisitors = useMemo(() => {
+    return (
+      tableTransaction?.pages.flatMap((page) =>
+        page.collection.map((item: any) => ({
+          id: item.id,
+          agenda: item.agenda || '-',
+          visitor_type_id: item.visitor_type_id,
+          visitor_type: item.visitor_type_name || '-',
+          site_id: item.site_id,
+          host_name: item.host_name || '-',
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
+          invited_by: item.invited_by || '-',
+        })),
+      ) ?? []
+    );
+  }, [tableTransaction]);
+
+  const totalFilteredRecords =
+    tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
+
+  const totalRecords =
+    tableTransaction?.pages[0]?.RecordsTotal ?? 0;
+
+  const cards = [
+    {
+      title: t('totalVisitor'),
+      icon: IconUsers,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Scan QR ' + t('navigation.visitor'),
+      icon: IconQrcode,
+      subTitle: iconScanQR,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    ...(!isOperatorAdmin
+      ? [
+        {
+          title: t('add') + ' Invitation',
+          icon: IconUser,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        {
+          title: t('add') + ' Pre Registration',
+          icon: IconClipboard,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+      ]
+      : []),
+  ];
+
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -347,6 +409,7 @@ const Content = () => {
       ...prev,
       registered_site: '',
     }));
+    setGroupVisitors([]);
     // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
   };
@@ -395,24 +458,26 @@ const Content = () => {
     }
   };
 
+  const {
+    data: detailData,
+    isLoading: groupDetailLoading,
+  } = useTransactionVisitorDetail(selectedGroupId ?? null);
+
   useEffect(() => {
-    if (!selectedGroupId) return;
+    if (detailData?.collection) {
+      setGroupVisitors(detailData.collection);
+    } else {
+      setGroupVisitors([]);
+    }
+  }, [detailData]);
 
-    const fetchDetail = async () => {
-      setGroupDetailLoading(true);
-      try {
-        const res = await getVisitorTransactionByIds(selectedGroupId);
-        setGroupHeader(res.collection[0]);
-        setGroupVisitors(res.collection);
-      } catch (e) {
-        // setGroupVisitors([]);
-      } finally {
-        setGroupDetailLoading(false);
-      }
-    };
+  const groupHeader =
+    detailData?.collection?.[0] ?? null;
 
-    fetchDetail();
-  }, [selectedGroupId]);
+  // const groupVisitors =
+  //   detailData?.collection ?? [];
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+
 
   const handleResetFilter = () => {
     const empty = {
@@ -452,7 +517,6 @@ const Content = () => {
   };
 
   const [hostSearch, setHostSearch] = useState('');
-
   const debouncedSearch = useDebounce(hostSearch, 800);
 
   const { visitorType } = useVisitorType();
@@ -480,20 +544,27 @@ const Content = () => {
       setOpenPreRegistration(true);
     }
   };
+  const { cancelMutation } =
+    useTransactionVisitorMutation();
 
   const handleCancel = async (id: string) => {
     try {
-      await cancelVisitor(id);
+      await cancelMutation.mutateAsync(id);
 
-      showSwal('success', 'Transaction successfully cancelled');
-
-      fetchData();
+      showSwal(
+        'success',
+        'Transaction successfully cancelled',
+      );
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || 'Failed to cancel visitor');
+      showSwal(
+        'error',
+        error?.response?.data?.message ??
+        'Failed to cancel visitor',
+      );
     }
   };
 
-  const filteredVisitors = tableRowVisitors.filter((item) => {
+  const filteredVisitors = tableRowVisitors.filter((item: any) => {
     const keyword = searchAgenda.trim().toLowerCase();
 
     return (
@@ -540,6 +611,10 @@ const Content = () => {
     }
   };
 
+  const fetchData = () => {
+
+  }
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -584,8 +659,8 @@ const Content = () => {
               mdUp={mdUp}
               secdrawerWidth={secdrawerWidth}
               loading={loading}
-              loadingMore={loadingMore}
-              hasMore={hasMore}
+              // loadingMore={loadingMore}
+              // hasMore={hasMore}
               profile={profile}
               searchAgenda={searchAgenda}
               setSearchAgenda={setSearchAgenda}
@@ -596,7 +671,9 @@ const Content = () => {
               setSelectedGroupId={setSelectedGroupId}
               handleDuplicate={handleDuplicate}
               handleCancel={handleCancel}
-              fetchData={fetchData}
+              loadingMore={isFetchingNextPage}
+              hasMore={hasNextPage ?? false}
+              fetchNextPage={fetchNextPage}
             />
             {/* Right */}
             <TransactionVisitorDetail

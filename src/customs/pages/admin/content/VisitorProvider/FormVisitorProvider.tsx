@@ -9,11 +9,12 @@ import {
   Typography,
   InputLabel,
   Paper,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useRef, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
@@ -24,6 +25,8 @@ import {
 import { MenuItem } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { useVisitorProviderMutation } from 'src/hooks/VisitorProvider/useVisitorProviderMutation';
+import { update } from 'lodash';
 
 interface Props {
   form: any;
@@ -40,6 +43,12 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const [removing, setRemoving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const {
+    createMutation,
+    updateMutation,
+    uploadLogoMutation,
+  } = useVisitorProviderMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,13 +103,19 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      tasks.push(uploadLogoVisitorProvider(id, fileFromInput));
+      tasks.push(await uploadLogoMutation.mutateAsync({
+        id,
+        file: fileFromInput,
+      }));
     }
 
     if (image && isDataUrl(image)) {
       const blob = await fetch(image).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      tasks.push(uploadLogoVisitorProvider(id, file));
+      tasks.push(await uploadLogoMutation.mutateAsync({
+        id,
+        file,
+      }));
     }
 
     if (tasks.length === 0) return;
@@ -141,14 +156,19 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
         auto_approve: form.auto_approve,
         is_quick_access: form.is_quick_access,
       };
-      console.log('Payload:', payload);
+
 
       let id = editingId;
 
       if (editingId) {
-        await updateVisitorProviders(editingId, payload);
+        // await updateVisitorProviders(editingId, payload);
+        await updateMutation.mutateAsync({
+          id: editingId,
+          data: payload,
+        });
       } else {
-        const response = await createVisitorProvider(payload);
+        // const response = await createVisitorProvider(payload);
+        const response = await createMutation.mutateAsync(payload);
         id = response?.data?.id ?? response?.id ?? response?.visitor_provider_id;
       }
 
@@ -474,7 +494,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
                 hidden
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                //   disabled={isBatchEdit}
+              //   disabled={isBatchEdit}
               />
 
               {previewUrl && (
@@ -527,14 +547,16 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
               color="primary"
               variant="contained"
               type="submit"
-
-              // startIcon={loading ? <CircularProgress size={18} /> : undefined}
+              disabled={createMutation.isPending || updateMutation.isPending}
             >
               Submit
             </Button>
           </Box>
         </Grid>
       </Grid>
+      <Backdrop open={updateMutation.isPending || createMutation.isPending}>
+        <CircularProgress />
+      </Backdrop>
     </form>
   );
 };

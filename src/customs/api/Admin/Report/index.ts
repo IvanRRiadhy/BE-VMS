@@ -1,5 +1,6 @@
 import axios from 'axios';
-import axiosInstance from '../interceptor';
+import axiosInstance from '../../interceptor';
+
 
 export const getReportVisitorTransaction = async (): Promise<any> => {
   try {

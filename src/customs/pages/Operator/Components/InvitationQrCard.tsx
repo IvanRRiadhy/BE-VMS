@@ -1,17 +1,16 @@
 import { Box, Card, CardContent, CardHeader, Divider, Typography, useTheme } from '@mui/material';
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface InvitationQrCardProps {
   invitationCode: any;
-  isFullscreen?: boolean;
   statusLabel?: string;
   activeVisitor?: any;
 }
 
 const InvitationQrCard = ({
   invitationCode,
-  isFullscreen = false,
   statusLabel = 'Match',
   activeVisitor,
 }: InvitationQrCardProps) => {
@@ -90,13 +89,13 @@ const InvitationQrCard = ({
               Check In Time
             </Typography>
             <Typography variant="body1" fontWeight={500}>
-              {data?.checkin_at || '-'}
+              {formatDateTime(data?.checkin_at) || '-'}
             </Typography>
             <Typography variant="h6" fontWeight={'semibold'}>
               Check Out Time
             </Typography>
             <Typography variant="body1" fontWeight={500}>
-              {data?.checkout_at || '-'}
+              {formatDateTime(data?.checkout_at) || '-'}
             </Typography>
           </Box>
         </Box>

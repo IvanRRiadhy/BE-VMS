@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Backdrop, Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -6,53 +6,47 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconBrandMedium } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import { getVisitorRoleByDt, updateVisitorRole } from 'src/customs/api/Admin/VisitorRole';
 
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useVisitorRolePagination } from 'src/hooks/VisitorRole/useVisitorRolePagination';
+import { useVisitorRoleMutation } from 'src/hooks/VisitorRole/useVisitorRoleMutation';
 const Content = () => {
-  const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [sortDir, setSortDir] = useState('desc');
+  const sortDir = 'desc';
   const { t } = useTranslation();
-  const [loadingAction, setLoadingAction] = useState(false);
-  const cards = [
-    {
-      title: t('totalVisitorRole'),
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconBrandMedium,
-      color: 'none',
-    },
-  ];
-  useEffect(() => {
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getVisitorRoleByDt(start, rowsPerPage, sortDir, search);
-        setTableData(response.collection);
-        setTotalRecords(response.collection.length);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [ page, rowsPerPage, refreshTrigger, search]);
+  const { data: visitorRole, isLoading } = useVisitorRolePagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+  });
+
+  const { updateMutation } = useVisitorRoleMutation();
+
+  const tableData = visitorRole?.collection ?? [];
+  const totalRecords = visitorRole?.RecordsTotal ?? 0;
+
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalVisitorRole'),
+        subTitle: String(totalRecords),
+        subTitleSetting: 10,
+        icon: IconBrandMedium,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
+
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -63,22 +57,21 @@ const Content = () => {
   );
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
-    setLoadingAction(true);
-    try {
-      const payload = {
-        name: row.name,
-        role: row.role,
-        active: checked,
-      };
 
-      await updateVisitorRole( row.id, payload);
+    try {
+
+      await updateMutation.mutateAsync({
+        id: row.id,
+        data: {
+          name: row.name,
+          role: row.role,
+          active: checked,
+        },
+      });
 
       showSwal('success', 'Visitor Role successfully updated');
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
-    } finally {
-      setLoadingAction(false);
     }
   };
 
@@ -95,7 +88,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 overflowX={'auto'}
                 data={tableData}
                 selectedRows={selectedRows}
@@ -125,7 +118,7 @@ const Content = () => {
         </Box>
       </Container>
       <Portal>
-        <Backdrop open={loadingAction} style={{ zIndex: 99999 }}>
+        <Backdrop open={updateMutation.isPending} style={{ zIndex: 99999 }}>
           <CircularProgress color="primary" />
         </Backdrop>
       </Portal>

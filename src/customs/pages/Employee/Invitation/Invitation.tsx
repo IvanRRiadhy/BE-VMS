@@ -52,7 +52,7 @@ import {
   deleteShareLink,
   getShareLinkByDt,
   getShareLinkById,
-} from 'src/customs/api/ShareLink';
+} from 'src/customs/api/Admin/ShareLink';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
@@ -165,7 +165,7 @@ const Content = () => {
       const res = await getEmployeeById(selectedEmployeeId!);
       return res.collection ?? [];
     },
-    enabled: !!selectedEmployeeId ,
+    enabled: !!selectedEmployeeId,
     staleTime: 1 * 60 * 1000,
     retry: 1,
   });
@@ -276,7 +276,7 @@ const Content = () => {
   useEffect(() => {
 
     fetchData(false);
-  }, [ page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
+  }, [page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda, refreshTrigger]);
 
   useEffect(() => {
     if (!selectedGroupId) return;
@@ -284,7 +284,7 @@ const Content = () => {
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
       try {
-        const res = await getVisitorTransactionByIds( selectedGroupId);
+        const res = await getVisitorTransactionByIds(selectedGroupId);
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -442,13 +442,13 @@ const Content = () => {
   };
 
   const handleView = async (id: string) => {
-    if (!id ) return;
+    if (!id) return;
 
     setOpenRelatedInvitation(true);
 
     try {
       // const res = await getInvitationRelatedVisitor(id, token);
-      const res = await getVisitorTransactionByIds( id);
+      const res = await getVisitorTransactionByIds(id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -488,7 +488,7 @@ const Content = () => {
   const debounceSearch = useDebounce(searchHost, 400);
 
   useEffect(() => {
-   
+
 
     const fetchSecondaryData = async () => {
       const [employeeResult, siteResult] = await Promise.allSettled([
@@ -515,7 +515,7 @@ const Content = () => {
   }, []);
 
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
-    useInvitationVisitorEmployee( {
+    useInvitationVisitorEmployee({
       search: debounceSearch,
       start: 0,
       length: 10,
@@ -541,7 +541,7 @@ const Content = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink( id);
+      await deleteShareLink(id);
       showSwal('success', 'Link deleted successfully.');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -596,7 +596,7 @@ const Content = () => {
         emails: emails,
       };
 
-      await createShareLinkByEmailById( payload, selectedShareLinkId as string);
+      await createShareLinkByEmailById(selectedShareLinkId as string, payload);
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
@@ -627,7 +627,7 @@ const Content = () => {
         emails: emails,
       };
 
-      await createShareLink( finalPayload);
+      await createShareLink(finalPayload);
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
@@ -645,7 +645,7 @@ const Content = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink( payload);
+      await createShareLink(payload);
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
@@ -659,7 +659,7 @@ const Content = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess( payload);
+      await createQuickAccess(payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -696,7 +696,7 @@ const Content = () => {
 
   const handleCancel = async (id: string) => {
     try {
-      await cancelVisitor( id);
+      await cancelVisitor(id);
 
       showSwal('success', 'Transaction successfully cancelled');
 
@@ -783,48 +783,48 @@ const Content = () => {
                   <Box>
                     {loading
                       ? Array.from({ length: 10 }).map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              backgroundColor: '#f5f5f5',
-                              borderRadius: '8px',
-                              padding: '10px',
-                              mb: 1,
-                            }}
-                          >
-                            <Skeleton variant="text" width="60%" height={24} />
-                            <Skeleton variant="text" width="40%" height={20} />
-                          </Box>
-                        ))
+                        <Box
+                          key={i}
+                          sx={{
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            mb: 1,
+                          }}
+                        >
+                          <Skeleton variant="text" width="60%" height={24} />
+                          <Skeleton variant="text" width="40%" height={20} />
+                        </Box>
+                      ))
                       : filteredVisitors.map((group: any) => (
-                          <Box
-                            key={group.id}
-                            sx={{
-                              backgroundColor:
-                                selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
-                              borderRadius: '8px',
-                              padding: '10px',
-                              cursor: 'pointer',
-                              mb: 1,
-                              '&:hover': {
-                                backgroundColor: '#eee',
-                              },
-                            }}
-                            onClick={() => {
-                              setSelectedGroup(group);
-                              setSelectedGroupId(group.id);
-                            }}
-                          >
-                            <Typography variant="body1" fontWeight="bold">
-                              {group.agenda}
-                            </Typography>
-                            <Box display={'flex'} justifyContent={'space-between'}>
-                              <Typography>{group.visitor_type}</Typography>
-                              <Typography>{group.host_name}</Typography>
-                            </Box>
-                            <Typography>Start : {group.visitor_period_start}</Typography>
-                            <Typography>End : {group.visitor_period_end}</Typography>
-                            {/* <Box display={'flex'} justifyContent={'flex-end'}>
+                        <Box
+                          key={group.id}
+                          sx={{
+                            backgroundColor:
+                              selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            cursor: 'pointer',
+                            mb: 1,
+                            '&:hover': {
+                              backgroundColor: '#eee',
+                            },
+                          }}
+                          onClick={() => {
+                            setSelectedGroup(group);
+                            setSelectedGroupId(group.id);
+                          }}
+                        >
+                          <Typography variant="body1" fontWeight="bold">
+                            {group.agenda}
+                          </Typography>
+                          <Box display={'flex'} justifyContent={'space-between'}>
+                            <Typography>{group.visitor_type}</Typography>
+                            <Typography>{group.host_name}</Typography>
+                          </Box>
+                          <Typography>Start : {group.visitor_period_start}</Typography>
+                          <Typography>End : {group.visitor_period_end}</Typography>
+                          {/* <Box display={'flex'} justifyContent={'flex-end'}>
                               {group.invited_by === profile?.user_id && (
                                 <Button
                                   variant="contained"
@@ -835,8 +835,8 @@ const Content = () => {
                                 </Button>
                               )}
                             </Box> */}
-                          </Box>
-                        ))}
+                        </Box>
+                      ))}
                     {hasMore && (
                       <Box display="flex" justifyContent="center" mt={2}>
                         <Button

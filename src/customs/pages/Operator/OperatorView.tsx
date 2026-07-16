@@ -25,7 +25,6 @@ import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   createGiveAccessOperator,
@@ -1086,6 +1085,7 @@ const OperatorView = () => {
       is_block: v.is_block ?? false,
       invited_by_name: v.invited_by_name ?? '-',
       visitor_role: v.visitor_role ?? '-',
+      checkout_at: v.checkout_at ?? "-"
     }));
 
     setInvitationCode((prev) =>
@@ -3031,7 +3031,6 @@ const OperatorView = () => {
 
         const res = await createGiveAccessOperator(payload);
         // console.log('Access Action Response:', JSON.stringify(res, null, 2));
-
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
 
@@ -3076,7 +3075,7 @@ const OperatorView = () => {
 
     return relatedVisitors?.[0] ?? null;
   }, [selectedVisitorId, relatedVisitors]);
-
+  
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 
@@ -3255,7 +3254,7 @@ const OperatorView = () => {
     };
 
     socket.onerror = (err) => {
-      console.error('❌ WS error:', err);
+      // console.error('❌ WS error:', err);
     };
 
     socket.onclose = () => {

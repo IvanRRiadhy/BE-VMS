@@ -393,7 +393,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         id: uniqueId(),
         title: 'navigation.timeaccess',
         icon: IconCalendarCheck,
-        href: '/admin/manage/timeaccess',
+        href: '/admin/manage/time-access',
       },
       {
         id: uniqueId(),

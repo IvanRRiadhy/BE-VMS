@@ -15,6 +15,7 @@ import {
 import { IconLink, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type Props = {
   open: boolean;
@@ -26,6 +27,7 @@ type Props = {
   expiredAt?: string | null;
   // shareLinkList?: any;
   shareLinkData?: any;
+  loading?: any;
 };
 
 const InvitationShareDialog: React.FC<Props> = ({
@@ -37,11 +39,10 @@ const InvitationShareDialog: React.FC<Props> = ({
   handleSendInvitation,
   expiredAt,
   shareLinkData,
+  loading,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [emails, setEmails] = useState<any>();
-  const [emailInput, setEmailInput] = useState('');
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ position: 'relative' }}>
@@ -119,24 +120,6 @@ ${generatedLink}
           <Box>
             <Typography sx={{ mb: 1 }}>Enter email address to send invitation:</Typography>
 
-            {/* <Autocomplete
-              // multiple
-              freeSolo
-              options={[]}
-              value={emails}
-              inputValue={emailInput}
-              onInputChange={(_, value) => setEmailInput(value)}
-              onChange={(_, value) => setEmails(value)}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip {...getTagProps({ index })} label={option} key={index} />
-                ))
-              }
-              renderInput={(params) => (
-                <CustomTextField {...params} placeholder="Input your email" />
-              )}
-            /> */}
-
             <CustomTextField
               fullWidth
               value={emails}
@@ -162,6 +145,7 @@ ${generatedLink}
           </Box>
         )}
       </DialogContent>
+      <GlobalBackdropLoading open={loading} />
     </Dialog>
   );
 };

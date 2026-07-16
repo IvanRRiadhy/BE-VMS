@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router';
 import { useAuth } from './AuthProvider';
 import { useSession } from './SessionContext';
 import { CircularProgress } from '@mui/material';
+import { useProfile } from 'src/hooks/useProfile';
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
@@ -9,9 +10,13 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
-  const { roleAccess } = useSession();
 
-  if (loading)
+  const {
+    data: profile,
+    isLoading: profileLoading,
+  } = useProfile();
+
+  if (loading || profileLoading)
     return (
       <div
         style={{
@@ -31,7 +36,7 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   if (!isAuthenticated) return <Navigate to="/auth/login" replace />;
 
   if (allowedRoles && allowedRoles.length > 0) {
-    const normalizedRole = roleAccess?.toUpperCase();
+    const normalizedRole = profile?.group_name.toUpperCase();
     const allowedNormalized = allowedRoles.map((r) => r.toUpperCase());
 
     const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;

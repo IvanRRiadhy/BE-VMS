@@ -188,7 +188,6 @@ export const QuickAccessDialog = ({
   const handleDetailQuickAccess = async (id: string) => {
     try {
       const res = await getVisitorById( id);
-      console.log('res', res.collection);
       setVisitorDetail(res?.collection ?? res ?? null);
       setOpenQrQuickAccess(true);
     } catch (error) {

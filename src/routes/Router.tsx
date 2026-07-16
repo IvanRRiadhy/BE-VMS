@@ -28,7 +28,7 @@ const LimitedInvitation = Loadable(
 const SuccessPage = Loadable(
   lazy(() => import('src/customs/pages/Guest/SelfPraregistration/components/SuccessPage')),
 );
-const View = Loadable(lazy(() => import('src/customs/pages/Operator/View')));
+
 /* ***Layouts**** */
 const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/layout/GuestLayout')));
 const EmployeeLayout = Loadable(
@@ -160,7 +160,7 @@ const ManageTimezone = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Timezone/Context')),
 );
 const ManageSettingVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/SettingVisitorOperator/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Settings/Content')),
 );
 const ManageDelivery = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Delivery/Staff/Content')),
@@ -288,22 +288,6 @@ const Monitoring = Loadable(lazy(() => import('src/customs/pages/Monitoring/Cont
 const Router = [
   {
     element: <AuthRedirector />,
-    // path: '/',
-    // children: [
-    //   {
-    //     index: true,
-    //     element: <AuthRedirector />,
-    //   },
-    //   {
-    //     element: <BlankLayout />,
-    //     children: [
-    //       { path: '/auth/login', element: <Login /> },
-    //       { path: '/unauthorized', element: <UnauthorizedPage /> },
-    //       { path: '/portal/information', element: <GuestInformation /> },
-    //       { path: '/portal/waiting', element: <WaitingPage /> },
-    //       { path: '*', element: <NotFoundPage /> },
-    //     ],
-    //   },
     children: [
       {
         path: '/',
@@ -529,7 +513,6 @@ const Router = [
               { index: true, element: <DashboardOperator /> },
               { path: 'dashboard', element: <DashboardOperator /> },
               { path: 'view', element: <OperatorView /> },
-              { path: 'vms-view', element: <View /> },
               { path: 'visitor', element: <ManageVisitorOperator /> },
               { path: 'transaction-log', element: <TransactionOperatorLog /> },
               { path: 'approval-workflow', element: <ApprovalOperator /> },

@@ -55,10 +55,10 @@ export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => 
   }
 };
 
-export const revokeToken = async (): Promise<RevokeTokenResponse> => {
+export const revokeToken = async (token?: string | null): Promise<RevokeTokenResponse> => {
   try {
     const response = await axiosInstance.get<RevokeTokenResponse>(`/_Auth/RevokeToken`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, },
     });
     return response.data;
   } catch (error) {
@@ -80,10 +80,10 @@ export const getProfile = async (): Promise<GetProfileResponse> => {
   }
 };
 
-export const updatePasswordUser = async ( data: any): Promise<any> => {
+export const updatePasswordUser = async (data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put('/profile/password', data, {
-      headers: {Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {

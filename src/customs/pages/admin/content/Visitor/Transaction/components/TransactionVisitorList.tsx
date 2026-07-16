@@ -31,7 +31,7 @@ interface TransactionVisitorListProps {
 
   handleDuplicate: (group: any) => void;
   handleCancel: (id: string) => void;
-  fetchData: (isLoadMore?: boolean) => void;
+  fetchNextPage?: any;
 }
 
 const TransactionVisitorList = ({
@@ -50,7 +50,7 @@ const TransactionVisitorList = ({
   setSelectedGroupId,
   handleDuplicate,
   handleCancel,
-  fetchData,
+  fetchNextPage
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -170,7 +170,7 @@ const TransactionVisitorList = ({
                   variant="outlined"
                   fullWidth
                   disabled={loadingMore}
-                  onClick={() => fetchData(true)}
+                  onClick={() => fetchNextPage()}
                 >
                   {loadingMore ? <CircularProgress size={18} /> : 'Load More'}
                 </Button>

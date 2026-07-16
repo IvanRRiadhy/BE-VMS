@@ -20,7 +20,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
-  CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
@@ -42,12 +41,6 @@ import { useNavigate } from 'react-router';
 import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
 import QrScannerDialog from './components/Dialog/QrScannerDialog';
 import Swal from 'sweetalert2';
-import {
-  createShareLink,
-  createShareLinkByEmailById,
-  deleteShareLink,
-  getShareLinkById,
-} from 'src/customs/api/ShareLink';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
@@ -67,6 +60,12 @@ import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
 import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import { useVisitorPagination } from 'src/hooks/Visitor/useVisitorPagination';
+import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
+import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
+import { useProfile } from 'src/hooks/useProfile';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -80,13 +79,13 @@ const Content = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
-
   const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
-
-  const { roleAccess } = useSession();
-
-  const isOperatorAdmin = roleAccess === 'OperatorAdmin';
-
+  // const { roleAccess } = useSession();
+  const {
+    data: profile,
+    isLoading: profileLoading,
+  } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -131,22 +130,19 @@ const Content = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const [openSendEmail, setOpenSendEmail] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite();
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const { t } = useTranslation();
   const { visitorType } = useVisitorType();
   const { sites } = useSites();
-  // const { employee } = useEmployees(token as string);
-
   const [hostSearch, setHostSearch] = useState('');
-
   const debouncedSearch = useDebounce(hostSearch, 400);
-
-  // const { allVisitorEmployee } = useVisitorEmployees(token as string);
   const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =
     useInvitationVisitorEmployee({
       search: debouncedSearch,
@@ -216,52 +212,20 @@ const Content = () => {
     end_date: '',
   });
 
+
   const {
     data: allVisitorData,
-    isLoading: isLoading,
-    isFetching: isFetching,
-  } = useQuery({
-    queryKey: ['visitors', search, appliedFilters],
-    queryFn: async () => {
-      const statusParam =
-        appliedFilters.status && appliedFilters.status !== 'All'
-          ? appliedFilters.status
-          : undefined;
-
-      const isEmergencyParam =
-        appliedFilters.emergency_situation === ''
-          ? undefined
-          : appliedFilters.emergency_situation === 'true';
-
-      const isBlockParam =
-        appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-      const res = await getAllVisitorPagination(
-        0,
-        -1,
-        search || undefined,
-        appliedFilters.start_date
-          ? dayjs(appliedFilters.start_date).utc().toISOString()
-          : undefined,
-        appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-        statusParam,
-        appliedFilters.data_filter,
-        appliedFilters.site_id || undefined,
-        appliedFilters.visitor_role || undefined,
-        isEmergencyParam,
-        isBlockParam,
-        appliedFilters.host_id || undefined,
-      );
-
-      return res.collection;
-    },
-    staleTime: 1000 * 60 * 2,
+    isLoading,
+  } = useVisitorPagination({
+    page,
+    rowsPerPage,
+    search,
+    filters: appliedFilters,
   });
 
   const processedData = useMemo(() => {
     if (!allVisitorData) return [];
-
-    return allVisitorData
+    return (allVisitorData?.collection ?? [])
       .map((item: any) => {
         const isExpired =
           item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
@@ -296,29 +260,12 @@ const Content = () => {
     [processedData],
   );
 
-  const paginatedData = useMemo(() => {
-    return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-  }, [processedData, page, rowsPerPage]);
-
-  const [quickSearch, setQuickSearch] = useState('');
-  const [quickPage, setQuickPage] = useState(0);
-  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
-
-  const { data: quickAccessResult } = useQuery({
-    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
-    queryFn: async () => {
-      const res = await getAllVisitorPagination(
-        quickPage * quickRowsPerPage,
-        quickRowsPerPage,
-        quickSearch || undefined,
-        undefined,
-        undefined,
-        'QuickAccess',
-      );
-
-      return res;
-    },
-    enabled:  openQuickAccess,
+  const {
+    data: quickAccessResult,
+  } = useQuickAccessPagination({
+    page: quickPage,
+    rowsPerPage: quickRowsPerPage,
+    search: quickSearch,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -356,14 +303,17 @@ const Content = () => {
   }, [quickAccessResult]);
 
   const visitorTableData = {
-    data: paginatedData,
+    data: visitorDataAll,
     dataQuickAccess: processedQuickAccessData ?? [],
-    RecordsFiltered: processedData.length,
-    RecordsTotal: processedData.length,
+    RecordsFiltered: allVisitorData?.RecordsFiltered ?? 0,
+    RecordsTotal: allVisitorData?.RecordsTotal ?? 0,
   };
 
-  const totalFilteredRecords = visitorTableData?.RecordsFiltered ?? 0;
-  const { t } = useTranslation();
+  const totalRecords =
+    allVisitorData?.RecordsTotal ?? 0;
+  const totalFilteredRecords =
+    allVisitorData?.RecordsFiltered ?? 0;
+
 
   const cards = [
     {
@@ -382,35 +332,35 @@ const Content = () => {
     },
     ...(!isOperatorAdmin
       ? [
-          {
-            title: t('add') + ' Invitation',
-            icon: IconUser,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('add') + ' Pre Registration',
-            icon: IconClipboard,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('shareLink'),
-            icon: IconShare,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('quickAccess'),
-            icon: IconBolt,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-        ]
+        {
+          title: t('add') + ' Invitation',
+          icon: IconUser,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        {
+          title: t('add') + ' Pre Registration',
+          icon: IconClipboard,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        {
+          title: t('shareLink'),
+          icon: IconShare,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        {
+          title: t('quickAccess'),
+          icon: IconBolt,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+      ]
       : []),
   ];
 
@@ -532,6 +482,17 @@ const Content = () => {
     setPage(0);
   };
 
+  const {
+    createMutation,
+    deleteMutation,
+    sendEmailMutation,
+  } = useShareLinkMutation();
+
+  const isGenerating =
+    createMutation.isPending ||
+    sendEmailMutation.isPending ||
+    deleteMutation.isPending;
+
   const handleDeleteLink = async (id: string) => {
     try {
       const confirm = await Swal.fire({
@@ -550,8 +511,7 @@ const Content = () => {
 
       if (!confirm.isConfirmed) return;
 
-      await deleteShareLink(id);
-      setRefreshKey((prev) => prev + 1);
+      await deleteMutation.mutateAsync(id);
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
       showSwal('error', 'Failed to delete link.');
@@ -563,7 +523,6 @@ const Content = () => {
     setSelectedShareLink(res.collection);
     setSelectedShareLinkId(row.id);
     setGeneratedLink(row.shorten_url || row.url);
-    // setGeneratedLink(row.url);
     setExpiredAt(row.expired_at);
     setOpenInviteViaLinkEmail(true);
   };
@@ -614,52 +573,42 @@ const Content = () => {
     }
 
     try {
-      const payload = {
-        emails: emails,
-      };
-      await createShareLinkByEmailById(payload, selectedShareLinkId as string);
+      await sendEmailMutation.mutateAsync({
+        id: selectedShareLinkId,
+        payload: {
+          emails: validEmails,
+        },
+      });
       showSwal('success', 'Invitation sent successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
-      showSwal('error', error?.response.data.message || 'Failed to send invitation');
+      showSwal('error', error?.response.data.msg || 'Failed to send invitation');
     }
   };
 
   const handleCreateLink = async (payload: any) => {
     try {
-      setIsGenerating(true);
-
-      await createShareLink(payload);
+      await createMutation.mutateAsync(payload);
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to create share link');
-    } finally {
-      setIsGenerating(false);
     }
   };
 
   const handleSendEmail = async (emails: string[]) => {
     try {
-      setIsGenerating(true);
-
       const finalPayload = {
         ...pendingPayload,
         emails: emails,
       };
-
-      await createShareLink(finalPayload);
-
+      // await createShareLink(finalPayload);
+      await createMutation.mutateAsync(finalPayload);
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-
       showSwal('success', 'Share link sent successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to send share link');
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -692,7 +641,7 @@ const Content = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess( payload);
+      await createQuickAccess(payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -706,6 +655,7 @@ const Content = () => {
       throw error;
     }
   };
+
 
   return (
     <PageContainer
@@ -972,6 +922,7 @@ const Content = () => {
         handleCopyLink={handleCopyLink}
         handleSendInvitation={handleSendInvitation}
         shareLinkData={selectedShareLink}
+        loading={isGenerating}
       />
 
       <CreateLinkDialog
@@ -982,6 +933,13 @@ const Content = () => {
           setPendingPayload(payload);
           setOpenSendEmail(true);
         }}
+        loading={isGenerating}
+      />
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={handleSendEmail}
+        loading={isGenerating}
       />
 
       <DetailLinkDialog
@@ -990,11 +948,6 @@ const Content = () => {
         dataVisitor={[]}
       />
 
-      <SendEmailDialog
-        open={openSendEmail}
-        onClose={() => setOpenSendEmail(false)}
-        onSend={handleSendEmail}
-      />
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={handleCancelDiscard}
@@ -1018,6 +971,7 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
+      <GlobalBackdropLoading open={isGenerating} />
     </PageContainer>
   );
 };

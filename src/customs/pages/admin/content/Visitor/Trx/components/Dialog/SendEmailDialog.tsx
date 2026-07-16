@@ -12,20 +12,21 @@ import {
 } from '@mui/material';
 import { IconSend, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSend: (emails: string[]) => void;
+  loading?: any;
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const SendEmailDialog = ({ open, onClose, onSend }: Props) => {
+const SendEmailDialog = ({ open, onClose, onSend, loading }: Props) => {
   const [emails, setEmails] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
     let finalEmails = [...emails];
@@ -47,17 +48,14 @@ const SendEmailDialog = ({ open, onClose, onSend }: Props) => {
     }
 
     try {
-      setLoading(true);
-      setError(null);
 
+      setError(null);
       await onSend(finalEmails);
 
       setEmails([]);
       setInputValue('');
     } catch (err) {
       setError('Failed to send email. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -119,6 +117,7 @@ const SendEmailDialog = ({ open, onClose, onSend }: Props) => {
           Send
         </Button>
       </DialogActions>
+      <GlobalBackdropLoading open={loading} />
     </Dialog>
   );
 };

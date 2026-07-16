@@ -65,7 +65,7 @@ import {
   getReportVisitorTransactionById,
   getReportVisitorTransactionDt,
   updateReportVisitorTransaction,
-} from 'src/customs/api/Report';
+} from 'src/customs/api/Admin/Report';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import axiosInstance from 'src/customs/api/interceptor';
 
@@ -170,14 +170,14 @@ const Content = () => {
   }, [searchKeyword]);
 
   const fetchReports = async (reset = false) => {
-    if ( loadingReports) return;
+    if (loadingReports) return;
 
     setLoadingReports(true);
 
     try {
       const start = reset ? 0 : reports.length;
 
-      const res = await getReportVisitorTransactionDt( {
+      const res = await getReportVisitorTransactionDt({
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
@@ -207,7 +207,7 @@ const Content = () => {
 
   const refreshReportList = async () => {
     const start = page * rowsPerPage;
-    const res = await getReportVisitorTransactionDt( {
+    const res = await getReportVisitorTransactionDt({
       start,
       length: rowsPerPage,
       sort_dir: sortDir,
@@ -234,7 +234,7 @@ const Content = () => {
 
   const handlePostReport = async (rep?: any) => {
     try {
- 
+
 
       if (!rep) {
         setSelectedReport(null);
@@ -254,8 +254,8 @@ const Content = () => {
       }
 
       const res = rep
-        ? await generateReportVisitorById( rep)
-        : await generateReport( formData);
+        ? await generateReportVisitorById(rep)
+        : await generateReport(formData);
       console.log('res', res);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
@@ -302,7 +302,7 @@ const Content = () => {
 
   const exportToExcel = async () => {
     try {
-  
+
 
       // Validasi CustomDate
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
@@ -319,7 +319,7 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-    
+
         responseType: 'blob',
       });
 
@@ -418,7 +418,7 @@ const Content = () => {
   const handleConfirmSaveReport = async () => {
     setLoading(true);
     try {
-      await createReportVisitorTransaction( formData);
+      await createReportVisitorTransaction(formData);
       await refreshReportList();
       await new Promise((res) => setTimeout(res, 600));
 
@@ -454,9 +454,9 @@ const Content = () => {
   };
 
   const handleEditReport = async (rep: any) => {
-  
 
-    const res = await getReportVisitorTransactionById( rep.id);
+
+    const res = await getReportVisitorTransactionById(rep.id);
     const d = res.collection;
 
     setFormData({
@@ -481,12 +481,12 @@ const Content = () => {
   const [loadingView, setLoadingView] = useState(false);
 
   const handleViewReport = async (rep: any) => {
- 
+
 
     setLoadingView(true);
 
     try {
-      const res = await getReportVisitorTransactionById( rep.id);
+      const res = await getReportVisitorTransactionById(rep.id);
       const d = res.collection;
 
       setFormData({
@@ -517,7 +517,7 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await updateReportVisitorTransaction( selectedReport.id, formData);
+      await updateReportVisitorTransaction(selectedReport.id, formData);
       // await refreshReportList();
       await fetchReports(true);
       setEditingId(null);
@@ -541,7 +541,7 @@ const Content = () => {
     if (isConfirmed) {
       setLoading(true);
       try {
-        await deleteReportVisitorTransaction( id);
+        await deleteReportVisitorTransaction(id);
         await fetchReports(true);
 
         showSwal('success', 'Report deleted successfully!');

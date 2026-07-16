@@ -123,9 +123,10 @@ const HostInformation = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   gap: 2,
+                  mb: 1
                 }}
               >
-                <Typography variant="h6" fontWeight="bold" mb={1}>
+                <Typography variant="h6" fontWeight="bold" mb={0}>
                   {data?.host_name || '-'}
                 </Typography>
                 {data && (
@@ -134,7 +135,7 @@ const HostInformation = ({
                       backgroundColor: 'success.main',
                       color: '#fff',
                       borderRadius: '20px',
-                      padding: '8px',
+                      padding: '5px',
                     }}
                   >
                     Available

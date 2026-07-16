@@ -8,8 +8,6 @@ export const useProfile = () => {
       const response = await getProfile();
       return response;
     },
-
     select: (response) => response.collection,
-    staleTime: 5 * 60 * 1000,
   });
 };
