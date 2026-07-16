@@ -90,19 +90,19 @@ import ActionPanelCard from 'src/customs/pages/Operator/Components/ActionPanelCa
 import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
 import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
 import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
-import { usePermission } from 'src/hooks/usePermission';
+import { usePermission } from 'src/hooks/UserGroup/usePermission';
 import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
 import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
 import VisitorListCard from 'src/customs/pages/Operator/Dialog/VisitorListCard';
-import usePrintBadgeConfig from 'src/hooks/usePrintBadge';
-import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
-import useDataPermission from 'src/hooks/useDataPermission';
-import usePermissionOperator from 'src/hooks/usePermissionOperator';
-import useAvailableCardOperator from 'src/hooks/useAvailableCardOperator';
-import useInvitationSite from 'src/hooks/useInvitationSite';
-import useRegisteredSiteOperator from 'src/hooks/useRegisteredSiteOperator';
-import useInvitationHost from 'src/hooks/useInvitationHost';
-import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import usePrintBadgeConfig from 'src/hooks/PrintBadge/usePrintBadge';
+import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
+import useDataPermission from 'src/hooks/Operator/useDataPermission';
+import usePermissionOperator from 'src/hooks/Operator/usePermissionOperator';
+import useAvailableCardOperator from 'src/hooks/Operator/useAvailableCardOperator';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
+import useRegisteredSiteOperator from 'src/hooks/Operator/useRegisteredSiteOperator';
+import useInvitationHost from 'src/hooks/Invitation/useInvitationHost';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import VisitorInformation from './Components/VisitorInformation';
 import HostInformation from './Components/HostInformation';
 import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
@@ -608,9 +608,9 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...v,
+              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : v,
         ),
       );
@@ -619,9 +619,9 @@ const OperatorView = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-                ...item,
-                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...item,
+              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : item,
         ),
       );
@@ -735,7 +735,7 @@ const OperatorView = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch {}
+    } catch { }
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
@@ -1498,10 +1498,10 @@ const OperatorView = () => {
         prev.map((v) =>
           v.id === selectedVisitorId
             ? {
-                ...v,
-                visitor_status: action,
-                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-              }
+              ...v,
+              visitor_status: action,
+              is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
+            }
             : v,
         ),
       );
@@ -1830,10 +1830,10 @@ const OperatorView = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-          relatedVisitors.find(
-            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-          ),
-        ].filter(Boolean);
+        relatedVisitors.find(
+          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+        ),
+      ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -1942,9 +1942,9 @@ const OperatorView = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-              ...f,
-              sort: f.sort ?? i,
-            }))
+            ...f,
+            sort: f.sort ?? i,
+          }))
           : [];
 
         return {
@@ -2174,11 +2174,11 @@ const OperatorView = () => {
             case 'site_place':
               options = sitePlaceName
                 ? [
-                    {
-                      value: field.answer_text || sitePlaceId,
-                      name: sitePlaceName,
-                    },
-                  ]
+                  {
+                    value: field.answer_text || sitePlaceId,
+                    name: sitePlaceName,
+                  },
+                ]
                 : [];
               break;
 
@@ -2838,10 +2838,10 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                is_praregister_done: true,
-                visitor_status: 'Preregis',
-              }
+              ...v,
+              is_praregister_done: true,
+              visitor_status: 'Preregis',
+            }
             : v,
         ),
       );
@@ -3075,7 +3075,7 @@ const OperatorView = () => {
 
     return relatedVisitors?.[0] ?? null;
   }, [selectedVisitorId, relatedVisitors]);
-  
+
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 
@@ -3648,7 +3648,7 @@ const OperatorView = () => {
           handleOpenSwipeDialog={handleOpenSwipeDialog}
           handleConfirmChooseCards={handleConfirmChooseCards}
           setAccessIssuance={setAccessIssuance}
-          // setSelectedCurrentCards={setSelectedCurrentCards}
+        // setSelectedCurrentCards={setSelectedCurrentCards}
         />
 
         {/* Dialog Swipe Card */}

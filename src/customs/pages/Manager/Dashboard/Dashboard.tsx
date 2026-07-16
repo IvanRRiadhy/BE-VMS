@@ -37,7 +37,7 @@ import { QuickAccessDialog } from '../../Employee/Components/Dialog/QuickAccessD
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { getAllVisitorPagination } from 'src/customs/api/admin';
 import dayjs from 'dayjs';
-import { useActivities } from 'src/hooks/useActivity';
+import { useActivities } from 'src/hooks/Dashboard/useActivity';
 import PieCharts from './PieCharts';
 
 const DashboardEmployee = () => {
@@ -134,8 +134,8 @@ const DashboardEmployee = () => {
       setTimeout(() => setLoading(true), 800);
 
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket( id);
-      if (action === 'Reject') await rejectTicket( id);
+      if (action === 'Approve') await approveTicket(id);
+      if (action === 'Reject') await rejectTicket(id);
       setTimeout(() => {
         showSwal(
           'success',
@@ -211,7 +211,7 @@ const DashboardEmployee = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess( payload);
+      await createQuickAccess(payload);
 
       showSwal('success', 'Quick access created successfully');
 

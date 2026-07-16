@@ -22,7 +22,6 @@ import {
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
   Item,
@@ -40,15 +39,14 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
 import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog';
-import { useVisitorType } from 'src/hooks/useVisitorType';
-import { useSites } from 'src/hooks/useSites';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import InvitationVisitorDialog from '../Trx/components/InvitationVisitorDialog';
 import PreRegistrationDialog from '../Trx/components/PreRegistrationDialog';
-import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
-import { cancelVisitor, getProfile } from 'src/customs/api/users';
-import { useProfile } from 'src/hooks/useProfile';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTranslation } from 'react-i18next';
 import {
   exportVisitorExcel,
@@ -80,22 +78,15 @@ const Content = () => {
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const [edittingId, setEdittingId] = useState('');
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [totalRecords, setTotalRecords] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   // const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = CreateVisitorRequestSchema.parse({});
-
   const [formDataAddVisitor, setFormDataAddVisitor] =
     useState<CreateVisitorRequest>(defaultFormData);
   const { t } = useTranslation();
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -130,9 +121,6 @@ const Content = () => {
   const [openGroup, setOpenGroup] = useState(true);
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  // const [groupDetailLoading, setGroupDetailLoading] = useState(false);
-  // const [groupHeader, setGroupHeader] = useState<any | null>(null);
-  // const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
@@ -178,97 +166,8 @@ const Content = () => {
     end_date: '',
   });
 
-  // const fetchData = async (append = false) => {
-  //   if (isFetchingRef.current) return;
-
-  //   isFetchingRef.current = true;
-
-  //   if (append) {
-  //     setLoadingMore(true);
-  //   } else {
-  //     setLoading(true);
-  //   }
-
-  //   try {
-  //     const start = append ? tableRowVisitors.length : 0;
-
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-  //     const res = await getVisitorTransactionPagination(
-  //       start,
-  //       rowsPerPage,
-  //       sortDir,
-  //       debouncedSearchAgenda || undefined,
-  //       appliedFilters.start_date || undefined,
-  //       appliedFilters.end_date || undefined,
-  //       appliedFilters.visitor_status || undefined,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.transaction_status || undefined,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-
-  //     const newRows = res.collection.map((item: any) => ({
-  //       id: item.id,
-  //       agenda: item.agenda || '-',
-  //       visitor_type_id: item.visitor_type_id,
-  //       visitor_type: item.visitor_type_name || '-',
-  //       site_id: item.site_id,
-  //       host_name: item.host_name || '-',
-  //       visitor_period_start: formatDateTime(item.visitor_period_start),
-  //       visitor_period_end: formatDateTime(item.visitor_period_end),
-  //       invited_by: item.invited_by || '-',
-  //     }));
-
-  //     if (append) {
-  //       setTableRowVisitors((prev) => [...prev, ...newRows]);
-  //     } else {
-  //       setTableRowVisitors(newRows);
-  //     }
-
-  //     setHasMore(start + newRows.length < res.RecordsFiltered);
-
-  //     setTotalRecords(res.RecordsTotal);
-  //     setTotalFilteredRecords(res.RecordsFiltered);
-  //   } catch {
-  //     setHasMore(false);
-  //   } finally {
-  //     isFetchingRef.current = false;
-  //     setLoading(false);
-  //     setLoadingMore(false);
-  //   }
-  // };
-
-  const isFetchingRef = useRef(false);
-
-  // useEffect(() => {
-  //   setSelectedGroupId(null);
-  //   setGroupVisitors([]);
-
-  //   fetchData(false);
-  // }, [page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   const { data: siteData } = useRegisteredSite();
-
-  // const {
-  //   data: tableTransaction,
-  //   isLoading,
-  // } = useTransactionVisitorPagination({
-  //   page,
-  //   rowsPerPage,
-  //   sortDir,
-  //   search: debouncedSearchAgenda,
-  //   filters: appliedFilters,
-  // });
 
   const {
     data: tableTransaction,
@@ -283,18 +182,6 @@ const Content = () => {
     filters: appliedFilters,
   });
 
-  // const tableRowVisitors =
-  //   tableTransaction?.collection.map((item: any) => ({
-  //     id: item.id,
-  //     agenda: item.agenda || '-',
-  //     visitor_type_id: item.visitor_type_id,
-  //     visitor_type: item.visitor_type_name || '-',
-  //     site_id: item.site_id,
-  //     host_name: item.host_name || '-',
-  //     visitor_period_start: formatDateTime(item.visitor_period_start),
-  //     visitor_period_end: formatDateTime(item.visitor_period_end),
-  //     invited_by: item.invited_by || '-',
-  //   })) ?? [];
 
   const tableRowVisitors = useMemo(() => {
     return (
@@ -474,10 +361,7 @@ const Content = () => {
   const groupHeader =
     detailData?.collection?.[0] ?? null;
 
-  // const groupVisitors =
-  //   detailData?.collection ?? [];
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
-
 
   const handleResetFilter = () => {
     const empty = {
@@ -520,7 +404,7 @@ const Content = () => {
   const debouncedSearch = useDebounce(hostSearch, 800);
 
   const { visitorType } = useVisitorType();
-  const { sites } = useSites();
+  const { data: sites } = useSites();
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
     sortDir: 'desc',
@@ -610,10 +494,6 @@ const Content = () => {
       console.error(err);
     }
   };
-
-  const fetchData = () => {
-
-  }
 
   return (
     <PageContainer

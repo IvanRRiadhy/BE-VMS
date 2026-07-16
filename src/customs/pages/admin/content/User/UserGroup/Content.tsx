@@ -47,11 +47,11 @@ import {
 } from 'src/customs/api/UserGroup';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import useDropPoint from 'src/hooks/useDropPoint';
+import useDropPoint from 'src/hooks/Invitation/useDropPoint';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
-import { useAccessControl } from 'src/hooks/useAccessControl';
-import { useVisitorType } from 'src/hooks/useVisitorType';
-import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
+import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -160,7 +160,7 @@ const Content = () => {
   }, []);
 
   const { organizations } = useOrganization();
-  const { accessData } = useAccessControl();
+  const { accessControl } = useAccessControl();
   const { visitorType } = useVisitorType();
   const { data: registeredSite } = useRegisteredSite();
 
@@ -370,7 +370,7 @@ const Content = () => {
       case 'InviteWithinOwnSite':
         return siteOptions;
       case 'ManageAccessScope':
-        return accessData;
+        return accessControl;
       case 'OperatorRegisterSite':
         return registeredSite;
       case 'ManageVisitor':
@@ -722,13 +722,13 @@ const Content = () => {
 
     return (
       JSON.stringify(originalData.permissions ?? []) !==
-        JSON.stringify(formData.permissions ?? []) ||
+      JSON.stringify(formData.permissions ?? []) ||
       JSON.stringify(originalData.organization ?? []) !==
-        JSON.stringify(formData.organization ?? []) ||
+      JSON.stringify(formData.organization ?? []) ||
       JSON.stringify(originalData.registeredSite ?? []) !==
-        JSON.stringify(formData.registeredSite ?? []) ||
+      JSON.stringify(formData.registeredSite ?? []) ||
       JSON.stringify(originalData.manageVisitor ?? []) !==
-        JSON.stringify(permissionSites['ManageVisitor'] ?? []) ||
+      JSON.stringify(permissionSites['ManageVisitor'] ?? []) ||
       JSON.stringify(originalData.accesses ?? []) !== JSON.stringify(formData.accesses ?? []) ||
       JSON.stringify(originalData.manageSite ?? []) !== JSON.stringify(formData.manageSite ?? []) ||
       JSON.stringify(originalData.visitorType ?? []) !== JSON.stringify(formData.visitorType ?? [])
@@ -857,7 +857,7 @@ const Content = () => {
         getDropdownOptions={getDropdownOptions}
         formatPermissionLabel={formatPermissionLabel}
         handleAddSiteAssignment={handleAddSiteAssignment}
-        accessOptions={accessData}
+        accessOptions={accessControl}
       />
 
       <ConfirmUnsavedDialog

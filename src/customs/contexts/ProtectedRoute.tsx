@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router';
 import { useAuth } from './AuthProvider';
 import { useSession } from './SessionContext';
 import { CircularProgress } from '@mui/material';
-import { useProfile } from 'src/hooks/useProfile';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];

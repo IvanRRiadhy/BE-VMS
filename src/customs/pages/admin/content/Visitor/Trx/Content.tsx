@@ -47,10 +47,10 @@ import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/compon
 import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from './components/ShareLinkDialog';
-import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
-import { useVisitorType } from 'src/hooks/useVisitorType';
-import { useSites } from 'src/hooks/useSites';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useSites } from 'src/hooks/Sites/useSites';
 import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -59,13 +59,13 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
-import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import { useVisitorPagination } from 'src/hooks/Visitor/useVisitorPagination';
 import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
-import { useProfile } from 'src/hooks/useProfile';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -140,7 +140,7 @@ const Content = () => {
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
   const { t } = useTranslation();
   const { visitorType } = useVisitorType();
-  const { sites } = useSites();
+  const { data: sites } = useSites();
   const [hostSearch, setHostSearch] = useState('');
   const debouncedSearch = useDebounce(hostSearch, 400);
   const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =

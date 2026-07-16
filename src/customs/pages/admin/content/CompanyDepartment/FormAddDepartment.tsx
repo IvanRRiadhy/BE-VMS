@@ -21,7 +21,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
 
 type Mode = 'create' | 'edit' | 'batch';
@@ -98,10 +98,10 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
   const onSubmit = async (form: CreateDepartmentRequest) => {
     try {
-    
+
       if (mode === 'create') {
         await create.mutateAsync({
-        
+
           data: form,
         });
         showSwal('success', 'Department successfully created!');
@@ -110,7 +110,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       if (mode === 'edit' && data) {
         await update.mutateAsync({
           id: data.id,
-        
+
           data: form,
         });
         showSwal('success', 'Department successfully updated!');
@@ -130,7 +130,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
             return update.mutateAsync({
               id: item.id,
-       
+
               data: payload,
             });
           }),

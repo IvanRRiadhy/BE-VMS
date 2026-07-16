@@ -8,6 +8,5 @@ export const useRegisteredSite = () => {
       const res = await getRegisteredSite();
       return res.collection;
     },
-    staleTime: 1 * 60 * 1000,
   });
 };

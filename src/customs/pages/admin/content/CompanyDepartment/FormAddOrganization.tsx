@@ -22,7 +22,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 
 type Mode = 'create' | 'edit' | 'batch';

@@ -22,7 +22,7 @@ import { getAllApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { updateSettingVms } from 'src/customs/api/Admin/Setting';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useApprovalWorkflow } from 'src/hooks/ApprovalWorkflow/useApprovalWorkflow';
-import { useSites } from 'src/hooks/useSites';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 interface Props {
     configuration: any;
@@ -52,7 +52,7 @@ export default function VMSConfigurationTab() {
 
     const [initialCardAccessEnabled, setInitialCardAccessEnabled] = useState(false);
     const [giveCardSettingEnabled, setGiveCardSettingEnabled] = useState(false);
-    const { sites } = useSites();
+    const { data: sites } = useSites();
     const { data: approvalWorkflow = [], isLoading } = useApprovalWorkflow();
 
     const handleChange = (key: keyof typeof configuration, value: any) => {

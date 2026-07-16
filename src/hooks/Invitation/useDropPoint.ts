@@ -6,8 +6,6 @@ const useDropPoint = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-
-
     const fetchDropPoint = async () => {
       try {
         setLoading(true);

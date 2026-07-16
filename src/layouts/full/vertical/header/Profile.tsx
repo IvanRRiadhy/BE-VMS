@@ -24,7 +24,7 @@ import { getProfile } from 'src/customs/api/users';
 import { useDispatch } from 'react-redux';
 import { clearUser } from 'src/store/apps/user/userSlice';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProfile } from 'src/hooks/useProfile';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);

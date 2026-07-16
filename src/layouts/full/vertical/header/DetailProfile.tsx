@@ -30,7 +30,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { InputAdornment, IconButton } from '@mui/material';
-import { useProfile } from 'src/hooks/useProfile';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);

@@ -29,9 +29,9 @@ import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
-import { useVisitorType } from 'src/hooks/useVisitorType';
-import { useSites } from 'src/hooks/useSites';
-import { useEmployees } from 'src/hooks/useEmployees';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 dayjs.extend(utc);
@@ -57,7 +57,7 @@ type FieldKey =
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }: Props) => {
   const { employee } = useEmployees();
   const { visitorType } = useVisitorType();
-  const { sites } = useSites();
+  const { data: sites } = useSites();
 
   const initialEnabledState = {
     visitorType: false,
@@ -225,7 +225,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               getOptionLabel={(option: any) => option.name ?? ''}
               // value={sites.filter((s) => selectedSiteParentIds.includes(s.id))}
               // value={form.site_id}
-              value={sites.find((s) => s.id === form.site_id) || null}
+              value={sites?.find((s) => s.id === form.site_id) || null}
               // onChange={(_, newValues) => {
               //   const parentIds = newValues.map((v: any) => v.id);
               //   setSelectedSiteParentIds(parentIds);

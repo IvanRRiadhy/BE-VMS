@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useVisitorProvider } from 'src/hooks/useVisitorProvider';
+import { useVisitorProvider } from 'src/hooks/VisitorProvider/useVisitorProvider';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import useDropPoint from 'src/hooks/useDropPoint';
+import useDropPoint from 'src/hooks/Invitation/useDropPoint';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 
 import FormQuickAccess from './Dialog/FormQuickAccess';
 import { getVisitorById } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import TemporaryAccessDialog from './Dialog/TemporaryAccessDialog';
-import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 
 interface QuickAccessDialogProps {
   open: boolean;
@@ -126,7 +126,7 @@ export const QuickAccessDialog = ({
       // console.log('payload', payload);
       await onSubmit?.(payload);
       setOpenQuickAccess(false);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
@@ -187,7 +187,7 @@ export const QuickAccessDialog = ({
 
   const handleDetailQuickAccess = async (id: string) => {
     try {
-      const res = await getVisitorById( id);
+      const res = await getVisitorById(id);
       setVisitorDetail(res?.collection ?? res ?? null);
       setOpenQrQuickAccess(true);
     } catch (error) {

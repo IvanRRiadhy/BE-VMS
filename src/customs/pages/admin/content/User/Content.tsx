@@ -27,7 +27,7 @@ import {
   getLinkAccountTracking,
   unassignAccount,
 } from 'src/customs/api/Admin/User';
-import { useEmployees } from 'src/hooks/useEmployees';
+import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
@@ -255,8 +255,8 @@ const Content = () => {
       showSwal(
         'error',
         error?.response?.data?.collection?.[0]?.message ||
-          error?.response?.data?.msg ||
-          'Failed to assign tracking',
+        error?.response?.data?.msg ||
+        'Failed to assign tracking',
       );
     }
   };

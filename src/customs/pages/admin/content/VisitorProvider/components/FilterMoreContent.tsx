@@ -10,10 +10,9 @@ import {
   Checkbox,
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { useHost } from 'src/hooks/useHost';
-import { useSites } from 'src/hooks/useSites';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';import { useEmployees } from 'src/hooks/Employee/useEmployees';
+;
+import { useSites } from 'src/hooks/Sites/useSites';
 
 type FilterMoreContentProps = {
   filters: any;
@@ -45,8 +44,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
   const visitorRoleOptions = Object.values(visitorRole);
   const statusOptions = Object.values(statusMap);
-  const { sites = [] } = useSites();
-  const { data: host = [] } = useHost();
+  const { data: sites = [] } = useSites();
+  const { employee } = useEmployees();
 
   return (
     <Box sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5 }}>
@@ -142,9 +141,9 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         <Grid size={{ xs: 12, lg: 6 }}>
           <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Host</CustomFormLabel>
           <Autocomplete
-            options={host}
+            options={employee}
             getOptionLabel={(option) => option.name}
-            value={host.find((o) => o.id === filters.site_id) || null}
+            value={employee.find((o) => o.id === filters.site_id) || null}
             onChange={(_, val) =>
               setFilters((prev: any) => ({
                 ...prev,

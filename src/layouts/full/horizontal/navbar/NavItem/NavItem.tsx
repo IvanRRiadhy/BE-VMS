@@ -8,7 +8,6 @@ import { ListItemIcon, List, styled, ListItemText, useTheme, ListItemButton } fr
 import { useSelector } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
 import { useTranslation } from 'react-i18next';
-import { useNavigateWithLoader } from 'src/hooks/useNavigateWithLoader';
 
 type NavGroup = {
   [x: string]: any;
@@ -38,7 +37,6 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const Icon = item.icon;
   const theme = useTheme();
-  // const { navigateWithLoader } = useNavigateWithLoader();
   const itemIcon =
     level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
 

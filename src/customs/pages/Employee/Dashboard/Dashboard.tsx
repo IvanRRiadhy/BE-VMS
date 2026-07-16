@@ -72,13 +72,13 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import dayjs from 'dayjs';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
-import { useActivities } from 'src/hooks/useActivity';
+import { useActivities } from 'src/hooks/Dashboard/useActivity';
 import PendingInvitationDialog from '../Components/Dialog/PendingInvitationDialog';
 import AccessPassEmployee from '../Components/AccessPassEmployee';
 import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
-import { useAccessPass } from 'src/hooks/useAccessPass';
+import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 
 const DashboardEmployee = () => {
@@ -130,7 +130,7 @@ const DashboardEmployee = () => {
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
 
-  
+
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
   };

@@ -19,7 +19,6 @@ import {
   SectionPageVisitorType,
 } from 'src/customs/api/models/Admin/VisitorType';
 import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash } from '@tabler/icons-react';
-import { createVisitorType, updateVisitorType } from 'src/customs/api/admin';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -38,12 +37,12 @@ import {
   updateVisitorTypeAnalytics,
 } from 'src/customs/api/VisitorType/Analytics';
 import StepComponent from './components/StepComponent';
-import { useVisitorRoles } from 'src/hooks/useVisitorRole';
-import { useAccessControl } from 'src/hooks/useAccessControl';
-import { useDocument } from 'src/hooks/useDocument';
-import { useCustomField } from 'src/hooks/useCustomField';
+import { useVisitorRoles } from 'src/hooks/VisitorRole/useVisitorRole';
+import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
+import { useDocuments } from 'src/hooks/Documents/useDocument';
+import { useCustomField } from 'src/hooks/CustomField/useCustomField';
 import NewSectionDialog from './components/NewSectionDialog';
-import { useCameraAnalytics } from 'src/hooks/useCameraAnalaytics';
+import { useCameraAnalytics } from 'src/hooks/VisitorType/useCameraAnalaytics';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 
 interface FormVisitorTypeProps {
@@ -91,11 +90,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   >([]);
 
   const { visitorRole } = useVisitorRoles();
-  const { accessData } = useAccessControl();
-  const { documents } = useDocument();
+  const { accessControl } = useAccessControl();
+  const { documents } = useDocuments();
   const { customField } = useCustomField();
   const { analyticCctv } = useCameraAnalytics();
-
   const { createMutation, updateMutation } = useVisitorTypeMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,15 +118,15 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   }, [initialAccess, edittingId]);
 
   useEffect(() => {
-    if (!edittingId || accessData.length === 0) return;
+    if (!edittingId || accessControl.length === 0) return;
 
     const fetchVisitorTypeAccess = async () => {
       const res = await getVisitorTypeAccessByVisitorId(edittingId);
 
       setSelectedAccess(
         res.collection.map((a: any) => {
-          const access = accessData.find(
-            (x) => x.name.trim().toLowerCase() === a.access_control_name.trim().toLowerCase(),
+          const access = accessControl.find(
+            (x: any) => x.name.trim().toLowerCase() === a.access_control_name.trim().toLowerCase(),
           );
 
           return {
@@ -142,7 +140,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     };
 
     fetchVisitorTypeAccess();
-  }, [edittingId, accessData]);
+  }, [edittingId, accessControl]);
 
   useEffect(() => {
     if (!edittingId || !formData.can_track_cctv) {
@@ -185,13 +183,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const buildUpdateAnalyticsPayload = (visitorTypeId: string) =>
     selectedAnalytics
       ? [
-          {
-            id: selectedAnalytics.id,
-            integration_id: selectedAnalytics.integration_id,
-            visitor_type_id: visitorTypeId,
-            sort: 0,
-          },
-        ]
+        {
+          id: selectedAnalytics.id,
+          integration_id: selectedAnalytics.integration_id,
+          visitor_type_id: visitorTypeId,
+          sort: 0,
+        },
+      ]
       : [];
 
   const handleOnSubmit = async (e: React.FormEvent) => {
@@ -208,7 +206,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         can_multiple_used: section.can_multiple_used,
         foreign_id: section.foreign_id || '',
         visit_form: section.visit_form.map((field) => {
-          const matchedField = customField.find((f) => f.id === field.custom_field_id);
+          const matchedField = customField.find((f: any) => f.id === field.custom_field_id);
           return {
             sort: field.sort ?? 0,
             short_name: field.short_name ?? '',
@@ -225,7 +223,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           };
         }),
         pra_form: section.pra_form.map((field) => {
-          const matchedField = customField.find((f) => f.id === field.custom_field_id);
+          const matchedField = customField.find((f: any) => f.id === field.custom_field_id);
           return {
             sort: field.sort ?? 0,
             short_name: field.short_name ?? '',
@@ -244,7 +242,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           };
         }),
         checkout_form: section.checkout_form.map((field) => {
-          const matchedField = customField.find((f) => f.id === field.custom_field_id);
+          const matchedField = customField.find((f: any) => f.id === field.custom_field_id);
           return {
             sort: field.sort ?? 0,
             short_name: field.short_name ?? '',
@@ -561,9 +559,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       prev.map((section, idx) =>
         idx === activeStep - 1
           ? {
-              ...section,
-              [key]: newData,
-            }
+            ...section,
+            [key]: newData,
+          }
           : section,
       ),
     );
@@ -872,7 +870,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               selectedAccess={selectedAccess}
               visitorRole={visitorRole}
               selectedAnalytics={selectedAnalytics}
-              accessData={accessData}
+              accessData={accessControl}
               documents={documents}
               documentIdentities={documentIdentities}
               analyticCctv={analyticCctv}

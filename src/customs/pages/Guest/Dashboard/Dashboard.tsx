@@ -53,7 +53,7 @@ import { useSelector } from 'react-redux';
 import Heatmap from './Heatmap';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import InputInvitationCodeDialog from './components/InputInvitationCodeDialog';
-import { useAccessPass } from 'src/hooks/useAccessPass';
+import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import VisitorActionBar from './components/VisitorActionBar';
 import GuestAccessPass from './components/GuestAccessPass';
 
@@ -189,7 +189,7 @@ const Dashboard = () => {
     if (!accessPass?.id) return;
     setIsParkingLoading(true);
     try {
-      await openParkingBlocker( { trx_visitor_id: accessPass.id });
+      await openParkingBlocker({ trx_visitor_id: accessPass.id });
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');

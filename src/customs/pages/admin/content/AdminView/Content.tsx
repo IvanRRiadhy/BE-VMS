@@ -101,7 +101,7 @@ import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/comp
 import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
 import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
 import { getPermission } from 'src/customs/api/users';
-import { usePermission } from 'src/hooks/usePermission';
+import { usePermission } from 'src/hooks/UserGroup/usePermission';
 import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
 import {
   AdminCustomSidebarItemsData,
@@ -109,7 +109,7 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
 import { getAllSite } from 'src/customs/api/admin';
-import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import VisitorInformation from 'src/customs/pages/Operator/Components/VisitorInformation';
 import HostInformation from 'src/customs/pages/Operator/Components/HostInformation';
 import Footer from 'src/customs/pages/Operator/Components/Footer';
@@ -225,9 +225,9 @@ const Content = () => {
   const [openParking, setOpenParking] = useState(false);
   const [openVehicle, setOpenVehicle] = useState(false);
   const [totalCountVisitor, setTotalCountVisitor] = useState(0);
-const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
-  CreateVisitorRequestSchema.parse({}),
-);
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
+    CreateVisitorRequestSchema.parse({}),
+  );
   const [swipePayload, setSwipePayload] = useState<any[]>([]);
   const parkingData = [
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
@@ -350,7 +350,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
 
-      await createMultipleGrantAccess( {
+      await createMultipleGrantAccess({
         data: payloads,
       });
       console.log('payloads', payloads);
@@ -659,15 +659,15 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         apply_to_all: applyToAll,
       };
 
-      await extendPeriodOperator( payload);
+      await extendPeriodOperator(payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...v,
+              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : v,
         ),
       );
@@ -676,9 +676,9 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-                ...item,
-                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...item,
+              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : item,
         ),
       );
@@ -742,7 +742,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
   }, []);
 
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
-    useInvitationVisitorEmployee( {
+    useInvitationVisitorEmployee({
       search: debounceSearch,
       start: 0,
       length: 10,
@@ -859,7 +859,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch {}
+    } catch { }
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
@@ -1080,7 +1080,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-      const freshVisitors = await getInvitationOperatorRelated(invitationId, );
+      const freshVisitors = await getInvitationOperatorRelated(invitationId,);
       const scannedNumber = data[0]?.visitor_number;
 
       const matchedIds = freshVisitors.collection
@@ -1190,7 +1190,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
-    const relatedRes = await getInvitationOperatorRelated(invitationId, );
+    const relatedRes = await getInvitationOperatorRelated(invitationId,);
     const relatedData = relatedRes.collection ?? [];
 
     const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
@@ -1475,7 +1475,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         return;
       }
       if (payloads.length > 1) {
-        await createMultipleGrantAccess( {
+        await createMultipleGrantAccess({
           data: payloads.map(({ visitorName, ...p }) => p),
         });
         console.log('payloads multiple', payloads);
@@ -1483,7 +1483,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         const { visitorName, ...payload } = payloads[0];
 
         console.log('payload', payload);
-        await createGrandAccessOperator( payload);
+        await createGrandAccessOperator(payload);
       }
 
       const invitationId = invitationCode?.[0]?.id;
@@ -1582,7 +1582,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         reason: res.value,
       };
 
-      await createOperatorBlacklist( payload);
+      await createOperatorBlacklist(payload);
 
       showSwal('success', 'Visitor has been successfully blacklisted.');
     } catch (err) {
@@ -1672,16 +1672,16 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         payload.reason = reason;
       }
 
-      await createInvitationActionOperator( id!, payload);
+      await createInvitationActionOperator(id!, payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
           v.id === selectedVisitorId
             ? {
-                ...v,
-                visitor_status: action,
-                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-              }
+              ...v,
+              visitor_status: action,
+              is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
+            }
             : v,
         ),
       );
@@ -1906,7 +1906,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       setLoadingAccess(true);
 
       if (validForApi.length > 0) {
-        await createMultipleInvitationActionOperator( payload);
+        await createMultipleInvitationActionOperator(payload);
       }
 
       setRelatedVisitors((prev) =>
@@ -2008,10 +2008,10 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-          relatedVisitors.find(
-            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-          ),
-        ].filter(Boolean);
+        relatedVisitors.find(
+          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+        ),
+      ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -2120,9 +2120,9 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-              ...f,
-              sort: f.sort ?? i,
-            }))
+            ...f,
+            sort: f.sort ?? i,
+          }))
           : [];
 
         return {
@@ -2274,7 +2274,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
       }
 
       const results = await Promise.all(
-        visitorList.map((v) => getDetailInvitationForm( v.id)),
+        visitorList.map((v) => getDetailInvitationForm(v.id)),
       );
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
@@ -2428,11 +2428,11 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
             case 'site_place':
               options = sitePlaceName
                 ? [
-                    {
-                      value: field.answer_text || sitePlaceId,
-                      name: sitePlaceName,
-                    },
-                  ]
+                  {
+                    value: field.answer_text || sitePlaceId,
+                    name: sitePlaceName,
+                  },
+                ]
                 : [];
               break;
 
@@ -3119,10 +3119,10 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                is_praregister_done: true,
-                visitor_status: 'Preregis',
-              }
+              ...v,
+              is_praregister_done: true,
+              visitor_status: 'Preregis',
+            }
             : v,
         ),
       );
@@ -3311,7 +3311,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
 
         // console.log('Final Payload:', payload);
 
-        const res = await createGiveAccessOperator( payload);
+        const res = await createGiveAccessOperator(payload);
         // console.log('Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
@@ -3402,7 +3402,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
         registered_site_id: registerSiteOperator,
       };
 
-      await returnCard( payload);
+      await returnCard(payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
@@ -3443,7 +3443,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
   };
 
   const fetchUpcomingPurpose = async () => {
-    const res = await getUpComingPurpose( {
+    const res = await getUpComingPurpose({
       today: 'true',
       all_visitor_type: 'true',
     });
@@ -3457,7 +3457,7 @@ const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorReques
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getUpComingVisitors( {
+      const res = await getUpComingVisitors({
         today: 'true',
         all_visitor_type: 'true',
         visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,

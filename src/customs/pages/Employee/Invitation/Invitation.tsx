@@ -65,9 +65,9 @@ import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLin
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
-import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
+import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
 import { useDebounce } from 'src/hooks/useDebounce';
-import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { cancelVisitor } from 'src/customs/api/users';
 import VisitorDetailPanel from './components/VisitorDetailPanel';

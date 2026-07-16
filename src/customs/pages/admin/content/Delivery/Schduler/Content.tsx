@@ -37,9 +37,9 @@ import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import SchedulerErrorDialog from './Dialog/SchedulerErrorDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
-import { useSites } from 'src/hooks/useSites';
-import { useVisitorType } from 'src/hooks/useVisitorType';
-import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useSchedulerPagination } from 'src/hooks/Scheduler/useSchedulerPagination';
 import { useSchedulerMutation } from 'src/hooks/Scheduler/useSchedulerMutation';
 
@@ -102,7 +102,7 @@ const Content = () => {
 
 
   const { allVisitorEmployee: hostDataQuery } = useVisitorEmployees();
-  const { sites: siteDataQuery } = useSites();
+  const { data: siteDataQuery } = useSites();
   const { visitorType: visitorTypeQuery } = useVisitorType();
   // const [rawSchedulerData, setRawSchedulerData] = useState<any[]>([]);
 
