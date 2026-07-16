@@ -48,7 +48,7 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/api/ShareLink';
+import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/api/Admin/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
