@@ -24,7 +24,7 @@ import {
   deleteShareLink,
   getShareLinkByDt,
   getShareLinkById,
-} from 'src/customs/api/ShareLink';
+} from 'src/customs/api/Admin/ShareLink';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
