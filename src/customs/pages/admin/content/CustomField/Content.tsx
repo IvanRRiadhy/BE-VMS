@@ -32,6 +32,9 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import CustomFieldDialog from './components/CustomFIeldDialog';
+import useCustomFieldPagination from 'src/hooks/CustomField/useCustomFieldPagination';
+import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
+import GlobalBackdropLoading from '../AdminView/Components/GlobalBackdrop';
 
 type CustomFieldTableRow = {
   id: string;
@@ -42,75 +45,33 @@ type CustomFieldTableRow = {
 };
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<CustomFieldTableRow[]>([]);
-
-  const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
-  const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
+  const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const {
+    data,
+    isLoading,
+  } = useCustomFieldPagination({
+    page,
+    rowsPerPage,
+    search,
+  });
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const responseGet = await getAllCustomField();
-        // const response = await getAllCustomFieldPagination(
-        //   token,
-        //   start,
-        //   rowsPerPage,
-        //   sortColumn,
-        //   sortDir,
-        //   searchKeyword,
-        // );
+  const {
+    deleteMutation,
+  } = useCustomFieldMutation();
 
-        // const rows = responseGet.collection.map((item: Item) => ({
-        //   id: item.id,
-        //   name: item.short_name,
-        //   display_text: item.long_display_text,
-        //   field_type: FieldType[item.field_type],
-        //   multiple_option_fields: item.multiple_option_fields,
-        // }));
-
-        const rows = responseGet.collection
-          .filter((item: Item) => {
-            if (!search) return true;
-
-            const keyword = search.toLowerCase();
-
-            return (
-              item.short_name?.toLowerCase().includes(keyword) ||
-              item.long_display_text?.toLowerCase().includes(keyword) ||
-              FieldType[item.field_type]?.toLowerCase().includes(keyword)
-            );
-          })
-          .map((item: Item) => ({
-            id: item.id,
-            name: item.short_name,
-            display_text: item.long_display_text,
-            remarks: item.remarks,
-            field_type: FieldType[item.field_type],
-            multiple_option_fields: item.multiple_option_fields,
-          }));
-        setTableRowSite(rows);
-        setTableData(rows);
-        setTotalRecords(responseGet.collection.length);
-      } catch (error) {
-        console.error('Fetch error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [ refreshTrigger, search]);
+  const tableData = data?.collection ?? [];
+  const totalRecords = data?.totalRecords ?? 0;
 
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     CreateCustomFieldRequestSchema.parse({}),
@@ -128,18 +89,13 @@ const Content = () => {
     },
   ];
 
-  const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
-  const dialogRef = useRef<HTMLDivElement>(null);
   const handleOpenDialog = () => {
     setOpenCreateCustomField(true);
   };
   const handleCloseDialog = () => {
     setOpenCreateCustomField(false);
     setInitialFormSnapshot(null);
-    setShouldTrackChanges(false);
   };
 
   const handleAdd = () => {
@@ -149,14 +105,11 @@ const Content = () => {
     setInitialFormSnapshot(JSON.stringify(data));
     setEdittingId('');
     handleOpenDialog();
-
-    setTimeout(() => setShouldTrackChanges(true), 100);
   };
 
   const handleEdit = async (id: string) => {
     // const data = tableData.find((item) => item.id === id) || {};
     const data = await getCustomFieldById(id);
-
     const parsed = CreateCustomFieldRequestSchema.parse(data.collection);
 
     setFormDataAddCustomField(parsed);
@@ -164,15 +117,13 @@ const Content = () => {
     setEdittingId(id);
 
     handleOpenDialog();
-
-    setTimeout(() => setShouldTrackChanges(true), 100);
   };
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
 
     if (pendingEditId) {
-      const data = tableData.find((item) => item.id === pendingEditId);
+      const data = tableData.find((item: any) => item.id === pendingEditId);
       setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse(data || {}));
       setEdittingId(pendingEditId);
     } else {
@@ -195,40 +146,35 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-
-
     const confirm = await showConfirmDelete('Are you sure you want to delete this custom field? ');
 
     if (confirm) {
-      setLoading(true);
+
       try {
-        await deleteCustomField(id);
+        await deleteMutation.mutateAsync(id);
         showSwal('success', 'Custom Field has been deleted.');
         setRefreshTrigger((prev) => prev + 1);
-      } catch (error) {
-        showSwal('error', 'Failed to delete custom field.');
-        setTimeout(() => setLoading(false), 500);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
+      } catch (error: any) {
+        showSwal('error', error.response.data.msg ?? 'Failed to delete custom field.');
       }
     }
   };
 
   const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
-    if ( rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
-      setLoading(true);
+
       try {
-        await Promise.all(rows.map((row) => deleteCustomField(row.id)));
+        await Promise.all(
+          rows.map((row) => deleteMutation.mutateAsync(row.id)),
+        );
         showSwal('success', `${rows.length} items of custom fields have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
-      } catch (error) {
-        showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
+      } catch (error: any) {
+        showSwal('error', error.response.data.msg ?? 'Failed to delete some items.');
       }
     }
   };
@@ -264,7 +210,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 overflowX={'auto'}
                 isHavePagination={false}
                 data={tableRowSite}
@@ -314,6 +260,7 @@ const Content = () => {
         onClose={() => setConfirmDialogOpen(false)}
         onDiscard={handleConfirmEdit}
       />
+      <GlobalBackdropLoading open={deleteMutation.isPending} />
     </PageContainer>
   );
 };

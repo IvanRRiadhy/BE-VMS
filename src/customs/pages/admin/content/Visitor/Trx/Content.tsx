@@ -66,6 +66,7 @@ import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -639,16 +640,13 @@ const Content = () => {
     }
   };
 
+  const { createMutation: createQuickAccess } = useQuickAccessMutation();
+
   const handleCreateQuickAccess = async (payload: any) => {
     try {
-      await createQuickAccess(payload);
-
+      await createQuickAccess.mutateAsync(payload);
       showSwal('success', 'Quick access created successfully');
-
       setOpenQuickAccess(false);
-      await queryClient.invalidateQueries({
-        queryKey: ['quick-access'],
-      });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 

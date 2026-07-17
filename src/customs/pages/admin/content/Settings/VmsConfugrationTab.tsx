@@ -52,7 +52,7 @@ export default function VMSConfigurationTab() {
 
     const [initialCardAccessEnabled, setInitialCardAccessEnabled] = useState(false);
     const [giveCardSettingEnabled, setGiveCardSettingEnabled] = useState(false);
-    const { data: sites } = useSites();
+    const { data: sites = [] } = useSites();
     const { data: approvalWorkflow = [], isLoading } = useApprovalWorkflow();
 
     const handleChange = (key: keyof typeof configuration, value: any) => {
@@ -133,6 +133,7 @@ export default function VMSConfigurationTab() {
                             <Autocomplete
                                 fullWidth
                                 options={sites}
+                                getOptionKey={(option) => option.id}
                                 value={
                                     sites.find((site) => site.id === configuration.default_site_id) ?? null
                                 }

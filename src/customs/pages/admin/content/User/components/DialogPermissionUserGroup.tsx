@@ -31,32 +31,25 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { IconTrash } from '@tabler/icons-react';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSubmit: () => void;
-
   selectedRoleAccess: string;
-  groupPermissionMap: Record<string, string[]>;
   dropPoint: any;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
-
   permissionSites: Record<string, string[]>;
   setPermissionSites: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
-
-  organizationSiteOptions: any[];
-  regsiteredSiteOptions: any[];
-  visitorTypeOptions: any[];
-  siteOptions: any[];
-
-  permissionNeedSite: string[];
-  getDropdownOptions: any;
+  // getDropdownOptions: any;
   handleAddSiteAssignment: () => void;
-
   formatPermissionLabel: (value: string) => string;
-  accessOptions: any[];
+  siteOptions: any[];
 }
 
 const DialogPermissionUserGroup: React.FC<Props> = ({
@@ -64,22 +57,119 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
   onClose,
   onSubmit,
   selectedRoleAccess,
-  groupPermissionMap,
   formData,
   setFormData,
   dropPoint,
   permissionSites,
   setPermissionSites,
-  organizationSiteOptions,
-  regsiteredSiteOptions,
-  siteOptions,
-  visitorTypeOptions,
-  permissionNeedSite,
-  getDropdownOptions,
   formatPermissionLabel,
   handleAddSiteAssignment,
-  accessOptions,
+
+  siteOptions
 }) => {
+  const groupPermissionMap: Record<string, string[]> = {
+    employee: [
+      'AsHead',
+      'InviteVistor',
+      'InviteWithinAllowPreRegister',
+      'InviteWithinOwnOrganization',
+      'InviteWithinOwnSite',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      // 'External',
+      // 'ManageTeam',
+      'VisitorTypeAssignment',
+      'OrganizationAssignment',
+      'SiteAssignment',
+    ],
+
+    operatorvms: [
+      'AsHead',
+      'OperatorAsWatcher',
+      'ManageInvite',
+      'ManageBlacklist',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'ManageVisitorTypeScope',
+      'ManageAccessScope',
+      'ManageSiteScope',
+      'OperatorRegisterSite',
+      'ManageVisitor',
+      'OrganizationAssignment',
+    ],
+
+    manager: [
+      'AsHead',
+      'ManageApprove',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+    ],
+
+    operatoradmin: [
+      'AllowSSOLoginParking',
+      'AllowSSOLoginTracking',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'ManageUser',
+    ],
+    visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
+  };
+  const permissionNeedSite = [
+    'OrganizationAssignment',
+    'ManageOperator',
+    'OperatorRegisterSite',
+    'ManageAccessScope',
+    'ManageVisitor',
+    'ManageSiteScope',
+    'VisitorTypeAssignment',
+    'SiteAssignment',
+    'ManageVisitorTypeScope',
+    'DropPoint',
+  ];
+  const MANAGE_VISITOR_PERMISSIONS = [
+    { id: 'OperatorVisitorSendNotificationArrival', name: 'Send Notification Arrival' },
+    { id: 'OperatorVisitorWalkIn', name: 'Walk In' },
+    { id: 'OperatorVisitorPreregister', name: 'Pre Register' },
+    { id: 'OperatorVisitorCheckIn', name: 'Check In' },
+    { id: 'OperatorVisitorCheckout', name: 'Check Out' },
+    { id: 'OperatorVisitorBlock', name: 'Block Visitor' },
+    { id: 'OperatorVisitorExtend', name: 'Extend Visit' },
+    { id: 'OperatorVisitorTriggerOpen', name: 'Trigger Open Gate' },
+    { id: 'OperatorVisitorCardIssuance', name: 'Card Issuance' },
+    { id: 'OperatorVisitorParkingIssuance', name: 'Parking Issuance' },
+  ];
+
+  const { organizations } = useOrganization();
+  const { accessControl } = useAccessControl();
+  const { visitorType } = useVisitorType();
+  const { data: registeredSite = [] } = useRegisteredSite();
+  const getDropdownOptions = (perm: string) => {
+    switch (perm) {
+      case 'ManageSiteScope':
+        return siteOptions;
+      case 'OrganizationAssignment':
+        return organizations;
+      case 'InviteWithinOwnSite':
+        return siteOptions;
+      case 'ManageAccessScope':
+        return accessControl;
+      case 'OperatorRegisterSite':
+        return registeredSite;
+      case 'ManageVisitor':
+        return MANAGE_VISITOR_PERMISSIONS;
+      case 'ManageVisitorTypeScope':
+        return visitorType;
+      case 'VisitorTypeAssignment':
+        return visitorType;
+      case 'SiteAssignment':
+        return siteOptions;
+      default:
+        return [];
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -117,15 +207,15 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
               <Grid
                 size={
                   perm === 'SiteAssignment' ||
-                  perm === 'DropPoint' ||
-                  perm === 'OperatorRegisterSite' ||
-                  perm === 'ManageVisitor' ||
-                  perm === 'ManageSiteScope' ||
-                  perm === 'ManageAccessScope' ||
-                  perm === 'ManageVisitorTypeScope' ||
-                  perm === 'VisitorTypeAssignment' ||
-                  perm === 'VisitorTypeAssignment' ||
-                  perm === 'OrganizationAssignment'
+                    perm === 'DropPoint' ||
+                    perm === 'OperatorRegisterSite' ||
+                    perm === 'ManageVisitor' ||
+                    perm === 'ManageSiteScope' ||
+                    perm === 'ManageAccessScope' ||
+                    perm === 'ManageVisitorTypeScope' ||
+                    perm === 'VisitorTypeAssignment' ||
+                    perm === 'VisitorTypeAssignment' ||
+                    perm === 'OrganizationAssignment'
                     ? { xs: 12 }
                     : { xs: 12, md: 6 }
                 }
@@ -214,16 +304,16 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                                       }));
                                     }}
                                   >
-                                    {accessOptions.map((site) => (
+                                    {accessControl.map((acessControl: any) => (
                                       <MenuItem
-                                        key={site.id}
-                                        value={site.id}
+                                        key={acessControl.id}
+                                        value={acessControl.id}
                                         disabled={formData.accesses.some(
                                           (x: any, i: any) =>
-                                            x.access_control_id === site.id && i !== index,
+                                            x.access_control_id === acessControl.id && i !== index,
                                         )}
                                       >
-                                        {site.name}
+                                        {acessControl.name}
                                       </MenuItem>
                                     ))}
                                   </Select>
@@ -324,9 +414,9 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                   {checked && perm === 'OrganizationAssignment' && (
                     <Autocomplete
                       multiple
-                      options={organizationSiteOptions}
+                      options={organizations}
                       getOptionLabel={(option: any) => option.name || ''}
-                      value={organizationSiteOptions.filter((opt: any) =>
+                      value={organizations.filter((opt: any) =>
                         formData.organization.includes(opt.id),
                       )}
                       onChange={(_, newValues) => {
@@ -388,9 +478,9 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                   {checked && perm === 'OperatorRegisterSite' && (
                     <Autocomplete
                       multiple
-                      options={regsiteredSiteOptions}
+                      options={registeredSite}
                       getOptionLabel={(option: any) => option.name || ''}
-                      value={regsiteredSiteOptions.filter((opt: any) =>
+                      value={registeredSite.filter((opt: any) =>
                         formData.registeredSite.includes(opt.id),
                       )}
                       onChange={(_, newValues) => {
@@ -440,9 +530,9 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                   {checked && perm === 'ManageVisitorTypeScope' && (
                     <Autocomplete
                       multiple
-                      options={visitorTypeOptions}
+                      options={visitorType}
                       getOptionLabel={(option: any) => option.name || ''}
-                      value={visitorTypeOptions.filter((opt: any) =>
+                      value={visitorType.filter((opt: any) =>
                         formData.visitorType.includes(opt.id),
                       )}
                       onChange={(_, newValues) => {
@@ -465,9 +555,9 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                   {checked && perm === 'VisitorTypeAssignment' && (
                     <Autocomplete
                       multiple
-                      options={visitorTypeOptions}
+                      options={visitorType}
                       getOptionLabel={(option: any) => option.name || ''}
-                      value={visitorTypeOptions.filter((opt: any) =>
+                      value={visitorType.filter((opt: any) =>
                         formData.visitorType.includes(opt.id),
                       )}
                       onChange={(_, newValues) => {

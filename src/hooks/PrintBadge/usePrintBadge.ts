@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 
 const usePrintBadgeConfig = () => {
-  const [printData, setPrintData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        const res = await getPrintBadgeConfig();
-        setPrintData(res?.collection ?? []);
-      } catch (error) {
-        console.error('Failed to fetch print badge config:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const query = useQuery({
+    queryKey: ['print-badge-config'],
+    queryFn: async () => {
+      const res = await getPrintBadgeConfig();
+      return res?.collection;
+    },
+  });
 
   return {
-    printData,
-    loading,
-    setPrintData,
+    printData: query.data,
+    loading: query.isLoading,
+    ...query,
   };
 };
 

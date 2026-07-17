@@ -12,13 +12,12 @@ import {
 import { Box } from '@mui/system';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createUser, getAllUserGroup, updateUser } from 'src/customs/api/admin';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { Autocomplete, TextField } from '@mui/material';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { InputAdornment, IconButton } from '@mui/material';
+import useUsersMutation from 'src/hooks/User/userUsersMutation';
+import useUserGroup from 'src/hooks/UserGroup/useUserGroup';
 
 interface FormUserProps {
   formData: any;
@@ -46,8 +45,11 @@ const FormUser: React.FC<FormUserProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const [userGroup, setUserGroup] = useState<any[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+  const {
+    createMutation: createUser,
+    updateMutation: updateUser,
+  } = useUsersMutation();
 
   const handleTogglePassword = () => {
     setShowPassword((prev) => !prev);
@@ -67,17 +69,7 @@ const FormUser: React.FC<FormUserProps> = ({
     onDirtyChange?.(isDirty);
   }, [isDirty]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAllUserGroup();
-        setUserGroup(res?.collection ?? []);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: userGroup = [], isLoading } = useUserGroup();
 
   const groupOptions = useMemo(() => {
     return userGroup
@@ -99,14 +91,15 @@ const FormUser: React.FC<FormUserProps> = ({
     setErrors({});
 
     try {
-    
-
       const { application_id, ...payload } = formData;
 
       if (edittingId) {
-        await updateUser( edittingId, payload);
+        await updateUser.mutateAsync({
+          id: edittingId,
+          payload,
+        });
       } else {
-        await createUser(payload);
+        await createUser.mutateAsync(payload);
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
@@ -209,31 +202,10 @@ const FormUser: React.FC<FormUserProps> = ({
             <CustomFormLabel htmlFor="user_group_id" sx={{ mt: 0.5 }}>
               Group
             </CustomFormLabel>
-
-            {/* <CustomTextField
-              id="user_group_id"
-              select
-              value={formData.user_group_id ?? ''}
-              onChange={(e) => handleGroupChange(e.target.value)}
-              error={Boolean(errors.user_group_id)}
-              helperText={errors.user_group_id ?? ''}
-              fullWidth
-              SelectProps={{ displayEmpty: true }}
-            >
-              <MenuItem value="" disabled>
-                Select Group
-              </MenuItem>
-
-              {groupOptions.map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  {group.label}
-                </MenuItem>
-              ))}
-            </CustomTextField> */}
             <Autocomplete
               options={groupOptions}
               getOptionLabel={(option) => option.label}
-              value={groupOptions.find((item) => item.id === formData.user_group_id) || null}
+              value={groupOptions.find((item: any) => item.id === formData.user_group_id) || null}
               onChange={(_, value) => {
                 handleGroupChange(value?.id ?? '');
               }}

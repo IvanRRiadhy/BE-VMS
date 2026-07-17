@@ -10,11 +10,12 @@ type ActivitiesParams = {
   end_date: string;
 };
 
-export const useActivities = ({  start, length, start_date, end_date }: ActivitiesParams) => {
+export const useActivities = ({ start, length, start_date, end_date }: ActivitiesParams) => {
   return useQuery({
     queryKey: ['activities', start, length, start_date, end_date],
-    queryFn: () => getActivities( start, length, start_date, end_date),
+    queryFn: () => getActivities(start, length, start_date, end_date),
     retry: false,
+    refetchInterval: 10000,
     select: (data) =>
       data.collection.map((item: any) => ({
         id: item.id,

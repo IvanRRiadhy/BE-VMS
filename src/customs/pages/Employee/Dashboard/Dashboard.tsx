@@ -51,12 +51,6 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import {
-  createShareLink,
-  createShareLinkByEmailById,
-  deleteShareLink,
-  getShareLinkByDt,
-} from 'src/customs/api/Admin/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -80,6 +74,12 @@ import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDia
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
 import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
+import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
+import ApprovalVisitorGroupDialog from '../Components/Dialog/ApprovalVisitorGroupDialog';
+import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
+import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
+import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -92,7 +92,6 @@ const DashboardEmployee = () => {
   const [loading, setLoading] = useState(false);
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
-  const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
@@ -122,14 +121,13 @@ const DashboardEmployee = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
   const { t } = useTranslation();
   const start = page * rowsPerPage;
   const navigate = useNavigate();
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
-
+  const { createMutation: createQuickAccess } = useQuickAccessMutation();
 
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
@@ -152,67 +150,18 @@ const DashboardEmployee = () => {
     setOpenAccess(false);
   };
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
-    queryFn: async () => {
-      const res = await getShareLinkByDt(start, rowsPerPage, searchKeyword, sortDir);
-
-      return res;
-    },
-
-    staleTime: 1000 * 60 * 1,
-    placeholderData: (previousData) => previousData,
+  const {
+    data,
+    isLoading: isLoadingShareLink,
+    isFetching,
+  } = useShareLinkPagination({
+    page,
+    rowsPerPage,
+    search: searchKeyword,
+    sortDir,
   });
 
-  const shareLinkList =
-    data?.collection?.map((item: any) => ({
-      id: item.id,
-      agenda: item.agenda,
-      url: item.url,
-      current_usage: item.current_usage,
-      max_usage: item.max_usage,
-      expired_at: (() => {
-        const date = new Date(item.expired_at + 'Z');
-
-        const formattedDate = date.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        });
-
-        const formattedTime = date
-          .toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          })
-          .replace(':', '.');
-
-        return `${formattedDate}, ${formattedTime}`;
-      })(),
-      link_status: item.link_status,
-    })) || [];
-
-  useEffect(() => {
-    const fetchDataActiveInvtiation = async () => {
-      try {
-        const response = await getActiveInvitation();
-        let rows = response.collection.map((item: any) => ({
-          id: item.id,
-          name: item.visitor.name,
-          email: item.visitor.email,
-          organization: item.visitor.organization,
-          visitor_period_start: item.visitor_period_start,
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          host: item.host_name ?? '-',
-          // visitor_status: item.visitor_status,
-        }));
-        setActiveInvitation(rows || []);
-      } catch (error) { }
-    };
-
-    fetchDataActiveInvtiation();
-  }, []);
+  const shareLinkList = data?.collection ?? [];
 
   const {
     data: approvalRes,
@@ -305,21 +254,13 @@ const DashboardEmployee = () => {
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const { data: quickAccessResult } = useQuery({
-    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
-    queryFn: async () => {
-      const res = await getAllVisitorPagination(
-        quickPage * quickRowsPerPage,
-        quickRowsPerPage,
-        quickSearch || undefined,
-        undefined,
-        undefined,
-        'QuickAccess',
-      );
-
-      return res;
-    },
-    enabled: openQuickAccess,
+  const {
+    data: quickAccessResult,
+    isLoading: isLoadingQuickAccess,
+  } = useQuickAccessPagination({
+    page: quickPage,
+    rowsPerPage: quickRowsPerPage,
+    search: quickSearch,
   });
 
   const processedQuickAccessData = useMemo(() => {
@@ -419,7 +360,7 @@ const DashboardEmployee = () => {
     setIsParkingLoading(true);
     try {
       const res = await openParkingBlocker({ id: accessPass.id });
-      console.log('res', JSON.stringify(res, null, 2));
+
       setSnackbar({
         open: true,
         message: 'Parking blocker opened successfully.',
@@ -499,6 +440,15 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleOpenInviteDialog = async (row: any) => {
+    const res = await getShareLinkById(row.id);
+    setSelectedShareLink(res.collection);
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.shorten_url || row.url);
+    setExpiredAt(row.expired_at);
+    setOpenInviteViaLinkEmail(true);
+  };
+
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     showSwal('success', 'Link copied to clipboard.');
@@ -508,6 +458,8 @@ const DashboardEmployee = () => {
     // window.open(link, '_blank');
     setOpenDetailLink(true);
   };
+
+  const { deleteMutation, createMutation, sendEmailMutation } = useShareLinkMutation();
 
   const handleDeleteLink = async (id: string) => {
     try {
@@ -526,11 +478,7 @@ const DashboardEmployee = () => {
       });
 
       if (!confirm.isConfirmed) return;
-
-      await deleteShareLink(id);
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      await deleteMutation.mutateAsync(id);
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
       showSwal('error', 'Something went wrong while deleting link.');
@@ -541,12 +489,7 @@ const DashboardEmployee = () => {
     try {
       setIsGenerating(true);
 
-      await createShareLink(payload);
-
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
-
+      await createMutation.mutateAsync(payload);
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
     } catch (err: any) {
@@ -565,11 +508,7 @@ const DashboardEmployee = () => {
         emails: emails,
       };
 
-      await createShareLink(finalPayload);
-
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      await createMutation.mutateAsync(finalPayload);
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
@@ -632,18 +571,15 @@ const DashboardEmployee = () => {
     }
   };
 
+
+
   const handleCreateQuickAccess = async (payload: any) => {
     try {
       setIsGenerating(true);
-      await createQuickAccess(payload);
-
+      await createQuickAccess.mutateAsync(payload);
       showSwal('success', 'Quick access created successfully');
-
-      // setOpenQuickAccess(false);
-      await queryClient.invalidateQueries({ queryKey: ['quick-access'] });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
-
       throw error;
     } finally {
       setIsGenerating(false);
@@ -714,13 +650,13 @@ const DashboardEmployee = () => {
       return;
     }
     try {
-      const payload = {
-        emails: emails,
-      };
-      // console.log('payload', payload);
-      await createShareLinkByEmailById(selectedShareLinkId as string, payload);
+      await sendEmailMutation.mutateAsync({
+        id: selectedShareLinkId,
+        payload: {
+          emails: validEmails,
+        },
+      });
       showSwal('success', 'Invitation sent successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
@@ -822,7 +758,7 @@ const DashboardEmployee = () => {
             }}
           >
             <DynamicTable
-              loading={isFetching}
+              loading={isLoadingShareLink}
               height={'100%'}
               overflowX="auto"
               data={shareLinkList}
@@ -837,7 +773,7 @@ const DashboardEmployee = () => {
               }}
               isHaveAddData={true}
               isDetailLink={true}
-              onCopyLink={(row: any) => handleCopyLink(row.url)}
+              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
               onDetailLink={(row: any) => handleDetailLink(row)}
               onDelete={(row: any) => handleDeleteLink(row.id)}
               onAddData={() => setOpenCreateLink(true)}
@@ -896,6 +832,7 @@ const DashboardEmployee = () => {
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
         visitorTableData={processedQuickAccessData}
+        loading={isLoadingQuickAccess}
         onSubmit={handleCreateQuickAccess}
         page={quickPage}
         setPage={setQuickPage}
@@ -990,95 +927,20 @@ const DashboardEmployee = () => {
           ref={printRef}
         />
       )}
-      {/* 
-      <VisitorApprovalDialog
+
+      <ApprovalVisitorGroupDialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        groupName={groupHeader?.group_name}
+        onClose={handleCloseDialog}
         loading={groupDetailLoading}
-        visitorTableData={visitorTableData ?? []}
+        data={visitorTableData}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         triggerCheckAll={triggerCheckAll}
-        selectedId={selectedId ?? undefined}
-        onReject={(id) => {
-          handleActionApproval(id, 'Reject');
-          setOpenDialog(false);
-        }}
-        onApprove={(id) => {
-          handleApproveMeetingHost(id);
-          setOpenDialog(false);
-        }}
-      /> */}
-
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        fullWidth
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
-      >
-        <DialogTitle>
-          Visitor Group
-          <IconButton
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-            onClick={handleCloseDialog}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers sx={{ padding: '0px !important' }}>
-          <DynamicTable
-            loading={groupDetailLoading}
-            data={visitorTableData}
-            selectedRows={selectedRows}
-            onCheckedChange={setSelectedRows}
-            setSelectedRows={setSelectedRows}
-            triggerCheckAll={triggerCheckAll}
-            isHaveChecked={true}
-            titleHeader="Select visitors for approval or rejection"
-            isHaveHeaderTitle={true}
-            isNoActionTableHead={true}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={(e: any) => {
-              e.stopPropagation();
-              if (!selectedId) return;
-              handleActionApproval(selectedId, 'Reject');
-              setOpenDialog(false);
-            }}
-            fullWidth
-            color="error"
-            variant="contained"
-          >
-            {t('reject')}
-          </Button>
-          <Button
-            onClick={(e: any) => {
-              e.stopPropagation();
-              if (!selectedId) return;
-              handleApproveMeetingHost(selectedId);
-            }}
-            variant="contained"
-            fullWidth
-          >
-            {t('approve')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        selectedId={selectedId as string}
+        onReject={(id) => handleActionApproval(id, 'Reject')}
+        onApprove={handleApproveMeetingHost}
+        t={t}
+      />
 
       <Portal>
         <Snackbar

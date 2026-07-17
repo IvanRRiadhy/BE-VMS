@@ -13,6 +13,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getUserById } from 'src/customs/api/admin';
 import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from '../FormUser';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 
 interface Props {
   open: boolean;
@@ -88,26 +89,11 @@ const DialogFormUser: React.FC<Props> = ({
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            onClick={() => setConfirmOpen(false)}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to continue editing or discard?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDiscard} variant="contained">
-            Yes, Discard Changes and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog 
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onDiscard={handleDiscard}
+      />
     </>
   );
 };

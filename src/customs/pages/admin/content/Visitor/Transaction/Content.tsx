@@ -121,6 +121,20 @@ const Content = () => {
   const [openGroup, setOpenGroup] = useState(true);
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [hostSearch, setHostSearch] = useState('');
+  const debouncedSearch = useDebounce(hostSearch, 800);
+
+  const { visitorType } = useVisitorType();
+  const { data: sites } = useSites();
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
+    'search[value]': debouncedSearch,
+    sortDir: 'desc',
+  });
+
+  const employeeData = data?.collection ?? [];
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const [vtLoading, setVtLoading] = useState(false);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
 
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
@@ -348,7 +362,7 @@ const Content = () => {
   const {
     data: detailData,
     isLoading: groupDetailLoading,
-  } = useTransactionVisitorDetail(selectedGroupId ?? null);
+  } = useTransactionVisitorDetail(selectedGroupId as string);
 
   useEffect(() => {
     if (detailData?.collection) {
@@ -400,19 +414,7 @@ const Content = () => {
     // setShowDrawerFilterMore(false);
   };
 
-  const [hostSearch, setHostSearch] = useState('');
-  const debouncedSearch = useDebounce(hostSearch, 800);
 
-  const { visitorType } = useVisitorType();
-  const { data: sites } = useSites();
-  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
-    'search[value]': debouncedSearch,
-    sortDir: 'desc',
-  });
-
-  const employeeData = data?.collection ?? [];
-  const { allVisitorEmployee } = useVisitorEmployees();
-  const [vtLoading, setVtLoading] = useState(false);
 
   const handleSelectSite = (site: any) => {
     setFormDataAddVisitor((prev: any) => ({
@@ -457,7 +459,6 @@ const Content = () => {
     );
   });
 
-  const [duplicateData, setDuplicateData] = useState<any>(null);
 
   const handleDuplicate = async (group: any) => {
     try {

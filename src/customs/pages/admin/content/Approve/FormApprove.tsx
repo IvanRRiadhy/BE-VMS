@@ -27,6 +27,7 @@ import {
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getAllUser, getAllEmployee } from 'src/customs/api/admin';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
+import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
 
 interface FormApproveProps {
   formData: any;
@@ -63,9 +64,11 @@ const FormApprove: React.FC<FormApproveProps> = ({
     { label: 'PIC', value: 'PIC' },
   ];
   const [expanded, setExpanded] = useState<string[]>([]);
-  // const [employees, setEmployees] = useState<any[]>([]);
-
   const { employee } = useEmployees();
+  const {
+    createMutation,
+    updateMutation,
+  } = useApprovalWorkflowMutation();
 
   const createId = () => Math.random().toString(36).substring(2, 9);
   const [rules, setRules] = useState<RuleNode[]>([]);
@@ -105,7 +108,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
     const loadData = async () => {
       try {
-        // setLoading(true);
 
         const res = await getApprovalWorkflowById(edittingId);
         const data = res.collection;
@@ -168,11 +170,13 @@ const FormApprove: React.FC<FormApproveProps> = ({
       console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
-        await updateApprovalWorkflow(edittingId, payload);
+        await updateMutation.mutateAsync({
+          id: edittingId,
+          payload,
+        });
       } else {
-        await createApprovalWorkflow(payload);
+        await createMutation.mutateAsync(payload);
       }
-
       setLoading(false);
       onSuccess?.();
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Container from 'src/components/container/PageContainer';
@@ -31,6 +31,8 @@ import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
+import useUsers from 'src/hooks/User/useUsers';
+import useUsersMutation from 'src/hooks/User/userUsersMutation';
 
 const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -40,21 +42,25 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
+  const [openEmployeeAssign, setOpenEmployeeAssign] = useState(false);
+  const [availableAccounts, setAvailableAccounts] = useState<any[]>([]);
+  const [assignedAccounts, setAssignedAccounts] = useState<any[]>([]);
+  const [selectedAvailable, setSelectedAvailable] = useState<any | null>(null);
+  const [selectedAssigned, setSelectedAssigned] = useState<any | null>(null);
+  const [openAssignDialog, setOpenAssignDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+
   const navigate = useNavigate();
-
+  const { employee } = useEmployees();
+  const { organizations } = useOrganization();
   const queryClient = useQueryClient();
+  const { data, isLoading } = useUsers();
+  const {
+    deleteMutation: deleteUser,
+  } = useUsersMutation();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await getAllUser();
-      return {
-        collection: response.collection,
-      };
-    },
-  });
-
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     if (!data?.collection) return [];
 
     return data.collection
@@ -72,15 +78,18 @@ const Content = () => {
 
   const totalRecords = data?.collection.length ?? 0;
 
-  const cards = [
-    {
-      title: 'Total User',
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconUsers,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total User',
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        icon: IconUsers,
+        color: 'none',
+      },
+    ],
+    [totalRecords]
+  );
 
   const handleAdd = () => {
     setEdittingId('');
@@ -114,18 +123,13 @@ const Content = () => {
     if (!confirmed) return;
 
     try {
-      await deleteUser(id);
+      await deleteUser.mutateAsync(id);
       showSwal('success', 'Successfully deleted user!');
 
-      queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error: any) {
       showSwal('error', error.response.data.msg || 'Failed to delete user.');
     }
   };
-
-  const { employee } = useEmployees();
-
-  const { organizations } = useOrganization();
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -141,9 +145,6 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  const [openAssignDialog, setOpenAssignDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
 
   const handleAssign = (row: any) => {
     setSelectedUser(row);
@@ -164,7 +165,6 @@ const Content = () => {
       });
 
       showSwal('success', 'Employee assigned successfully');
-
       setOpenEmployeeAssign(false);
 
       queryClient.invalidateQueries({
@@ -193,13 +193,6 @@ const Content = () => {
     }
   };
 
-  const [openEmployeeAssign, setOpenEmployeeAssign] = useState(false);
-
-  const [availableAccounts, setAvailableAccounts] = useState<any[]>([]);
-  const [assignedAccounts, setAssignedAccounts] = useState<any[]>([]);
-
-  const [selectedAvailable, setSelectedAvailable] = useState<any | null>(null);
-  const [selectedAssigned, setSelectedAssigned] = useState<any | null>(null);
 
   const handleAssignTracking = async (row: any) => {
     const res = await getLinkAccountTracking(row.id);
@@ -382,7 +375,6 @@ const Content = () => {
         edittingId={edittingId}
         onSuccess={() => {
           setOpenFormAddDocument(false);
-          queryClient.invalidateQueries({ queryKey: ['users'] });
         }}
         organizationRes={organizations}
       />

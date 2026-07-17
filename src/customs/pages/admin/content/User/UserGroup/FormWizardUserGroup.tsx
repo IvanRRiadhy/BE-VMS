@@ -16,6 +16,7 @@ import { createUserGroup, updateUserGroup } from 'src/customs/api/admin';
 
 
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import useUserGroupMutation from 'src/hooks/UserGroup/useUserGroupMutation';
 interface FormWizardUserGroupProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -52,6 +53,11 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     onDirtyChange?.(isDirty);
   }, [isDirty]);
 
+  const {
+    createMutation: createUserGroup,
+    updateMutation: updateUserGroup,
+  } = useUserGroupMutation();
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [id]: value }));
@@ -63,7 +69,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     setErrors({});
 
     try {
-      
+
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -71,12 +77,14 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
         role_access: formData.role_access,
       };
       if (edittingId) {
-        await updateUserGroup( edittingId, payload);
+        await updateUserGroup.mutateAsync({
+          id: edittingId,
+          payload,
+        });
       } else {
-        await createUserGroup (payload);
+        await createUserGroup.mutateAsync(payload);
       }
-
-      showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
+      showSwal('success', edittingId ? 'User group successfully updated!' : 'User group successfully created!');
 
       onSuccess?.();
     } catch (err: any) {

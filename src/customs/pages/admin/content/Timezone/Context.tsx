@@ -19,7 +19,6 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';

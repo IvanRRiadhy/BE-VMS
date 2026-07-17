@@ -20,9 +20,11 @@ import printBadge from 'src/assets/images/print_badge.jpeg';
 import { PrintBadgeSchema } from 'src/customs/api/validations/PrintBadgeSchema';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { getPrintBadgeConfig, updatePrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import FormPrintBadge from './FormPrintBadge';
+import usePrintBadgeConfig from 'src/hooks/PrintBadge/usePrintBadge';
+import { useQueryClient } from '@tanstack/react-query';
+import usePrintBadgeMutation from 'src/hooks/PrintBadge/usePrintBadgeMutation';
+import { uploadPrintBadgeLogo } from 'src/customs/api/Admin/PrintBadge';
 
 type PrintBadgeForm = {
   logo: File | null;
@@ -44,36 +46,30 @@ const Content = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [printBadgeConfig, setPrintBadgeConfig] = useState<any | null>(null);
+  // const [printBadgeConfig, setPrintBadgeConfig] = useState<any | null>(null);
   const handleChange = (field: keyof PrintBadgeForm, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const uploadFileToCDN = async (file: File, id: string): Promise<string | null> => {
-    if (!(file instanceof File)) return null;
 
-    const uploadFormData = new FormData();
-    uploadFormData.append('logo', file);
+  const { printData: printBadgeConfig, isLoading } = usePrintBadgeConfig();
+  const queryClient = useQueryClient();
 
-    try {
-      const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, uploadFormData, {
-        headers: {
-          'Content-Type': undefined,
-        },
-        transformRequest: [(data) => data],
-      });
+  useEffect(() => {
+    if (!printBadgeConfig) return;
 
-      const fileUrl = response.data?.collection?.file_url;
-      console.log('uploaded file url:', fileUrl);
-      if (!fileUrl) return null;
+    setFormData({
+      logo: null,
+      name: printBadgeConfig.name ?? '',
+      footer_text: printBadgeConfig.footer_text ?? '',
+      printer_name: printBadgeConfig.printer_name ?? '',
+      printer_vendor_id: printBadgeConfig.printer_vendor_id ?? '',
+      printer_paper_size: printBadgeConfig.printer_paper_size ?? '',
+    });
+  }, [printBadgeConfig]);
 
-      return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      return null;
-    }
-  };
+  const updateMutation = usePrintBadgeMutation();
 
   const deleteCDN = async (fileUrl: string) => {
     try {
@@ -119,7 +115,10 @@ const Content = () => {
       let logoUrl: string | null = oldLogo;
 
       if (formData.logo instanceof File) {
-        const uploadedUrl = await uploadFileToCDN(formData.logo, printBadgeConfig.id);
+        const uploadedUrl = await uploadPrintBadgeLogo(
+          printBadgeConfig.id,
+          formData.logo
+        );
 
         if (!uploadedUrl) {
           setErrors({ logo: 'Upload failed' });
@@ -137,7 +136,11 @@ const Content = () => {
         printer_paper_size: result.data.printer_paper_size,
       };
 
-      await updatePrintBadgeConfig(printBadgeConfig.id, payload);
+      // await updatePrintBadgeConfig(printBadgeConfig.id, payload);
+      await updateMutation.mutateAsync({
+        id: printBadgeConfig.id,
+        payload,
+      });
 
       if (oldLogo && oldLogo !== logoUrl) {
         try {
@@ -146,8 +149,13 @@ const Content = () => {
           console.error(err);
         }
       }
-      setPrintBadgeConfig((prev: any) => ({
-        ...prev,
+      // setPrintBadgeConfig((prev: any) => ({
+      //   ...prev,
+      //   ...payload,
+      // }));
+
+      queryClient.setQueryData(['print-badge-config'], (old: any) => ({
+        ...old,
         ...payload,
       }));
 
@@ -165,29 +173,6 @@ const Content = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getPrintBadgeConfig();
-        const config = res?.collection;
-
-        setPrintBadgeConfig(config);
-
-        setFormData({
-          logo: null,
-          name: config.name ?? '',
-          footer_text: config.footer_text ?? '',
-          printer_name: config.printer_name ?? '',
-          printer_vendor_id: config.printer_vendor_id ?? '',
-          printer_paper_size: config.printer_paper_size ?? '',
-        });
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   return (
     <PageContainer
@@ -235,7 +220,7 @@ const Content = () => {
         </Box>
       </Container>
       <Portal>
-        <Backdrop sx={{ color: '#fff', zIndex: 99999 }} open={loading}>
+        <Backdrop sx={{ color: '#fff', zIndex: 99999 }} open={loading || updateMutation.isPending}>
           <CircularProgress color="primary" />
         </Backdrop>
       </Portal>

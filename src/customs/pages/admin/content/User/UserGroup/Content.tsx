@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Backdrop, Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconUsers } from '@tabler/icons-react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createPermission,
@@ -17,15 +16,12 @@ import {
   deletePermissionOrganization,
   deletePermissionRegisterSite,
   deletePermissionSite,
-  deleteUserGroup,
   getAllPermission,
   getAllPermissionManageVisitor,
   getAllPermissionOrganization,
   getAllPermissionRegisterSite,
   getAllPermissionSite,
-  getAllSite,
   getUserGroupById,
-  getUserGroupDt,
 } from 'src/customs/api/admin';
 import {
   AdminCustomSidebarItemsData,
@@ -48,10 +44,9 @@ import {
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import useDropPoint from 'src/hooks/Invitation/useDropPoint';
-import { useOrganization } from 'src/hooks/Organization/useOrganization';
-import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
-import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
-import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
+import useUserGroups from 'src/hooks/UserGroup/useUserGroupPagination';
+import useUserGroupMutation from 'src/hooks/UserGroup/useUserGroupMutation';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -63,7 +58,6 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [siteOptions, setSiteOptions] = useState<any[]>([]);
   const { dropPoint } = useDropPoint();
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
@@ -71,43 +65,42 @@ const Content = () => {
   const [originalData, setOriginalData] = useState<any>(null);
   const [sortDir, setSortDir] = useState('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users-group', page, rowsPerPage, sortDir, search],
-    queryFn: async () => {
-      const start = page * rowsPerPage;
-      const response = await getUserGroupDt(start, rowsPerPage, search, sortDir);
-
-      const filteredData = response.collection.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || '',
-        homepage: item.homepage,
-        level_priority: item.level_priority,
-        role_access: item.role_access,
-      }));
-
-      return {
-        collection: filteredData,
-        tableCollection: filteredData,
-        totalRecords: response.recordsTotal,
-        totalFiltered: response.RecordsFiltered,
-      };
-    },
+  const { data, isLoading, refetch } = useUserGroups({
+    page,
+    rowsPerPage,
+    search,
+    sortDir,
   });
+
+  const { data: sites = [] } = useSites();
+  const siteOptions = useMemo(
+    () =>
+      sites.map((site: any) => ({
+        ...site,
+        id: site.id.toLowerCase(),
+      })),
+    [sites],
+  );
+
+  const {
+    deleteMutation: deleteUserGroup,
+  } = useUserGroupMutation();
 
   const collection = data?.collection || [];
   const totalRecords = data?.collection.length || 0;
 
-  const cards = [
-    {
-      title: 'Total User Group',
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconUsers,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total User Group',
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        icon: IconUsers,
+        color: 'none',
+      },
+    ],
+    [totalRecords]
+  );
 
   const handleAdd = () => {
     setEdittingId('');
@@ -134,7 +127,7 @@ const Content = () => {
 
     setLoading(true);
     try {
-      await deleteUserGroup(id);
+      await deleteUserGroup.mutateAsync(id);
       showSwal('success', 'Successfully deleted user group!');
       refetch();
     } catch (error) {
@@ -144,25 +137,6 @@ const Content = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const siteRes = await getAllSite();
-
-      setSiteOptions(
-        (siteRes.collection ?? []).map((site: any) => ({
-          ...site,
-          id: site.id.toLowerCase(),
-        })),
-      );
-    };
-
-    fetchData();
-  }, []);
-
-  const { organizations } = useOrganization();
-  const { accessControl } = useAccessControl();
-  const { visitorType } = useVisitorType();
-  const { data: registeredSite } = useRegisteredSite();
 
   const handlePermission = async (row: any) => {
     try {
@@ -348,93 +322,6 @@ const Content = () => {
     }));
   };
 
-  const PERMISSION_NEED_SITE = [
-    'OrganizationAssignment',
-    'ManageOperator',
-    'OperatorRegisterSite',
-    'ManageAccessScope',
-    'ManageVisitor',
-    'ManageSiteScope',
-    'VisitorTypeAssignment',
-    'SiteAssignment',
-    'ManageVisitorTypeScope',
-    'DropPoint',
-  ];
-
-  const getDropdownOptions = (perm: string) => {
-    switch (perm) {
-      case 'ManageSiteScope':
-        return siteOptions;
-      case 'OrganizationAssignment':
-        return organizations;
-      case 'InviteWithinOwnSite':
-        return siteOptions;
-      case 'ManageAccessScope':
-        return accessControl;
-      case 'OperatorRegisterSite':
-        return registeredSite;
-      case 'ManageVisitor':
-        return MANAGE_VISITOR_PERMISSIONS;
-      case 'ManageVisitorTypeScope':
-        return visitorType;
-      case 'VisitorTypeAssignment':
-        return visitorType;
-      case 'SiteAssignment':
-        return siteOptions;
-      default:
-        return [];
-    }
-  };
-
-  const GROUP_PERMISSION_MAP: Record<string, string[]> = {
-    employee: [
-      'AsHead',
-      'InviteVistor',
-      'InviteWithinAllowPreRegister',
-      'InviteWithinOwnOrganization',
-      'InviteWithinOwnSite',
-      'AllowMobileLogin',
-      'AllowSSOActiveDirectory',
-      // 'External',
-      // 'ManageTeam',
-      'VisitorTypeAssignment',
-      'OrganizationAssignment',
-      'SiteAssignment',
-    ],
-
-    operatorvms: [
-      'AsHead',
-      'OperatorAsWatcher',
-      'ManageInvite',
-      'ManageBlacklist',
-      'AllowMobileLogin',
-      'AllowSSOActiveDirectory',
-      'ManageVisitorTypeScope',
-      'ManageAccessScope',
-      'ManageSiteScope',
-      'OperatorRegisterSite',
-      'ManageVisitor',
-      'OrganizationAssignment',
-    ],
-
-    manager: [
-      'AsHead',
-      'ManageApprove',
-      'ManageSchedule',
-      'AllowMobileLogin',
-      'AllowSSOActiveDirectory',
-    ],
-
-    operatoradmin: [
-      'AllowSSOLoginParking',
-      'AllowSSOLoginTracking',
-      'ManageSchedule',
-      'AllowMobileLogin',
-      'AllowSSOActiveDirectory',
-      'ManageUser',
-    ],
-    visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
-  };
   const [formData, setFormData] = useState({
     group_id: '',
     permissions: [] as string[],
@@ -526,19 +413,6 @@ const Content = () => {
       showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
     }
   };
-
-  const MANAGE_VISITOR_PERMISSIONS = [
-    { id: 'OperatorVisitorSendNotificationArrival', name: 'Send Notification Arrival' },
-    { id: 'OperatorVisitorWalkIn', name: 'Walk In' },
-    { id: 'OperatorVisitorPreregister', name: 'Pre Register' },
-    { id: 'OperatorVisitorCheckIn', name: 'Check In' },
-    { id: 'OperatorVisitorCheckout', name: 'Check Out' },
-    { id: 'OperatorVisitorBlock', name: 'Block Visitor' },
-    { id: 'OperatorVisitorExtend', name: 'Extend Visit' },
-    { id: 'OperatorVisitorTriggerOpen', name: 'Trigger Open Gate' },
-    { id: 'OperatorVisitorCardIssuance', name: 'Card Issuance' },
-    { id: 'OperatorVisitorParkingIssuance', name: 'Parking Issuance' },
-  ];
 
   const handleDeleteAll = async () => {
     if (!originalData) return;
@@ -788,7 +662,6 @@ const Content = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 loading={isLoading}
@@ -843,21 +716,14 @@ const Content = () => {
         onClose={handleRequestClosePermission}
         onSubmit={handleSubmitPermission}
         selectedRoleAccess={selectedRoleAccess}
-        groupPermissionMap={GROUP_PERMISSION_MAP}
         formData={formData}
         setFormData={setFormData}
         siteOptions={siteOptions}
         permissionSites={permissionSites}
         setPermissionSites={setPermissionSites}
         dropPoint={dropPoint}
-        organizationSiteOptions={organizations}
-        regsiteredSiteOptions={registeredSite ?? []}
-        visitorTypeOptions={visitorType}
-        permissionNeedSite={PERMISSION_NEED_SITE}
-        getDropdownOptions={getDropdownOptions}
         formatPermissionLabel={formatPermissionLabel}
         handleAddSiteAssignment={handleAddSiteAssignment}
-        accessOptions={accessControl}
       />
 
       <ConfirmUnsavedDialog

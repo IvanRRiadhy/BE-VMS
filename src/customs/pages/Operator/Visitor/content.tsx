@@ -318,7 +318,7 @@ const Visitor = () => {
         emails: finalEmails,
       };
       console.log('payload', payload);
-      await createShareLinkByEmailById(payload, selectedShareLinkId);
+      await createShareLinkByEmailById(selectedShareLinkId, payload);
       showSwal('success', 'Invitation sent successfully');
 
       setEmails([]);

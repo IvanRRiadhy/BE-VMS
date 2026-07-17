@@ -17,7 +17,6 @@ import { Box } from '@mui/system';
 import React, { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   CreateCustomFieldRequest,
@@ -27,6 +26,8 @@ import {
 } from 'src/customs/api/models/Admin/CustomField';
 import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import GlobalBackdropLoading from '../AdminView/Components/GlobalBackdrop';
+import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
 
 interface FormCustomFieldProps {
   formData: any;
@@ -38,7 +39,10 @@ interface FormCustomFieldProps {
 const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCustomFieldProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-
+  const {
+    createMutation,
+    updateMutation,
+  } = useCustomFieldMutation();
   const [multiOptionList, setMultiOptionList] = useState<multiOptField[]>(
     formData.multiple_option_fields,
   );
@@ -73,24 +77,22 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       };
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
 
-      if (editingId && editingId !== '') {
-        await updateCustomField(parsedData, editingId);
+      if (editingId) {
+        await updateMutation.mutateAsync({
+          id: editingId,
+          payload: parsedData,
+        });
       } else {
-        await createCustomField(parsedData);
+        await createMutation.mutateAsync(parsedData);
       }
-
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
+      onSuccess?.();
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
       showSwal('error', err.response.data.msg ?? 'Failed to create custom field.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setLoading(false);
     }
   };
 
@@ -314,24 +316,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
           </Button>
         </Box>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

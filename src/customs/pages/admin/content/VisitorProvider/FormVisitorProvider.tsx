@@ -17,16 +17,10 @@ import React, { useRef, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import {
-  createVisitorProvider,
-  updateVisitorProviders,
-  uploadLogoVisitorProvider,
-} from 'src/customs/api/Admin/VisitorProviders';
 import { MenuItem } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useVisitorProviderMutation } from 'src/hooks/VisitorProvider/useVisitorProviderMutation';
-import { update } from 'lodash';
 
 interface Props {
   form: any;
@@ -36,7 +30,6 @@ interface Props {
 }
 
 const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => {
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,8 +131,6 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
     }
 
     try {
-      setLoading(true);
-
       const payload = {
         name: form.name,
         code: form.code,
@@ -186,8 +177,6 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
       onSuccess?.();
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to save Visitor Provider');
-    } finally {
-      setLoading(false);
     }
   };
   return (
@@ -471,7 +460,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
             >
               <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
               <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                Upload Employee Image
+                Upload Image
               </Typography>
 
               <Box

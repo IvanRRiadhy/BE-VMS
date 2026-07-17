@@ -18,7 +18,7 @@ export const useEmployeePagination = (
   },
 ) => {
   return useQuery({
-    queryKey: ['employees-pagi', params],
+    queryKey: ['employees', params],
     queryFn: () =>
       getAllEmployeePagination(
         params?.start,

@@ -21,20 +21,19 @@ import {
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
 
 const Content = ({
   tableData,
+  loading,
   searchKeyword,
   setSearchKeyword,
   page,
   setPage,
-  setRefreshTrigger,
-  refreshTrigger,
 }: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const defaultApprovalWorkflow: CreateApprovalWorkflowRequest = {
     name: '',
@@ -43,9 +42,10 @@ const Content = ({
     type: '',
     conditions: [],
   };
-
+  const {
+    deleteMutation,
+  } = useApprovalWorkflowMutation();
   const [isDirty, setIsDirty] = useState(false);
-
   const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
     useState<CreateApprovalWorkflowRequest>(defaultApprovalWorkflow);
 
@@ -119,15 +119,14 @@ const Content = ({
 
     if (!confirm) return;
     try {
-      setLoading(true);
-      await deleteApprovalWorkflow(id);
+      // await deleteApprovalWorkflow(id);
+      await deleteMutation.mutateAsync(id);
       showSwal('success', 'Successfully deleted approval workflow!');
-      setRefreshTrigger((prev: any) => prev + 1);
+
     } catch (error) {
       showSwal('error', 'Failed to delete approval workflow.');
-    } finally {
-      setLoading(false);
     }
+
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
@@ -136,31 +135,26 @@ const Content = ({
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
-      setLoading(true);
+
       try {
-        await Promise.all(rows.map((row) => deleteApprovalWorkflow(row.id)));
-        setRefreshTrigger((prev: any) => prev + 1);
+        await Promise.all(
+          rows.map(row => deleteMutation.mutateAsync(row.id))
+        );
+
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
       }
     }
   };
 
+
   const handleSuccessApprovalWorkflow = async () => {
     setIsDirty(false);
-
     setOpenFormAddDocument(false);
     setEdittingId('');
     setFormAddApprovalWorkflow(defaultApprovalWorkflow);
-
-    setRefreshTrigger((prev: any) => prev + 1);
-
-    await new Promise((r) => setTimeout(r, 200));
-
     await showSwal(
       'success',
       edittingId

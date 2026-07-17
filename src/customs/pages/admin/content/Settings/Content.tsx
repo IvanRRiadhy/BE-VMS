@@ -10,18 +10,6 @@ import {
   Portal,
   useTheme,
   useMediaQuery,
-  Button,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  FormControlLabel,
-  Stack,
-  Switch,
-  Tooltip,
-  Divider,
 } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -42,10 +30,10 @@ import VisitorCardSetting from './VisitorCardSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import NotificationSetting from './NotificationSetting';
 import VMSConfigurationTab from './VmsConfugrationTab';
+import useApprovalWorkflowPagination from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowPagination';
 
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -62,36 +50,7 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
 
-  const cards = [
-    {
-      title: 'Total Visitor Setting',
-      subTitle: `${settingData.length ?? 0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-    // {
-    //   title: 'Total Operator Setting',
-    //   subTitle: `${operatorSettingData.length ?? 0}`,
-    //   subTitleSetting: 10,
-    //   icon: IconSettingsFilled,
-    //   color: 'none',
-    // },
-    {
-      title: 'Total Approval Workflow',
-      subTitle: `${totalRecords ?? 0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-    {
-      title: 'Total Visitor Card Setting',
-      subTitle: `${0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-  ];
+
 
   const handleSubmit = async () => {
     try {
@@ -105,8 +64,6 @@ const Content = () => {
       setShowForm(false);
       setEdittingId('');
     } catch (error: any) {
-      console.error(error);
-      // showErrorAlert('Error!', error.message);
       showSwal('error', error.message || 'Failed to update setting');
     }
   };
@@ -174,25 +131,51 @@ const Content = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sortDir, setSortDir] = useState('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [tableData, setTableData] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getApprovalWorkflowByDt(start, rowsPerPage, sortDir, search);
-        setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
-        setTotalRecords(response.RecordsTotal);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [page, rowsPerPage, sortDir, refreshTrigger, search]);
 
+  const {
+    data,
+    isLoading,
+  } = useApprovalWorkflowPagination({
+    page,
+    rowsPerPage,
+    search,
+    sortDir,
+  });
+
+  const tableData = data?.collection ?? [];
+  const totalRecords = data?.totalRecords ?? 0;
+
+  const cards = [
+    {
+      title: 'Total Visitor Setting',
+      subTitle: `${settingData.length ?? 0}`,
+      subTitleSetting: 10,
+      icon: IconSettingsFilled,
+      color: 'none',
+    },
+    // {
+    //   title: 'Total Operator Setting',
+    //   subTitle: `${operatorSettingData.length ?? 0}`,
+    //   subTitleSetting: 10,
+    //   icon: IconSettingsFilled,
+    //   color: 'none',
+    // },
+    {
+      title: 'Total Approval Workflow',
+      subTitle: `${totalRecords ?? 0}`,
+      subTitleSetting: 10,
+      icon: IconSettingsFilled,
+      color: 'none',
+    },
+    {
+      title: 'Total Visitor Card Setting',
+      subTitle: `${0}`,
+      subTitleSetting: 10,
+      icon: IconSettingsFilled,
+      color: 'none',
+    },
+  ];
 
 
   return (
@@ -243,7 +226,7 @@ const Content = () => {
             >
               {/* vms configuration */}
               {tabIndex === 0 && (
-                <VMSConfigurationTab/>
+                <VMSConfigurationTab />
               )}
               {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
@@ -286,6 +269,7 @@ const Content = () => {
                   {!showForm ? (
                     <ApprovalWorkflow
                       tableData={tableData}
+                      loading={isLoading}
                       searchKeyword={search}
                       setSearchKeyword={setSearch}
                       page={page}

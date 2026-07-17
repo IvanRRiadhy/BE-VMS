@@ -25,6 +25,7 @@ interface QuickAccessDialogProps {
   searchKeyword?: string;
   onSearch?: (keyword: string) => void;
   totalCount?: number;
+  loading?: any;
 }
 
 export interface QuickAccessFormData {
@@ -42,6 +43,7 @@ export interface QuickAccessFormData {
   siteId: string;
   hostId: string;
   duration: number | null;
+
 }
 
 export const QuickAccessDialog = ({
@@ -56,6 +58,7 @@ export const QuickAccessDialog = ({
   searchKeyword,
   onSearch,
   totalCount,
+  loading
 }: QuickAccessDialogProps) => {
   const handleChange = (field: keyof QuickAccessFormData, value: string | number | null) => {
     setForm((prev) => ({
@@ -94,7 +97,7 @@ export const QuickAccessDialog = ({
 
   const handleSubmit = async () => {
     try {
-      const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
+      const selectedProvider = visitorProviders?.find((item: any) => item.id === form.visitorProviderId);
 
       const needPlateNumber =
         selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
@@ -128,7 +131,7 @@ export const QuickAccessDialog = ({
     } catch (error) { }
   };
 
-  const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
+  const selectedProvider = visitorProviders?.find((item: any) => item.id === form.visitorProviderId);
   const showVehiclePlate = selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
 
   const qrRef = useRef<HTMLDivElement>(null);
@@ -220,6 +223,7 @@ export const QuickAccessDialog = ({
         <DialogContent dividers sx={{ p: 0 }}>
           <DynamicTable
             data={visitorTableData || []}
+            loading={loading}
             isHaveSearch={true}
             searchKeyword={searchKeyword}
             onSearch={onSearch}
