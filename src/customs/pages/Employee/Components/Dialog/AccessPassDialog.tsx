@@ -147,11 +147,9 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
                 onClick={onOpenParking}
                 disabled={isParkingLoading}
               >
-                {isParkingLoading ? (
-                  <CircularProgress size={22} sx={{ color: 'white' }} />
-                ) : (
-                  'Open Parking Blocker'
-                )}
+
+                Open Parking Blocker
+
               </Button>
             )}
           </Box>

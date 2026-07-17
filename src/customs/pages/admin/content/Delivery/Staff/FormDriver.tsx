@@ -7,8 +7,6 @@ import {
   Step,
   StepLabel,
   Button,
-  Alert,
-  Stack,
   MenuItem,
   FormHelperText,
   FormControl,
@@ -19,12 +17,9 @@ import {
   Paper,
   Dialog,
   Divider,
-  CircularProgress,
-  Backdrop,
   Switch,
   Checkbox,
   StepButton,
-  Portal,
 } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -75,6 +70,9 @@ import {
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import { useDepartment } from 'src/hooks/Department/useDepartment';
 import { useDistricts } from 'src/hooks/District/useDistricts';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
+import { IconCamera, IconDeviceFloppy, IconTrash } from '@tabler/icons-react';
 
 const FormDriver = ({
   formData,
@@ -107,9 +105,8 @@ const FormDriver = ({
   const [localForm, setLocalForm] = useState(formData);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // useEffect(() => {
-  //   setFormData(localForm);
-  // }, [localForm]);
+  const { t } = useTranslation();
+
   const clearLocal = () => {
     setSiteImageFile(null);
     setPreviewUrl(null);
@@ -124,8 +121,8 @@ const FormDriver = ({
 
     const serverPath =
       localForm.faceimage &&
-      !localForm.faceimage.startsWith('data:') &&
-      !/^https?:\/\//i.test(localForm.faceimage)
+        !localForm.faceimage.startsWith('data:') &&
+        !/^https?:\/\//i.test(localForm.faceimage)
         ? localForm.faceimage
         : null;
 
@@ -662,7 +659,7 @@ const FormDriver = ({
                 justifyContent="space-between"
                 sx={{ marginTop: '0px' }}
               >
-                <CustomFormLabel sx={{ marginY: 1 }}>
+                <CustomFormLabel sx={{ marginY: 1 }} required>
                   <Typography variant="caption" sx={{ marginLeft: '0px', marginTop: '0px' }}>
                     Gender
                   </Typography>
@@ -1074,7 +1071,7 @@ const FormDriver = ({
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join" required>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join">
                 <Typography variant="caption">Exit Date</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -1207,8 +1204,8 @@ const FormDriver = ({
 
                         <Divider sx={{ my: 2 }} />
 
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Button onClick={handleClear} color="warning" sx={{ mr: 2 }}>
+                        <Box sx={{ textAlign: 'right', display: 'flex', gap: 1 }}>
+                          <Button onClick={handleClear} color="warning" sx={{ mr: 2 }} startIcon={<IconTrash />}>
                             Clear Foto
                           </Button>
                           <Button
@@ -1217,6 +1214,7 @@ const FormDriver = ({
                               e.stopPropagation();
                               handleCapture();
                             }}
+                            startIcon={<IconCamera />}
                           >
                             Take Foto
                           </Button>
@@ -1226,8 +1224,9 @@ const FormDriver = ({
                               setOpenCamera(false);
                             }}
                             sx={{ ml: 2 }}
+                            startIcon={<IconDeviceFloppy />}
                           >
-                            Close
+                            Submit
                           </Button>
                         </Box>
                       </Box>
@@ -1327,17 +1326,6 @@ const FormDriver = ({
             ))}
           </Stepper>
         )}
-        {/* 
-        {activeStep === steps.length ? (
-          <Stack spacing={2} mt={3}>
-            <Alert severity="success">All steps completed - you're finished</Alert>
-            <Box textAlign="right">
-              <Button onClick={handleReset} variant="contained" color="error">
-                Reset
-              </Button>
-            </Box>
-          </Stack>
-        ) : ( */}
         <>
           <Box mt={3}>{StepContent(activeStep)}</Box>
           <Box display="flex" flexDirection="row" mt={3}>
@@ -1348,12 +1336,12 @@ const FormDriver = ({
               onClick={handleBack}
               sx={{ backgroundColor: '#edf3ff' }}
             >
-              Back
+              {t("back")}
             </Button>
             <Box flex="1 1 auto" />
             {activeStep !== steps.length - 1 ? (
               <Button onClick={handleNext} variant="contained" color="primary">
-                Next
+                {t("next")}
               </Button>
             ) : (
               <Button
@@ -1367,19 +1355,8 @@ const FormDriver = ({
             )}
           </Box>
         </>
-        {/* )} */}
       </Box>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </form>
   );
 };

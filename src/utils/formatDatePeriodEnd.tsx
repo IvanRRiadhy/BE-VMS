@@ -5,6 +5,9 @@ export const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
 
   const base = moment.utc(dateStr);
 
+  if (!base.isValid()) return '-';
+
+
   if (extendMinutes !== 0) {
     base.add(extendMinutes, 'minutes');
   }

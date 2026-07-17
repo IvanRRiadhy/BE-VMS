@@ -279,6 +279,7 @@ const Ipsotek = ({ id: string }: any) => {
                 Integration
               </CustomFormLabel>
               <Autocomplete
+                disabled
                 options={integration}
                 getOptionLabel={(opt: any) => opt.name || ''}
                 value={integration.find((i) => i.id === formCategory.integration_id) || null}

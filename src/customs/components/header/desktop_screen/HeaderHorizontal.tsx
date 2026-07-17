@@ -2,7 +2,8 @@ import { IconButton, Box, AppBar, Toolbar, Stack, Theme } from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
 import { IconMenu2, IconMoon, IconMoonFilled } from '@tabler/icons-react';
-import Notifications from 'src/layouts/full/vertical/header/Notification';
+// import Notifications from 'src/layouts/full/vertical/header/Notification';
+
 import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
@@ -11,6 +12,11 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
 import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
+import { lazy } from 'react';
+
+const Notifications = lazy(
+  () => import('src/layouts/full/vertical/header/Notification')
+);
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   background: theme.palette.background.paper,

@@ -384,6 +384,7 @@ function DynamicTableBase<
     'shorten_url',
     'ticket_id',
     'employee_linked',
+    'is_blacklist'
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -399,9 +400,9 @@ function DynamicTableBase<
     loading || data.length === 0
       ? fallbackColumns
       : (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
-          keyof T,
-          string
-        >[]);
+        keyof T,
+        string
+      >[]);
 
   const columnss =
     sortColumns && sortColumns.length > 0
@@ -1251,11 +1252,11 @@ function DynamicTableBase<
                   // overflowX: 'auto',
                 }}
                 stickyHeader={stickyHeader}
-                // sx={{
-                // width: '100%',
-                // tableLayout: 'fixed',
-                // whiteSpace: 'normal', // biar teks bisa wrap
-                // }}
+              // sx={{
+              // width: '100%',
+              // tableLayout: 'fixed',
+              // whiteSpace: 'normal', // biar teks bisa wrap
+              // }}
               >
                 <TableHead>
                   <TableRow>

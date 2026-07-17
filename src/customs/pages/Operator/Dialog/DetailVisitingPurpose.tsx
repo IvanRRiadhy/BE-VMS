@@ -2,15 +2,15 @@ import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
-const DetailVisitingPurpose = ({ open, onClose, data, purposeName }: any) => {
+const DetailVisitingPurpose = ({ open, onClose, data, purposeName, page, setPage, rowsPerPage, setRowsPerPage, searchKeyword, setSearchKeyword }: any) => {
   return (
     <div>
-      <Dialog open={open} onClose={onClose} fullWidth   maxWidth={false}
-            PaperProps={{
-              sx: {
-                width: '100vw',
-              },
-            }}>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}>
         <DialogTitle>{purposeName?.name}</DialogTitle>
 
         <IconButton
@@ -26,7 +26,21 @@ const DetailVisitingPurpose = ({ open, onClose, data, purposeName }: any) => {
           <IconX />
         </IconButton>
         <DialogContent dividers>
-          <DynamicTable data={data} isHaveChecked isNoActionTableHead  isHaveSearch/>
+          <DynamicTable data={data}
+            isHaveChecked={false}
+            isNoActionTableHead
+            isHaveSearch isHavePagination={false}
+            // selectedRows={selectedRows}
+            defaultRowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10, 50, 100]}
+            currentPage={page}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
+            searchKeyword={searchKeyword}
+            onSearch={setSearchKeyword}
+          />
         </DialogContent>
       </Dialog>
     </div>

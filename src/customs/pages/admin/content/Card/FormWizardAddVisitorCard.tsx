@@ -42,6 +42,8 @@ import {
 } from 'src/customs/api/models/Admin/VisitorCard';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
@@ -81,8 +83,6 @@ const FormWizardAddVisitorCard = ({
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
   );
-  const [employeeRes, setEmployeeRes] = useState<any[]>([]);
-  const [siteSpaceRes, setSiteSpaceRes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [localForm, setLocalForm] = useState(formData);
@@ -118,19 +118,8 @@ const FormWizardAddVisitorCard = ({
     setIsDirty?.(true);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const employeeRes = await getVisitorEmployee();
-        const siteSpaceRes = await getRegisteredSite();
-        setEmployeeRes(employeeRes.collection);
-        setSiteSpaceRes(siteSpaceRes.collection);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchData();
-  }, []);
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const { data: siteSpaceRes = [] } = useRegisteredSite();
 
   useEffect(() => {
     if (localForm.is_multi_site) {
@@ -429,9 +418,9 @@ const FormWizardAddVisitorCard = ({
               </CustomFormLabel>
               <Autocomplete
                 id="employee_id"
-                options={employeeRes}
+                options={allVisitorEmployee}
                 getOptionLabel={(option) => option.name ?? ''}
-                value={employeeRes.find((emp) => emp.id === localForm.employee_id) || null}
+                value={allVisitorEmployee.find((emp) => emp.id === localForm.employee_id) || null}
                 onChange={(_, newValue) => {
                   setLocalForm((prev) => ({
                     ...prev,
@@ -502,10 +491,10 @@ const FormWizardAddVisitorCard = ({
                   localForm.is_multi_site
                     ? null
                     : siteSpaceRes.find(
-                        (s) =>
-                          String(s.id).toLowerCase() ===
-                          String(localForm.registered_site ?? '').toLowerCase(),
-                      ) || null
+                      (s) =>
+                        String(s.id).toLowerCase() ===
+                        String(localForm.registered_site ?? '').toLowerCase(),
+                    ) || null
                 }
                 isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                 onChange={(_, newValue) => {

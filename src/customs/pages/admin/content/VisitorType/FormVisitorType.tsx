@@ -192,6 +192,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       ]
       : [];
 
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -311,9 +312,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
         setDeletedAccessIds([]);
 
+        // const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
+        // for (const payload of analyticsPayloads) {
+        //   if (edittingId) {
+        //     await updateVisitorTypeAnalytics(payload.id, payload);
+        //   } else {
+        //     await createVisitorTypeAnalytics(payload);
+        //   }
+        // }
+
         const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
+
         for (const payload of analyticsPayloads) {
-          if (edittingId) {
+          if (payload.id) {
             await updateVisitorTypeAnalytics(payload.id, payload);
           } else {
             await createVisitorTypeAnalytics(payload);
@@ -337,6 +348,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
         if (formData.can_track_cctv && selectedAnalytics) {
           const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
+          console.log("accessPayloadAnalytics", accessPayloadAnalytics);
           await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics);
         }
         showSwal('success', 'Visitor type created successfully!');
@@ -622,12 +634,23 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     })),
   });
 
+  // const buildCreateAnalyticsPayloads = (visitorTypeId: string) => ({
+  //   data: selectedAnalytics.map((a: any, index: any) => ({
+  //     integration_id: a.integration_id,
+  //     visitor_type_id: visitorTypeId,
+  //     sort: index,
+  //   })),
+  // });
+
+
   const buildCreateAnalyticsPayload = (visitorTypeId: string) => ({
-    data: selectedAnalytics.map((a: any, index: any) => ({
-      integration_id: a.integration_id,
-      visitor_type_id: visitorTypeId,
-      sort: index,
-    })),
+    data: [
+      {
+        integration_id: selectedAnalytics.integration_id,
+        visitor_type_id: visitorTypeId,
+        sort: 0,
+      },
+    ],
   });
 
   return (

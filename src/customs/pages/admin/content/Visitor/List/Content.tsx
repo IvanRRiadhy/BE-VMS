@@ -28,22 +28,6 @@ import { useTranslation } from 'react-i18next';
 import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
 import { useListVisitorMutation } from 'src/hooks/Visitor/useListVisitorMutation';
 
-type VisitorTableRow = {
-  id: string;
-  identity_id: string;
-  name: string;
-  visitor_type: string;
-  email: string;
-  organization: string;
-  gender: string;
-  phone: string;
-  is_vip: string;
-  visitor_period_start: string;
-  visitor_period_end: string;
-  host: string;
-  is_blacklist: boolean;
-};
-
 interface VisitorFilters {
   organization_id: string;
   department_id: string;

@@ -140,6 +140,7 @@ const VisitorDetailCard = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 1,
+        height: '100%',
       }}
     >
       <Card

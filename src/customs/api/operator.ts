@@ -1,3 +1,4 @@
+import { start } from 'repl';
 import axios from 'axios';
 import axiosInstance from './interceptor';
 import {
@@ -367,6 +368,9 @@ export const getUpComingVisitors = async (params?: {
   end_date?: string;
   visitor_type?: string;
   all_visitor_type?: string;
+  start?: number;
+  length?: number;
+  sortDir?: string;
 }): Promise<any> => {
   const response = await axiosInstance.get('/operator-invitation/upcoming-visitor', {
     headers: {
@@ -378,6 +382,9 @@ export const getUpComingVisitors = async (params?: {
       'end-date': params?.end_date,
       'visitor-type': params?.visitor_type,
       'all-visitor-type': params?.all_visitor_type,
+      start: params?.start,
+      length: params?.length,
+      'sort_dir': params?.sortDir,
     },
   });
 

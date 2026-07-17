@@ -148,6 +148,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   const [value, setValue] = useState<any[]>([]);
   const [valueVisitorProvider, setValueVisitorProvider] = useState<any | null>(null);
 
+
   if (activeStep === 0) {
     return (
       <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -414,15 +415,27 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 options={analyticCctv}
                 value={selectedAnalytics}
                 getOptionLabel={(option: any) => option.name ?? ''}
+                isOptionEqualToValue={(option, value) =>
+                  option.integration_id === value.integration_id
+                }
+                // onChange={(_, newValue) => {
+                //   if (!newValue) {
+                //     setSelectedAnalytics(null);
+                //     return;
+                //   }
+
+                //   setSelectedAnalytics({
+                //     id: undefined,
+                //     integration_id: newValue.integration_id,
+                //     name: newValue.name,
+                //   });
+                // }}
                 onChange={(_, newValue) => {
-                  if (!newValue) {
-                    setSelectedAnalytics(null);
-                    return;
-                  }
+                  if (!newValue) return;
 
                   setSelectedAnalytics({
                     id: undefined,
-                    integration_id: newValue.integration_id,
+                    integration_id: newValue.id,
                     name: newValue.name,
                   });
                 }}
@@ -477,10 +490,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.duration_visit || ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>
@@ -510,10 +523,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.max_time_visit ?? ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>
@@ -546,10 +559,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.period || ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>
@@ -581,10 +594,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.grace_time || ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>

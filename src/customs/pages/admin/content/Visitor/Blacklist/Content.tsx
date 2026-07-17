@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -56,29 +56,32 @@ const Content = () => {
   const totalActive = data?.collection.filter((x: any) => x.is_active).length ?? 0;
   const totalNonActive = data?.collection.filter((x: any) => !x.is_active).length ?? 0;
 
-  const cards = [
-    {
-      title: t('total_blacklist'),
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      icon: IconForbid,
-      color: 'none',
-    },
-    {
-      title: t('activeBlacklist'),
-      subTitle: `${totalActive}`,
-      subTitleSetting: 10,
-      icon: IconForbid,
-      color: 'none',
-    },
-    {
-      title: t('nonActiveBlacklist'),
-      subTitle: `${totalNonActive}`,
-      subTitleSetting: 10,
-      icon: IconForbid,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('total_blacklist'),
+        subTitle: `${totalFilteredRecords}`,
+        subTitleSetting: 10,
+        icon: IconForbid,
+        color: 'none',
+      },
+      {
+        title: t('activeBlacklist'),
+        subTitle: `${totalActive}`,
+        subTitleSetting: 10,
+        icon: IconForbid,
+        color: 'none',
+      },
+      {
+        title: t('nonActiveBlacklist'),
+        subTitle: `${totalNonActive}`,
+        subTitleSetting: 10,
+        icon: IconForbid,
+        color: 'none',
+      },
+    ],
+    [t, totalFilteredRecords, totalActive, totalNonActive]
+  );
 
   const { data: visitors = [], isLoading: isLoadingVisitor } = useListVisitor();
 

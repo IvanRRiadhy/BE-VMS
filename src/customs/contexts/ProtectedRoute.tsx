@@ -10,7 +10,6 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
-
   const {
     data: profile,
     isLoading: profileLoading,
@@ -29,7 +28,7 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
           zIndex: 9999,
         }}
       >
-        <CircularProgress color="primary" size={60} />
+        <CircularProgress color="primary"/>
       </div>
     );
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -24,15 +24,18 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const cards = [
-    {
-      title: 'Total Brand',
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconBrandMedium,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Brand',
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        icon: IconBrandMedium,
+        color: 'none',
+      },
+    ],
+    [totalRecords],
+  );
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);

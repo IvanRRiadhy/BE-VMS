@@ -189,7 +189,6 @@ const ManageReportApproval = Loadable(
 const ManageReportOperatorActivityLog = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/OperatorActivityLog/Content')),
 );
-const ManageZone = Loadable(lazy(() => import('src/customs/pages/admin/content/Zone/Content')));
 const ManagePrintBadge = Loadable(
   lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
 );
@@ -447,7 +446,6 @@ const Router = [
           { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
           { path: '/admin/manage/access-control', element: <ManageAccessControl /> },
           { path: '/admin/manage/custom-field', element: <ManageCustomField /> },
-          { path: '/admin/manage/zone', element: <ManageZone /> },
           { path: '/admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
           { path: '/admin/settings', element: <ManageSettingVisitor /> },
           { path: '/admin/users', element: <ManageUser /> },

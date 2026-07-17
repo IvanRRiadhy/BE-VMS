@@ -71,10 +71,6 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 
 import {
-  createPraRegister,
-  createPraRegisterGroup,
-  createVisitor,
-  createVisitorsGroup,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';

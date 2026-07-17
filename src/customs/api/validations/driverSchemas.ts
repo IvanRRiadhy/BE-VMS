@@ -25,20 +25,13 @@ export const Step1Schema = z.object({
 export const Step3Schema = z.object({
   birth_date: z.string().min(1, 'Birth date is required'),
   join_date: z.string().min(1, 'Join date is required'),
-  exit_date: z.string().min(1, 'Exit date is required'),
-
-  // ⇩ Buat exit_date opsional: kosong "" dianggap "tidak diisi"
-  // exit_date: z
-  //   .string()
-  //   .optional()
-  //   .transform((v) => (v === '' ? undefined : v)),
 });
 // Field yang divalidasi per step
 export const stepFieldMap: Record<number, Array<keyof CreateEmployeeRequest>> = {
   0: ['name', 'person_id', 'identity_id', 'email', 'gender', 'identity_type'],
   1: ['district_id', 'organization_id', 'department_id'],
   2: [],
-  3: ['birth_date', 'join_date', 'exit_date'],
+  3: ['birth_date', 'join_date'],
   4: [],
 };
 

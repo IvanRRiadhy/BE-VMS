@@ -27,7 +27,7 @@ import {
   Item,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
-import { getVisitorTransactionByIds, getVisitorTransactionPagination } from 'src/customs/api/admin';
+import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
 
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -196,6 +196,23 @@ const Content = () => {
     filters: appliedFilters,
   });
 
+  const {
+    data: detailData,
+    isLoading: groupDetailLoading,
+  } = useTransactionVisitorDetail(selectedGroupId as string);
+
+  useEffect(() => {
+    if (detailData?.collection) {
+      setGroupVisitors(detailData.collection);
+    } else {
+      setGroupVisitors([]);
+    }
+  }, [detailData]);
+
+  const groupHeader =
+    detailData?.collection?.[0] ?? null;
+
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const tableRowVisitors = useMemo(() => {
     return (
@@ -359,23 +376,6 @@ const Content = () => {
     }
   };
 
-  const {
-    data: detailData,
-    isLoading: groupDetailLoading,
-  } = useTransactionVisitorDetail(selectedGroupId as string);
-
-  useEffect(() => {
-    if (detailData?.collection) {
-      setGroupVisitors(detailData.collection);
-    } else {
-      setGroupVisitors([]);
-    }
-  }, [detailData]);
-
-  const groupHeader =
-    detailData?.collection?.[0] ?? null;
-
-  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleResetFilter = () => {
     const empty = {

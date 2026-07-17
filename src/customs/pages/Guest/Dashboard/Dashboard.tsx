@@ -1,12 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import { Box } from '@mui/system';
 import {
-  Card,
-  Typography,
   Grid2 as Grid,
-  Button,
-  Drawer,
   Portal,
   Backdrop,
   CircularProgress,
@@ -23,7 +18,6 @@ import {
   IconLogout,
   IconX,
 } from '@tabler/icons-react';
-import QRCode from 'react-qr-code';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
@@ -31,8 +25,6 @@ import {
   getInvitationById,
   openParkingBlocker,
 } from 'src/customs/api/visitor';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import moment from 'moment-timezone';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -105,25 +97,6 @@ const Dashboard = () => {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
-
-  // function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-  //   const startLocal = moment
-  //     .utc(startUtc)
-  //     .tz(moment.tz.guess())
-  //     .format('dddd, DD MMMM YYYY HH:mm');
-  //   const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('dddd,DD MMMM YYYY HH:mm');
-  //   return `${startLocal} - ${endLocal}`;
-  // }
-
-  // function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-  //   const timezone = 'Asia/Jakarta';
-
-  //   const startLocal = dayjs.utc(startUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
-
-  //   const endLocal = dayjs.utc(endUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
-
-  //   return `${startLocal} - ${endLocal}`;
-  // }
 
   function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
     const timezone = dayjs.tz.guess();

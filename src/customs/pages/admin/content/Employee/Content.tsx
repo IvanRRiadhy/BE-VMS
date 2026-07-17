@@ -19,13 +19,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/Employee';
-import { createEmployeeBlacklist } from 'src/customs/api/admin';
+import { createEmployeeBlacklist, getEmployeeById } from 'src/customs/api/admin';
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
@@ -75,8 +74,12 @@ const Content = () => {
   const { organizations } = useOrganization();
   const { department } = useDepartment();
   const { districts } = useDistricts();
-  const [loadingData, setLoadingData] = useState(false);
-  const { remove } = useEmployeeMutation();
+  const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
+  const navigate = useNavigate();
+  const { remove, blacklist } = useEmployeeMutation();
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
     // joinEnd: '',
@@ -97,20 +100,25 @@ const Content = () => {
     search,
     filters,
   });
+
   const tableData = useMemo<Item[]>(() => {
     return employeeQuery.data?.collection ?? [];
   }, [employeeQuery.data]);
+
   const totalRecords = employeeQuery.data?.RecordsTotal ?? 0;
   const totalFilteredRecords = employeeQuery.data?.RecordsFiltered ?? 0;
-  const cards = [
-    {
-      title: t('total_employee'),
-      icon: IconUsers,
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('total_employee'),
+        icon: IconUsers,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords]
+  );
   const loading = employeeQuery.isPending;
   const tableRowEmployee = useMemo(() => {
     const collection = employeeQuery.data?.collection ?? [];
@@ -121,11 +129,11 @@ const Content = () => {
       organization: item.organization?.name ?? item.Organization?.name ?? '-',
       department: item.department?.name ?? item.Department?.name ?? '-',
       faceimage: item.faceimage,
+      is_blacklist: item.is_blacklist,
     }));
   }, [employeeQuery.data]);
 
   const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
-
   const [formDataAddEmployee, setFormDataAddEmployee] = useState(
     CreateEmployeeRequestSchema.parse({}),
   );
@@ -133,11 +141,6 @@ const Content = () => {
   const isFormChanged = useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
   }, [formDataAddEmployee]);
-
-  const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [isBatchEdit, setIsBatchEdit] = useState(false);
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
   const handleCloseDialog = () => {
@@ -156,9 +159,8 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  const handleEdit = (id: string) => {
-    const existingData = tableData.find((item) => String(item.id) === String(id));
-
+  const handleEdit = async (id: string) => {
+    const existingData = await getEmployeeById(String(id));
     if (!existingData) return;
 
     const toNum = (
@@ -205,7 +207,7 @@ const Content = () => {
       district_id: String(s?.district_id ?? ''),
     });
 
-    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData));
+    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
 
     if (isDirty) {
       setPendingEditId(id);
@@ -245,7 +247,6 @@ const Content = () => {
   const coerceEmployee = (employee: Item) =>
     CreateEmployeeRequestSchema.parse({
       ...employee,
-
       gender: toNum(
         employee.gender,
         {
@@ -294,8 +295,6 @@ const Content = () => {
     setIsDirty(false);
 
     setPendingEditId(null);
-
-    // buka form baru
     handleOpenDialog();
   };
 
@@ -426,14 +425,18 @@ const Content = () => {
 
       if (!inputReason) return;
 
-      setLoadingData(true);
-
       const payload = {
         employee_id: id,
         action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
-      await createEmployeeBlacklist(payload);
+      await blacklist.mutateAsync({
+        data: {
+          employee_id: id,
+          action: isBlacklistAction ? 'blacklist' : 'whitelist',
+          reason: inputReason.trim(),
+        },
+      });
 
       showSwal(
         'success',
@@ -443,8 +446,6 @@ const Content = () => {
       );
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist employee.');
-    } finally {
-      setLoadingData(false);
     }
   };
 
@@ -452,7 +453,7 @@ const Content = () => {
     handleBlacklist(row.id, Boolean(row.is_blacklist));
   }, []);
 
-  const navigate = useNavigate();
+
 
   return (
     <PageContainer
@@ -578,7 +579,7 @@ const Content = () => {
         onDiscard={handleConfirmEdit}
       />
       <Backdrop
-        open={loadingData}
+        open={remove.isPending || blacklist.isPending}
         sx={{
           color: '#fff',
           zIndex: 999999,

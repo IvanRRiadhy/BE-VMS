@@ -116,10 +116,10 @@ const Content = () => {
         const availables =
           availableResponseResult.status === 'fulfilled'
             ? (availableResponseResult.value.collection ?? []).map((item: any) => ({
-                ...item,
-                brand_type: normalizeBrandType(item.brand_type),
-                api_type_auth: item.api_type_auth,
-              }))
+              ...item,
+              brand_type: normalizeBrandType(item.brand_type),
+              api_type_auth: item.api_type_auth,
+            }))
             : [];
 
         if (availableResponseResult.status === 'rejected') {
@@ -160,7 +160,7 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [ page, rowsPerPage, search, refreshTrigger]);
+  }, [page, rowsPerPage, search, refreshTrigger]);
 
   const filteredData = useMemo(() => {
     if (!search) return tableData;
@@ -297,7 +297,7 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: any[]) => {
-    if ( rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 

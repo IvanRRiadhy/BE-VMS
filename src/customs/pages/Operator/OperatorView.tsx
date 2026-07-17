@@ -1029,6 +1029,16 @@ const OperatorView = () => {
       }
       handleCloseScanQR();
       setTypeVisitor('related');
+
+      const matched = freshVisitors.collection.find(
+        (v: any) => v.visitor_number === scannedNumber,
+      );
+
+      if (matched) {
+        setSelectedVisitorId(matched.id);
+        setSelectedVisitorNumber(matched.visitor_number);
+        setSelectedVisitors([matched.id]);
+      }
       showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
       showSwal('error', 'Your code does not exist.', 3000);
@@ -1085,7 +1095,8 @@ const OperatorView = () => {
       is_block: v.is_block ?? false,
       invited_by_name: v.invited_by_name ?? '-',
       visitor_role: v.visitor_role ?? '-',
-      checkout_at: v.checkout_at ?? "-"
+      checkout_at: v.checkout_at ?? "-",
+      checkin_at: v.checkin_at ?? "-"
     }));
 
     setInvitationCode((prev) =>
@@ -3167,12 +3178,20 @@ const OperatorView = () => {
     fetchUpcomingPurpose();
   }, []);
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const sortDir = 'desc';
+
+
   useEffect(() => {
     const fetchData = async () => {
       const res = await getUpComingVisitors({
         today: 'true',
         // all_visitor_type: 'true',
         visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
+        start: page * rowsPerPage,
+        length: rowsPerPage,
+        sortDir: sortDir,
       });
 
       const rows = res.collection.map((items: any) => ({
@@ -3191,25 +3210,78 @@ const OperatorView = () => {
       setUpcomingVisitors(rows ?? []);
     };
     fetchData();
-  }, [selectedPurpose]);
+  }, [selectedPurpose, page, rowsPerPage]);
+
+  const filteredUpcomingVisitors = useMemo(() => {
+    if (!searchKeyword.trim()) return upcomingVisitors;
+
+    const keyword = searchKeyword.toLowerCase();
+
+    return upcomingVisitors.filter((item: any) =>
+      [
+        item.name,
+        item.host,
+        item.organization,
+        item.invitation_code,
+        item.agenda,
+        item.vehicle_plate_number,
+        item.vehicle_type,
+        item.visitor_status,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword)),
+    );
+  }, [upcomingVisitors, searchKeyword]);
 
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
+  // const filteredVisitors = useMemo(() => {
+  //   const keyword = debouncedKeyword.toLowerCase().trim();
+
+  //   if (!keyword) return visitorsSource;
+
+  //   return visitorsSource.filter((v: any) => {
+  //     if (typeVisitor === 'related') {
+  //       return [v.name, v.organization]
+  //         .filter(Boolean)
+  //         .some((field) => field.toLowerCase().includes(keyword));
+  //     }
+
+  //     return [v.visitor_name, v.visitor_organization_name]
+  //       .filter(Boolean)
+  //       .some((field) => field.toLowerCase().includes(keyword));
+  //   });
+  // }, [visitorsSource, debouncedKeyword, typeVisitor]);
+
   const filteredVisitors = useMemo(() => {
-    const keyword = debouncedKeyword.toLowerCase().trim();
+    const keyword = debouncedKeyword.trim().toLowerCase();
 
     if (!keyword) return visitorsSource;
 
     return visitorsSource.filter((v: any) => {
-      if (typeVisitor === 'related') {
-        return [v.name, v.organization]
-          .filter(Boolean)
-          .some((field) => field.toLowerCase().includes(keyword));
-      }
+      const fields =
+        typeVisitor === 'related'
+          ? [
+            v.name,
+            v.organization,
+            v.host,
+          ]
+          : [
+            v.name,
+            v.organization,
+            v.host,
+            v.invitation_code,
+            v.agenda,
+            v.vehicle_plate_number,
+            v.vehicle_type,
+            v.visitor_status,
+          ];
 
-      return [v.visitor_name, v.visitor_organization_name]
+      return fields
         .filter(Boolean)
-        .some((field) => field.toLowerCase().includes(keyword));
+        .some((field) =>
+          String(field).toLowerCase().includes(keyword)
+        );
     });
   }, [visitorsSource, debouncedKeyword, typeVisitor]);
 
@@ -3574,8 +3646,14 @@ const OperatorView = () => {
         <DetailVisitingPurpose
           open={openDetailVisitingPurpose}
           onClose={() => setOpenDetailVistingPurpose(false)}
-          data={upcomingVisitors}
+          data={filteredUpcomingVisitors}
           purposeName={selectedPurpose}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          searchKeyword={searchKeyword}
+          setSearchKeyword={setSearchKeyword}
         />
         {/* Search Visitor */}
         <SearchVisitorDialog

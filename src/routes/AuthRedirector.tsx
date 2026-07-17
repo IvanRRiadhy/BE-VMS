@@ -116,7 +116,7 @@ export default function AuthRedirector() {
           alignItems: 'center',
         }}
       >
-        <CircularProgress />
+        <CircularProgress  />
       </div>
     );
   }

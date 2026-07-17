@@ -774,7 +774,7 @@ export const getAllVisitorCard = async (): Promise<GetAllVisitorCardResponse> =>
   return response.data;
 };
 
-export const getVisitorCardById = async (id: string): Promise<GetGetVisitorCardByIdResponse> => {
+export const getVisitorCardById = async (id: string): Promise<any> => {
   const response = await axiosInstance.get(`/card/${id}`, {
     headers: { Accept: 'application/json' },
   });

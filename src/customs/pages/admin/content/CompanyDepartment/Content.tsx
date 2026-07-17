@@ -65,8 +65,8 @@ const entityLabel = (e?: DialogEntity) =>
     ? e === 'Organizations'
       ? 'Organization'
       : e === 'Departments'
-      ? 'Department'
-      : 'District'
+        ? 'Department'
+        : 'District'
     : '';
 
 const Content = () => {
@@ -87,16 +87,16 @@ const Content = () => {
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   useEffect(() => {
-   
+
 
     const fetchEmployees = async () => {
       try {
         const res = await getVisitorEmployee();
         const map = Array.isArray(res?.collection)
           ? res.collection.reduce((acc: any, emp: any) => {
-              acc[emp.id] = emp.name;
-              return acc;
-            }, {})
+            acc[emp.id] = emp.name;
+            return acc;
+          }, {})
           : {};
         setEmployeeMap(map);
       } catch (err) {
@@ -140,8 +140,8 @@ const Content = () => {
     selectedType === 'organization'
       ? organizationQuery
       : selectedType === 'department'
-      ? departmentQuery
-      : districtQuery;
+        ? departmentQuery
+        : districtQuery;
   const loading = currentQuery.isLoading || currentQuery.isFetching;
   const response = currentQuery.data;
   const tableData = useMemo(
@@ -180,29 +180,32 @@ const Content = () => {
     district: totalsQueries[2].data?.RecordsTotal ?? 0,
   };
 
-  const cards = [
-    {
-      title: t('total_organization'),
-      subTitle: totals.organization.toString(),
-      subTitleSetting: totals.organization,
-      icon: IconBuildingSkyscraper,
-      color: 'none',
-    },
-    {
-      title: t('total_department'),
-      subTitle: totals.department.toString(),
-      subTitleSetting: totals.department,
-      icon: IconBuilding,
-      color: 'none',
-    },
-    {
-      title: t('total_district'),
-      subTitle: totals.district.toString(),
-      subTitleSetting: totals.district,
-      icon: IconMapPins,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('total_organization'),
+        subTitle: totals.organization.toString(),
+        subTitleSetting: totals.organization,
+        icon: IconBuildingSkyscraper,
+        color: 'none',
+      },
+      {
+        title: t('total_department'),
+        subTitle: totals.department.toString(),
+        subTitleSetting: totals.department,
+        icon: IconBuilding,
+        color: 'none',
+      },
+      {
+        title: t('total_district'),
+        subTitle: totals.district.toString(),
+        subTitleSetting: totals.district,
+        icon: IconMapPins,
+        color: 'none',
+      },
+    ],
+    [t, totals.organization, totals.department, totals.district]
+  );
 
   const [dialog, setDialog] = useState<DialogState>(null);
   const editTokenRef = useRef(0);
@@ -233,7 +236,7 @@ const Content = () => {
   };
 
   const openEdit = async (entity: DialogEntity, row: Item) => {
-    
+
     // setLoading(true);
     const myToken = ++editTokenRef.current;
     try {
@@ -272,7 +275,7 @@ const Content = () => {
 
   const handleDelete = useCallback(
     async (row: Item) => {
-  
+
 
       const confirmed = await showConfirmDelete(
         `Are you sure you want to delete ${selectedType} "${row.name}"?`,
@@ -287,7 +290,7 @@ const Content = () => {
           case 'department':
             await remove.mutateAsync({
               id: row.id,
-     
+
             });
 
             successText = `Department "${row.name}" has been successfully deleted.`;
@@ -296,7 +299,7 @@ const Content = () => {
           case 'district':
             await deleteDistrict.mutateAsync({
               id: row.id,
-        
+
             });
 
             successText = `District "${row.name}" has been successfully deleted.`;
@@ -306,7 +309,7 @@ const Content = () => {
           default:
             await deleteOrganization.mutateAsync({
               id: row.id,
-       
+
             });
 
             successText = `Organization "${row.name}" has been successfully deleted.`;
@@ -318,11 +321,11 @@ const Content = () => {
         showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
       }
     },
-    [ selectedType, remove, deleteDistrict, deleteOrganization],
+    [selectedType, remove, deleteDistrict, deleteOrganization],
   );
 
   const handleBatchDelete = async (rows: Item[]) => {
-    if ( rows.length === 0) return;
+    if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
@@ -335,19 +338,19 @@ const Content = () => {
             case 'department':
               return remove.mutateAsync({
                 id: row.id,
-             
+
               });
 
             case 'district':
               return deleteDistrict.mutateAsync({
                 id: row.id,
-            
+
               });
 
             default:
               return deleteOrganization.mutateAsync({
                 id: row.id,
-             
+
               });
           }
         }),

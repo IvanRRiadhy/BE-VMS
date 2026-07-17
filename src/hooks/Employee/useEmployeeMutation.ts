@@ -19,6 +19,9 @@ export const useEmployeeMutation = () => {
       queryClient.invalidateQueries({
         queryKey: ['visitor-employees'],
       }),
+      queryClient.invalidateQueries({
+        queryKey: ['employee-blacklist'],
+      }),
     ]);
   };
 

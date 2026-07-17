@@ -9,24 +9,13 @@ import {
   useTheme,
   Grid2 as Grid,
 } from '@mui/material';
-import QRCode from 'react-qr-code';
 import {
   IconBrandWhatsapp,
-  IconCar,
-  IconCards,
   IconPhone,
-  IconTruck,
-  IconUser,
-  IconUsers,
-  IconUsersGroup,
 } from '@tabler/icons-react';
 import { Email } from '@mui/icons-material';
 
 interface InvitationQrCardProps {
-  //   invitationCode?: {
-  //     visitor_number?: string;
-  //     invitation_code?: string;
-  //   }[];
   invitationCode?: any;
   isFullscreen?: boolean;
   statusLabel?: string;
@@ -75,26 +64,13 @@ const HostInformation = ({
   statusLabel = 'Match',
 }: InvitationQrCardProps) => {
   const data = invitationCode[0];
-
-  const whatsappNumber = data?.host_phone?.replace(/\D/g, '');
-
+  const whatsappNumber = data?.hosts[0].phone?.replace(/\D/g, '');
   return (
     <>
       <Card
         sx={{
           borderRadius: 2,
-          // height: '100%',
           width: '100%',
-          // height: '100%',
-          // height: {
-          //   xs: '100%',
-          //   xl: data ? '400px' : '400px',
-          // },
-          // minHeight: 360,
-          // maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
-          // display: 'flex',
-          // justifyContent: 'center',
-          // alignItems: 'center',
           border: '1px solid #e0e0e0',
           backgroundColor: 'background.paper',
           p: 1,
@@ -127,7 +103,7 @@ const HostInformation = ({
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" mb={0}>
-                  {data?.host_name || '-'}
+                  {data?.hosts[0].name || '-'}
                 </Typography>
                 {data && (
                   <Typography
@@ -166,7 +142,7 @@ const HostInformation = ({
                 <Typography sx={{ width: 5 }}>:</Typography>
 
                 <Typography variant="body1" color="text.secondary">
-                  {data?.host_phone || '-'}
+                  {data?.hosts[0].phone || '-'}
                 </Typography>
               </Box>
 
@@ -190,7 +166,7 @@ const HostInformation = ({
                 <Typography sx={{ width: 5 }}>:</Typography>
 
                 <Typography variant="body1" color="text.secondary">
-                  {data?.host_email || '-'}
+                  {data?.hosts[0].email || '-'}
                 </Typography>
               </Box>
             </Box>
@@ -199,7 +175,7 @@ const HostInformation = ({
           <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
             <Box
               component="a"
-              href={data?.host_phone ? `tel:${data.host_phone}` : undefined}
+              href={data?.hosts[0].phone ? `tel:${data?.hosts[0].phone}` : undefined}
               sx={{
                 flex: 1,
                 bgcolor: 'primary.main',
@@ -211,8 +187,8 @@ const HostInformation = ({
                 p: 1,
                 borderRadius: 2,
                 textDecoration: 'none',
-                cursor: data?.host_phone ? 'pointer' : 'not-allowed',
-                opacity: data?.host_phone ? 1 : 0.5,
+                cursor: data?.hosts[0].phone ? 'pointer' : 'not-allowed',
+                opacity: data?.hosts[0].phone ? 1 : 0.5,
               }}
             >
               <IconPhone size={20} />
@@ -245,7 +221,7 @@ const HostInformation = ({
 
             <Box
               component="a"
-              href={data?.host_email ? `mailto:${data.host_email}` : undefined}
+              href={data?.hosts[0].email ? `mailto:${data?.hosts[0].email}` : undefined}
               sx={{
                 flex: 1,
                 bgcolor: 'secondary.main',
@@ -257,8 +233,8 @@ const HostInformation = ({
                 p: 1,
                 borderRadius: 2,
                 textDecoration: 'none',
-                cursor: data?.host_email ? 'pointer' : 'not-allowed',
-                opacity: data?.host_email ? 1 : 0.5,
+                cursor: data?.hosts[0].email ? 'pointer' : 'not-allowed',
+                opacity: data?.hosts[0].email ? 1 : 0.5,
               }}
             >
               <Email />

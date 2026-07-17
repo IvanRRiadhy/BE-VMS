@@ -20,7 +20,6 @@ import { IconMail, IconPower } from '@tabler/icons-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getProfile } from 'src/customs/api/users';
 import { useDispatch } from 'react-redux';
 import { clearUser } from 'src/store/apps/user/userSlice';
 import { useQueryClient } from '@tanstack/react-query';

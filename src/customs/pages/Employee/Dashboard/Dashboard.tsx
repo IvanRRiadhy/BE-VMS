@@ -1,20 +1,14 @@
 import {
   Alert,
-  Backdrop,
   Button,
-  Card,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
-  Drawer,
   Grid2 as Grid,
   IconButton,
   Portal,
   Snackbar,
   Typography,
-  Box,
-  DialogActions,
 } from '@mui/material';
 import moment from 'moment-timezone';
 import {
@@ -37,8 +31,6 @@ import {
 } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
 import {
-  getAccessPass,
-  getAllVisitorPagination,
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
@@ -52,17 +44,12 @@ import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
-  approveMeetingHost,
-  approveTicket,
   getApprovalTicket,
-  rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-
-import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import dayjs from 'dayjs';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
@@ -80,6 +67,8 @@ import ApprovalVisitorGroupDialog from '../Components/Dialog/ApprovalVisitorGrou
 import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
 import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -88,8 +77,6 @@ const DashboardEmployee = () => {
     { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
   ];
-  const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -128,10 +115,27 @@ const DashboardEmployee = () => {
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
   const { createMutation: createQuickAccess } = useQuickAccessMutation();
+  const { accessPass, loading: loadingAccessPass } = useAccessPass();
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const [isParkingLoading, setIsParkingLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
 
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
   };
+
+  const {
+    approveMutation,
+    rejectMutation,
+    approveMeetingHostMutation,
+  } = useApprovalMutation();
 
   const handleCloseInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(false);
@@ -162,19 +166,20 @@ const DashboardEmployee = () => {
   });
 
   const shareLinkList = data?.collection ?? [];
+  const debouncedKeyword = useDebounce(searchKeyword, 500);
 
   const {
     data: approvalRes,
     refetch: refetchApproval,
     isFetching: loadingApproval,
   } = useQuery({
-    queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
+    queryKey: ['approval', page, rowsPerPage, debouncedKeyword, sortDir],
     queryFn: async () => {
       return await getApprovalTicket({
         start,
         length: rowsPerPage,
         sort_dir: sortDir,
-        keyword: searchKeyword,
+        keyword: debouncedKeyword,
       });
     },
   });
@@ -248,11 +253,6 @@ const DashboardEmployee = () => {
     fetchData();
   }, []);
 
-  const { accessPass, loading: loadingAccessPass } = useAccessPass();
-
-  const [quickSearch, setQuickSearch] = useState('');
-  const [quickPage, setQuickPage] = useState(0);
-  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
   const {
     data: quickAccessResult,
@@ -346,15 +346,6 @@ const DashboardEmployee = () => {
     }
   };
 
-  const [isParkingLoading, setIsParkingLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error';
-  }>({ open: false, message: '', severity: 'success' });
-
-  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
-
   const handleOpenParkingBlocker = async () => {
     if (!accessPass?.id) return;
     setIsParkingLoading(true);
@@ -375,25 +366,25 @@ const DashboardEmployee = () => {
 
   const handleApproveMeetingHost = async (id: string) => {
     try {
-      setLoading(true);
+      setIsGenerating(true);
 
       const payload = {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
-      const response = await approveMeetingHost(id, payload);
+      const response = await approveMeetingHostMutation.mutateAsync({
+        id,
+        payload: {
+          list_trx_visitor_id: selectedRows.map((item) => item.id),
+        },
+      });
       const res = await handleActionApproval(id, 'Approve');
 
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
-
-      queryClient.invalidateQueries({
-        queryKey: ['approval-ticket'],
-      });
-
       setSelectedRows([]);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -419,12 +410,10 @@ const DashboardEmployee = () => {
         if (!confirm.isConfirmed) return;
       }
 
-      if (action === 'Approve') await approveTicket(id);
-      if (action === 'Reject') await rejectTicket(id);
-
-      queryClient.invalidateQueries({
-        queryKey: ['approval-ticket'],
-      });
+      // if (action === 'Approve') await approveTicket(id);
+      // if (action === 'Reject') await rejectTicket(id);
+      if (action === 'Approve') await approveMutation.mutateAsync(id);
+      if (action === 'Reject') await rejectMutation.mutateAsync(id);
 
       showSwal(
         'success',
@@ -463,6 +452,7 @@ const DashboardEmployee = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
+      setIsGenerating(true);
       const confirm = await Swal.fire({
         title: 'Do you want to delete this link?',
         icon: 'question',
@@ -482,6 +472,8 @@ const DashboardEmployee = () => {
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
       showSwal('error', 'Something went wrong while deleting link.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -570,8 +562,6 @@ const DashboardEmployee = () => {
       setIsExporting(false);
     }
   };
-
-
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
@@ -737,7 +727,6 @@ const DashboardEmployee = () => {
               loading={loadingApproval}
               height={'100%'}
               overflowX="auto"
-              // minWidth={200}
               data={approvalData}
               isHaveChecked={true}
               isHaveAction={true}

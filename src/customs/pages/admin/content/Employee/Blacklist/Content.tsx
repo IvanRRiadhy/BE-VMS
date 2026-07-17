@@ -20,6 +20,7 @@ import { IconUsers } from '@tabler/icons-react';
 
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import { useEmployeeBlacklistPagination } from 'src/hooks/Employee/useEmployeeBlacklistPagination';
 
 type EmployeesTableRow = {
   id: string;
@@ -41,18 +42,40 @@ interface Filters {
 }
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
-  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { t } = useTranslation();
+  const employeeBlacklistQuery = useEmployeeBlacklistPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    search,
+  });
 
+  const tableData = useMemo<Item[]>(() => {
+    return employeeBlacklistQuery.data?.collection ?? [];
+  }, [employeeBlacklistQuery.data]);
+
+  const totalRecords = employeeBlacklistQuery.data?.RecordsTotal ?? 0;
+
+  const totalFilteredRecords =
+    employeeBlacklistQuery.data?.RecordsFiltered ?? 0;
+
+  const loading = employeeBlacklistQuery.isPending;
+  const tableRowEmployee = useMemo(() => {
+    const collection = employeeBlacklistQuery.data?.collection ?? [];
+
+    return collection.map((item: any) => ({
+      id: item.id,
+      name: item.employee?.name ?? '-',
+      phone: item.employee?.phone ?? '-',
+      email: item.employee?.email ?? '-',
+      gender: item.employee?.gender ?? '-',
+      reason: item.reason ?? '-',
+    }));
+  }, [employeeBlacklistQuery.data]);
   const cards = [
     {
       title: t('total_blacklist'),
@@ -62,49 +85,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-
-        let employeeRes: any;
-        try {
-          employeeRes = await getAllEmployeeBlacklistPagination(
-            start,
-            rowsPerPage,
-            sortDir,
-            search,
-            true,
-          );
-        } catch (err: any) {
-          throw err;
-        }
-
-        const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-
-        setTableData(safeCollection);
-        setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
-        setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
-
-        const rows = safeCollection.map((item: any) => ({
-          id: item.id,
-          name: item.employee.name,
-          phone: item.employee.phone,
-          email: item.employee.email,
-          gender: item.employee.gender,
-          reason: item.reason || '-',
-        }));
-        setTableRowEmployee(rows);
-      } catch (error: any) {
-        console.error('Error fetching data:', error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -119,7 +99,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Employee" description="this is Employee page">
+      <Container title="Blacklist Employee" description="this is Employee page">
         <Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -147,11 +127,6 @@ const Content = () => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
                 onCheckedChange={(selected) => {
                   const fullSelectedItems = tableData.filter((item) =>
                     selected.some((row: EmployeesTableRow) => row.id === item.id),

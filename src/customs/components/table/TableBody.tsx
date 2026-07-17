@@ -6,26 +6,13 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   TextField,
   Button,
   Box,
-  Select,
-  MenuItem,
-  FormControl,
-  CardContent,
-  Grid2,
   Typography,
   Tooltip,
   Skeleton,
-  Fab,
-  InputAdornment,
-  Drawer,
-  Tab,
-  Tabs,
-  TablePagination,
   IconButton,
   Switch,
   Breadcrumbs,
@@ -34,24 +21,15 @@ import {
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import {
   IconAlertSquare,
-  IconArrowAutofitLeft,
   IconCheck,
   IconCopy,
   IconCopyPlus,
   IconEye,
   IconEyeOff,
-  IconFileExport,
-  IconFileSpreadsheet,
   IconFileText,
-  IconFileTypePdf,
-  IconForbid2,
-  IconHome,
-  IconKeyOff,
   IconLogin2,
   IconLogout2,
   IconPencil,
-  IconPlus,
-  IconPrinter,
   IconRefresh,
   IconSettings,
   IconTrash,
@@ -164,20 +142,7 @@ export const TableBodyContent = ({
   // INDEX_COL_WIDTH,
   onDelete,
 }: any) => {
-  const CARD_STATUS: Record<number, string> = {
-    0: 'Not Found',
-    1: 'Active',
-    2: 'Lost',
-    3: 'Broken',
-    4: 'Not Return',
-  };
 
-  const DOCUMENT_TYPE: Record<number, string> = {
-    0: 'Card',
-    1: 'Document',
-    2: 'Face',
-  };
-  const BASE_URL = axiosInstance2.defaults.baseURL + '/cdn';
 
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105;
@@ -189,19 +154,6 @@ export const TableBodyContent = ({
     (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
     (isActionVisitor ? ACTION_COL_WIDTH : 0) +
     INDEX_COL_WIDTH;
-  const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
-
-  const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
-  const statusBgMap: Record<string, string> = {
-    Checkin: '#21c45d', // hijau
-    Checkout: '#F44336', // merah
-    Block: '#000000', // hitam
-    Deny: '#8B0000', // merah tua
-    Approve: '#21c45d', // hijau
-    Pracheckin: '#21c45d', // hijau
-  };
-
-  const defaultBg = '#9E9E9E'; // abu-abu
 
   const skeletonCount = rowsPerPage === -1 ? 10 : rowsPerPage;
   return (
@@ -545,6 +497,8 @@ const TableRowItem = React.memo(
       Deny: '#8B0000', // merah tua
       Approve: '#21c45d', // hijau
       Pracheckin: '#21c45d', // hijau
+      Approved: '#4CAF50',
+      Rejected: "#f44336"
     };
 
     const defaultBg = '#9E9E9E';
@@ -792,6 +746,26 @@ const TableRowItem = React.memo(
 
                   <Typography variant="body2">{row.name ?? '-'}</Typography>
                 </Box>
+              ) : col === 'approval_status' || col === 'approval_actor_status' ? (
+
+                <Box
+                  sx={{
+                    backgroundColor: statusBgMap[row.approval_status] || defaultBg,
+                    borderRadius: '999px',
+                    color: '#fff',
+                    px: 1.5,
+                    py: 0.5,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {row.approval_status || '-'}
+                </Box>
+
               ) : col === 'visitor_status' ? (
                 <Box
                   sx={{
@@ -1175,7 +1149,7 @@ const TableRowItem = React.memo(
                         fontSize: '0.875rem',
                         textDecoration: 'underline',
                       }}
-                      // target="_blank"
+                    // target="_blank"
                     >
                       {String(row[col] ?? '-')}
                     </Button>

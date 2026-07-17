@@ -24,12 +24,6 @@ import {
   CreateVisitorCardRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/VisitorCard';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import {
-  getAllVisitorCardPagination,
-  deleteVisitorCard,
-  getAllVisitorCard,
-} from 'src/customs/api/admin';
 import {
   showConfirmDelete,
   showErrorAlert,
@@ -52,6 +46,8 @@ import { useTranslation } from 'react-i18next';
 import { useVisitorCardPagination } from 'src/hooks/Card/useVisitorCard';
 import { useVisitorCardSummary } from 'src/hooks/Card/useVisitorCardSummary';
 import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { getVisitorCardById } from 'src/customs/api/admin';
 
 type EnableField = {
   employee_id: boolean;
@@ -89,13 +85,9 @@ const typeMap: Record<string, number> = {
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  // const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  // const [totalRecords, setTotalRecords] = useState(0);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -213,7 +205,6 @@ const Content = () => {
     let freshForm;
 
     freshForm = CreateVisitorCardRequestSchema.parse({});
-
     setEdittingId('');
     setFormAddVisitorCard(freshForm);
     setInitialFormData(freshForm);
@@ -221,13 +212,16 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
     const existingData = tableVisitorCard.find((item) => item.id === id);
+    // const existingData = await getVisitorCardById(id);
+    // const data = existingData.collection;
     if (!existingData) return;
 
     const parsedData = {
       ...existingData,
       registered_site: existingData.registered_site ?? '',
+      // registered_site: existingData.registered_site ?? '',
       type: typeMap[existingData.type] ?? 0,
     } as CreateVisitorCardRequest;
 
@@ -241,16 +235,11 @@ const Content = () => {
     const confirmed = await showConfirmDelete('Are you sure to delete this card?');
 
     if (confirmed) {
-      setLoading(true);
       try {
         await deleteMutation.mutateAsync(id);
-
         showSwal('success', 'Successfully deleted card!');
       } catch (error: any) {
         showSwal('error', error?.response?.data?.msg || 'Failed to delete card.');
-        setLoading(false);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -269,7 +258,6 @@ const Content = () => {
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
-      setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
         setSelectedRows([]);
@@ -279,8 +267,6 @@ const Content = () => {
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
         return false;
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -324,7 +310,6 @@ const Content = () => {
     formData.append('batch', file);
 
     try {
-      setLoading(true);
       const resp = await fetch(`${BASE_URL}/card/create-batch`, {
         method: 'POST',
         body: formData,
@@ -355,7 +340,6 @@ const Content = () => {
     } catch (err: any) {
       showErrorAlert('Error', err?.message ?? 'Failed to import');
     } finally {
-      setLoading(false);
       e.target.value = '';
     }
   };
@@ -399,20 +383,20 @@ const Content = () => {
     handleCloseModalCreateVisitorCard();
   };
 
- const handleApplyFilter = () => {
-   setPage(0);
-   setAppliedFilters(filters);
- };
- const handleResetFilter = () => {
-   const initial = {
-     type: -1,
-     card_status: -1,
-   };
+  const handleApplyFilter = () => {
+    setPage(0);
+    setAppliedFilters(filters);
+  };
+  const handleResetFilter = () => {
+    const initial = {
+      type: -1,
+      card_status: -1,
+    };
 
-   setPage(0);
-   setFilters(initial);
-   setAppliedFilters(initial);
- };
+    setPage(0);
+    setFilters(initial);
+    setAppliedFilters(initial);
+  };
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -527,6 +511,7 @@ const Content = () => {
         onClose={handleCancelEditDiscard}
         onDiscard={handleConfirmEditDiscard}
       />
+      <GlobalBackdropLoading open={deleteMutation.isPending} />
     </PageContainer>
   );
 };

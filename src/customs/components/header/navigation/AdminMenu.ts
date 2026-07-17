@@ -487,7 +487,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       },
       {
         id: uniqueId(),
-        title: 'Invitation Visitor',
+        title: 'Live Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/live-visitor',

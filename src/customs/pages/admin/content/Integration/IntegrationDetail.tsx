@@ -40,13 +40,13 @@ const IntegrationDetail = () => {
   if (err) return <p style={{ color: 'tomato' }}>{err}</p>;
   if (!integration) return <p>Data not found.</p>;
 
-  const brand = String(integration.brand_name || '').toLowerCase();
+  const brand = String(integration.brand_name || '');
   const brandType = String(integration.brand_type || '');
   const fullName = String(integration.name || '').toLowerCase();
   const name = fullName.split(' - ')[0].trim();
 
   switch (true) {
-    case brand === 'honeywell' && brandType === 'CameraAnalytics':
+    case brand === 'Honeywell IPSOTEK' && brandType === 'CameraAnalytics':
       return <Ipsotek id={integration.id} />;
 
     case brand === 'honeywell' || name === 'honeywell':

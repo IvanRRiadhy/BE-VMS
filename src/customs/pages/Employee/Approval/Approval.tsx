@@ -1,10 +1,9 @@
 import { Backdrop, Button, CircularProgress, Grid2 as Grid, useMediaQuery } from '@mui/material';
 import { Box, useTheme } from '@mui/system';
 import { IconBan, IconCheck, IconClock, IconScript, IconSearch, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
@@ -24,6 +23,8 @@ import { useDebounce } from 'src/hooks/useDebounce';
 import ApprovalSidebar from './components/ApprovalSidebar';
 import Swal from 'sweetalert2';
 import GroupVisitorTable from './components/GroupVisitorTable';
+import { useApprovalPagination } from 'src/hooks/Approval/useApprovalPagination';
+import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 
 type Group = {
   id: string;
@@ -33,18 +34,12 @@ type Group = {
 };
 
 const Approval = () => {
-  const [approvalData, setApprovalData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const secdrawerWidth = 300;
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [loadingAction, setLoadingAction] = useState(false);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -55,7 +50,25 @@ const Approval = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const debouncedKeyword = useDebounce(searchKeyword, 500);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { t } = useTranslation();
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+  } = useApprovalPagination({
+    page,
+    rowsPerPage,
+    search: debouncedKeyword,
+    sortDir,
+  });
+
+  const approvalData = data?.collection ?? [];
+  const totalRecords = data?.totalRecords ?? 0;
+  const totalFilteredRecords = data?.totalFiltered ?? 0;
+
+  const hasMore = approvalData.length < totalFilteredRecords;
   const getApprovalCounts = () => {
     const counts = {
       total: approvalData.length,
@@ -64,7 +77,7 @@ const Approval = () => {
       pending: 0,
     };
 
-    approvalData.forEach((item) => {
+    approvalData.forEach((item: any) => {
       const status = item.approval_status;
 
       if (status === 'Approved' || status === 'Accept') {
@@ -79,108 +92,51 @@ const Approval = () => {
     return counts;
   };
 
+
   const { total, approve, reject, pending } = getApprovalCounts();
-  const cards = [
-    {
-      title: 'Total Approval',
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      icon: IconScript,
-      color: 'none',
-    },
-    {
-      title: 'Total Approve',
-      subTitle: `${approve}`,
-      subTitleSetting: 10,
-      icon: IconCheck,
-      color: 'none',
-    },
-    {
-      title: 'Total Reject',
-      subTitle: `${reject}`,
-      subTitleSetting: 10,
-      icon: IconBan,
-      color: 'none',
-    },
-    {
-      title: 'Total Pending',
-      subTitle: `${pending}`,
-      subTitleSetting: 10,
-      icon: IconClock,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Approval',
+        subTitle: `${totalFilteredRecords}`,
+        subTitleSetting: 10,
+        icon: IconScript,
+        color: 'none',
+      },
+      {
+        title: 'Total Approve',
+        subTitle: `${approve}`,
+        subTitleSetting: 10,
+        icon: IconCheck,
+        color: 'none',
+      },
+      {
+        title: 'Total Reject',
+        subTitle: `${reject}`,
+        subTitleSetting: 10,
+        icon: IconBan,
+        color: 'none',
+      },
+      {
+        title: 'Total Pending',
+        subTitle: `${pending}`,
+        subTitleSetting: 10,
+        icon: IconClock,
+        color: 'none',
+      },
+    ],
+    [totalFilteredRecords, approve, reject, pending]
+  );
 
-  const hasMore = approvalData.length < totalFilteredRecords;
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-
-        const res = await getApprovalTicket({
-          start,
-          length: rowsPerPage,
-          sort_dir: sortDir,
-          keyword: debouncedKeyword,
-          entity_type: 'Invitation',
-        });
-
-        const rows = res.collection.map((item: any) => ({
-          approval_ticket_id: item.approval_ticket_id,
-          visitor_type_name: item.visitor_type_name,
-          agenda: item.agenda,
-          host_name: item.host_name,
-          entity_id: item.entity_id,
-          ticket_id: item.ticket_id,
-          approval_actor_status: item.approval_actor_status,
-          approval_workflow_type: item.approval_workflow_type,
-          approval_status: item.approval_status,
-          current_step: item.current_step,
-          visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
-        }));
-        // setApprovalData(rows);
-        setApprovalData((prev) => (page === 0 ? rows : [...prev, ...rows]));
-
-        setTotalFilteredRecords(res.RecordsFiltered);
-        setTotalRecords(res.RecordsTotal);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [refreshTrigger, debouncedKeyword, sortDir, page, rowsPerPage]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [debouncedKeyword, sortDir]);
+  const {
+    approveMutation,
+    rejectMutation,
+    approveMeetingHostMutation,
+  } = useApprovalMutation();
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    // if (!id || !token) return;
-    // console.log('id', id);
 
     try {
-      // const confirm = await Swal.fire({
-      //   title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
-      //   icon: 'question',
-      //   // imageUrl: BI_LOGO,
-      //   imageWidth: 100,
-      //   imageHeight: 100,
-      //   reverseButtons: true,
-      //   showCancelButton: true,
-      //   confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
-      //   cancelButtonText: 'Cancel',
-      //   confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
-      //   customClass: {
-      //     title: 'swal2-title-custom',
-      //     htmlContainer: 'swal2-text-custom',
-      //   },
-      // });
       if (action === 'Reject') {
         const confirm = await Swal.fire({
           title: 'Reject Approval?',
@@ -199,57 +155,41 @@ const Approval = () => {
 
         if (!confirm.isConfirmed) return;
       }
-
-      // if (!confirm.isConfirmed) return;
-
-      setLoadingAction(true);
-      // console.log('Performing action:', action, 'on approval ticket ID:', id);
-
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(id);
-      if (action === 'Reject') await rejectTicket(id);
+      if (action === 'Approve') await approveMutation.mutateAsync(id);
+      if (action === 'Reject') await rejectMutation.mutateAsync(id);
 
       showSwal(
         'success',
         `Data Approval ${action === 'Approve' ? 'approved' : 'denied'} successfully.`,
       );
 
-      setRefreshTrigger((prev) => prev + 1);
       setOpenDialog(false);
     } catch (error: any) {
-      setTimeout(() => setLoadingAction(false), 800);
       showSwal('error', error.response.data.msg || 'Failed action approval.');
-    } finally {
-      setLoadingAction(false);
     }
   };
 
-  const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const handleApproveMeetingHost = async (id: string) => {
-    // console.log('id', id);
-    try {
-      setLoading(true);
 
+  const handleApproveMeetingHost = async (id: string) => {
+    try {
       const payload = {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
 
       // console.log('payload', payload);
-
-      const response = await approveMeetingHost(id, payload);
-      // console.log('response', response);
-
+      const response = await approveMeetingHostMutation.mutateAsync({
+        id,
+        payload: {
+          list_trx_visitor_id: selectedRows.map((item) => item.id),
+        },
+      });
       const res = await handleActionApproval(id, 'Approve');
-      // console.log('res', res);
-
       showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
       setSelectedRows([]);
-      // setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -376,7 +316,7 @@ const Approval = () => {
                 <ApprovalSidebar
                   mdUp={mdUp}
                   secdrawerWidth={secdrawerWidth}
-                  loading={loading}
+                  loading={isLoading}
                   approvalData={approvalData}
                   selectedId={selectedId}
                   searchKeyword={searchKeyword}
@@ -433,7 +373,7 @@ const Approval = () => {
         }}
       />
       <Backdrop
-        open={loadingAction}
+        open={approveMutation.isPending || rejectMutation.isPending || approveMeetingHostMutation.isPending}
         sx={{
           color: '#fff',
           zIndex: 99999,

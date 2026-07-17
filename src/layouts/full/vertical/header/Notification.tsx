@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React, { useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { Tabs, Tab } from '@mui/material';
 import {
   IconButton,
@@ -31,35 +31,30 @@ import { markAsRead } from 'src/store/apps/notifications/NotificationSlice';
 
 const Notifications = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
-
-  const handleClick2 = (event: any) => {
-    setAnchorEl2(event.currentTarget);
-  };
-
-  const handleClose2 = () => {
-    setAnchorEl2(null);
-  };
-
   const [tab, setTab] = useState(0);
-
-  const handleChangeTab = (_: any, newValue: number) => {
-    setTab(newValue);
-  };
-
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
   const notifications = useSelector((state: AppState) => state.notifications.items);
   const unreadCount = useSelector((state: AppState) => state.notifications.unreadCount);
   const lg = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const handleOpenNotification = (notification: any) => {
+  const handleClick2 = useCallback((event: any) => {
+    setAnchorEl2(event.currentTarget);
+  }, []);
+
+  const handleClose2 = useCallback(() => {
+    setAnchorEl2(null);
+  }, []);
+
+  const handleChangeTab = useCallback((_: any, newValue: number) => {
+    setTab(newValue);
+  }, []);
+
+
+  const handleOpenNotification = useCallback((notification: any) => {
     dispatch(markAsRead(notification.id));
-
     setSelectedNotification(notification);
-
     setOpenDialog(true);
-  };
+  }, []);
   return (
     <Box>
       <IconButton
@@ -370,4 +365,4 @@ const Notifications = () => {
   );
 };
 
-export default Notifications;
+export default memo(Notifications);

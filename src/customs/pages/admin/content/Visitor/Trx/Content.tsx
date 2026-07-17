@@ -55,7 +55,6 @@ import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { QuickAccessDialog } from './components/QuickAccessDialog';
-import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
@@ -81,7 +80,6 @@ const Content = () => {
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
-  // const { roleAccess } = useSession();
   const {
     data: profile,
     isLoading: profileLoading,
