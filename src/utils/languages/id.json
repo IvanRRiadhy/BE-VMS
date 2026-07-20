@@ -115,5 +115,14 @@
   "searchVisitor": "Cari Pengunjung",
   "name": "Nama",
   "code": "Kode",
-  "vehiclePlateNumber": "Nomor Plat Kendaraan"
+  "vehiclePlateNumber": "Nomor Plat Kendaraan",
+  "confirmDelete": "Apakah Anda yakin ingin menghapus {{name}} ini?",
+  "confirmDeleteMultiple": "Apakah Anda yakin ingin menghapus {{count}} {{name}}?",
+  "deleteSuccess": "{{name}} berhasil dihapus.",
+  "deleteSuccessMultiple": "{{count}} {{name}} berhasil dihapus.",
+  "deleteFailed": "Gagal menghapus {{name}}.",
+  "createdSuccess": "{{name}} berhasil dibuat.",
+  "createdFailed": "Gagal membuat {{name}}.",
+  "updatedSuccess": "{{name}} berhasil diubah.",
+  "updatedFailed": "Gagal mengubah {{name}}."
 }

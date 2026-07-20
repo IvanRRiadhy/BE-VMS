@@ -22,6 +22,7 @@ import {
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
+import { useTranslation } from 'react-i18next';
 
 const Content = ({
   tableData,
@@ -48,6 +49,7 @@ const Content = ({
   const [isDirty, setIsDirty] = useState(false);
   const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
     useState<CreateApprovalWorkflowRequest>(defaultApprovalWorkflow);
+  const { t } = useTranslation();
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -114,17 +116,16 @@ const Content = ({
 
   const handleDelete = async (id: string) => {
     const confirm = await showConfirmDelete(
-      'Are you sure you want to delete this approval workflow?',
+      t("confirmDelete", { name: "Approval Workflow" }),
     );
 
     if (!confirm) return;
     try {
       // await deleteApprovalWorkflow(id);
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Successfully deleted approval workflow!');
-
-    } catch (error) {
-      showSwal('error', 'Failed to delete approval workflow.');
+      showSwal('success', t('deleteSuccess', { name: "Approval Workflow" }));
+    } catch (error: any) {
+      showSwal('error', error?.response.data.msg ?? t('deleteFailed', { name: "Approval Workflow" }));
     }
 
   };
@@ -158,8 +159,8 @@ const Content = ({
     await showSwal(
       'success',
       edittingId
-        ? 'Approval workflow updated successfully!'
-        : 'Approval workflow created successfully!',
+        ? t('updateSuccess', { name: "Approval Workflow" })
+        : t('createSuccess', { name: "Approval Workflow" }),
     );
   };
 

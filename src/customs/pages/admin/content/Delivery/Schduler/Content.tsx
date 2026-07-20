@@ -18,14 +18,8 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-
-import {
-  getAllTimezone,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useQuery } from '@tanstack/react-query';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import {
   getSchedulerDeliveryById,
@@ -42,6 +36,8 @@ import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useSchedulerPagination } from 'src/hooks/Scheduler/useSchedulerPagination';
 import { useSchedulerMutation } from 'src/hooks/Scheduler/useSchedulerMutation';
+import { useAllTimezone } from 'src/hooks/Timezone/useAllTimeszone';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 interface Filters {
   visitor_type_id: string | null;
@@ -90,22 +86,15 @@ const Content = () => {
     }
   };
 
-
-  const { data: timezoneData, isLoading: loadingTimezone } = useQuery({
-    queryKey: ['timezones'],
-    queryFn: async () => {
-      const res = await getAllTimezone();
-      return res.collection;
-    },
-
-  });
-
-
+  const {
+    data: timezoneData,
+    isLoading: loadingTimezone,
+    error,
+    refetch,
+  } = useAllTimezone();
   const { allVisitorEmployee: hostDataQuery } = useVisitorEmployees();
   const { data: siteDataQuery } = useSites();
   const { visitorType: visitorTypeQuery } = useVisitorType();
-  // const [rawSchedulerData, setRawSchedulerData] = useState<any[]>([]);
-
   const { data, isLoading } = useSchedulerPagination({
     page,
     rowsPerPage,
@@ -276,7 +265,7 @@ const Content = () => {
               isHaveView={false}
               isHaveViewAndAction={true}
               onView={(row) => {
-                handleView(row.id);
+                handleView(row.id as string);
               }}
               isHaveFilterMore={true}
               filterMoreContent={
@@ -291,9 +280,9 @@ const Content = () => {
                 />
               }
               onEdit={(row) => {
-                handleEdit(row.id);
+                handleEdit(row.id as string);
               }}
-              onDelete={(row) => handleDeleteSchduler(row.id)}
+              onDelete={(row) => handleDeleteSchduler(row.id as string)}
               searchKeyword={search}
               onSearch={handleSearch}
               onAddData={handleAdd}
@@ -350,17 +339,7 @@ const Content = () => {
           onDiscard={handleDiscard}
         />
 
-        <Portal>
-          <Backdrop
-            open={loadingData}
-            sx={{
-              color: '#fff',
-              zIndex: 999999,
-            }}
-          >
-            <CircularProgress color="primary" />
-          </Backdrop>
-        </Portal>
+        <GlobalBackdropLoading open={loadingData} />
       </Container>
     </PageContainer>
   );

@@ -73,6 +73,7 @@ import { useDistricts } from 'src/hooks/District/useDistricts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import { IconCamera, IconDeviceFloppy, IconTrash } from '@tabler/icons-react';
+import { useStaffMutation } from 'src/hooks/Staff/useStaffMutation';
 
 const FormDriver = ({
   formData,
@@ -101,7 +102,6 @@ const FormDriver = ({
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const [removing, setRemoving] = useState(false);
-  const [employeeAllRes, setEmployeeAllRes] = useState<Item[]>([]);
   const [localForm, setLocalForm] = useState(formData);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -167,9 +167,6 @@ const FormDriver = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      const employeeAll = await getAllDriver();
-      setEmployeeAllRes(employeeAll.collection ?? []);
-
       if (edittingId && !isBatchEdit) {
         const employeeRes = await getDriverById(edittingId);
         const employee = employeeRes?.collection ?? null;
@@ -282,7 +279,7 @@ const FormDriver = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       setFormData(localForm);
-    }, 300); // 🔥 debounce
+    }, 300); 
 
     return () => clearTimeout(handler);
   }, [localForm]);
@@ -375,6 +372,11 @@ const FormDriver = ({
 
   const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
 
+  const {
+    createMutation: createStaff,
+    updateMutation: updateStaff,
+  } = useStaffMutation();
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -459,7 +461,8 @@ const FormDriver = ({
           is_email_verify: false,
         };
 
-        const res = await updateDriver(edittingId, editData);
+        // const res = await updateDriver(edittingId, editData);
+        const res = await updateStaff.mutateAsync({ id: edittingId, data: editData });
 
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
@@ -467,25 +470,24 @@ const FormDriver = ({
 
         showSwal('success', 'Driver successfully updated!');
       } else {
-        const created = await createDriver(data);
+        // const created = await createDriver(data);
+        const created = await createStaff.mutateAsync(data);
         const newDriverId = created?.collection?.employee_id;
 
         if (newDriverId && hasNewImage) {
           await handleFileUploads(newDriverId, rawFileImage, rawFaceImage);
         }
 
-        setTimeout(() => {
-          showSwal('success', 'Driver successfully created!');
-        }, 750);
+        showSwal('success', 'Driver successfully created!');
         setLocalForm(CreateDriverRequestSchema.parse({}));
       }
 
-      setTimeout(() => onSuccess?.(), 600);
+      onSuccess?.()
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
     } finally {
-      setTimeout(() => setLoading(false), 600);
+      setLoading(false)
     }
   };
 

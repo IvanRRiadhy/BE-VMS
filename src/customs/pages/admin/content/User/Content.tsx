@@ -33,6 +33,7 @@ import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
 import useUsers from 'src/hooks/User/useUsers';
 import useUsersMutation from 'src/hooks/User/userUsersMutation';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -50,7 +51,7 @@ const Content = () => {
   const [openAssignDialog, setOpenAssignDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { employee } = useEmployees();
   const { organizations } = useOrganization();
@@ -119,15 +120,15 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(`Are you sure to delete this user?`);
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'User' }));
     if (!confirmed) return;
 
     try {
       await deleteUser.mutateAsync(id);
-      showSwal('success', 'Successfully deleted user!');
+      showSwal('success', t('deleteSuccess', { name: 'User' }));
 
     } catch (error: any) {
-      showSwal('error', error.response.data.msg || 'Failed to delete user.');
+      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'User' }));
     }
   };
 
@@ -350,7 +351,7 @@ const Content = () => {
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
                 searchKeyword={search}
-                isHaveAssign={true}
+                isHaveAssign={false}
                 isHaveUnAssign={true}
                 isHaveAssignTracking={true}
                 onAssignTracking={handleAssignTracking}

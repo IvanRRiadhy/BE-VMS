@@ -82,8 +82,6 @@ const Content = () => {
   const { remove, blacklist } = useEmployeeMutation();
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
-    // joinEnd: '',
-    // exitStart: '',
     exitEnd: '',
     gender: 0,
     statusEmployee: 0,
@@ -308,7 +306,7 @@ const Content = () => {
     const name = row.name || '-';
 
     const confirmed = await showConfirmDelete(
-      `Are you sure you want to delete employee "${name}"?`,
+      t('confirmDelete', { name: `employee "${name}"` }),
     );
 
     if (confirmed) {
@@ -317,9 +315,9 @@ const Content = () => {
           id: row.id,
         });
 
-        showSwal('success', `Successfully deleted employee "${name}".`);
+        showSwal('success', t('deleteSuccess', { name: `employee "${name}"` }));
       } catch (error: any) {
-        showSwal('error', error.message || `Failed to delete employee "${name}".`);
+        showSwal('error', error.reseponse.data.message || t('deleteFailed', { name: `employee "${name}"` }));
       }
     }
   };
@@ -327,7 +325,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} employees?`);
+    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'employees' }));
 
     if (!confirmed) return false;
 
@@ -340,7 +338,7 @@ const Content = () => {
         ),
       );
 
-      showSwal('success', `Succesfully deleted ${rows.length} employees.`);
+      showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'employees' }));
       setSelectedRows([]);
       return true;
     } catch (error: any) {

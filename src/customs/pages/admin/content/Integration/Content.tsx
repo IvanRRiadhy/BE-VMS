@@ -9,11 +9,11 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   deleteIntegration,
   getAllIntegration,
   getAvailableIntegration,
+  getIntegrationById,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -32,6 +32,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import IntegrationDialog from './components/IntegrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
+import IntegrationCard from './components/IntegrationCard';
 
 type IntegrationTableRow = {
   id: string;
@@ -52,7 +53,11 @@ const IntegrationTypeMap: Record<string, number> = {
 function sanitizeIntegrationForForm(item: Item): CreateIntegrationRequest {
   return CreateIntegrationRequestSchema.parse({
     ...item,
-    brand_type: Number(item.brand_type),
+    // brand_type: normalizeBrandType(item.brand_type),
+    brand_type:
+      typeof item.brand_type === 'string'
+        ? BrandType[item.brand_type as keyof typeof BrandType]
+        : item.brand_type,
     // integration_type: Number(item.integration_type),
     // integration_type: item.integration_type,
     integration_type: IntegrationTypeMap[item.integration_type] ?? 0,
@@ -69,7 +74,6 @@ const Content = () => {
   const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
   const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -134,7 +138,7 @@ const Content = () => {
 
         setAvailableIntegration(availables);
 
-        setIntegrationData(integrations);
+        // setIntegrationData(integrations);
         setTotalRecords(integrations.length);
 
         const rows: any = integrations.map((item) => ({
@@ -193,15 +197,17 @@ const Content = () => {
   );
   const { t } = useTranslation();
 
-  const cards = [
-    {
-      title: t('totalIntegration'),
-      subTitle: `${totalRecords}`,
-      icon: IconWorldCog,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalIntegration'),
+        subTitle: `${totalRecords ?? 0}`,
+        icon: IconWorldCog,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
 
   const brandTypeBgColorMap: Record<number, string> = {
     0: theme.palette.error.light, // red
@@ -263,11 +269,12 @@ const Content = () => {
     openForm(integration);
   };
 
-  const handleEdit = (id: string) => {
-    const integration = integrationData.find((item) => item.id === id);
+  const handleEdit = async (id: string) => {
+    const integration = await getIntegrationById(id);
+    const res = integration?.collection ?? integration;
     if (!integration) return;
 
-    const sanitized = sanitizeIntegrationForForm(integration);
+    const sanitized = sanitizeIntegrationForForm(res as Item);
 
     setFormDataAddIntegration(sanitized);
     setEdittingId(id);
@@ -412,59 +419,10 @@ const Content = () => {
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
               {availableIntegration.map((integration, index) => (
                 <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-                  <Box
-                    sx={{
-                      border: '1px solid #ccc',
-                      borderRadius: 2,
-                      padding: 2,
-                      marginBottom: 0,
-                      // backgroundColor: brandTypeBgColorMap[integration.brand_type] || '#fff',
-                      backgroundColor: 'primary.light',
-                    }}
-                  >
-                    <Box component="h3">{integration.name}</Box>
-                    <Box component="h5" sx={{ color: 'gray', mt: 0, mb: 2 }}>
-                      {integration.brand_name}
-                    </Box>
-                    <Divider />
-                    {/* <br /> */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: 2,
-                        flexWrap: 'wrap',
-                        mt: 1,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Box fontSize={12} sx={{ mt: 0 }}>
-                        <strong>Brand Type:</strong> {BrandType[integration.brand_type]}
-                      </Box>
-                      <Box fontSize={12} sx={{ mt: 0, textAlign: 'left' }}>
-                        <strong>Integration Type:</strong>
-                        {/* {IntegrationType[integration.integration_type]} */}
-
-                        {integration.integration_type}
-                      </Box>
-                      <Box fontSize={12} sx={{ mt: 0 }}>
-                        <strong>API Auth Type:</strong>
-                        {/* {ApiTypeAuth[integration.api_type_auth]} */}
-                        {integration.api_type_auth}
-                      </Box>
-                    </Box>
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => {
-                          handleAdd(integration);
-                          // handleOpenDialog();
-                        }}
-                      >
-                        Add Integration
-                      </Button>
-                    </Box>
-                  </Box>
+                  <IntegrationCard
+                    integration={integration}
+                    onAdd={handleAdd}
+                  />
                 </Grid>
               ))}
             </Grid>

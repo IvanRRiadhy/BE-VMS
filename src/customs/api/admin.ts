@@ -2396,11 +2396,10 @@ export const getAvailableIntegration = async (): Promise<any> => {
 
 export const getIntegrationById = async (
   id: string,
-  token: string,
 ): Promise<GetIntegrationByIdResponse> => {
   try {
     const response = await axiosInstance.get(`/integration/${id}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {

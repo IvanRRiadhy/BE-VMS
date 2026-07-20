@@ -210,7 +210,7 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
               startIcon={<IconSend size={18} />}
               sx={{ ml: 1 }}
             >
-              {editingId ? 'Submit' : 'Submit'}
+              Submit
             </Button>
           </Grid>
         </Grid>

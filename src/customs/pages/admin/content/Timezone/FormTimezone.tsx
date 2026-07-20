@@ -1,5 +1,6 @@
 import { Grid2 as Grid, Backdrop, CircularProgress } from '@mui/material';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { TimeGridSelector } from 'src/customs/components/GridSelector/TimeGridSelector';
@@ -26,6 +27,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
   const [name, setName] = useState(initialData?.name ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [days, setDays] = useState<any[]>([]);
+  const { t } = useTranslation();
 
   const {
     createMutation,
@@ -111,7 +113,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         setDescription('');
         setDays([]);
 
-        showSwal('success', 'Time Access successfully created');
+        showSwal('success', t("createSuccess", { resource: 'Time Access' }));
         onSuccess?.();
       } else {
         // edit
@@ -122,11 +124,11 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
           data: payload,
         });
 
-        showSwal('success', 'Time Access successfully updated');
+        showSwal('success', t("updateSuccess", { resource: 'Time Access' }));
         onSuccess?.();
       }
     } catch (err: any) {
-      showSwal('error', err?.response?.data?.message || 'Failed to create timezone');
+      showSwal('error', err?.response?.data?.message || 'Failed to create time access');
     }
   };
 

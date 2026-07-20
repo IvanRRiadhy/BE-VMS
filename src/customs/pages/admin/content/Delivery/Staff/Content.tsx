@@ -25,15 +25,24 @@ import {
   CreateDriverRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/Driver';
-import { deleteDriver } from 'src/customs/api/Delivery/Driver';
 import { IconUsers } from '@tabler/icons-react';
-
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Staff/FilterMoreContent';
-import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
 import FormDriver from 'src/customs/pages/admin/content/Delivery/Staff/FormDriver';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useDriverPagination } from 'src/hooks/Staff/useStaffPagination';
+import { useStaffMutation } from 'src/hooks/Staff/useStaffMutation';
+
+export const DEFAULT_FILTERS: Filters = {
+  gender: -1,
+  organization: '',
+  department: '',
+  district: '',
+  joinStart: '',
+  exitEnd: '',
+  statusEmployee: -1,
+};
 
 type DriverTableRows = {
   id: string;
@@ -67,104 +76,62 @@ interface Filters {
 }
 
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
+  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-
-  const [totalRecords, setTotalRecords] = useState(0);
-  // const [page, setPage] = useState(0);
+  // const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
-  const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
 
-  const [filters, setFilters] = useState<Filters>({
-    joinStart: '',
-    // joinEnd: '',
-    // exitStart: '',
-    exitEnd: '',
-    gender: 0,
-    statusEmployee: 0,
-    organization: '',
-    department: '',
-    district: '',
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS);
+
+  const driverQuery = useDriverPagination({
+    page,
+    rowsPerPage,
+    sortColumn,
+    sortDir,
+    search,
+    filters: appliedFilters,
   });
 
-  const cards = [
-    {
-      title: 'Total Staff',
-      icon: IconUsers,
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const tableData = driverQuery.data?.collection ?? [];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
+  const totalRecords =
+    driverQuery.data?.RecordsTotal ?? 0;
 
-        let employeeRes: any;
-        try {
-          employeeRes = await getAllDriverPaginationFilterMore(
-            start,
-            rowsPerPage,
-            sortColumn,
-            sortDir,
-            search,
-            filters.gender === 0 ? undefined : filters.gender,
-            filters.joinStart,
-            filters.exitEnd,
-            filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
-            String(filters.organization),
-            String(filters.district),
-            String(filters.department),
-          );
-        } catch (err: any) {
-          if (err?.response?.status === 404 || err?.status === 404) {
-            setTableData([]);
-            setTableRowEmployee([]);
-            setTotalRecords(0);
-            setTotalFilteredRecords(0);
-            return;
-          }
-          throw err;
-        }
+  const totalFilteredRecords =
+    driverQuery.data?.RecordsFiltered ?? 0;
 
-        const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-        const isNotFound =
-          employeeRes?.status_code === 404 ||
-          employeeRes?.status === 'not_found' ||
-          safeCollection.length === 0;
+  const loading = driverQuery.isLoading;
 
-        setTableData(safeCollection);
-        setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
-        setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Staff',
+        icon: IconUsers,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalRecords]
+  );
 
-        const rows = safeCollection.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          faceimage: item.faceimage,
-          organization: item.organization?.name || '-',
-          department: item.department?.name || '-',
-          // district: item.district?.name || '-',
-        }));
-        setTableRowEmployee(rows);
-      } catch (error: any) {
-        console.error('Error fetching data:', error.message);
-      } finally {
-        // setTimeout(() => setLoading(false), 300);
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [page, rowsPerPage, sortColumn, refreshTrigger, search]);
+  const tableRowEmployee = useMemo(() => {
+    return tableData.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      faceimage: item.faceimage,
+      organization: item.organization?.name ?? '-',
+      department: item.department?.name ?? '-',
+    }));
+  }, [tableData]);
+
 
   const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(
     CreateDriverRequestSchema.parse({}),
@@ -264,8 +231,6 @@ const Content = () => {
 
     const parsedData = CreateDriverRequestSchema.parse(coerceEmployee(existingData));
 
-    // Kalau sedang ada dialog terbuka dan form berubah,
-    // tampilkan confirm terlebih dahulu
     if (openFormAddEmployee && isFormChanged) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
@@ -373,20 +338,19 @@ const Content = () => {
     setPendingEditId(null);
   };
 
+  const { deleteMutation: deleteStaff } = useStaffMutation();
+
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirmDelete('Are you sure to delete this delivery staff?');
 
     if (confirmed) {
-      setLoading(true);
       try {
-        await deleteDriver(id);
-        setRefreshTrigger((prev) => prev + 1);
+        // await deleteDriver(id);
+        await deleteStaff.mutateAsync(id);
+
         showSwal('success', 'Successfully deleted delivery staff!');
       } catch (error) {
         showSwal('error', 'Failed to delete staff.');
-        setTimeout(() => setLoading(false), 500);
-      } finally {
-        setTimeout(() => setLoading(false), 500);
       }
     }
   };
@@ -395,29 +359,31 @@ const Content = () => {
     if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
+      `Are you sure to delete ${rows.length} items?`
     );
 
     if (confirmed) {
-      setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteDriver(row.id)));
-        setRefreshTrigger((prev) => prev + 1);
+        await Promise.all(rows.map((row) => deleteStaff.mutateAsync(row.id)));
+
 
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
       }
     }
   };
 
   const handleApplyFilter = () => {
     setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilter = () => {
+    setPage(0);
+    setFilters(DEFAULT_FILTERS);
+    setAppliedFilters(DEFAULT_FILTERS);
   };
 
   const [enabledFields, setEnabledFields] = useState<EnableField>({
@@ -435,8 +401,6 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
-
     setInitialFormData((_) => formDataDriver);
     setOpenFormAddEmployee(false);
   };
@@ -506,6 +470,7 @@ const Content = () => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
+                    onResetFilter={handleResetFilter}
                   />
                 }
                 isHaveHeader={false}
@@ -522,10 +487,8 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>

@@ -227,9 +227,7 @@ const DashboardOperator = Loadable(
   lazy(() => import('src/customs/pages/Operator/Dashboard/Dashboard')),
 );
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
-const ManageVisitorOperator = Loadable(
-  lazy(() => import('src/customs/pages/Operator/Visitor/content')),
-);
+
 const TransactionOperatorLog = Loadable(
   lazy(() => import('src/customs/pages/Operator/Report/TranasctionLog/Content')),
 );
@@ -511,7 +509,7 @@ const Router = [
               { index: true, element: <DashboardOperator /> },
               { path: 'dashboard', element: <DashboardOperator /> },
               { path: 'view', element: <OperatorView /> },
-              { path: 'visitor', element: <ManageVisitorOperator /> },
+              // { path: 'visitor', element: <ManageVisitorOperator /> },
               { path: 'transaction-log', element: <TransactionOperatorLog /> },
               { path: 'approval-workflow', element: <ApprovalOperator /> },
               { path: 'operator-activity-log', element: <OperatorActivityLog /> },

@@ -12,10 +12,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import {
-  deleteSiteSpace,
-  getAllEmployee,
   getAllSite,
-  getAllSitePagination,
   getSiteById,
 } from 'src/customs/api/admin';
 import { IconSitemap } from '@tabler/icons-react';
@@ -31,6 +28,7 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
 import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type SiteTableRow = {
   id: string;
@@ -179,18 +177,20 @@ const Content = () => {
   const totalRecords = sitePagination?.RecordsTotal ?? 0;
   const totalFilteredRecords = sitePagination?.RecordsFiltered ?? 0;
 
-  const cards = [
-    {
-      title: `Total ${t('navigation.site_space')}`,
-      subTitle: `${totalFilteredRecords}`,
-      icon: IconSitemap,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: `Total ${t('navigation.site_space')}`,
+        subTitle: `${totalFilteredRecords}`,
+        icon: IconSitemap,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalFilteredRecords, t],
+  );
 
   const { remove, updateActive } = useSiteMutation();
-
   const [filters, setFilters] = useState<any>({
     type: -1,
   });
@@ -360,9 +360,7 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-
-
-    const confirm = await showConfirmDelete('Are you sure you want to delete this site space?');
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Site Space' }));
 
     if (!confirm) return;
 
@@ -372,9 +370,9 @@ const Content = () => {
           id,
         });
 
-        showSwal('success', 'Successfully deleted site space!');
+        showSwal('success', t('deleteSuccess', { name: 'Site Space' }));
       } catch (error: any) {
-        showSwal('error', error.response?.data?.msg || 'Failed to delete site space.');
+        showSwal('error', error.response?.data?.msg || t('deleteFailed', { name: 'Site Space' }));
       }
     }
   };
@@ -389,7 +387,7 @@ const Content = () => {
       await Promise.all(rows.map((row) => remove.mutateAsync({ id: row.id })));
 
       setSelectedRows([]);
-      showSwal('success', `${rows.length} site space have been deleted.`);
+      showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Site Space' }));
       return true;
     } catch (error) {
       showSwal('error', 'Failed to delete some items.');
@@ -603,9 +601,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
-      <Backdrop open={loadingBackdrop} sx={{ zIndex: (theme) => theme.zIndex.drawer + 999999 }}>
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loadingBackdrop} />
     </PageContainer>
   );
 };

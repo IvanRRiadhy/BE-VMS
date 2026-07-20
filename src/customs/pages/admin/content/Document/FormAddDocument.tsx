@@ -26,6 +26,7 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
 import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
+import { useTranslation } from 'react-i18next';
 
 interface FormAddDocumentProps {
   initialData: CreateDocumentRequest;
@@ -53,6 +54,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { create, update } = useDocumentMutation();
+  const { t } = useTranslation();
 
   const resetFileState = () => {
     setFile(null);
@@ -168,12 +170,12 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       }
       showSwal(
         'success',
-        edittingId ? 'Document updated successfully!' : 'Document created successfully!',
+        edittingId ? t("updatedSuccess", { name: "Document" }) : t("createdSuccess", { name: "Document" }),
       );
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', err?.message || 'Failed to create document.');
+      showSwal('error', err?.response?.data.msg || t("updatedFailed", { name: "Document" }));
     }
   };
 
@@ -459,7 +461,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 variant="contained"
                 type="submit"
                 disabled={loading}
-                // startIcon={loading ? <CircularProgress size={18} /> : undefined}
+              // startIcon={loading ? <CircularProgress size={18} /> : undefined}
               >
                 Submit
               </Button>

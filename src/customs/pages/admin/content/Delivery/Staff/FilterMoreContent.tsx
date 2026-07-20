@@ -36,12 +36,14 @@ type FilterMoreContentProps = {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   onApplyFilter: () => void;
+  onResetFilter: () => void;
 };
 
 const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
   filters,
   setFilters,
   onApplyFilter,
+  onResetFilter
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, name } = e.target as any;
@@ -238,7 +240,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Actions */}
         <Grid2 size={{ xs: 12 }}>
           <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
-            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
+            <Button variant="outlined" onClick={onResetFilter}>
               Reset
             </Button>
             <Button variant="contained" onClick={onApplyFilter}>

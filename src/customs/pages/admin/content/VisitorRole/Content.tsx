@@ -69,9 +69,9 @@ const Content = () => {
         },
       });
 
-      showSwal('success', 'Visitor Role successfully updated');
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Role' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || 'Failed to update status active');
+      showSwal('error', error?.response?.data?.message || t("failedToUpdate", { name: 'Visitor Role' }));
     }
   };
 

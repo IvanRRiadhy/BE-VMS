@@ -226,6 +226,7 @@ const Content = () => {
           host_name: item.host_name || '-',
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
+          invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
         })),
       ) ?? []

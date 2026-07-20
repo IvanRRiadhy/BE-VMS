@@ -5,11 +5,6 @@ import {
   DialogTitle,
   Grid2 as Grid,
   IconButton,
-  Select,
-  MenuItem,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Switch,
   Autocomplete,
   CardActions,
@@ -24,7 +19,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
   createIpsotekCategory,
@@ -37,11 +31,11 @@ import {
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 const Ipsotek = ({ id: string }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
-  const [visitorType, setVisitorType] = useState<any[]>([]);
+  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [integration, setIntegration] = useState<any[]>([]);
   const [openDialogCategory, setOpenDialogCategory] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,13 +57,13 @@ const Ipsotek = ({ id: string }: any) => {
       color: 'none',
     },
   ];
-  const visitorTypeMap = React.useMemo(() => {
-    const map = new Map<string, string>();
-    visitorType.forEach((v) => {
-      map.set(v.id, v.name);
-    });
-    return map;
-  }, [visitorType]);
+  // const visitorTypeMap = React.useMemo(() => {
+  //   const map = new Map<string, string>();
+  //   visitorType.forEach((v) => {
+  //     map.set(v.id, v.name);
+  //   });
+  //   return map;
+  // }, [visitorType]);
 
   const integrationMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -102,17 +96,8 @@ const Ipsotek = ({ id: string }: any) => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAllVisitorType();
-        setVisitorType(res.collection ?? []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+
+  const { visitorType } = useVisitorType();
 
   useEffect(() => {
     const fetchData = async () => {

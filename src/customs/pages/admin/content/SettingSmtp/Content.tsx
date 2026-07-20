@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Box, Grid2 as Grid, Paper, Tab, Tabs } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
@@ -27,6 +27,7 @@ import {
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormSettingSmtp from './FormSettingSmtp';
 import FormSendTestEmail from './FormSendTestEmail';
+import { useTranslation } from 'react-i18next';
 
 type SettingSMTPRow = {
   id: number;
@@ -77,16 +78,19 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
-
-  const cards = [
-    {
-      title: 'Total SMTP Provider',
-      subTitle: `${smtpData.length}`,
-      subTitleSetting: 10,
-      icon: IconBrandGmail,
-      color: 'none',
-    },
-  ];
+  const { t } = useTranslation();
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total SMTP Provider',
+        subTitle: `${smtpData.length}`,
+        subTitleSetting: 10,
+        icon: IconBrandGmail,
+        color: 'none',
+      },
+    ],
+    [smtpData.length],
+  );
 
   useEffect(() => {
 
@@ -123,22 +127,20 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [ page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
+  }, [page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
-
-
-    const confirmed = await showConfirmDelete('Are you sure to delete this smtp provider?');
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'SMTP Provider' }));
     if (!confirmed) return;
     try {
       if (confirmed) {
         setLoading(true);
         await deleteSmtp(id);
         setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', 'Successfully deleted smtp provider!');
+        showSwal('success', t('successDelete', { name: 'SMTP Provider' }));
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      showSwal('error', error.message || t('failedDelete', { name: 'SMTP Provider' }));
     } finally {
       setLoading(false);
     }
@@ -163,11 +165,11 @@ const Content = () => {
       const validated = CreateSettingSmtpSchema.parse(data);
 
       if (edittingId) {
-        await updateSmtp( validated, edittingId);
-        showSwal('success', 'SMTP updated.');
+        await updateSmtp(validated, edittingId);
+        showSwal('success', t('successUpdate', { name: 'SMTP Provider' }));
       } else {
         await createSmtp(validated);
-        showSwal('success', 'SMTP created.');
+        showSwal('success', t('successCreate', { name: 'SMTP Provider' }));
       }
 
       setRefreshTrigger((p) => p + 1);
@@ -180,7 +182,7 @@ const Content = () => {
 
   const handleBooleanSwitchChange = async (id: number | string, field: string, value: boolean) => {
     if (field !== 'selected_email') return;
-  
+
 
     try {
       // setBusyId(id);
@@ -204,7 +206,7 @@ const Content = () => {
 
       const validated = CreateSettingSmtpSchema.parse(payload);
 
-      await updateSmtp( validated, row.id.toString());
+      await updateSmtp(validated, row.id.toString());
 
       if (value) {
         const prev = smtpData.find((x) => x.selected_email && x.id !== row.id);
@@ -221,7 +223,7 @@ const Content = () => {
             secure: prev.secure,
             selected_email: false,
           };
-          await updateSmtp( CreateSettingSmtpSchema.parse(offPayload), prev.id.toString());
+          await updateSmtp(CreateSettingSmtpSchema.parse(offPayload), prev.id.toString());
         }
       }
 
@@ -241,7 +243,7 @@ const Content = () => {
   };
 
   const handleSubmitEmail = async (data: ItemEmail) => {
-  
+
 
     try {
       setLoading(true);
@@ -259,8 +261,7 @@ const Content = () => {
 
       await showSwal(
         'success',
-        `Successfully sent test email from "${providerName}" to ${
-          validated.email_sender || '(no email provided)'
+        `Successfully sent test email from "${providerName}" to ${validated.email_sender || '(no email provided)'
         }`,
       );
 

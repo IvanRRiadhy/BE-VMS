@@ -47,6 +47,7 @@ import useDropPoint from 'src/hooks/Invitation/useDropPoint';
 import useUserGroups from 'src/hooks/UserGroup/useUserGroupPagination';
 import useUserGroupMutation from 'src/hooks/UserGroup/useUserGroupMutation';
 import { useSites } from 'src/hooks/Sites/useSites';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -65,6 +66,7 @@ const Content = () => {
   const [originalData, setOriginalData] = useState<any>(null);
   const [sortDir, setSortDir] = useState('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
+  const { t } = useTranslation();
   const { data, isLoading, refetch } = useUserGroups({
     page,
     rowsPerPage,
@@ -122,16 +124,16 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(`Are you sure to delete this user group?`);
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'User Group' }));
     if (!confirmed) return;
 
     setLoading(true);
     try {
       await deleteUserGroup.mutateAsync(id);
-      showSwal('success', 'Successfully deleted user group!');
+      showSwal('success', t('deleteSuccess', { name: 'User Group' }));
       refetch();
-    } catch (error) {
-      showSwal('error', 'Failed to delete user group.');
+    } catch (error: any) {
+      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'User Group' }));
     } finally {
       setTimeout(() => setLoading(false), 500);
     }

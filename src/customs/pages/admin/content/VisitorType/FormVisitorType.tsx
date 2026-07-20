@@ -11,7 +11,6 @@ import {
   Box,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorTypeRequest,
   CreateVisitorTypeRequestSchema,
@@ -333,7 +332,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
         showSwal(
           'success',
-          edittingId ? 'Visitor type updated successfully!' : 'Visitor type updated successfully!',
+          t('updatedSuccess', { name: 'Visitor Type' }),
         );
       } else {
         // const res = await createVisitorType(parseData);
@@ -348,16 +347,16 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
         if (formData.can_track_cctv && selectedAnalytics) {
           const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
-          console.log("accessPayloadAnalytics", accessPayloadAnalytics);
+          // console.log("accessPayloadAnalytics", accessPayloadAnalytics);
           await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics);
         }
-        showSwal('success', 'Visitor type created successfully!');
+        showSwal('success', t('createdSuccess', { name: 'Visitor Type' }));
       }
 
-      setTimeout(() => {
-        onSuccess?.();
-        setLoading(false);
-      }, 600);
+
+      onSuccess?.();
+      setLoading(false);
+
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);

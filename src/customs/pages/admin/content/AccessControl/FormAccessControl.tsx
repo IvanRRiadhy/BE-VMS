@@ -35,6 +35,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
+import { useTranslation } from 'react-i18next';
 
 type FormType = z.infer<typeof CreateAccessControlRequestSchema>;
 
@@ -48,6 +49,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   const [loading, setLoading] = useState(false);
   // const [brandList, setBrandList] = useState<any[]>([]);
   const [integrationList, setIntegrationList] = useState<any[]>([]);
+  const { t } = useTranslation();
 
   const typeMap: Record<string, number> = {
     Access: 0,
@@ -71,7 +73,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
       door_id: '',
       raw: '{}',
       integration_id: '',
-      integration_name: '',
     },
   });
 
@@ -82,10 +83,8 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   useEffect(() => {
     (async () => {
       const [integrationRes] = await Promise.allSettled([
-        // getAllBrand(),
         getAllIntegration(),
-      ]);
-      // if (brandRes.status === 'fulfilled') setBrandList(brandRes.value?.collection ?? []);
+      ])
       if (integrationRes.status === 'fulfilled')
         setIntegrationList(integrationRes.value?.collection ?? []);
     })();
@@ -108,7 +107,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
           channel: d.channel,
           door_id: d.door_id,
           raw: d.raw,
-          integration_name: d.integration_name,
           // brand_name: d.brand_name,
         });
       }
@@ -123,18 +121,12 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
       if (editingId) {
         const payload = UpdateAccessControlRequestSchema.parse({
           ...data,
-          brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
-          brand_name: null,
         });
-        // await updateAccessControl(editingId, payload);
         await updateMutation.mutateAsync({ id: editingId, data: payload });
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
           ...data,
-          brand_id: 'AABDF1E2-C5AF-4F87-96AA-FA2496BCE88A',
-          brand_name: null,
         });
-        // await createAccessControl(payload);
         await createMutation.mutateAsync(payload);
       }
 
@@ -142,7 +134,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
       onDirty?.(false);
       showSwal(
         'success',
-        editingId ? 'Updated successfully Access Control' : 'Created successfully Access Control',
+        editingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createdSuccess", { name: 'Access Control' }),
       );
       onSuccess?.();
     } catch (err: any) {
@@ -226,21 +218,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Settings
             </Typography>
-            {/* <CustomFormLabel>Brand</CustomFormLabel>
-            <Controller
-              name="brand_id"
-              control={control}
-              render={({ field }) => (
-                <CustomSelect {...field} error={!!errors.brand_id} sx={{ width: '100%' }}>
-                  <MenuItem value="">Select Brand</MenuItem>
-                  {brandList.map((b) => (
-                    <MenuItem key={b.id} value={b.id}>
-                      {b.name}
-                    </MenuItem>
-                  ))}
-                </CustomSelect>
-              )}
-            /> */}
 
             {/* INTEGRATION */}
             <CustomFormLabel required>Integration</CustomFormLabel>
@@ -255,7 +232,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
                       const id = e.target.value;
                       field.onChange(id);
                       const selected = integrationList.find((x) => x.id === id);
-                      setValue('integration_name', selected?.name ?? '');
+                      // setValue('integration_name', selected?.name ?? '');
                     }}
                   >
                     <MenuItem value="">Select Integration</MenuItem>

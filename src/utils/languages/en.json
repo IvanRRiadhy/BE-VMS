@@ -116,5 +116,14 @@
   "searchVisitor": "Search Visitor",
   "name": "Name",
   "code": "Code",
-  "vehiclePlateNumber": "Vehicle Plate Number"
+  "vehiclePlateNumber": "Vehicle Plate Number",
+  "confirmDelete": "Are you sure want to delete this {{name}}?",
+  "confirmDeleteMultiple": "Are you sure want to delete {{count}} {{name}}?",
+  "deleteSuccess": "{{name}} deleted successfully.",
+  "deleteSuccessMultiple": "{{count}} {{name}} deleted successfully.",
+  "deleteFailed": "Failed to delete {{name}}.",
+  "createdSuccess": "{{name}} created successfully.",
+  "createdFailed": "Failed to create {{name}}.",
+  "updatedSuccess": "{{name}} updated successfully.",
+  "updatedFailed": "Failed to update {{name}}."
 }

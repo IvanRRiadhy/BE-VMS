@@ -19,7 +19,7 @@ import {
 import { IconDeviceFloppy, IconInfoCircle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { getAllApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
-import { updateSettingVms } from 'src/customs/api/Admin/Setting';
+import { getSettingVms, updateSettingVms } from 'src/customs/api/Admin/Setting';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useApprovalWorkflow } from 'src/hooks/ApprovalWorkflow/useApprovalWorkflow';
 import { useSites } from 'src/hooks/Sites/useSites';
@@ -36,16 +36,16 @@ interface Props {
 export default function VMSConfigurationTab() {
 
     const [configuration, setConfiguration] = useState({
-        default_site_id: "",
+        default_site_id: null,
         employeeInvitationMode: '',
         visitorInvitationMode: '',
         grant_access_mode: 0,
         grantAccessWhen: 0,
-        initialGrantAcess: 0,
+        initialGrantAcess: '',
         temporaryAccessBeforeMinutes: 0,
         temporaryAccessAfterMinutes: 0,
         needHostApproval: false,
-        approval_workflow_id: "",
+        approval_workflow_id: null,
         autoCheckout: false,
         autoCheckoutAfterMinutes: 0,
     });
@@ -69,6 +69,37 @@ export default function VMSConfigurationTab() {
             [key]: event.target.checked,
         }));
     };
+
+    const fetchConfiguration = async () => {
+        try {
+            const res = await getSettingVms();
+
+            const data = res.collection;
+
+            setConfiguration({
+                default_site_id: data.default_site_id,
+                employeeInvitationMode: data.employee_access_mode,
+                visitorInvitationMode: data.visitor_access_mode,
+                grant_access_mode: data.grant_access_mode,
+                grantAccessWhen: data.grant_access_when,
+                initialGrantAcess: data.initial_grant_access,
+                temporaryAccessBeforeMinutes: data.temporary_access_before_minutes,
+                temporaryAccessAfterMinutes: data.temporary_access_after_minutes,
+                needHostApproval: data.need_host_approval,
+                approval_workflow_id: data.approval_workflow_id,
+                autoCheckout: data.auto_signout,
+                autoCheckoutAfterMinutes: data.auto_signout_after_minutes,
+            });
+        } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to load configuration.');
+        }
+    };
+
+    useEffect(() => {
+        fetchConfiguration();
+    }, []);
+
 
     const handleSubmit = async () => {
         try {
@@ -115,7 +146,7 @@ export default function VMSConfigurationTab() {
             showSwal(
                 'error',
                 err?.response?.data?.collection ||
-                err?.response?.data?.message ||
+                err?.response?.data?.msg ||
                 'Failed to save configuration.',
             );
         }
@@ -172,6 +203,7 @@ export default function VMSConfigurationTab() {
                                 <MenuItem value="DirectAccess">Direct Access</MenuItem>
                                 <MenuItem value="NeedCheckIn">Need Check In</MenuItem>
                                 <MenuItem value="NeedVisitorCard">Need Visitor Card</MenuItem>
+                                <MenuItem value="TemporaryAccess">Temporary Access</MenuItem>
                             </Select>
                         </FormControl>
                     </Paper>
@@ -220,10 +252,12 @@ export default function VMSConfigurationTab() {
                                     handleChange('grant_access_mode', e.target.value)
                                 }
                             >
-
-                                <MenuItem value={0}>Existing Card</MenuItem>
+                                <MenuItem value="DisableOldQRAccess">
+                                    Disable Old QR Access
+                                </MenuItem>
+                                {/* <MenuItem value={0}>Existing Card</MenuItem>
                                 <MenuItem value={1}>Visitor Card</MenuItem>
-                                <MenuItem value={2}>QR Code</MenuItem>
+                                <MenuItem value={2}>QR Code</MenuItem> */}
                             </Select>
                         </FormControl>
 
@@ -236,7 +270,7 @@ export default function VMSConfigurationTab() {
                                     handleChange('grantAccessWhen', e.target.value)
                                 }
                             >
-                                <MenuItem value={0}>Time Visit</MenuItem>
+                                <MenuItem value="TimeVisit">Time Visit</MenuItem>
                             </Select>
                         </FormControl>
 
@@ -261,7 +295,8 @@ export default function VMSConfigurationTab() {
                                             handleChange('initialGrantAcess', e.target.value)
                                         }
                                     >
-                                        <MenuItem value={0}>Time Visit</MenuItem>
+                                        <MenuItem value={'QRCode'}>QR Code</MenuItem>
+                                        <MenuItem value={'TimeVisit'}>TimeVisit</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -275,6 +310,11 @@ export default function VMSConfigurationTab() {
                                     onChange={(e) =>
                                         handleChange('temporaryAccessBeforeMinutes', e.target.value)
                                     }
+                                    slotProps={{
+                                        htmlInput: {
+                                            min: 0,
+                                        },
+                                    }}
                                 />
                             </Grid>
 
@@ -287,6 +327,11 @@ export default function VMSConfigurationTab() {
                                     onChange={(e) =>
                                         handleChange('temporaryAccessAfterMinutes', e.target.value)
                                     }
+                                    slotProps={{
+                                        htmlInput: {
+                                            min: 0,
+                                        },
+                                    }}
                                 />
                             </Grid>
                         </Grid>

@@ -236,8 +236,6 @@ const Content = () => {
   };
 
   const openEdit = async (entity: DialogEntity, row: Item) => {
-
-    // setLoading(true);
     const myToken = ++editTokenRef.current;
     try {
       let res: any;
@@ -275,10 +273,10 @@ const Content = () => {
 
   const handleDelete = useCallback(
     async (row: Item) => {
-
-
       const confirmed = await showConfirmDelete(
-        `Are you sure you want to delete ${selectedType} "${row.name}"?`,
+        t('confirmDelete', {
+          name: `${selectedType} "${row.name}"`,
+        })
       );
 
       if (!confirmed) return;
@@ -293,7 +291,7 @@ const Content = () => {
 
             });
 
-            successText = `Department "${row.name}" has been successfully deleted.`;
+            successText = `${t("deleteSuccess", { name: 'Department' })}`;
             break;
 
           case 'district':
@@ -301,8 +299,7 @@ const Content = () => {
               id: row.id,
 
             });
-
-            successText = `District "${row.name}" has been successfully deleted.`;
+            successText = `${t("deleteSuccess", { name: 'District' })}`;
             break;
 
           case 'organization':
@@ -312,13 +309,13 @@ const Content = () => {
 
             });
 
-            successText = `Organization "${row.name}" has been successfully deleted.`;
+            successText = `${t("deleteSuccess", { name: 'Organization' })}`;
             break;
         }
 
         showSwal('success', successText);
-      } catch (error) {
-        showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
+      } catch (error: any) {
+        showSwal('error', error?.message ?? t("deleteFailed", { name: `${selectedType} "${row.name}"` }));
       }
     },
     [selectedType, remove, deleteDistrict, deleteOrganization],
@@ -327,7 +324,8 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    // const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(`${t("confirmDeleteMultiple", { count: rows.length, name: `${selectedType}` })}`);
 
     if (!confirmed) return;
 
@@ -356,7 +354,7 @@ const Content = () => {
         }),
       );
 
-      showSwal('success', `${rows.length} items have been deleted.`);
+      showSwal('success', `${t("deleteSuccessMultiple", { count: rows.length, name: `${selectedType}` })}`);
       setSelectedRows([]);
     } catch (err: any) {
       showSwal('error', err.message || 'Failed to delete some items.');

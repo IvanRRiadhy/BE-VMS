@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -13,7 +13,6 @@ import {
   CreateDocumentRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/Document';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -30,7 +29,6 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir] = useState('desc');
   const [edittingId, setEdittingId] = useState('');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [isDirty, setIsDirty] = useState(false);
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
@@ -54,15 +52,18 @@ const Content = () => {
   const loading = documentQuery.isPending;
   const { remove } = useDocumentMutation();
 
-  const cards = [
-    {
-      title: t('totalDocument'),
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconScript,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalDocument'),
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        icon: IconScript,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
 
   const handleCloseDialog = () => {
     if (isDirty) {
@@ -103,7 +104,7 @@ const Content = () => {
     if (pendingEditId) {
       setFormDataAddDocument(
         tableData.find((item: any) => item.id === pendingEditId) ||
-          CreateDocumentRequestSchema.parse({}),
+        CreateDocumentRequestSchema.parse({}),
       );
 
       setOpenFormAddDocument(false);
@@ -122,15 +123,14 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete('Are you sure you want to delete this document?');
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Document' }));
 
     if (!confirm) return;
     try {
       await remove.mutateAsync({
         id,
       });
-      showSwal('success', 'Successfully deleted document!');
-      setRefreshTrigger((prev) => prev + 1);
+      showSwal('success', t('deleteSuccess', { name: 'Document' }));
     } catch (error) {
       showSwal('error', 'Failed to delete document.');
     }
@@ -139,7 +139,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Document' }));
 
     if (confirmed) {
       try {
@@ -150,8 +150,8 @@ const Content = () => {
             });
           }),
         );
-        setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', `${rows.length} items have been deleted.`);
+
+        showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }));
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
@@ -173,7 +173,7 @@ const Content = () => {
   const handleSuccess = () => {
     setIsDirty(false);
     setOpenFormAddDocument(false);
-    setRefreshTrigger((prev) => prev + 1);
+
     setEdittingId('');
   };
 

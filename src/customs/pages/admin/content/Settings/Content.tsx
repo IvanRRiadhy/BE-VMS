@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Grid2 as Grid,
   Paper,
   Tab,
   Tabs,
-  CircularProgress,
-  Backdrop,
-  Portal,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -25,8 +22,6 @@ import ApprovalWorkflow from 'src/customs/pages/admin/content/Approve/content';
 import { getAllOrganizations, getSetting, updateSetting } from 'src/customs/api/admin';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormSetting from './FormSetting';
-import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
-import VisitorCardSetting from './VisitorCardSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import NotificationSetting from './NotificationSetting';
 import VMSConfigurationTab from './VmsConfugrationTab';
@@ -35,22 +30,19 @@ import useApprovalWorkflowPagination from 'src/hooks/ApprovalWorkflow/useApprova
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Form state
   const initialFormData: Item = {
     id: '',
     organization_id: '',
   };
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [sortDir, setSortDir] = useState('desc');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [formData, setFormData] = useState<Item>(() => initialFormData);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
-
-
 
   const handleSubmit = async () => {
     try {
@@ -60,7 +52,6 @@ const Content = () => {
         showSwal('success', 'Setting updated successfully!');
       }
 
-      setRefreshTrigger((p) => p + 1);
       setShowForm(false);
       setEdittingId('');
     } catch (error: any) {
@@ -127,12 +118,6 @@ const Content = () => {
     setShowForm(true);
   };
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [sortDir, setSortDir] = useState('desc');
-  const { page, search, setPage, setSearch } = useTableQueryParams();
-
-
   const {
     data,
     isLoading,
@@ -146,36 +131,23 @@ const Content = () => {
   const tableData = data?.collection ?? [];
   const totalRecords = data?.totalRecords ?? 0;
 
-  const cards = [
-    {
-      title: 'Total Visitor Setting',
-      subTitle: `${settingData.length ?? 0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-    // {
-    //   title: 'Total Operator Setting',
-    //   subTitle: `${operatorSettingData.length ?? 0}`,
-    //   subTitleSetting: 10,
-    //   icon: IconSettingsFilled,
-    //   color: 'none',
-    // },
-    {
-      title: 'Total Approval Workflow',
-      subTitle: `${totalRecords ?? 0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-    {
-      title: 'Total Visitor Card Setting',
-      subTitle: `${0}`,
-      subTitleSetting: 10,
-      icon: IconSettingsFilled,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Visitor Setting',
+        subTitle: `${settingData.length ?? 0}`,
+        icon: IconSettingsFilled,
+        color: 'none',
+      },
+      {
+        title: 'Total Approval Workflow',
+        subTitle: `${totalRecords ?? 0}`,
+        icon: IconSettingsFilled,
+        color: 'none',
+      },
+    ],
+    [settingData.length, totalRecords],
+  );
 
 
   return (
@@ -274,8 +246,6 @@ const Content = () => {
                       setSearchKeyword={setSearch}
                       page={page}
                       setPage={setPage}
-                      refreshTrigger={refreshTrigger}
-                      setRefreshTrigger={setRefreshTrigger}
                     />
                   ) : null}
                 </Box>
@@ -293,18 +263,7 @@ const Content = () => {
               ) : null}
             </Box>
           </Paper>
-        </Box>
-        <Portal>
-          <Backdrop
-            open={loadingData}
-            sx={{
-              color: '#fff',
-              zIndex: 999999,
-            }}
-          >
-            <CircularProgress color="primary" />
-          </Backdrop>
-        </Portal>
+          </Box>
       </Container>
     </PageContainer>
   );

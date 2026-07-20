@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
@@ -10,9 +10,6 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import {
-  getAllAccessControlPagination,
-  deleteAccessControl,
-  getAccessControlById,
   getAccessControlsById,
 } from 'src/customs/api/admin';
 import { CreateAccessControlRequest } from 'src/customs/api/models/Admin/AccessControl';
@@ -41,15 +38,10 @@ import { useAccessControlPagination } from 'src/hooks/AccessControl/useAccessCon
 import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
 
 const Content = () => {
-  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-
-  // const [totalRecords, setTotalRecords] = useState(0);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [sortColumn, setSortColumn] = useState<string>('id');
-  const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
@@ -65,7 +57,6 @@ const Content = () => {
   });
 
   const { deleteMutation } = useAccessControlMutation();
-
   const tableData: any =
     data?.collection.map((item: any) => ({
       id: item.id,
@@ -80,21 +71,24 @@ const Content = () => {
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
-  const cards = [
-    {
-      title: t('totalAccessControl'),
-      icon: IconAccessible,
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalAccessControl'),
+        icon: IconAccessible,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords]
+  );
 
   const defaultFormData: CreateAccessControlRequest = {
     brand_id: null,
     brand_name: '',
     integration_id: '',
-    integration_name: '',
+    // integration_name: '',
     type: -1,
     name: '',
     description: '',
@@ -107,7 +101,7 @@ const Content = () => {
     brand_id: item?.brand_id ?? '',
     brand_name: item?.brand_name ?? '',
     integration_id: item?.integration_id ?? '',
-    integration_name: item?.integration_name ?? '',
+    // integration_name: item?.integration_name ?? '',
     type: item?.type ?? -1,
     name: item?.name ?? '',
     description: item?.description ?? '',
@@ -169,19 +163,15 @@ const Content = () => {
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirmDelete(
-      'Are you sure you want to delete this Access Control?',
+      t("confirmDelete", { name: 'Access Control' }),
     );
 
     if (confirmed) {
       try {
-        // await deleteAccessControl(id);
         await deleteMutation.mutateAsync(id);
-        showSwal('success', 'Successfully deleted Access Control!');
-      } catch (error) {
-        console.error(error);
-        showSwal('error', 'Failed to delete Access Control.');
-      } finally {
-        setTimeout(() => setLoading(false), 500);
+        showSwal('success', t("deleteSuccess", { name: 'Access Control' }));
+      } catch (error: any) {
+        showSwal('error', error?.message ?? t("deleteFailed", { name: 'Access Control' }));
       }
     }
   };
@@ -189,19 +179,15 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Access Control' }));
 
     if (confirmed) {
-      setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
-        showSwal('success', `${rows.length} items have been deleted.`);
+        showSwal('success', `${t("deleteSuccessMultiple", { count: rows.length, name: 'Access Control' })}`);
         setSelectedRows([]);
-      } catch (error) {
-        console.error(error);
-        showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
+      } catch (error: any) {
+        showSwal('error', error?.message ?? t("deleteFailed", { name: 'Access Control' }));
       }
     }
   };
@@ -212,7 +198,7 @@ const Content = () => {
 
     showSwal(
       'success',
-      edittingId ? 'Access Control successfully updated!' : 'Access Control successfully created!',
+      edittingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createdSuccess", { name: 'Access Control' }),
     );
   };
 

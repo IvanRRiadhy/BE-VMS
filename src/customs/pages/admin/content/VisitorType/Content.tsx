@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
-import { Box, CircularProgress, Divider, Grid2 as Grid, IconButton, Backdrop } from '@mui/material';
+import { Box, CircularProgress, Divider, Grid2 as Grid } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -12,12 +12,7 @@ import {
   CreateVisitorTypeRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/VisitorType';
-import { useSession } from 'src/customs/contexts/SessionContext';
-
 import {
-  getAllVisitorTypePagination,
-  updateVisitorType,
-  deleteVisitorType,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import Swal from 'sweetalert2';
@@ -29,11 +24,11 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
 import VisitorTypeDialog from './components/VisitorTypeDialog';
-import { updateQuickVisitorType, updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useVisitorTypePagination } from 'src/hooks/VisitorType/useVisitorTypePagination';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -46,10 +41,7 @@ const Content = () => {
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  // const [refreshTrigger, setRefreshTrigger] = useState(0);
-  // const [totalRecords, setTotalRecords] = useState(0);
   // const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
@@ -145,7 +137,6 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      setLoading(true);
       const resp = await getVisitorTypeById(id);
       const raw = resp?.collection;
 
@@ -173,8 +164,6 @@ const Content = () => {
       handleOpenDialog();
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -259,16 +248,16 @@ const Content = () => {
   }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete('Are you sure to delete this visitor type?');
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Visitor Type' }));
     if (!confirmed) return;
     try {
       setLoadingData(true);
       // await deleteVisitorType(id);
       await deleteMutation.mutateAsync(id);
 
-      showSwal('success', 'Successfully deleted visitor type!');
+      showSwal('success', t('deleteSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
-      showSwal('error', error.response.data.msg || 'Failed to delete visitor type.');
+      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'Visitor Type' }));
     } finally {
       setTimeout(() => {
         setLoadingData(false);
@@ -279,24 +268,15 @@ const Content = () => {
   const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
     if (rows.length === 0) return;
 
-    const result = await Swal.fire({
-      title: `Are you sure to delete ${rows.length} items?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes',
-      cancelButtonText: 'No',
-    });
+    const result = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Visitor Type' }));
+    if (result) {
 
-    if (result.isConfirmed) {
-      setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
-        showSwal('success', 'Successfully deleted selected items!');
+        showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Visitor Type' }));
         setSelectedRows([]);
       } catch (error) {
-        showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
+        showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'Visitor Type' }));
       }
     }
   };
@@ -368,12 +348,11 @@ const Content = () => {
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      // await updateVisitorTypeActive(row.id, checked);
       await activeMutation.mutateAsync({
         id: row.id,
         active: checked,
       });
-      showSwal('success', 'Visitor Type successfully updated');
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
     } finally {
@@ -389,9 +368,9 @@ const Content = () => {
         id: row.id,
         quickAccess: checked,
       });
-      showSwal('success', 'Quick Access successfully updated');
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
+      showSwal('error', error?.response?.data?.msg || t('updatedFailed', { name: 'Visitor Type' }));
     } finally {
       setLoadingData(false);
     }
@@ -474,15 +453,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
-      <Backdrop
-        open={loadingData}
-        sx={{
-          color: 'primary',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loadingData} />
     </PageContainer>
   );
 };

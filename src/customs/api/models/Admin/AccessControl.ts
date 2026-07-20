@@ -12,7 +12,6 @@ export type Item = {
   door_id: string;
   raw: string;
   integration_id: string;
-  integration_name: string;
 };
 
 export enum AccessControlType {
@@ -59,7 +58,6 @@ export const CreateAccessControlRequestSchema = z.object({
   door_id: z.string(),
   raw: z.string(),
   integration_id: z.string().min(1, 'Integration is required'),
-  integration_name: z.string(),
 });
 
 export type CreateAccessControlRequest = z.infer<typeof CreateAccessControlRequestSchema>;
@@ -91,7 +89,6 @@ export const UpdateAccessControlRequestSchema = z.object({
   door_id: z.string(),
   raw: z.string(),
   integration_id: z.string(),
-  integration_name: z.string().optional(),
 });
 
 export type UpdateAccessControlRequest = z.infer<typeof UpdateAccessControlRequestSchema>;

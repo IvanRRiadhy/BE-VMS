@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Grid2 as Grid,
@@ -35,6 +35,7 @@ import CustomFieldDialog from './components/CustomFIeldDialog';
 import useCustomFieldPagination from 'src/hooks/CustomField/useCustomFieldPagination';
 import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
 import GlobalBackdropLoading from '../AdminView/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 type CustomFieldTableRow = {
   id: string;
@@ -50,12 +51,12 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(30);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const {
     data,
@@ -79,15 +80,18 @@ const Content = () => {
   const isFormChanged =
     initialFormSnapshot !== null && JSON.stringify(formDataAddCustomField) !== initialFormSnapshot;
 
-  const cards = [
-    {
-      title: 'Total Custom Field',
-      subTitle: `${totalRecords}`,
-      icon: IconSettings,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Custom Field',
+        subTitle: `${totalRecords ?? 0}`,
+        icon: IconSettings,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalRecords],
+  );
 
 
   const handleOpenDialog = () => {
@@ -146,13 +150,13 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete('Are you sure you want to delete this custom field? ');
+    const confirm = await showConfirmDelete(t("confirmDelete", { name: 'Custom Field' }));
 
     if (confirm) {
 
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', 'Custom Field has been deleted.');
+        showSwal('success', t("deleteSuccess", { name: 'Custom Field' }));
         setRefreshTrigger((prev) => prev + 1);
       } catch (error: any) {
         showSwal('error', error.response.data.msg ?? 'Failed to delete custom field.');
@@ -183,9 +187,9 @@ const Content = () => {
     handleCloseDialog();
     setRefreshTrigger(refreshTrigger + 1);
     if (edittingId) {
-      showSwal('success', 'Custom Field successfully updated!');
+      showSwal('success', t('updatedSuccess', { name: 'Custom Field' }));
     } else {
-      showSwal('success', 'Custom Field successfully created!');
+      showSwal('success', t('createdSuccess', { name: 'Custom Field' }));
     }
   };
 
@@ -213,7 +217,7 @@ const Content = () => {
                 loading={isLoading}
                 overflowX={'auto'}
                 isHavePagination={false}
-                data={tableRowSite}
+                data={tableData}
                 selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 isHaveChecked={true}

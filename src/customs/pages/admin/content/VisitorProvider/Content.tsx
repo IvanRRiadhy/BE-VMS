@@ -133,7 +133,7 @@ const Content = () => {
         data: payload,
       });
 
-      showSwal('success', 'Visitor Provider successfully updated');
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Provider' }));
 
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
@@ -163,16 +163,16 @@ const Content = () => {
   const handleDelete = async (id: string) => {
 
     const confirmed = await showConfirmDelete(
-      `Are you sure you want to delete this Visitor Provider?`,
+      t("confirmDelete", { name: 'Visitor Provider' }),
     );
 
     if (confirmed) {
 
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', `Successfully deleted Visitor Provider.`);
-      } catch (error) {
-        showSwal('error', `Failed to delete Visitor Provider.`);
+        showSwal('success', t("deleteSuccess", { name: 'Visitor Provider' }));
+      } catch (error: any) {
+        showSwal('error', error?.response?.data?.message ?? t("deleteFailed", { name: 'Visitor Provider' }));
       }
     }
   };

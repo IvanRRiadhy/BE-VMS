@@ -43,6 +43,7 @@ export type Item = {
   api_key_field: string;
   api_key_value: string;
   integration_list_id: string;
+  ipsotek_url_dashboard_incident?: string;
 };
 
 export type AvailableItem = z.infer<typeof AvailableIntegrationItemSchema>;
@@ -121,6 +122,7 @@ export const CreateIntegrationRequestSchema = z.object({
   api_key_field: z.string().default(''),
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
+  ipsotek_url_dashboard_incident: z.string().optional(),
 });
 
 export type CreateIntegrationRequest = z.infer<typeof CreateIntegrationRequestSchema>;
@@ -155,6 +157,8 @@ export const UpdateIntegrationRequestSchema = z.object({
   api_key_field: z.string().default(''),
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
+  ipsotek_url_dashboard_incident: z.string().optional(),
+  
 });
 
 export type UpdateIntegrationRequest = z.infer<typeof UpdateIntegrationRequestSchema>;

@@ -112,10 +112,10 @@ const TransactionVisitorDetail = ({
 
               <TableRow>
                 <TableCell />
-
                 <TableCell>Visitor Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Phone</TableCell>
+                <TableCell>Invitation Code</TableCell>
                 <TableCell>Organization</TableCell>
                 <TableCell>Host</TableCell>
                 <TableCell>Site</TableCell>
@@ -123,25 +123,27 @@ const TransactionVisitorDetail = ({
               </TableRow>
             </TableHead>
 
-            <TableBody>
-              {groupDetailLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
-              ) : groupVisitors.length > 0 ? (
-                groupVisitors.map((visitor: any, index: number) => (
-                  <VisitorRow key={visitor.id} visitor={visitor} index={index} />
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <Typography color="text.secondary">No visitor data</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+            {openGroup && (
+              <TableBody>
+                {groupDetailLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : groupVisitors.length > 0 ? (
+                  groupVisitors.map((visitor: any, index: number) => (
+                    <VisitorRow key={visitor.id} visitor={visitor} index={index} />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <Typography color="text.secondary">No visitor data</Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            )}
           </Table>
         </TableContainer>
       ) : (

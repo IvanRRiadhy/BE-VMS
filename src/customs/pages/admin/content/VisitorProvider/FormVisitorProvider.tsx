@@ -22,6 +22,8 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useVisitorProviderMutation } from 'src/hooks/VisitorProvider/useVisitorProviderMutation';
 
+import { useTranslation } from 'react-i18next';
+
 interface Props {
   form: any;
   setForm: React.Dispatch<React.SetStateAction<any>>;
@@ -36,6 +38,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const [removing, setRemoving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { t } = useTranslation();
 
   const {
     createMutation,
@@ -152,13 +155,11 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
       let id = editingId;
 
       if (editingId) {
-        // await updateVisitorProviders(editingId, payload);
         await updateMutation.mutateAsync({
           id: editingId,
           data: payload,
         });
       } else {
-        // const response = await createVisitorProvider(payload);
         const response = await createMutation.mutateAsync(payload);
         id = response?.data?.id ?? response?.id ?? response?.visitor_provider_id;
       }
@@ -170,8 +171,8 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
       showSwal(
         'success',
         editingId
-          ? 'Visitor Provider successfully updated'
-          : 'Visitor Provider successfully created',
+          ? t('updatedSuccess', { name: 'Visitor Provider' })
+          : t('createdSuccess', { name: 'Visitor Provider' }),
       );
 
       onSuccess?.();

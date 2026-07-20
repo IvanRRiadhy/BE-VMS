@@ -19,7 +19,7 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
+import {getTimezoneById } from 'src/customs/api/admin';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormTimezone from './FormTimezone';
@@ -95,14 +95,14 @@ const Content = () => {
   const { deleteMutation } = useTimezoneMutation();
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete('Are you sure you want to delete this time access?');
+    const confirmed = await showConfirmDelete(t("confirmDelete", { entity: "Time Access" }));
     if (confirmed) {
 
       try {
         // await deleteTimezone(id);
         await deleteMutation.mutateAsync(id);
 
-        showSwal('success', 'Time Access has been deleted.');
+        showSwal('success', t('deleteSuccess', { entity: "Time Access" }));
         setSelectedTimezone(null);
       } catch (error) {
         console.error(error);

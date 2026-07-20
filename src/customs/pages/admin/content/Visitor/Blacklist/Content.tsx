@@ -8,7 +8,6 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { getBlacklistDt, getListVisitor } from 'src/customs/api/admin';
 import { IconForbid, IconScript } from '@tabler/icons-react';
 import FilterBlacklist from './FilterBlacklist';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';

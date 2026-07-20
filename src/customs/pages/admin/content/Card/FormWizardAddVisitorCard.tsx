@@ -20,22 +20,12 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import ParentCard from 'src/components/shared/ParentCard';
 import PageContainer from 'src/components/container/PageContainer';
-import {
-  createVisitorCard,
-  getAllEmployee,
-  getAllSite,
-  getRegisteredSite,
-  getVisitorEmployee,
-  updateVisitorCard,
-} from 'src/customs/api/admin';
 import {
   CreateVisitorCardRequest,
   UpdateBatchCardSchema,
 } from 'src/customs/api/models/Admin/VisitorCard';
 import { Item } from 'src/customs/api/models/Admin/VisitorCard';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorCardRequestSchema,
   UpdateVisitorCardRequest,
@@ -44,6 +34,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
+import { useTranslation } from 'react-i18next';
 const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
@@ -86,6 +77,9 @@ const FormWizardAddVisitorCard = ({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [localForm, setLocalForm] = useState(formData);
+  const { t } = useTranslation();
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const { data: siteSpaceRes = [] } = useRegisteredSite();
   useEffect(() => {
     setLocalForm(formData);
   }, [formData]);
@@ -118,8 +112,6 @@ const FormWizardAddVisitorCard = ({
     setIsDirty?.(true);
   };
 
-  const { allVisitorEmployee } = useVisitorEmployees();
-  const { data: siteSpaceRes = [] } = useRegisteredSite();
 
   useEffect(() => {
     if (localForm.is_multi_site) {
@@ -219,11 +211,10 @@ const FormWizardAddVisitorCard = ({
             }),
           );
 
-          showSwal('success', 'Card updated successfully');
+          showSwal('success', t('updateSuccess', { name: 'Card' }));
           resetEnabledFields();
           onSuccess?.();
         } catch (err) {
-          console.error('❌ Batch update failed:', err);
           showSwal('error', 'Some cards failed to update.');
         } finally {
           setLoading(false);
@@ -239,22 +230,18 @@ const FormWizardAddVisitorCard = ({
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         } as UpdateVisitorCardRequest;
-
-        // console.log('📤 Updating card ID:', edittingId, updatedData);
-        // await updateVisitorCard(edittingId, updatedData);
         await updateMutation.mutateAsync({
           id: edittingId,
           data: updatedData,
         });
-        showSwal('success', 'Card updated successfully');
+        showSwal('success', t('updateSuccess', { name: 'Card' }));
       } else {
         const createdData: CreateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         };
-        // await createVisitorCard(createdData);
         await createMutation.mutateAsync(createdData);
-        showSwal('success', 'Card created successfully');
+        showSwal('success', t('createSuccess', { name: 'Card' }));
       }
 
       setLoading(false);
@@ -675,12 +662,12 @@ const FormWizardAddVisitorCard = ({
                 onClick={handleBack}
                 sx={{ mr: 1 }}
               >
-                Back
+                {t("back")}
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (
                 <Button onClick={handleNext} variant="contained" color="primary">
-                  Next
+                  {t("next")}
                 </Button>
               ) : (
                 <Button

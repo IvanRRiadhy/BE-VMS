@@ -6,12 +6,14 @@ import {
   Button,
   Backdrop,
   Portal,
+  Divider,
+  InputAdornment,
+  IconButton,
+  Box
 } from '@mui/material';
-import { Box } from '@mui/system';
 import React, { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   ApiTypeAuth,
   BrandType,
@@ -21,6 +23,9 @@ import {
 } from 'src/customs/api/models/Admin/Integration';
 import { createIntegration, updateIntegration } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 interface FormIntegrationProps {
   formData: CreateIntegrationRequest;
@@ -32,7 +37,8 @@ interface FormIntegrationProps {
 const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
@@ -50,12 +56,13 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     setLoading(true);
     setErrors({});
     try {
-     
+
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
       const payload: any = {
         ...data,
         api_type_auth: ApiTypeAuthMap[data.api_type_auth],
       };
+      console.log("payload", payload);
 
       if (editingId && editingId !== '') {
         await updateIntegration(editingId, payload);
@@ -63,10 +70,9 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         await createIntegration(payload);
       }
 
-
       showSwal(
         'success',
-        editingId ? 'Integration successfully updated!' : 'Integration successfully created!',
+        editingId ? t("updatedSuccess", { name: 'Integration' }) : t("createdSuccess", { name: 'Integration' }),
       );
       onSuccess?.();
     } catch (error: any) {
@@ -158,12 +164,30 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                 <CustomFormLabel htmlFor="api_auth_password">API Auth Password</CustomFormLabel>
                 <CustomTextField
                   id="api_auth_passwd"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.api_auth_passwd}
                   error={Boolean(errors.api_auth_passwd)}
                   helperText={errors.api_auth_passwd || ''}
                   onChange={handleChange}
                   fullWidth
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                          >
+                            {showPassword ? (
+                              <IconEyeOff size={20} />
+                            ) : (
+                              <IconEye size={20} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </>
             )}
@@ -177,7 +201,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                   helperText={errors.api_key_field || ''}
                   onChange={handleChange}
                   fullWidth
-                  // disabled
+                // disabled
                 />
                 <CustomFormLabel htmlFor="api_key_value">API Key Value</CustomFormLabel>
                 <CustomTextField
@@ -188,10 +212,23 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                   onChange={handleChange}
                   fullWidth
                 />
+
               </>
+            )}
+            {formData.brand_type === BrandType.CameraAnalytics && (<>
+              <CustomFormLabel htmlFor="ipsotek_url_dashboard_incident">Ipsotek URL</CustomFormLabel>
+              <CustomTextField
+                id="ipsotek_url_dashboard_incident"
+                value={formData.ipsotek_url_dashboard_incident}
+                error={Boolean(errors.ipsotek_url_dashboard_incident)}
+                helperText={errors.ipsotek_url_dashboard_incident || ''}
+                onChange={handleChange}
+                fullWidth
+              /></>
             )}
           </Grid>
         </Grid>
+        <Divider />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
           <Button
             color="primary"
@@ -204,17 +241,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
           </Button>
         </Box>
       </form>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: 'primary.main',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

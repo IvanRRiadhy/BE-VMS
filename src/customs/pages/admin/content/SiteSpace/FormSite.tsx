@@ -80,6 +80,7 @@ import { useSiteAccess } from 'src/hooks/Sites/useSiteAccess';
 import { useSitesParking } from 'src/hooks/Sites/useSitesParking';
 import { useSitesTracking } from 'src/hooks/Sites/useSitesTracking';
 import { useSiteDocuments } from 'src/hooks/Sites/useSiteDocuments';
+import { useTranslation } from 'react-i18next';
 
 type EnabledFields = {
   type: boolean;
@@ -141,8 +142,7 @@ const FormSite = ({
   ];
   // const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<any[]>([]);
-  // const [siteParking, setSiteParking] = useState<Parking[]>([]);
-  // const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
+  const { t } = useTranslation();
   const [newDocument, setNewDocument] = useState<SiteDocumentItem>({
     id: '',
     site_id: '',
@@ -179,7 +179,7 @@ const FormSite = ({
 
   useEffect(() => {
     if (!editingId) return;
-    
+
     const site = siteAccess?.collection;
     const accessControlList = accessControl?.collection ?? [];
     const parkingMaster = siteParking?.collection ?? [];
@@ -230,18 +230,18 @@ const FormSite = ({
 
     const mappedAccess = Array.isArray(site)
       ? site.map((a: any, idx: number) => {
-          const master = accessControlList.find(
-            (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
-          );
+        const master = accessControlList.find(
+          (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
+        );
 
-          return {
-            id: a.id,
-            sort: idx,
-            access_control_id: a.access_control_id,
-            name: master?.name ?? '',
-            early_access: a.early_access ?? false,
-          };
-        })
+        return {
+          id: a.id,
+          sort: idx,
+          access_control_id: a.access_control_id,
+          name: master?.name ?? '',
+          early_access: a.early_access ?? false,
+        };
+      })
       : [];
 
     setInitialTracking(mappedTracking);
@@ -356,7 +356,7 @@ const FormSite = ({
     }
 
     try {
-    
+
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
 
@@ -399,7 +399,7 @@ const FormSite = ({
         // const res = await updateSite(editingId, updateData, token);
         const res = await update.mutateAsync({
           id: editingId,
-      
+
           data: updateData,
         });
         const deletedTracking = initialTracking.filter(
@@ -472,13 +472,13 @@ const FormSite = ({
                   document_id: doc.document_id,
                   retention_time: doc.retention_time,
                 },
-            
+
               ),
             ),
           );
         }
 
-        showSwal('success', 'Site successfully updated!');
+        showSwal('success', t('updateSuccess', { name: 'Site Space' }));
         setDeletedSiteDocuments([]);
         setNewSiteDocuments([]);
       } else {
@@ -499,9 +499,8 @@ const FormSite = ({
         };
         // console.log('finalFormData', JSON.stringify(finalFormData, null, 2));
         const createData = CreateSiteRequestSchema.parse(finalFormData);
-        // const res = await createSite(createData, token);
         const res = await create.mutateAsync({
-    
+
           data: createData,
         });
         const newSiteId = res.collection?.id as string;
@@ -519,7 +518,7 @@ const FormSite = ({
         await createSiteDocumentsForNewSite();
         handleFileUpload(newSiteId);
 
-        showSwal('success', 'Site successfully created!');
+        showSwal('success', t('createSuccess', { name: 'Site Space' }));
       }
 
       onSuccess?.();
@@ -560,7 +559,7 @@ const FormSite = ({
   };
 
   const handleFileUpload = async (siteId: string) => {
-    if ( !siteImageFile) return;
+    if (!siteImageFile) return;
     try {
       await uploadImageSite(siteId, siteImageFile);
     } catch (err) {
@@ -569,7 +568,7 @@ const FormSite = ({
   };
 
   const createSiteDocumentsForNewSite = async () => {
- 
+
 
     const allSitesRes = await getAllSite();
     const newSite = allSitesRes.collection.find(
@@ -1632,15 +1631,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.parking ||
                     (localForm.parking.length === 0 && localForm.can_visited)) && (
-                    <MuiButton
-                      size="small"
-                      onClick={() => handleAddDetail('parking')}
-                      variant="contained"
-                      color="primary"
-                    >
-                      Add New
-                    </MuiButton>
-                  )}
+                      <MuiButton
+                        size="small"
+                        onClick={() => handleAddDetail('parking')}
+                        variant="contained"
+                        color="primary"
+                      >
+                        Add New
+                      </MuiButton>
+                    )}
                 </Box>
               </Paper>
             </Grid>
@@ -1684,15 +1683,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.tracking ||
                     (localForm.tracking.length === 0 && localForm.can_visited)) && (
-                    <MuiButton
-                      size="small"
-                      onClick={() => handleAddDetail('tracking')}
-                      variant="contained"
-                      color="primary"
-                    >
-                      Add New
-                    </MuiButton>
-                  )}
+                      <MuiButton
+                        size="small"
+                        onClick={() => handleAddDetail('tracking')}
+                        variant="contained"
+                        color="primary"
+                      >
+                        Add New
+                      </MuiButton>
+                    )}
                 </Box>
               </Paper>
             </Grid>
