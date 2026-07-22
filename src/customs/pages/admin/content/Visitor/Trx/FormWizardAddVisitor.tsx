@@ -59,7 +59,6 @@ import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
 import 'react-image-crop/dist/ReactCrop.css';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   CreateGroupVisitorRequest,
@@ -5309,10 +5308,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
-        const safeTrim = (val: any): string => {
-          if (val === undefined || val === null) return '';
+        // const safeTrim = (val: any): string => {
+        //   if (val === undefined || val === null) return '';
+        //   if (typeof val === 'string') return val.trim();
+        //   if (Array.isArray(val)) return val.map(String).join(',');
+        //   return String(val).trim();
+        // };
+
+        const safeTrim = (val: any): string | null => {
+          if (val === undefined || val === null) return null;
+
           if (typeof val === 'string') return val.trim();
+
           if (Array.isArray(val)) return val.map(String).join(',');
+
           return String(val).trim();
         };
 

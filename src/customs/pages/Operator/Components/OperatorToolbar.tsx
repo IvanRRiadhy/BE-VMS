@@ -56,6 +56,11 @@ const OperatorToolbar = ({
     setAnchorEl(null);
   };
 
+  const selectedValue =
+    registeredSite?.some((item) => item.id === selectedSite)
+      ? selectedSite
+      : '';
+
   return (
     <Box
       display="flex"
@@ -67,7 +72,7 @@ const OperatorToolbar = ({
       }}
     >
       <Select
-        value={selectedSite ?? ''}
+        value={selectedValue}
         onChange={(e) => onChangeSite?.(e.target.value)}
         displayEmpty
         size="medium"

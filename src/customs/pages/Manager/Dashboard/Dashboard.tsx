@@ -15,7 +15,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
 import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -38,7 +37,6 @@ import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { getAllVisitorPagination } from 'src/customs/api/admin';
 import dayjs from 'dayjs';
 import { useActivities } from 'src/hooks/Dashboard/useActivity';
-import PieCharts from './PieCharts';
 
 const DashboardEmployee = () => {
   const CardItems = [

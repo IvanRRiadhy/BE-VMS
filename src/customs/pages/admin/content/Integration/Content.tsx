@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Box, Button, Divider, Grid2 as Grid } from '@mui/material';
+import { useCallback, useMemo, useState } from 'react';
+import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -10,9 +10,6 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
-  deleteIntegration,
-  getAllIntegration,
-  getAvailableIntegration,
   getIntegrationById,
 } from 'src/customs/api/admin';
 import {
@@ -27,12 +24,13 @@ import {
 } from 'src/customs/api/models/Admin/Integration';
 import { useTheme } from '@mui/material/styles';
 import { IconWorldCog } from '@tabler/icons-react';
-
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import IntegrationDialog from './components/IntegrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import IntegrationCard from './components/IntegrationCard';
+import { useAvailableIntegration, useIntegration } from 'src/hooks/Integration/useIntegration';
+import { useIntegrationMutation } from 'src/hooks/Integration/useIntegrationMutation';
 
 type IntegrationTableRow = {
   id: string;
@@ -69,19 +67,15 @@ function sanitizeIntegrationForForm(item: Item): CreateIntegrationRequest {
 
 const Content = () => {
   const theme = useTheme();
-  const [integrationData, setIntegrationData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<IntegrationTableRow[]>([]);
-  const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
-  const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
-
+  const [isDirty, setIsDirty] = useState(false);
+  const { t } = useTranslation();
   function normalizeBrandType(value: unknown): number {
     if (typeof value === 'number') return value;
 
@@ -92,86 +86,51 @@ const Content = () => {
     return 0;
   }
 
-  const ApiTypeAuthMap: Record<string, number> = {
-    Basic: 0,
-    Bearer: 1,
-    ApiKey: 2,
-    Bacnet: 4,
-  };
+  const {
+    data: integrationResponse = [],
+    isLoading: loadingIntegration,
+  } = useIntegration();
 
-  useEffect(() => {
+  const {
+    data: availableResponse = [],
+    isLoading: loadingAvailable,
+  } = useAvailableIntegration();
 
-    let cancelled = false;
+  const loading = loadingIntegration || loadingAvailable;
 
-    const fetchData = async () => {
-      setLoading(true);
+  const tableData = useMemo(
+    () =>
+      integrationResponse.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        brand_name: item.brand_name,
+        brand_type: item.brand_type,
+        integration_type: item.integration_type,
+        api_type_auth: item.api_type_auth,
+        api_url: item.api_url || '',
+      })),
+    [integrationResponse],
+  );
 
-      try {
-        const [responseResult, availableResponseResult] = await Promise.allSettled([
-          getAllIntegration(),
-          getAvailableIntegration(),
-        ]);
+  const availableIntegration = useMemo(
+    () =>
+      (availableResponse?.collection ?? []).map((item: any) => ({
+        ...item,
+        brand_type: normalizeBrandType(item.brand_type),
+        api_type_auth: item.api_type_auth,
+      })),
+    [availableResponse],
+  );
 
-        const integrations: Item[] =
-          responseResult.status === 'fulfilled' && Array.isArray(responseResult.value?.collection)
-            ? responseResult.value.collection
-            : [];
+  const totalRecords = integrationResponse.length;
 
-        const availables =
-          availableResponseResult.status === 'fulfilled'
-            ? (availableResponseResult.value.collection ?? []).map((item: any) => ({
-              ...item,
-              brand_type: normalizeBrandType(item.brand_type),
-              api_type_auth: item.api_type_auth,
-            }))
-            : [];
-
-        if (availableResponseResult.status === 'rejected') {
-          console.error('getAvailableIntegration failed:', availableResponseResult.reason);
-        }
-
-        if (responseResult.status === 'rejected') {
-          console.error('getAllIntegration failed:', responseResult.reason);
-        }
-
-        if (cancelled) return;
-
-        setAvailableIntegration(availables);
-
-        // setIntegrationData(integrations);
-        setTotalRecords(integrations.length);
-
-        const rows: any = integrations.map((item) => ({
-          id: item.id,
-          name: item.name,
-          brand_name: item.brand_name,
-          brand_type: item.brand_type,
-          integration_type: item.integration_type,
-          api_type_auth: item.api_type_auth,
-          api_url: item.api_url || '',
-        }));
-
-        setTableData(rows);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page, rowsPerPage, search, refreshTrigger]);
 
   const filteredData = useMemo(() => {
     if (!search) return tableData;
 
     const keyword = search.toLowerCase();
 
-    return tableData.filter((item) =>
+    return tableData.filter((item: any) =>
       [
         item.name,
         item.brand_name,
@@ -195,7 +154,7 @@ const Content = () => {
       api_type_auth: '',
     }),
   );
-  const { t } = useTranslation();
+
 
   const cards = useMemo(
     () => [
@@ -269,6 +228,10 @@ const Content = () => {
     openForm(integration);
   };
 
+  const {
+    deleteMutation,
+  } = useIntegrationMutation();
+
   const handleEdit = async (id: string) => {
     const integration = await getIntegrationById(id);
     const res = integration?.collection ?? integration;
@@ -282,43 +245,35 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-
     const isConfirmed = await showConfirmDelete(
-      'Are you sure you want to delete this integration?',
+      t("confirmDelete", { name: 'Integration' }),
     );
 
     if (!isConfirmed) return;
 
-    setLoading(true);
 
     try {
-      await deleteIntegration(id);
-      setRefreshTrigger((prev) => prev + 1);
-      showSwal('success', 'Successfully deleted integration');
-    } catch (error) {
-      console.error(error);
-      showSwal('error', 'Failed to delete the item.');
-    } finally {
-      setLoading(false);
+      // await deleteIntegration(id);
+      await deleteMutation.mutateAsync(id);
+      showSwal('success', t("deleteSuccess", { name: 'Integration' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || t("deleteFailed", { name: 'Integration' }));
     }
   };
 
   const handleBatchDelete = async (rows: any[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Integration' }));
 
     if (confirmed) {
-      setLoading(true);
       try {
-        await Promise.all(rows.map((row) => deleteIntegration(row.id)));
-        setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', `${rows.length} items have been deleted.`);
+        // await Promise.all(rows.map((row) => deleteIntegration(row.id)));
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
+        showSwal('success', t("deleteSuccessMultiple", { count: rows.length, name: 'Integration' }));
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -331,7 +286,7 @@ const Content = () => {
     [setPage, setSearch],
   );
 
-  const [isDirty, setIsDirty] = useState(false);
+
 
   const handleRequestClose = () => {
     if (isDirty) {
@@ -347,8 +302,6 @@ const Content = () => {
 
       showSwal('success', 'ID copied successfully');
     } catch (error) {
-      console.error(error);
-
       showSwal('error', 'Failed to copy ID');
     }
   };
@@ -417,7 +370,7 @@ const Content = () => {
               />
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
-              {availableIntegration.map((integration, index) => (
+              {availableIntegration.map((integration: any, index: any) => (
                 <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
                   <IntegrationCard
                     integration={integration}

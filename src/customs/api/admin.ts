@@ -2366,7 +2366,7 @@ export const createEmail = async (data: CreateEmailRequest): Promise<CreateEmail
 //#endregion
 
 //#region Integration API
-export const getAllIntegration = async (): Promise<GetAllIntegrationResponse> => {
+export const getAllIntegration = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/integration`, {
       headers: { Accept: 'application/json' },
@@ -2395,7 +2395,7 @@ export const getAvailableIntegration = async (): Promise<any> => {
 };
 
 export const getIntegrationById = async (
-  id: string,
+  id: any,
 ): Promise<GetIntegrationByIdResponse> => {
   try {
     const response = await axiosInstance.get(`/integration/${id}`, {
@@ -3785,7 +3785,7 @@ export const getIntegrationIpsotekCategory = async (): Promise<any> => {
 
 // get by id
 
-export const getIntegrationIpsotekCategoryById = async (integrationId: string): Promise<any> => {
+export const getIntegrationIpsotekCategoryById = async (integrationId?: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/integration-ipsotek/category/${integrationId}`, {
       headers: { Accept: 'application/json' },

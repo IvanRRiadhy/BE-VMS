@@ -19,7 +19,7 @@ import {
   IconPlus,
   IconX,
 } from '@tabler/icons-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';

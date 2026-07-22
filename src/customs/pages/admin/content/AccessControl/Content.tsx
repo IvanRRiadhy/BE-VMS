@@ -36,6 +36,7 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useAccessControlPagination } from 'src/hooks/AccessControl/useAccessControlPagination';
 import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -286,6 +287,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
+      <GlobalBackdropLoading open={deleteMutation.isPending} />
     </PageContainer>
   );
 };

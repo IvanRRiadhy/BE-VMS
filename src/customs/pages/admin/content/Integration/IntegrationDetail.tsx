@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Honeywell from './Honeywell';
 import BioPeopleTracking from './BioPeopleTracking';
 import BioPeopleParking from './BioPeopleParking';
@@ -46,16 +45,16 @@ const IntegrationDetail = () => {
   const name = fullName.split(' - ')[0].trim();
 
   switch (true) {
-    case brand === 'Honeywell IPSOTEK' && brandType === 'CameraAnalytics':
+    case name == 'honeywell ipsotek' && brandType == 'CameraAnalytics':
       return <Ipsotek id={integration.id} />;
 
-    case brand === 'honeywell' || name === 'honeywell':
+    case brand == 'Honeywell' || name == 'Honeywell':
       return <Honeywell id={integration.id} />;
 
-    case brand === 'bio experience' && name === 'bio people tracking system':
+    case brand == 'Bio Experience' && name == 'bio people tracking system':
       return <BioPeopleTracking id={integration.id} />;
 
-    case brand === 'bio experience' && name === 'bio parking system':
+    case brand == 'Bio Experience' && name == 'bio parking system':
       return <BioPeopleParking id={integration.id} />;
     default:
       return <div></div>;

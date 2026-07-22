@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
   Grid2 as Grid,
   IconButton,
-  TextField,
   Typography,
   useMediaQuery,
   Tooltip,
@@ -53,8 +52,6 @@ const Content = () => {
   const debounceSearch = useDebounce(search, 500);
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
-
-  // const [timezoneData, setTimezoneData] = useState<Item[] | null>([]);
   const { t } = useTranslation();
 
   // useEffect(() => {
@@ -91,7 +88,6 @@ const Content = () => {
     data?.pages.flatMap((page) => page.collection) ?? [];
 
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
-
   const { deleteMutation } = useTimezoneMutation();
 
   const handleDelete = async (id: string) => {
@@ -99,9 +95,7 @@ const Content = () => {
     if (confirmed) {
 
       try {
-        // await deleteTimezone(id);
         await deleteMutation.mutateAsync(id);
-
         showSwal('success', t('deleteSuccess', { entity: "Time Access" }));
         setSelectedTimezone(null);
       } catch (error) {
@@ -310,17 +304,6 @@ const Content = () => {
                   </Button>
                 </Box>
               )}
-              {/* {!hasNextPage && timezoneData.length > 0 && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                  textAlign="center"
-                  py={2}
-                >
-                  No more data
-                </Typography>
-              )} */}
             </Box>
           </Box>
 

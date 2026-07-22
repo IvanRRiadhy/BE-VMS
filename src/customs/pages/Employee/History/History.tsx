@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -66,8 +65,6 @@ const History = () => {
   };
 
   useEffect(() => {
-
-
     fetchHistory();
   }, []);
 

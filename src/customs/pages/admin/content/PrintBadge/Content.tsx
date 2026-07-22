@@ -78,7 +78,6 @@ const Content = () => {
           file_url: fileUrl,
         },
       });
-      // console.log('Deleted old logo from CDN:', fileUrl);
     } catch (error) {
       console.error('Delete failed:', error);
     }

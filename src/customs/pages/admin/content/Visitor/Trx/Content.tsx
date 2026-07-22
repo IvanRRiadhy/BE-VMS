@@ -3,9 +3,6 @@ import { Box, Grid2 as Grid, Portal, Snackbar, Alert } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 import type { AlertColor } from '@mui/material/Alert';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -17,7 +14,6 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
 } from 'src/customs/api/models/Admin/Visitor';
@@ -41,7 +37,6 @@ import { useNavigate } from 'react-router';
 import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
 import QrScannerDialog from './components/Dialog/QrScannerDialog';
 import Swal from 'sweetalert2';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
@@ -67,6 +62,8 @@ import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -97,7 +94,6 @@ const Content = () => {
   };
 
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
@@ -115,7 +111,6 @@ const Content = () => {
   const navigate = useNavigate();
   const [selectedShareLink, setSelectedShareLink] = useState(null);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  const queryClient = useQueryClient();
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
   const [hasDecoded, setHasDecoded] = useState(false);
@@ -319,7 +314,6 @@ const Content = () => {
       title: t('totalVisitor'),
       icon: IconUsers,
       subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
       color: 'none',
     },
     {
@@ -383,7 +377,6 @@ const Content = () => {
       ...prev,
       registered_site: '',
     }));
-    queryClient.invalidateQueries({ queryKey: ['visitors'] });
     closeVisitorDialog();
   };
 
@@ -900,7 +893,6 @@ const Content = () => {
       />
 
       <ShareLinkDialog
-        refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
         onCopyLink={(row) => handleOpenInviteDialog(row)}

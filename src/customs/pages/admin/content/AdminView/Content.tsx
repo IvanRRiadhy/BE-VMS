@@ -26,7 +26,6 @@ import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/customs/components/container/PageContainer';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   createGiveAccessOperator,
@@ -3968,7 +3967,9 @@ const Content = () => {
             setFillFormDataVisitor={setFillFormDataVisitor}
             loadingAccess={loadingAccess}
             handleSubmitPramultiple={handleSubmitPramultiple}
-            renderFieldInput={renderFieldInput}
+            // renderFieldInput={renderFieldInput}
+            invitationDetail={invitationDetail}
+            allVisitorEmployee={allVisitorEmployee}
             getSectionType={getSectionType}
             formsOf={formsOf}
             isSelfGroup={isSelfGroup}

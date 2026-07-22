@@ -8,12 +8,8 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-
 import {
-  IconCalendar,
-  IconCards,
   IconCircleMinus,
-  IconDownload,
   IconLogin,
   IconLogout,
   IconX,
@@ -48,12 +44,21 @@ import InputInvitationCodeDialog from './components/InputInvitationCodeDialog';
 import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import VisitorActionBar from './components/VisitorActionBar';
 import GuestAccessPass from './components/GuestAccessPass';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
   const [openAccess, setOpenAccess] = useState(false);
   const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
+  const { accessPass, loading: loadingAccessPass } = useAccessPass();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const open = Boolean(anchorEl);
+  const printRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -92,24 +97,15 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  const { accessPass, loading: loadingAccessPass } = useAccessPass();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
-  const open = Boolean(anchorEl);
+
 
   function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
     const timezone = dayjs.tz.guess();
-
     const startLocal = dayjs.utc(startUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
-
     const endLocal = dayjs.utc(endUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
 
     return `${startLocal} - ${endLocal}`;
   }
-
-  const printRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownloadPDF = async () => {
     if (!printRef.current) return;
@@ -330,19 +326,7 @@ const Dashboard = () => {
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 1,
-            position: 'fixed',
-            margin: '0 auto',
-            color: 'primary',
-          }}
-          open={isGenerating}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={isGenerating} />
     </PageContainer>
   );
 };

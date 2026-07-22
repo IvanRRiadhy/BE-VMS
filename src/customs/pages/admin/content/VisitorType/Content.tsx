@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
+import { useEffect, useState, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Box, CircularProgress, Divider, Grid2 as Grid } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
@@ -15,8 +15,6 @@ import {
 import {
   getVisitorTypeById,
 } from 'src/customs/api/admin';
-import Swal from 'sweetalert2';
-
 import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -42,7 +40,6 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loadingData, setLoadingData] = useState(false);
-  // const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     CreateVisitorTypeRequestSchema.parse({}),
@@ -59,7 +56,6 @@ const Content = () => {
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [duplicatedAccess, setDuplicatedAccess] = useState<any[]>([]);
   const { t } = useTranslation();
   const identityValueMap: Record<string, number> = {
@@ -108,15 +104,17 @@ const Content = () => {
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
-  const cards = [
-    {
-      title: t('totalVisitorType'),
-      subTitle: `${totalRecords}`,
-      icon: IconUsersGroup,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalVisitorType'),
+        subTitle: `${totalRecords}`,
+        icon: IconUsersGroup,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);

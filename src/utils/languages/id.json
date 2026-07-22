@@ -99,6 +99,10 @@
   "totalVisitorProviders": "Total Kategori Pengunjung",
   "totalVisitor": "Total Pengunjung",
   "totalScheduler": "Total Jadwal",
+  "totalApproval": "Total Persetujuan",
+  "totalApprove": "Total Disetujui",
+  "totalReject": "Total Ditolak",
+  "totalPending": "Total Menunggu Persetujuan",
   "approve": "Setuju",
   "reject": "Tolak",
   "selectVisitor": "Pilih Pengunjung",
@@ -124,5 +128,7 @@
   "createdSuccess": "{{name}} berhasil dibuat.",
   "createdFailed": "Gagal membuat {{name}}.",
   "updatedSuccess": "{{name}} berhasil diubah.",
-  "updatedFailed": "Gagal mengubah {{name}}."
+  "updatedFailed": "Gagal mengubah {{name}}.",
+  "successReturnCard": "Pengembalian kartu berhasil.",
+  "mustChooseOneCard": "Pilih minimal satu kartu."
 }

@@ -21,11 +21,11 @@ import {
   CreateIntegrationRequestSchema,
   IntegrationType,
 } from 'src/customs/api/models/Admin/Integration';
-import { createIntegration, updateIntegration } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import { useIntegrationMutation } from 'src/hooks/Integration/useIntegrationMutation';
 
 interface FormIntegrationProps {
   formData: CreateIntegrationRequest;
@@ -36,13 +36,16 @@ interface FormIntegrationProps {
 
 const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
+  const {
+    createMutation,
+    updateMutation,
+  } = useIntegrationMutation();
 
   const ApiTypeAuthMap: Record<string, number> = {
     Basic: 0,
@@ -53,7 +56,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrors({});
     try {
 
@@ -62,12 +64,14 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         ...data,
         api_type_auth: ApiTypeAuthMap[data.api_type_auth],
       };
-      console.log("payload", payload);
+      // console.log("payload", payload);
 
       if (editingId && editingId !== '') {
-        await updateIntegration(editingId, payload);
+        // await updateIntegration(editingId, payload);
+        await updateMutation.mutateAsync({ id: editingId, data: payload });
       } else {
-        await createIntegration(payload);
+        // await createIntegration(payload);
+        await createMutation.mutateAsync(payload);
       }
 
       showSwal(
@@ -89,8 +93,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       }
 
       showSwal('error', error?.msg || error?.message || 'Failed to submit data.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -234,14 +236,13 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             color="primary"
             variant="contained"
             type="submit"
-            disabled={loading}
             size="medium"
           >
             Submit
           </Button>
         </Box>
       </form>
-      <GlobalBackdropLoading open={loading} />
+      <GlobalBackdropLoading open={createMutation.isPending || updateMutation.isPending} />
     </>
   );
 };

@@ -14,7 +14,6 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
@@ -39,10 +38,11 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 import { useDepartmentPagination } from 'src/hooks/Department/useDepartmentPagination';
 import { useDistrictPagination } from 'src/hooks/District/useDistrictPagination';
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 import { useDistrictMutation } from 'src/hooks/District/useDistrictMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type EnableField = {
   name: boolean;
@@ -87,8 +87,6 @@ const Content = () => {
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   useEffect(() => {
-
-
     const fetchEmployees = async () => {
       try {
         const res = await getVisitorEmployee();
@@ -132,7 +130,7 @@ const Content = () => {
     searchKeyword,
   });
 
-  const { remove } = useDepartmentMutation();
+  const { remove: deleteDepartment } = useDepartmentMutation();
   const { removeOrganization: deleteOrganization } = useOrganizationMutation();
   const { remove: deleteDistrict } = useDistrictMutation();
 
@@ -286,11 +284,10 @@ const Content = () => {
 
         switch (selectedType) {
           case 'department':
-            await remove.mutateAsync({
+            await deleteDepartment.mutateAsync({
               id: row.id,
 
             });
-
             successText = `${t("deleteSuccess", { name: 'Department' })}`;
             break;
 
@@ -301,14 +298,12 @@ const Content = () => {
             });
             successText = `${t("deleteSuccess", { name: 'District' })}`;
             break;
-
           case 'organization':
           default:
             await deleteOrganization.mutateAsync({
               id: row.id,
 
             });
-
             successText = `${t("deleteSuccess", { name: 'Organization' })}`;
             break;
         }
@@ -318,23 +313,19 @@ const Content = () => {
         showSwal('error', error?.message ?? t("deleteFailed", { name: `${selectedType} "${row.name}"` }));
       }
     },
-    [selectedType, remove, deleteDistrict, deleteOrganization],
+    [selectedType, deleteDepartment, deleteDistrict, deleteOrganization],
   );
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
-
-    // const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
     const confirmed = await showConfirmDelete(`${t("confirmDeleteMultiple", { count: rows.length, name: `${selectedType}` })}`);
-
     if (!confirmed) return;
-
     try {
       await Promise.all(
         rows.map((row) => {
           switch (selectedType) {
             case 'department':
-              return remove.mutateAsync({
+              return deleteDepartment.mutateAsync({
                 id: row.id,
 
               });
@@ -426,7 +417,7 @@ const Content = () => {
   );
 
   const [tableKey, setTableKey] = useState(0);
-
+  
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -468,9 +459,6 @@ const Content = () => {
                   isHaveSearch
                   isHaveFilter={false}
                   hasFetched={hasFetched}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
                   selectedHeaderItem={selectedType}
                   isHaveAddData
                   onBatchEdit={handleBatchEdit}
@@ -607,6 +595,7 @@ const Content = () => {
         onClose={() => setConfirmDialogOpen(false)}
         onDiscard={handleDiscard}
       />
+      <GlobalBackdropLoading open={deleteDistrict.isPending || deleteOrganization.isPending || deleteDepartment.isPending} />
     </PageContainer>
   );
 };

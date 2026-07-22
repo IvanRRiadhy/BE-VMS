@@ -27,7 +27,7 @@ export const useEmployeePagination = ({
   filters, 
 }: Props) => {
   return useQuery({
-    queryKey: ['employees', 'pagination', page, rowsPerPage, sortDir, search, filters],
+    queryKey: ['employees', page, rowsPerPage, sortDir, search, filters],
 
     queryFn: () =>
       getAllEmployeePaginationFilterMore(

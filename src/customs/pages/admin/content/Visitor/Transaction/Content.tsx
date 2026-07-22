@@ -100,7 +100,6 @@ const Content = () => {
   };
 
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
@@ -122,7 +121,7 @@ const Content = () => {
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [hostSearch, setHostSearch] = useState('');
-  const debouncedSearch = useDebounce(hostSearch, 800);
+  const debouncedSearch = useDebounce(hostSearch, 500);
 
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();

@@ -4583,7 +4583,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                           <Divider sx={{ my: 2 }} />
 
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                             <Button
                               onClick={() =>
                                 handleRemoveFileForField(
@@ -4735,7 +4735,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
             //   }
           } else {
-            // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
               (cf && rowIdxMap.byCF.get(cf)) ||
@@ -4826,9 +4825,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
-
-        const safeTrim = (val: any): string => {
-          if (val === undefined || val === null) return '';
+        const safeTrim = (val: any): string | null => {
+          if (val === undefined || val === null) return null;
           if (typeof val === 'string') return val.trim();
           if (Array.isArray(val)) return val.map(String).join(',');
           return String(val).trim();

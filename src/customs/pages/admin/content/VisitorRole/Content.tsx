@@ -9,19 +9,18 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconBrandMedium } from '@tabler/icons-react';
-import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-
+import {  showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useVisitorRolePagination } from 'src/hooks/VisitorRole/useVisitorRolePagination';
 import { useVisitorRoleMutation } from 'src/hooks/VisitorRole/useVisitorRoleMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const sortDir = 'desc';
   const { t } = useTranslation();
-
   const { data: visitorRole, isLoading } = useVisitorRolePagination({
     page,
     rowsPerPage,
@@ -39,14 +38,12 @@ const Content = () => {
       {
         title: t('totalVisitorRole'),
         subTitle: String(totalRecords),
-        subTitleSetting: 10,
         icon: IconBrandMedium,
         color: 'none',
       },
     ],
     [t, totalRecords],
   );
-
 
   const handleSearch = useCallback(
     (keyword: string) => {
@@ -57,9 +54,7 @@ const Content = () => {
   );
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
-
     try {
-
       await updateMutation.mutateAsync({
         id: row.id,
         data: {
@@ -117,11 +112,7 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <Portal>
-        <Backdrop open={updateMutation.isPending} style={{ zIndex: 99999 }}>
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={updateMutation.isPending} />
     </PageContainer>
   );
 };

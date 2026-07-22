@@ -1,4 +1,4 @@
-import { Grid2 as Grid, Portal, CircularProgress, Backdrop } from '@mui/material';
+import { Grid2 as Grid } from '@mui/material';
 
 import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -14,11 +14,11 @@ import TopCardsUI from './components/TopCardsUi';
 import { QuickAccessDialog } from '../../admin/content/Visitor/Trx/components/QuickAccessDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAllVisitorPagination } from 'src/customs/api/admin';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import dayjs from 'dayjs';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 
 const DashboardOperator = () => {
   const CardItems = [
@@ -35,7 +35,6 @@ const DashboardOperator = () => {
   ];
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
-
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
@@ -96,7 +95,7 @@ const DashboardOperator = () => {
     try {
       // setIsGenerating(true);
       setLoadingAccess(true);
-      await createQuickAccess( payload);
+      await createQuickAccess(payload);
 
       showSwal('success', 'Quick access created successfully');
 
@@ -316,20 +315,7 @@ const DashboardOperator = () => {
         onSearch={handleQuickSearch}
         totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
-
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            margin: '0 auto',
-            color: 'primary',
-          }}
-          open={loadingAccess}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loadingAccess} />
     </Container>
   );
 };

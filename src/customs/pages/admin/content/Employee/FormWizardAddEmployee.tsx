@@ -42,6 +42,7 @@ import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
+import { uploadImageEmployee } from 'src/customs/api/admin';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -115,8 +116,8 @@ const FormWizardAddEmployee = ({
 
     const serverPath =
       localForm.faceimage &&
-      !localForm.faceimage.startsWith('data:') &&
-      !/^https?:\/\//i.test(localForm.faceimage)
+        !localForm.faceimage.startsWith('data:') &&
+        !/^https?:\/\//i.test(localForm.faceimage)
         ? localForm.faceimage
         : null;
 
@@ -367,12 +368,14 @@ const FormWizardAddEmployee = ({
         }
 
         const payload = pick(localForm, enabledKeys);
+        console.log("payload", payload);
         const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
         const partialSchema = baseSchema?.pick(
           Object.fromEntries(enabledKeys.map((k) => [k, true])),
         );
 
         const res = partialSchema?.safeParse(payload);
+        console.log('res', res);
         if (res && !res.success) {
           const em = toErrorMap(res.error.issues);
           setErrors(em);
@@ -441,7 +444,6 @@ const FormWizardAddEmployee = ({
           is_email_verify: false,
           exit_date: data.exit_date || null,
         };
-
         await update.mutateAsync({
           id: edittingId,
 
@@ -464,6 +466,8 @@ const FormWizardAddEmployee = ({
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
+
+
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) {
@@ -472,9 +476,9 @@ const FormWizardAddEmployee = ({
       showSwal(
         'error',
         err?.response.data?.msg ??
-          err?.response.data?.message ??
-          err?.message ??
-          'Failed to submit. Please try again.',
+        err?.response.data?.message ??
+        err?.message ??
+        'Failed to submit. Please try again.',
       );
     }
   };
@@ -487,7 +491,7 @@ const FormWizardAddEmployee = ({
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      // tasks.push(uploadImageEmployee(employeeId, fileFromInput, token as string));
+      // tasks.push(uploadImageEmployee(employeeId, fileFromInput));
       tasks.push(
         uploadImage.mutateAsync({
           employeeId,
@@ -499,7 +503,7 @@ const FormWizardAddEmployee = ({
     if (faceImage && isDataUrl(faceImage)) {
       const blob = await fetch(faceImage).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      // tasks.push(uploadImageEmployee(employeeId, file, token as string));
+      // tasks.push(uploadImageEmployee(employeeId, file));
       tasks.push(
         uploadImage.mutateAsync({
           employeeId,

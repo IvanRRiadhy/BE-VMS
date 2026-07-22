@@ -5,8 +5,6 @@ import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconUsers, IconX } from '@tabler/icons-react';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { useQuery } from '@tanstack/react-query';
 import { deleteUser, getAllUser, getUserById } from 'src/customs/api/admin';
 import {
   AdminCustomSidebarItemsData,

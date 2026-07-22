@@ -15,7 +15,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { createBlacklist, getListVisitorPagination, getVisitorById } from 'src/customs/api/admin';
+import { getVisitorById } from 'src/customs/api/admin';
 
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
@@ -27,6 +27,7 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
 import { useListVisitorMutation } from 'src/hooks/Visitor/useListVisitorMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 interface VisitorFilters {
   organization_id: string;
@@ -40,15 +41,11 @@ interface VisitorFilters {
 
 const Content = () => {
   const navigate = useNavigate();
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
-  const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const { t } = useTranslation();
-
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
@@ -317,16 +314,7 @@ const Content = () => {
           onConfirm={(action: any) => openConfirm(action)}
         />
       </PageContainer>
-
-      <Backdrop
-        open={loadingData}
-        sx={{
-          color: '#fff',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loadingData} />
     </>
   );
 };

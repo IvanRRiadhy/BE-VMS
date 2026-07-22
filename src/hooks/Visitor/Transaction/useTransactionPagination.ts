@@ -25,7 +25,7 @@ export const useTransactionVisitorPagination = ({
         ],
 
         initialPageParam: 0,
-
+        staleTime: 30 * 1000,
         queryFn: ({ pageParam }) =>
             getVisitorTransactionPagination(
                 pageParam,

@@ -10,18 +10,15 @@ import {
   Box,
   TextField,
   Divider,
-  Button,
-  Stack,
   useMediaQuery,
   useTheme,
   CircularProgress,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import axiosInstance from 'src/customs/api/interceptor';
 import { getProfile } from 'src/customs/api/users';
-import type { GetProfileResponse, Item } from 'src/customs/api/models/profile';
+import type { Item } from 'src/customs/api/models/profile';
 
 const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -48,8 +45,7 @@ const DetailProfile = () => {
     district_name: '',
     department_name: '',
   });
-
-  // 🔹 Ambil data profil dari API
+  
   useEffect(() => {
     const fetchProfile = async () => {
 
@@ -60,22 +56,22 @@ const DetailProfile = () => {
         const d = res?.collection;
         if (!d) return;
 
-         setFormData({
-           id: d.id || '',
-           fullname: d.fullname || '',
-           username: d.username || '',
-           email: d.email || '',
-           group_name: d.group_name || '',
-           gender: d.gender || '',
-           address: d.address || '',
-           phone: d.phone || '',
-           password: d.password || '',
-           is_vip: d.is_vip ?? false,
-           is_email_verified: d.is_email_verified ?? false,
-           organization_name: d.organization_name || '',
-           district_name: d.district_name || '',
-           department_name: d.department_name || '',
-         });
+        setFormData({
+          id: d.id || '',
+          fullname: d.fullname || '',
+          username: d.username || '',
+          email: d.email || '',
+          group_name: d.group_name || '',
+          gender: d.gender || '',
+          address: d.address || '',
+          phone: d.phone || '',
+          password: d.password || '',
+          is_vip: d.is_vip ?? false,
+          is_email_verified: d.is_email_verified ?? false,
+          organization_name: d.organization_name || '',
+          district_name: d.district_name || '',
+          department_name: d.department_name || '',
+        });
       } catch (err) {
         console.error('Gagal mengambil data profil:', err);
       } finally {
@@ -102,7 +98,7 @@ const DetailProfile = () => {
           department_name: formData.department_name,
           district_name: formData.district_name,
         },
-    
+
       );
       setIsEditing(false);
     } catch (err) {

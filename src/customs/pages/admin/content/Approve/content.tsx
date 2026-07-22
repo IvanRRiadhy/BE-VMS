@@ -12,10 +12,8 @@ import Container from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import { Item } from 'src/customs/api/models/Admin/Document';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormApprove from './FormApprove';
-import { deleteApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
 import {
   CreateApprovalWorkflowRequest,
   CreateApprovalWorkflowSchema,
@@ -133,7 +131,8 @@ const Content = ({
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(
+      t("confirmDeleteMultiple", { count: rows.length, name: "Approval Workflow" }));
 
     if (confirmed) {
 

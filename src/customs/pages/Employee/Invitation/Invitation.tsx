@@ -12,28 +12,19 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
-  Typography,
-  InputAdornment,
-  Skeleton,
-  Button,
-  CircularProgress,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
-  CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
   getAllVisitorPagination,
   getEmployeeById,
-  getFormEmployee,
   getVisitorTransactionByIds,
-  getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { IconBolt, IconClipboard, IconSearch, IconShare, IconUsers } from '@tabler/icons-react';
@@ -47,10 +38,6 @@ import {
   getInvitationVisitorType,
 } from 'src/customs/api/Admin/InvitationData';
 import {
-  createShareLink,
-  createShareLinkByEmailById,
-  deleteShareLink,
-  getShareLinkByDt,
   getShareLinkById,
 } from 'src/customs/api/Admin/ShareLink';
 import Swal from 'sweetalert2';
@@ -64,11 +51,9 @@ import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Di
 import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLinkDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
-import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { cancelVisitor } from 'src/customs/api/users';
 import VisitorDetailPanel from './components/VisitorDetailPanel';
 import VisitorListTable from './components/VisitorListTable';
@@ -79,6 +64,7 @@ import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
 import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTransactionVisitorDetail';
+import TransactionVisitorList from './components/TransactionVisitorList';
 type Group = {
   id: string;
   name: string;
@@ -87,15 +73,12 @@ type Group = {
 };
 
 const Content = () => {
-  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
-
   const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
   const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
 
@@ -146,8 +129,6 @@ const Content = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const secdrawerWidth = 300;
-  // const [groupDetailLoading, setGroupDetailLoading] = useState(false);
-  // const [groupHeader, setGroupHeader] = useState<any | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleEmployeeClick = (employeeId: string) => {
@@ -179,7 +160,6 @@ const Content = () => {
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
 
-  const [search, setSearch] = useState<string>('');
   const [searchHost, setSearchHost] = useState<any>('');
 
   const [appliedFilters, setAppliedFilters] = useState<any>({
@@ -199,8 +179,6 @@ const Content = () => {
   const queryClient = useQueryClient();
   const [sortDir, setSortDir] = useState<string>('desc');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  // const [totalRecords, setTotalRecords] = useState(0);
   const [searchAgenda, setSearchAgenda] = useState('');
   const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
   const [openGroup, setOpenGroup] = useState(true);
@@ -371,8 +349,6 @@ const Content = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
     setIsDirty(false);
-
-    setRefreshTrigger((prev) => prev + 1);
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
 
     handleCloseDialog();
@@ -406,7 +382,6 @@ const Content = () => {
     setOpenRelatedInvitation(true);
 
     try {
-      // const res = await getInvitationRelatedVisitor(id, token);
       const res = await getVisitorTransactionByIds(id);
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
@@ -502,7 +477,6 @@ const Content = () => {
       // await deleteShareLink(id);
       await deleteMutation.mutateAsync(id);
       showSwal('success', 'Link deleted successfully.');
-      setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to delete link.');
     }
@@ -517,7 +491,6 @@ const Content = () => {
     setOpenDetailLink(true);
   };
 
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
@@ -562,7 +535,6 @@ const Content = () => {
         },
       });
       showSwal('success', 'Invitation sent successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
@@ -593,10 +565,9 @@ const Content = () => {
       setOpenCreateLink(false);
 
       showSwal('success', 'Share link sent successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (err) {
       showSwal('error', 'Failed to send share link');
-    } 
+    }
   };
 
   const handleCreateLink = async (payload: any) => {
@@ -605,7 +576,6 @@ const Content = () => {
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
-      setRefreshKey((prev) => prev + 1);
     } catch (err: any) {
       showSwal('error', err.response.data.message ?? 'Failed to create share link');
     }
@@ -690,111 +660,21 @@ const Content = () => {
                 marginTop: '5px',
               }}
             >
-              <Box
-                sx={{
-                  width: mdUp ? secdrawerWidth : '100%',
-                  borderRight: '1px solid #eee',
-                  p: 2,
-                  pt: 2,
-                  overflow: 'auto',
-                  height: { xs: '100%', md: '75vh' },
-                }}
-              >
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                  <Typography variant="h6" fontSize="1rem">
-                    Transaction Visitor
-                  </Typography>
-                </Box>
-
-                {/* Search */}
-                <CustomTextField
-                  fullWidth
-                  size="small"
-                  placeholder="Search Transaction"
-                  value={searchAgenda}
-                  onChange={(e) => setSearchAgenda(e.target.value)}
-                  sx={{ mb: 2 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start" style={{ paddingLeft: '0px !important' }}>
-                        <IconSearch style={{ color: 'gray' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <Box>
-                  <Box>
-                    {loading
-                      ? Array.from({ length: 10 }).map((_, i) => (
-                        <Box
-                          key={i}
-                          sx={{
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            mb: 1,
-                          }}
-                        >
-                          <Skeleton variant="text" width="60%" height={24} />
-                          <Skeleton variant="text" width="40%" height={20} />
-                        </Box>
-                      ))
-                      : filteredVisitors.map((group: any) => (
-                        <Box
-                          key={group.id}
-                          sx={{
-                            backgroundColor:
-                              selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            cursor: 'pointer',
-                            mb: 1,
-                            '&:hover': {
-                              backgroundColor: '#eee',
-                            },
-                          }}
-                          onClick={() => {
-                            setSelectedGroup(group);
-                            setSelectedGroupId(group.id);
-                          }}
-                        >
-                          <Typography variant="body1" fontWeight="bold">
-                            {group.agenda}
-                          </Typography>
-                          <Box display={'flex'} justifyContent={'space-between'}>
-                            <Typography>{group.visitor_type}</Typography>
-                            <Typography>{group.host_name}</Typography>
-                          </Box>
-                          <Typography>Start : {group.visitor_period_start}</Typography>
-                          <Typography>End : {group.visitor_period_end}</Typography>
-                          {/* <Box display={'flex'} justifyContent={'flex-end'}>
-                              {group.invited_by === profile?.user_id && (
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  onClick={() => handleCancel(group.id)}
-                                >
-                                  Cancel
-                                </Button>
-                              )}
-                            </Box> */}
-                        </Box>
-                      ))}
-                    {hasNextPage && (
-                      <Box display="flex" justifyContent="center" mt={2}>
-                        <Button
-                          variant="outlined"
-                          fullWidth
-                          disabled={isFetchingNextPage}
-                          onClick={() => fetchNextPage()}
-                        >
-                          {loadingMore ? <CircularProgress size={18} /> : 'Load More'}
-                        </Button>
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
+              <TransactionVisitorList
+                mdUp={mdUp}
+                secdrawerWidth={secdrawerWidth}
+                loading={loading}
+                loadingMore={loadingMore}
+                searchAgenda={searchAgenda}
+                setSearchAgenda={setSearchAgenda}
+                filteredVisitors={filteredVisitors}
+                selectedGroup={selectedGroup}
+                setSelectedGroup={setSelectedGroup}
+                setSelectedGroupId={setSelectedGroupId}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                fetchNextPage={fetchNextPage}
+              />
               <Box
                 p={2}
                 sx={{
@@ -902,7 +782,6 @@ const Content = () => {
 
       {/* Share Link */}
       <ShareLinkDialog
-        refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
         onCopyLink={(row) => handleOpenInviteDialog(row)}

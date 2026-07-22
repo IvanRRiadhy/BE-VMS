@@ -10,7 +10,6 @@ import {
 import { IconBrandGmail } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateEmailSchema,
   CreateSettingSmtpSchema,
@@ -84,7 +83,6 @@ const Content = () => {
       {
         title: 'Total SMTP Provider',
         subTitle: `${smtpData.length}`,
-        subTitleSetting: 10,
         icon: IconBrandGmail,
         color: 'none',
       },
@@ -243,8 +241,6 @@ const Content = () => {
   };
 
   const handleSubmitEmail = async (data: ItemEmail) => {
-
-
     try {
       setLoading(true);
 

@@ -20,7 +20,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { Item } from 'src/customs/api/models/Admin/Setting';
 import ApprovalWorkflow from 'src/customs/pages/admin/content/Approve/content';
 import { getAllOrganizations, getSetting, updateSetting } from 'src/customs/api/admin';
-import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import FormSetting from './FormSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import NotificationSetting from './NotificationSetting';
@@ -263,7 +263,7 @@ const Content = () => {
               ) : null}
             </Box>
           </Paper>
-          </Box>
+        </Box>
       </Container>
     </PageContainer>
   );

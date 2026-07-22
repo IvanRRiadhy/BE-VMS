@@ -37,7 +37,7 @@ export const useVisitorPagination = ({
             search,
             filters,
         ],
-
+        staleTime: 30 * 1000,
         queryFn: async () => {
             try {
                 const res = await getAllVisitorPagination(

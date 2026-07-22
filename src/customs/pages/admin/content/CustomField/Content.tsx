@@ -1,8 +1,7 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Grid2 as Grid,
-  IconButton,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -13,11 +12,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
-  getAllCustomField,
-  getAllCustomFieldPagination,
-  deleteCustomField,
   getCustomFieldById,
 } from 'src/customs/api/admin';
 import {
@@ -50,7 +45,6 @@ const Content = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
@@ -92,7 +86,6 @@ const Content = () => {
     ],
     [totalRecords],
   );
-
 
   const handleOpenDialog = () => {
     setOpenCreateCustomField(true);
@@ -157,7 +150,7 @@ const Content = () => {
       try {
         await deleteMutation.mutateAsync(id);
         showSwal('success', t("deleteSuccess", { name: 'Custom Field' }));
-        setRefreshTrigger((prev) => prev + 1);
+
       } catch (error: any) {
         showSwal('error', error.response.data.msg ?? 'Failed to delete custom field.');
       }
@@ -167,7 +160,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Custom Field' }));
 
     if (confirmed) {
 
@@ -175,8 +168,8 @@ const Content = () => {
         await Promise.all(
           rows.map((row) => deleteMutation.mutateAsync(row.id)),
         );
-        showSwal('success', `${rows.length} items of custom fields have been deleted.`);
-        setRefreshTrigger((prev) => prev + 1);
+        showSwal('success', t("deleteSuccessMultiple", { count: rows.length, name: 'Custom Field' }));
+
       } catch (error: any) {
         showSwal('error', error.response.data.msg ?? 'Failed to delete some items.');
       }
@@ -185,7 +178,6 @@ const Content = () => {
 
   const handleSuccess = () => {
     handleCloseDialog();
-    setRefreshTrigger(refreshTrigger + 1);
     if (edittingId) {
       showSwal('success', t('updatedSuccess', { name: 'Custom Field' }));
     } else {

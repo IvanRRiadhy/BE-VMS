@@ -7,10 +7,10 @@ import {
   MenuItem,
   FormControl,
   Select,
+  Box,
   FormHelperText,
 } from '@mui/material';
-import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
@@ -20,11 +20,8 @@ import {
 } from 'src/customs/api/models/Admin/AccessControl';
 
 import {
-  createAccessControl,
   getAccessControlsById,
-  getAllBrand,
   getAllIntegration,
-  updateAccessControl,
 } from 'src/customs/api/admin';
 
 import { AccessControlType } from 'src/customs/api/models/Admin/AccessControl';
@@ -36,6 +33,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAccessControlMutation } from 'src/hooks/AccessControl/useAccessControlMutation';
 import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type FormType = z.infer<typeof CreateAccessControlRequestSchema>;
 
@@ -282,9 +280,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         </Box>
       </form>
 
-      <Backdrop open={loading}>
-        <CircularProgress />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

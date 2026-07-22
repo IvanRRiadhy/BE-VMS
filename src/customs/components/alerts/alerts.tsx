@@ -154,10 +154,10 @@ export const showSwal = (
   const isMultiline = text.includes('\n');
   const formattedText = isMultiline
     ? text
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .join('<br>')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join('<br>')
     : text;
 
   const config: SweetAlertOptions = {
@@ -205,4 +205,40 @@ export const showDialogError = (htmlContent: string) => {
       confirmButton: 'rounded-md px-4 py-2 font-medium',
     },
   });
+};
+
+type ReasonDialogOptions = Omit<
+  SweetAlertOptions,
+  'input' | 'inputValidator' | 'preConfirm'
+>;
+
+export const showReasonDialog = async (
+  title: string,
+  text: string,
+  placeholder = 'Enter reason...',
+  options: Partial<ReasonDialogOptions> = {},
+): Promise<string | null> => {
+  const result = await Swal.fire({
+    title,
+    text,
+    icon: 'warning',
+    input: 'text',
+    inputPlaceholder: placeholder,
+    showCancelButton: true,
+    showCloseButton: true,
+    confirmButtonText: 'Yes',
+    cancelButtonText: 'No',
+    reverseButtons: true,
+    confirmButtonColor: '#16a34a',
+    preConfirm: (value) => {
+      if (!value?.trim()) {
+        Swal.showValidationMessage('Reason is required.');
+        return false;
+      }
+      return value.trim();
+    },
+    ...options,
+  });
+
+  return result.isConfirmed ? result.value : null;
 };

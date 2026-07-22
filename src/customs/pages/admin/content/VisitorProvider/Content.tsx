@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Backdrop,
   Box,
@@ -30,6 +30,7 @@ import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTranslation } from 'react-i18next';
 import { useVisitorProviderPagination } from 'src/hooks/VisitorProvider/useVisitorProviderPagination';
 import { useVisitorProviderMutation } from 'src/hooks/VisitorProvider/useVisitorProviderMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 interface VisitorProviderForm {
   name: string;
   code: string;
@@ -69,15 +70,17 @@ const Content = () => {
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
-  const cards = [
-    {
-      title: t('totalVisitorProviders'),
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconCategory,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalVisitorProviders'),
+        subTitle: `${totalRecords}`,
+        icon: IconCategory,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
 
   const tableData =
     data?.collection.map((item: any) => ({
@@ -293,11 +296,7 @@ const Content = () => {
         onClose={() => setOpenUnsavedDialog(false)}
         onDiscard={handleDiscard}
       />
-      <Portal>
-        <Backdrop open={actionLoading} style={{ zIndex: 99999 }}>
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={actionLoading} />
     </PageContainer>
   );
 };

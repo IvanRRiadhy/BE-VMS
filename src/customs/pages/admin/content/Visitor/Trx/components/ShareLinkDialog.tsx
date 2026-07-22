@@ -5,7 +5,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
 
 type Props = {
-  refreshKey: any;
   open: boolean;
   onClose: () => void;
   onCopyLink: (row: any) => void;
@@ -15,7 +14,6 @@ type Props = {
 };
 
 const ShareLinkDialog: React.FC<Props> = ({
-  refreshKey,
   open,
   onClose,
   onCopyLink,

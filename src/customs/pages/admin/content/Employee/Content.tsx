@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
-  Backdrop,
   Box,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -20,11 +18,10 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
 import {
-  CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/Employee';
-import { createEmployeeBlacklist, getEmployeeById } from 'src/customs/api/admin';
+import { getEmployeeById } from 'src/customs/api/admin';
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
@@ -38,6 +35,8 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 
 type EmployeesTableRow = {
   id: string;
@@ -80,6 +79,7 @@ const Content = () => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const navigate = useNavigate();
   const { remove, blacklist } = useEmployeeMutation();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
     exitEnd: '',
@@ -158,8 +158,12 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
-    const existingData = await getEmployeeById(String(id));
+    // const existingData = await getEmployeeById(String(id));
+    const existingData = employeeQuery.data?.collection.find(
+      (item) => item.id === id
+    );
     if (!existingData) return;
+
 
     const toNum = (
       v: unknown,
@@ -205,7 +209,7 @@ const Content = () => {
       district_id: String(s?.district_id ?? ''),
     });
 
-    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
+    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData));
 
     if (isDirty) {
       setPendingEditId(id);
@@ -365,8 +369,10 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setInitialFormData((_) => formDataAddEmployee);
+    // queryClient.invalidateQueries({ queryKey: ['employees'] });
+    await employeeQuery.refetch();
     setOpenFormAddEmployee(false);
   };
 
@@ -576,15 +582,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
-      <Backdrop
-        open={remove.isPending || blacklist.isPending}
-        sx={{
-          color: '#fff',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={remove.isPending || blacklist.isPending} />
     </PageContainer>
   );
 };

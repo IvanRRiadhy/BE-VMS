@@ -8,7 +8,6 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { IconBell } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 

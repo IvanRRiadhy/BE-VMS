@@ -4,15 +4,8 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
-  DialogActions,
-  DialogTitle,
-  Divider,
   FormControl,
   Grid2 as Grid,
-  IconButton,
-  List,
-  ListItem,
   MenuItem,
   Select,
   Typography,
@@ -134,42 +127,7 @@ interface VisitorImageProps {
   todayVisitingPurpose?: any;
 }
 
-const StatCard = ({
-  title,
-  value,
-  icon,
-  color,
-}: {
-  title: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color: string;
-}) => (
-  <Box
-    sx={{
-      p: 2,
-      borderRadius: 2,
-      bgcolor: '#f8fafc',
-      border: '1px solid',
-      borderColor: 'divider',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    }}
-  >
-    <Box>
-      <Typography variant="caption" color="text.secondary">
-        {title}
-      </Typography>
 
-      <Typography variant="h5" fontWeight={700} sx={{ color }}>
-        {value}
-      </Typography>
-    </Box>
-
-    <Box sx={{ color }}>{icon}</Box>
-  </Box>
-);
 
 const VisitorImage = ({
   faceImage,
@@ -260,14 +218,15 @@ const VisitorImage = ({
                       transform: 'translateY(-4px)',
                       boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
                     },
+                    color: '#fff',
                     cursor: 'pointer',
                   }}
                   onClick={() => handleOpenDetailVistingPurpose(item)}
                 >
-                  <CardContent sx={{ p: '15px !important' }}>
+                  <CardContent sx={{ p: '15px !important', color: '#fff', }}>
                     <Typography fontWeight={600}>{item.name}</Typography>
 
-                    <Typography variant="h4" color="primary" fontWeight="bold" mt={1}>
+                    <Typography variant="h4" fontWeight="bold" mt={1}>
                       {item.count}
                     </Typography>
                   </CardContent>

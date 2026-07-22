@@ -1,4 +1,4 @@
-import { Backdrop, Button, CircularProgress, Grid2 as Grid, useMediaQuery } from '@mui/material';
+import { Grid2 as Grid, useMediaQuery } from '@mui/material';
 import { Box, useTheme } from '@mui/system';
 import { IconBan, IconCheck, IconClock, IconScript, IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -7,9 +7,6 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
-  approveMeetingHost,
-  approveTicket,
-  getApprovalTicket,
   getVisitorByTickedId,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
@@ -25,6 +22,7 @@ import Swal from 'sweetalert2';
 import GroupVisitorTable from './components/GroupVisitorTable';
 import { useApprovalPagination } from 'src/hooks/Approval/useApprovalPagination';
 import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 
 type Group = {
   id: string;
@@ -97,35 +95,31 @@ const Approval = () => {
   const cards = useMemo(
     () => [
       {
-        title: 'Total Approval',
+        title: t('totalApproval'),
         subTitle: `${totalFilteredRecords}`,
-        subTitleSetting: 10,
         icon: IconScript,
         color: 'none',
       },
       {
-        title: 'Total Approve',
+        title: t("totalApprove"),
         subTitle: `${approve}`,
-        subTitleSetting: 10,
         icon: IconCheck,
         color: 'none',
       },
       {
-        title: 'Total Reject',
+        title: t("totalReject"),
         subTitle: `${reject}`,
-        subTitleSetting: 10,
         icon: IconBan,
         color: 'none',
       },
       {
-        title: 'Total Pending',
+        title: t("totalPending"),
         subTitle: `${pending}`,
-        subTitleSetting: 10,
         icon: IconClock,
         color: 'none',
       },
     ],
-    [totalFilteredRecords, approve, reject, pending]
+    [totalFilteredRecords, approve, reject, pending, t]
   );
 
   const {
@@ -372,15 +366,7 @@ const Approval = () => {
           setOpenDialog(false);
         }}
       />
-      <Backdrop
-        open={approveMutation.isPending || rejectMutation.isPending || approveMeetingHostMutation.isPending}
-        sx={{
-          color: '#fff',
-          zIndex: 99999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={approveMutation.isPending || rejectMutation.isPending || approveMeetingHostMutation.isPending} />
     </>
   );
 };

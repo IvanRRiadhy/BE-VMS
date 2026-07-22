@@ -1,44 +1,44 @@
 import {
+  Autocomplete,
   Box,
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Grid2 as Grid,
   IconButton,
   Switch,
-  Autocomplete,
-  CardActions,
-  Button,
-  DialogActions,
-  Portal,
-  Backdrop,
-  CircularProgress,
 } from '@mui/material';
 import { IconCategory, IconX } from '@tabler/icons-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
   createIpsotekCategory,
   deleteIpsotekCategory,
   getAllIntegration,
   getAllVisitorType,
+  getIntegrationById,
+  getIntegrationIpsotekById,
   getIntegrationIpsotekCategory,
+  getIntegrationIpsotekCategoryById,
   updateIpsotekCategory,
 } from 'src/customs/api/admin';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 const Ipsotek = ({ id: string }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
-  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [integration, setIntegration] = useState<any[]>([]);
   const [openDialogCategory, setOpenDialogCategory] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
 
   const [formCategory, setFormCategory] = useState({
     category: '',
@@ -48,56 +48,47 @@ const Ipsotek = ({ id: string }: any) => {
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const cards = [
-    {
-      title: 'Category',
-      subTitle: categoryAll.length.toString(),
-      subTitleSetting: 1,
-      icon: IconCategory,
-      color: 'none',
-    },
-  ];
-  // const visitorTypeMap = React.useMemo(() => {
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Category',
+        subTitle: '' + categoryAll.length,
+        subTitleSetting: 1,
+        icon: IconCategory,
+        color: 'none',
+      },
+    ],
+    [categoryAll.length],
+  );
+
+  const { visitorType } = useVisitorType();
+  // const { data: integration = [] } = useIntegration();
+
+  // const integrationMap = React.useMemo(() => {
   //   const map = new Map<string, string>();
-  //   visitorType.forEach((v) => {
+  //   integration?.forEach((v) => {
   //     map.set(v.id, v.name);
   //   });
   //   return map;
-  // }, [visitorType]);
+  // }, [integration]);
 
-  const integrationMap = React.useMemo(() => {
-    const map = new Map<string, string>();
-    integration.forEach((v) => {
-      map.set(v.id, v.name);
-    });
-    return map;
-  }, [integration]);
-
+  const fetchCategories = async () => {
+    try {
+      setLoadingData(true);
+      const res = await getIntegrationIpsotekCategoryById(id);
+      setCategoryAll(res.collection ?? []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const res = await getIntegrationIpsotekCategory();
-
-        // const mapped = (res.collection ?? []).map((item: any) => ({
-        //   ...item,
-        //   visitor_type_id: visitorTypeMap.get(item.visitor_type_id) || '-',
-        //   integration_id: integrationMap.get(item.integration_id) || '-',
-        // }));
-
-        // setCategoryAll(mapped);
-        setCategoryAll(res.collection ?? []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    fetchCategories();
+  }, [id]);
 
 
-  const { visitorType } = useVisitorType();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,12 +114,13 @@ const Ipsotek = ({ id: string }: any) => {
       try {
         await deleteIpsotekCategory(id);
         showSwal('success', 'Successfully deleted integration!');
+        await fetchCategories();
         setOpenDialogCategory(false);
       } catch (error) {
         console.error(error);
         showSwal('error', 'Failed to delete integration.');
       } finally {
-        setTimeout(() => setLoading(false), 500);
+        setLoading(false);
       }
     }
   };
@@ -171,14 +163,10 @@ const Ipsotek = ({ id: string }: any) => {
         await createIpsotekCategory(payload, id as string);
         showSwal('success', 'Category successfully created');
       }
-
+      await fetchCategories();
       setOpenDialogCategory(false);
 
-      // refresh list
-      const res = await getIntegrationIpsotekCategory();
-      setCategoryAll(res.collection ?? []);
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error?.message || 'Failed to save category');
     } finally {
       setLoading(false);
@@ -194,7 +182,7 @@ const Ipsotek = ({ id: string }: any) => {
           </Grid>
           <Grid size={{ xs: 12, lg: 12 }}>
             <DynamicTable
-              loading={loading}
+              loading={loadingData}
               data={categoryAll}
               isHaveChecked={true}
               isHaveAction={true}
@@ -264,7 +252,7 @@ const Ipsotek = ({ id: string }: any) => {
                 Integration
               </CustomFormLabel>
               <Autocomplete
-                disabled
+
                 options={integration}
                 getOptionLabel={(opt: any) => opt.name || ''}
                 value={integration.find((i) => i.id === formCategory.integration_id) || null}
@@ -299,17 +287,7 @@ const Ipsotek = ({ id: string }: any) => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => 99999,
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </PageContainer>
   );
 };

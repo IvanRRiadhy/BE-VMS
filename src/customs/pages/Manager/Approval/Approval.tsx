@@ -10,13 +10,11 @@ import {
   IconButton,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import { IconBan, IconCheck, IconScript, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import FilterMoreContent from '../Dashboard/FilterMoreContent';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -213,37 +211,8 @@ const Approval = () => {
         return;
       }
 
-      // const confirm = await Swal.fire({
-      //   title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
-      //   icon: 'question',
-      //   // imageUrl: BI_LOGO,
-      //   imageWidth: 100,
-      //   imageHeight: 100,
-      //   showCancelButton: true,
-      //   confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
-      //   cancelButtonText: 'Cancel',
-      //   reverseButtons: true,
-      //   confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
-      //   customClass: {
-      //     title: 'swal2-title-custom',
-      //     htmlContainer: 'swal2-text-custom',
-      //   },
-      // });
-
-      // if (!confirm.isConfirmed) return;
-
-      // setLoadingAction(true);
-
-      // // const res = await createApproval(token, { action }, id);
-      // if (action === 'Approve') await approveTicket(token, id);
-      // if (action === 'Reject') await rejectTicket(token, id);
-
-      // setTimeout(() => {
-
-      // }, 400);
       setTriggerCheckAll((prev) => !prev);
       setOpenVisitorApproval(true);
-      // setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       setTimeout(() => setLoadingAction(false), 800);
       showSwal(

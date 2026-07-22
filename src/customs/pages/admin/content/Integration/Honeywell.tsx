@@ -61,6 +61,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddBadgeDialog from './components/AddBadgeDialog';
 import { checkConnection } from 'src/customs/api/Admin/Integration';
 import SyncBadgeDialog from './components/SyncBadgeDialog';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const Honeywell = ({ id }: { id: string }) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -239,7 +240,7 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const loadTotals = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     const [cRes, btRes, ccRes, bsRes] = await Promise.allSettled([
       getCompanies(id as string),
@@ -261,7 +262,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if ( !id) return;
+    if (!id) return;
     setLoading(true);
     try {
       if (type === 'companies') {
@@ -282,7 +283,14 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData(rows ?? []);
       } else if (type === 'clear_codes') {
         const res = await getClearcodes(id as string);
-        setListData(res.collection ?? []);
+        const rows = res?.collection?.map((item: any) => ({
+          id: String(item.id),
+          clearcode_id: item.clearcode_id ?? '',
+          description: item.description ?? '',
+          honeywell_id: item.honeywell_id ?? '',
+          active: item.active ?? false,
+        }))
+        setListData(rows ?? []);
       } else if (type === 'badge_status') {
         const res = await getBadgeStatus(id as string);
         setListData(res.collection ?? []);
@@ -304,7 +312,7 @@ const Honeywell = ({ id }: { id: string }) => {
   >(null);
 
   useEffect(() => {
-    if (!editingRow) return; 
+    if (!editingRow) return;
 
     let type: typeof editDialogType = null;
     if (selectedType === 'companies') type = 'Companies';
@@ -347,7 +355,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [selectedType, editingRow]);
 
   const handleEditRow = async (row: any) => {
-    if ( !id) return;
+    if (!id) return;
 
     setIsBatchEdit(false);
     setEnabled({
@@ -368,6 +376,7 @@ const Honeywell = ({ id }: { id: string }) => {
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'clear_codes') {
         const res = await getClearcodesById(id as string, String(row.id));
+
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'badge_status') {
         const res = await getBadgeStatusById(id as string, String(row.id));
@@ -449,7 +458,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
- 
+
 
     let cancelled = false;
 
@@ -517,7 +526,7 @@ const Honeywell = ({ id }: { id: string }) => {
     };
 
     loadOptions();
-    return () => {};
+    return () => { };
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -566,10 +575,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: companyForm.name?.trim() } : {}),
         ...(enabled.organization_id
           ? {
-              organization_id: companyForm.organization_id
-                ? String(companyForm.organization_id).trim()
-                : undefined,
-            }
+            organization_id: companyForm.organization_id
+              ? String(companyForm.organization_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -652,10 +661,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: badgeTypeForm.name?.trim() } : {}),
         ...(enabled.visitor_type_id
           ? {
-              visitor_type_id: badgeTypeForm.visitor_type_id
-                ? String(badgeTypeForm.visitor_type_id).trim()
-                : undefined,
-            }
+            visitor_type_id: badgeTypeForm.visitor_type_id
+              ? String(badgeTypeForm.visitor_type_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -718,10 +727,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: clearCodeForm.name?.trim() } : {}),
         ...(enabled.access_control_id
           ? {
-              access_control_id: clearCodeForm.access_control_id
-                ? String(clearCodeForm.access_control_id).trim()
-                : undefined,
-            }
+            access_control_id: clearCodeForm.access_control_id
+              ? String(clearCodeForm.access_control_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -751,7 +760,7 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
- 
+
     const prev = listData;
 
     setListData((p) =>
@@ -772,9 +781,9 @@ const Honeywell = ({ id }: { id: string }) => {
         return;
       }
 
-      setSyncMsg({ open: true, text: 'Status diperbarui.', severity: 'success' });
+      // setSyncMsg({ open: true, text: 'Status diperbarui.', severity: 'success' });
+      showSwal('success', 'Status diperbarui.');
     } catch (e: any) {
-      console.error(e);
       setListData(prev);
       showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
     }
@@ -857,7 +866,7 @@ const Honeywell = ({ id }: { id: string }) => {
         })),
       };
 
-      await addBadgeEmployee( id as string, payload);
+      await addBadgeEmployee(id as string, payload);
 
       showSwal('success', 'Selected badges imported successfully');
 
@@ -872,15 +881,9 @@ const Honeywell = ({ id }: { id: string }) => {
     }
   };
 
-  const [openConnection, setOpenConnection] = useState(false);
-
   const handleCheckConnection = async () => {
-    
-
     try {
-      const res = await checkConnection( id);
-      console.log('id', id);
-
+      const res = await checkConnection(id);
       if (res.status === 'success') {
         showSwal('success', res.msg || 'Connected');
       } else {
@@ -1425,7 +1428,7 @@ const Honeywell = ({ id }: { id: string }) => {
                 <Autocomplete
                   fullWidth
                   autoHighlight
-                  disablePortal
+                  // disablePortal
                   options={accessControlOptions}
                   value={
                     accessControlOptions.find(
@@ -1521,17 +1524,7 @@ const Honeywell = ({ id }: { id: string }) => {
           <CircularProgress />
         </Backdrop>
       </Portal>
-      <Portal>
-        <Backdrop
-          open={syncing}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={syncing} />
     </>
   );
 };

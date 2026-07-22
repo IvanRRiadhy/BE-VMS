@@ -561,7 +561,6 @@ const Content = () => {
                 onSearchKeywordChange={handleSearchKeywordChange}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
-                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleOpenType}
               />
             </Grid>

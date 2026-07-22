@@ -30,7 +30,6 @@ import {
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTodayPraregister } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -38,7 +37,6 @@ import dayjs from 'dayjs';
 
 const Content = () => {
   const dispatch = useDispatch();
-  // const { startDate, endDate, isManual } = useSelector((state: RootState) => state.dateRange);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
   const exportRef = useRef<HTMLDivElement>(null);
