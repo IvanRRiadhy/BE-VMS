@@ -33,6 +33,7 @@ import {
   IconDeviceFloppy,
   IconGenderTransgender,
   IconMan,
+  IconRefresh,
   IconTrash,
   IconWoman,
   IconX,
@@ -51,6 +52,8 @@ import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import GlobalBackdropLoading from '../Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -63,7 +66,6 @@ interface FormDialogPraregistProps {
   onSubmitted?: (id?: string) => void;
   containerRef?: any;
   registeredSite?: string;
-  selfRegisterData?: any;
 }
 
 const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
@@ -72,7 +74,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   onSubmitted,
   containerRef,
   registeredSite,
-  // selfRegisterData,
 }) => {
   const [activeStep, setActiveStep] = useState(-1);
   const [isSelfInvitation, setIsSelfInvitation] = useState<boolean | null>(null);
@@ -90,17 +91,17 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const { t } = useTranslation();
   const formatDateTime = (value: string | null) =>
     !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
-
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
       setLoading(true);
       try {
         const res = await getDetailInvitationForm(id);
-        console.log('res', res);
         const data = res.collection;
         setInvitationData(data);
 
@@ -265,19 +266,46 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </IconButton>
             </Box>
 
+            <Divider sx={{ mb: 2 }} />
+
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'user' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                />
+                <Box sx={{ position: 'relative' }}>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={{
+                      facingMode,
+                    }}
+                    style={{
+                      width: '100%',
+                      borderRadius: 8,
+                      height: '250px',
+                      objectFit: 'cover',
+                      border: '2px solid #ccc',
+                    }}
+                  />
+                  <IconButton
+                    onClick={() =>
+                      setFacingMode((prev) =>
+                        prev === 'environment' ? 'user' : 'environment',
+                      )
+                    }
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.7)',
+                      },
+                    }}
+                  >
+                    <IconRefresh />
+                  </IconButton>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 {previewSrc ? (
@@ -287,6 +315,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     style={{
                       width: '100%',
                       borderRadius: 8,
+                      height: '250px',
+                      objectFit: 'cover',
                       border: '2px solid #ccc',
                     }}
                   />
@@ -310,7 +340,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             </Grid>
 
             <Divider sx={{ my: 2 }} />
-            <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
               <Button
                 color="error"
                 startIcon={<IconTrash />}
@@ -795,20 +825,28 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           return (
             <Grid key={idx} size={gridSize}>
               {!['vehicle_type', 'vehicle_plate'].includes(f.remarks) ||
-              formValues['is_driving'] === 'true' ? (
+                formValues['is_driving'] === 'true' ? (
                 <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
                   {f.long_display_text || f.remarks}
                 </CustomFormLabel>
               ) : null}
 
               {(() => {
-                switch (type) {
-                  case 10:
-                    return renderCameraField(f, idx); // selfie_image
-                  case 11:
-                    return renderFileUploadField(f, idx); // nda
-                  case 12:
-                    return renderUploadWithCamera(f, idx); // identity_image
+                const type = f.field_type;
+
+                switch (true) {
+                  case f.remarks === 'selfie_image':
+                    return renderUploadWithCamera(f, idx);
+
+                  case type === 10:
+                    return renderCameraField(f, idx);
+
+                  case type === 11:
+                    return renderFileUploadField(f, idx);
+
+                  case type === 12:
+                    return renderUploadWithCamera(f, idx);
+
                   default:
                     return null;
                 }
@@ -1141,11 +1179,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         'Failed Praregister';
 
       await new Promise((r) => setTimeout(r, 600));
-      showSwal('error', errMsg ?? 'Something went wrong');
+      showSwal('error', errMsg ?? "Failed Praregister");
     } finally {
-      setTimeout(() => {
         setSubmitting(false);
-      }, 600);
     }
   };
 
@@ -1274,7 +1310,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             disabled={activeStep === -1}
             startIcon={<IconArrowLeft />}
           >
-            Back
+            {t("back")}
           </Button>
           <Button
             variant="contained"
@@ -1283,7 +1319,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             onClick={() => setActiveStep(0)}
             endIcon={<IconArrowRight />}
           >
-            Next
+            {t("next")}
           </Button>
         </Box>
       </Box>
@@ -1373,7 +1409,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     </Button>
                   ) : (
                     <Button size="medium" variant="contained" color="primary" onClick={handleNext}>
-                      Next
+                      {t("next")}
                       <KeyboardArrowRight />
                     </Button>
                   )
@@ -1381,7 +1417,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 backButton={
                   <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
                     <KeyboardArrowLeft />
-                    Back
+                    {t("back")}
                   </Button>
                 }
               />
@@ -1395,7 +1431,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 onClick={handleBack}
                 startIcon={<IconArrowLeft size={18} />}
               >
-                Back
+                {t("back")}
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (
@@ -1404,7 +1440,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   onClick={handleNext}
                   endIcon={<IconArrowRight size={18} />}
                 >
-                  Next
+                  {t('next')}
                 </Button>
               ) : (
                 <Button variant="contained" color="primary" onClick={handleSubmit}>
@@ -1416,18 +1452,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         </Grid>
       </Grid>
 
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: 99999,
-          position: 'fixed',
-        }}
-        open={submitting}
-      >
-        <Box textAlign="center">
-          <CircularProgress color="primary" />
-        </Box>
-      </Backdrop>
+      <GlobalBackdropLoading open={submitting} />
     </>
   );
 };

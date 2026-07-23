@@ -173,7 +173,7 @@ const VisitorImage = ({
             onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
           />
         </Grid> */}{' '}
-      <Card sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }}>
+      <Card sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }} id="tour-occupancy">
         <Box
           sx={{
             display: 'flex',
@@ -249,7 +249,7 @@ const VisitorImage = ({
           )}
         </Grid>
       </Card>
-      <Grid>
+      <Grid id="tour-identity-image">
         <ImageCard
           title="Identity Image"
           imageSrc={identityImage}
@@ -258,7 +258,7 @@ const VisitorImage = ({
           onClick={() => identityImage && handleOpen(identityImage, 'Identity Image')}
         />
       </Grid>
-      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }}>
+      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }} id="tour-alert">
         <AlertCard
           isFullscreen={isFullscreen}
           title="Alerts"
@@ -278,7 +278,7 @@ const VisitorImage = ({
         onClose={() => setOpenMore(false)}
         data={todayVisitingPurpose}
       />
-    </Grid>
+    </Grid >
   );
 };
 

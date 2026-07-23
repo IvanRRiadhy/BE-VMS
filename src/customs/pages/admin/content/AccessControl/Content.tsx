@@ -78,7 +78,6 @@ const Content = () => {
         title: t('totalAccessControl'),
         icon: IconAccessible,
         subTitle: `${totalRecords}`,
-        subTitleSetting: 10,
         color: 'none',
       },
     ],
@@ -264,7 +263,6 @@ const Content = () => {
                 onBatchDelete={handleBatchDelete}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>

@@ -485,13 +485,97 @@ function FillPraregistrationGroup({
 
         case 10: // Camera
           if (field.remarks === 'selfie_image') {
+            const key = opts?.uniqueKey ?? String(index);
+
             return (
-              <CameraUpload
-                value={field.answer_file as string | undefined}
-                onChange={(url) => {
-                  onChange(index, 'answer_file', url);
-                }}
-              />
+              <Box
+                display="flex"
+                flexDirection={{ xs: 'column', md: 'row' }}
+                gap={1.5}
+                width="100%"
+                sx={{ maxWidth: 400 }}
+              >
+                <TextField
+                  select
+                  size="small"
+                  value={uploadMethods[key] || 'camera'}
+                  onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+                  sx={{ width: { xs: '100%', md: 180 } }}
+                >
+                  <MenuItem value="camera">Take Photo</MenuItem>
+                  <MenuItem value="file">Choose File</MenuItem>
+                </TextField>
+
+                {(uploadMethods[key] || 'camera') === 'camera' ? (
+                  <CameraUpload
+                    value={field.answer_file as string | undefined}
+                    onChange={(url) => onChange(index, 'answer_file', url)}
+                  />
+                ) : (
+                  <Box sx={{ width: { xs: '100%', md: 220 } }}>
+                    <label htmlFor={key}>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1.5,
+                          borderRadius: 2,
+                          p: 0.5,
+                          cursor: 'pointer',
+                          bgcolor: '#f5faff',
+                        }}
+                      >
+                        <CloudUploadIcon color="primary" />
+                        <Typography>Upload Selfie</Typography>
+                      </Box>
+                    </label>
+
+                    <input
+                      id={key}
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      capture="user"
+                      onChange={(e) =>
+                        handleFileChangeForField(
+                          e,
+                          (url) => onChange(index, 'answer_file', url),
+                          key,
+                        )
+                      }
+                    />
+
+                    {(field.answer_file || uploadNames[key]) && (
+                      <Box
+                        mt={0.5}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                      >
+                        <Typography variant="caption" noWrap>
+                          {uploadNames[key] ?? field.answer_file?.split('/').pop()}
+                        </Typography>
+
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            handleRemoveFileForField(
+                              field.answer_file as string,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        >
+                          <IconX size={16} />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
             );
           }
           return (

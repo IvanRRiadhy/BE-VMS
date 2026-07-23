@@ -4,7 +4,6 @@ import LoadingImage from '../../../assets/images/backgrounds/loading-img.svg';
 import { useNavigate } from 'react-router';
 import { AuthVisitor } from 'src/customs/api/users';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { showSwal } from '../alerts/alerts';
 import { HourglassTopOutlined, InfoOutlined } from '@mui/icons-material';
 
@@ -31,7 +30,7 @@ const WaitingPage = () => {
         setMessage(res?.msg);
 
         if (token) {
-          await saveToken(token, GroupRoleId.Visitor);
+          await saveToken(token);
           localStorage.removeItem('visitor_ref_code');
           navigate('/guest/dashboard', { replace: true });
           showSwal('success', 'Welcome to the Visitor Management System');

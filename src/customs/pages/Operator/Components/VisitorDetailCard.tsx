@@ -21,12 +21,17 @@ const VisitorDetailCard = ({
 
   const data = invitationCode[0];
   const status = data?.visitor_status;
+  const isHost = data?.is_host;
   const isBlocked = !!data?.is_block;
 
   const renderActions = () => {
     if (
       selectedVisitor &&
-      (selectedVisitor.is_praregister_done == null || selectedVisitor.is_praregister_done === false)
+      (
+        selectedVisitor.is_praregister_done == null ||
+        selectedVisitor.is_praregister_done === false
+      ) &&
+      !isHost
     ) {
       return (
         <Button variant="contained" size="large" onClick={() => handleView(selectedVisitor.id)}>
@@ -142,6 +147,7 @@ const VisitorDetailCard = ({
         gap: 1,
         height: '100%',
       }}
+      id="tour-visitor-detail"
     >
       <Card
         sx={{

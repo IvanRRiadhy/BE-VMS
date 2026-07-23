@@ -76,6 +76,7 @@ const HostInformation = ({
           p: 1,
           mt: 0.5,
         }}
+        id="tour-host-info"
       >
         <CardHeader title="Host Information" sx={{ pb: '0 !important', pt: '15px !important' }} />
         {/* <Divider /> */}

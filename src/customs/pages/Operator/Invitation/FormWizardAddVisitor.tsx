@@ -164,24 +164,8 @@ interface GroupScanPreview {
   selected: boolean;
 }
 
-const scanPulse = keyframes`
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-`;
 
-const ScanIcon = styled(IconScan)(() => ({
-  animation: `${scanPulse} 1.2s infinite ease-in-out`,
-}));
+
 
 type VisitorItem = {
   question_page: SectionPageVisitor[];
@@ -189,7 +173,7 @@ type VisitorItem = {
   type?: string;
 };
 
-import { styled, keyframes } from '@mui/material/styles';
+
 import RenderFieldGroup from '../Components/RenderFieldGroup';
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -201,6 +185,7 @@ import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
 import { IconRefresh } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
+import ScanningDialog from '../Dialog/ScanningDialog';
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -365,14 +350,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  const ScanContainer = styled(Box)(() => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 250,
-    gap: 16,
-  }));
+
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -6039,20 +6017,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       />
 
       {/* Scanning Dialog */}
-      <Dialog open={isGroupScanning} fullWidth maxWidth="sm">
-        <DialogTitle>Scanning Document</DialogTitle>
-        <DialogContent dividers>
-          <ScanContainer>
-            <ScanIcon size={48} />
-            <Typography variant="h6">Scanning document...</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Please wait a moment
-            </Typography>
-            <LinearProgress style={{ width: 220 }} />
-          </ScanContainer>
-        </DialogContent>
-      </Dialog>
-
+      <ScanningDialog open={isGroupScanning} />
       <GlobalBackdropLoading open={loading} />
 
       <Portal>

@@ -60,7 +60,6 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const queryClient = useQueryClient();
@@ -600,7 +599,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
-      <GlobalBackdropLoading open={loadingBackdrop} />
+      <GlobalBackdropLoading open={loadingBackdrop || remove.isPending} />
     </PageContainer>
   );
 };

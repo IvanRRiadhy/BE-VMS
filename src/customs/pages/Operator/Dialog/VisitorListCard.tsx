@@ -127,6 +127,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
         flexDirection: 'column',
         overflow: 'hidden',
       }}
+      id="tour-visitor-list"
     >
       <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -197,7 +198,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           </Tooltip>
         </Stack>
 
-        <Box display="flex" gap={1} alignItems="center" justifyContent={'flex-end'}>
+        <Box display="flex" gap={1} alignItems="center" justifyContent={'flex-end'} id="tour-select-multiple">
           <Tooltip
             title="Click and Select more than 1 visitor"
             slotProps={{

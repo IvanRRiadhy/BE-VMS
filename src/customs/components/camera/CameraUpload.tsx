@@ -209,7 +209,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
           </Grid>
 
           <Divider sx={{ my: 2 }} />
-          <Box textAlign="right">
+          <Box textAlign="right" display="flex" justifyContent="flex-end" gap={1} >
             <Button color="error" sx={{ mr: 1 }} onClick={clearLocal} startIcon={<IconTrash />}>
               Clear
             </Button>

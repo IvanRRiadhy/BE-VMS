@@ -33,7 +33,6 @@ import {  Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
@@ -106,7 +105,7 @@ const Login = () => {
       // const { token, group_id } = response.collection;
       const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
         response.collection;
-      saveToken(token, user_group_id, role_access);
+      saveToken(token);
 
       dispatch(
         setUser({
@@ -208,7 +207,7 @@ const Login = () => {
       const token = res.collection.token;
       const { id, visitor_id } = res.collection || {};
       if (token) {
-        saveToken(token, GroupRoleId.Visitor.toLowerCase(), 'Visitor');
+        saveToken(token);
         localStorage.removeItem('visitor_ref_code');
         navigate('/guest/dashboard');
 

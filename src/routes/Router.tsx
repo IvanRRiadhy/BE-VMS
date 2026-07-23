@@ -4,7 +4,6 @@ import React, { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Loadable from 'src/layouts/full/shared/loadable/Loadable';
 import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
-import { GroupRoleId } from '../constant/GroupRoleId';
 import AuthRedirector from './AuthRedirector';
 // import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
 // import Register from 'src/views/authentication/auth/Register';

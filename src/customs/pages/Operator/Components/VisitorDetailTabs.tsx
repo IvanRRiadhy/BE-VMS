@@ -220,23 +220,21 @@ const VisitorDetailTabs: React.FC<Props> = ({
                 </Box>
               </Box>
             </Grid>
-
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconUser />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invited By</CustomFormLabel>
-                  <Typography>{data?.invited_by_name || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
-
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
                 <IconUser />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Name</CustomFormLabel>
                   <Typography>{data?.group_name || '-'}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 6, md: 6 }}>
+              <Box display="flex" gap={2}>
+                <IconUser />
+                <Box>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group</CustomFormLabel>
+                  <Typography>{data?.is_group ? 'Yes' : 'No'}</Typography>
                 </Box>
               </Box>
             </Grid>

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { setClearTokenCallback } from 'src/customs/api/interceptor';
 import { Backdrop, CircularProgress } from '@mui/material';

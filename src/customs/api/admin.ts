@@ -1405,6 +1405,12 @@ export const getAllDocument = async (): Promise<GetAllDocumentResponse> => {
   });
   return response.data;
 };
+export const getDocumentById = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/document/${id}`, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
 
 export const getAllDocumentPagination = async (
   start: number,

@@ -92,6 +92,7 @@ const VisitorInformation = ({
         justifyContent: 'space-between',
         flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
       }}
+      id="tour-visitor-info"
     >
       {/* IMAGE */}
       <Grid size={{ xs: 12, xl: 4 }}>
@@ -180,7 +181,7 @@ const VisitorInformation = ({
                   display="flex"
                   alignItems="center"
                   gap={1}
-                  sx={{ textTransform: 'capitalize'}}
+                  sx={{ textTransform: 'capitalize' }}
                 >
                   {invitationCode[0]?.visitor_name ?? 'Name'}
                   {invitationCode[0]?.visitor_name && (

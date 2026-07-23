@@ -1,7 +1,7 @@
 import { Grid2 as Grid, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { IconHistory, IconScript } from '@tabler/icons-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -18,7 +18,7 @@ const History = () => {
 
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
-  const[rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<any>({
     start_date: '',
     end_date: '',

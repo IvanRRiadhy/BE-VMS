@@ -88,7 +88,7 @@ export default function VisitorListTable({
                 </IconButton>
               </TableCell>
 
-              <TableCell colSpan={7}>
+              <TableCell colSpan={8}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography
                     sx={{
@@ -138,6 +138,9 @@ export default function VisitorListTable({
               </TableCell>
               <TableCell component="th" scope="row">
                 Phone
+              </TableCell>
+              <TableCell component="th" scope="row">
+                Invitation Code
               </TableCell>
               <TableCell component="th" scope="row">
                 Organization

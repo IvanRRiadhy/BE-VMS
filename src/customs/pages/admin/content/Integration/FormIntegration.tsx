@@ -64,7 +64,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         ...data,
         api_type_auth: ApiTypeAuthMap[data.api_type_auth],
       };
-      // console.log("payload", payload);
 
       if (editingId && editingId !== '') {
         // await updateIntegration(editingId, payload);

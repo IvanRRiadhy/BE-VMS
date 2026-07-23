@@ -71,6 +71,7 @@ const ActionPanelCard: FC<Props> = ({
         alignItems: isFullscreen ? 'center' : 'stretch',
         // height: '350px',
       }}
+      id="tour-action-panel"
     >
       <Card
         sx={{

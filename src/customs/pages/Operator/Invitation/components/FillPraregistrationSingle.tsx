@@ -20,7 +20,6 @@ type Props = {
   fetchRelatedVisitorsByInvitationId: (id: string) => Promise<void>;
   fetchUpcomingPurpose: () => Promise<void>;
   registeredSite?: string;
-  selfRegisterData?: any;
 };
 
 const FillPraregistrationSingle: React.FC<Props> = ({
@@ -33,7 +32,6 @@ const FillPraregistrationSingle: React.FC<Props> = ({
   fetchRelatedVisitorsByInvitationId,
   fetchUpcomingPurpose,
   registeredSite,
-  selfRegisterData,
 }) => {
   const getTargetId = () => selectedInvitationId ?? invitationCode?.[0]?.id;
 
@@ -64,7 +62,7 @@ const FillPraregistrationSingle: React.FC<Props> = ({
             minHeight: 400,
           }}
         >
-          <CircularProgress />
+          <CircularProgress color='primary' />
         </DialogContent>
       ) : (
         <DialogContent dividers>
@@ -79,10 +77,10 @@ const FillPraregistrationSingle: React.FC<Props> = ({
 
                 if (!targetId) return;
 
-              void Promise.all([
-                fetchRelatedVisitorsByInvitationId(targetId),
-                fetchUpcomingPurpose(),
-              ]);
+                void Promise.all([
+                  fetchRelatedVisitorsByInvitationId(targetId),
+                  fetchUpcomingPurpose(),
+                ]);
               }}
               containerRef={containerRef}
               registeredSite={registeredSite}

@@ -24,6 +24,7 @@ import FormAddDocumentDialog from './components/FormDocumentDialog';
 import { useDocumentPagination } from 'src/hooks/Documents/useDocumentPagination';
 import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { getAllDocument, getDocumentById } from 'src/customs/api/admin';
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -85,13 +86,14 @@ const Content = () => {
     }
   }, [isDirty]);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
+    const res = await getDocumentById(id);
     if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
     } else {
       setFormDataAddDocument(
-        CreateDocumentRequestSchema.parse(tableData.find((item: any) => item.id === id) || {}),
+        CreateDocumentRequestSchema.parse(res.collection || {}),
       );
       setOpenFormAddDocument(true);
     }
@@ -153,8 +155,8 @@ const Content = () => {
 
         showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }));
         setSelectedRows([]);
-      } catch (error) {
-        showSwal('error', 'Failed to delete some items.');
+      } catch (error: any) {
+        showSwal('error', error?.response?.data?.msg || t("deleteSuccessMultiple", { count: rows.length, name: 'Document' }));
       }
     }
   };

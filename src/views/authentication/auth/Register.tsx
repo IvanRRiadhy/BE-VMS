@@ -24,22 +24,13 @@ import {
   Radio,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
-
-import { useDispatch } from 'react-redux';
-import { setUser, clearUser } from '../../../store/apps/user/userSlice';
-
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { AuthVisitor, login } from 'src/customs/api/users';
-import { AxiosError } from 'axios';
 import { Link as RouterLink, useNavigate } from 'react-router';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/bi_pic.png';
-import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
 import Footer from '../components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
@@ -47,15 +38,9 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 
 const Register = () => {
   const { isAuthenticated } = useAuth();
-  const { saveToken } = useSession();
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -83,8 +68,6 @@ const Register = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Tabs state
-  const [tab, setTab] = useState(0);
 
   // On Submit (login normal)
   //   async function loginSubmit(e: FormEvent<HTMLFormElement>) {

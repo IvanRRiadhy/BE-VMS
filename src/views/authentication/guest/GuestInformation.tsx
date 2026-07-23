@@ -50,7 +50,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { GroupRoleId } from '../../../constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import { Snackbar } from '@mui/material';
@@ -182,7 +181,7 @@ const GuestInformationStepper = () => {
       const token = res?.collection?.token;
 
       if (token) {
-        saveToken(token, GroupRoleId.Visitor.toLowerCase(), 'Visitor');
+        saveToken(token);
 
         navigate('/guest/dashboard', {
           replace: true,
@@ -1332,7 +1331,7 @@ const GuestInformationStepper = () => {
       }
 
       if (token) {
-        await saveToken(token, GroupRoleId.Visitor);
+        await saveToken(token);
         showSwal('success', 'Successfully Pra Register Visitor');
 
         navigate('/guest/dashboard', { replace: true });

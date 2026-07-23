@@ -99,6 +99,7 @@ import HostInformation from './Components/HostInformation';
 import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
 import Footer from './Components/Footer';
 import { getConfig } from 'src/config';
+import { Joyride, STATUS } from 'react-joyride';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -232,7 +233,7 @@ const OperatorView = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: AlertColor; 
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -297,6 +298,8 @@ const OperatorView = () => {
       is_block: boolean;
       nda: string;
       invited_by: string;
+      is_host: boolean;
+      visitor_id: string;
     }[]
   >([]);
 
@@ -855,15 +858,20 @@ const OperatorView = () => {
   };
 
   const handleActionBlacklist = async () => {
-    const id = selectedVisitorId ?? invitationCode?.[0]?.visitor_id;
+    const selectedVisitor = relatedVisitors.find(
+      v => v.id === selectedVisitorId
+    );
 
-    if (!id) {
-      // toast('Please select visitor first.', 'warning');
+    const visitorId =
+      selectedVisitor?.visitor_id ??
+      invitationCode?.[0]?.visitor_id;
+
+    if (!visitorId) {
       setOpenDialogIndex(1);
       return;
     }
 
-    await handleBlacklistStatus(id);
+    await handleBlacklistStatus(visitorId);
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
@@ -1011,6 +1019,7 @@ const OperatorView = () => {
 
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
+      visitor_id: v.visitor_id ?? '-',
       name: v.visitor?.name ?? '-',
       selfie_image: v.selfie_image ?? '-',
       identity_image: v.identity_image ?? '-',
@@ -1043,7 +1052,8 @@ const OperatorView = () => {
       invited_by_name: v.invited_by_name ?? '-',
       visitor_role: v.visitor_role ?? '-',
       checkout_at: v.checkout_at ?? "-",
-      checkin_at: v.checkin_at ?? "-"
+      checkin_at: v.checkin_at ?? "-",
+      is_host: v.is_host ?? false
     }));
 
     setInvitationCode((prev) =>
@@ -1310,35 +1320,6 @@ const OperatorView = () => {
 
   const handleBlacklistStatus = async (id: string) => {
     try {
-      // const res = await Swal.fire({
-      //   icon: 'warning',
-      //   target: containerRef.current,
-      //   title: 'Blacklist Visitor',
-      //   text: 'Please provide a reason for blacklist this visitor',
-      //   input: 'text',
-      //   inputPlaceholder: 'Enter reason...',
-      //   showCloseButton: true,
-      //   showCancelButton: true,
-      //   confirmButtonText: 'Yes',
-      //   reverseButtons: true,
-      //   cancelButtonText: 'No',
-      //   confirmButtonColor: '#16a34a',
-      //   preConfirm: (value) => {
-      //     if (!value) {
-      //       toast('Please provide a reason for blacklist this visitor.', 'info');
-      //       return false;
-      //     }
-      //     return value;
-      //   },
-      // });
-
-      // if (!res.isConfirmed) return;
-
-      // if (!res.value) {
-      //   toast('Please provide a reason for blacklist this visitor.', 'info');
-      //   return;
-      // }
-
       const reason = await showReasonDialog(
         'Blacklist Visitor',
         'Please provide a reason for blacklisting this visitor.',
@@ -1351,7 +1332,6 @@ const OperatorView = () => {
         action: 'blacklist',
         reason,
       };
-
       await createOperatorBlacklist(payload);
 
       showSwal('success', 'Visitor has been successfully blacklisted.');
@@ -1632,32 +1612,13 @@ const OperatorView = () => {
         reason,
       })),
     };
-
-    // console.log('payload', payload);
-
+    // console.log('payload', payload)
     try {
       setLoadingAccess(true);
 
       if (validForApi.length > 0) {
         await createMultipleInvitationActionOperator(payload);
       }
-
-      setRelatedVisitors((prev) =>
-        prev.map((v) => {
-          const valid = validForApi.some((vv) => vv.id === v.id);
-          if (valid) {
-            let newStatus = v.visitor_status;
-            if (bulkAction === 'checkin') newStatus = 'Checkin';
-            else if (bulkAction === 'checkout') newStatus = 'Checkout';
-            else if (bulkAction === 'block') newStatus = 'Block';
-            else if (bulkAction === 'unblock') newStatus = 'Unblock';
-
-            return { ...v, visitor_status: newStatus, is_praregister_done: true };
-          }
-          return v;
-        }),
-      );
-
       setInvitationCode((prev) => {
         if (!prev.length) return prev;
 
@@ -1722,9 +1683,7 @@ const OperatorView = () => {
 
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        setTimeout(async () => {
-          await fetchRelatedVisitorsByInvitationId(invitationId);
-        }, 500);
+        await fetchRelatedVisitorsByInvitationId(invitationId);
       }
       setSelectedVisitors([]);
       setBulkAction('');
@@ -1815,11 +1774,15 @@ const OperatorView = () => {
     block: 'Block',
     unblock: 'Unblock',
   };
+  const isHost = selectedData[0]?.is_host;
 
-  const availableActions = [...actions].map((a) => ({
-    label: labelMap[a] || a,
-    value: a,
-  }));
+  const availableActions = [...actions]
+    .filter((a) => !(isHost && a === 'fill_form'))
+    .map((a) => ({
+      label: labelMap[a] || a,
+      value: a,
+    }));
+
 
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
@@ -2785,6 +2748,73 @@ const OperatorView = () => {
     await handleSubmitQRCode(visitor.invitation_code);
   };
 
+  const [runTour, setRunTour] = useState(false);
+  const handleJoyrideCallback = (data: any) => {
+    const { status } = data;
+
+    if (
+      status === STATUS.FINISHED ||
+      status === STATUS.SKIPPED
+    ) {
+      setRunTour(false);
+    }
+  };
+  const handleOpenInfo = () => {
+    setRunTour(false);
+
+    requestAnimationFrame(() => {
+      setRunTour(true);
+    });
+  };
+
+  const tourSteps = useMemo(
+    () => [
+      {
+        target: "#tour-search",
+        content:
+          "Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.",
+      },
+      {
+        target: "#tour-visitor-info",
+        content: "Menampilkan informasi utama visitor, seperti nama, perusahaan, dan detail kunjungan,dll.",
+      },
+      {
+        target: "#tour-visitor-detail",
+        content: "Menampilkan informasi detail visitor, termasuk data tambahan dan riwayat yang berkaitan dengan kunjungan.",
+      },
+      {
+        target: "#tour-action-panel",
+        content: "Semua aksi operator tersedia di sini.",
+      },
+      {
+        target: "#tour-visitor-list",
+        content:
+          "Menampilkan daftar Related Visitor yang terhubung dengan kode undangan (Invitation Code) yang telah dimasukkan. Berbeda dengan Live Visitor yang menampilkan seluruh visitor yang akan datang atau berada di area.",
+      },
+      {
+        target: '#tour-select-multiple',
+        content: "Aktifkan mode Multiple Selection untuk memilih lebih dari satu visitor.",
+      },
+      {
+        target: "#tour-host-info",
+        content: "Menampilkan informasi host atau PIC yang menerima kunjungan visitor.",
+      },
+      {
+        target: "#tour-occupancy",
+        content: "Menampilkan daftar tipe kunjungan. Klik salah satu tipe untuk melihat detail informasi.",
+      },
+      {
+        target: "#tour-identity-image",
+        content: "Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.",
+      },
+      {
+        target: "#tour-alert",
+        content: "Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor.",
+      },
+    ],
+    []
+  );
+
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -2811,7 +2841,7 @@ const OperatorView = () => {
           }}
         >
           <Grid container spacing={1} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
-            <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
+            <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}
                 onClear={handleClearAll}
@@ -2826,7 +2856,8 @@ const OperatorView = () => {
                 onClear={handleClearAll}
                 onOpenList={handleOpenListVisitor}
                 onOpenBlacklist={handleOpenBlacklistVisitor}
-                onOpenInfo={() => setOpenDialogInfo(true)}
+                // onOpenInfo={() => setOpenDialogInfo(true)}
+                onOpenInfo={handleOpenInfo}
                 onOpenVehicle={handleOpenVehicle}
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={toggleFullscreen}
@@ -2848,6 +2879,7 @@ const OperatorView = () => {
             >
               <Grid
                 size={{ xs: 12, lg: 4.5 }}
+
                 sx={{
                   borderRadius: '15px',
                   // backgroundColor: '#fff',
@@ -3306,6 +3338,38 @@ const OperatorView = () => {
           </Snackbar>
         </Portal>
         <GlobalBackdropLoading open={loadingAccess} />
+        <Joyride
+          run={runTour}
+          onEvent={handleJoyrideCallback}
+          continuous={true}
+          options={{ buttons: ['skip', 'back', 'close', 'primary'], showProgress: true, overlayClickAction: "close" }}
+          scrollToFirstStep={true}
+          steps={tourSteps}
+          styles={{
+            tooltip: {
+              borderRadius: 16,
+              padding: 26,
+              boxShadow: "0 20px 60px rgba(0,0,0,.25)",
+            },
+            tooltipTitle: {
+              fontSize: 24,
+              fontWeight: 700,
+            },
+            tooltipContent: {
+              fontSize: 16,
+              lineHeight: 1.6,
+            },
+            beaconWrapper: {
+              accentColor: "#2563EB",
+            },
+            buttonSkip: {
+              color: "#6B7280",
+            },
+            buttonBack: {
+              color: "#6B7280",
+            },
+          }}
+        />
       </Box>
     </PageContainer>
   );
