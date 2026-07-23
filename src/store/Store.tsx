@@ -13,21 +13,7 @@ import {
   TypedUseSelectorHook,
 } from 'react-redux';
 
-// export const store = configureStore({
-//   reducer: {
-//     customizer: CustomizerReducer,
-//     ecommerceReducer: EcommerceReducer,
-//     chatReducer: ChatsReducer,
-//     emailReducer: EmailReducer,
-//     notesReducer: NotesReducer,
-//     contactsReducer: ContactsReducer,
-//     ticketReducer: TicketReducer,
-//     userpostsReducer: UserProfileReducer,
-//     blogReducer: BlogReducer,
-//     dateRange: dateRangeReducer,
-//     userReducer: userReducer,
-//   },
-// });
+
 
 const rootReducer = combineReducers({
   customizer: CustomizerReducer,
@@ -39,7 +25,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['userReducer'], 
+  whitelist: ['userReducer'],
 };
 
 // === Bungkus rootReducer dengan persistReducer ===

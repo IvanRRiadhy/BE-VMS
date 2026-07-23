@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
   Dialog,
@@ -60,6 +59,7 @@ import {
 } from 'src/customs/api/models/Integration/Parking';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const BioPeopleParking = ({ id }: { id: string }) => {
   const [totals, setTotals] = useState<{ [key: string]: number }>({
@@ -138,11 +138,9 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       },
       {
         title: 'Sync Data',
-        subTitle: '',
-        subTitleSetting: 10,
         icon: IconRefresh,
-        color: 'none',
         onIconClick: handleParkingSyncIntegration,
+        type: 'action',
       },
     ],
     [totals],
@@ -237,7 +235,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if ( !id) return;
+    if (!id) return;
     setLoading(true);
     try {
       if (type === 'visitor_type') {
@@ -481,7 +479,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
     loadOptions();
 
-    return () => {};
+    return () => { };
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -490,7 +488,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     );
 
   const handleSaveVisitorType = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -531,7 +529,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       });
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateVisitorTypeParking(it, payload))); 
+      await Promise.all(ids.map((it) => updateVisitorTypeParking(it, payload)));
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -549,7 +547,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   };
 
   const handleSaveVehicle = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -601,7 +599,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Block
   const handleSaveBlock = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -651,7 +649,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Area
   const handleSaveArea = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -709,7 +707,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   // Slot
   const handleSaveSlot = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -746,7 +744,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       });
 
       const ids = selectedRows.map((it) => String(it.id));
-      await Promise.all(ids.map((it) => updateSlotParking(it, payload))); 
+      await Promise.all(ids.map((it) => updateSlotParking(it, payload)));
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
@@ -778,6 +776,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
                 <DynamicTable
+                  loading={loading}
                   isHavePagination
                   rowsPerPageOptions={[10, 50]}
                   overflowX={'auto'}
@@ -1345,18 +1344,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           <CircularProgress />
         </Backdrop>
       </Portal>
-
-      <Portal>
-        <Backdrop
-          open={syncing}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={syncing} />
     </>
   );
 };

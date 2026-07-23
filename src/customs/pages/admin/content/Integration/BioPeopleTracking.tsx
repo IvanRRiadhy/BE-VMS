@@ -1,6 +1,4 @@
 import { useEffect, useState, useRef, useMemo, act } from 'react';
-import { useParams } from 'react-router-dom';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
   Card,
@@ -41,6 +39,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const BioPeopleTracking = ({ id }: { id: string }) => {
 
@@ -194,7 +193,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   };
 
   const loadTotals = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     const settled = await Promise.allSettled([getCardAccessTracking(id as string)]);
 
@@ -213,7 +212,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   }, [id]);
 
   const fetchListByType = async (type: string) => {
-    if ( !id) return;
+    if (!id) return;
     setLoading(true);
     try {
       if (type === 'card_access') {
@@ -261,7 +260,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   });
 
   const handleEditRow = async (row: any) => {
-    if ( !id) return;
+    if (!id) return;
 
     setIsBatchEdit(false);
     setEnabled({
@@ -333,7 +332,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
- 
+
 
     let cancelled = false;
 
@@ -366,7 +365,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
     loadOptions();
 
-    return () => {};
+    return () => { };
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -377,7 +376,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   const accessType = cardAccessForm?.access_tracking_type;
 
   const handleSaveCardAccess = async () => {
-    if ( !id) return;
+    if (!id) return;
 
     try {
       setSaving(true);
@@ -703,17 +702,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           <CircularProgress />
         </Backdrop>
       </Portal>
-      <Portal>
-        <Backdrop
-          open={syncing}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => 999999,
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={syncing} />
     </>
   );
 };

@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
 import { uploadImageEmployee } from 'src/customs/api/admin';
+import { useQueryClient } from '@tanstack/react-query';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -158,7 +159,7 @@ const FormWizardAddEmployee = ({
 
   const { data: employee } = useEmployeeDetail({
     id: edittingId,
-    enabled: !!edittingId && !isBatchEdit,
+    enabled: !!edittingId,
   });
 
   useEffect(() => {
@@ -341,6 +342,8 @@ const FormWizardAddEmployee = ({
     return out;
   };
 
+  const queryCLient = useQueryClient();
+
   const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
     ...v,
     organization_id: String(v.organization_id ?? ''),
@@ -375,7 +378,7 @@ const FormWizardAddEmployee = ({
         );
 
         const res = partialSchema?.safeParse(payload);
-        console.log('res', res);
+        // console.log('res', res);
         if (res && !res.success) {
           const em = toErrorMap(res.error.issues);
           setErrors(em);
@@ -437,21 +440,23 @@ const FormWizardAddEmployee = ({
 
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
+        if (hasNewImage) {
+          await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
+        }
         const editData: any = {
           ...withoutImage,
           type: String(data.type ?? ''),
           qr_code: localForm.card_number,
           is_email_verify: false,
           exit_date: data.exit_date || null,
+          faceimage: localForm.faceimage,
         };
         await update.mutateAsync({
           id: edittingId,
-
           data: editData,
         });
-        if (hasNewImage) {
-          await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
-        }
+        console.log('editData', editData);
+
         showSwal('success', 'Employee successfully updated!');
       } else {
         // const created = await createEmployee(data, token as string);

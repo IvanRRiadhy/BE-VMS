@@ -903,6 +903,11 @@ const TableRowItem = React.memo(
                 row[col].trim() !== '' ? (
                 <img
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.style.display = "none";
+                    // e.currentTarget.src = '/images/no-image.png';
+                  }}
                   src={(() => {
                     const value = row[col];
                     if (value.startsWith('data:image')) return value;

@@ -131,6 +131,7 @@ const Content = () => {
     }));
   }, [employeeQuery.data]);
 
+
   const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
   const [formDataAddEmployee, setFormDataAddEmployee] = useState(
     CreateEmployeeRequestSchema.parse({}),
@@ -158,10 +159,10 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
-    // const existingData = await getEmployeeById(String(id));
-    const existingData = employeeQuery.data?.collection.find(
-      (item) => item.id === id
-    );
+    const existingData = await getEmployeeById(String(id));
+    // const existingData = employeeQuery.data?.collection.find(
+    //   (item) => item.id === id
+    // );
     if (!existingData) return;
 
 
@@ -209,7 +210,7 @@ const Content = () => {
       district_id: String(s?.district_id ?? ''),
     });
 
-    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData));
+    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
 
     if (isDirty) {
       setPendingEditId(id);
@@ -369,10 +370,16 @@ const Content = () => {
     handleOpenDialog();
   };
 
+  // const handleSuccess = async () => {
+  //   setInitialFormData((_) => formDataAddEmployee);
+  //   // queryClient.invalidateQueries({ queryKey: ['employees'] });
+  //   await employeeQuery.refetch();
+  //   setOpenFormAddEmployee(false);
+  // };
+
   const handleSuccess = async () => {
-    setInitialFormData((_) => formDataAddEmployee);
-    // queryClient.invalidateQueries({ queryKey: ['employees'] });
     await employeeQuery.refetch();
+
     setOpenFormAddEmployee(false);
   };
 
