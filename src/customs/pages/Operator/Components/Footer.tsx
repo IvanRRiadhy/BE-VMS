@@ -5,18 +5,20 @@ const Footer = () => {
   return (
     <Box
       sx={{
+        // mt: 'auto',
         width: '100%',
         bgcolor: 'background.paper',
         borderTop: '1px solid',
         borderColor: 'divider',
         py: 1.5,
         px: 1,
-
+        height: '50px',
         // overflow: 'hidden',
-        marginTop: '2px',
+        marginTop: '1px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        flexShrink: 0,
       }}
     >
       <Typography variant="body2" color="text.secondary" fontWeight={'bold'}>

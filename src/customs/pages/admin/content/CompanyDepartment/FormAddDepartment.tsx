@@ -1,12 +1,8 @@
 import {
   Button,
   Autocomplete,
-  CircularProgress,
-  Backdrop,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
   Switch,
+  Divider,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -17,12 +13,12 @@ import {
   CreateDepartmentRequest,
 } from 'src/customs/api/models/Admin/Department';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -246,16 +242,14 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           </>
         )}
 
+        <Divider sx={{ my: 1 }} />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button sx={{ mt: 2 }} variant="contained" type="submit">
+          <Button sx={{ mt: 0 }} variant="contained" type="submit">
             Submit
           </Button>
         </Box>
       </form>
-
-      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <CircularProgress />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

@@ -29,9 +29,9 @@ const Content = () => {
   });
 
   const { updateMutation } = useVisitorRoleMutation();
-
   const tableData = visitorRole?.collection ?? [];
   const totalRecords = visitorRole?.RecordsTotal ?? 0;
+  const totalFilteredRecords = visitorRole?.RecordsFiltered ?? 0;
 
   const cards = useMemo(
     () => [
@@ -94,6 +94,7 @@ const Content = () => {
                 isHaveExportXlf={false}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                totalCount={totalRecords}
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

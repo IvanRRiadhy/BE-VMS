@@ -2090,7 +2090,8 @@ const TableRowItem = React.memo(
       prev.index === next.index &&
       prev.page === next.page &&
       prev.checkedIds === next.checkedIds &&
-      prev.openRow === next.openRow
+      prev.openRow === next.openRow,
+      prev.visiblePasswords === next.visiblePasswords
     );
   },
 );

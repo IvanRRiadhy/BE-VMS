@@ -69,7 +69,6 @@ import {
   getInvitationRelatedVisitor,
   getOngoingInvitation,
 } from 'src/customs/api/visitor';
-import { useSession } from 'src/customs/contexts/SessionContext';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';

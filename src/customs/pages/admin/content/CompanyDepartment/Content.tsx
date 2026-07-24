@@ -28,6 +28,7 @@ import {
   getDistrictById,
   getAllOrganizationPagination,
   getVisitorEmployee,
+  getAllEmployee,
 } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Admin/Department';
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
@@ -89,7 +90,7 @@ const Content = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await getVisitorEmployee();
+        const res = await getAllEmployee();
         const map = Array.isArray(res?.collection)
           ? res.collection.reduce((acc: any, emp: any) => {
             acc[emp.id] = emp.name;
@@ -102,8 +103,12 @@ const Content = () => {
       }
     };
 
+
+
     fetchEmployees();
   }, []);
+
+
 
   useEffect(() => {
     setPage(0);
@@ -134,27 +139,32 @@ const Content = () => {
   const { removeOrganization: deleteOrganization } = useOrganizationMutation();
   const { remove: deleteDistrict } = useDistrictMutation();
 
+
+
   const currentQuery =
     selectedType === 'organization'
       ? organizationQuery
       : selectedType === 'department'
         ? departmentQuery
         : districtQuery;
-  const loading = currentQuery.isLoading || currentQuery.isFetching;
+
   const response = currentQuery.data;
-  const tableData = useMemo(
-    () =>
-      (response?.collection ?? []).map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        code: item.code,
-        host: employeeMap[item.host] || item.host,
-      })),
-    [response, employeeMap],
-  );
+  const employeeLoading = Object.keys(employeeMap).length === 0;
+
+  const tableData = useMemo(() => {
+    if (employeeLoading) return [];
+
+    return (response?.collection ?? []).map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      code: item.code,
+      host: employeeMap[item.host] ?? '-',
+    }));
+  }, [response, employeeMap, employeeLoading]);
 
   const totalRecords = response?.RecordsTotal ?? 0;
   const hasFetched = currentQuery.isSuccess;
+  const loading = currentQuery.isLoading || currentQuery.isFetching || employeeLoading;
 
   const totalsQueries = useQueries({
     queries: [
@@ -417,7 +427,7 @@ const Content = () => {
   );
 
   const [tableKey, setTableKey] = useState(0);
-  
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}

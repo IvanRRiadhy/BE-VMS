@@ -8,7 +8,6 @@ import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import FormSelfPraregistration from './FormSelfPraregistration';
 import { getInvitationLink } from 'src/customs/api/users';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   getPublicSite,
   getPublicVisitorEmployee,

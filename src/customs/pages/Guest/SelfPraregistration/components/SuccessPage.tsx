@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
 import { Card, CircularProgress, Grid2 as Grid, Tooltip, Typography } from '@mui/material';
-import Logo from 'src/assets/images/logos/BI_Logo.png';
 import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 
@@ -12,16 +11,16 @@ import { IconArrowLeft, IconArrowRight, IconCircleCheck } from '@tabler/icons-re
 export default function SuccessPage() {
   const navigate = useNavigate();
   const [showBackToTop, setShowBackToTop] = useState(false);
-  useEffect(() => {
-    const token = localStorage.getItem('token'); 
-    const timer = setTimeout(() => {
-      if (token) {
-        navigate('/guest/dashboard');
-      }
-    }, 3000); 
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token'); 
+  //   const timer = setTimeout(() => {
+  //     if (token) {
+  //       navigate('/guest/dashboard');
+  //     }
+  //   }, 3000); 
 
-    return () => clearTimeout(timer);
-  }, []);
+  //   return () => clearTimeout(timer);
+  // }, []);
   return (
     <PageContainer title="Invitation" description="this is self praregistration">
       <Box>

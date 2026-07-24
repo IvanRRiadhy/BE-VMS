@@ -229,14 +229,14 @@ const Content = () => {
         prev.map((x) => (x.id === row.id ? { ...x, selected_email: value } : x)),
       );
 
-      setTimeout(() => {
-        setLoading(false);
-        showSwal('success', 'Selected email updated.');
-      }, 800);
+
+      setLoading(false);
+      showSwal('success', 'Selected email updated.');
+
     } catch (err: any) {
       showSwal('error', err?.message ?? 'Failed to update selected email.');
     } finally {
-      setTimeout(() => setLoading(false), 400);
+      setLoading(false)
     }
   };
 

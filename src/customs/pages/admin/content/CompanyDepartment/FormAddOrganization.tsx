@@ -7,6 +7,7 @@ import {
   FormControlLabel,
   Radio,
   Switch,
+  Divider,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { use, useEffect, useMemo, useState } from 'react';
@@ -17,13 +18,12 @@ import {
   CreateOrganizationSubmitSchema,
 } from 'src/customs/api/models/Admin/Organization';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { useSession } from 'src/customs/contexts/SessionContext';
-
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -262,18 +262,16 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
           </>
         )}
 
+        <Divider sx={{ my: 1 }} />
         {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
+          <Button sx={{ mt: 0 }} variant="contained" type="submit" disabled={loading}>
             Submit
           </Button>
         </Box>
       </form>
 
-      {/* LOADING */}
-      <Backdrop open={loading} sx={{ zIndex: 999999 }}>
-        <CircularProgress />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid2 as Grid,
   IconButton,
   Portal,
@@ -183,7 +182,6 @@ const Content = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-
   const {
     data: tableTransaction,
     isLoading,
@@ -299,7 +297,6 @@ const Content = () => {
       title: 'Total ' + t('visitor'),
       icon: IconUsers,
       subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
       color: 'none',
     },
     {
@@ -310,14 +307,14 @@ const Content = () => {
       color: 'none',
     },
     {
-      title: 'Share Link',
+      title: t("shareLink"),
       icon: IconShare,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
     },
     {
-      title: 'Quick Access',
+      title: t("quickAccess"),
       icon: IconBolt,
       subTitle: iconAdd,
       subTitleSetting: 'image',

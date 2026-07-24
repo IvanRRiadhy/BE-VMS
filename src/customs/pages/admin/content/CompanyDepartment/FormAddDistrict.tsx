@@ -1,4 +1,4 @@
-import { Button, CircularProgress, Autocomplete, Backdrop, Switch } from '@mui/material';
+import { Button, CircularProgress, Autocomplete, Backdrop, Switch, Divider } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { use, useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -8,13 +8,13 @@ import {
   CreateDistrictSubmitSchema,
 } from 'src/customs/api/models/Admin/District';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { useSession } from 'src/customs/contexts/SessionContext';
 
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useDistrictMutation } from 'src/hooks/District/useDistrictMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -221,18 +221,16 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
           </>
         )}
 
+        <Divider sx={{ my: 1 }} />
+
         {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
+          <Button sx={{ mt: 0 }} variant="contained" type="submit" disabled={loading}>
             Submit
           </Button>
         </Box>
       </form>
-
-      {/* LOADING */}
-      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <CircularProgress />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

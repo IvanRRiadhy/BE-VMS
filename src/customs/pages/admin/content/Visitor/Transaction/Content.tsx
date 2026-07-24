@@ -539,7 +539,7 @@ const Content = () => {
             <TransactionVisitorList
               mdUp={mdUp}
               secdrawerWidth={secdrawerWidth}
-              loading={loading}
+              loading={isLoading}
               // loadingMore={loadingMore}
               // hasMore={hasMore}
               profile={profile}

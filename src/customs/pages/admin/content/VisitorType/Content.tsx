@@ -250,7 +250,6 @@ const Content = () => {
     if (!confirmed) return;
     try {
       setLoadingData(true);
-      // await deleteVisitorType(id);
       await deleteMutation.mutateAsync(id);
 
       showSwal('success', t('deleteSuccess', { name: 'Visitor Type' }));
@@ -361,7 +360,6 @@ const Content = () => {
   const handleQuickAccessToggle = async (row: any, checked: boolean) => {
     try {
       setLoadingData(true);
-      // await updateQuickVisitorType(row.id, checked);
       await quickAccessMutation.mutateAsync({
         id: row.id,
         quickAccess: checked,

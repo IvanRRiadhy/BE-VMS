@@ -27,7 +27,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
@@ -42,8 +41,8 @@ import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
-import { uploadImageEmployee } from 'src/customs/api/admin';
-import { useQueryClient } from '@tanstack/react-query';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { IconDeviceFloppy } from '@tabler/icons-react';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -195,7 +194,7 @@ const FormWizardAddEmployee = ({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  function   unwrapZodObject(schema: any): ZodObject<any> | null {
+  function unwrapZodObject(schema: any): ZodObject<any> | null {
     if (schema instanceof z.ZodObject) {
       return schema;
     }
@@ -369,7 +368,7 @@ const FormWizardAddEmployee = ({
         }
 
         const payload = pick(localForm, enabledKeys);
-        console.log("payload", payload);
+        // console.log("payload", payload);
         const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
         const partialSchema = baseSchema?.pick(
           Object.fromEntries(enabledKeys.map((k) => [k, true])),
@@ -453,7 +452,7 @@ const FormWizardAddEmployee = ({
           id: edittingId,
           data: editData,
         });
-        console.log('editData', editData);
+        // console.log('editData', editData);
 
         showSwal('success', 'Employee successfully updated!');
       } else {
@@ -612,9 +611,7 @@ const FormWizardAddEmployee = ({
                       ...prev,
                       identity_type: e.target.value,
                     }));
-
                     //  setIsFormChanged?.(true);
-
                     if (errors.identity_type) {
                       setErrors((p) => ({ ...p, identity_type: '' }));
                     }
@@ -1090,84 +1087,6 @@ const FormWizardAddEmployee = ({
                 }}
               />
             </Grid2>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head_employee_1">
-                <Typography variant="caption">Employee Head - 1</Typography>
-              </CustomFormLabel>
-              <Autocomplete
-                fullWidth
-                autoHighlight
-                // disablePortal
-                options={employeeAllRes}
-                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_2)}
-                getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === localForm.head_employee_1) || null}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                onChange={(_, newVal) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    head_employee_1: newVal ? newVal.id : '',
-                  }));
-                }}
-                disabled={isBatchEdit}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    id="head_employee_1"
-                    placeholder="Search employee…"
-                    variant="outlined"
-                  />
-                )}
-                // optional: tampilkan nama + email di dropdown
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body2">{option.name}</Typography>
-  
-                    </Box>
-                  </li>
-                )}
-              />
-            </Grid2>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head2">
-                <Typography variant="caption">Employee Head - 2</Typography>
-              </CustomFormLabel>
-              <Autocomplete
-                fullWidth
-                autoHighlight
-                // disablePortal
-                options={employeeAllRes}
-                // cegah pilih orang yg sama dgn Head-1
-                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_1)}
-                getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === localForm.head_employee_2) || null}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                onChange={(_, newVal) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    head_employee_2: newVal ? newVal.id : '',
-                  }));
-                }}
-                disabled={isBatchEdit}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    id="head_employee_2"
-                    placeholder="Search employee…"
-                    variant="outlined"
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body2">{option.name}</Typography>
-                    
-                    </Box>
-                  </li>
-                )}
-              />
-            </Grid2> */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
                 <Typography variant="caption">Card Access</Typography>
@@ -1417,8 +1336,8 @@ const FormWizardAddEmployee = ({
 
                         <Divider sx={{ my: 2 }} />
 
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Button onClick={handleClear} color="warning" sx={{ mr: 2 }}>
+                        <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                          <Button onClick={handleClear} color="error" sx={{ mr: 2 }}>
                             Clear Foto
                           </Button>
                           <Button
@@ -1435,9 +1354,10 @@ const FormWizardAddEmployee = ({
                               e.stopPropagation();
                               setOpenCamera(false);
                             }}
-                            sx={{ ml: 2 }}
+                            sx={{ ml: 1 }}
+                            startIcon={<IconDeviceFloppy />}
                           >
-                            Close
+                            Submit
                           </Button>
                         </Box>
                       </Box>
@@ -1568,17 +1488,8 @@ const FormWizardAddEmployee = ({
             )}
           </Box>
         </>
-        {/* )} */}
       </Box>
-      <Backdrop
-        open={loading}
-        sx={{
-          color: '#fff',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </form>
   );
 };

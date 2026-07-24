@@ -126,6 +126,7 @@ const OperatorView = () => {
   const dataImage = [infoPic];
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
@@ -2822,12 +2823,18 @@ const OperatorView = () => {
         ref={containerRef}
         sx={{
           display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
+          flexDirection: { xs: 'column', xl: 'row' },
           // height: isFullscreen ? '100vh' : '100%',
-          height: '100%',
+
+          // height: '100%',
+          // height: isFullscreen ? '100vh' : '100%',
+          height: isFullscreen
+            ? (isMobile ? '100%' : '100vh')
+            : '100%',
+          // overflow: 'hidden',
           width: '100%',
           position: 'relative',
-          overflowY: isFullscreen ? 'hidden' : 'auto',
+          // overflowY: isFullscreen ? 'hidden' : 'auto',
           // overflowX: 'hidden',
         }}
       >
@@ -2837,10 +2844,10 @@ const OperatorView = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
-            // overflow: 'hidden',
+            height: '100%',
           }}
         >
-          <Grid container spacing={1} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
+          <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }} >
             <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}
@@ -2866,7 +2873,11 @@ const OperatorView = () => {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2} alignItems="stretch">
+          <Grid container spacing={1} alignItems="stretch"
+            sx={{
+              flex: 1,
+              minHeight: 0,
+            }}>
             <Grid
               container
               spacing={2}
@@ -2999,9 +3010,13 @@ const OperatorView = () => {
                 />
               </Grid>
             </Grid>
+
           </Grid>
+
           <Footer />
         </Box>
+
+
         {/* Print */}
         <PrintDialogBulk
           open={openBulkPrint}
@@ -3371,7 +3386,7 @@ const OperatorView = () => {
           }}
         />
       </Box>
-    </PageContainer>
+    </PageContainer >
   );
 };
 

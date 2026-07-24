@@ -52,7 +52,7 @@ const Content = () => {
   const tableData = documentQuery.data?.collection ?? [];
   const totalRecords = documentQuery.data?.RecordsTotal ?? 0;
   const loading = documentQuery.isPending;
-  const { remove } = useDocumentMutation();
+  const { remove: deleteDocument } = useDocumentMutation();
 
   const cards = useMemo(
     () => [
@@ -129,7 +129,7 @@ const Content = () => {
 
     if (!confirm) return;
     try {
-      await remove.mutateAsync({
+      await deleteDocument.mutateAsync({
         id,
       });
       showSwal('success', t('deleteSuccess', { name: 'Document' }));
@@ -147,7 +147,7 @@ const Content = () => {
       try {
         await Promise.all(
           rows.map((row) => {
-            remove.mutateAsync({
+            deleteDocument.mutateAsync({
               id: row.id,
             });
           }),
@@ -254,7 +254,7 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
-      <GlobalBackdropLoading open={remove.isPending} />
+      <GlobalBackdropLoading open={deleteDocument.isPending} />
     </PageContainer>
   );
 };

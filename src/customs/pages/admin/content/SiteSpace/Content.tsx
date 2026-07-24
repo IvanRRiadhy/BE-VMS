@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Backdrop, Box, CircularProgress, Grid2 as Grid } from '@mui/material';
+import { Backdrop, Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -272,11 +272,6 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
-    const safeNumber = (val: any, fallback = 0) => {
-      const n = Number(val);
-      return Number.isFinite(n) ? n : fallback;
-    };
-
     try {
       const res = await getSiteById(id);
       const found = res?.collection ?? null;
@@ -528,10 +523,6 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isSiteSpaceType={true}
