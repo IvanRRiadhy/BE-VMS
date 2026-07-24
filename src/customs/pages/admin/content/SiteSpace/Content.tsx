@@ -379,7 +379,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: SiteTableRow[]) => {
     if (rows.length === 0) return false;
 
-    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Site Space' }));
     if (!confirmed) return false;
 
     try {
@@ -390,7 +390,6 @@ const Content = () => {
       return true;
     } catch (error) {
       showSwal('error', 'Failed to delete some items.');
-
       return false;
     }
   };
@@ -479,7 +478,7 @@ const Content = () => {
         active: checked,
       });
 
-      showSwal('success', 'Site space successfully updated');
+      showSwal('success', t('updatedSuccess', { name: 'Site Space' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
     } finally {

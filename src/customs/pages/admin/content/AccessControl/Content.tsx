@@ -130,14 +130,12 @@ const Content = () => {
   };
 
   const handleEdit = async (id: string) => {
+    const res = await getAccessControlsById(id);
     if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
     }
-
-    const res = await getAccessControlsById(id);
-
     setFormDataAddAccessControl(mapItemToFormData(res.collection as any));
     setEdittingId(id);
     handleOpenDialog();

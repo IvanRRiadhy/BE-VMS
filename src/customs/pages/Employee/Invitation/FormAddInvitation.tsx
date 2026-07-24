@@ -74,10 +74,6 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 
 import {
-  createPraRegister,
-  createPraRegisterGroup,
-  createVisitor,
-  createVisitorsGroup,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -110,6 +106,8 @@ import PurposeVisitDialog from '../../admin/content/Visitor/Trx/components/Dialo
 import { IconInfoCircle } from '@tabler/icons-react';
 import VisitorSelectEmployee from 'src/customs/components/select2/VisitorSelectEmployee';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
+import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -173,7 +171,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  // const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
@@ -209,6 +206,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
+  const { t } = useTranslation();
 
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
@@ -809,7 +807,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       sx={{ mb: 1, mt: 1 }}
                       startIcon={<IconPlus />}
                     >
-                      + Add Group
+                      Add Group
                     </Button>
                   )}
                 </Box>
@@ -5649,7 +5647,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               }}
               startIcon={<IconArrowLeft width={18} />}
             >
-              Back
+              {t('back')}
             </MuiButton>
 
             {isGroup ? (
@@ -5677,7 +5675,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   onClick={handleNext}
                   endIcon={<IconArrowRight width={18} />}
                 >
-                  Next
+                  {t("next")}
                 </Button>
               )
             ) : isLastStep ? (
@@ -5695,7 +5693,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 onClick={handleNext}
                 endIcon={<IconArrowRight width={18} />}
               >
-                Next
+                {t("next")}
               </Button>
             )}
           </Box>
@@ -5728,17 +5726,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         }}
       />
 
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
       <Portal>
         <Snackbar
           open={snackbar.open}

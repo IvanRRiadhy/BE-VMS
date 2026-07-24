@@ -130,5 +130,10 @@
   "updatedSuccess": "{{name}} berhasil diubah.",
   "updatedFailed": "Gagal mengubah {{name}}.",
   "successReturnCard": "Pengembalian kartu berhasil.",
-  "mustChooseOneCard": "Pilih minimal satu kartu."
+  "mustChooseOneCard": "Pilih minimal satu kartu.",
+  "successSendInvitation": "Berhasil mengirim undangan.",
+  "successSendShareLink": "Berhasil mengirim link",
+  "pleaseSendAtleastOneEmail": "Minimal kirim satu email.",
+  "loadMore": "Lihat Selengkapnya",
+  "noDataFound": "Tidak ada data ditemukan."
 }

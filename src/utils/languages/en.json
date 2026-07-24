@@ -131,5 +131,10 @@
   "updatedSuccess": "Successfully updated {name}}.",
   "updatedFailed": "Failed to update {{name}}.",
   "successReturnCard": "Successfully return card.",
-  "mustChooseOneCard": "Please choose  at least one card."
+  "mustChooseOneCard": "Please choose  at least one card.",
+  "successSendInvitation": "Successfully send invitation.",
+  "successSendShareLink": "Successfully send share link.",
+  "pleaseSendAtleastOneEmail": "Please send at least one email.",
+  "loadMore": "Load More",
+  "noDataFound": "No data found."
 }

@@ -495,8 +495,7 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ mt: 0, pt: 0 }}>
+        <DialogContent sx={{ mt: 0, pt: 0 }} dividers>
           <br />
           <FormWizardAddVisitorCard
             formData={formAddVisitorCard}

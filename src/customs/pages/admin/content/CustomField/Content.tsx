@@ -171,7 +171,7 @@ const Content = () => {
         showSwal('success', t("deleteSuccessMultiple", { count: rows.length, name: 'Custom Field' }));
 
       } catch (error: any) {
-        showSwal('error', error.response.data.msg ?? 'Failed to delete some items.');
+        showSwal('error', error.response.data.msg ?? t("deleteSuccessMultiple", { count: rows.length, name: 'Custom Field' }));
       }
     }
   };

@@ -483,7 +483,7 @@ const DashboardEmployee = () => {
 
       await createMutation.mutateAsync(payload);
       setOpenCreateLink(false);
-      showSwal('success', 'Share link created successfully');
+      showSwal('success', t('createSuccess', { name: 'Share Link' }));
     } catch (err: any) {
       showSwal('error', err.response.data.message ?? 'Failed to create share link');
     } finally {
@@ -494,18 +494,14 @@ const DashboardEmployee = () => {
   const handleSendEmail = async (emails: string[]) => {
     try {
       setIsGenerating(true);
-
       const finalPayload = {
         ...pendingPayload,
         emails: emails,
       };
-
       await createMutation.mutateAsync(finalPayload);
-
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-
-      showSwal('success', 'Share link sent successfully');
+      showSwal('success', t("successSendShareLink"));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     } finally {
@@ -567,7 +563,7 @@ const DashboardEmployee = () => {
     try {
       setIsGenerating(true);
       await createQuickAccess.mutateAsync(payload);
-      showSwal('success', 'Quick access created successfully');
+      showSwal('success', t("createSuccess", { name: 'Quick Access' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
       throw error;
@@ -636,7 +632,7 @@ const DashboardEmployee = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', 'Please enter at least one email');
+      showSwal('error', t("pleaseSendAtleastOneEmail"));
       return;
     }
     try {
@@ -646,7 +642,7 @@ const DashboardEmployee = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', 'Invitation sent successfully');
+      showSwal('success', t("successSendInvitation"));
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }

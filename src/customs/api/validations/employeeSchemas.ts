@@ -6,7 +6,7 @@ import type { CreateEmployeeRequest } from 'src/customs/api/models/Admin/Employe
 export const Step0Schema = z
   .object({
     name: z.string().min(1, 'Employee name is required'),
-    person_id: z.string().min(1, 'Person ID is required'),
+    person_id: z.string().min(1, 'Employee ID is required'),
     identity_type: z.string().min(1, 'Identity Type is required'),
     identity_id: z.string().min(1, 'Identity ID is required'),
     email: z.string().email('Email is invalid'),

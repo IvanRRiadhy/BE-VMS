@@ -195,7 +195,7 @@ const FormWizardAddEmployee = ({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  function unwrapZodObject(schema: any): ZodObject<any> | null {
+  function   unwrapZodObject(schema: any): ZodObject<any> | null {
     if (schema instanceof z.ZodObject) {
       return schema;
     }
@@ -341,8 +341,6 @@ const FormWizardAddEmployee = ({
     }
     return out;
   };
-
-  const queryCLient = useQueryClient();
 
   const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
     ...v,
@@ -585,7 +583,7 @@ const FormWizardAddEmployee = ({
             {/* Person ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="person_id" required>
-                <Typography variant="caption">Person ID </Typography>
+                <Typography variant="caption">Employee Identity Id</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="person_id"
@@ -642,7 +640,7 @@ const FormWizardAddEmployee = ({
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="identity_id" required>
-                <Typography variant="caption">Identity ID (KTP/SIM/Paspor)</Typography>
+                <Typography variant="caption">Identity ID (KTP/SIM/Pasport)</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"

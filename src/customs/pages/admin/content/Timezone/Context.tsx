@@ -18,7 +18,7 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-import {getTimezoneById } from 'src/customs/api/admin';
+import { getTimezoneById } from 'src/customs/api/admin';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormTimezone from './FormTimezone';
@@ -53,23 +53,6 @@ const Content = () => {
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const { t } = useTranslation();
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const res = await getAllTimezone();
-  //       setTimezoneData(res.collection ?? []);
-  //     } catch (error) {
-  //       console.error(error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [refreshTrigger]);
-
   const {
     data,
     isLoading,
@@ -281,7 +264,7 @@ const Content = () => {
                 <Box display="flex" flexDirection="column" alignItems="center" mt={1}>
                   <img src={bg_nodata} alt="No Data" style={{ width: '80px', height: '80px' }} />
                   <Typography variant="body2" color="text.secondary" textAlign="center" mt={4}>
-                    No Data Found
+                    {t("noDataFound")}
                   </Typography>
                 </Box>
               )}
@@ -299,7 +282,7 @@ const Content = () => {
 
                       </>
                     ) : (
-                      'Load More'
+                      t("loadMore")
                     )}
                   </Button>
                 </Box>

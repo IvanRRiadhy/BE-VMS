@@ -41,6 +41,23 @@ const Content = () => {
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
   const exportRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const open = Boolean(anchorEl);
+
+  const CardItems = [
+    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
+    { title: 'waiting', key: 'waiting', icon: <IconHourglass size={25} /> },
+    {
+      title: 'blacklist',
+      key: 'blacklist',
+      icon: <IconUsersGroup size={22} />,
+    },
+  ];
 
   const handleExportPdf = async () => {
     if (!exportRef.current || isExporting) return;
@@ -88,7 +105,7 @@ const Content = () => {
     const fetchData = async () => {
       try {
         const response = await getTodayPraregister(
-  
+
           dayjs(startDate).format('YYYY-MM-DD'),
           dayjs(endDate).format('YYYY-MM-DD'),
         );
@@ -107,29 +124,13 @@ const Content = () => {
             visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           }));
         setDataPraregist(rows || []);
-      } catch (error) {}
+      } catch (error) { }
     };
 
     fetchData();
   }, []);
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
-  const open = Boolean(anchorEl);
 
-  const CardItems = [
-    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
-    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-    { title: 'waiting', key: 'waiting', icon: <IconHourglass size={25} /> },
-    {
-      title: 'blacklist',
-      key: 'blacklist',
-      icon: <IconUsersGroup size={22} />,
-    },
-  ];
 
   return (
     <PageContainer

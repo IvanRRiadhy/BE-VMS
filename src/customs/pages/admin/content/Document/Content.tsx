@@ -24,7 +24,7 @@ import FormAddDocumentDialog from './components/FormDocumentDialog';
 import { useDocumentPagination } from 'src/hooks/Documents/useDocumentPagination';
 import { useDocumentMutation } from 'src/hooks/Documents/useDocumentMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { getAllDocument, getDocumentById } from 'src/customs/api/admin';
+import { getDocumentById } from 'src/customs/api/admin';
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -226,7 +226,6 @@ const Content = () => {
                 onBatchDelete={handleBatchDelete}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleAdd}
                 htmlFields={['document_text']}
                 htmlClampLines={4}

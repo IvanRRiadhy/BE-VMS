@@ -46,7 +46,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { Snackbar, Alert } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
 
@@ -68,6 +67,10 @@ import {
 } from 'src/customs/api/Admin/Report';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import axiosInstance from 'src/customs/api/interceptor';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
+import { useListVisitor } from 'src/hooks/Visitor/useListVisitor';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -86,11 +89,11 @@ const Content = () => {
   });
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [siteOptions, setSiteOptions] = useState<Array<{ id: string; name: string }>>([]);
-  const [employeeOptions, setEmployeeOptions] = useState<Array<{ id: string; name: string }>>([]);
-  const [visitorOptions, setVisitorOptions] = useState<Array<{ id: string; visitor_name: string }>>(
-    [],
-  );
+  // const [siteOptions, setSiteOptions] = useState<Array<{ id: string; name: string }>>([]);
+  // const [employeeOptions, setEmployeeOptions] = useState<Array<{ id: string; name: string }>>([]);
+  // const [visitorOptions, setVisitorOptions] = useState<Array<{ id: string; visitor_name: string }>>(
+  //   [],
+  // );
   const [activeTab, setActiveTab] = useState(0);
   const [summary, setSummary] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -125,25 +128,28 @@ const Content = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const resSite = await getAllSite();
+  //     setSiteOptions(resSite.collection);
+  //     const resEmployeee = await getVisitorEmployee();
+  //     setEmployeeOptions(resEmployeee.collection);
+  //     const resVisitor = await getAllVisitor();
+  //     setVisitorOptions(resVisitor.collection);
+  //   };
 
-      const resSite = await getAllSite();
-      setSiteOptions(resSite.collection);
-      const resEmployeee = await getVisitorEmployee();
-      setEmployeeOptions(resEmployeee.collection);
-      const resVisitor = await getAllVisitor();
-      setVisitorOptions(resVisitor.collection);
-    };
+  //   fetchData();
+  // }, []);
 
-    fetchData();
-  }, []);
+  const { data: siteOptions = [] } = useSites();
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const { data: visitorOptions = [] } = useListVisitor();
 
   const getSiteNames = (ids: string[]) => {
-    if (!ids || !siteOptions.length) return '-';
+    if (!ids || !siteOptions?.length) return '-';
     return ids
       .map((id) => {
-        const site = siteOptions.find((site) => site.id.toUpperCase() === id.toUpperCase());
+        const site = siteOptions?.find((site) => site.id.toUpperCase() === id.toUpperCase());
         return site?.name;
       })
       .filter(Boolean)
@@ -151,10 +157,10 @@ const Content = () => {
   };
 
   const getHostNames = (ids: string[]) => {
-    if (!ids || !employeeOptions.length) return '-';
+    if (!ids || !allVisitorEmployee.length) return '-';
     return ids
       .map((id) => {
-        const host = employeeOptions.find((e) => e.id.toUpperCase() === id.toUpperCase());
+        const host = allVisitorEmployee.find((e) => e.id.toUpperCase() === id.toUpperCase());
         return host?.name;
       })
       .filter(Boolean)
@@ -649,24 +655,24 @@ const Content = () => {
                     size="small"
                     options={visitorOptions}
                     getOptionLabel={(option) =>
-                      typeof option === 'string' ? option : option.visitor_name
+                      typeof option === 'string' ? option : option.name
                     }
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     inputValue={searchVisitor}
                     onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
                     filterOptions={(opts, state) => {
                       const term = (state.inputValue || '').toLowerCase();
-                      if (term.length < 3) return [];
+                      // if (term.length < 3) return [];
                       return opts.filter((opt) =>
-                        (opt.visitor_name || '').toLowerCase().includes(term),
+                        (opt.name || '').toLowerCase().includes(term),
                       );
                     }}
                     noOptionsText={searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'}
-                    value={visitorOptions.find((x) => x.id === formData.visitor_id) || null}
+                    value={visitorOptions.find((x: any) => x.id === formData.visitor_id) || null}
                     onChange={(_, val) => handleChange('visitor_id', val ? val.id : null)}
                     renderOption={(props, option) => (
                       <li {...props} key={option.id}>
-                        {option.visitor_name}
+                        {option.name}
                       </li>
                     )}
                     renderInput={(params) => (
@@ -733,8 +739,8 @@ const Content = () => {
                   <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
                   <Autocomplete
                     multiple
-                    options={employeeOptions}
-                    value={employeeOptions.filter((x) => formData.hosts.includes(x.id))}
+                    options={allVisitorEmployee}
+                    value={allVisitorEmployee.filter((x) => formData.hosts.includes(x.id))}
                     getOptionLabel={(option) => option.name}
                     onChange={(e, val) =>
                       handleChange(
@@ -1210,11 +1216,7 @@ const Content = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
-        <Portal>
-          <Backdrop sx={{ color: '#fff', zIndex: 99999 }} open={loading}>
-            <CircularProgress color="primary" />
-          </Backdrop>
-        </Portal>
+        <GlobalBackdropLoading open={loading} />
       </Container>
     </PageContainer>
   );

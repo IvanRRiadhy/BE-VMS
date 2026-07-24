@@ -560,7 +560,7 @@ const Content = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', 'Please enter at least one email');
+      showSwal('error', t("pleaseSendAtleastOneEmail"));
       return;
     }
 
@@ -571,7 +571,7 @@ const Content = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', 'Invitation sent successfully');
+      showSwal('success', t("successSendInvitation"));
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to send invitation');
@@ -598,7 +598,7 @@ const Content = () => {
       await createMutation.mutateAsync(finalPayload);
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-      showSwal('success', 'Share link sent successfully');
+      showSwal('success', t("successSendShareLink"));
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to send share link');
     }

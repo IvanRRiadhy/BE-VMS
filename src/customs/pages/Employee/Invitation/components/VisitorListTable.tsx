@@ -130,28 +130,28 @@ export default function VisitorListTable({
 
             <TableRow>
               <TableCell />
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Visitor Name
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Email
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Phone
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Invitation Code
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Organization
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Host
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Site
               </TableCell>
-              <TableCell component="th" scope="row">
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Status
               </TableCell>
             </TableRow>

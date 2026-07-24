@@ -40,8 +40,7 @@ import {
 import {
   getShareLinkById,
 } from 'src/customs/api/Admin/ShareLink';
-import Swal from 'sweetalert2';
-import { showSwal } from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
@@ -148,7 +147,6 @@ const Content = () => {
       return res.collection ?? [];
     },
     enabled: !!selectedEmployeeId,
-    staleTime: 1 * 60 * 1000,
     retry: 1,
   });
 
@@ -161,7 +159,6 @@ const Content = () => {
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const [searchHost, setSearchHost] = useState<any>('');
-
   const [appliedFilters, setAppliedFilters] = useState<any>({
     status: undefined,
     visitor_status: '',
@@ -180,9 +177,8 @@ const Content = () => {
   const [sortDir, setSortDir] = useState<string>('desc');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
   const [openGroup, setOpenGroup] = useState(true);
-  // const [hasMore, setHasMore] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -350,7 +346,6 @@ const Content = () => {
     setFormDataAddVisitor(defaultFormData);
     setIsDirty(false);
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
-
     handleCloseDialog();
   };
 
@@ -458,27 +453,14 @@ const Content = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      const confirm = await Swal.fire({
-        title: 'Do you want to delete this link?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        confirmButtonColor: '#4caf50',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
-      });
-
-      if (!confirm.isConfirmed) return;
+      const confirm = showConfirmDelete(t("confirmDelete", { name: 'Share Link' }));
+      if (!confirm) return;
 
       // await deleteShareLink(id);
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Link deleted successfully.');
+      showSwal('success', t("deleteSuccess", { name: 'Share Link' }));
     } catch (error: any) {
-      showSwal('error', error?.response.data.message || 'Failed to delete link.');
+      showSwal('error', error?.response.data.message || t("deleteFailed", { name: 'Share Link' }));
     }
   };
 
@@ -520,7 +502,7 @@ const Content = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', 'Please enter at least one email');
+      showSwal('error', t("pleaseSendAtleastOneEmail"));
       return;
     }
     try {
@@ -534,7 +516,7 @@ const Content = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', 'Invitation sent successfully');
+      showSwal('success', t("successSendInvitation"));
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
@@ -552,19 +534,14 @@ const Content = () => {
 
   const handleSendEmail = async (emails: string[]) => {
     try {
-
-
       const finalPayload = {
         ...pendingPayload,
         emails: emails,
       };
-
       await createMutation.mutateAsync(finalPayload);
-
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-
-      showSwal('success', 'Share link sent successfully');
+      showSwal('success', t("successSendShareLink"));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     }
@@ -575,9 +552,9 @@ const Content = () => {
       await createMutation.mutateAsync(payload);
 
       setOpenCreateLink(false);
-      showSwal('success', 'Share link created successfully');
+      showSwal('success', t("createSuccess", { name: 'Share Link' }));
     } catch (err: any) {
-      showSwal('error', err.response.data.message ?? 'Failed to create share link');
+      showSwal('error', err.response.data.message ?? t("createFailed", { name: 'Share Link' }));
     }
   };
 
@@ -585,12 +562,11 @@ const Content = () => {
     try {
       await createQuickAccess.mutateAsync(payload);
 
-      showSwal('success', 'Quick access created successfully');
+      showSwal('success', t("createSuccess", { name: 'Quick Access' }));
 
       setOpenQuickAccess(false);
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
-
+      showSwal('error', error?.response?.data?.message || t("createFailed", { name: 'Quick Access' }));
       throw error;
     }
   };
@@ -725,8 +701,7 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: '10px' }}>
+        <DialogContent sx={{ paddingTop: '10px' }} dividers>
           <Praregist
             key={wizardKey}
             formData={formDataAddVisitor}

@@ -61,6 +61,8 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { IconDownload } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
+import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 
 const DashboardDeliveryStaff = () => {
   const CardItems = [
@@ -79,7 +81,7 @@ const DashboardDeliveryStaff = () => {
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
-  const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
@@ -99,7 +101,7 @@ const DashboardDeliveryStaff = () => {
   const handleClose = () => setAnchorEl(null);
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
-
+  const { t } = useTranslation();
   const start = page * rowsPerPage;
   const navigate = useNavigate();
 
@@ -180,7 +182,7 @@ const DashboardDeliveryStaff = () => {
           // visitor_status: item.visitor_status,
         }));
         setActiveInvitation(rows || []);
-      } catch (error) {}
+      } catch (error) { }
     };
 
     fetchDataActiveInvtiation();
@@ -271,18 +273,20 @@ const DashboardDeliveryStaff = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const resAccess = await getAccessPass();
-        setActiveAccessPass(resAccess);
-      } catch (e) {
-        console.error(e);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const resAccess = await getAccessPass();
+  //       setActiveAccessPass(resAccess);
+  //     } catch (e) {
+  //       console.error(e);
+  //     }
+  //   };
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
+
+  const { accessPass: activeAccessPass } = useAccessPass();
 
   const handleView = (row: any) => {
     setSelectedInvitationId(row.id);
@@ -487,17 +491,14 @@ const DashboardDeliveryStaff = () => {
         ...pendingPayload,
         emails: emails,
       };
-
       await createShareLink(finalPayload);
-
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
       });
-
       setOpenSendEmail(false);
       setOpenCreateLink(false);
 
-      showSwal('success', 'Share link sent successfully');
+      showSwal('success', t("successSendShareLink"));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     } finally {
