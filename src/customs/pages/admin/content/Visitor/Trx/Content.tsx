@@ -61,6 +61,7 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
+import VisitorQrCodeDialog from './components/VisitorQrCodeDialog';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -143,6 +144,7 @@ const Content = () => {
       start: 0,
       length: 10,
     });
+  const [openQrDialog, setOpenQrDialog] = useState(false);
 
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
@@ -418,6 +420,16 @@ const Content = () => {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
     } finally {
       setVisitorLoading(false);
+    }
+  };
+
+  const handleQrCode = async (id: string) => {
+    try {
+      const res = await getVisitorById(id);
+      setVisitorDetail(res?.collection ?? res ?? null);
+      setOpenQrDialog(true);
+    } catch (err: any) {
+      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
     }
   };
 
@@ -755,6 +767,10 @@ const Content = () => {
                 onView={(row) => {
                   handleView(row.id);
                 }}
+                isHaveQrCode={true}
+                onQrCode={(row) => {
+                  handleQrCode(row.id);
+                }}
                 searchKeyword={search}
                 onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => {
@@ -941,6 +957,12 @@ const Content = () => {
         onClose={handleCancelDiscard}
         onDiscard={confirmDiscardAndClose}
       />
+      <VisitorQrCodeDialog
+        open={openQrDialog}
+        onClose={() => setOpenQrDialog(false)}
+        visitorDetail={visitorDetail}
+      />
+
       <Portal>
         <Snackbar
           open={snackbar.open}

@@ -97,6 +97,7 @@ type DynamicTableProps<
   isButtonRegisteredSite?: boolean;
   isCopy?: boolean;
   isButtonGiveAccess?: boolean;
+  onQrCode?: (row: T) => void;
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
   isHaveSettingOperator?: boolean;
@@ -111,6 +112,7 @@ type DynamicTableProps<
   isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
+  isHaveQrCode?: boolean;
   isButtonSiteAccess?: boolean;
   isHaveImportExcel?: boolean;
   isTreeSiteType?: boolean;
@@ -241,6 +243,7 @@ function DynamicTableBase<
     isHaveExportPdf = false,
     isHaveExportXlf = false,
     isHaveImportExcel = false,
+    isHaveQrCode,
     isHaveFilterDuration = false,
     isActionEmployee = false,
     isButtonSiteAccess = false,
@@ -266,6 +269,7 @@ function DynamicTableBase<
     isBlacklistPage = false,
     isActionListVisitor = false,
     isHaveVerified = false,
+    onQrCode,
     isHaveDataQuickAccess,
     onDetailQuickAccess,
     isHaveView = false,
@@ -1618,6 +1622,7 @@ function DynamicTableBase<
                   onQuickAccessToggle={onQuickAccessToggle}
                   isHaveVerified={isHaveVerified}
                   visiblePasswords={visiblePasswords}
+                  onQrCode={onQrCode}
                   togglePassword={togglePassword}
                   isHavePassword={isHavePassword}
                   isHaveAssign={isHaveAssign}
@@ -1641,6 +1646,7 @@ function DynamicTableBase<
                   onView={onView}
                   onCopy={onCopy}
                   onEdit={onEdit}
+                  isHaveQrCode={isHaveQrCode}
                   isHavePermission={isHavePermission}
                   onPermission={onPermission}
                   isHaveViewAndAction={isHaveViewAndAction}

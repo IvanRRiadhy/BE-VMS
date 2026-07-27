@@ -65,8 +65,8 @@ const Approval = () => {
   const approvalData = data?.collection ?? [];
   const totalRecords = data?.totalRecords ?? 0;
   const totalFilteredRecords = data?.totalFiltered ?? 0;
-
   const hasMore = approvalData.length < totalFilteredRecords;
+
   const getApprovalCounts = () => {
     const counts = {
       total: approvalData.length,
