@@ -219,13 +219,22 @@ function FillPraregistrationGroup({
 
         case 3: {
           let options: { value: string; name: string }[] = [];
-
+          const visitorRole = invitationDetail?.collection?.visitor_role ?? '';
           const hostName = invitationDetail?.collection?.host_name ?? '';
           const hostId = invitationDetail?.collection?.host ?? '';
           const sitePlaceName = invitationDetail?.collection?.site_place_name ?? '';
           const sitePlaceId = invitationDetail?.collection?.site_place ?? '';
 
           switch (field.remarks) {
+            case "visitor_role":
+              options =
+                invitationDetail?.collection?.visitor_type_data?.visitor_roles?.map(
+                  (r: any) => ({
+                    value: r.role,
+                    name: r.role,
+                  }),
+                ) ?? [];
+              break;
             case 'host':
               options = [{ value: hostId, name: hostName }];
               break;
@@ -269,7 +278,7 @@ function FillPraregistrationGroup({
               }
               filterOptions={(opts, state) => {
                 const term = (state.inputValue || '').toLowerCase();
-                if (term.length < 3) return [];
+                // if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={

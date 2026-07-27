@@ -5183,7 +5183,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
 
-        // console.log('invitationCode', invitationCode);
+        console.log('invitationCode', invitationCode);
         if (invitationCode) {
           onInvitationCreated?.(invitationCode);
         }

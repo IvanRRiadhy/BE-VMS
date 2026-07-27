@@ -1913,6 +1913,7 @@ const OperatorView = () => {
           question_page: structuredClone(wrappedSections),
         };
       });
+      // console.log("visitorGroupList", visitorGroupList);
       setFillFormDataVisitor(visitorGroupList);
 
       setOpenFillForm(true);
@@ -2178,7 +2179,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       await createSubmitCompletePraMultiple(payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
