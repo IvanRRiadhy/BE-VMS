@@ -70,6 +70,7 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 
 import {
+  createPraRegister,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -5486,6 +5487,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         } else {
           await createVisitorMutation.mutateAsync(parsed);
         }
+
+        
 
         const successMessage =
           TYPE_REGISTERED === 0

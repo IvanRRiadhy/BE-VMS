@@ -72,7 +72,8 @@ const formVisitorSchema = z.object({
   custom_field_id: z.string().optional().default(''),
   multiple_option_fields: z.array(z.any()).optional().default([]),
   visitor_form_type: z.number().optional(),
-  answer_text: z.string().optional(),
+  // answer_text: z.string().optional(),
+  answer_text: z.string().nullable().optional(),
   answer_datetime: z.string().datetime().optional(), // atau nullable().optional() jika butuh null
   // answer_file: z.string().optional(),
   answer_file: z.string().nullable().optional(),
