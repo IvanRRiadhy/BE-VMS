@@ -5442,7 +5442,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
-
         // const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         // await submitFn( parsed as any);
         if (TYPE_REGISTERED === 0) {
@@ -5475,11 +5474,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-
         // console.log('Payload :', JSON.stringify(payload, null, 2));
         const parsed = CreateVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
-
         // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         // await submitFn(parsed);
         if (TYPE_REGISTERED === 0) {
@@ -5487,8 +5484,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         } else {
           await createVisitorMutation.mutateAsync(parsed);
         }
-
-        
 
         const successMessage =
           TYPE_REGISTERED === 0

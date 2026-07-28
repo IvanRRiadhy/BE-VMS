@@ -125,6 +125,7 @@ interface VisitorImageProps {
   handleOpenDetailVistingPurpose?: any;
   getColorByName?: any;
   todayVisitingPurpose?: any;
+  recordsFiltered?: any;
 }
 
 
@@ -139,6 +140,7 @@ const VisitorImage = ({
   handleOpenDetailVistingPurpose,
   getColorByName,
   todayVisitingPurpose,
+  recordsFiltered,
 }: VisitorImageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -227,7 +229,8 @@ const VisitorImage = ({
                     <Typography fontWeight={600}>{item.name}</Typography>
 
                     <Typography variant="h4" fontWeight="bold" mt={1}>
-                      {item.count}
+                      {/* {item.count} */}
+                      {recordsFiltered}
                     </Typography>
                   </CardContent>
                 </Card>

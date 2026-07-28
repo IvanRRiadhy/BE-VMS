@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import FormDialogPraregist from '../../Dialog/FormDialogPraregist';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Props = {
   open: boolean;
@@ -18,7 +19,7 @@ type Props = {
   invitationCode?: any[];
   containerRef?: any;
   fetchRelatedVisitorsByInvitationId: (id: string) => Promise<void>;
-  fetchUpcomingPurpose: () => Promise<void>;
+  // fetchUpcomingPurpose: () => Promise<void>;
   registeredSite?: string;
 };
 
@@ -30,10 +31,11 @@ const FillPraregistrationSingle: React.FC<Props> = ({
   invitationCode,
   containerRef,
   fetchRelatedVisitorsByInvitationId,
-  fetchUpcomingPurpose,
+  // fetchUpcomingPurpose,
   registeredSite,
 }) => {
   const getTargetId = () => selectedInvitationId ?? invitationCode?.[0]?.id;
+  const queryClient = useQueryClient();
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" container={containerRef}>
@@ -79,7 +81,9 @@ const FillPraregistrationSingle: React.FC<Props> = ({
 
                 void Promise.all([
                   fetchRelatedVisitorsByInvitationId(targetId),
-                  fetchUpcomingPurpose(),
+                  queryClient.invalidateQueries({ queryKey: ['upcoming-purpose'] }),
+                  queryClient.invalidateQueries({ queryKey: ['upcoming-visitors'] }),
+
                 ]);
               }}
               containerRef={containerRef}

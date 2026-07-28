@@ -75,6 +75,10 @@ interface VisitorListCardProps {
   handleApplyBulkAction: () => void;
   handleChooseCard: () => void;
   handlePrintClick: () => void;
+  page?: number;
+  rowsPerPage?: number;
+  totalCount?: number;
+  setPage?: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -110,14 +114,21 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   handleApplyBulkAction,
   handleChooseCard,
   handlePrintClick,
+  page,
+  rowsPerPage,
+  totalCount,
+  setPage,
 }) => {
-  const ITEMS_PER_PAGE = 8;
+  // const ITEMS_PER_PAGE = 8;
 
-  const [page, setPage] = useState(1);
+  // const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(filteredVisitors.length / ITEMS_PER_PAGE);
+  // const totalPages = Math.ceil(filteredVisitors.length / ITEMS_PER_PAGE);
 
-  const pagedVisitors = filteredVisitors.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  // const pagedVisitors = filteredVisitors.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  // const totalPages = Math.ceil(totalCount / rowsPerPage);
+  // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 8));
+  const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 8));
   return (
     <Card
       sx={{
@@ -231,12 +242,16 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               }}
             />
           </Tooltip>
-          <IconButton size="small" disabled={page === 1} onClick={() => setPage(page - 1)}>
+          <IconButton
+            size="small"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
             <ChevronLeft />
           </IconButton>
 
-          <Typography display={'flex'}>
-            <span> {filteredVisitors.length > 0 ? page : 0}</span> / <span>{totalPages}</span>
+          <Typography display="flex">
+            {`${totalPages === 0 ? 0 : page + 1} / ${totalPages}`}
           </Typography>
           <IconButton
             size="small"
@@ -269,7 +284,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             gap: 1,
           }}
         >
-          {pagedVisitors.map((visitor, index) => {
+          {filteredVisitors.map((visitor, index) => {
             const isDriving = visitor.is_driving === true;
             const isScanned =
               visitor.visitor_number &&

@@ -100,6 +100,9 @@ import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
 import Footer from './Components/Footer';
 import { getConfig } from 'src/config';
 import { Joyride, STATUS } from 'react-joyride';
+import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
+import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
+import { useQueryClient } from '@tanstack/react-query';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -214,8 +217,8 @@ const OperatorView = () => {
   ];
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [typeVisitor, setTypeVisitor] = useState('live');
-  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
-  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
+  // const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
+  // const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
   const { sitesOperator } = useInvitationSite();
   const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
     useRegisteredSiteOperator();
@@ -652,7 +655,14 @@ const OperatorView = () => {
       registered_site: '',
     }));
     handleCloseDialog();
-    await fetchUpcomingPurpose();
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ['upcoming-visitors'],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      }),
+    ]);
   };
 
   // useEffect(() => {
@@ -2067,6 +2077,8 @@ const OperatorView = () => {
     );
   };
 
+  const queryClient = useQueryClient();
+
   // Multiple
   const handleSubmitPramultiple = async () => {
     try {
@@ -2200,8 +2212,9 @@ const OperatorView = () => {
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
-
-      await fetchUpcomingPurpose();
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      })
     } catch (error: any) {
       showSwal(
         'error',
@@ -2502,51 +2515,67 @@ const OperatorView = () => {
     setOpenChooseCardDialog(false);
   };
 
-  const fetchUpcomingPurpose = async () => {
-    const res = await getUpComingPurpose({
-      today: 'true',
-      all_visitor_type: 'true',
-    });
+  // const fetchUpcomingPurpose = async () => {
+  //   const res = await getUpComingPurpose({
+  //     today: 'true',
+  //     all_visitor_type: 'true',
+  //   });
 
-    setUpcomingPurpose(res?.collection ?? []);
-  };
+  //   setUpcomingPurpose(res?.collection ?? []);
+  // };
 
-  useEffect(() => {
-    fetchUpcomingPurpose();
-  }, []);
+  // useEffect(() => {
+  //   fetchUpcomingPurpose();
+  // }, []);
+
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const res = await getUpComingVisitors({
+  //       today: 'true',
+  //       // all_visitor_type: 'true',
+  //       visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
+  //       start: page * rowsPerPage,
+  //       length: rowsPerPage,
+  //       sortDir: sortDir,
+  //     });
+
+  //     const rows = res.collection.map((items: any) => ({
+  //       id: items.id,
+  //       name: items.visitor_name,
+  //       host: items.host_name,
+  //       invitation_code: items.invitation_code,
+  //       organization: items.visitor_organization_name,
+  //       agenda: items.agenda,
+  //       visitor_period_start: formatDateTime(items.visitor_period_start),
+  //       visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
+  //       visitor_status: items.visitor_status,
+  //       vehicle_type: items.vehicle_type,
+  //       vehicle_plate_number: items.vehicle_plate_number,
+  //     }));
+  //     setUpcomingVisitors(rows ?? []);
+  //   };
+  //   fetchData();
+  // }, [selectedPurpose, page, rowsPerPage]);
+
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(8);
   const sortDir = 'desc';
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getUpComingVisitors({
-        today: 'true',
-        // all_visitor_type: 'true',
-        visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
-        start: page * rowsPerPage,
-        length: rowsPerPage,
-        sortDir: sortDir,
-      });
+  const upcomingPurposeQuery = useUpcomingPurpose();
 
-      const rows = res.collection.map((items: any) => ({
-        id: items.id,
-        name: items.visitor_name,
-        host: items.host_name,
-        invitation_code: items.invitation_code,
-        organization: items.visitor_organization_name,
-        agenda: items.agenda,
-        visitor_period_start: formatDateTime(items.visitor_period_start),
-        visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
-        visitor_status: items.visitor_status,
-        vehicle_type: items.vehicle_type,
-        vehicle_plate_number: items.vehicle_plate_number,
-      }));
-      setUpcomingVisitors(rows ?? []);
-    };
-    fetchData();
-  }, [selectedPurpose, page, rowsPerPage]);
+  const upcomingVisitorQuery = useUpcomingVisitors({
+    page,
+    rowsPerPage,
+    sortDir,
+    selectedPurpose: selectedPurpose
+  });
+
+  const upcomingVisitors = upcomingVisitorQuery.data?.collection ?? [];
+  const recordsTotal = upcomingVisitorQuery.data?.recordsTotal ?? 0;
+  const recordsFiltered = upcomingVisitorQuery.data?.recordsFiltered ?? 0;
+  const upcomingPurpose = upcomingPurposeQuery.data ?? [];
 
   const filteredUpcomingVisitors = useMemo(() => {
     if (!searchKeyword.trim()) return upcomingVisitors;
@@ -2568,6 +2597,7 @@ const OperatorView = () => {
         .some((value) => String(value).toLowerCase().includes(keyword)),
     );
   }, [upcomingVisitors, searchKeyword]);
+
 
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
@@ -2817,6 +2847,11 @@ const OperatorView = () => {
     []
   );
 
+  const totalCount =
+    typeVisitor === "related"
+      ? filteredVisitors.length
+      : recordsTotal;
+
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -2989,6 +3024,10 @@ const OperatorView = () => {
                   handleApplyBulkAction={handleApplyBulkAction}
                   handleChooseCard={handleChooseCard}
                   handlePrintClick={handlePrintClick}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  totalCount={totalCount}
+                  setPage={setPage}
                 />
               </Grid>
 
@@ -3008,6 +3047,7 @@ const OperatorView = () => {
                   handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
                   getColorByName={getColorByName}
                   todayVisitingPurpose={upcomingPurpose}
+                  recordsFiltered={recordsTotal}
                 />
               </Grid>
             </Grid>
@@ -3051,6 +3091,7 @@ const OperatorView = () => {
           purposeName={selectedPurpose}
           page={page}
           setPage={setPage}
+          totalCount={recordsTotal}
           rowsPerPage={rowsPerPage}
           setRowsPerPage={setRowsPerPage}
           searchKeyword={searchKeyword}
@@ -3196,7 +3237,6 @@ const OperatorView = () => {
           invitationCode={invitationCode}
           containerRef={containerRef.current}
           fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
-          fetchUpcomingPurpose={fetchUpcomingPurpose}
           registeredSite={registerSiteOperator}
         />
 
