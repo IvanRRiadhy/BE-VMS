@@ -458,6 +458,10 @@ const Content = () => {
     handleCloseModalCreateSiteSpace();
 
     queryClient.invalidateQueries({
+      queryKey: ['sites'],
+    });
+
+    queryClient.invalidateQueries({
       queryKey: ['registeredSites'],
     });
     setIsDirty(false);

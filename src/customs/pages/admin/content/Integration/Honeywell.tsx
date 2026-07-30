@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
   Dialog,
@@ -54,19 +53,19 @@ import {
   IconRefresh,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import CloseIcon from '@mui/icons-material/Close';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddBadgeDialog from './components/AddBadgeDialog';
 import { checkConnection } from 'src/customs/api/Admin/Integration';
 import SyncBadgeDialog from './components/SyncBadgeDialog';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import EditCompanyDialog from './components/Honeywell/EditCompaniesDialog';
+import EditBadgeTypeDialog from './components/Honeywell/EditBadgeTypeDialog';
+import EditClearCodeDialog from './components/Honeywell/EditClearCodeDialog';
 
 const Honeywell = ({ id }: { id: string }) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [checkingConnection, setCheckingConnection] = useState(false);
   const [selectedType, setSelectedType] = useState('companies');
   const [openFormType, setOpenFormType] = useState<
     'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | null
@@ -178,52 +177,55 @@ const Honeywell = ({ id }: { id: string }) => {
     }
   };
 
-  const cards = [
-    {
-      title: 'Companies',
-      subTitle: totals.companies.toString(),
-      subTitleSetting: totals.companies,
-      icon: IconBuilding,
-      color: 'none',
-      type: 'info',
-    },
-    {
-      title: 'Badge Type',
-      subTitle: totals.badge_type.toString(),
-      subTitleSetting: totals.badge_type,
-      icon: IconUsersGroup,
-      color: 'none',
-      type: 'info',
-    },
-    {
-      title: 'Clearcodes',
-      subTitle: totals.clear_codes.toString(),
-      subTitleSetting: totals.clear_codes,
-      icon: IconCode,
-      color: 'none',
-      type: 'info',
-    },
-    {
-      title: 'Badge Status',
-      subTitle: totals.badge_status.toString(),
-      subTitleSetting: totals.badge_status,
-      icon: IconAccessPoint,
-      color: 'none',
-      type: 'info',
-    },
-    {
-      title: 'Sync Data',
-      icon: IconRefresh,
-      onIconClick: handleSyncIntegration,
-      type: 'action',
-    },
-    {
-      title: 'Import Badge',
-      icon: IconRefresh,
-      onIconClick: handleSyncBadge,
-      type: 'action',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: "Companies",
+        subTitle: totals.companies.toString(),
+        subTitleSetting: totals.companies,
+        icon: IconBuilding,
+        color: "none",
+        type: "info",
+      },
+      {
+        title: "Badge Type",
+        subTitle: totals.badge_type.toString(),
+        subTitleSetting: totals.badge_type,
+        icon: IconUsersGroup,
+        color: "none",
+        type: "info",
+      },
+      {
+        title: "Clearcodes",
+        subTitle: totals.clear_codes.toString(),
+        subTitleSetting: totals.clear_codes,
+        icon: IconCode,
+        color: "none",
+        type: "info",
+      },
+      {
+        title: "Badge Status",
+        subTitle: totals.badge_status.toString(),
+        subTitleSetting: totals.badge_status,
+        icon: IconAccessPoint,
+        color: "none",
+        type: "info",
+      },
+      {
+        title: "Sync Data",
+        icon: IconRefresh,
+        onIconClick: handleSyncIntegration,
+        type: "action",
+      },
+      {
+        title: "Import Badge",
+        icon: IconRefresh,
+        onIconClick: handleSyncBadge,
+        type: "action",
+      },
+    ],
+    [totals, handleSyncIntegration, handleSyncBadge]
+  );
 
   const getCount = (res: any) => {
     if (!res) return 0;
@@ -267,7 +269,19 @@ const Honeywell = ({ id }: { id: string }) => {
     try {
       if (type === 'companies') {
         const res = await getCompanies(id as string);
-        setListData(res.collection ?? []);
+        const rows = res?.collection?.map((item: any) => ({
+          id: String(item.id),
+          name: item.name ?? '',
+          description: item.description ?? '',
+          address: item.address ?? '',
+          city: item.city ?? '',
+          state: item.state ?? '',
+          zip: item.zip ?? '',
+          company_id: item.company_id ?? '',
+          organization: item.organization?.name ?? '',
+          active: item.active ?? false,
+        }))
+        setListData(rows ?? []);
       } else if (type === 'badge_type' || type === 'badge_types') {
         const res = await getBadgeType(id as string);
         const rows = res?.collection?.map((item: any) => ({
@@ -276,6 +290,7 @@ const Honeywell = ({ id }: { id: string }) => {
           description: item.description ?? '',
           badge_type_id: item.badge_type_id ?? '',
           visitor_type_id: item.visitor_type_id ?? '',
+          visitor_type: item.visitor_type?.name ?? '',
           honeywell_id: item.honeywell_id ?? '',
           // visitor_type: item.visitor_type.name,
           active: item.active ?? false,
@@ -288,6 +303,7 @@ const Honeywell = ({ id }: { id: string }) => {
           clearcode_id: item.clearcode_id ?? '',
           description: item.description ?? '',
           honeywell_id: item.honeywell_id ?? '',
+          access_control: item.access_control?.name ?? '',
           active: item.active ?? false,
         }))
         setListData(rows ?? []);
@@ -323,6 +339,9 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [selectedType, editingRow]);
 
   const handleCloseDialog = () => {
+    console.log("close");
+    setEditDialogType(null);
+
     setIsBatchEdit(false);
     setEnabled({
       name: true,
@@ -330,9 +349,6 @@ const Honeywell = ({ id }: { id: string }) => {
       visitor_type_id: true,
       access_control_id: true,
     });
-    setEditDialogType(null);
-    setEditingRow(null);
-    setOpenFormType(null);
   };
 
   const headerMap: Record<string, string> = {
@@ -422,7 +438,7 @@ const Honeywell = ({ id }: { id: string }) => {
       setBadgeTypeForm({
         // editable
         name: detailData.name ?? '',
-        visitor_type_id: detailData.visitor_type_id ?? '',
+        visitor_type_id: detailData.visitor_type?.id ?? detailData.visitor_type_id ?? '',
         // readonly (opsional)
         description: detailData.description ?? '',
         badge_type_id: detailData.badge_type_id ?? '',
@@ -434,7 +450,11 @@ const Honeywell = ({ id }: { id: string }) => {
       setClearCodeForm({
         // editable
         name: detailData.name ?? '',
-        access_control_id: detailData.access_control_id ?? '',
+        // access_control_id: detailData.access_control_id ?? '',
+        access_control_id:
+          detailData.access_control?.id ??
+          detailData.access_control_id ??
+          '',
 
         description: detailData.description ?? '',
         clearcode_id: detailData.clearcode_id ?? '',
@@ -502,10 +522,11 @@ const Honeywell = ({ id }: { id: string }) => {
               label: v.name ?? v.description ?? String(v.id),
             })) || [];
 
-          setAccessControlOptions(items);
+
+          setAccessControlOptions(items ?? []);
+
           setOrgOptions([]);
         } else {
-          // Dialog lain (atau ditutup)
           setOrgOptions([]);
           setVisitorTypeOptions([]);
         }
@@ -547,26 +568,28 @@ const Honeywell = ({ id }: { id: string }) => {
           return;
         }
 
-        // Kirim dua field (trim) — kosong tidak ikut dikirim agar tidak mengosongkan server
-        const payload = omitEmpty({
-          name: companyForm.name?.trim(),
+        // const payload = omitEmpty({
+        //   name: companyForm.name?.trim(),
+        //   organization_id: companyForm.organization_id
+        //     ? String(companyForm.organization_id).trim()
+        //     : undefined,
+        // });
+        const payload: any = {
+          name: companyForm.name?.trim() || null,
           organization_id: companyForm.organization_id
             ? String(companyForm.organization_id).trim()
-            : undefined,
-        });
-
+            : null,
+        };
         await updateCompany(companyId, payload);
-
+        await fetchListByType(selectedType);
         setListData((prev) =>
           prev.map((it) => (String(it.id) === companyId ? { ...it, ...payload } : it)),
         );
 
-        // setSyncMsg({ open: true, text: 'Company updated successfully', severity: 'success' });
         showSwal('success', 'Company updated successfully');
         setTimeout(() => {
           handleCloseDialog();
         }, 600);
-        return;
         return;
       }
 
@@ -583,43 +606,27 @@ const Honeywell = ({ id }: { id: string }) => {
       });
 
       if (!Object.keys(payload).length) {
-        // setSyncMsg({
-        //   open: true,
-        //   text: 'Nyalakan minimal satu toggle (Name/Organization) untuk disimpan.',
-        //   severity: 'error',
-        // });
         showSwal('error', 'Turn on at least one toggle (Name/Organization) to save.');
         return;
       }
 
       const ids = selectedRows.map((r) => String(r.id));
       await Promise.all(ids.map((id) => updateCompany(id, payload)));
+      await fetchListByType(selectedType);
 
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      // setSyncMsg({
-      //   open: true,
-      //   text: `Updated ${ids.length} companies.`,
-      //   severity: 'success',
-      // });
       showSwal('success', `Updated ${ids.length} companies.`);
       setTimeout(() => {
         handleCloseDialog();
       }, 600);
       return;
     } catch (err: any) {
-      // setSyncMsg({
-      //   open: true,
-      //   text: err?.response?.data?.msg || 'Failed to update company',
-      //   severity: 'error',
-      // });
       showSwal('error', err?.response?.data?.msg || 'Failed to update company');
     } finally {
-      setTimeout(() => {
-        setSaving(false);
-      }, 800);
+      setSaving(false);
     }
   };
 
@@ -647,12 +654,10 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData((prev) =>
           prev.map((it) => (String(it.id) === btId ? { ...it, ...payload } : it)),
         );
-        // setSyncMsg({ open: true, text: 'Badge type updated successfully', severity: 'success' });
+        await fetchListByType(selectedType);
         showSwal('success', 'Badge type updated successfully');
 
-        setTimeout(() => {
-          handleCloseDialog();
-        }, 600);
+        handleCloseDialog();
         return;
       }
 
@@ -674,20 +679,17 @@ const Honeywell = ({ id }: { id: string }) => {
 
       const ids = selectedRows.map((r) => String(r.id));
       await Promise.all(ids.map((id) => updateBadgeType(id, payload)));
+      await fetchListByType(selectedType);
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
       showSwal('success', `Updated ${ids.length} badge types.`);
-      setTimeout(() => {
-        handleCloseDialog();
-      }, 600);
-    } catch (err) {
-      showSwal('error', 'Failed to update badge type');
+      handleCloseDialog();
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to update badge type');
     } finally {
-      setTimeout(() => {
-        setSaving(false);
-      }, 800);
+      setSaving(false);
     }
   };
 
@@ -715,6 +717,7 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData((prev) =>
           prev.map((it) => (String(it.id) === ccId ? { ...it, ...payload } : it)),
         );
+        await fetchListByType(selectedType);
         // setSyncMsg({ open: true, text: 'Clear code updated successfully', severity: 'success' });
         showSwal('success', 'Clear code updated successfully');
         setTimeout(() => {
@@ -744,18 +747,17 @@ const Honeywell = ({ id }: { id: string }) => {
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
+      await fetchListByType(selectedType);
       // setSyncMsg({ open: true, text: `Updated ${ids.length} clear codes.`, severity: 'success' });
       showSwal('success', `Updated ${ids.length} clear codes.`);
-      setTimeout(() => {
-        handleCloseDialog();
-      }, 600);
+      handleCloseDialog();
       return;
     } catch (err) {
       console.error('Save clear code error:', err);
       // setSyncMsg({ open: true, text: 'Failed to update clear code', severity: 'error' });
       showSwal('error', 'Failed to update clear code');
     } finally {
-      setTimeout(() => setSaving(false), 800);
+      setSaving(false);
     }
   };
 
@@ -882,8 +884,11 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   const handleCheckConnection = async () => {
+    setCheckingConnection(true);
+
     try {
       const res = await checkConnection(id);
+
       if (res.status === 'success') {
         showSwal('success', res.msg || 'Connected');
       } else {
@@ -891,9 +896,10 @@ const Honeywell = ({ id }: { id: string }) => {
       }
     } catch (e: any) {
       showSwal('error', e?.response?.data?.msg || 'Failed to check connection');
+    } finally {
+      setCheckingConnection(false);
     }
   };
-
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
 
   const handleSelectAll = (checked: boolean) => {
@@ -1006,484 +1012,70 @@ const Honeywell = ({ id }: { id: string }) => {
         onSubmit={handleConfirmImportBadge}
       />
       {/* Edit Companies */}
-      <Dialog
-        open={editDialogType === 'Companies'}
-        fullWidth
-        maxWidth="md"
+      <EditCompanyDialog
+        open={editDialogType === "Companies"}
+        saving={saving}
+        isBatchEdit={isBatchEdit}
+        companyForm={companyForm}
+        setCompanyForm={setCompanyForm}
+        enabled={enabled}
+        setEnabled={setEnabled}
+        orgOptions={orgOptions}
         onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Company
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!companyForm ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                py: 4,
-              }}
-            >
-              <CircularProgress size={36} thickness={4} />
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>
-                    Name
-                  </CustomFormLabel>
-
-                  {/* Toggle hanya muncul saat batch */}
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.name}
-                          onChange={(e) => setEnabled((p) => ({ ...p, name: e.target.checked }))}
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <CustomTextField
-                  id="name"
-                  value={companyForm?.name ?? ''}
-                  onChange={(e: any) =>
-                    setCompanyForm((p: any) => ({ ...p, name: e.target.value }))
-                  }
-                  fullWidth
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.name || saving : saving}
-                />
-              </Box>
-
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="organization_id" sx={{ mt: 0 }}>
-                    Organization
-                  </CustomFormLabel>
-
-                  {/* Toggle hanya muncul saat batch */}
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.organization_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, organization_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={
-                    orgOptions.find((o) => o.id === String(companyForm?.organization_id ?? '')) ||
-                    null
-                  }
-                  onChange={(_, newVal) =>
-                    setCompanyForm((p: any) => ({ ...p, organization_id: newVal ? newVal.id : '' }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.organization_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.organization_id || saving : saving}
-                />
-              </Box>
-
-              {/* === Readonly info (opsional) === */}
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
-                <CustomTextField value={companyForm.address} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>City</CustomFormLabel>
-                <CustomTextField value={companyForm.city} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>State</CustomFormLabel>
-                <CustomTextField value={companyForm.state} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>ZIP</CustomFormLabel>
-                <CustomTextField value={companyForm.zip} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Description</CustomFormLabel>
-                <CustomTextField value={companyForm.description} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Company ID</CustomFormLabel>
-                <CustomTextField value={companyForm.company_id} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Honeywell ID</CustomFormLabel>
-                <CustomTextField value={companyForm.honeywell_id} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!companyForm || saving}
-            onClick={handleSaveCompany}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSubmit={handleSaveCompany}
+        onExited={() => {
+          setCompanyForm(null);
+          setBadgeTypeForm(null);
+          setClearCodeForm(null);
+          setBadgeStatusForm(null);
+          setDetailData(null);
+          setEditingRow(null);
+        }}
+      />
 
       {/* Edit Badge Type */}
-      <Dialog
-        open={editDialogType === 'Badge Type'}
-        fullWidth
-        maxWidth="md"
+      <EditBadgeTypeDialog
+        open={editDialogType === "Badge Type"}
+        saving={saving}
+        isBatchEdit={isBatchEdit}
+        badgeTypeForm={badgeTypeForm}
+        setBadgeTypeForm={setBadgeTypeForm}
+        enabled={enabled}
+        setEnabled={setEnabled}
+        visitorTypeOptions={visitorTypeOptions}
         onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Badge Type
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!badgeTypeForm ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                py: 4,
-              }}
-            >
-              <CircularProgress size={36} thickness={4} />
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {/* === Editable === */}
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="bt_name" sx={{ mt: 0 }}>
-                    Name
-                  </CustomFormLabel>
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.name}
-                          onChange={(e) => setEnabled((p) => ({ ...p, name: e.target.checked }))}
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <CustomTextField
-                  id="bt_name"
-                  value={badgeTypeForm.name}
-                  onChange={(e: any) =>
-                    setBadgeTypeForm((p: any) => ({ ...p, name: e.target.value }))
-                  }
-                  fullWidth
-                  disabled={isBatchEdit ? !enabled.name || saving : saving}
-                />
-              </Box>
-
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="visitor_type_id" sx={{ mt: 0 }}>
-                    Visitor Type
-                  </CustomFormLabel>
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.visitor_type_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, visitor_type_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={visitorTypeOptions}
-                  value={
-                    visitorTypeOptions.find(
-                      (o) => o.id === String(badgeTypeForm.visitor_type_id ?? ''),
-                    ) || null
-                  }
-                  onChange={(_, newVal) =>
-                    setBadgeTypeForm((p: any) => ({
-                      ...p,
-                      visitor_type_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.visitor_type_id || saving : saving}
-                    />
-                  )}
-                />
-              </Box>
-
-              {/* === Readonly (opsional ditampilkan) === */}
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Description</CustomFormLabel>
-                <CustomTextField value={badgeTypeForm.description} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Badge Type ID</CustomFormLabel>
-                <CustomTextField value={badgeTypeForm.badge_type_id} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Honeywell ID</CustomFormLabel>
-                <CustomTextField value={badgeTypeForm.honeywell_id} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!badgeTypeForm || saving}
-            onClick={handleSaveBadgeType}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSubmit={handleSaveBadgeType}
+        onExited={() => {
+          setCompanyForm(null);
+          setBadgeTypeForm(null);
+          setClearCodeForm(null);
+          setBadgeStatusForm(null);
+          setDetailData(null);
+          setEditingRow(null);
+        }}
+      />
 
       {/* Edit Clear Codes */}
-      <Dialog
-        open={editDialogType === 'Clearcodes'}
-        fullWidth
-        maxWidth="md"
+      <EditClearCodeDialog
+        open={editDialogType === "Clearcodes"}
+        saving={saving}
+        isBatchEdit={isBatchEdit}
+        clearCodeForm={clearCodeForm}
+        setClearCodeForm={setClearCodeForm}
+        enabled={enabled}
+        setEnabled={setEnabled}
+        accessControlOptions={accessControlOptions}
         onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Clear Codes
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!clearCodeForm ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                py: 4,
-              }}
-            >
-              <CircularProgress size={36} thickness={4} />
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {/* === Editable === */}
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="cc_name" sx={{ mt: 0 }}>
-                    Name
-                  </CustomFormLabel>
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.name}
-                          onChange={(e) => setEnabled((p) => ({ ...p, name: e.target.checked }))}
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <CustomTextField
-                  id="cc_name"
-                  value={clearCodeForm.name}
-                  onChange={(e: any) =>
-                    setClearCodeForm((p: any) => ({ ...p, name: e.target.value }))
-                  }
-                  fullWidth
-                  disabled={isBatchEdit ? !enabled.name || saving : saving}
-                />
-              </Box>
-
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="access_control_id" sx={{ mt: 0 }}>
-                    Access Control
-                  </CustomFormLabel>
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.access_control_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, access_control_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  // disablePortal
-                  options={accessControlOptions}
-                  value={
-                    accessControlOptions.find(
-                      (o) => o.id === String(clearCodeForm.access_control_id ?? ''),
-                    ) || null
-                  }
-                  onChange={(_, newVal) =>
-                    setClearCodeForm((p: any) => ({
-                      ...p,
-                      access_control_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.access_control_id || saving : saving}
-                    />
-                  )}
-                />
-              </Box>
-
-              {/* === Readonly (opsional) === */}
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Description</CustomFormLabel>
-                <CustomTextField value={clearCodeForm.description} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Clearcode ID</CustomFormLabel>
-                <CustomTextField value={clearCodeForm.clearcode_id} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Honeywell ID</CustomFormLabel>
-                <CustomTextField value={clearCodeForm.honeywell_id} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!clearCodeForm || saving}
-            onClick={handleSaveClearCode}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSubmit={handleSaveClearCode}
+        onExited={() => {
+          setCompanyForm(null);
+          setBadgeTypeForm(null);
+          setClearCodeForm(null);
+          setBadgeStatusForm(null);
+          setDetailData(null);
+          setEditingRow(null);
+        }}
+      />
 
       <SyncBadgeDialog
         open={openSyncDialog}
@@ -1513,18 +1105,8 @@ const Honeywell = ({ id }: { id: string }) => {
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          open={saving}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
-      <GlobalBackdropLoading open={syncing} />
+
+      <GlobalBackdropLoading open={syncing || saving || checkingConnection} />
     </>
   );
 };
