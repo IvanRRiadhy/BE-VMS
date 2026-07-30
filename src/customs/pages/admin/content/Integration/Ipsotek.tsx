@@ -32,6 +32,7 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useTranslation } from 'react-i18next';
 const Ipsotek = ({ id: string }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
@@ -39,7 +40,7 @@ const Ipsotek = ({ id: string }: any) => {
   const [openDialogCategory, setOpenDialogCategory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-
+  const { t } = useTranslation();
   const [formCategory, setFormCategory] = useState({
     category: '',
     visitor_type_id: '',
@@ -107,18 +108,17 @@ const Ipsotek = ({ id: string }: any) => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete('Are you sure you want to delete this category?');
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'category' }));
 
     if (confirmed) {
       setLoading(true);
       try {
         await deleteIpsotekCategory(id);
-        showSwal('success', 'Successfully deleted integration!');
+        showSwal('success', t('deleteSuccess', { name: 'category' }));
         await fetchCategories();
         setOpenDialogCategory(false);
-      } catch (error) {
-        console.error(error);
-        showSwal('error', 'Failed to delete integration.');
+      } catch (error: any) {
+        showSwal('error', error?.response?.data?.msg || 'Failed to delete integration.');
       } finally {
         setLoading(false);
       }
@@ -283,7 +283,7 @@ const Ipsotek = ({ id: string }: any) => {
             Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleOnSubmit} disabled={loading}>
-            {editingId ? 'Submit' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>

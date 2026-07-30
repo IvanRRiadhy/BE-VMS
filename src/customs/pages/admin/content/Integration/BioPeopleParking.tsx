@@ -787,7 +787,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                   isSelectedType={selectedType !== 'badge_status'}
                   isDataVerified={true}
                   isHaveActionOnlyEdit={true}
-                  isHaveSearch={true}
+                  isHaveSearch={false}
                   isHaveFilter={false}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
@@ -823,6 +823,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         fullWidth
         maxWidth="md"
         onClose={handleCloseDialog}
+        transitionDuration={0}
       >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -943,13 +944,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             disabled={!organizationForm || saving}
             onClick={handleSaveVisitorType}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Block */}
-      <Dialog open={editDialogType === 'Block'} fullWidth maxWidth="md" onClose={handleCloseDialog}>
+      <Dialog open={editDialogType === 'Block'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -963,8 +964,8 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
+
+        <DialogContent sx={{ pt: 2 }} dividers>
           {!memberForm ? (
             <Box sx={{ py: 2 }}>Loading…</Box>
           ) : (
@@ -1017,13 +1018,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             disabled={!memberForm || saving}
             onClick={handleSaveBlock}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Area */}
-      <Dialog open={editDialogType === 'Area'} fullWidth maxWidth="md" onClose={handleCloseDialog}>
+      <Dialog open={editDialogType === 'Area'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -1037,8 +1038,8 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
+
+        <DialogContent sx={{ pt: 2 }} dividers>
           {!districtForm ? (
             <Box sx={{ py: 2 }}>Loading…</Box>
           ) : (
@@ -1123,13 +1124,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             disabled={!districtForm || saving}
             onClick={handleSaveArea}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Slot */}
-      <Dialog open={editDialogType === 'Slot'} fullWidth maxWidth="md" onClose={handleCloseDialog}>
+      <Dialog open={editDialogType === 'Slot'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -1143,8 +1144,8 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
+
+        <DialogContent sx={{ pt: 2 }} dividers>
           {!departmentForm ? (
             <Box sx={{ py: 2 }}>Loading…</Box>
           ) : (
@@ -1198,7 +1199,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             disabled={!departmentForm || saving}
             onClick={handleSaveSlot}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
@@ -1209,6 +1210,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         fullWidth
         maxWidth="md"
         onClose={handleCloseDialog}
+        transitionDuration={0}
       >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -1223,10 +1225,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
+
+        <DialogContent sx={{ pt: 2 }} dividers>
           {!cardForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box sx={{ py: 2 }}><CircularProgress /></Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {/* Vehicle Type */}
@@ -1309,7 +1311,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             disabled={!cardForm || saving}
             onClick={handleSaveVehicle}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
@@ -1333,18 +1335,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         </Snackbar>
       </Portal>
 
-      <Portal>
-        <Backdrop
-          open={saving}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1), // ⬅️ tepat di bawah snackbar
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
-      <GlobalBackdropLoading open={syncing} />
+      <GlobalBackdropLoading open={syncing || saving} />
     </>
   );
 };

@@ -125,16 +125,16 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Document' }));
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'document' }));
 
     if (!confirm) return;
     try {
       await deleteDocument.mutateAsync({
         id,
       });
-      showSwal('success', t('deleteSuccess', { name: 'Document' }));
+      showSwal('success', t('deleteSuccess', { name: 'document' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'Document' }));
+      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'document' }));
     }
   };
 

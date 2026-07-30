@@ -229,6 +229,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
             resAllSite.collection.find(
               (site: any) => String(site.id).toUpperCase() === String(item.site_id).toUpperCase(),
             )?.name ?? item.site_id,
+          visitor_type: visitoTypeOptions.find(
+            (site: any) => String(site.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
+          )?.label ?? item.visitor_type_id,
           active: item.active ? 'Active' : 'Inactive',
         }));
         setListData(rows ?? []);
@@ -491,6 +494,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         fullWidth
         maxWidth="md"
         onClose={handleCloseDialog}
+        transitionDuration={0}
       >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -508,7 +512,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!cardAccessForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box sx={{ py: 2 }}><CircularProgress /></Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
@@ -604,7 +608,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                 <Autocomplete
                   fullWidth
                   autoHighlight
-                  disablePortal
+                  // disablePortal
                   options={visitoTypeOptions}
                   value={
                     visitoTypeOptions.find(
@@ -669,7 +673,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
             disabled={!cardAccessForm || saving}
             onClick={handleSaveCardAccess}
           >
-            {saving ? 'Saving…' : 'Submit'}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>
@@ -691,18 +695,8 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          open={saving}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
-          }}
-        >
-          <CircularProgress />
-        </Backdrop>
-      </Portal>
-      <GlobalBackdropLoading open={syncing} />
+
+      <GlobalBackdropLoading open={syncing || saving} />
     </>
   );
 };
