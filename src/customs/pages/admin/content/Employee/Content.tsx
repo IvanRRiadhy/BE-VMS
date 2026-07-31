@@ -37,6 +37,8 @@ import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination'
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import { BASE_URL } from 'src/customs/api/interceptor';
+import { importEmployeeBatch } from 'src/customs/api/employee';
 
 type EmployeesTableRow = {
   id: string;
@@ -465,6 +467,27 @@ const Content = () => {
   }, []);
 
 
+  const handleImportExcel = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      await importEmployeeBatch(file);
+      showSwal('success', 'Successfully imported employees');
+    } catch (err: any) {
+      showSwal(
+        'error',
+        err?.msg ||
+        err?.response?.data?.msg ||
+        'Failed to import employees',
+      );
+    } finally {
+      e.target.value = '';
+    }
+  };
+ 
 
   return (
     <PageContainer
@@ -490,6 +513,8 @@ const Content = () => {
                 isHaveImage={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
+                isHaveImportExcel={true}
+                onImportExcel={handleImportExcel}
                 // isListBlacklist={true}
                 isBlacklistPage={true}
                 onNavigatePage={() => {

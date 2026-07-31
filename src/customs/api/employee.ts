@@ -116,3 +116,31 @@ export const createApproval = async (
     throw error;
   }
 };
+
+
+
+export const importEmployeeBatch = async (
+  file: File,
+): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('employee', file);
+
+    const response = await axiosInstance.post(
+      '/employee/bulk',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};

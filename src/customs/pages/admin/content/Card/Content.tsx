@@ -345,9 +345,11 @@ const Content = () => {
         return;
       }
 
-      showSuccessAlert('Success', 'Visitor Card imported successfully');
+      // showSuccessAlert('Success', 'Visitor Card imported successfully');
+      showSwal('success', 'Visitor Card imported successfully');
     } catch (err: any) {
-      showErrorAlert('Error', err?.message ?? 'Failed to import');
+      // showErrorAlert('Error', err?.message ?? 'Failed to import');
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to import card');
     } finally {
       e.target.value = '';
     }
