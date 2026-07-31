@@ -41,6 +41,10 @@ import {
   syncHoneywellBadge,
   addBadgeEmployee,
   updateBadgeStatus,
+  syncHoneywellBadgeIntegration,
+  getLogdevsById,
+  getLogdevs,
+  updateLogdevs,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -62,6 +66,7 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import EditCompanyDialog from './components/Honeywell/EditCompaniesDialog';
 import EditBadgeTypeDialog from './components/Honeywell/EditBadgeTypeDialog';
 import EditClearCodeDialog from './components/Honeywell/EditClearCodeDialog';
+import EditLogDevsDialog from './components/Honeywell/EditLogDevsDialog';
 
 const Honeywell = ({ id }: { id: string }) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -69,10 +74,9 @@ const Honeywell = ({ id }: { id: string }) => {
   const [checkingConnection, setCheckingConnection] = useState(false);
   const [selectedType, setSelectedType] = useState('companies');
   const [openFormType, setOpenFormType] = useState<
-    'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | null
+    'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | 'Logdevs' | null
   >(null);
   const [editingRow, setEditingRow] = useState<Item | null>(null);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [listData, setListData] = useState<any[]>([]);
   const [detailData, setDetailData] = useState<any | null>(null);
@@ -86,6 +90,7 @@ const Honeywell = ({ id }: { id: string }) => {
     Array<{ id: string; label: string }>
   >([]);
   const [clearCodeForm, setClearCodeForm] = useState<any>(null);
+  const [logdevsForm, setLogdevsForm] = useState<any>(null);
   const [accessControlOptions, setAccessControlOptions] = useState<
     Array<{ id: string; label: string }>
   >([]);
@@ -101,6 +106,7 @@ const Honeywell = ({ id }: { id: string }) => {
     badge_type: 0,
     clear_codes: 0,
     badge_status: 0,
+    logdevs: 0,
   });
 
   const [syncing, setSyncing] = useState(false);
@@ -123,6 +129,36 @@ const Honeywell = ({ id }: { id: string }) => {
     try {
       setSyncing(true);
       const res = await syncHoneywellIntegration(id as string);
+      setSyncing(false);
+
+      if (res.status !== 'success') {
+        showSwal('error', res.msg || 'Synchronization failed.');
+
+        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
+        }
+
+        return;
+      }
+
+      showSwal('success', res.msg || 'Synchronization successful.');
+      loadTotals().catch((e) => console.error('loadTotals error:', e));
+      fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
+    } catch (e: any) {
+      setSyncing(false);
+      showSwal('error', e?.message || 'Synchronization failed. Please try again later.');
+    }
+  };
+
+  const handleSyncBadgeIntegration = async () => {
+    if (!id) {
+      showSwal('error', 'Session expired / Invalid ID.');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const res = await syncHoneywellBadgeIntegration(id as string);
       setSyncing(false);
 
       if (res.status !== 'success') {
@@ -181,51 +217,57 @@ const Honeywell = ({ id }: { id: string }) => {
   const cards = useMemo(
     () => [
       {
-        title: "Companies",
+        title: 'Companies',
         subTitle: totals.companies.toString(),
         subTitleSetting: totals.companies,
         icon: IconBuilding,
-        color: "none",
-        type: "info",
+        color: 'none',
+        type: 'info',
       },
       {
-        title: "Badge Type",
+        title: 'Badge Type',
         subTitle: totals.badge_type.toString(),
         subTitleSetting: totals.badge_type,
         icon: IconUsersGroup,
-        color: "none",
-        type: "info",
+        color: 'none',
+        type: 'info',
       },
       {
-        title: "Clearcodes",
+        title: 'Clearcodes',
         subTitle: totals.clear_codes.toString(),
         subTitleSetting: totals.clear_codes,
         icon: IconCode,
-        color: "none",
-        type: "info",
+        color: 'none',
+        type: 'info',
       },
       {
-        title: "Badge Status",
+        title: 'Badge Status',
         subTitle: totals.badge_status.toString(),
         subTitleSetting: totals.badge_status,
         icon: IconAccessPoint,
-        color: "none",
-        type: "info",
+        color: 'none',
+        type: 'info',
       },
       {
-        title: "Sync Data",
+        title: 'Sync Data',
         icon: IconRefresh,
         onIconClick: handleSyncIntegration,
-        type: "action",
+        type: 'action',
       },
       {
-        title: "Import Badge",
+        title: 'Sync Badge',
+        icon: IconRefresh,
+        onIconClick: handleSyncBadgeIntegration,
+        type: 'action',
+      },
+      {
+        title: 'Import Badge',
         icon: IconRefresh,
         onIconClick: handleSyncBadge,
-        type: "action",
+        type: 'action',
       },
     ],
-    [totals, handleSyncIntegration, handleSyncBadge]
+    [totals, handleSyncIntegration, handleSyncBadge],
   );
 
   const getCount = (res: any) => {
@@ -245,11 +287,12 @@ const Honeywell = ({ id }: { id: string }) => {
   const loadTotals = async () => {
     if (!id) return;
 
-    const [cRes, btRes, ccRes, bsRes] = await Promise.allSettled([
+    const [cRes, btRes, ccRes, bsRes, bRes] = await Promise.allSettled([
       getCompanies(id as string),
       getBadgeType(id as string),
       getClearcodes(id as string),
       getBadgeStatus(id as string),
+      getLogdevs(id as string),
     ]);
 
     setTotals({
@@ -257,6 +300,7 @@ const Honeywell = ({ id }: { id: string }) => {
       badge_type: btRes.status === 'fulfilled' ? getCount(btRes.value) : 0,
       clear_codes: ccRes.status === 'fulfilled' ? getCount(ccRes.value) : 0,
       badge_status: bsRes.status === 'fulfilled' ? getCount(bsRes.value) : 0,
+      logdevs: bRes.status === 'fulfilled' ? getCount(bRes.value) : 0,
     });
   };
 
@@ -281,7 +325,7 @@ const Honeywell = ({ id }: { id: string }) => {
           company_id: item.company_id ?? '',
           organization: item.organization?.name ?? '',
           active: item.active ?? false,
-        }))
+        }));
         setListData(rows ?? []);
       } else if (type === 'badge_type' || type === 'badge_types') {
         const res = await getBadgeType(id as string);
@@ -306,11 +350,22 @@ const Honeywell = ({ id }: { id: string }) => {
           honeywell_id: item.honeywell_id ?? '',
           access_control: item.access_control?.name ?? '',
           active: item.active ?? false,
-        }))
+        }));
         setListData(rows ?? []);
       } else if (type === 'badge_status') {
         const res = await getBadgeStatus(id as string);
         setListData(res.collection ?? []);
+      } else if (type === 'logdevs') {
+        const res = await getLogdevs(id as string);
+        const rows = res?.collection?.map((item: any) => ({
+          id: String(item.id),
+          log_dev_id: item.log_dev_id ?? '',
+          description: item.description ?? '',
+          honeywell_id: item.honeywell_id ?? '',
+          access_control: item.access_control?.name ?? '',
+          active: item.active ?? false,
+        }));
+        setListData(rows ?? []);
       } else {
         setListData([]);
       }
@@ -325,7 +380,7 @@ const Honeywell = ({ id }: { id: string }) => {
   }, [selectedType, id]);
 
   const [editDialogType, setEditDialogType] = useState<
-    'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | null
+    'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | 'Logdevs' | null
   >(null);
 
   useEffect(() => {
@@ -336,13 +391,12 @@ const Honeywell = ({ id }: { id: string }) => {
     else if (selectedType === 'badge_types') type = 'Badge Type';
     else if (selectedType === 'clear_codes') type = 'Clearcodes';
     else if (selectedType === 'badge_status') type = 'Badge Status';
+    else if (selectedType === 'logdevs') type = 'Logdevs';
     setEditDialogType(type);
   }, [selectedType, editingRow]);
 
   const handleCloseDialog = () => {
-    console.log("close");
     setEditDialogType(null);
-
     setIsBatchEdit(false);
     setEnabled({
       name: true,
@@ -357,13 +411,18 @@ const Honeywell = ({ id }: { id: string }) => {
     badge_type: 'Badge Type',
     clear_codes: 'Clearcodes',
     badge_status: 'Badge Status',
+    logdevs: 'Logdevs',
   };
 
-  const TYPE_MAP: Record<string, 'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status'> = {
+  const TYPE_MAP: Record<
+    string,
+    'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | 'Logdevs'
+  > = {
     companies: 'Companies',
     badge_type: 'Badge Type',
     clear_codes: 'Clearcodes',
     badge_status: 'Badge Status',
+    logdevs: 'Logdevs',
   };
 
   useEffect(() => {
@@ -393,16 +452,17 @@ const Honeywell = ({ id }: { id: string }) => {
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'clear_codes') {
         const res = await getClearcodesById(id as string, String(row.id));
-
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'badge_status') {
         const res = await getBadgeStatusById(id as string, String(row.id));
+        setDetailData(res.collection ?? row);
+      } else if (selectedType === 'logdevs') {
+        const res = await getLogdevsById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else {
         setDetailData(row);
       }
     } catch (e) {
-      console.error('Fetch detail error:', e);
       setDetailData(row);
     }
   };
@@ -413,6 +473,7 @@ const Honeywell = ({ id }: { id: string }) => {
       setBadgeTypeForm(null);
       setClearCodeForm(null);
       setBadgeStatusForm(null);
+      setLogdevsForm(null);
       return;
     }
 
@@ -452,10 +513,7 @@ const Honeywell = ({ id }: { id: string }) => {
         // editable
         name: detailData.name ?? '',
         // access_control_id: detailData.access_control_id ?? '',
-        access_control_id:
-          detailData.access_control?.id ??
-          detailData.access_control_id ??
-          '',
+        access_control_id: detailData.access_control?.id ?? detailData.access_control_id ?? '',
 
         description: detailData.description ?? '',
         clearcode_id: detailData.clearcode_id ?? '',
@@ -471,16 +529,26 @@ const Honeywell = ({ id }: { id: string }) => {
         honeywell_id: detailData.honeywell_id ?? '',
         id: detailData.id ?? '',
       });
+    } else if (editDialogType === 'Logdevs') {
+      setLogdevsForm({
+        // editable
+        name: detailData.name ?? '',
+        description: detailData.description ?? '',
+        logdev_id: detailData.logdev_id ?? '',
+        honeywell_id: detailData.honeywell_id ?? '',
+        active: detailData.active,
+        id: detailData.id ?? '',
+      });
     } else {
       setCompanyForm(null);
       setBadgeTypeForm(null);
       setClearCodeForm(null);
+      setBadgeStatusForm(null);
+      setLogdevsForm(null);
     }
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-
-
     let cancelled = false;
 
     const loadOptions = async () => {
@@ -512,7 +580,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
           setVisitorTypeOptions(items);
           setOrgOptions([]);
-        } else if (editDialogType === 'Clearcodes') {
+        } else if (editDialogType === 'Clearcodes' || editDialogType === 'Logdevs') {
           // Load visitor types
           const res = await getAllAccessControl();
           if (cancelled) return;
@@ -522,7 +590,6 @@ const Honeywell = ({ id }: { id: string }) => {
               id: String(v.id),
               label: v.name ?? v.description ?? String(v.id),
             })) || [];
-
 
           setAccessControlOptions(items ?? []);
 
@@ -548,7 +615,7 @@ const Honeywell = ({ id }: { id: string }) => {
     };
 
     loadOptions();
-    return () => { };
+    return () => {};
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -599,10 +666,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: companyForm.name?.trim() } : {}),
         ...(enabled.organization_id
           ? {
-            organization_id: companyForm.organization_id
-              ? String(companyForm.organization_id).trim()
-              : undefined,
-          }
+              organization_id: companyForm.organization_id
+                ? String(companyForm.organization_id).trim()
+                : undefined,
+            }
           : {}),
       });
 
@@ -667,10 +734,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: badgeTypeForm.name?.trim() } : {}),
         ...(enabled.visitor_type_id
           ? {
-            visitor_type_id: badgeTypeForm.visitor_type_id
-              ? String(badgeTypeForm.visitor_type_id).trim()
-              : undefined,
-          }
+              visitor_type_id: badgeTypeForm.visitor_type_id
+                ? String(badgeTypeForm.visitor_type_id).trim()
+                : undefined,
+            }
           : {}),
       });
 
@@ -731,10 +798,10 @@ const Honeywell = ({ id }: { id: string }) => {
         ...(enabled.name ? { name: clearCodeForm.name?.trim() } : {}),
         ...(enabled.access_control_id
           ? {
-            access_control_id: clearCodeForm.access_control_id
-              ? String(clearCodeForm.access_control_id).trim()
-              : undefined,
-          }
+              access_control_id: clearCodeForm.access_control_id
+                ? String(clearCodeForm.access_control_id).trim()
+                : undefined,
+            }
           : {}),
       });
 
@@ -762,8 +829,71 @@ const Honeywell = ({ id }: { id: string }) => {
     }
   };
 
-  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
+  const handleSaveLogDevs = async () => {
+    if (!logdevsForm) return;
+    try {
+      setSaving(true);
 
+      // === SINGLE EDIT ===
+      if (!isBatchEdit) {
+        const ccId = String(logdevsForm.id ?? '');
+        if (!ccId) {
+          console.error('ID is missing');
+          return;
+        }
+
+        const payload: any = omitEmpty({
+          name: logdevsForm.name?.trim(),
+          access_control_id: logdevsForm.access_control_id
+            ? String(logdevsForm.access_control_id).trim()
+            : undefined,
+        });
+
+        await updateLogdevs(ccId, payload);
+        setListData((prev) =>
+          prev.map((it) => (String(it.id) === ccId ? { ...it, ...payload } : it)),
+        );
+        await fetchListByType(selectedType);
+        showSwal('success', 'Log devs updated successfully');
+        setTimeout(() => {
+          handleCloseDialog();
+        }, 600);
+        return;
+      }
+
+      const payload: any = omitEmpty({
+        ...(enabled.name ? { name: logdevsForm.name?.trim() } : {}),
+        ...(enabled.access_control_id
+          ? {
+              access_control_id: logdevsForm.access_control_id
+                ? String(logdevsForm.access_control_id).trim()
+                : undefined,
+            }
+          : {}),
+      });
+
+      if (!Object.keys(payload).length) {
+        showSwal('error', 'Turn on at least one toggle (Name/Access Control) to save.');
+        return;
+      }
+
+      const ids = selectedRows.map((r) => String(r.id));
+      await Promise.all(ids.map((id) => updateLogdevs(id, payload)));
+      setListData((prev) =>
+        prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
+      );
+      await fetchListByType(selectedType);
+      showSwal('success', `Updated ${ids.length} logdevs.`);
+      handleCloseDialog();
+      return;
+    } catch (err: any) {
+      showSwal('error', err?.message || 'Failed to update clear code');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
     const prev = listData;
 
     setListData((p) =>
@@ -772,8 +902,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
     try {
       const payload: any = { [field]: value };
-      if (selectedType === 'companies')
-        await updateCompany(String(rowId), payload);
+      if (selectedType === 'companies') await updateCompany(String(rowId), payload);
       else if (selectedType === 'badge_type' || selectedType === 'badge_types')
         await updateBadgeType(String(rowId), payload as any);
       else if (selectedType === 'clear_codes')
@@ -782,10 +911,7 @@ const Honeywell = ({ id }: { id: string }) => {
         await updateBadgeStatus(String(rowId), payload as any);
       }
 
-      showSwal(
-        'success',
-        `Successfully updated ${headerMap[selectedType] ?? 'Data'} status.`,
-      );
+      showSwal('success', `Successfully updated ${headerMap[selectedType] ?? 'Data'}.`);
     } catch (e: any) {
       setListData(prev);
       showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
@@ -949,7 +1075,7 @@ const Honeywell = ({ id }: { id: string }) => {
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 2 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 1.7 }} />
             </Grid>
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
@@ -997,9 +1123,9 @@ const Honeywell = ({ id }: { id: string }) => {
                   onSearchKeywordChange={handleSearchKeywordChange}
                   searchKeyword={searchInput}
                   onSearch={handleSearch}
-                  onFilterByColumn={(column) => {
-                    setSortColumn(column.column);
-                  }}
+                  // onFilterByColumn={(column) => {
+                  //   setSortColumn(column.column);
+                  // }}
                 />
               </Grid>
             </Grid>
@@ -1014,7 +1140,7 @@ const Honeywell = ({ id }: { id: string }) => {
       />
       {/* Edit Companies */}
       <EditCompanyDialog
-        open={editDialogType === "Companies"}
+        open={editDialogType === 'Companies'}
         saving={saving}
         isBatchEdit={isBatchEdit}
         companyForm={companyForm}
@@ -1036,7 +1162,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
       {/* Edit Badge Type */}
       <EditBadgeTypeDialog
-        open={editDialogType === "Badge Type"}
+        open={editDialogType === 'Badge Type'}
         saving={saving}
         isBatchEdit={isBatchEdit}
         badgeTypeForm={badgeTypeForm}
@@ -1058,7 +1184,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
       {/* Edit Clear Codes */}
       <EditClearCodeDialog
-        open={editDialogType === "Clearcodes"}
+        open={editDialogType === 'Clearcodes'}
         saving={saving}
         isBatchEdit={isBatchEdit}
         clearCodeForm={clearCodeForm}
@@ -1074,6 +1200,28 @@ const Honeywell = ({ id }: { id: string }) => {
           setClearCodeForm(null);
           setBadgeStatusForm(null);
           setDetailData(null);
+          setEditingRow(null);
+        }}
+      />
+
+      <EditLogDevsDialog
+        open={editDialogType === 'Logdevs'}
+        saving={saving}
+        isBatchEdit={isBatchEdit}
+        clearCodeForm={logdevsForm}
+        setClearCodeForm={setLogdevsForm}
+        enabled={enabled}
+        setEnabled={setEnabled}
+        accessControlOptions={accessControlOptions}
+        onClose={handleCloseDialog}
+        onSubmit={handleSaveLogDevs}
+        onExited={() => {
+          setCompanyForm(null);
+          setBadgeTypeForm(null);
+          setClearCodeForm(null);
+          setBadgeStatusForm(null);
+          setDetailData(null);
+
           setEditingRow(null);
         }}
       />

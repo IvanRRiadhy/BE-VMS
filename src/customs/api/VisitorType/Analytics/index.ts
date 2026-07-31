@@ -27,9 +27,7 @@ export const getVisitorTypeAnalyticsById = async (id: string, token: string): Pr
 };
 
 // get visitor by id
-export const getVisitorTypeAnalyticsByVisitorId = async (
-  id: string,
-): Promise<any> => {
+export const getVisitorTypeAnalyticsByVisitorId = async (id: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/visitor-type-analytics/visitor-type/${id}`);
     return response.data;
@@ -62,12 +60,20 @@ export const createVisitorTypeAnalyticsBulk = async (data: any): Promise<any> =>
 };
 
 // update
-export const updateVisitorTypeAnalytics = async (
-  id: string,
-  data: any,
-): Promise<any> => {
+export const updateVisitorTypeAnalytics = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put(`/visitor-type-analytics/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
+
+// update bulk
+export const updateVisitorTypeAnalyticsBulk = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/visitor-type-analytics/bulk`, data);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -89,11 +95,9 @@ export const deleteVisitorTypeAnalytics = async (id: string, token: string): Pro
 };
 
 // Delete bulk
-export const deleteVisitorTypeAnalyticsBulk = async (id: string, token: string): Promise<any> => {
+export const deleteVisitorTypeAnalyticsBulk = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.delete(`/visitor-type-analytics/bulk/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.delete(`/visitor-type-analytics/bulk/${id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);

@@ -294,8 +294,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-          ? false
-          : status;
+        ? false
+        : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -2400,9 +2400,7 @@ export const getAvailableIntegration = async (): Promise<any> => {
   }
 };
 
-export const getIntegrationById = async (
-  id: any,
-): Promise<GetIntegrationByIdResponse> => {
+export const getIntegrationById = async (id: any): Promise<GetIntegrationByIdResponse> => {
   try {
     const response = await axiosInstance.get(`/integration/${id}`, {
       headers: { Accept: 'application/json' },
@@ -2442,9 +2440,30 @@ type ApiResponse = {
 
 export const syncHoneywellIntegration = async (integrationId: string): Promise<ApiResponse> => {
   try {
+    const { data } = await axiosInstance.post(`/integration-honeywell/sync/${integrationId}`, {});
+    return data as ApiResponse;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const d = (error.response.data || {}) as Partial<ApiResponse>;
+      return {
+        status: d.status ?? 'fail',
+        status_code: d.status_code ?? error.response.status,
+        title: d.title ?? 'fail',
+        msg: d.msg ?? 'Request failed',
+        collection: d.collection ?? null,
+      };
+    }
+    throw error;
+  }
+};
+
+export const syncHoneywellBadgeIntegration = async (
+  integrationId: string,
+): Promise<ApiResponse> => {
+  try {
     const { data } = await axiosInstance.post(
-      `/integration-honeywell/sync/${integrationId}`,
-      {}, // pakai {} biar nggak trigger edge-case body null
+      `/integration-honeywell/sync/${integrationId}/logdevs`,
+      {},
     );
     return data as ApiResponse;
   } catch (error: any) {
@@ -2675,10 +2694,7 @@ export const getBadgeStatusById = async (
   }
 };
 
-export const updateBadgeStatus = async (
-  id: string,
-  data: any,
-): Promise<any> => {
+export const updateBadgeStatus = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.put(`/integration-honeywell/badge-status/${id}`, data);
     return response.data;
@@ -2727,6 +2743,50 @@ export const updateClearcodes = async (
 ): Promise<UpdateClearcodesResponse> => {
   try {
     const response = await axiosInstance.put(`/integration-honeywell/clearcodes/${id}`, data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// logdevs
+
+export const getLogdevs = async (integrationId: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/integration-honeywell/logdevs/${integrationId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get clearcodes by id
+export const getLogdevsById = async (
+  integrationId: string,
+  id: string,
+): Promise<GetClearCodesResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/logdevs/${integrationId}/${id}`,
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateLogdevs = async (id: string, data: any): Promise<UpdateClearcodesResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-honeywell/logdevs/${id}`, data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {

@@ -32,8 +32,10 @@ import {
 import {
   createVisitorTypeAnalytics,
   createVisitorTypeAnalyticsBulk,
+  deleteVisitorTypeAnalyticsBulk,
   getVisitorTypeAnalyticsByVisitorId,
   updateVisitorTypeAnalytics,
+  updateVisitorTypeAnalyticsBulk,
 } from 'src/customs/api/VisitorType/Analytics';
 import StepComponent from './components/StepComponent';
 import { useVisitorRoles } from 'src/hooks/VisitorRole/useVisitorRole';
@@ -65,7 +67,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [loading, setLoading] = useState(false);
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedAnalytics, setSelectedAnalytics] = useState<any | null>(null);
+  // const [selectedAnalytics, setSelectedAnalytics] = useState<any | null>(null);
+  const [selectedAnalytics, setSelectedAnalytics] = useState<any[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
   const [openModal, setOpenModal] = useState(false);
@@ -143,25 +146,33 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (!edittingId || !formData.can_track_cctv) {
-      setSelectedAnalytics(null);
+      setSelectedAnalytics([]);
       return;
     }
     const fetchVisitorTypeAnalytics = async () => {
       try {
         const res = await getVisitorTypeAnalyticsByVisitorId(edittingId);
 
-        const existing = res?.collection?.[0];
+        const existing = res?.collection ?? [];
 
         if (!existing) {
-          setSelectedAnalytics(null);
+          setSelectedAnalytics([]);
           return;
         }
 
-        setSelectedAnalytics({
-          id: existing.id,
-          integration_id: existing.integration_id,
-          name: existing.integration_name,
-        });
+        setSelectedAnalytics(
+          existing.map((item: any) => ({
+            id: item.integration_id,
+            name: item.integration_name,
+            analytics_id: item.id,
+          })),
+        );
+
+        // setSelectedAnalytics({
+        //   id: existing.id,
+        //   integration_id: existing.integration_id,
+        //   name: existing.integration_name,
+        // });
       } catch (error) {
         // setSelectedAnalytics(null);
       }
@@ -179,18 +190,25 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       sort: index,
     }));
 
-  const buildUpdateAnalyticsPayload = (visitorTypeId: string) =>
-    selectedAnalytics
-      ? [
-        {
-          id: selectedAnalytics.id,
-          integration_id: selectedAnalytics.integration_id,
-          visitor_type_id: visitorTypeId,
-          sort: 0,
-        },
-      ]
-      : [];
+  // const buildUpdateAnalyticsPayload = (visitorTypeId: string) =>
+  //   selectedAnalytics
+  //     ? [
+  //         {
+  //           id: selectedAnalytics.id,
+  //           integration_id: selectedAnalytics.integration_id,
+  //           visitor_type_id: visitorTypeId,
+  //           sort: 0,
+  //         },
+  //       ]
+  //     : [];
 
+  const buildUpdateAnalyticsPayload = (visitorTypeId: string) => ({
+    data: selectedAnalytics.map((item, index) => ({
+      integration_id: item.id,
+      visitor_type_id: visitorTypeId,
+      sort: index,
+    })),
+  });
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +254,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : (matchedField?.multiple_option_fields ?? []),
+              : matchedField?.multiple_option_fields ?? [],
             visitor_form_type: 0,
             document_id: field.document_id ?? null,
           };
@@ -255,7 +273,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : (matchedField?.multiple_option_fields ?? []),
+              : matchedField?.multiple_option_fields ?? [],
             visitor_form_type: 2,
             document_id: field.document_id ?? null,
           };
@@ -320,20 +338,37 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         //   }
         // }
 
-        const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
+        // const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
 
-        for (const payload of analyticsPayloads) {
-          if (payload.id) {
-            await updateVisitorTypeAnalytics(payload.id, payload);
-          } else {
-            await createVisitorTypeAnalytics(payload);
-          }
+        // for (const payload of analyticsPayloads) {
+        //   if (payload.id) {
+        //     await updateVisitorTypeAnalytics(payload.id, payload);
+        //   } else {
+        //     await createVisitorTypeAnalytics(payload);
+        //   }
+        // }
+
+        // if (formData.can_track_cctv && selectedAnalytics.length > 0) {
+        //   const analyticsPayload = buildUpdateAnalyticsPayload(edittingId);
+
+        //   await updateVisitorTypeAnalyticsBulk(analyticsPayload);
+        // }
+
+        await deleteVisitorTypeAnalyticsBulk(edittingId);
+
+        const analyticsPayload = {
+          data: selectedAnalytics.map((item: any, index: number) => ({
+            integration_id: item.id, // atau item.integration_id
+            visitor_type_id: edittingId,
+            sort: index,
+          })),
+        };
+
+        if (formData.can_track_cctv && analyticsPayload.data.length > 0) {
+          await createVisitorTypeAnalyticsBulk(analyticsPayload);
         }
 
-        showSwal(
-          'success',
-          t('updatedSuccess', { name: 'Visitor Type' }),
-        );
+        showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
       } else {
         // const res = await createVisitorType(parseData);
         const res = await createMutation.mutateAsync(parseData);
@@ -345,18 +380,27 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           await createVisitorTypeAccessBulk(accessPayload);
         }
 
-        if (formData.can_track_cctv && selectedAnalytics) {
-          const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
-          // console.log("accessPayloadAnalytics", accessPayloadAnalytics);
-          await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics);
+        // if (formData.can_track_cctv && selectedAnalytics) {
+        //   const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
+        //   // console.log("accessPayloadAnalytics", accessPayloadAnalytics);
+        //   await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics);
+        // }
+        const analyticsPayload = {
+          data: selectedAnalytics.map((item: any, index: number) => ({
+            integration_id: item.id, // atau item.integration_id
+            visitor_type_id: visitorTypeId as string,
+            sort: index,
+          })),
+        };
+
+        if (formData.can_track_cctv && analyticsPayload.data.length > 0) {
+          await createVisitorTypeAnalyticsBulk(analyticsPayload);
         }
         showSwal('success', t('createdSuccess', { name: 'Visitor Type' }));
       }
 
-
       onSuccess?.();
       setLoading(false);
-
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
@@ -570,9 +614,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       prev.map((section, idx) =>
         idx === activeStep - 1
           ? {
-            ...section,
-            [key]: newData,
-          }
+              ...section,
+              [key]: newData,
+            }
           : section,
       ),
     );
@@ -641,15 +685,22 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   //   })),
   // });
 
+  // const buildCreateAnalyticsPayload = (visitorTypeId: string) => ({
+  //   data: [
+  //     {
+  //       integration_id: selectedAnalytics.integration_id,
+  //       visitor_type_id: visitorTypeId,
+  //       sort: 0,
+  //     },
+  //   ],
+  // });
 
   const buildCreateAnalyticsPayload = (visitorTypeId: string) => ({
-    data: [
-      {
-        integration_id: selectedAnalytics.integration_id,
-        visitor_type_id: visitorTypeId,
-        sort: 0,
-      },
-    ],
+    data: selectedAnalytics.map((item, index) => ({
+      integration_id: item.id, // atau item.integration_id sesuai data
+      visitor_type_id: visitorTypeId,
+      sort: index,
+    })),
   });
 
   return (
@@ -780,8 +831,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color: '#fff',
                                   width: 30,
                                   height: 30,
