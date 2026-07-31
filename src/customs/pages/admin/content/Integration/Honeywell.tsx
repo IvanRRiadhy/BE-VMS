@@ -40,6 +40,7 @@ import {
   syncHoneywellIntegration,
   syncHoneywellBadge,
   addBadgeEmployee,
+  updateBadgeStatus,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -778,13 +779,13 @@ const Honeywell = ({ id }: { id: string }) => {
       else if (selectedType === 'clear_codes')
         await updateClearcodes(String(rowId), payload as any);
       else if (selectedType === 'badge_status') {
-        showSwal('error', 'Failed to update badge status');
-        setListData(prev);
-        return;
+        await updateBadgeStatus(String(rowId), payload as any);
       }
 
-      // setSyncMsg({ open: true, text: 'Status diperbarui.', severity: 'success' });
-      showSwal('success', 'Status diperbarui.');
+      showSwal(
+        'success',
+        `Successfully updated ${headerMap[selectedType] ?? 'Data'} status.`,
+      );
     } catch (e: any) {
       setListData(prev);
       showSwal('error', e?.response?.data?.msg || 'Failed to update status.');

@@ -2675,6 +2675,21 @@ export const getBadgeStatusById = async (
   }
 };
 
+export const updateBadgeStatus = async (
+  id: string,
+  data: any,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/integration-honeywell/badge-status/${id}`, data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 // get clearcodes
 export const getClearcodes = async (integrationId: string): Promise<GetClearCodesResponse> => {
   try {
