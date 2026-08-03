@@ -132,6 +132,7 @@ const Content = () => {
                 isHaveAction={false}
                 isHaveSearch={true}
                 isHaveFilter={false}
+                searchPlaceholder='Search blacklist'
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
                 isNoActionTableHead={true}

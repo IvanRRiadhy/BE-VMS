@@ -454,6 +454,7 @@ const Content = () => {
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHavePagination={true}
+                searchPlaceholder='Search staff'
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
                 currentPage={page}

@@ -14,6 +14,7 @@ import {
   IconPrinter,
   IconQrcode,
   IconUser,
+  IconUserPlus,
 } from '@tabler/icons-react';
 import { FC } from 'react';
 import { Skeleton } from '@mui/material';
@@ -148,7 +149,7 @@ const ActionPanelCard: FC<Props> = ({
                     <Button
                       variant="contained"
                       color="primary"
-                      startIcon={<IconClipboard size={25} />}
+                      startIcon={<IconUserPlus size={25} />}
                       onClick={() => setOpenPreRegistration(true)}
                       sx={{
                         textTransform: 'none',
@@ -171,7 +172,7 @@ const ActionPanelCard: FC<Props> = ({
                     <Button
                       variant="contained"
                       color="primary"
-                      startIcon={<IconUser size={25} />}
+                      startIcon={<IconUserPlus size={25} />}
                       onClick={() => setOpenInvitationVisitor(true)}
                       sx={{
                         textTransform: 'none',

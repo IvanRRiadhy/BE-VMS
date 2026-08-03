@@ -117,6 +117,7 @@ const Content = () => {
                 isHaveAction={false}
                 isHaveSearch={true}
                 isHaveImage={true}
+                searchPlaceholder='Search blacklist employee'
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHavePagination={true}

@@ -7,11 +7,13 @@ export const useUpcomingVisitors = ({
     rowsPerPage,
     sortDir,
     selectedPurpose,
+    search,
 }: {
     page: number;
     rowsPerPage: number;
     sortDir: string;
     selectedPurpose?: any;
+    search?: string;
 }) => {
     return useQuery({
         queryKey: [
@@ -20,6 +22,7 @@ export const useUpcomingVisitors = ({
             rowsPerPage,
             sortDir,
             selectedPurpose?.id,
+            search
         ],
         queryFn: async () => {
             const res = await getUpComingVisitors({
@@ -31,6 +34,7 @@ export const useUpcomingVisitors = ({
                 start: page * rowsPerPage,
                 length: rowsPerPage,
                 sortDir,
+                search,
             });
 
 

@@ -335,9 +335,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
+                searchPlaceholder='Search integration'
                 isCopy={true}
                 onCopy={(row) => {
                   handleCopy(row.id);

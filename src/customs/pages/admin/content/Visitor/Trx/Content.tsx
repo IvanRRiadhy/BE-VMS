@@ -724,6 +724,7 @@ const Content = () => {
                 isHaveVisitor={true}
                 isActionVisitor={true}
                 isActionEmployee={true}
+                searchPlaceholder='Search Visitor...'
                 stickyVisitorCount={2}
                 isBlacklistPage={true}
                 onNavigatePage={() => {

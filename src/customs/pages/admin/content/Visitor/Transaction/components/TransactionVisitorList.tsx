@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
-import { IconFilterFilled } from '@tabler/icons-react';
+import { IconFilterFilled, IconSearch } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 interface TransactionVisitorListProps {
@@ -75,10 +75,15 @@ const TransactionVisitorList = ({
         onChange={(e) => setSearchAgenda(e.target.value)}
         sx={{ mb: 2 }}
         InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconSearch fontSize="small" color="#9e9e9e" size={18} />
+            </InputAdornment>
+          ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                <IconFilterFilled />
+                <IconFilterFilled size={18} />
               </IconButton>
             </InputAdornment>
           ),

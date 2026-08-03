@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {  Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
+import { Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -9,7 +9,7 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconBrandMedium } from '@tabler/icons-react';
-import {  showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useVisitorRolePagination } from 'src/hooks/VisitorRole/useVisitorRolePagination';
@@ -93,6 +93,7 @@ const Content = () => {
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
                 defaultRowsPerPage={rowsPerPage}
+                searchPlaceholder='Search visitor role'
                 rowsPerPageOptions={[10, 50, 100]}
                 totalCount={totalRecords}
                 currentPage={page}

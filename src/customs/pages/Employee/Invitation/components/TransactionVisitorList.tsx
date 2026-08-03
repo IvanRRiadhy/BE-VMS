@@ -67,7 +67,7 @@ const TransactionVisitorList = ({
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            <IconSearch color="gray" />
+                            <IconSearch color="gray"  size={18}/>
                         </InputAdornment>
                     ),
                 }}

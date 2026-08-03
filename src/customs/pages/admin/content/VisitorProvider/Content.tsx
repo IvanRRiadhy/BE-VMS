@@ -247,6 +247,7 @@ const Content = () => {
                 }}
                 isHavePagination={true}
                 isHaveFilterDuration={false}
+                searchPlaceholder='Search visitor provider'
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 searchKeyword={search}

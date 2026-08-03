@@ -6,6 +6,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 
 type SearchToolbarProps = {
   value?: string;
+  searchPlaceholder?: string;
   t: (key: string) => string;
   onSearch?: (keyword: string) => void;
   onKeyDown?: any;
@@ -18,6 +19,7 @@ const SearchToolbar = memo(
   ({
     value = '',
     t,
+    searchPlaceholder,
     onSearch,
     onKeyDown,
     onNavigatePage,
@@ -49,6 +51,7 @@ const SearchToolbar = memo(
           size="small"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
+          placeholder={searchPlaceholder}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               submit();

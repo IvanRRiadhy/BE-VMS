@@ -518,6 +518,7 @@ const Content = () => {
                   navigate(`/admin/manage/site-space/${newPath}`);
                 }}
                 setCurrentId={(id: any) => setCurrentId(id)}
+                searchPlaceholder={'Search site space'}
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
                 overflowX={'auto'}

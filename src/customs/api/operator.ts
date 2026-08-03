@@ -371,6 +371,7 @@ export const getUpComingVisitors = async (params?: {
   start?: number;
   length?: number;
   sortDir?: string;
+  search?: string;
 }): Promise<any> => {
   const response = await axiosInstance.get('/operator-invitation/upcoming-visitor', {
     headers: {
@@ -385,6 +386,7 @@ export const getUpComingVisitors = async (params?: {
       start: params?.start,
       length: params?.length,
       'sort_dir': params?.sortDir,
+      'search[value]': params?.search,
     },
   });
 

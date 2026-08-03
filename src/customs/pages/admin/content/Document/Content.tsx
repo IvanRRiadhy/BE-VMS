@@ -206,6 +206,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                searchPlaceholder='Search document'
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

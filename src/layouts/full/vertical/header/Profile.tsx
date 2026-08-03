@@ -14,8 +14,9 @@ import {
   Select,
   MenuItem,
   Divider,
+  Badge,
 } from '@mui/material';
-import { IconMail, IconPower } from '@tabler/icons-react';
+import { IconArrowNarrowDown, IconCaretDown, IconCaretDownFilled, IconChevronDown, IconMail, IconPower } from '@tabler/icons-react';
 // import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
@@ -71,20 +72,52 @@ const Profile = () => {
         color="inherit"
         aria-controls="msgs-menu"
         aria-haspopup="true"
+        onClick={handleClick2}
         sx={{
           ...(Boolean(anchorEl2) && {
             color: 'primary.main',
           }),
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          paddingRight: '0 !important',
         }}
-        onClick={handleClick2}
       >
-        <Avatar
-          src={''}
-          alt="profile"
-          sx={{
-            width: 35,
-            height: 35,
+        <Badge
+          overlap="circular"
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
           }}
+          variant="dot"
+          sx={{
+            '& .MuiBadge-badge': {
+              backgroundColor: '#44b700',
+              color: '#44b700',
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              border: '2px solid white',
+            },
+          }}
+        >
+          <Avatar
+            src=""
+            alt="profile"
+            sx={{
+              width: 35,
+              height: 35,
+            }}
+          />
+        </Badge>
+
+        <IconChevronDown
+        size={14}
+          // sx={{
+          //   fontSize: 18,
+          //   transition: 'transform .2s ease',
+          //   transform: Boolean(anchorEl2) ? 'rotate(180deg)' : 'rotate(0deg)',
+          // }}
         />
       </IconButton>
 

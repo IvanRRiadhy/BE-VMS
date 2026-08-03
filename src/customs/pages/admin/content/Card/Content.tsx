@@ -453,6 +453,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isDataVerified={true}
+                searchPlaceholder='Search card'
                 sortColumns={['name']}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => {

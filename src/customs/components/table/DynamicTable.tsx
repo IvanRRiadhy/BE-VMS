@@ -63,6 +63,7 @@ type DynamicTableProps<
   data: T[];
   selectedRows?: T[];
   searchKeyword?: string | undefined;
+  searchPlaceholder?: string;
   setSelectedRows?: React.Dispatch<React.SetStateAction<T[]>>;
   selectedRef?: React.MutableRefObject<T[]>;
   isHaveGender?: boolean;
@@ -135,6 +136,8 @@ type DynamicTableProps<
   isHaveVip?: boolean;
   isNoActionTableHead?: boolean;
   isHaveBooleanSwitch?: boolean;
+  isHaveViewAll?: boolean;
+  onHaveViewAll?: any;
   isHavePdf?: boolean;
   isHaveCard?: boolean;
   isDataVerified?: boolean;
@@ -220,6 +223,7 @@ function DynamicTableBase<
     selectedRows,
     setSelectedRows,
     searchKeyword,
+    searchPlaceholder,
     isHaveBack,
     onBack,
     isHaveChecked = false,
@@ -238,6 +242,8 @@ function DynamicTableBase<
     isHaveActive,
     onActiveToggle,
     isHaveExportExcel = false,
+    isHaveViewAll = false,
+    onHaveViewAll,
     isHavePrint = false,
     currentPage = 0,
     isHaveExportPdf = false,
@@ -388,7 +394,7 @@ function DynamicTableBase<
     'shorten_url',
     'ticket_id',
     'employee_linked',
-    'is_blacklist'
+    'is_blacklist',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -404,9 +410,9 @@ function DynamicTableBase<
     loading || data.length === 0
       ? fallbackColumns
       : (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
-        keyof T,
-        string
-      >[]);
+          keyof T,
+          string
+        >[]);
 
   const columnss =
     sortColumns && sortColumns.length > 0
@@ -872,7 +878,7 @@ function DynamicTableBase<
                 onClick={() => onBack?.()}
                 sx={{ mb: 1 }}
               >
-                Back
+                {t('back')}
               </Button>
             )}
             {/* <Grid2
@@ -906,6 +912,7 @@ function DynamicTableBase<
                   {isHaveSearch && (
                     <SearchToolbar
                       value={searchKeyword}
+                      searchPlaceholder={searchPlaceholder}
                       t={t}
                       onSearch={onSearch}
                       onKeyDown={handleKeyDown}
@@ -942,6 +949,25 @@ function DynamicTableBase<
                 }}
               >
                 <Stack direction="row" spacing={0.5} alignItems="center" flexWrap={'wrap'} gap={0}>
+                  {/* view all */}
+                  {isHaveViewAll && (
+                    <Box>
+                      <Typography
+                        variant="body1"
+                        color="primary"
+                        sx={{
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          },
+                        }}
+                        onClick={onHaveViewAll}
+                      >
+                        View All
+                      </Typography>
+                    </Box>
+                  )}
                   {/* PRINT */}
                   {isHavePrint && onPrint && (
                     <Button
@@ -1256,11 +1282,11 @@ function DynamicTableBase<
                   // overflowX: 'auto',
                 }}
                 stickyHeader={stickyHeader}
-              // sx={{
-              // width: '100%',
-              // tableLayout: 'fixed',
-              // whiteSpace: 'normal', // biar teks bisa wrap
-              // }}
+                // sx={{
+                // width: '100%',
+                // tableLayout: 'fixed',
+                // whiteSpace: 'normal', // biar teks bisa wrap
+                // }}
               >
                 <TableHead>
                   <TableRow>

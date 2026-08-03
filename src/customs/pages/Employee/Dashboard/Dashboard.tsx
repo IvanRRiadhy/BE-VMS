@@ -30,9 +30,7 @@ import {
   openParkingBlocker,
 } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
-import {
-  getVisitorTransactionByIds,
-} from 'src/customs/api/admin';
+import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -45,9 +43,7 @@ import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery } from '@tanstack/react-query';
-import {
-  getApprovalTicket,
-} from 'src/customs/api/Admin/ApprovalWorkflow';
+import { getApprovalTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
@@ -131,11 +127,7 @@ const DashboardEmployee = () => {
     setOpenInviteOrCreateLink(true);
   };
 
-  const {
-    approveMutation,
-    rejectMutation,
-    approveMeetingHostMutation,
-  } = useApprovalMutation();
+  const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
 
   const handleCloseInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(false);
@@ -253,11 +245,7 @@ const DashboardEmployee = () => {
     fetchData();
   }, []);
 
-
-  const {
-    data: quickAccessResult,
-    isLoading: isLoadingQuickAccess,
-  } = useQuickAccessPagination({
+  const { data: quickAccessResult, isLoading: isLoadingQuickAccess } = useQuickAccessPagination({
     page: quickPage,
     rowsPerPage: quickRowsPerPage,
     search: quickSearch,
@@ -501,7 +489,7 @@ const DashboardEmployee = () => {
       await createMutation.mutateAsync(finalPayload);
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-      showSwal('success', t("successSendShareLink"));
+      showSwal('success', t('successSendShareLink'));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     } finally {
@@ -563,7 +551,7 @@ const DashboardEmployee = () => {
     try {
       setIsGenerating(true);
       await createQuickAccess.mutateAsync(payload);
-      showSwal('success', t("createSuccess", { name: 'Quick Access' }));
+      showSwal('success', t('createSuccess', { name: 'Quick Access' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
       throw error;
@@ -576,7 +564,6 @@ const DashboardEmployee = () => {
     setQuickPage(0);
     setQuickSearch(keyword);
   }, []);
-
 
   const handleOpenApprovalDialog = async (row: any) => {
     try {
@@ -632,7 +619,7 @@ const DashboardEmployee = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', t("pleaseSendAtleastOneEmail"));
+      showSwal('error', t('pleaseSendAtleastOneEmail'));
       return;
     }
     try {
@@ -642,7 +629,7 @@ const DashboardEmployee = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', t("successSendInvitation"));
+      showSwal('success', t('successSendInvitation'));
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
@@ -726,6 +713,10 @@ const DashboardEmployee = () => {
               data={approvalData}
               isHaveChecked={true}
               isHaveAction={true}
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/approval');
+              }}
               isActionVisitor={false}
               isHaveHeaderTitle
               titleHeader="Approval"

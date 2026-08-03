@@ -348,6 +348,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
+                searchPlaceholder='Search user'
                 searchKeyword={search}
                 isHaveAssign={false}
                 isHaveUnAssign={true}

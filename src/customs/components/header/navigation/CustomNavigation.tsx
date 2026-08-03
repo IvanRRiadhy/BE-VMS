@@ -36,12 +36,13 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           px: xl ? '10px !important' : '5px !important',
           py: 2,
           borderRadius: 0,
+
           // overflow: 'hidden',
           // position: 'fixed'
         }}
       >
         <Box
-          sx={{ px: 1, zIndex: 9999, position: 'sticky' }}
+          sx={{ px: 1, zIndex: 9999, position: 'sticky', top: 0, }}
           display={'flex'}
           justifyContent={'space-between'}
           alignItems={'center'}

@@ -465,6 +465,7 @@ const Content = () => {
                   selectedRows={selectedRows}
                   isHaveChecked
                   isHaveAction
+                  searchPlaceholder={`Search ${selectedType}...`}
                   isActionVisitor={false}
                   isHaveSearch
                   isHaveFilter={false}

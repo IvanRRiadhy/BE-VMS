@@ -2569,7 +2569,8 @@ const OperatorView = () => {
     page,
     rowsPerPage,
     sortDir,
-    selectedPurpose: selectedPurpose
+    selectedPurpose: selectedPurpose,
+    search: searchKeyword
   });
 
   const upcomingVisitors = upcomingVisitorQuery.data?.collection ?? [];
