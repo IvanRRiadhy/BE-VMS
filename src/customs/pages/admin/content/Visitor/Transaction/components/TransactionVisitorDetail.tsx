@@ -23,15 +23,14 @@ interface TransactionVisitorDetailProps {
   selectedGroupId: string | null;
   openGroup: boolean;
   setOpenGroup: React.Dispatch<React.SetStateAction<boolean>>;
-
   groupHeader: any;
   groupVisitors: any[];
   groupDetailLoading: boolean;
-
   exportVisitorPdf: (title: string, visitors: any[]) => void;
   exportVisitorExcel: (title: string, visitors: any[]) => void;
-
   t: (key: string) => string;
+  selectedVisitor?: any;
+  setSelectedVisitor?: any;
 }
 
 const TransactionVisitorDetail = ({
@@ -44,6 +43,8 @@ const TransactionVisitorDetail = ({
   exportVisitorPdf,
   exportVisitorExcel,
   t,
+  selectedVisitor,
+  setSelectedVisitor,
 }: TransactionVisitorDetailProps) => {
   return (
     <Box
@@ -133,7 +134,8 @@ const TransactionVisitorDetail = ({
                   </TableRow>
                 ) : groupVisitors.length > 0 ? (
                   groupVisitors.map((visitor: any, index: number) => (
-                    <VisitorRow key={visitor.id} visitor={visitor} index={index} />
+                    <VisitorRow key={visitor.id} visitor={visitor} index={index} selectedVisitor={selectedVisitor}
+                      setSelectedVisitor={setSelectedVisitor} />
                   ))
                 ) : (
                   <TableRow>

@@ -26,7 +26,7 @@ import {
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconBolt, IconClipboard, IconSearch, IconShare, IconUsers } from '@tabler/icons-react';
+import { IconBolt, IconClipboard, IconLink, IconSearch, IconShare, IconUserPlus, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -295,20 +295,20 @@ const Content = () => {
   const cards = [
     {
       title: 'Total ' + t('visitor'),
-      icon: IconUsers,
+      icon: IconUserPlus,
       subTitle: `${totalRecords}`,
       color: 'none',
     },
     {
       title: t('add') + ' Pre Registration',
-      icon: IconClipboard,
+      icon: IconUserPlus,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
     },
     {
       title: t("shareLink"),
-      icon: IconShare,
+      icon: IconLink,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
@@ -368,20 +368,7 @@ const Content = () => {
     handleCloseDialog();
   };
 
-  const handleView = async (id: string) => {
-    if (!id) return;
 
-    setOpenRelatedInvitation(true);
-
-    try {
-      const res = await getVisitorTransactionByIds(id);
-      setVisitorDetail(res?.collection ?? res ?? null);
-    } catch (err: any) {
-      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
-    } finally {
-      setVisitorLoading(false);
-    }
-  };
 
   const selectedVisitorData = useMemo(() => {
     return visitorDetail
@@ -650,9 +637,20 @@ const Content = () => {
               />
               <Box
                 p={2}
+                // sx={{
+                //   height: { xs: 'auto', xl: '78vh' },
+                //   overflow: 'auto',
+                //   display: 'flex',
+                //   width: '100%',
+                //   flexDirection: {
+                //     xs: 'column',
+                //     md: 'row',
+                //   },
+                //   gap: 2,
+                // }}
                 sx={{
                   height: { xs: 'auto', xl: '78vh' },
-                  overflow: 'auto',
+                  overflow: 'hidden',
                   display: 'flex',
                   width: '100%',
                   flexDirection: {
@@ -674,7 +672,13 @@ const Content = () => {
                   setOpenGroup={setOpenGroup}
                 />
                 {/* Detail From List */}
-                <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
+                {selectedVisitor && (
+                  <VisitorDetailPanel
+                    selectedVisitor={selectedVisitor}
+                    tab={tab}
+                    setTab={setTab}
+                  />
+                )}
               </Box>
             </Box>
           </Grid>

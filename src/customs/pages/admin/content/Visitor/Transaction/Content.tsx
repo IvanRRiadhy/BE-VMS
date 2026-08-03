@@ -28,7 +28,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
-import { IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
+import { IconClipboard, IconQrcode, IconUser, IconUserPlus, IconUsers } from '@tabler/icons-react';
 
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -57,6 +57,7 @@ import TransactionVisitorList from './components/TransactionVisitorList';
 import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTransactionVisitorDetail';
 import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
+import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -122,7 +123,8 @@ const Content = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [hostSearch, setHostSearch] = useState('');
   const debouncedSearch = useDebounce(hostSearch, 500);
-
+  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const [tab, setTab] = useState<any>(0);
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
@@ -257,14 +259,14 @@ const Content = () => {
       ? [
         {
           title: t('add') + ' Invitation',
-          icon: IconUser,
+          icon: IconUserPlus,
           subTitle: iconAdd,
           subTitleSetting: 'image',
           color: 'none',
         },
         {
           title: t('add') + ' Pre Registration',
-          icon: IconClipboard,
+          icon: IconUserPlus,
           subTitle: iconAdd,
           subTitleSetting: 'image',
           color: 'none',
@@ -567,7 +569,18 @@ const Content = () => {
               exportVisitorPdf={exportVisitorPdf}
               exportVisitorExcel={exportVisitorExcel}
               t={t}
+              selectedVisitor={selectedVisitor}
+              setSelectedVisitor={setSelectedVisitor}
             />
+            <Box sx={{ mt: 2 }}>
+              {selectedVisitor && (
+                <VisitorDetailPanel
+                  selectedVisitor={selectedVisitor}
+                  tab={tab}
+                  setTab={setTab}
+                />
+              )}
+            </Box>
           </Box>
         </Box>
       </Container>

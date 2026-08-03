@@ -26,6 +26,8 @@ import {
   IconUser,
   IconUsers,
   IconBolt,
+  IconLink,
+  IconUserPlus,
 } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
@@ -329,21 +331,21 @@ const Content = () => {
       ? [
         {
           title: t('add') + ' Invitation',
-          icon: IconUser,
+          icon: IconUserPlus,
           subTitle: iconAdd,
           subTitleSetting: 'image',
           color: 'none',
         },
         {
           title: t('add') + ' Pre Registration',
-          icon: IconClipboard,
+          icon: IconUserPlus,
           subTitle: iconAdd,
           subTitleSetting: 'image',
           color: 'none',
         },
         {
           title: t('shareLink'),
-          icon: IconShare,
+          icon: IconLink,
           subTitle: iconAdd,
           subTitleSetting: 'image',
           color: 'none',

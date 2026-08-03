@@ -44,6 +44,7 @@ export default function VisitorListTable({
   setOpenGroup,
 }: Props) {
   const { t } = useTranslation();
+  const lg = window.innerWidth > 1200;
   if (!selectedGroupId) {
     return (
       <Box
@@ -76,7 +77,8 @@ export default function VisitorListTable({
         component={Paper}
         sx={{
           border: '1px solid #d6d6d6ff',
-          minWidth: 900,
+          minWidth: lg ? 900 : '100%',
+
         }}
       >
         <Table>

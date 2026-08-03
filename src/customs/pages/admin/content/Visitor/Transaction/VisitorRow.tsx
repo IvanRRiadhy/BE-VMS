@@ -52,15 +52,13 @@ function VisitorRow({
                 </TableHead> */}
       {/* <TableBody> */}
       <TableRow>
-        {isAdmin && <TableCell>{index + 1}</TableCell>}
-        {!isAdmin && (
-          <TableCell>
-            <Checkbox
-              checked={selectedVisitor?.id === visitor.id}
-              onChange={() => setSelectedVisitor(visitor)}
-            />
-          </TableCell>
-        )}
+        <TableCell>
+          <Checkbox
+            checked={selectedVisitor?.id === visitor.id}
+            onChange={() => setSelectedVisitor(visitor)}
+          />
+        </TableCell>
+
         <TableCell
           sx={{
             display: 'inline-flex',

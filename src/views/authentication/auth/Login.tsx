@@ -29,10 +29,10 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { AuthVisitor, login } from 'src/customs/api/users';
 import { AxiosError } from 'axios';
-import {  Link as RouterLink, useNavigate } from 'react-router';
+import { Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
+import { IconEye, IconEyeOff, IconLock, IconUser, IconUserPlus } from '@tabler/icons-react';
 import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
@@ -432,7 +432,7 @@ const Login = () => {
                         <Tab
                           icon={<IconUserPlus size={18} />}
                           iconPosition="start"
-                          label="Guest/Visitor Code"
+                          label="Guest/Visitor"
                         />
                         {/* <Tab
                       icon={<IconUserPlus size={18} />}
@@ -459,11 +459,18 @@ const Login = () => {
                                 id="username"
                                 variant="outlined"
                                 fullWidth
-                                placeholder="Username"
+                                placeholder="Enter your username"
                                 value={username}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                   setUsername(e.target.value)
                                 }
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <IconUser size={20} stroke={1.8} />
+                                    </InputAdornment>
+                                  ),
+                                }}
                               />
                             </Box>
                             <Box>
@@ -475,12 +482,17 @@ const Login = () => {
                                 type={showPassword ? 'text' : 'password'}
                                 variant="outlined"
                                 fullWidth
-                                placeholder="Password"
+                                placeholder="Enter your password"
                                 value={password}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                   setPassword(e.target.value)
                                 }
                                 InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <IconLock size={20} stroke={1.8} />
+                                    </InputAdornment>
+                                  ),
                                   endAdornment: (
                                     <InputAdornment position="end">
                                       <IconButton
@@ -529,22 +541,25 @@ const Login = () => {
                           >
                             Forgot Password?
                           </Link> */}
-                            <Typography
-                              onClick={handleForgotPassword}
-                              sx={{
-                                opacity: 0.6,
-                                cursor: 'pointer',
-                                mt: 1,
-                                fontSize: 14,
-                                '&:hover': {
-                                  opacity: 1,
-                                  textDecoration: 'underline',
-                                },
-                              }}
-                            >
-                              {/* Forgot Password? */}
-                              {t('forgotPassword')}
-                            </Typography>
+                            <Box display="flex" justifyContent="end" alignItems="center">
+                              <Typography
+                                onClick={handleForgotPassword}
+                                sx={{
+                                  // opacity: 0.6,
+                                  color: "primary.main",
+                                  cursor: 'pointer',
+                                  mt: 0,
+                                  fontSize: 14,
+                                  '&:hover': {
+                                    opacity: 1,
+                                    textDecoration: 'underline',
+                                  },
+                                }}
+                              >
+                                {/* Forgot Password? */}
+                                {t('forgotPassword')}
+                              </Typography>
+                            </Box>
                           </Stack>
 
                           <Box marginTop={1.5}>
@@ -620,7 +635,7 @@ const Login = () => {
                     {tab === 1 && (
                       <form onSubmit={guestSubmit}>
                         <Typography variant="h6" mb={1} textAlign="center" mt={1}>
-                          Guest/Visitor Code
+                          Guest/Visitor
                         </Typography>
                         <Typography variant="body1" textAlign="center" color="text.secondary">
                           {t('confirmationInputCode')}
@@ -634,6 +649,7 @@ const Login = () => {
                               id="guest-id"
                               variant="outlined"
                               fullWidth
+                              placeholder='Enter your invitation code'
                               value={guestCode}
                               onChange={(e) => {
                                 setGuestCode(e.target.value);
@@ -641,6 +657,7 @@ const Login = () => {
                               }}
                               error={guestError}
                             />
+
                           </Box>
                           {/* {showCaptcha && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
