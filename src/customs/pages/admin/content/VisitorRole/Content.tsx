@@ -8,7 +8,7 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { IconBrandMedium } from '@tabler/icons-react';
+import { IconBrandMedium, IconUser, IconUserFilled } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +38,7 @@ const Content = () => {
       {
         title: t('totalVisitorRole'),
         subTitle: String(totalRecords),
-        icon: IconBrandMedium,
+        icon: IconUserFilled,
         color: 'none',
       },
     ],

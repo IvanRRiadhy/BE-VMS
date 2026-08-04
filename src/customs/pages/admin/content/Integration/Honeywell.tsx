@@ -249,6 +249,14 @@ const Honeywell = ({ id }: { id: string }) => {
         type: 'info',
       },
       {
+        title: 'Logdevs',
+        subTitle: totals.logdevs.toString(),
+        subTitleSetting: totals.logdevs,
+        icon: IconAccessPoint,
+        color: 'none',
+        type: 'info',
+      },
+      {
         title: 'Sync Data',
         icon: IconRefresh,
         onIconClick: handleSyncIntegration,
@@ -1075,7 +1083,7 @@ const Honeywell = ({ id }: { id: string }) => {
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 1.7 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 1.5 }} />
             </Grid>
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>

@@ -53,7 +53,7 @@ const GroupVisitorTable = ({
       flexGrow={1}
       p={2}
       sx={{
-        height: { xs: 'auto', xl: '78vh' },
+        height: { xs: '100%', xl: '78vh' },
         overflow: 'auto',
       }}
     >

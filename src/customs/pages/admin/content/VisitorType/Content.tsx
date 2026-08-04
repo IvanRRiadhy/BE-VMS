@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useLayoutEffect, useMemo } from 'react';
-import { Box, CircularProgress, Divider, Grid2 as Grid } from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -403,10 +403,6 @@ const Content = () => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isHaveBooleanSwitch={true}

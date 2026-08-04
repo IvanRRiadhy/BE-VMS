@@ -15,7 +15,6 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const History = () => {
-
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -90,6 +89,7 @@ const History = () => {
           </Grid>
           <Grid size={{ xs: 12, lg: 12 }}>
             <DynamicTable
+              loading={loading}
               overflowX={'auto'}
               data={historyData}
               isHavePagination={true}

@@ -198,7 +198,7 @@ const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
     try {
       const res = await getInvitationCode( value);
       const data = res.collection?.data ?? [];
-      console.log('data', res.collection?.data);
+      // console.log('data', res.collection?.data);
 
       if (data.length === 0) {
         showSwal('error', 'Your code does not exist.');
@@ -213,7 +213,7 @@ const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
 
       // await fetchRelatedVisitorsByInvitationId(invitationId);
       const relatedVisitor = await getInvitationOperatorRelated(invitationId);
-      console.log('relatedVisitor', relatedVisitor);
+      // console.log('relatedVisitor', relatedVisitor);
       setRelatedVisitors(relatedVisitor.collection ?? []);
       setOpenQRCode(false);
     } catch (error) {

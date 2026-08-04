@@ -14,9 +14,7 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import {
-  CreateVisitorRequestSchema,
-} from 'src/customs/api/models/Admin/Visitor';
+import { CreateVisitorRequestSchema } from 'src/customs/api/models/Admin/Visitor';
 import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
 import {
@@ -80,10 +78,7 @@ const Content = () => {
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
-  const {
-    data: profile,
-    isLoading: profileLoading,
-  } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
   const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -210,11 +205,7 @@ const Content = () => {
     end_date: '',
   });
 
-
-  const {
-    data: allVisitorData,
-    isLoading,
-  } = useVisitorPagination({
+  const { data: allVisitorData, isLoading } = useVisitorPagination({
     page,
     rowsPerPage,
     search,
@@ -258,9 +249,7 @@ const Content = () => {
     [processedData],
   );
 
-  const {
-    data: quickAccessResult,
-  } = useQuickAccessPagination({
+  const { data: quickAccessResult } = useQuickAccessPagination({
     page: quickPage,
     rowsPerPage: quickRowsPerPage,
     search: quickSearch,
@@ -307,11 +296,8 @@ const Content = () => {
     RecordsTotal: allVisitorData?.RecordsTotal ?? 0,
   };
 
-  const totalRecords =
-    allVisitorData?.RecordsTotal ?? 0;
-  const totalFilteredRecords =
-    allVisitorData?.RecordsFiltered ?? 0;
-
+  const totalRecords = allVisitorData?.RecordsTotal ?? 0;
+  const totalFilteredRecords = allVisitorData?.RecordsFiltered ?? 0;
 
   const cards = [
     {
@@ -329,35 +315,35 @@ const Content = () => {
     },
     ...(!isOperatorAdmin
       ? [
-        {
-          title: t('add') + ' Invitation',
-          icon: IconUserPlus,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-        {
-          title: t('add') + ' Pre Registration',
-          icon: IconUserPlus,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-        {
-          title: t('shareLink'),
-          icon: IconLink,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-        {
-          title: t('quickAccess'),
-          icon: IconBolt,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-      ]
+          {
+            title: t('add') + ' Invitation',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: t('add') + ' Pre Registration',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: t('shareLink'),
+            icon: IconLink,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: t('quickAccess'),
+            icon: IconBolt,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+        ]
       : []),
   ];
 
@@ -376,11 +362,13 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
+    setWizardKey((k) => k + 1);
     setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
       registered_site: '',
     }));
+    setFormDataAddVisitor(defaultFormData);
     closeVisitorDialog();
   };
 
@@ -488,16 +476,10 @@ const Content = () => {
     setPage(0);
   };
 
-  const {
-    createMutation,
-    deleteMutation,
-    sendEmailMutation,
-  } = useShareLinkMutation();
+  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
 
   const isGenerating =
-    createMutation.isPending ||
-    sendEmailMutation.isPending ||
-    deleteMutation.isPending;
+    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
 
   const handleDeleteLink = async (id: string) => {
     try {
@@ -574,7 +556,7 @@ const Content = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', t("pleaseSendAtleastOneEmail"));
+      showSwal('error', t('pleaseSendAtleastOneEmail'));
       return;
     }
 
@@ -585,7 +567,7 @@ const Content = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', t("successSendInvitation"));
+      showSwal('success', t('successSendInvitation'));
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to send invitation');
@@ -612,7 +594,7 @@ const Content = () => {
       await createMutation.mutateAsync(finalPayload);
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-      showSwal('success', t("successSendShareLink"));
+      showSwal('success', t('successSendShareLink'));
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to send share link');
     }
@@ -658,7 +640,6 @@ const Content = () => {
       throw error;
     }
   };
-
 
   return (
     <PageContainer
@@ -724,7 +705,7 @@ const Content = () => {
                 isHaveVisitor={true}
                 isActionVisitor={true}
                 isActionEmployee={true}
-                searchPlaceholder='Search Visitor...'
+                searchPlaceholder="Search Visitor..."
                 stickyVisitorCount={2}
                 isBlacklistPage={true}
                 onNavigatePage={() => {

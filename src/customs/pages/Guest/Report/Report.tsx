@@ -20,26 +20,26 @@ const Report = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const cards = [
     {
-      title: 'Total Visitor',
+      title: 'Report',
       subTitle: '0',
       subTitleSetting: 10,
       icon: IconHistory,
       color: 'none',
     },
-    {
-      title: 'New Visitor',
-      subTitle: '0',
-      subTitleSetting: 10,
-      icon: IconHistory,
-      color: 'none',
-    },
-    {
-      title: 'Returning',
-      subTitle: '0',
-      subTitleSetting: 10,
-      icon: IconHistory,
-      color: 'none',
-    },
+    // {
+    //   title: 'New Visitor',
+    //   subTitle: '0',
+    //   subTitleSetting: 10,
+    //   icon: IconHistory,
+    //   color: 'none',
+    // },
+    // {
+    //   title: 'Returning',
+    //   subTitle: '0',
+    //   subTitleSetting: 10,
+    //   icon: IconHistory,
+    //   color: 'none',
+    // },
   ];
   const [tableData, setTableData] = useState<[]>([]);
   const [agenda, setAgenda] = useState('');
@@ -94,7 +94,7 @@ const Report = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 overflowX={'auto'}
-                data={tableDataVisitor}
+                data={[]}
                 isHavePagination={false}
                 selectedRows={selectedRows}
                 // defaultRowsPerPage={rowsPerPage}

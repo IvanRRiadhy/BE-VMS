@@ -45,6 +45,7 @@ import { useCustomField } from 'src/hooks/CustomField/useCustomField';
 import NewSectionDialog from './components/NewSectionDialog';
 import { useCameraAnalytics } from 'src/hooks/VisitorType/useCameraAnalaytics';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -254,7 +255,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : matchedField?.multiple_option_fields ?? [],
+              : (matchedField?.multiple_option_fields ?? []),
             visitor_form_type: 0,
             document_id: field.document_id ?? null,
           };
@@ -273,7 +274,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : matchedField?.multiple_option_fields ?? [],
+              : (matchedField?.multiple_option_fields ?? []),
             visitor_form_type: 2,
             document_id: field.document_id ?? null,
           };
@@ -831,8 +832,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color: '#fff',
                                   width: 30,
                                   height: 30,
@@ -998,15 +999,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         onChange={setNewSectionName}
         onSubmit={handleAddSection}
       />
-      <Backdrop
-        open={loading}
-        sx={{
-          color: '#fff',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

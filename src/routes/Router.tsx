@@ -5,6 +5,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Loadable from 'src/layouts/full/shared/loadable/Loadable';
 import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
 import AuthRedirector from './AuthRedirector';
+import path from 'path';
 // import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
 // import Register from 'src/views/authentication/auth/Register';
 // import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
@@ -305,7 +306,7 @@ const Router = [
               { path: '/invitation-share', element: <SelfPraregistration /> },
               { path: '/invitation-share/success', element: <SuccessPage /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
-              { path: '/monitoring', element: <Monitoring /> },
+
               { path: '*', element: <NotFoundPage /> },
             ],
           },
@@ -512,11 +513,12 @@ const Router = [
               { path: 'transaction-log', element: <TransactionOperatorLog /> },
               { path: 'approval-workflow', element: <ApprovalOperator /> },
               { path: 'operator-activity-log', element: <OperatorActivityLog /> },
-              { path: 'monitoring', element: <MonitoringDashboard /> },
+              { path: 'monitorings', element: <MonitoringDashboard /> },
               { path: 'profile', element: <DetailProfile /> },
               { path: 'notification', element: <OperatorNotification /> },
             ],
           },
+          { path: 'monitoring', element: <Monitoring /> },
         ],
       },
 
