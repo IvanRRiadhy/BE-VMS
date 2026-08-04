@@ -145,8 +145,6 @@ export const TableBodyContent = ({
   // INDEX_COL_WIDTH,
   onDelete,
 }: any) => {
-
-
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105;
   const INDEX_COL_WIDTH = 56;
@@ -505,7 +503,7 @@ const TableRowItem = React.memo(
       Approve: '#21c45d', // hijau
       Pracheckin: '#21c45d', // hijau
       Approved: '#4CAF50',
-      Rejected: "#f44336"
+      Rejected: '#f44336',
     };
 
     const defaultBg = '#9E9E9E';
@@ -678,8 +676,7 @@ const TableRowItem = React.memo(
               )}
             </Box>
           </TableCell>
-        )
-        }
+        )}
         <TableCell
           sx={{
             position: { xs: 'static', lg: 'sticky' },
@@ -695,137 +692,165 @@ const TableRowItem = React.memo(
         >
           {index + 1 + page * rowsPerPage}
         </TableCell>
-        {
-          columns.map((col: any, idx: any) => {
-            const makeSticky = isStickyVisitorCol(idx);
-            return (
-              <TableCell
-                key={col}
-                sx={{
-                  ...(makeSticky && {
-                    position: { xs: 'static', lg: 'sticky' },
-                    left: getStickyLeft(idx),
-                    zIndex: 3,
-                    // background: 'white',
-                    bgcolor: 'background.paper',
-                    minWidth: DATA_COL_WIDTH,
-                    maxWidth: DATA_COL_WIDTH,
-                  }),
-                  fontSize: '0.85rem !important',
-                }}
-              >
-                {isHaveVip && col === 'is_vip' ? (
-                  row[col] ? (
-                    <Tooltip title="VIP">
-                      <IconStarFilled color="gold" />
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Not VIP">
-                      <IconStarFilled color="lightgray" />
-                    </Tooltip>
-                  )
-                ) : isHavePdf &&
-                  col === 'document_text' &&
-                  typeof row.file === 'string' &&
-                  row.file.trim() !== '' ? (
-                  <Tooltip title="View File">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onFileClick?.(row)}
-                      sx={{
-                        borderRadius: '50%',
-                        width: 30,
-                        height: 30,
-                        backgroundColor: (theme) => theme.palette.grey[100],
-                      }}
-                    >
-                      <IconFileText />
-                    </IconButton>
+        {columns.map((col: any, idx: any) => {
+          const makeSticky = isStickyVisitorCol(idx);
+          return (
+            <TableCell
+              key={col}
+              sx={{
+                ...(makeSticky && {
+                  position: { xs: 'static', lg: 'sticky' },
+                  left: getStickyLeft(idx),
+                  zIndex: 3,
+                  // background: 'white',
+                  bgcolor: 'background.paper',
+                  minWidth: DATA_COL_WIDTH,
+                  maxWidth: DATA_COL_WIDTH,
+                }),
+                fontSize: '0.85rem !important',
+              }}
+            >
+              {isHaveVip && col === 'is_vip' ? (
+                row[col] ? (
+                  <Tooltip title="VIP">
+                    <IconStarFilled color="gold" />
                   </Tooltip>
-                ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
-                  <RichHtmlCell
-                    html={String(row[col] ?? '')}
-                    lines={htmlClampLines}
-                    maxWidth={htmlMaxWidth}
-                  />
-                ) : col === 'type' && isAccessControlType ? (
-                  <>{row.type === 0 ? 'Access' : 'Group'}</>
-                ) : col === 'card_status' ? (
-                  (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
-                ) : col === 'is_employee' ? (
-                  row[col] ? (
-                    <IconUserCheck size={20} color="green" />
-                  ) : (
-                    <IconUserX size={20} color="red" />
-                  )
-                ) : isHaveDataImage && col === 'name' ? (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar
-                      src={
-                        // row.image
-                        //   ? row.image.startsWith('http') || row.image.startsWith('data:image')
-                        //     ? row.image
-                        //     : `${BASE_URL}${row.image}`
-                        //   : undefined
-                        undefined
-                      }
-                      sx={{ width: 32, height: 32 }}
-                    >
-                      {/* {String(row.name ?? '')
+                ) : (
+                  <Tooltip title="Not VIP">
+                    <IconStarFilled color="lightgray" />
+                  </Tooltip>
+                )
+              ) : isHavePdf &&
+                col === 'document_text' &&
+                typeof row.file === 'string' &&
+                row.file.trim() !== '' ? (
+                <Tooltip title="View File">
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => onFileClick?.(row)}
+                    sx={{
+                      borderRadius: '50%',
+                      width: 30,
+                      height: 30,
+                      backgroundColor: (theme) => theme.palette.grey[100],
+                    }}
+                  >
+                    <IconFileText />
+                  </IconButton>
+                </Tooltip>
+              ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
+                <RichHtmlCell
+                  html={String(row[col] ?? '')}
+                  lines={htmlClampLines}
+                  maxWidth={htmlMaxWidth}
+                />
+              ) : col === 'type' && isAccessControlType ? (
+                <>{row.type === 0 ? 'Access' : 'Group'}</>
+              ) : col === 'card_status' ? (
+                (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
+              ) : col === 'is_employee' ? (
+                row[col] ? (
+                  <IconUserCheck size={20} color="green" />
+                ) : (
+                  <IconUserX size={20} color="red" />
+                )
+              ) : isHaveDataImage && col === 'name' ? (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar
+                    src={
+                      // row.image
+                      //   ? row.image.startsWith('http') || row.image.startsWith('data:image')
+                      //     ? row.image
+                      //     : `${BASE_URL}${row.image}`
+                      //   : undefined
+                      undefined
+                    }
+                    sx={{ width: 32, height: 32 }}
+                  >
+                    {/* {String(row.name ?? '')
                       .charAt(0)
                       .toUpperCase()} */}
-                    </Avatar>
+                  </Avatar>
 
-                    <Typography variant="body2">{row.name ?? '-'}</Typography>
-                  </Box>
-                ) : col === 'approval_status' || col === 'approval_actor_status' ? (
-
-                  <Box
+                  <Typography variant="body2">{row.name ?? '-'}</Typography>
+                </Box>
+              ) : col === 'approval_status' || col === 'approval_actor_status' ? (
+                <Box
+                  sx={{
+                    backgroundColor: statusBgMap[row.approval_status] || defaultBg,
+                    borderRadius: '999px',
+                    color: '#fff',
+                    px: 1.5,
+                    py: 0.5,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {row.approval_status || '-'}
+                </Box>
+              ) : col === 'visitor_status' ? (
+                <Box
+                  sx={{
+                    backgroundColor: statusBgMap[row.visitor_status] || defaultBg,
+                    borderRadius: '999px',
+                    color: '#fff',
+                    px: 1.5,
+                    py: 0.5,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {row.visitor_status || '-'}
+                </Box>
+              ) : col === 'document_type' ? (
+                (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
+              ) : col === 'status' && isHaveApproval ? (
+                row[col] === 'Approve' ? (
+                  <Typography
                     sx={{
-                      backgroundColor: statusBgMap[row.approval_status] || defaultBg,
-                      borderRadius: '999px',
-                      color: '#fff',
-                      px: 1.5,
-                      py: 0.5,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
+                      color: 'success.main',
+                      fontWeight: 400,
+                      backgroundColor: 'success.light',
+                      textAlign: 'center',
+                      padding: 0.5,
+                      borderRadius: '8px',
+                      width: '100px',
                     }}
+                    variant="body2"
                   >
-                    {row.approval_status || '-'}
-                  </Box>
-
-                ) : col === 'visitor_status' ? (
-                  <Box
+                    Approve
+                  </Typography>
+                ) : row[col] === 'Reject' ? (
+                  <Typography
                     sx={{
-                      backgroundColor: statusBgMap[row.visitor_status] || defaultBg,
-                      borderRadius: '999px',
-                      color: '#fff',
-                      px: 1.5,
-                      py: 0.5,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
+                      color: 'error.main',
+                      fontWeight: 400,
+                      backgroundColor: 'error.light',
+                      textAlign: 'center',
+                      padding: 0.5,
+                      borderRadius: '8px',
+                      width: '100px',
                     }}
+                    variant="body2"
                   >
-                    {row.visitor_status || '-'}
-                  </Box>
-                ) : col === 'document_type' ? (
-                  (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
-                ) : col === 'status' && isHaveApproval ? (
-                  row[col] === 'Approve' ? (
+                    Reject
+                  </Typography>
+                ) : (
+                  <>
                     <Typography
                       sx={{
-                        color: 'success.main',
+                        color: '#fff',
                         fontWeight: 400,
-                        backgroundColor: 'success.light',
+                        backgroundColor: 'grey',
                         textAlign: 'center',
                         padding: 0.5,
                         borderRadius: '8px',
@@ -833,300 +858,40 @@ const TableRowItem = React.memo(
                       }}
                       variant="body2"
                     >
-                      Approve
+                      Pending
                     </Typography>
-                  ) : row[col] === 'Reject' ? (
-                    <Typography
-                      sx={{
-                        color: 'error.main',
-                        fontWeight: 400,
-                        backgroundColor: 'error.light',
-                        textAlign: 'center',
-                        padding: 0.5,
-                        borderRadius: '8px',
-                        width: '100px',
-                      }}
-                      variant="body2"
-                    >
-                      Reject
-                    </Typography>
-                  ) : (
-                    <>
-                      <Typography
-                        sx={{
-                          color: '#fff',
-                          fontWeight: 400,
-                          backgroundColor: 'grey',
-                          textAlign: 'center',
-                          padding: 0.5,
-                          borderRadius: '8px',
-                          width: '100px',
-                        }}
-                        variant="body2"
-                      >
-                        Pending
-                      </Typography>
-                    </>
-                  )
-                ) : isHavePeriod && col === 'visitor_period_start' ? (
-                  <>
-                    {formatDate(row[col] as string)}
-                    <br />
                   </>
-                ) : isHaveEmployee && col === 'host' ? (
-                  <Tooltip title="View Host">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onEmployeeClick?.(row)}
-                      sx={{
-                        borderRadius: '50%',
-                        width: 30,
-                        height: 30,
-                        backgroundColor: (theme) => theme.palette.grey[100],
-                      }}
-                    >
-                      <IconUserFilled />
-                    </IconButton>
-                  </Tooltip>
-                ) : col === 'current_used' ? (
-                  <Box display="flex" alignItems="center" justifyContent="start" width="100%">
-                    <Tooltip
-                      title={
-                        row[col]
-                          ? (tooltipLabels[col]?.true ?? 'Current Used')
-                          : (tooltipLabels[col]?.false ?? 'Not Current Used')
-                      }
-                    >
-                      <Box
-                        sx={(theme) => ({
-                          backgroundColor: row[col]
-                            ? theme.palette.success.main
-                            : theme.palette.error.main,
-                          borderRadius: '50%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          p: '2px',
-                        })}
-                      >
-                        {row[col] ? (
-                          <IconCheck color="white" size={16} />
-                        ) : (
-                          <IconX color="white" size={16} />
-                        )}
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                ) : col === 'employee' ? (
-                  <>
-                    {row.employee && (
-                      <Tooltip title="You are the host">
-                        <IconStarFilled color="gold" size={24} style={{ color: 'gold' }} />
-                      </Tooltip>
-                    )}
-                  </>
-                ) : isHaveGender && col === 'gender' ? (
-                  (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
-                ) : isSiteSpaceType && col === 'type' ? (
-                  (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
-                ) : isHaveImage &&
-                  imageFields.includes(col) &&
-                  typeof row[col] === 'string' &&
-                  row[col].trim() !== '' ? (
-                  <img
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.style.display = "none";
-                      // e.currentTarget.src = '/images/no-image.png';
-                    }}
-                    src={(() => {
-                      const value = row[col];
-                      if (value.startsWith('data:image')) return value;
-                      if (value.startsWith('http')) return value;
-                      return `${BASE_URL}${value}`;
-                    })()}
-                    style={{
-                      width: 60,
-                      height: 60,
+                )
+              ) : isHavePeriod && col === 'visitor_period_start' ? (
+                <>
+                  {formatDate(row[col] as string)}
+                  <br />
+                </>
+              ) : isHaveEmployee && col === 'host' ? (
+                <Tooltip title="View Host">
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => onEmployeeClick?.(row)}
+                    sx={{
                       borderRadius: '50%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                ) : isHaveImage && imageFields.includes(col) ? (
-                  <></>
-                ) : isHaveActive && col === 'active' ? (
-                  <Box display="flex" alignItems="center" justifyContent="start" width="100%">
-                    <Switch
-                      checked={Boolean(row.active)}
-                      color="primary"
-                      size="small"
-                      onChange={(_, checked) => {
-                        onActiveToggle?.(row, checked);
-                      }}
-                    />
-                  </Box>
-                ) : isHaveActive && col === 'quick_access' ? (
-                  <Box display="flex" alignItems="center" justifyContent="start" width="100%">
-                    <Switch
-                      checked={Boolean(row.quick_access)}
-                      color="primary"
-                      size="small"
-                      onChange={(_, checked) => {
-                        onQuickAccessToggle?.(row, checked);
-                      }}
-                    />
-                  </Box>
-                ) : (isDataVerified && col === 'secure') ||
-                  (isDataVerified && col === 'active') ||
-                  col === 'can_upload' ||
-                  col === 'can_signed' ||
-                  col === 'can_declined' ||
-                  col === 'is_primary' ||
-                  col === 'is_employee_used' ||
-                  col === 'is_multi_site' ||
-                  col === 'is_used' ||
-                  col === 'link_status' ||
-                  col === 'is_active' ||
-                  col === 'auto_approve' ||
-                  col === 'need_plate_number' ||
-                  col === 'support_vehicle' ||
-                  col === 'is_quick_access' ||
-                  col === 'early_access' ? (
-                  <Box display="flex" alignItems="center" justifyContent="start" width="100%">
-                    <Tooltip
-                      title={
-                        row[col]
-                          ? (tooltipLabels[col]?.true ?? 'Verified')
-                          : (tooltipLabels[col]?.false ?? 'Not Verified')
-                      }
-                    >
-                      <Box
-                        sx={(theme) => ({
-                          backgroundColor: row[col]
-                            ? theme.palette.success.main
-                            : theme.palette.error.main,
-                          borderRadius: '50%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          p: '2px',
-                        })}
-                      >
-                        {row[col] ? (
-                          <IconCheck color="white" size={16} />
-                        ) : (
-                          <IconX color="white" size={16} />
-                        )}
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                ) : col === 'email' ? (
-                  <Box
-                    display="inline-flex"
-                    alignItems="center"
-                    justifyContent="start"
-                    textAlign={'left'}
-                    gap={0.5}
-                    width="100%"
-                    sx={{
-                      wordBreak: 'break-word',
-                      whiteSpace: 'normal',
+                      width: 30,
+                      height: 30,
+                      backgroundColor: (theme) => theme.palette.grey[100],
                     }}
                   >
-                    <span>{(row[col] as React.ReactNode) ?? '-'}</span>
-
-                    {isHaveVerified &&
-                      (row.is_email_verified ? (
-                        <Tooltip title="Email Verified">
-                          <Box
-                            sx={{
-                              backgroundColor: '#13DEB9',
-                              borderRadius: '50%',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '1px',
-                            }}
-                          >
-                            <IconCheck color="white" size={16} />
-                          </Box>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip title="Email Not Verified">
-                          <Box
-                            sx={{
-                              backgroundColor: 'red',
-                              borderRadius: '50%',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '1px',
-                            }}
-                          >
-                            <IconX color="white" size={16} />
-                          </Box>
-                        </Tooltip>
-                      ))}
-                  </Box>
-                ) : col === 'password' ? (
-                  <Box
-                    display="inline-flex"
-                    alignItems="center"
-                    gap={0.5}
-                    justifyContent={'start'}
-                    width="100%"
+                    <IconUserFilled />
+                  </IconButton>
+                </Tooltip>
+              ) : col === 'current_used' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Tooltip
+                    title={
+                      row[col]
+                        ? (tooltipLabels[col]?.true ?? 'Current Used')
+                        : (tooltipLabels[col]?.false ?? 'Not Current Used')
+                    }
                   >
-                    {isHavePassword ? (
-                      visiblePasswords[row.id] ? (
-                        <>
-                          <span>{String(row[col] ?? '-')}</span>
-                          <Tooltip title="Hide Password">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                togglePassword(row.id);
-                              }}
-                            >
-                              <IconEyeOff size={18} />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        <Tooltip title="Show Password">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              togglePassword(row.id);
-                            }}
-                            sx={{
-                              bgcolor: 'grey.200',
-                              '&:hover': {
-                                bgcolor: 'grey.300',
-                              },
-                              borderRadius: '50%',
-                              p: 0.5,
-                            }}
-                          >
-                            <IconEye size={18} />
-                          </IconButton>
-                        </Tooltip>
-                      )
-                    ) : (
-                      '••••••••'
-                    )}
-                  </Box>
-                ) : isHaveCard && col === 'card' ? (
-                  row[col] ? (
-                    <>{row[col]}</>
-                  ) : (
-                    <>-</>
-                  )
-                ) : col === 'is_blacklist' ? (
-                  <>
                     <Box
                       sx={(theme) => ({
                         backgroundColor: row[col]
@@ -1140,785 +905,951 @@ const TableRowItem = React.memo(
                       })}
                     >
                       {row[col] ? (
-                        <Tooltip title="Blacklist" arrow>
-                          <IconCheck color="white" size={18} />
-                        </Tooltip>
+                        <IconCheck color="white" size={16} />
                       ) : (
-                        <Tooltip title="Not Blacklist" arrow>
-                          <IconX color="white" size={16} />
-                        </Tooltip>
+                        <IconX color="white" size={16} />
                       )}
                     </Box>
-                  </>
-                ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                  <Box display="flex" alignItems="center" width={'100%'} justifyContent={'center'}>
-                    <Switch
-                      checked={row[col] as boolean}
-                      onChange={(_, checked) => {
-                        onBooleanSwitchChange?.(row.id, col, checked);
-                      }}
-                      color="primary"
-                      size="small"
-                    />
-                  </Box>
-                ) : isHaveObjectData &&
-                  objectFields?.includes(col) &&
-                  typeof row[col] === 'object' &&
-                  row[col] !== null ? (
-                  Array.isArray(row[col]) ? (
-                    row[col].map((item: any) => item.name).join(', ')
-                  ) : (
-                    ((row[col] as { name?: string }).name ?? '-')
-                  )
-                ) : (
-                  <>
-                    {isHaveIntegration && col === 'name' && onNameClick ? (
-                      <Button
-                        variant="text"
-                        size="small"
-                        onClick={() => {
-                          // e.stopPropagation();
-                          onNameClick?.(row);
-                        }}
-                        sx={{
-                          p: 1,
-                          minWidth: 0,
-                          textTransform: 'none',
-                          fontSize: '0.875rem',
-                          textDecoration: 'underline',
-                        }}
-                      // target="_blank"
-                      >
-                        {String(row[col] ?? '-')}
-                      </Button>
+                  </Tooltip>
+                </Box>
+              ) : col === 'employee' ? (
+                <>
+                  {row.employee && (
+                    <Tooltip title="You are the host">
+                      <IconStarFilled color="gold" size={24} style={{ color: 'gold' }} />
+                    </Tooltip>
+                  )}
+                </>
+              ) : isHaveGender && col === 'gender' ? (
+                (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
+              ) : isSiteSpaceType && col === 'type' ? (
+                (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
+              ) : isHaveImage &&
+                imageFields.includes(col) &&
+                typeof row[col] === 'string' &&
+                row[col].trim() !== '' ? (
+                <img
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.style.display = 'none';
+                    // e.currentTarget.src = '/images/no-image.png';
+                  }}
+                  src={(() => {
+                    const value = row[col];
+                    if (value.startsWith('data:image')) return value;
+                    if (value.startsWith('http')) return value;
+                    return `${BASE_URL}${value}`;
+                  })()}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : isHaveImage && imageFields.includes(col) ? (
+                <></>
+              ) : isHaveActive && col === 'active' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Switch
+                    checked={Boolean(row.active)}
+                    color="primary"
+                    size="small"
+                    onChange={(_, checked) => {
+                      onActiveToggle?.(row, checked);
+                    }}
+                  />
+                </Box>
+              ) : isHaveActive && col === 'quick_access' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Switch
+                    checked={Boolean(row.quick_access)}
+                    color="primary"
+                    size="small"
+                    onChange={(_, checked) => {
+                      onQuickAccessToggle?.(row, checked);
+                    }}
+                  />
+                </Box>
+              ) : (isDataVerified && col === 'secure') ||
+                (isDataVerified && col === 'active') ||
+                col === 'can_upload' ||
+                col === 'can_signed' ||
+                col === 'can_declined' ||
+                col === 'is_primary' ||
+                col === 'is_employee_used' ||
+                col === 'is_multi_site' ||
+                col === 'is_used' ||
+                col === 'link_status' ||
+                col === 'is_active' ||
+                col === 'auto_approve' ||
+                col === 'need_plate_number' ||
+                col === 'support_vehicle' ||
+                col === 'is_quick_access' ||
+                col === 'early_access' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Tooltip
+                    title={
+                      row[col]
+                        ? (tooltipLabels[col]?.true ?? 'Verified')
+                        : (tooltipLabels[col]?.false ?? 'Not Verified')
+                    }
+                  >
+                    <Box
+                      sx={(theme) => ({
+                        backgroundColor: row[col]
+                          ? theme.palette.success.main
+                          : theme.palette.error.main,
+                        borderRadius: '50%',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        p: '2px',
+                      })}
+                    >
+                      {row[col] ? (
+                        <IconCheck color="white" size={16} />
+                      ) : (
+                        <IconX color="white" size={16} />
+                      )}
+                    </Box>
+                  </Tooltip>
+                </Box>
+              ) : col === 'email' ? (
+                <Box
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="start"
+                  textAlign={'left'}
+                  gap={0.5}
+                  width="100%"
+                  sx={{
+                    wordBreak: 'break-word',
+                    whiteSpace: 'normal',
+                  }}
+                >
+                  <span>{(row[col] as React.ReactNode) ?? '-'}</span>
+
+                  {isHaveVerified &&
+                    (row.is_email_verified ? (
+                      <Tooltip title="Email Verified">
+                        <Box
+                          sx={{
+                            backgroundColor: '#13DEB9',
+                            borderRadius: '50%',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '1px',
+                          }}
+                        >
+                          <IconCheck color="white" size={16} />
+                        </Box>
+                      </Tooltip>
                     ) : (
-                      String(row[col] ?? '-')
+                      <Tooltip title="Email Not Verified">
+                        <Box
+                          sx={{
+                            backgroundColor: 'red',
+                            borderRadius: '50%',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '1px',
+                          }}
+                        >
+                          <IconX color="white" size={16} />
+                        </Box>
+                      </Tooltip>
+                    ))}
+                </Box>
+              ) : col === 'password' ? (
+                <Box
+                  display="inline-flex"
+                  alignItems="center"
+                  gap={0.5}
+                  justifyContent={'start'}
+                  width="100%"
+                >
+                  {isHavePassword ? (
+                    visiblePasswords[row.id] ? (
+                      <>
+                        <span>{String(row[col] ?? '-')}</span>
+                        <Tooltip title="Hide Password">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePassword(row.id);
+                            }}
+                          >
+                            <IconEyeOff size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <Tooltip title="Show Password">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePassword(row.id);
+                          }}
+                          sx={{
+                            bgcolor: 'grey.200',
+                            '&:hover': {
+                              bgcolor: 'grey.300',
+                            },
+                            borderRadius: '50%',
+                            p: 0.5,
+                          }}
+                        >
+                          <IconEye size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  ) : (
+                    '••••••••'
+                  )}
+                </Box>
+              ) : isHaveCard && col === 'card' ? (
+                row[col] ? (
+                  <>{row[col]}</>
+                ) : (
+                  <>-</>
+                )
+              ) : col === 'is_blacklist' ? (
+                <>
+                  <Box
+                    sx={(theme) => ({
+                      backgroundColor: row[col]
+                        ? theme.palette.success.main
+                        : theme.palette.error.main,
+                      borderRadius: '50%',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      p: '2px',
+                    })}
+                  >
+                    {row[col] ? (
+                      <Tooltip title="Blacklist" arrow>
+                        <IconCheck color="white" size={18} />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Not Blacklist" arrow>
+                        <IconX color="white" size={16} />
+                      </Tooltip>
                     )}
-                  </>
-                )}
-              </TableCell>
-            );
-          })
-        }
+                  </Box>
+                </>
+              ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                <Box display="flex" alignItems="center" width={'100%'} justifyContent={'center'}>
+                  <Switch
+                    checked={row[col] as boolean}
+                    onChange={(_, checked) => {
+                      onBooleanSwitchChange?.(row.id, col, checked);
+                    }}
+                    color="primary"
+                    size="small"
+                  />
+                </Box>
+              ) : isHaveObjectData &&
+                objectFields?.includes(col) &&
+                typeof row[col] === 'object' &&
+                row[col] !== null ? (
+                Array.isArray(row[col]) ? (
+                  row[col].map((item: any) => item.name).join(', ')
+                ) : (
+                  ((row[col] as { name?: string }).name ?? '-')
+                )
+              ) : (
+                <>
+                  {isHaveIntegration && col === 'name' && onNameClick ? (
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => {
+                        // e.stopPropagation();
+                        onNameClick?.(row);
+                      }}
+                      sx={{
+                        p: 1,
+                        minWidth: 0,
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        textDecoration: 'underline',
+                      }}
+                      // target="_blank"
+                    >
+                      {String(row[col] ?? '-')}
+                    </Button>
+                  ) : (
+                    String(row[col] ?? '-')
+                  )}
+                </>
+              )}
+            </TableCell>
+          );
+        })}
         {isHaveCard && (
           <TableCell>
             <Typography variant="body2" color="text.secondary"></Typography>
           </TableCell>
         )}
 
-        {
-          isHaveDataQuickAccess && (
-            <TableCell>
-              <Box display="flex" alignItems="end">
-                <Tooltip title="Detail Quick Access">
-                  <IconButton
-                    onClick={() => onDetailQuickAccess?.(row.id)}
-                    disableRipple
-                    sx={{
-                      color: 'white',
-                      backgroundColor: 'gray',
-                      width: 32,
-                      height: 32,
-                      padding: 0.5,
-                      borderRadius: '50%',
-                      '&:hover': { backgroundColor: 'gray', color: 'white' },
-                    }}
-                  >
-                    <IconEye width={20} height={20} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-          )
-        }
+        {isHaveDataQuickAccess && (
+          <TableCell>
+            <Box display="flex" alignItems="end">
+              <Tooltip title="Detail Quick Access">
+                <IconButton
+                  onClick={() => onDetailQuickAccess?.(row.id)}
+                  disableRipple
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'gray',
+                    width: 32,
+                    height: 32,
+                    padding: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': { backgroundColor: 'gray', color: 'white' },
+                  }}
+                >
+                  <IconEye width={20} height={20} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
 
-        {
-          isHaveAction && !isActionVisitor && (
-            <TableCell
+        {isHaveAction && !isActionVisitor && (
+          <TableCell
+            sx={{
+              position: 'sticky',
+              right: 0,
+              bgcolor: 'background.paper',
+              zIndex: 2,
+              p: 0,
+              verticalAlign: 'middle',
+            }}
+          >
+            <Box
               sx={{
-                position: 'sticky',
-                right: 0,
-                bgcolor: 'background.paper',
-                zIndex: 2,
-                p: 0,
-                verticalAlign: 'middle',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 1.25,
+                height: '100%',
               }}
             >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  px: 1.5,
-                  py: 1.25,
-                  height: '100%',
-                }}
-              >
-                {isHaveApproval ? (
-                  (row as any)?.approval_status == 'Pending' ? (
-                    <>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 1,
-                          px: 1.5,
-                          py: 1.25,
-                          height: '100%',
-                          borderBottom: 'none',
-                        }}
-                      >
-                        {/* ✅ Accept / Denied */}
-                        <Tooltip title="Approve">
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            sx={{
-                              minWidth: 64,
-                              textTransform: 'none',
-                              borderBottom: 'none',
-                            }}
-                            onClick={() => onAccept?.(row)}
-                          >
-                            Approve
-                          </Button>
-                        </Tooltip>
-
-                        <Tooltip title="Reject">
-                          <Button
-                            variant="contained"
-                            color="error"
-                            size="small"
-                            sx={{ minWidth: 64, textTransform: 'none' }}
-                            onClick={() => onDenied?.(row)}
-                          >
-                            Reject
-                          </Button>
-                        </Tooltip>
-                      </Box>
-                    </>
-                  ) : (
+              {isHaveApproval ? (
+                (row as any)?.approval_status == 'Pending' ? (
+                  <>
                     <Box
                       sx={{
-                        position: 'sticky',
-                        right: 0,
-                        bgcolor: 'background.paper',
-                        zIndex: 2,
-                        p: 0,
-                        verticalAlign: 'middle',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                        px: 1.5,
+                        py: 1.25,
+                        height: '100%',
+                        borderBottom: 'none',
                       }}
-                    ></Box>
-                  )
-                ) : isHaveAccess ? (
-                  <TableCell
+                    >
+                      {/* ✅ Accept / Denied */}
+                      <Tooltip title="Approve">
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          sx={{
+                            minWidth: 64,
+                            textTransform: 'none',
+                            borderBottom: 'none',
+                          }}
+                          onClick={() => onAccept?.(row)}
+                        >
+                          Approve
+                        </Button>
+                      </Tooltip>
+
+                      <Tooltip title="Reject">
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          sx={{ minWidth: 64, textTransform: 'none' }}
+                          onClick={() => onDenied?.(row)}
+                        >
+                          Reject
+                        </Button>
+                      </Tooltip>
+                    </Box>
+                  </>
+                ) : (
+                  <Box
                     sx={{
                       position: 'sticky',
                       right: 0,
                       bgcolor: 'background.paper',
                       zIndex: 2,
                       p: 0,
-                      verticalAlign: '',
-                      textAlign: 'center',
-                      display: 'flex',
-                      alignItems: 'flex-start',
+                      verticalAlign: 'middle',
                     }}
-                  >
-                    {getAccessActions(row)}
-                  </TableCell>
-                ) : isHaveDuplicate ? (
-                  <Box
+                  ></Box>
+                )
+              ) : isHaveAccess ? (
+                <TableCell
+                  sx={{
+                    position: 'sticky',
+                    right: 0,
+                    bgcolor: 'background.paper',
+                    zIndex: 2,
+                    p: 0,
+                    verticalAlign: '',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {getAccessActions(row)}
+                </TableCell>
+              ) : isHaveDuplicate ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: '2px',
+                    borderBottom: 'none !important',
+                    padding: '0px !important',
+                  }}
+                >
+                  <Tooltip title="Duplicate Visitor Type" arrow>
+                    <IconButton
+                      onClick={() => onDuplicate?.(row)}
+                      disableRipple
+                      sx={{
+                        bgcolor: 'success.lighter',
+                        color: 'success.main',
+                        borderRadius: '50%',
+                        border: '1px solid',
+                        borderColor: 'success.main',
+                        width: 31,
+                        height: 31,
+                        transition: 'all .2s ease',
+                        '&:hover': {
+                          bgcolor: 'success.main',
+                          color: 'white',
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    >
+                      <IconCopyPlus width={18} height={18} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit" arrow>
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete" arrow>
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ) : isHaveView ? (
+                <>
+                  <Tooltip title="View Invitation">
+                    <IconButton
+                      onClick={() => onView?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'gray !important',
+                        width: 28,
+                        height: 28,
+                        padding: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'success.dark',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <RemoveRedEyeIcon width={18} height={18} />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              ) : isHavePermission ? (
+                <>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete">
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Permission">
+                    <Button
+                      onClick={() => onPermission?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                      }}
+                      variant="contained"
+                      color="primary"
+                    >
+                      {/* <IconRefresh width={18} height={18} /> */}
+                      Permission
+                    </Button>
+                  </Tooltip>
+                </>
+              ) : isHaveViewAndAction ? (
+                <>
+                  <Tooltip title="View Detail Schedule">
+                    <IconButton
+                      onClick={() => onView?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'gray !important',
+                        width: 28,
+                        height: 28,
+                        padding: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'success.dark',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <RemoveRedEyeIcon width={18} height={18} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete">
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Sync Visitor Type">
+                    <IconButton
+                      onClick={() => onView?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'gray !important',
+                        width: 28,
+                        height: 28,
+                        padding: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'success.dark',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconRefresh width={18} height={18} />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              ) : isBlacklistAction ? (
+                <Tooltip
+                  title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
+                  arrow
+                  placement="top"
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '0.85rem',
+                        padding: '8px 14px',
+                      },
+                    },
+                  }}
+                >
+                  <Button
+                    size="small"
+                    startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
+                    onClick={() => onBlacklist?.(row)}
                     sx={{
-                      display: 'flex',
-                      gap: '2px',
-                      borderBottom: 'none !important',
-                      padding: '0px !important',
+                      textTransform: 'none',
+                      borderRadius: 1,
+                      fontWeight: 500,
+                      backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                        opacity: 0.8,
+                      },
                     }}
                   >
-                    <Tooltip title="Duplicate Visitor Type" arrow>
-                      <IconButton
-                        onClick={() => onDuplicate?.(row)}
-                        disableRipple
-                        sx={{
-                          bgcolor: 'success.lighter',
-                          color: 'success.main',
-                          borderRadius: '50%',
-                          border: '1px solid',
-                          borderColor: 'success.main',
-                          width: 31,
-                          height: 31,
-                          transition: 'all .2s ease',
-                          '&:hover': {
-                            bgcolor: 'success.main',
-                            color: 'white',
-                            transform: 'scale(1.05)',
-                          },
-                        }}
-                      >
-                        <IconCopyPlus width={18} height={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit" arrow>
-                      <IconButton
-                        onClick={() => onEdit?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: '#FA896B',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                        }}
-                      >
-                        <IconPencil width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-
-                    {/* 🗑 Delete */}
-                    <Tooltip title="Delete" arrow>
-                      <IconButton
-                        onClick={() => onDelete?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'error.main',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <IconTrash width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                ) : isHaveView ? (
-                  <>
-                    <Tooltip title="View Invitation">
-                      <IconButton
-                        onClick={() => onView?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'gray !important',
-                          width: 28,
-                          height: 28,
-                          padding: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'success.dark',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <RemoveRedEyeIcon width={18} height={18} />
-                      </IconButton>
-                    </Tooltip>
-                  </>
-                ) : isHavePermission ? (
-                  <>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        onClick={() => onEdit?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: '#FA896B',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                        }}
-                      >
-                        <IconPencil width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-
-                    {/* 🗑 Delete */}
-                    <Tooltip title="Delete">
-                      <IconButton
-                        onClick={() => onDelete?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'error.main',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <IconTrash width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Permission">
-                      <Button
-                        onClick={() => onPermission?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                        }}
-                        variant="contained"
-                        color="primary"
-                      >
-                        {/* <IconRefresh width={18} height={18} /> */}
-                        Permission
-                      </Button>
-                    </Tooltip>
-                  </>
-                ) : isHaveViewAndAction ? (
-                  <>
-                    <Tooltip title="View Detail Schedule">
-                      <IconButton
-                        onClick={() => onView?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'gray !important',
-                          width: 28,
-                          height: 28,
-                          padding: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'success.dark',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <RemoveRedEyeIcon width={18} height={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        onClick={() => onEdit?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: '#FA896B',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                        }}
-                      >
-                        <IconPencil width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-
-                    {/* 🗑 Delete */}
-                    <Tooltip title="Delete">
-                      <IconButton
-                        onClick={() => onDelete?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'error.main',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <IconTrash width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Sync Visitor Type">
-                      <IconButton
-                        onClick={() => onView?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'gray !important',
-                          width: 28,
-                          height: 28,
-                          padding: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'success.dark',
-                            color: 'white',
-                          },
-                        }}
-                      >
-                        <IconRefresh width={18} height={18} />
-                      </IconButton>
-                    </Tooltip>
-                  </>
-                ) : isBlacklistAction ? (
+                    {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                  </Button>
+                </Tooltip>
+              ) : isActionListVisitor ? (
+                <>
                   <Tooltip
-                    title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
+                    title="Blacklist Visitor"
                     arrow
                     placement="top"
                     slotProps={{
                       tooltip: {
                         sx: {
-                          fontSize: '0.85rem',
+                          fontSize: '0.8rem',
                           padding: '8px 14px',
                         },
                       },
                     }}
                   >
                     <Button
+                      // variant="contained"
+                      // color="error"
                       size="small"
-                      startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
-                      onClick={() => onBlacklist?.(row)}
+                      startIcon={<IconXboxX />}
+                      // onClick={() => onBlock?.(row)}
                       sx={{
                         textTransform: 'none',
                         borderRadius: 1,
                         fontWeight: 500,
-                        backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                        backgroundColor: '#6B0000',
                         color: 'white',
-                        '&:hover': {
-                          backgroundColor: row.is_blacklist ? '#15803d' : '#000',
-                          opacity: 0.8,
-                        },
+                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
                       }}
                     >
-                      {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                      Blacklist
                     </Button>
                   </Tooltip>
-                ) : isActionListVisitor ? (
-                  <>
-                    <Tooltip
-                      title="Blacklist Visitor"
-                      arrow
-                      placement="top"
-                      slotProps={{
-                        tooltip: {
-                          sx: {
-                            fontSize: '0.8rem',
-                            padding: '8px 14px',
-                          },
+                  <Tooltip
+                    title="Sign alert to visitor"
+                    arrow
+                    placement="top"
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '0.8rem',
+                          padding: '8px 14px',
                         },
+                      },
+                    }}
+                  >
+                    <Button
+                      // variant="contained"
+                      // color="error"
+                      size="small"
+                      startIcon={<IconAlertSquare />}
+                      // onClick={() => onBlock?.(row)} // optional trigger
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: 1,
+                        fontWeight: 500,
+                        backgroundColor: '#FFC107',
+                        // width: '100%',
+                        px: 1,
+                        textWrap: 'nowrap',
+                        color: 'white',
+                        '&:hover': { backgroundColor: '#FFC107 ', opacity: 0.8 },
                       }}
                     >
-                      <Button
-                        // variant="contained"
-                        // color="error"
-                        size="small"
-                        startIcon={<IconXboxX />}
-                        // onClick={() => onBlock?.(row)}
-                        sx={{
-                          textTransform: 'none',
-                          borderRadius: 1,
-                          fontWeight: 500,
-                          backgroundColor: '#6B0000',
-                          color: 'white',
-                          '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
-                        }}
-                      >
-                        Blacklist
-                      </Button>
-                    </Tooltip>
-                    <Tooltip
-                      title="Sign alert to visitor"
-                      arrow
-                      placement="top"
-                      slotProps={{
-                        tooltip: {
-                          sx: {
-                            fontSize: '0.8rem',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                    >
-                      <Button
-                        // variant="contained"
-                        // color="error"
-                        size="small"
-                        startIcon={<IconAlertSquare />}
-                        // onClick={() => onBlock?.(row)} // optional trigger
-                        sx={{
-                          textTransform: 'none',
-                          borderRadius: 1,
-                          fontWeight: 500,
-                          backgroundColor: '#FFC107',
-                          // width: '100%',
-                          px: 1,
-                          textWrap: 'nowrap',
-                          color: 'white',
-                          '&:hover': { backgroundColor: '#FFC107 ', opacity: 0.8 },
-                        }}
-                      >
-                        Sign Alert
-                      </Button>
-                    </Tooltip>
-                  </>
-                ) : (
-                  <Box display="flex" gap={0.5}>
-                    {isHaveSettingOperator &&
-                      (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
-                        row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
-                        <Tooltip title="Setting">
-                          <IconButton
-                            onClick={() => onSettingOperator?.(row)}
-                            disableRipple
-                            sx={{
-                              color: 'white',
-                              backgroundColor: '#000',
-                              width: 28,
-                              height: 28,
-                              p: 0.5,
-                              borderRadius: '50%',
-                              '&:hover': { backgroundColor: '#000', color: 'white' },
-                            }}
-                          >
-                            <IconSettings width={14} height={14} />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-
-                    {isCopy && (
-                      <Tooltip title="Copy">
+                      Sign Alert
+                    </Button>
+                  </Tooltip>
+                </>
+              ) : (
+                <Box display="flex" gap={0.5}>
+                  {isHaveSettingOperator &&
+                    (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
+                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
+                      <Tooltip title="Setting">
                         <IconButton
-                          onClick={() => onCopy?.(row)}
+                          onClick={() => onSettingOperator?.(row)}
                           disableRipple
                           sx={{
                             color: 'white',
-                            backgroundColor: 'gray',
+                            backgroundColor: '#000',
                             width: 28,
                             height: 28,
                             p: 0.5,
                             borderRadius: '50%',
-                            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+                            '&:hover': { backgroundColor: '#000', color: 'white' },
                           }}
                         >
-                          <IconCopy width={14} height={14} />
+                          <IconSettings width={14} height={14} />
                         </IconButton>
                       </Tooltip>
                     )}
-                    {isHaveBlacklist && (
-                      <Tooltip
-                        title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
-                        arrow
-                        placement="top"
-                        slotProps={{
-                          tooltip: {
-                            sx: {
-                              fontSize: '0.85rem',
-                              padding: '8px 14px',
-                            },
+
+                  {isCopy && (
+                    <Tooltip title="Copy">
+                      <IconButton
+                        onClick={() => onCopy?.(row)}
+                        disableRipple
+                        sx={{
+                          color: 'white',
+                          backgroundColor: 'gray',
+                          width: 28,
+                          height: 28,
+                          p: 0.5,
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+                        }}
+                      >
+                        <IconCopy width={14} height={14} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {isHaveBlacklist && (
+                    <Tooltip
+                      title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
+                      arrow
+                      placement="top"
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            fontSize: '0.85rem',
+                            padding: '8px 14px',
+                          },
+                        },
+                      }}
+                    >
+                      <Button
+                        size="small"
+                        startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
+                        onClick={() => onBlacklist?.(row)}
+                        sx={{
+                          textTransform: 'none',
+                          borderRadius: 1,
+                          fontWeight: 500,
+                          backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                            opacity: 0.8,
                           },
                         }}
                       >
+                        {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                      </Button>
+                    </Tooltip>
+                  )}
+
+                  {/* {isHaveAssign && ( */}
+
+                  {isHaveAssign &&
+                    (row.group_name === 'Manager' ||
+                      row.group_name === 'Admin' ||
+                      row.group_name === 'Operator VMS') &&
+                    !row.employee_linked && (
+                      <Tooltip title="Assign Employee" arrow placement="top">
                         <Button
-                          size="small"
-                          startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
-                          onClick={() => onBlacklist?.(row)}
-                          sx={{
-                            textTransform: 'none',
-                            borderRadius: 1,
-                            fontWeight: 500,
-                            backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
-                            color: 'white',
-                            '&:hover': {
-                              backgroundColor: row.is_blacklist ? '#15803d' : '#000',
-                              opacity: 0.8,
-                            },
-                          }}
-                        >
-                          {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
-                        </Button>
-                      </Tooltip>
-                    )}
-
-                    {/* {isHaveAssign && ( */}
-
-                    {isHaveAssign &&
-                      (row.group_name === 'Manager' ||
-                        row.group_name === 'Admin' ||
-                        row.group_name === 'Operator VMS') &&
-                      !row.employee_linked && (
-                        <Tooltip title="Assign Employee" arrow placement="top">
-                          <Button
-                            onClick={() => onAssign?.(row)}
-                            disableRipple
-                            variant="contained"
-                            sx={{
-                              color: 'white',
-
-                              // width: 28,
-                              // height: 28,
-                              // p: 0.5,
-                              // borderRadius: '50%',
-                            }}
-                          >
-                            Assign Employee
-                          </Button>
-                        </Tooltip>
-                      )}
-
-                    {/* {row.group_name === 'Manager' && row.employee_linked && (
-                  {isHaveUnAssign && ( */}
-                    {isHaveUnAssign &&
-                      (row.group_name === 'Manager' ||
-                        row.group_name === 'Admin' ||
-                        row.group_name === 'Operator VMS') &&
-                      row.employee_linked && (
-                        <Tooltip title="Unassign Employee" arrow placement="top">
-                          <Button
-                            onClick={() => onUnAssign?.(row)}
-                            disableRipple
-                            variant="contained"
-                            color="secondary"
-                            sx={{
-                              color: 'white',
-
-                              // width: 28,
-                              // height: 28,
-                              // p: 0.5,
-                              // borderRadius: '50%',
-                            }}
-                          >
-                            Unassign Employee
-                          </Button>
-                        </Tooltip>
-                      )}
-
-                    {isHaveAssignTracking && (
-                      <Tooltip title="Assign Tracking BLE" arrow placement="top">
-                        <Button
-                          onClick={() => onAssignTracking?.(row)}
+                          onClick={() => onAssign?.(row)}
                           disableRipple
                           variant="contained"
-                          // color="secondary"
                           sx={{
                             color: 'white',
-                            backgroundColor: '#000',
+
                             // width: 28,
                             // height: 28,
                             // p: 0.5,
                             // borderRadius: '50%',
                           }}
                         >
-                          Assign Tracking
+                          Assign Employee
                         </Button>
                       </Tooltip>
                     )}
 
-                    <Tooltip title="Edit">
-                      <IconButton
-                        onClick={() => onEdit?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: '#FA896B',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                        }}
-                      >
-                        <IconPencil width={14} height={14} />
-                      </IconButton>
-                    </Tooltip>
-
-                    {/* 🗑 Delete */}
-                    <Tooltip title="Delete">
-                      <IconButton
-                        onClick={() => onDelete?.(row)}
-                        disableRipple
-                        sx={{
-                          color: 'white',
-                          backgroundColor: 'error.main',
-                          width: 28,
-                          height: 28,
-                          p: 0.5,
-                          borderRadius: '50%',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                  {/* {row.group_name === 'Manager' && row.employee_linked && (
+                  {isHaveUnAssign && ( */}
+                  {isHaveUnAssign &&
+                    (row.group_name === 'Manager' ||
+                      row.group_name === 'Admin' ||
+                      row.group_name === 'Operator VMS') &&
+                    row.employee_linked && (
+                      <Tooltip title="Unassign Employee" arrow placement="top">
+                        <Button
+                          onClick={() => onUnAssign?.(row)}
+                          disableRipple
+                          variant="contained"
+                          color="secondary"
+                          sx={{
                             color: 'white',
-                          },
+
+                            // width: 28,
+                            // height: 28,
+                            // p: 0.5,
+                            // borderRadius: '50%',
+                          }}
+                        >
+                          Unassign Employee
+                        </Button>
+                      </Tooltip>
+                    )}
+
+                  {isHaveAssignTracking && (
+                    <Tooltip title="Assign Tracking BLE" arrow placement="top">
+                      <Button
+                        onClick={() => onAssignTracking?.(row)}
+                        disableRipple
+                        variant="contained"
+                        // color="secondary"
+                        sx={{
+                          color: 'white',
+                          backgroundColor: '#000',
+                          // width: 28,
+                          // height: 28,
+                          // p: 0.5,
+                          // borderRadius: '50%',
                         }}
                       >
-                        <IconTrash width={14} height={14} />
-                      </IconButton>
+                        Assign Tracking
+                      </Button>
                     </Tooltip>
-                  </Box>
-                )}
-              </Box>
-            </TableCell>
-          )
-        }
-        {
-          isHaveActionRevoke && !isActionVisitor && (
-            <>
-              <TableCell
-                sx={{
-                  position: 'sticky',
-                  right: 0,
-                  background: 'white',
-                  zIndex: 2,
-                  display: 'flex',
-                  gap: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Tooltip title="Grant" arrow>
-                  <Button
-                    onClick={() => onActionAccess?.(row, 'grant')}
-                    disableRipple
-                    variant="contained"
-                    sx={{
-                      color: 'white',
-                      backgroundColor: '#4CAF50',
-                    }}
-                  >
-                    Grant
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Revoke" arrow>
-                  <Button
-                    onClick={() => onActionAccess?.(row, 'revoke')}
-                    disableRipple
-                    variant="contained"
-                    sx={{
-                      color: 'white',
-                      backgroundColor: '#f44336',
-                    }}
-                  >
-                    Revoke
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Block" arrow>
-                  <Button
-                    onClick={() => onActionAccess?.(row, 'block')}
-                    disableRipple
-                    variant="contained"
-                    sx={{
-                      color: 'white',
-                      backgroundColor: '#000',
-                    }}
-                  >
-                    Block
-                  </Button>
-                </Tooltip>
-              </TableCell>
-            </>
-          )
-        }
-        {
-          isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+                  )}
+
+                  <Tooltip title="Edit">
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete">
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
+          </TableCell>
+        )}
+        {isHaveActionRevoke && !isActionVisitor && (
+          <>
             <TableCell
               sx={{
                 position: 'sticky',
@@ -1931,7 +1862,82 @@ const TableRowItem = React.memo(
                 justifyContent: 'center',
               }}
             >
-              <Box display="flex" alignItems="end">
+              <Tooltip title="Grant" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'grant')}
+                  disableRipple
+                  variant="contained"
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#4CAF50',
+                  }}
+                >
+                  Grant
+                </Button>
+              </Tooltip>
+              <Tooltip title="Revoke" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'revoke')}
+                  disableRipple
+                  variant="contained"
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#f44336',
+                  }}
+                >
+                  Revoke
+                </Button>
+              </Tooltip>
+              <Tooltip title="Block" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'block')}
+                  disableRipple
+                  variant="contained"
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#000',
+                  }}
+                >
+                  Block
+                </Button>
+              </Tooltip>
+            </TableCell>
+          </>
+        )}
+        {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+          <>
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                background: 'white',
+                zIndex: 2,
+                display: 'flex',
+                gap: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Box display="flex" alignItems="end" gap={0.5}>
+                {isCopy && (
+                  <Tooltip title="Copy">
+                    <IconButton
+                      onClick={() => onCopy?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'gray',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+                      }}
+                    >
+                      <IconCopy width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 {/* Tombol Edit (Primary, Kecil) */}
                 <Tooltip title="Edit">
                   <IconButton
@@ -1954,182 +1960,176 @@ const TableRowItem = React.memo(
                 </Tooltip>
               </Box>
             </TableCell>
-          )
-        }
-        {
-          isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
-            <TableCell
-              sx={{
-                position: 'sticky',
-                right: 0,
-                background: 'white',
-                zIndex: 2,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Box display="flex" alignItems="end" gap={1}>
-                {/* Tombol Edit (Primary, Kecil) */}
-                <Tooltip title="Give Access" arrow>
-                  <Button
-                    onClick={() => onGiveAccess?.(row)}
-                    // disableRipple
-                    variant="contained"
-                    color="primary"
-                  >
-                    Give Access
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Registered Site" arrow>
-                  <Button
-                    onClick={() => onRegisteredSite?.(row)}
-                    // disableRipple
-                    variant="contained"
-                    color="secondary"
-                  >
-                    Registered Site
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Site Access" arrow>
-                  <Button
-                    onClick={() => onSiteAccess?.(row)}
-                    // disableRipple
-                    variant="contained"
-                    color="warning"
-                  >
-                    Site Access
-                  </Button>
-                </Tooltip>
-              </Box>
-            </TableCell>
-          )
-        }
-        {
-          isCopyLink && (
-            <TableCell
-              sx={{
-                position: 'sticky',
-                right: 0,
-                background: 'white',
-                zIndex: 2,
-                display: 'flex',
-                gap: 0.5,
-                mt: 0.5,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Box display="flex" alignItems="end" gap={1}>
-                {/* Tombol Edit (Primary, Kecil) */}
-                <Tooltip title="Copy Link" arrow>
-                  <IconButton
-                    onClick={() => onCopyLink?.(row)}
-                    disableRipple
-                    sx={{
+          </>
+        )}
+        {isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
+          <TableCell
+            sx={{
+              position: 'sticky',
+              right: 0,
+              background: 'white',
+              zIndex: 2,
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box display="flex" alignItems="end" gap={1}>
+              {/* Tombol Edit (Primary, Kecil) */}
+              <Tooltip title="Give Access" arrow>
+                <Button
+                  onClick={() => onGiveAccess?.(row)}
+                  // disableRipple
+                  variant="contained"
+                  color="primary"
+                >
+                  Give Access
+                </Button>
+              </Tooltip>
+              <Tooltip title="Registered Site" arrow>
+                <Button
+                  onClick={() => onRegisteredSite?.(row)}
+                  // disableRipple
+                  variant="contained"
+                  color="secondary"
+                >
+                  Registered Site
+                </Button>
+              </Tooltip>
+              <Tooltip title="Site Access" arrow>
+                <Button
+                  onClick={() => onSiteAccess?.(row)}
+                  // disableRipple
+                  variant="contained"
+                  color="warning"
+                >
+                  Site Access
+                </Button>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
+        {isCopyLink && (
+          <TableCell
+            sx={{
+              position: 'sticky',
+              right: 0,
+              background: 'white',
+              zIndex: 2,
+              display: 'flex',
+              gap: 0.5,
+              mt: 0.5,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box display="flex" alignItems="end" gap={1}>
+              {/* Tombol Edit (Primary, Kecil) */}
+              <Tooltip title="Copy Link" arrow>
+                <IconButton
+                  onClick={() => onCopyLink?.(row)}
+                  disableRipple
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#FA896B',
+                    width: 28,
+                    height: 28,
+                    p: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.7)',
                       color: 'white',
-                      backgroundColor: '#FA896B',
-                      width: 28,
-                      height: 28,
-                      p: 0.5,
-                      borderRadius: '50%',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    <IconCopy width={14} height={14} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Detail Link" arrow>
-                  <IconButton
-                    onClick={() => onDetailLink?.(row)}
-                    disableRipple
-                    sx={{
+                    },
+                  }}
+                >
+                  <IconCopy width={14} height={14} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Detail Link" arrow>
+                <IconButton
+                  onClick={() => onDetailLink?.(row)}
+                  disableRipple
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'gray',
+                    width: 28,
+                    height: 28,
+                    p: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
                       color: 'white',
-                      backgroundColor: 'gray',
-                      width: 28,
-                      height: 28,
-                      p: 0.5,
-                      borderRadius: '50%',
-                      '&:hover': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    {/* <IconCopy width={14} height={14} /> */}
-                    <IconEye width={24} height={24} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Link" arrow>
-                  <IconButton
-                    onClick={() => onDelete?.(row)}
-                    disableRipple
-                    sx={{
-                      color: 'white',
+                    },
+                  }}
+                >
+                  {/* <IconCopy width={14} height={14} /> */}
+                  <IconEye width={24} height={24} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete Link" arrow>
+                <IconButton
+                  onClick={() => onDelete?.(row)}
+                  disableRipple
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'red',
+                    width: 28,
+                    height: 28,
+                    p: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': {
                       backgroundColor: 'red',
-                      width: 28,
-                      height: 28,
-                      p: 0.5,
-                      borderRadius: '50%',
-                      '&:hover': {
-                        backgroundColor: 'red',
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    {/* <IconCopy width={14} height={14} /> */}
-                    <IconTrash width={24} height={24} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </TableCell>
-          )
-        }
-        {
-          isButtonEnabled && isButtonDisabled && (
-            <TableCell
-              sx={{
-                position: 'sticky',
-                right: 0,
-                background: 'white',
-                zIndex: 2,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Box display="flex" alignItems="end" gap={1}>
-                {/* Tombol Edit (Primary, Kecil) */}
-                <Tooltip title="Enabled" arrow>
-                  <Button
-                    onClick={() => onGiveAccess?.(row)}
-                    // disableRipple
-                    variant="contained"
-                    color="primary"
-                  >
-                    Enabled
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Disabled" arrow>
-                  <Button
-                    onClick={() => onIsButtonDisabled?.(row)}
-                    // disableRipple
-                    variant="contained"
-                    color="error"
-                  >
-                    Disabled
-                  </Button>
-                </Tooltip>
-              </Box>
-            </TableCell>
-          )
-        }
-      </TableRow >
+                      color: 'white',
+                    },
+                  }}
+                >
+                  {/* <IconCopy width={14} height={14} /> */}
+                  <IconTrash width={24} height={24} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
+        {isButtonEnabled && isButtonDisabled && (
+          <TableCell
+            sx={{
+              position: 'sticky',
+              right: 0,
+              background: 'white',
+              zIndex: 2,
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box display="flex" alignItems="end" gap={1}>
+              {/* Tombol Edit (Primary, Kecil) */}
+              <Tooltip title="Enabled" arrow>
+                <Button
+                  onClick={() => onGiveAccess?.(row)}
+                  // disableRipple
+                  variant="contained"
+                  color="primary"
+                >
+                  Enabled
+                </Button>
+              </Tooltip>
+              <Tooltip title="Disabled" arrow>
+                <Button
+                  onClick={() => onIsButtonDisabled?.(row)}
+                  // disableRipple
+                  variant="contained"
+                  color="error"
+                >
+                  Disabled
+                </Button>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
+      </TableRow>
     );
   },
   (prev, next) => {

@@ -16,7 +16,6 @@ import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   createGiveAccessOperator,
   createGrandAccessOperator,
@@ -43,7 +42,6 @@ import {
   CreateVisitorRequestSchema,
   FormVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
-import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';

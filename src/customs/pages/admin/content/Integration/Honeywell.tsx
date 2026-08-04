@@ -1068,6 +1068,16 @@ const Honeywell = ({ id }: { id: string }) => {
     navigate('/admin/manage/integration');
   };
 
+  const handleCopy = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+
+      showSwal('success', 'ID copied successfully');
+    } catch (error) {
+      showSwal('error', 'Failed to copy ID');
+    }
+  };
+
   return (
     <>
       <PageContainer title="Integration Detail" description="this is Dashboard page">
@@ -1122,6 +1132,10 @@ const Honeywell = ({ id }: { id: string }) => {
                   onSearchKeywordChange={handleSearchKeywordChange}
                   searchKeyword={searchInput}
                   onSearch={handleSearch}
+                  isCopy={true}
+                  onCopy={(row) => {
+                    handleCopy(row.id);
+                  }}
                   // onFilterByColumn={(column) => {
                   //   setSortColumn(column.column);
                   // }}

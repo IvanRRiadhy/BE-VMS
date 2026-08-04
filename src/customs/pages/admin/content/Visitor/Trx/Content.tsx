@@ -66,12 +66,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
-import 'dayjs/locale/id';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
+import 'dayjs/locale/id';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
