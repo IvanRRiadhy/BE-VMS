@@ -306,7 +306,6 @@ const Router = [
               { path: '/invitation-share', element: <SelfPraregistration /> },
               { path: '/invitation-share/success', element: <SuccessPage /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
-
               { path: '*', element: <NotFoundPage /> },
             ],
           },

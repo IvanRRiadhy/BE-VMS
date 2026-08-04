@@ -62,9 +62,17 @@ import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
 import VisitorQrCodeDialog from './components/VisitorQrCodeDialog';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import 'dayjs/locale/id';
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
+dayjs.locale('id');
+
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
@@ -232,6 +240,7 @@ const Content = () => {
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           invitation_created_at: item.invitation_created_at,
           host: item.host ?? '-',
+          host_name: item.host_name ?? '-',
           visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
         };
       })
@@ -241,7 +250,7 @@ const Content = () => {
 
         return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
       })
-      .map(({ invitation_created_at, ...rest }: any) => rest);
+      .map(({ invitation_created_at, host_name, ...rest }: any) => rest);
   }, [allVisitorData]);
 
   const visitorDataAll = useMemo(
@@ -641,6 +650,68 @@ const Content = () => {
     }
   };
 
+  const handleExportPdf = () => {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    doc.setFontSize(18);
+    doc.text('Visitor Report', 14, 15);
+
+    doc.setFontSize(10);
+    doc.text(`Generated : ${dayjs().format('DD MMM YYYY HH:mm:ss')}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 28,
+      theme: 'grid',
+      head: [
+        [
+          'No',
+          'Visitor Type',
+          'Name',
+          'Identity ID',
+          'Email',
+          'Organization',
+          'Phone',
+          'Host',
+          'Period Start',
+          'Period End',
+          'Status',
+        ],
+      ],
+      body: (allVisitorData?.collection ?? []).map((item: any, index: number) => [
+        index + 1,
+        item.visitor_type_name,
+        item.visitor_name,
+        item.visitor_identity_id,
+        item.visitor_email,
+        item.visitor_organization_name,
+        item.visitor_phone,
+        item.host_name,
+        formatDateTime(item.visitor_period_start),
+        formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+        item.visitor_status,
+      ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        valign: 'middle',
+      },
+      headStyles: {
+        fillColor: [25, 118, 210],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+    });
+
+    doc.save(`Visitor_Report_${dayjs().format('YYYYMMDD_HHmmss')}.pdf`);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -693,7 +764,8 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveImage={true}
                 isHaveSearch={true}
-                isHaveExportPdf={false}
+                isHaveExportPdf={true}
+                onExportPdf={handleExportPdf}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
                 isHaveVip={true}

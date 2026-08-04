@@ -30,6 +30,7 @@ import {
   IconFileExport,
   IconFileSpreadsheet,
   IconFileTypePdf,
+  IconFilter,
   IconLink,
   IconPlus,
   IconPrinter,
@@ -1077,12 +1078,12 @@ function DynamicTableBase<
                       onClick={() => setShowDrawerFilterMore(true)}
                       size="medium"
                       variant="outlined"
-                      startIcon={<IconAdjustmentsHorizontal />}
-                      color="info"
+                      startIcon={<IconFilter />}
+                      color="primary"
                       sx={{ height: 36 }}
                     >
                       <Typography variant="caption" fontSize={'0.7rem'}>
-                        Filter more
+                        Filter
                       </Typography>
                     </Button>
                   )}

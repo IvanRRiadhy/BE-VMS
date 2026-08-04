@@ -1,5 +1,13 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Box, Button, Typography, InputAdornment, TextField, Tooltip } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  InputAdornment,
+  TextField,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { IconArrowAutofitLeft, IconExternalLink } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -42,8 +50,13 @@ const SearchToolbar = memo(
         justifyContent="space-between"
         alignItems="center"
         gap={0.5}
-        // flexWrap="wrap"
-        // width="100%"
+        flexWrap="wrap"
+        sx={{
+          width: {
+            xs: '100%',
+            lg: 'auto',
+          },
+        }}
       >
         <TextField
           fullWidth
@@ -80,23 +93,22 @@ const SearchToolbar = memo(
             // },
           }}
         />
+        <Button
+          variant="contained"
+          onClick={submit}
+          sx={{
+            height: 36,
+            fontSize: '0.7rem',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          <Typography fontSize="0.7rem" variant="caption">
+            {t('search')}
+          </Typography>
+        </Button>
 
-        <Box display="flex" gap={0.5}>
-          <Button
-            variant="contained"
-            onClick={submit}
-            sx={{
-              height: 36,
-              fontSize: '0.7rem',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            <Typography fontSize="0.7rem" variant="caption">
-              {t('search')}
-            </Typography>
-          </Button>
-
+        <Box display="flex" gap={0.5} flexWrap="wrap">
           {isOperatorSetting && (
             <Button
               variant="contained"
