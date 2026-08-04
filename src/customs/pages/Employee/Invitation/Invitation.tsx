@@ -17,16 +17,14 @@ import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  CreateVisitorRequestSchema,
-} from 'src/customs/api/models/Admin/Visitor';
+import { CreateVisitorRequestSchema } from 'src/customs/api/models/Admin/Visitor';
 import {
   getAllVisitorPagination,
   getEmployeeById,
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconBolt, IconClipboard, IconLink, IconSearch, IconShare, IconUserPlus, IconUsers } from '@tabler/icons-react';
+import { IconBolt, IconClipboard, IconLink, IconUserPlus } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -36,9 +34,7 @@ import {
   getInvitationVisitorEmployee,
   getInvitationVisitorType,
 } from 'src/customs/api/Admin/InvitationData';
-import {
-  getShareLinkById,
-} from 'src/customs/api/Admin/ShareLink';
+import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
@@ -94,7 +90,6 @@ const Content = () => {
   // Employee Detail
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
-  const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any[]>([]);
   const [openRelatedInvitation, setOpenRelatedInvitation] = useState(false);
@@ -195,7 +190,6 @@ const Content = () => {
     filters: appliedFilters,
   });
 
-
   const tableRowVisitors = useMemo(() => {
     return (
       tableTransaction?.pages.flatMap((page) =>
@@ -214,15 +208,12 @@ const Content = () => {
     );
   }, [tableTransaction]);
 
-  const totalFilteredRecords =
-    tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
-  const totalRecords =
-    tableTransaction?.pages[0]?.RecordsTotal ?? 0;
+  const totalFilteredRecords = tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
+  const totalRecords = tableTransaction?.pages[0]?.RecordsTotal ?? 0;
 
-  const {
-    data: detailData,
-    isLoading: groupDetailLoading,
-  } = useTransactionVisitorDetail(selectedGroupId as string);
+  const { data: detailData, isLoading: groupDetailLoading } = useTransactionVisitorDetail(
+    selectedGroupId as string,
+  );
 
   useEffect(() => {
     if (detailData?.collection) {
@@ -232,18 +223,13 @@ const Content = () => {
     }
   }, [detailData]);
 
-  const groupHeader =
-    detailData?.collection?.[0] ?? null;
-
+  const groupHeader = detailData?.collection?.[0] ?? null;
 
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const {
-    data: quickAccessResult,
-    isLoading: isLoadingQuickAccess,
-  } = useQuickAccessPagination({
+  const { data: quickAccessResult, isLoading: isLoadingQuickAccess } = useQuickAccessPagination({
     page: quickPage,
     rowsPerPage: quickRowsPerPage,
     search: quickSearch,
@@ -307,14 +293,14 @@ const Content = () => {
       color: 'none',
     },
     {
-      title: t("shareLink"),
+      title: t('shareLink'),
       icon: IconLink,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
     },
     {
-      title: t("quickAccess"),
+      title: t('quickAccess'),
       icon: IconBolt,
       subTitle: iconAdd,
       subTitleSetting: 'image',
@@ -367,8 +353,6 @@ const Content = () => {
     setConfirmDialogOpen(false);
     handleCloseDialog();
   };
-
-
 
   const selectedVisitorData = useMemo(() => {
     return visitorDetail
@@ -434,17 +418,16 @@ const Content = () => {
     fetchSecondaryData();
   }, []);
 
-
   const handleDeleteLink = async (id: string) => {
     try {
-      const confirm = showConfirmDelete(t("confirmDelete", { name: 'Share Link' }));
+      const confirm = showConfirmDelete(t('confirmDelete', { name: 'Share Link' }));
       if (!confirm) return;
 
       // await deleteShareLink(id);
       await deleteMutation.mutateAsync(id);
-      showSwal('success', t("deleteSuccess", { name: 'Share Link' }));
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
     } catch (error: any) {
-      showSwal('error', error?.response.data.message || t("deleteFailed", { name: 'Share Link' }));
+      showSwal('error', error?.response.data.message || t('deleteFailed', { name: 'Share Link' }));
     }
   };
 
@@ -456,7 +439,6 @@ const Content = () => {
   const handleDetailLink = (link: string) => {
     setOpenDetailLink(true);
   };
-
 
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
@@ -486,7 +468,7 @@ const Content = () => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
 
     if (!validEmails.length || !selectedShareLinkId) {
-      showSwal('error', t("pleaseSendAtleastOneEmail"));
+      showSwal('error', t('pleaseSendAtleastOneEmail'));
       return;
     }
     try {
@@ -500,7 +482,7 @@ const Content = () => {
           emails: validEmails,
         },
       });
-      showSwal('success', t("successSendInvitation"));
+      showSwal('success', t('successSendInvitation'));
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
@@ -525,7 +507,7 @@ const Content = () => {
       await createMutation.mutateAsync(finalPayload);
       setOpenSendEmail(false);
       setOpenCreateLink(false);
-      showSwal('success', t("successSendShareLink"));
+      showSwal('success', t('successSendShareLink'));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     }
@@ -536,9 +518,9 @@ const Content = () => {
       await createMutation.mutateAsync(payload);
 
       setOpenCreateLink(false);
-      showSwal('success', t("createSuccess", { name: 'Share Link' }));
+      showSwal('success', t('createSuccess', { name: 'Share Link' }));
     } catch (err: any) {
-      showSwal('error', err.response.data.message ?? t("createFailed", { name: 'Share Link' }));
+      showSwal('error', err.response.data.message ?? t('createFailed', { name: 'Share Link' }));
     }
   };
 
@@ -546,11 +528,14 @@ const Content = () => {
     try {
       await createQuickAccess.mutateAsync(payload);
 
-      showSwal('success', t("createSuccess", { name: 'Quick Access' }));
+      showSwal('success', t('createSuccess', { name: 'Quick Access' }));
 
       setOpenQuickAccess(false);
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || t("createFailed", { name: 'Quick Access' }));
+      showSwal(
+        'error',
+        error?.response?.data?.message || t('createFailed', { name: 'Quick Access' }),
+      );
       throw error;
     }
   };
@@ -673,11 +658,7 @@ const Content = () => {
                 />
                 {/* Detail From List */}
                 {selectedVisitor && (
-                  <VisitorDetailPanel
-                    selectedVisitor={selectedVisitor}
-                    tab={tab}
-                    setTab={setTab}
-                  />
+                  <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
                 )}
               </Box>
             </Box>
@@ -824,7 +805,14 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
-      <GlobalBackdropLoading open={createQuickAccess.isPending || createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending} />
+      <GlobalBackdropLoading
+        open={
+          createQuickAccess.isPending ||
+          createMutation.isPending ||
+          sendEmailMutation.isPending ||
+          deleteMutation.isPending
+        }
+      />
     </>
   );
 };

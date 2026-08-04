@@ -50,8 +50,6 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showReasonDialog, showSwal } from 'src/customs/components/alerts/alerts';
 import FormWizardAddVisitor from 'src/customs/pages/Operator/Invitation/FormWizardAddVisitor';
 import FormWizardAddInvitation from 'src/customs/pages/Operator/Invitation/FormWizardAddInvitation';

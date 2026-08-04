@@ -80,7 +80,6 @@ const Content = () => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const navigate = useNavigate();
   const { remove, blacklist } = useEmployeeMutation();
-  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
     exitEnd: '',

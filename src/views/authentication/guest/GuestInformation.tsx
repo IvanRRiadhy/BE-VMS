@@ -1204,8 +1204,24 @@ const GuestInformationStepper = () => {
                     <CustomTextField
                       fullWidth
                       value={displayValue}
-                      onChange={(e) => handleChange(f.remarks, e.target.value)}
-                      placeholder={f.long_display_text || f.remarks}
+                      onChange={(e) => {
+                        let value = e.target.value;
+
+                        if ((f.remarks || '').toLowerCase() === 'phone') {
+                          value = value.replace(/\D/g, '');
+                        }
+
+                        handleChange(f.remarks, value);
+                      }}
+                      inputProps={
+                        (f.remarks || '').toLowerCase() === 'phone'
+                          ? {
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*',
+                            }
+                          : undefined
+                      }
+                      placeholder={'Enter your ' + (f.long_display_text || f.remarks)}
                       error={!!errors[f.remarks]}
                       helperText={errors[f.remarks]}
                     />

@@ -2972,8 +2972,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       size="small"
                       value={item.answer_text || ''}
                       onChange={(e) => {
-                        onChange(originalIndex, 'answer_text', e.target.value);
-                        if (e.target.value) clearFieldError(key);
+                        let value = e.target.value;
+
+                        if ((item.remarks || '').toLowerCase() === 'phone') {
+                          value = value.replace(/\D/g, '');
+                        }
+
+                        onChange(originalIndex, 'answer_text', value);
+
+                        if (value) clearFieldError(key);
                       }}
                       placeholder={
                         item.remarks === 'name'
@@ -2985,6 +2992,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               : item.remarks === 'indentity_id'
                                 ? ''
                                 : ''
+                      }
+                      inputProps={
+                        (item.remarks || '').toLowerCase() === 'phone'
+                          ? {
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*',
+                            }
+                          : undefined
                       }
                       disabled={item.remarks === 'name' && isEmployee}
                       fullWidth

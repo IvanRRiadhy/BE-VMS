@@ -145,7 +145,28 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             type="text"
             size="small"
             value={field.answer_text}
-            onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+            // onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+            onChange={(e) => {
+              let value = e.target.value;
+
+              if ((field.remarks || '').toLowerCase() === 'phone') {
+                value = value.replace(/\D/g, '');
+              }
+
+              onChange(index, 'answer_text', value);
+
+              if (value) {
+                clearFieldError(errorKey);
+              }
+            }}
+            inputProps={
+              (field.remarks || '').toLowerCase() === 'phone'
+                ? {
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  }
+                : undefined
+            }
             placeholder=""
             fullWidth
             sx={{ minWidth: 160, maxWidth: '100%' }}

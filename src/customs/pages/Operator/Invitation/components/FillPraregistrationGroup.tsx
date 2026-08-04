@@ -185,7 +185,23 @@ function FillPraregistrationGroup({
             <CustomTextField
               size="small"
               value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+              onChange={(e) => {
+                let value = e.target.value;
+
+                if ((field.remarks || '').toLowerCase() === 'phone') {
+                  value = value.replace(/\D/g, '');
+                }
+
+                onChange(index, 'answer_text', value);
+              }}
+              inputProps={
+                (field.remarks || '').toLowerCase() === 'phone'
+                  ? {
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*',
+                    }
+                  : undefined
+              }
               placeholder=""
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
@@ -226,14 +242,12 @@ function FillPraregistrationGroup({
           const sitePlaceId = invitationDetail?.collection?.site_place ?? '';
 
           switch (field.remarks) {
-            case "visitor_role":
+            case 'visitor_role':
               options =
-                invitationDetail?.collection?.visitor_type_data?.visitor_roles?.map(
-                  (r: any) => ({
-                    value: r.role,
-                    name: r.role,
-                  }),
-                ) ?? [];
+                invitationDetail?.collection?.visitor_type_data?.visitor_roles?.map((r: any) => ({
+                  value: r.role,
+                  name: r.role,
+                })) ?? [];
               break;
             case 'host':
               options = [{ value: hostId, name: hostName }];
@@ -249,11 +263,11 @@ function FillPraregistrationGroup({
             case 'site_place':
               options = sitePlaceName
                 ? [
-                  {
-                    value: field.answer_text || sitePlaceId,
-                    name: sitePlaceName,
-                  },
-                ]
+                    {
+                      value: field.answer_text || sitePlaceId,
+                      name: sitePlaceName,
+                    },
+                  ]
                 : [];
               break;
 
@@ -1039,7 +1053,7 @@ function FillPraregistrationGroup({
                           <Typography fontWeight={600}>{f.long_display_text}</Typography>
 
                           <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                            {renderFieldInput(f, idx, () => { })}
+                            {renderFieldInput(f, idx, () => {})}
                           </Box>
                         </Grid>
                       ))}
@@ -1061,7 +1075,7 @@ function FillPraregistrationGroup({
           disabled={fillFormActiveStep === -1}
           startIcon={<IconArrowLeft width={18} />}
         >
-          {t("back")}
+          {t('back')}
         </Button>
 
         {fillFormActiveStep < fillFormData.length - 1 ? (
@@ -1070,7 +1084,7 @@ function FillPraregistrationGroup({
             onClick={() => setFillFormActiveStep((p: number) => p + 1)}
             endIcon={<IconArrowRight width={18} />}
           >
-            {t("next")}
+            {t('next')}
           </Button>
         ) : (
           <Button variant="contained" onClick={handleSubmitPramultiple} disabled={loadingAccess}>

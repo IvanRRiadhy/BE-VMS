@@ -2,11 +2,6 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  DialogActions,
   Portal,
   Button,
   Grid2 as Grid,
@@ -14,10 +9,6 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  IconButton,
-  Autocomplete,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
