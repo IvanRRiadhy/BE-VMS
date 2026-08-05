@@ -1145,7 +1145,7 @@ const TableRowItem = React.memo(
                   </Box>
                 </>
               ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                <Box display="flex" alignItems="center" width={'100%'} justifyContent={'center'}>
+                <Box display="flex" alignItems="center" width={'100%'} justifyContent={'start'}>
                   <Switch
                     checked={row[col] as boolean}
                     onChange={(_, checked) => {

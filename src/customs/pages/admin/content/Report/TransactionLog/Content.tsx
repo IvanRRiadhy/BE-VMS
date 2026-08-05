@@ -240,8 +240,6 @@ const Content = () => {
 
   const handlePostReport = async (rep?: any) => {
     try {
-
-
       if (!rep) {
         setSelectedReport(null);
       }
@@ -259,10 +257,8 @@ const Content = () => {
         return;
       }
 
-      const res = rep
-        ? await generateReportVisitorById(rep)
-        : await generateReport(formData);
-      console.log('res', res);
+      const res = rep ? await generateReportVisitorById(rep) : await generateReport(formData);
+
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,
@@ -281,11 +277,11 @@ const Content = () => {
         res.collection?.data?.map((item: any) => ({
           id: item.id,
           visitor_type: item.visitor_type_name,
-          name: item.visitor.name,
-          email: item.visitor.email,
-          organization: item.visitor.organization,
-          gender: item.visitor.gender,
-          phone: item.visitor.phone,
+          name: item.visitor_name,
+          email: item.visitor_email,
+          organization: item.visitor_organization_name,
+          // gender: item.visitor.gender,
+          phone: item.visitor_phone,
           // is_vip: item.visitor.is_vip,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
@@ -308,8 +304,6 @@ const Content = () => {
 
   const exportToExcel = async () => {
     try {
-
-
       // Validasi CustomDate
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
         showSwal('error', 'Please select start and end date for CustomDate report');
@@ -325,7 +319,6 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-
         responseType: 'blob',
       });
 
@@ -460,8 +453,6 @@ const Content = () => {
   };
 
   const handleEditReport = async (rep: any) => {
-
-
     const res = await getReportVisitorTransactionById(rep.id);
     const d = res.collection;
 
@@ -487,8 +478,6 @@ const Content = () => {
   const [loadingView, setLoadingView] = useState(false);
 
   const handleViewReport = async (rep: any) => {
-
-
     setLoadingView(true);
 
     try {
@@ -654,18 +643,14 @@ const Content = () => {
                   <Autocomplete
                     size="small"
                     options={visitorOptions}
-                    getOptionLabel={(option) =>
-                      typeof option === 'string' ? option : option.name
-                    }
+                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     inputValue={searchVisitor}
                     onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
                     filterOptions={(opts, state) => {
                       const term = (state.inputValue || '').toLowerCase();
                       // if (term.length < 3) return [];
-                      return opts.filter((opt) =>
-                        (opt.name || '').toLowerCase().includes(term),
-                      );
+                      return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
                     }}
                     noOptionsText={searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'}
                     value={visitorOptions.find((x: any) => x.id === formData.visitor_id) || null}

@@ -36,12 +36,7 @@ import {
   IconCalendarUp,
   IconMapPin,
   IconUserCheck,
-  IconLogin2,
-  IconLogout2,
   IconX,
-  IconForbid2,
-  IconQrcodeOff,
-  IconCardboards,
   IconId,
 } from '@tabler/icons-react';
 import moment from 'moment-timezone';
