@@ -965,7 +965,7 @@ function DynamicTableBase<
                         }}
                         onClick={onHaveViewAll}
                       >
-                        View All
+                        {t('viewAll')}
                       </Typography>
                     </Box>
                   )}
@@ -980,7 +980,7 @@ function DynamicTableBase<
                       onClick={onPrint}
                     >
                       <Typography variant="caption" fontSize={'0.7rem'}>
-                        Print
+                        {t('print')}
                       </Typography>
                     </Button>
                   )}
@@ -1139,13 +1139,13 @@ function DynamicTableBase<
                   )}
 
                   {isHaveConnection && (
-                    <Tooltip title="Check Connection">
+                    <Tooltip title={t('checkConnection')}>
                       <Button
                         startIcon={<IconLink />}
                         variant="contained"
                         onClick={onCheckConnection}
                       >
-                        Check Connection
+                        {t('checkConnection')}
                       </Button>
                     </Tooltip>
                   )}

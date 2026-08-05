@@ -1001,7 +1001,7 @@ const OperatorView = () => {
         setSelectedVisitorNumber(matched.visitor_number);
         setSelectedVisitors([matched.id]);
       }
-      showSwal('success', 'Code scanned successfully.', 3000);
+      // showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
       showSwal('error', 'Your code does not exist.', 3000);
     }

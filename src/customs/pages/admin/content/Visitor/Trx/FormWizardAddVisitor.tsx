@@ -42,6 +42,7 @@ import {
   Tooltip,
   Select,
   FormHelperText,
+  Avatar,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -903,14 +904,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         >
           <Box mb={3}>
             <Typography variant="h5" fontWeight={700}>
-              Are you filling this invitation for yourself or someone else?
+              {t('questionInvitation')}
             </Typography>
 
             <Typography variant="body2" color="text.secondary" mt={1}>
-              Select whether you are creating the invitation for yourself or for someone else.
+              {t('subtitleQuestionInvitation')}
             </Typography>
           </Box>
-
           <RadioGroup
             value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
             onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
@@ -944,10 +944,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <Box ml={1}>
                         <Box display="flex" alignItems="center" gap={1}>
                           <Typography fontWeight={700} fontSize={18}>
-                            Self
+                            {t('self')}
                           </Typography>
 
-                          <Tooltip title="This invitation is intended for yourself." arrow>
+                          <Tooltip title={t('selfTooltip')} arrow>
                             <InfoOutlined
                               fontSize="small"
                               color="action"
@@ -957,7 +957,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Box>
 
                         <Typography variant="body2" color="text.secondary" mt={0.5}>
-                          Use this option if you are registering yourself.
+                          {t('selfOption')}
                         </Typography>
                       </Box>
                     }
@@ -993,13 +993,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <Box ml={1}>
                         <Box display="flex" alignItems="center" gap={1}>
                           <Typography fontWeight={700} fontSize={18}>
-                            Other
+                            {t('others')}
                           </Typography>
 
-                          <Tooltip
-                            title="This invitation is intended for another person or guest."
-                            arrow
-                          >
+                          <Tooltip title={t('otherTooltip')} arrow>
                             <InfoOutlined
                               fontSize="small"
                               color="action"
@@ -1009,7 +1006,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Box>
 
                         <Typography variant="body2" color="text.secondary" mt={0.5}>
-                          Use this option if you are creating an invitation for someone else.
+                          {t('othersOption')}
                         </Typography>
                       </Box>
                     }
@@ -1045,9 +1042,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 htmlFor="visitor-type"
                 sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
               >
-                Select Status Visitor
+                {t('selectStatusVisitor')}
+                {/* <br /> */}
               </CustomFormLabel>
-              <Box display="flex" alignItems="center" gap={2}>
+              <Typography sx={{ color: 'secondary', opacity: '0.7' }}>
+                {t('subtitleStatusVisitor')}
+              </Typography>
+
+              {/* <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
                   control={
                     <Radio
@@ -1106,6 +1108,117 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     </Box>
                   }
                 />
+              </Box> */}
+              <Box display="flex" gap={2} flexWrap={'wrap'} mt={0.6}>
+                {/* Single */}
+                <Paper
+                  variant="outlined"
+                  onClick={() => {
+                    setIsSingle(true);
+                    setIsGroup(false);
+
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      is_group: false,
+                    }));
+                  }}
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    borderColor: formData.is_group === false ? 'primary.main' : 'divider',
+                    bgcolor: formData.is_group === false ? 'primary.50' : 'background.paper',
+                    transition: 'all .2s',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <Box display="flex" alignItems="center">
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: formData.is_group === false ? 'primary.main' : 'grey.200',
+                        color: formData.is_group === false ? '#fff' : 'text.secondary',
+                      }}
+                    >
+                      <IconUser size={20} />
+                    </Avatar>
+
+                    <Box ml={2} flex={1}>
+                      <Typography fontWeight={600}>Single</Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {t('onlyOneVisitor')}
+                      </Typography>
+                    </Box>
+
+                    <Tooltip arrow title="Only one visitor can be added">
+                      <IconButton size="small">
+                        <IconInfoCircle size={18} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Radio checked={formData.is_group === false} />
+                  </Box>
+                </Paper>
+
+                {/* Group */}
+                <Paper
+                  variant="outlined"
+                  onClick={() => {
+                    setIsSingle(false);
+                    setIsGroup(true);
+
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      is_group: true,
+                    }));
+                  }}
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    borderColor: formData.is_group ? 'primary.main' : 'divider',
+                    bgcolor: formData.is_group ? 'primary.50' : 'background.paper',
+                    transition: 'all .2s',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <Box display="flex" alignItems="center">
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: formData.is_group ? 'primary.main' : 'grey.200',
+                        color: formData.is_group ? '#fff' : 'text.secondary',
+                      }}
+                    >
+                      <IconUsers size={20} />
+                    </Avatar>
+
+                    <Box ml={2} flex={1}>
+                      <Typography fontWeight={600}>Group</Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {t('moreThanOneVisitor')}
+                      </Typography>
+                    </Box>
+
+                    <Tooltip arrow title="Multiple visitors can be added">
+                      <IconButton size="small">
+                        <IconInfoCircle size={18} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Radio checked={formData.is_group === true} />
+                  </Box>
+                </Paper>
               </Box>
               {isGroup && (
                 <Box>
@@ -1217,7 +1330,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       onClick={handleAddGroup}
                       sx={{ mb: 1, mt: 1 }}
                     >
-                      + Add Group
+                      + {t('add')} Group
                     </Button>
                   )}
                 </Box>
@@ -1910,7 +2023,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     }
                   : undefined
               }
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
               error={!!errorMessage}
@@ -1949,7 +2064,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 onChange(index, 'answer_text', e.target.value);
                 if (e.target.value) clearFieldError(errorKey);
               }}
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
               error={!!errorMessage}
@@ -2076,6 +2193,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 error={!!errorMessage}
                 helperText={errorMessage}
                 sx={{ minWidth: 160, maxWidth: '100%' }}
+                placeholder="Select Role"
               >
                 <MenuItem value="">Select Role</MenuItem>
 
@@ -3465,17 +3583,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         if (value) clearFieldError(key);
                       }}
-                      placeholder={
-                        item.remarks === 'name'
-                          ? ''
-                          : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                              ? ''
-                              : item.remarks === 'indentity_id'
-                                ? ''
-                                : ''
-                      }
+                      // placeholder={
+                      //   item.remarks === 'name'
+                      //     ? ''
+                      //     : item.remarks === 'phone'
+                      //       ? ''
+                      //       : item.remarks === 'organization'
+                      //         ? ''
+                      //         : item.remarks === 'indentity_id'
+                      //           ? ''
+                      //           : ''
+                      // }
+                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                       inputProps={
                         (item.remarks || '').toLowerCase() === 'phone'
                           ? {
@@ -3500,7 +3619,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
-                      placeholder="Enter number"
+                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -3516,7 +3635,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
-                      placeholder={item.remarks === 'email' ? '' : ''}
+                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -3947,29 +4066,53 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   }
                   if ((item.remarks || '').toLowerCase() === 'visitor_role') {
                     return (
-                      <CustomTextField
-                        select
+                      // <CustomTextField
+                      //   select
+                      //   size="small"
+                      //   fullWidth
+                      //   value={item.answer_text || ''}
+                      //   onChange={(e) => {
+                      //     const selectedRole = e.target.value;
+                      //     onChange(originalIndex, 'answer_text', selectedRole);
+                      //     if (selectedRole) {
+                      //       clearFieldError(key);
+                      //     }
+                      //   }}
+                      //   placeholder="Select Role"
+
+                      //   error={!!errorMessage}
+                      //   helperText={errorMessage}
+                      // >
+                      //   <MenuItem value="">Select Role</MenuItem>
+
+                      //   {visitorRoles.map((role: any) => (
+                      //     <MenuItem key={role.id} value={role.role}>
+                      //       {role.role}
+                      //     </MenuItem>
+                      //   ))}
+                      // </CustomTextField>
+                      <Autocomplete
                         size="small"
                         fullWidth
-                        value={item.answer_text || ''}
-                        onChange={(e) => {
-                          const selectedRole = e.target.value;
-                          onChange(originalIndex, 'answer_text', selectedRole);
-                          if (selectedRole) {
+                        options={visitorRoles}
+                        getOptionLabel={(option) => option.role}
+                        value={visitorRoles.find((r: any) => r.role === item.answer_text) || null}
+                        onChange={(_, value) => {
+                          onChange(originalIndex, 'answer_text', value?.role || '');
+
+                          if (value) {
                             clearFieldError(key);
                           }
                         }}
-                        error={!!errorMessage}
-                        helperText={errorMessage}
-                      >
-                        <MenuItem value="">Select Role</MenuItem>
-
-                        {visitorRoles.map((role: any) => (
-                          <MenuItem key={role.id} value={role.role}>
-                            {role.role}
-                          </MenuItem>
-                        ))}
-                      </CustomTextField>
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select Role"
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
                     );
                   }
                   return (

@@ -167,7 +167,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                   }
                 : undefined
             }
-            placeholder=""
+            placeholder={'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)}
             fullWidth
             sx={{ minWidth: 160, maxWidth: '100%' }}
             error={!!errorMessage}
@@ -185,7 +185,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             size="small"
             value={field.answer_text}
             onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-            placeholder="Enter number"
+            placeholder={'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)}
             fullWidth
             error={!!errorMessage}
             helperText={errorMessage}
@@ -199,7 +199,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             size="small"
             value={field.answer_text}
             onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-            placeholder=""
+            placeholder={'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)}
             fullWidth
             sx={{ minWidth: 160, maxWidth: '100%' }}
             error={!!errorMessage}

@@ -7,7 +7,8 @@ import {
   getInvitationVisitor,
   getInvitationVisitorEmployee,
 } from 'src/customs/api/Admin/InvitationData';
-import { useDebounce } from 'src/hooks/useDebounce';
+import { components } from 'react-select';
+import { IconSearch } from '@tabler/icons-react';
 
 type Visitor = {
   id: string;
@@ -198,6 +199,9 @@ const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, isEmployee }) => {
       cacheOptions
       defaultOptions={true}
       loadOptions={debouncedLoadOptions}
+      components={{
+        Control: CustomControl,
+      }}
       isOptionDisabled={(option) => option.data?.is_blacklist === true}
       onChange={(option) => {
         setSelectedOption(option as any | null);
@@ -218,5 +222,18 @@ const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, isEmployee }) => {
     />
   );
 };
+
+const CustomControl = (props: any) => (
+  <components.Control {...props}>
+    <IconSearch
+      size={18}
+      style={{
+        marginLeft: 12,
+        color: '#9e9e9e',
+      }}
+    />
+    {props.children}
+  </components.Control>
+);
 
 export default VisitorSelectEmployee;

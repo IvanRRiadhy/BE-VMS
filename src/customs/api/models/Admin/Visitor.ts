@@ -103,7 +103,8 @@ export const visitorItemSchema = z.object({
 export const ListGroupItemSchema = z.object({
   visitor_type: z.string().default(''),
   type_registered: z.number().default(0).optional(),
-  is_group: z.boolean().default(false).optional(),
+  // is_group: z.boolean().default(false).optional(),
+  is_group: z.boolean().nullable().optional(),
   tz: z.string().default('').optional(),
   registered_site: z.string().default('').optional(),
   group_code: z.string().default('').optional(),
@@ -147,7 +148,8 @@ export type CreateSingleVisitorRequest = z.infer<typeof CreateSingleVisitorReque
 export const CreateVisitorRequestSchema = z.object({
   visitor_type: z.string().optional(),
   type_registered: z.number().optional().default(0),
-  is_group: z.boolean().default(false).optional(),
+  // is_group: z.boolean().default(false).optional(),
+  is_group: z.boolean().nullable().optional(),
   tz: z.string().optional(),
   registered_site: z.string().optional(),
   flow: z.string().optional(),
@@ -166,7 +168,8 @@ export const CreateGroupVisitorRequestSchema = z.object({
   list_group: z.array(
     z.object({
       visitor_type: z.string().optional(),
-      is_group: z.boolean().optional().default(false),
+      // is_group: z.boolean().optional().default(false),
+      is_group: z.boolean().nullable().optional(),
       type_registered: z.number().optional().default(0),
       tz: z.string().optional(),
       registered_site: z.string().optional(),

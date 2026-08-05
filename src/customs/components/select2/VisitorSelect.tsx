@@ -9,7 +9,8 @@ import {
   getVisitorInvitation,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-
+import { components } from 'react-select';
+import { IconSearch } from '@tabler/icons-react';
 type Visitor = {
   id: string;
   visitor_status: string;
@@ -135,7 +136,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
         }}
       >
         <Avatar
-          src={imageUrl}
+          src={imageUrl }
           alt={data.name || 'Profile'}
           style={{
             width: 40,
@@ -177,6 +178,9 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
       cacheOptions
       defaultOptions={true}
       loadOptions={debouncedLoadOptions}
+      components={{
+        Control: CustomControl,
+      }}
       isOptionDisabled={(option) => option.data?.is_blacklist === true}
       onChange={(option) => {
         setSelectedOption(option as any | null);
@@ -197,5 +201,18 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
     />
   );
 };
+
+const CustomControl = (props: any) => (
+  <components.Control {...props}>
+    <IconSearch
+      size={18}
+      style={{
+        marginLeft: 12,
+        color: '#9e9e9e',
+      }}
+    />
+    {props.children}
+  </components.Control>
+);
 
 export default VisitorSelect;

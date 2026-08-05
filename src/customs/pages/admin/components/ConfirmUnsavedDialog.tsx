@@ -8,6 +8,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   open: boolean;
@@ -23,13 +24,16 @@ const ConfirmUnsavedDialog: React.FC<Props> = ({
   onClose,
   onDiscard,
   // onContinue,
-  title = 'Unsaved Changes',
-  message = 'You have unsaved changes. Are you sure you want to discard them and continue?',
+  title,
+  message,
 }) => {
+  const { t } = useTranslation();
+  const dialogTitle = title ?? t('unsavedChangesTitle');
+  const dialogMessage = message ?? t('unsavedChangesMessage');
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {title}
+        {dialogTitle}
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -43,11 +47,11 @@ const ConfirmUnsavedDialog: React.FC<Props> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>{message}</DialogContent>
+      <DialogContent dividers> {dialogMessage}</DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={onDiscard} variant="contained" color="primary">
-          Yes, Discard and Continue
+          {t('discardAndContinue')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1221,7 +1221,7 @@ const GuestInformationStepper = () => {
                             }
                           : undefined
                       }
-                      placeholder={'Enter your ' + (f.long_display_text || f.remarks)}
+                      placeholder={'Enter your ' + (f.long_display_text?.toLowerCase() || f.remarks)}
                       error={!!errors[f.remarks]}
                       helperText={errors[f.remarks]}
                     />

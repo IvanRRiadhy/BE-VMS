@@ -5,6 +5,7 @@ import {
   AccordionSummary,
   Alert,
   Autocomplete,
+  Avatar,
   Backdrop,
   Button,
   Card,
@@ -81,6 +82,7 @@ import PreviewDialog from './components/PreviewDialog';
 import { useNavigate } from 'react-router';
 import Swal from 'sweetalert2';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 type VisitorItem = {
   question_page: SectionPageVisitor[];
   single_page: FormField[];
@@ -136,7 +138,7 @@ const FormSelfPraregistration = ({
     single_page: [],
     batch_page: {},
   });
-
+  const { t } = useTranslation();
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -545,8 +547,8 @@ const FormSelfPraregistration = ({
       showSwal(
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
-        err.response?.data?.message ||
-        'Failed to create visitor.',
+          err.response?.data?.message ||
+          'Failed to create visitor.',
       );
 
       if (err?.name === 'ZodError') {
@@ -707,11 +709,11 @@ const FormSelfPraregistration = ({
 
           return shared
             ? {
-              ...f,
-              answer_text: shared.answer_text,
-              answer_datetime: shared.answer_datetime,
-              answer_file: shared.answer_file,
-            }
+                ...f,
+                answer_text: shared.answer_text,
+                answer_datetime: shared.answer_datetime,
+                answer_file: shared.answer_file,
+              }
             : f;
         });
 
@@ -1171,8 +1173,8 @@ const FormSelfPraregistration = ({
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => { })
-            .catch((err) => { }),
+            .then(() => {})
+            .catch((err) => {}),
         ),
       );
 
@@ -1524,9 +1526,9 @@ const FormSelfPraregistration = ({
               options = invitation?.host
                 ? [{ value: invitation.host.id, name: invitation.host.name }]
                 : allVisitorEmployee.map((emp: any) => ({
-                  value: emp.id,
-                  name: emp.name,
-                }));
+                    value: emp.id,
+                    name: emp.name,
+                  }));
               break;
 
             case 'visitor_role':
@@ -2215,12 +2217,12 @@ const FormSelfPraregistration = ({
     const showVTListSkeleton = vtLoading;
     if (step == 0) {
       return (
-        <Box>
+        <Box mt={2}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel
                 htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+                sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}
               >
                 Visitor Type
               </CustomFormLabel>
@@ -2254,10 +2256,14 @@ const FormSelfPraregistration = ({
                 htmlFor="visitor-type"
                 sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
               >
-                Select Status Visitor
+                {t('selectStatusVisitor')}
+                {/* <br /> */}
               </CustomFormLabel>
+              <Typography sx={{ color: 'secondary', opacity: '0.7' }}>
+                {t('subtitleStatusVisitor')}
+              </Typography>
               {/* {formData.visitor_type && ( */}
-              <Box display="flex" alignItems="center" gap={2}>
+              {/* <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
                   // labelPlacement="start"
                   control={
@@ -2315,6 +2321,117 @@ const FormSelfPraregistration = ({
                     </Box>
                   }
                 />
+              </Box> */}
+              <Box display="flex" gap={2} flexWrap={'wrap'} mt={0.6}>
+                {/* Single */}
+                <Paper
+                  variant="outlined"
+                  onClick={() => {
+                    setIsSingle(true);
+                    setIsGroup(false);
+
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      is_group: false,
+                    }));
+                  }}
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    borderColor: formData.is_group === false ? 'primary.main' : 'divider',
+                    bgcolor: formData.is_group === false ? 'primary.50' : 'background.paper',
+                    transition: 'all .2s',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <Box display="flex" alignItems="center">
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: formData.is_group === false ? 'primary.main' : 'grey.200',
+                        color: formData.is_group === false ? '#fff' : 'text.secondary',
+                      }}
+                    >
+                      <IconUser size={20} />
+                    </Avatar>
+
+                    <Box ml={2} flex={1}>
+                      <Typography fontWeight={600}>Single</Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {t('onlyOneVisitor')}
+                      </Typography>
+                    </Box>
+
+                    <Tooltip arrow title="Only one visitor can be added">
+                      <IconButton size="small">
+                        <IconInfoCircle size={18} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Radio checked={formData.is_group === false} />
+                  </Box>
+                </Paper>
+
+                {/* Group */}
+                <Paper
+                  variant="outlined"
+                  onClick={() => {
+                    setIsSingle(false);
+                    setIsGroup(true);
+
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      is_group: true,
+                    }));
+                  }}
+                  sx={{
+                    flex: 1,
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    borderColor: formData.is_group ? 'primary.main' : 'divider',
+                    bgcolor: formData.is_group ? 'primary.50' : 'background.paper',
+                    transition: 'all .2s',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  <Box display="flex" alignItems="center">
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: formData.is_group ? 'primary.main' : 'grey.200',
+                        color: formData.is_group ? '#fff' : 'text.secondary',
+                      }}
+                    >
+                      <IconUsers size={20} />
+                    </Avatar>
+
+                    <Box ml={2} flex={1}>
+                      <Typography fontWeight={600}>Group</Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {t('moreThanOneVisitor')}
+                      </Typography>
+                    </Box>
+
+                    <Tooltip arrow title="Multiple visitors can be added">
+                      <IconButton size="small">
+                        <IconInfoCircle size={18} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Radio checked={formData.is_group === true} />
+                  </Box>
+                </Paper>
               </Box>
               {isGroup && (
                 <Box>
@@ -2466,10 +2583,10 @@ const FormSelfPraregistration = ({
                             sIdx !== activeStep - 1
                               ? s
                               : updateSectionForm(s, (arr) =>
-                                arr.map((item, i) =>
-                                  i === index ? { ...item, [field]: value } : item,
+                                  arr.map((item, i) =>
+                                    i === index ? { ...item, [field]: value } : item,
+                                  ),
                                 ),
-                              ),
                           ),
                         );
                       }}
@@ -2770,13 +2887,13 @@ const FormSelfPraregistration = ({
                   // // return shared ? { ...f, ...pickAns(shared) } : f;
                   return shared
                     ? {
-                      ...f,
-                      ...Object.fromEntries(
-                        Object.entries(pickAns(shared)).filter(
-                          ([_, v]) => v !== '' && v !== null && v !== undefined,
+                        ...f,
+                        ...Object.fromEntries(
+                          Object.entries(pickAns(shared)).filter(
+                            ([_, v]) => v !== '' && v !== null && v !== undefined,
+                          ),
                         ),
-                      ),
-                    }
+                      }
                     : f;
                 });
 
@@ -2928,18 +3045,18 @@ const FormSelfPraregistration = ({
   const cloneForms = (forms?: any[]) =>
     Array.isArray(forms)
       ? forms.map((f, idx) => ({
-        ...f,
-        sort: f.sort ?? idx,
-        foreign_id: asStr(f.foreign_id),
-        answer_text: f.answer_text ?? '',
-        answer_datetime: f.answer_datetime ?? '',
-        answer_file: f.answer_file ?? '',
-        multiple_option_fields: Array.isArray(f.multiple_option_fields)
-          ? f.multiple_option_fields.map((opt: any) =>
-            typeof opt === 'object' ? { ...opt } : opt,
-          )
-          : [],
-      }))
+          ...f,
+          sort: f.sort ?? idx,
+          foreign_id: asStr(f.foreign_id),
+          answer_text: f.answer_text ?? '',
+          answer_datetime: f.answer_datetime ?? '',
+          answer_file: f.answer_file ?? '',
+          multiple_option_fields: Array.isArray(f.multiple_option_fields)
+            ? f.multiple_option_fields.map((opt: any) =>
+                typeof opt === 'object' ? { ...opt } : opt,
+              )
+            : [],
+        }))
       : [];
 
   const buildGroupSections = (sections?: any[]) => {
@@ -2964,116 +3081,116 @@ const FormSelfPraregistration = ({
     // Siapkan Visitor Information (Group)
     const vi = viSrc
       ? {
-        ...viSrc,
-        name: 'Visitor Information (Group)',
-        can_multiple_used: true,
-        is_document: false,
+          ...viSrc,
+          name: 'Visitor Information (Group)',
+          can_multiple_used: true,
+          is_document: false,
 
-        [FORM_KEY]: (() => {
-          const base = cloneForms(formsOf(viSrc));
-          const extra = cloneForms(otherSingles);
-          const startExtra = base.length;
-          const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
+          [FORM_KEY]: (() => {
+            const base = cloneForms(formsOf(viSrc));
+            const extra = cloneForms(otherSingles);
+            const startExtra = base.length;
+            const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
 
-          const startDocs = startExtra + extraWithSort.length;
-          const docsWithSort = docForms.map((f, i) => ({
-            ...f,
-            sort: f.sort ?? startDocs + i,
-          }));
+            const startDocs = startExtra + extraWithSort.length;
+            const docsWithSort = docForms.map((f, i) => ({
+              ...f,
+              sort: f.sort ?? startDocs + i,
+            }));
 
-          return [...base, ...extraWithSort, ...docsWithSort];
-        })(),
-      }
+            return [...base, ...extraWithSort, ...docsWithSort];
+          })(),
+        }
       : {
-        Id: 'visitor_info_group',
-        sort: 0,
-        name: 'Visitor Information (Group)',
-        is_document: false,
-        can_multiple_used: true,
-        [FORM_KEY]: cloneForms([
-          {
-            short_name: 'Full Name',
-            long_display_text: 'Full Name',
-            field_type: 0,
-            remarks: 'name',
-          },
-          { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
-          {
-            short_name: 'Organization',
-            long_display_text: 'Organization',
-            field_type: 0,
-            remarks: 'organization',
-          },
-          // minimal kolom dokumen
-          {
-            short_name: 'Selfie Image',
-            long_display_text: 'Selfie Image',
-            field_type: 10,
-            remarks: 'selfie_image',
-          },
-          {
-            short_name: 'Upload Identity',
-            long_display_text: 'Upload Identity',
-            field_type: 12,
-            remarks: 'identity_image',
-          },
-          {
-            short_name: 'Sign NDA',
-            long_display_text: 'Sign NDA',
-            field_type: 11,
-            remarks: 'nda',
-          },
-        ]),
-      };
+          Id: 'visitor_info_group',
+          sort: 0,
+          name: 'Visitor Information (Group)',
+          is_document: false,
+          can_multiple_used: true,
+          [FORM_KEY]: cloneForms([
+            {
+              short_name: 'Full Name',
+              long_display_text: 'Full Name',
+              field_type: 0,
+              remarks: 'name',
+            },
+            { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
+            {
+              short_name: 'Organization',
+              long_display_text: 'Organization',
+              field_type: 0,
+              remarks: 'organization',
+            },
+            // minimal kolom dokumen
+            {
+              short_name: 'Selfie Image',
+              long_display_text: 'Selfie Image',
+              field_type: 10,
+              remarks: 'selfie_image',
+            },
+            {
+              short_name: 'Upload Identity',
+              long_display_text: 'Upload Identity',
+              field_type: 12,
+              remarks: 'identity_image',
+            },
+            {
+              short_name: 'Sign NDA',
+              long_display_text: 'Sign NDA',
+              field_type: 11,
+              remarks: 'nda',
+            },
+          ]),
+        };
 
     // Purpose Visit tetap section tersendiri (umumnya can_multiple_used true)
     const pv = pvSrc
       ? {
-        ...pvSrc,
-        name: 'Purpose Visit',
-        can_multiple_used: false,
-        is_document: false,
-        [FORM_KEY]: cloneForms(formsOf(pvSrc)),
-      }
+          ...pvSrc,
+          name: 'Purpose Visit',
+          can_multiple_used: false,
+          is_document: false,
+          [FORM_KEY]: cloneForms(formsOf(pvSrc)),
+        }
       : {
-        Id: 'purpose_visit',
-        sort: 1,
-        name: 'Purpose Visit',
-        is_document: false,
-        can_multiple_used: true,
-        [FORM_KEY]: cloneForms([
-          {
-            short_name: 'Host PIC Visit',
-            long_display_text: 'Host PIC Visit',
-            field_type: 3,
-            remarks: 'host',
-          },
-          {
-            short_name: 'Agenda',
-            long_display_text: 'Agenda',
-            field_type: 0,
-            remarks: 'agenda',
-          },
-          {
-            short_name: 'Site Place',
-            long_display_text: 'Site Place',
-            field_type: 0,
-            remarks: 'site_place',
-          },
-          {
-            short_name: 'Visit Start',
-            long_display_text: 'Visit Start',
-            field_type: 9,
-            remarks: 'visitor_period_start',
-          },
-          {
-            short_name: 'Visit End',
-            long_display_text: 'Visit End',
-            field_type: 9,
-            remarks: 'visitor_period_end',
-          },
-        ]),
-      };
+          Id: 'purpose_visit',
+          sort: 1,
+          name: 'Purpose Visit',
+          is_document: false,
+          can_multiple_used: true,
+          [FORM_KEY]: cloneForms([
+            {
+              short_name: 'Host PIC Visit',
+              long_display_text: 'Host PIC Visit',
+              field_type: 3,
+              remarks: 'host',
+            },
+            {
+              short_name: 'Agenda',
+              long_display_text: 'Agenda',
+              field_type: 0,
+              remarks: 'agenda',
+            },
+            {
+              short_name: 'Site Place',
+              long_display_text: 'Site Place',
+              field_type: 0,
+              remarks: 'site_place',
+            },
+            {
+              short_name: 'Visit Start',
+              long_display_text: 'Visit Start',
+              field_type: 9,
+              remarks: 'visitor_period_start',
+            },
+            {
+              short_name: 'Visit End',
+              long_display_text: 'Visit End',
+              field_type: 9,
+              remarks: 'visitor_period_end',
+            },
+          ]),
+        };
     return [vi, pv];
   };
 
@@ -3184,7 +3301,6 @@ const FormSelfPraregistration = ({
     g.data_visitor?.some((v: any) => !isVisitorEmpty(v)),
   );
 
-
   return (
     <>
       <form
@@ -3197,7 +3313,7 @@ const FormSelfPraregistration = ({
         <Box width="100%">
           <>
             {!isMobile ? (
-              <DragDropContext onDragEnd={() => { }}>
+              <DragDropContext onDragEnd={() => {}}>
                 <Droppable
                   droppableId="stepper"
                   direction="horizontal"
@@ -3523,7 +3639,7 @@ const FormSelfPraregistration = ({
                     formData.is_group === null ||
                     formData.is_group === undefined
                   }
-                // onClick={handleOnSubmit}
+                  // onClick={handleOnSubmit}
                 >
                   Submit
                 </Button>

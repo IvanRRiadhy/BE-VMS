@@ -48,6 +48,7 @@ import moment from 'moment-timezone';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import ImagePreviewDialog from './ImagePreviewDialog';
 interface VisitorDetailDialogProps {
   open: boolean;
   loading: boolean;
@@ -85,6 +86,8 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
     : detail?.identity_image
       ? `${axiosInstance2.defaults.baseURL}/cdn${detail.identity_image}`
       : undefined;
+
+  const [previewOpen, setPreviewOpen] = useState(false);
   return (
     <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -112,6 +115,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
                 src={avatarSrc}
                 alt={detail.name || 'visitor'}
                 sx={{ width: 100, height: 100 }}
+                onClick={() => avatarSrc && setPreviewOpen(true)}
               />
               <Typography variant="h5" textAlign="center" noWrap={false}>
                 {detail.visitor_name ?? '-'}
@@ -146,7 +150,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
                     },
                     {
                       icon: <IconId />,
-                      label: 'Identity Id',  
+                      label: 'Identity Id',
                       value: detail.visitor_identity_id,
                     },
                   ].map((item, idx) => (
@@ -284,6 +288,13 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
           Block
         </Button>
       </DialogActions> */}
+      <ImagePreviewDialog
+        open={previewOpen}
+        image={avatarSrc}
+        title="Visitor Photo"
+        alt={'Visitor Photo'}
+        onClose={() => setPreviewOpen(false)}
+      />
     </Dialog>
   );
 };
