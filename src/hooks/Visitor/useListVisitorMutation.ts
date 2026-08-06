@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { createBlacklist } from 'src/customs/api/admin';
+import {
+  createBlacklist,
+  updateVisitorInvitation,
+  deleteVisitorInvitation,
+} from 'src/customs/api/admin';
 
 export const useListVisitorMutation = () => {
   const queryClient = useQueryClient();
@@ -16,7 +20,19 @@ export const useListVisitorMutation = () => {
     onSuccess: invalidate,
   });
 
+  const updateVisitorMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateVisitorInvitation(id, data),
+    onSuccess: invalidate,
+  });
+
+  const deleteVisitorMutation = useMutation({
+    mutationFn: (id: string) => deleteVisitorInvitation(id),
+    onSuccess: invalidate,
+  });
+
   return {
     blacklistMutation,
+    updateVisitorMutation,
+    deleteVisitorMutation,
   };
 };

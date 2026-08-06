@@ -294,8 +294,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-        ? false
-        : status;
+          ? false
+          : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -913,6 +913,22 @@ export const getListVisitorPagination = async (
   return response.data;
 };
 
+// update visitor
+export const updateVisitorInvitation = async (id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/visitor/${id}`, data, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// delete visitor
+export const deleteVisitorInvitation = async (id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/visitor/${id}`, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 // Get by invitation
 export const getVisitorInvitation = async (): Promise<any> => {
   const response = await axiosInstance.get('/visitor/invitation', {
@@ -1031,6 +1047,12 @@ export const deleteVisitor = async (visitId: string): Promise<DeleteVisitorRespo
     headers: { Accept: 'application/json' },
   });
   return response.data;
+};
+
+export const removeVisitor = async (data: { trx_id_visitor: string }) => {
+  return axiosInstance.delete('/visitor/remove-visitor-invite', {
+    data,
+  });
 };
 
 // Transaction Visitor

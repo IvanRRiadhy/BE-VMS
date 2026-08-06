@@ -31,6 +31,7 @@ interface TransactionVisitorDetailProps {
   t: (key: string) => string;
   selectedVisitor?: any;
   setSelectedVisitor?: any;
+  handleRemoveVisitor: () => void;
 }
 
 const TransactionVisitorDetail = ({
@@ -45,6 +46,7 @@ const TransactionVisitorDetail = ({
   t,
   selectedVisitor,
   setSelectedVisitor,
+  handleRemoveVisitor,
 }: TransactionVisitorDetailProps) => {
   return (
     <Box
@@ -71,12 +73,13 @@ const TransactionVisitorDetail = ({
                   </IconButton>
                 </TableCell>
 
-                <TableCell colSpan={8}>
+                <TableCell colSpan={9}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography
                       sx={{
                         fontWeight: 'bold',
                         fontSize: 18,
+                        textTransform: 'capitalize',
                       }}
                     >
                       {groupHeader?.group_name ?? '-'}
@@ -121,6 +124,7 @@ const TransactionVisitorDetail = ({
                 <TableCell>Host</TableCell>
                 <TableCell>Site</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>{t('action')}</TableCell>
               </TableRow>
             </TableHead>
 
@@ -128,14 +132,20 @@ const TransactionVisitorDetail = ({
               <TableBody>
                 {groupDetailLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell colSpan={10} align="center">
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
                 ) : groupVisitors.length > 0 ? (
                   groupVisitors.map((visitor: any, index: number) => (
-                    <VisitorRow key={visitor.id} visitor={visitor} index={index} selectedVisitor={selectedVisitor}
-                      setSelectedVisitor={setSelectedVisitor} />
+                    <VisitorRow
+                      key={visitor.id}
+                      visitor={visitor}
+                      index={index}
+                      selectedVisitor={selectedVisitor}
+                      setSelectedVisitor={setSelectedVisitor}
+                      handleRemoveVisitor={handleRemoveVisitor}
+                    />
                   ))
                 ) : (
                   <TableRow>

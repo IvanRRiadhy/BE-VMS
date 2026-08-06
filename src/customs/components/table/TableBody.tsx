@@ -22,6 +22,7 @@ import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import {
   IconAlertSquare,
   IconCheck,
+  IconCircleMinus,
   IconCopy,
   IconCopyPlus,
   IconEye,
@@ -150,6 +151,25 @@ export const TableBodyContent = ({
   const INDEX_COL_WIDTH = 56;
   const DATA_COL_WIDTH = 180;
   const STICKY_DATA_COUNT = 2;
+
+  const COLUMN_WIDTHS: Record<string, number> = {
+    is_vip: 50,
+    // is_employee: 50,
+    // active: 70,
+    // quick_access: 70,
+    // current_used: 70,
+    // is_blacklist: 70,
+
+    // document_text: 70,
+
+    // name: 220,
+    // email: 260,
+    // phone: 150,
+
+    // approval_status: 150,
+    // visitor_status: 150,
+    // visitor_period_start: 180,
+  };
 
   const getLeftBase = () =>
     (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
@@ -487,6 +507,25 @@ const TableRowItem = React.memo(
     const INDEX_COL_WIDTH = 56;
     const DATA_COL_WIDTH = 180;
     const STICKY_DATA_COUNT = 2;
+    const COLUMN_WIDTHS: Record<string, number> = {
+      is_vip: 30,
+      email: 260,
+      // is_employee: 50,
+      // active: 70,
+      // quick_access: 70,
+      // current_used: 70,
+      // is_blacklist: 70,
+
+      // document_text: 70,
+
+      // name: 220,
+      // email: 260,
+      // phone: 150,
+
+      // approval_status: 150,
+      // visitor_status: 150,
+      // visitor_period_start: 180,
+    };
 
     const getLeftBase = () =>
       (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
@@ -694,6 +733,7 @@ const TableRowItem = React.memo(
         </TableCell>
         {columns.map((col: any, idx: any) => {
           const makeSticky = isStickyVisitorCol(idx);
+          const columnWidth = COLUMN_WIDTHS[col] ?? DATA_COL_WIDTH;
           return (
             <TableCell
               key={col}
@@ -706,7 +746,13 @@ const TableRowItem = React.memo(
                   bgcolor: 'background.paper',
                   minWidth: DATA_COL_WIDTH,
                   maxWidth: DATA_COL_WIDTH,
+                  // minWidth: columnWidth,
+                  // maxWidth: columnWidth,
+                  // width: columnWidth,
                 }),
+                // minWidth: columnWidth,
+                // maxWidth: columnWidth,
+                // width: columnWidth,
                 fontSize: '0.85rem !important',
               }}
             >
@@ -1552,38 +1598,79 @@ const TableRowItem = React.memo(
                   </Tooltip>
                 </>
               ) : isBlacklistAction ? (
-                <Tooltip
-                  title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
-                  arrow
-                  placement="top"
-                  slotProps={{
-                    tooltip: {
-                      sx: {
-                        fontSize: '0.85rem',
-                        padding: '8px 14px',
-                      },
-                    },
-                  }}
-                >
-                  <Button
-                    size="small"
-                    startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
-                    onClick={() => onBlacklist?.(row)}
-                    sx={{
-                      textTransform: 'none',
-                      borderRadius: 1,
-                      fontWeight: 500,
-                      backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
-                      color: 'white',
-                      '&:hover': {
-                        backgroundColor: row.is_blacklist ? '#15803d' : '#000',
-                        opacity: 0.8,
+                <>
+                  <Tooltip title="Edit" arrow>
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete" arrow>
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip
+                    title={row.is_blacklist ? 'Whitelist Visitor' : 'Blacklist Visitor'}
+                    arrow
+                    placement="top"
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '0.85rem',
+                          padding: '8px 14px',
+                        },
                       },
                     }}
                   >
-                    {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
-                  </Button>
-                </Tooltip>
+                    <Button
+                      size="small"
+                      startIcon={row.is_blacklist ? <IconCheck /> : <IconCircleMinus />}
+                      onClick={() => onBlacklist?.(row)}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: 1,
+                        fontWeight: 500,
+                        backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                          opacity: 0.8,
+                        },
+                      }}
+                    >
+                      {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                    </Button>
+                  </Tooltip>
+                </>
               ) : isActionListVisitor ? (
                 <>
                   <Tooltip
@@ -1697,7 +1784,7 @@ const TableRowItem = React.memo(
                   )}
                   {isHaveBlacklist && (
                     <Tooltip
-                      title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
+                      title={row.is_blacklist ? 'Whitelist Visitor' : 'Blacklist Visitor'}
                       arrow
                       placement="top"
                       slotProps={{
@@ -1711,7 +1798,7 @@ const TableRowItem = React.memo(
                     >
                       <Button
                         size="small"
-                        startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
+                        startIcon={row.is_blacklist ? <IconCheck /> : <IconCircleMinus />}
                         onClick={() => onBlacklist?.(row)}
                         sx={{
                           textTransform: 'none',

@@ -153,7 +153,7 @@ export default function EditBadgeTypeDialog({
                             <Autocomplete
                                 fullWidth
                                 autoHighlight
-                                disablePortal
+                                // disablePortal
                                 options={visitorTypeOptions}
                                 value={
                                     visitorTypeOptions.find(

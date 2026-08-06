@@ -77,7 +77,7 @@ const Content = () => {
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const mdUp = useMediaQuery(theme.breakpoints.up('lg'));
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -181,7 +181,6 @@ const Content = () => {
     end_date: '',
   });
 
-
   const { data: siteData } = useRegisteredSite();
 
   const {
@@ -197,10 +196,9 @@ const Content = () => {
     filters: appliedFilters,
   });
 
-  const {
-    data: detailData,
-    isLoading: groupDetailLoading,
-  } = useTransactionVisitorDetail(selectedGroupId as string);
+  const { data: detailData, isLoading: groupDetailLoading } = useTransactionVisitorDetail(
+    selectedGroupId as string,
+  );
 
   useEffect(() => {
     if (detailData?.collection) {
@@ -210,8 +208,7 @@ const Content = () => {
     }
   }, [detailData]);
 
-  const groupHeader =
-    detailData?.collection?.[0] ?? null;
+  const groupHeader = detailData?.collection?.[0] ?? null;
 
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
@@ -234,11 +231,8 @@ const Content = () => {
     );
   }, [tableTransaction]);
 
-  const totalFilteredRecords =
-    tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
-
-  const totalRecords =
-    tableTransaction?.pages[0]?.RecordsTotal ?? 0;
+  const totalFilteredRecords = tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
+  const totalRecords = tableTransaction?.pages[0]?.RecordsTotal ?? 0;
 
   const cards = [
     {
@@ -257,24 +251,23 @@ const Content = () => {
     },
     ...(!isOperatorAdmin
       ? [
-        {
-          title: t('add') + ' Invitation',
-          icon: IconUserPlus,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-        {
-          title: t('add') + ' Pre Registration',
-          icon: IconUserPlus,
-          subTitle: iconAdd,
-          subTitleSetting: 'image',
-          color: 'none',
-        },
-      ]
+          {
+            title: t('add') + ' Invitation',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: t('add') + ' Pre Registration',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+        ]
       : []),
   ];
-
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -378,7 +371,6 @@ const Content = () => {
     }
   };
 
-
   const handleResetFilter = () => {
     const empty = {
       visitor_status: '',
@@ -416,8 +408,6 @@ const Content = () => {
     // setShowDrawerFilterMore(false);
   };
 
-
-
   const handleSelectSite = (site: any) => {
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
@@ -432,23 +422,15 @@ const Content = () => {
       setOpenPreRegistration(true);
     }
   };
-  const { cancelMutation } =
-    useTransactionVisitorMutation();
+  const { cancelMutation, removeMutation } = useTransactionVisitorMutation();
 
   const handleCancel = async (id: string) => {
     try {
       await cancelMutation.mutateAsync(id);
 
-      showSwal(
-        'success',
-        'Transaction successfully cancelled',
-      );
+      showSwal('success', 'Transaction successfully cancelled');
     } catch (error: any) {
-      showSwal(
-        'error',
-        error?.response?.data?.message ??
-        'Failed to cancel visitor',
-      );
+      showSwal('error', error?.response?.data?.message ?? 'Failed to cancel visitor');
     }
   };
 
@@ -460,7 +442,6 @@ const Content = () => {
       item.host_name?.toLowerCase().includes(keyword)
     );
   });
-
 
   const handleDuplicate = async (group: any) => {
     try {
@@ -495,6 +476,22 @@ const Content = () => {
       setOpenPreRegistration(true);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleRemoveVisitor = async () => {
+    if (!selectedVisitor) return;
+
+    try {
+      await removeMutation.mutateAsync({
+        trx_id_visitor: selectedVisitor.id, // atau selectedVisitor.trx_id_visitor
+      });
+
+      showSwal('success', 'Visitor removed successfully');
+
+      setSelectedVisitor(null);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to remove visitor');
     }
   };
 
@@ -571,14 +568,11 @@ const Content = () => {
               t={t}
               selectedVisitor={selectedVisitor}
               setSelectedVisitor={setSelectedVisitor}
+              handleRemoveVisitor={handleRemoveVisitor}
             />
             <Box sx={{ mt: 2 }}>
               {selectedVisitor && (
-                <VisitorDetailPanel
-                  selectedVisitor={selectedVisitor}
-                  tab={tab}
-                  setTab={setTab}
-                />
+                <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
               )}
             </Box>
           </Box>

@@ -233,7 +233,7 @@ const Content = () => {
           name: item.visitor_name || '-',
           identity_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
+          // organization: item.visitor_organization_name || '-',
           invitation_code: item.invitation_code || '-',
           phone: item.visitor_phone || '-',
           visitor_period_start: item.visitor_period_start || '-',
@@ -241,6 +241,7 @@ const Content = () => {
           invitation_created_at: item.invitation_created_at,
           host: item.host ?? '-',
           host_name: item.host_name ?? '-',
+          is_vip: item.is_vip,
           visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
         };
       })

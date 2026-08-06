@@ -20,7 +20,7 @@ import { getVisitorById } from 'src/customs/api/admin';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
-import { showSwal } from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
 import { useListVisitorMutation } from 'src/hooks/Visitor/useListVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import VisitorEditDialog from './components/VisitorEditDialog';
 
 interface VisitorFilters {
   organization_id: string;
@@ -52,7 +53,8 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
-
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [visitorEdit, setVisitorEdit] = useState<any>(null);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [filters, setFilters] = useState<VisitorFilters>({
     organization_id: '',
@@ -72,7 +74,8 @@ const Content = () => {
     filters,
   });
 
-  const { blacklistMutation } = useListVisitorMutation();
+  const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } =
+    useListVisitorMutation();
 
   const tableCustomVisitor =
     data?.collection.map((item: any) => ({
@@ -81,14 +84,15 @@ const Content = () => {
       identity_id: item.identity_id || '-',
       email: item.email || '-',
       is_email_verified: item.is_email_verified || false,
-      is_vip: item.is_vip || false,
       phone: item.phone || '-',
+      // is_vip: item.is_vip || false,
       is_employee: item.is_employee || false,
       is_blacklist: item.is_blacklist,
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+  const vipCount = data?.collection.filter((visitor: any) => visitor.is_vip).length ?? 0;
 
   const cards = useMemo(
     () => [
@@ -96,11 +100,16 @@ const Content = () => {
         title: t('totalVisitor'),
         icon: IconUsers,
         subTitle: `${totalRecords}`,
-        subTitleSetting: 10,
         color: 'none',
       },
+      // {
+      //   title: 'VIP',
+      //   icon: IconUsers,
+      //   subTitle: `${vipCount}`,
+      //   color: 'none',
+      // },
     ],
-    [totalRecords],
+    [totalRecords, t],
   );
 
   const handleView = async (id: string) => {
@@ -232,6 +241,58 @@ const Content = () => {
     [filters],
   );
 
+  const handleDelete = async (id: string) => {
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'visitor' }));
+
+    if (!confirm) return;
+
+    try {
+      setLoadingData(true);
+
+      await deleteVisitorMutation.mutateAsync(id);
+
+      showSwal('success', t('deleteSuccess', { name: 'visitor' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'visitor' }));
+    } finally {
+      setLoadingData(false);
+    }
+  };
+  const handleEdit = async (id: string) => {
+    try {
+      setLoadingData(true);
+
+      const res = await getVisitorById(id);
+
+      setVisitorDetail(res.collection);
+      setOpenEditDialog(true);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || t('fetchFailed', { name: 'visitor' }));
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleUpdate = async (payload: any) => {
+    try {
+      setLoadingData(true);
+
+      await updateVisitorMutation.mutateAsync({
+        id: visitorEdit.id,
+        data: payload,
+      });
+
+      showSwal('success', 'Visitor updated successfully');
+
+      setOpenEditDialog(false);
+      setVisitorEdit(null);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to update visitor');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   return (
     <>
       <PageContainer
@@ -301,6 +362,11 @@ const Content = () => {
                   onNavigatePage={() => {
                     navigate('/admin/visitor/blacklist-visitor');
                   }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    // setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => handleDelete(row.id)}
                 />
               </Grid>
             </Grid>
@@ -314,7 +380,18 @@ const Content = () => {
           onClose={() => setOpenVisitorDialog(false)}
           onConfirm={(action: any) => openConfirm(action)}
         />
+
+        <VisitorEditDialog
+          open={openEditDialog}
+          detail={visitorEdit}
+          onClose={() => {
+            setOpenEditDialog(false);
+            setVisitorEdit(null);
+          }}
+          onSave={handleUpdate}
+        />
       </PageContainer>
+
       <GlobalBackdropLoading open={loadingData} />
     </>
   );

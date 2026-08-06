@@ -1,10 +1,6 @@
-import {
-  Avatar,
-  Checkbox,
-  TableCell,
-  TableRow,
-} from '@mui/material';
+import { Avatar, Button, Checkbox, IconButton, TableCell, TableRow, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
+import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useProfile } from 'src/hooks/Profile/useProfile';
@@ -14,11 +10,13 @@ function VisitorRow({
   index,
   selectedVisitor,
   setSelectedVisitor,
+  handleRemoveVisitor,
 }: {
   visitor: any;
   index: number;
   selectedVisitor?: any;
   setSelectedVisitor?: any;
+  handleRemoveVisitor: () => void;
 }) {
   const [open, setOpen] = useState(true);
   const statusBgMap: Record<string, string> = {
@@ -33,24 +31,6 @@ function VisitorRow({
   const isAdmin = profile?.group_name === 'Admin';
   return (
     <>
-      {/* <TableRow>
-        <TableCell colSpan={6} sx={{ p: 0 }}>
-          <Collapse in={open}>
-            <Box p={2}>
-              <Table size="small"> */}
-      {/* <TableHead>
-                  <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell width="10%">Visitor Name</TableCell>
-                    <TableCell width="15%">Email</TableCell>
-                    <TableCell width="15%">Phone</TableCell>
-                    <TableCell width="15%">Organization</TableCell>
-                    <TableCell width="15%">Host</TableCell>
-                    <TableCell width="15%">Site</TableCell>
-                    <TableCell width="15%">Status</TableCell>
-                  </TableRow>
-                </TableHead> */}
-      {/* <TableBody> */}
       <TableRow>
         <TableCell>
           <Checkbox
@@ -67,18 +47,14 @@ function VisitorRow({
             fontSize: '13px',
           }}
         >
-          <Avatar
-            src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
-          />
+          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
           {visitor.visitor_name}
         </TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
 
-        <TableCell sx={{ fontSize: '13px' }}>
-          {visitor.visitor_organization_name}
-        </TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>
@@ -96,13 +72,16 @@ function VisitorRow({
             {visitor.visitor_status}
           </Box>
         </TableCell>
-      </TableRow>
-      {/* </TableBody>
-              </Table>
-            </Box>
-          </Collapse>
+        <TableCell>
+          <Tooltip title="Remove Visitor" arrow>
+            <span>
+              <IconButton color="error" disabled={!selectedVisitor} onClick={handleRemoveVisitor}>
+                <IconTrash size={26} />
+              </IconButton>
+            </span>
+          </Tooltip>
         </TableCell>
-      </TableRow> */}
+      </TableRow>
     </>
   );
 }
