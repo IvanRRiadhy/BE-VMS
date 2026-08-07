@@ -115,7 +115,7 @@ const Content = () => {
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
-  const secdrawerWidth = 300;
+  const secdrawerWidth = 340;
   const [search, setSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [openGroup, setOpenGroup] = useState(true);
@@ -151,7 +151,7 @@ const Content = () => {
   };
 
   const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 2000);
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
 
   const [filters, setFilters] = useState<any>({
     status: undefined,
@@ -226,6 +226,7 @@ const Content = () => {
           visitor_period_end: formatDateTime(item.visitor_period_end),
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
+          remarks: item.remarks,
         })),
       ) ?? []
     );

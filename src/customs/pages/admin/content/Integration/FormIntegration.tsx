@@ -75,7 +75,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
 
       showSwal(
         'success',
-        editingId ? t("updatedSuccess", { name: 'Integration' }) : t("createdSuccess", { name: 'Integration' }),
+        editingId ? t("updatedSuccess", { name: 'Integration' }) : t("createSuccess", { name: 'Integration' }),
       );
       onSuccess?.();
     } catch (error: any) {

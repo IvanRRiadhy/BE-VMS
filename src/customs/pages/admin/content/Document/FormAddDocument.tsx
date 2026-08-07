@@ -170,7 +170,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       }
       showSwal(
         'success',
-        edittingId ? t("updatedSuccess", { name: "Document" }) : t("createdSuccess", { name: "Document" }),
+        edittingId ? t("updatedSuccess", { name: "Document" }) : t("createSuccess", { name: "Document" }),
       );
       onSuccess?.();
     } catch (err: any) {

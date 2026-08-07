@@ -63,6 +63,7 @@ export default function PreRegistrationDialog({
       onClose={handleClose}
       maxWidth={false}
       PaperProps={{ sx: { width: '100vw' } }}
+      keepMounted
     >
       <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
         {t('add')} Pre Registration

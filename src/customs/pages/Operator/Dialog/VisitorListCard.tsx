@@ -75,10 +75,12 @@ interface VisitorListCardProps {
   handleApplyBulkAction: () => void;
   handleChooseCard: () => void;
   handlePrintClick: () => void;
-  page?: number;
+  page?: any;
   rowsPerPage?: number;
   totalCount?: number;
-  setPage?: React.Dispatch<React.SetStateAction<number>>;
+  setPage?: any;
+  liveCount?: any;
+  relatedCount?: any;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -118,6 +120,8 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   rowsPerPage,
   totalCount,
   setPage,
+  liveCount,
+  relatedCount,
 }) => {
   // const ITEMS_PER_PAGE = 8;
 
@@ -154,15 +158,18 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               },
             }}
           >
-            <Tab value="live" label="Live Visitors" />
-            <Tab value="related" label="Related Visitors" />
+            {/* <Tab value="live" label="Live Visitors" />
+            <Tab value="related" label="Related Visitors" /> */}
+            <Tab value="live" label={`Live Visitors (${liveCount})`} />
+
+            <Tab value="related" label={`Related Visitors (${relatedCount})`} />
           </Tabs>
 
-          <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
+          {/* <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
             <Typography variant="body2" color="text.secondary">
               ({totalVisitors})
             </Typography>
-          </Tooltip>
+          </Tooltip> */}
         </Box>
       </Box>
 
@@ -209,7 +216,13 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           </Tooltip>
         </Stack>
 
-        <Box display="flex" gap={1} alignItems="center" justifyContent={'flex-end'} id="tour-select-multiple">
+        <Box
+          display="flex"
+          gap={1}
+          alignItems="center"
+          justifyContent={'flex-end'}
+          id="tour-select-multiple"
+        >
           <Tooltip
             title="Click and Select more than 1 visitor"
             slotProps={{
@@ -242,11 +255,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               }}
             />
           </Tooltip>
-          <IconButton
-            size="small"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
+          <IconButton size="small" disabled={page === 0} onClick={() => setPage((p: any) => p - 1)}>
             <ChevronLeft />
           </IconButton>
 

@@ -128,7 +128,7 @@
   "deleteSuccess": "Successfully deleted {{name}}.",
   "deleteSuccessMultiple": "Successfully deleted {{count}} {{name}}.",
   "deleteFailed": "Failed to delete {{name}}.",
-  "createdSuccess": "Successfully created {{name}}.",
+  "createSuccess": "Successfully created {{name}}.",
   "createdFailed": "Failed to create {{name}}.",
   "updatedSuccess": "Successfully updated {{name}}.",
   "updatedFailed": "Failed to update {{name}}.",

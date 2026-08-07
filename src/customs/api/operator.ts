@@ -385,8 +385,10 @@ export const getUpComingVisitors = async (params?: {
       'all-visitor-type': params?.all_visitor_type,
       start: params?.start,
       length: params?.length,
-      'sort_dir': params?.sortDir,
-      'search[value]': params?.search,
+      sort_dir: params?.sortDir,
+      ...(params?.search?.trim() && {
+        'search[value]': params.search.trim(),
+      }),
     },
   });
 

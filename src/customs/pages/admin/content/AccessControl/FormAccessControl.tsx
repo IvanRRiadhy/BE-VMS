@@ -132,7 +132,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
       onDirty?.(false);
       showSwal(
         'success',
-        editingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createdSuccess", { name: 'Access Control' }),
+        editingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createSuccess", { name: 'Access Control' }),
       );
       onSuccess?.();
     } catch (err: any) {

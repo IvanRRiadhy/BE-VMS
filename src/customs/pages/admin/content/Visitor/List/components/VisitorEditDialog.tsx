@@ -7,7 +7,9 @@ import {
   Grid,
   Switch,
   FormControlLabel,
+  IconButton,
 } from '@mui/material';
+import { IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
@@ -36,9 +38,14 @@ export default function VisitorEditDialog({ open, detail, onClose, onSave }: Pro
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edit Visitor</DialogTitle>
+      <DialogTitle>
+        Edit Visitor
+        <IconButton size="small" sx={{ position: 'absolute', right: 8, top: 8 }} onClick={onClose}>
+          <IconX />
+        </IconButton>
+      </DialogTitle>
 
-      <DialogContent>
+      <DialogContent dividers>
         <Grid container spacing={2} mt={1}>
           <Grid item xs={12} md={6}>
             <CustomTextField
@@ -116,12 +123,12 @@ export default function VisitorEditDialog({ open, detail, onClose, onSave }: Pro
       </DialogContent>
 
       <DialogActions>
-        <Button color="inherit" onClick={onClose}>
+        <Button color="secondary" onClick={onClose}>
           Cancel
         </Button>
 
         <Button variant="contained" onClick={() => onSave(form)}>
-          Save
+          Submit
         </Button>
       </DialogActions>
     </Dialog>

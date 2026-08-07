@@ -90,8 +90,12 @@ const errorInterceptor = (error: any) => {
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    if (config.url?.includes('/visitor-type/')) {
+      console.log('REQUEST', config.url);
+      console.trace();
+    }
+
     const token = localStorage.getItem('token');
-    // console.log('TOKEN:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -99,15 +103,12 @@ axiosInstance.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 axiosInstance2.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    // console.log('TOKEN:', token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

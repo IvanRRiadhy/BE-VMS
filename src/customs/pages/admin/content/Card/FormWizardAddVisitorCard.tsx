@@ -112,7 +112,6 @@ const FormWizardAddVisitorCard = ({
     setIsDirty?.(true);
   };
 
-
   useEffect(() => {
     if (localForm.is_multi_site) {
       setErrors((prev) => {
@@ -478,10 +477,10 @@ const FormWizardAddVisitorCard = ({
                   localForm.is_multi_site
                     ? null
                     : siteSpaceRes.find(
-                      (s) =>
-                        String(s.id).toLowerCase() ===
-                        String(localForm.registered_site ?? '').toLowerCase(),
-                    ) || null
+                        (s) =>
+                          String(s.id).toLowerCase() ===
+                          String(localForm.registered_site ?? '').toLowerCase(),
+                      ) || null
                 }
                 isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                 onChange={(_, newValue) => {
@@ -662,12 +661,12 @@ const FormWizardAddVisitorCard = ({
                 onClick={handleBack}
                 sx={{ mr: 1 }}
               >
-                {t("back")}
+                {t('back')}
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (
                 <Button onClick={handleNext} variant="contained" color="primary">
-                  {t("next")}
+                  {t('next')}
                 </Button>
               ) : (
                 <Button

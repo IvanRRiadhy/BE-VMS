@@ -181,7 +181,7 @@ const Content = () => {
     if (edittingId) {
       showSwal('success', t('updatedSuccess', { name: 'Custom Field' }));
     } else {
-      showSwal('success', t('createdSuccess', { name: 'Custom Field' }));
+      showSwal('success', t('createSuccess', { name: 'Custom Field' }));
     }
   };
 

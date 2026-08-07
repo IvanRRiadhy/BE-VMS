@@ -610,9 +610,9 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...v,
+                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : v,
         ),
       );
@@ -621,9 +621,9 @@ const OperatorView = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-              ...item,
-              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...item,
+                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : item,
         ),
       );
@@ -700,7 +700,7 @@ const OperatorView = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch { }
+    } catch {}
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
@@ -865,13 +865,9 @@ const OperatorView = () => {
   };
 
   const handleActionBlacklist = async () => {
-    const selectedVisitor = relatedVisitors.find(
-      v => v.id === selectedVisitorId
-    );
+    const selectedVisitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
 
-    const visitorId =
-      selectedVisitor?.visitor_id ??
-      invitationCode?.[0]?.visitor_id;
+    const visitorId = selectedVisitor?.visitor_id ?? invitationCode?.[0]?.visitor_id;
 
     if (!visitorId) {
       setOpenDialogIndex(1);
@@ -992,9 +988,7 @@ const OperatorView = () => {
       handleCloseScanQR();
       setTypeVisitor('related');
 
-      const matched = freshVisitors.collection.find(
-        (v: any) => v.visitor_number === scannedNumber,
-      );
+      const matched = freshVisitors.collection.find((v: any) => v.visitor_number === scannedNumber);
 
       if (matched) {
         setSelectedVisitorId(matched.id);
@@ -1058,9 +1052,9 @@ const OperatorView = () => {
       is_block: v.is_block ?? false,
       invited_by_name: v.invited_by_name ?? '-',
       visitor_role: v.visitor_role ?? '-',
-      checkout_at: v.checkout_at ?? "-",
-      checkin_at: v.checkin_at ?? "-",
-      is_host: v.is_host ?? false
+      checkout_at: v.checkout_at ?? '-',
+      checkin_at: v.checkin_at ?? '-',
+      is_host: v.is_host ?? false,
     }));
 
     setInvitationCode((prev) =>
@@ -1109,7 +1103,6 @@ const OperatorView = () => {
 
     return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
   };
-
 
   const visitorsForSwipe = useMemo(() => {
     return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
@@ -1206,7 +1199,7 @@ const OperatorView = () => {
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
-        toast(t("mustChooseOneCard"), 'info');
+        toast(t('mustChooseOneCard'), 'info');
         return;
       }
 
@@ -1435,10 +1428,10 @@ const OperatorView = () => {
         prev.map((v) =>
           v.id === selectedVisitorId
             ? {
-              ...v,
-              visitor_status: action,
-              is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-            }
+                ...v,
+                visitor_status: action,
+                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
+              }
             : v,
         ),
       );
@@ -1699,7 +1692,7 @@ const OperatorView = () => {
     } catch (error: any) {
       showSwal('error', error?.message || 'Failed to perform multiple action.');
     } finally {
-      setLoadingAccess(false)
+      setLoadingAccess(false);
     }
   };
 
@@ -1707,10 +1700,10 @@ const OperatorView = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-        relatedVisitors.find(
-          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-        ),
-      ].filter(Boolean);
+          relatedVisitors.find(
+            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+          ),
+        ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -1790,7 +1783,6 @@ const OperatorView = () => {
       value: a,
     }));
 
-
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
@@ -1813,9 +1805,9 @@ const OperatorView = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-            ...f,
-            sort: f.sort ?? i,
-          }))
+              ...f,
+              sort: f.sort ?? i,
+            }))
           : [];
 
         return {
@@ -2194,10 +2186,10 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              is_praregister_done: true,
-              visitor_status: 'Preregis',
-            }
+                ...v,
+                is_praregister_done: true,
+                visitor_status: 'Preregis',
+              }
             : v,
         ),
       );
@@ -2210,7 +2202,7 @@ const OperatorView = () => {
       }
       await queryClient.invalidateQueries({
         queryKey: ['upcoming-purpose'],
-      })
+      });
     } catch (error: any) {
       showSwal(
         'error',
@@ -2462,7 +2454,7 @@ const OperatorView = () => {
   const handleSubmitReturnCard = async () => {
     try {
       if (!returnCardNumber.trim()) {
-        showSwal('warning', t("card.inputCardNumber"));
+        showSwal('warning', t('card.inputCardNumber'));
         return;
       }
       setLoadingAccess(true);
@@ -2473,7 +2465,7 @@ const OperatorView = () => {
       };
 
       await returnCard(payload);
-      showSwal('success', t("successReturnCard"));
+      showSwal('success', t('successReturnCard'));
       setOpenReturnCard(false);
       setReturnCardNumber('');
       const invitationId = invitationCode?.[0]?.id;
@@ -2524,7 +2516,6 @@ const OperatorView = () => {
   //   fetchUpcomingPurpose();
   // }, []);
 
-
   // useEffect(() => {
   //   const fetchData = async () => {
   //     const res = await getUpComingVisitors({
@@ -2554,25 +2545,63 @@ const OperatorView = () => {
   //   fetchData();
   // }, [selectedPurpose, page, rowsPerPage]);
 
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(8);
   const sortDir = 'desc';
 
-  const upcomingPurposeQuery = useUpcomingPurpose();
+  const [livePage, setLivePage] = useState(0);
+  const [liveRowsPerPage, setLiveRowsPerPage] = useState(8);
+  const [liveSearch, setLiveSearch] = useState('');
 
-  const upcomingVisitorQuery = useUpcomingVisitors({
-    page,
-    rowsPerPage,
+  const liveVisitorQuery = useUpcomingVisitors({
+    page: livePage,
+    rowsPerPage: liveRowsPerPage,
     sortDir,
-    selectedPurpose: selectedPurpose,
-    search: searchKeyword
+    search: liveSearch,
+    allVisitorType: true,
   });
 
-  const upcomingVisitors = upcomingVisitorQuery.data?.collection ?? [];
-  const recordsTotal = upcomingVisitorQuery.data?.recordsTotal ?? 0;
-  const recordsFiltered = upcomingVisitorQuery.data?.recordsFiltered ?? 0;
+  const upcomingPurposeQuery = useUpcomingPurpose();
+
+  // const upcomingVisitorQuery = useUpcomingVisitors({
+  //   page,
+  //   rowsPerPage,
+  //   sortDir,
+  //   selectedPurpose: selectedPurpose,
+  //   // all_visitor_type: 'true',
+  //   search: searchKeyword
+  // });
+
+  const [purposePage, setPurposePage] = useState(0);
+  const [purposeRowsPerPage, setPurposeRowsPerPage] = useState(10);
+  const [purposeSearch, setPurposeSearch] = useState('');
+
+  const purposeVisitorQuery = useUpcomingVisitors({
+    page: purposePage,
+    rowsPerPage: purposeRowsPerPage,
+    sortDir,
+    search: purposeSearch,
+    visitorType: selectedPurpose?.id,
+  });
+
+  // const upcomingVisitors = upcomingVisitorQuery.data?.collection ?? [];
+  // const recordsTotal = upcomingVisitorQuery.data?.recordsTotal ?? 0;
+  // const recordsFiltered = upcomingVisitorQuery.data?.recordsFiltered ?? 0;
+
+  // Live Visitor
+  const upcomingVisitors = liveVisitorQuery.data?.collection ?? [];
+  const liveRecordsTotal = liveVisitorQuery.data?.recordsTotal ?? 0;
+  const liveRecordsFiltered = liveVisitorQuery.data?.recordsFiltered ?? 0;
+
+  // Detail Purpose
+  const upcomingPurposeVisitors = purposeVisitorQuery.data?.collection ?? [];
+  const loadingPurposeVisitor = purposeVisitorQuery.isLoading || purposeVisitorQuery.isFetching;
+  const purposeRecordsTotal = purposeVisitorQuery.data?.recordsTotal ?? 0;
+  const purposeRecordsFiltered = purposeVisitorQuery.data?.recordsFiltered ?? 0;
+
+  // Card Purpose
   const upcomingPurpose = upcomingPurposeQuery.data ?? [];
+  // const upcomingPurpose = upcomingPurposeQuery.data ?? [];
 
   const filteredUpcomingVisitors = useMemo(() => {
     if (!searchKeyword.trim()) return upcomingVisitors;
@@ -2595,7 +2624,6 @@ const OperatorView = () => {
     );
   }, [upcomingVisitors, searchKeyword]);
 
-
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
   const filteredVisitors = useMemo(() => {
@@ -2606,27 +2634,19 @@ const OperatorView = () => {
     return visitorsSource.filter((v: any) => {
       const fields =
         typeVisitor === 'related'
-          ? [
-            v.name,
-            v.organization,
-            v.host,
-          ]
+          ? [v.name, v.organization, v.host]
           : [
-            v.name,
-            v.organization,
-            v.host,
-            v.invitation_code,
-            v.agenda,
-            v.vehicle_plate_number,
-            v.vehicle_type,
-            v.visitor_status,
-          ];
+              v.name,
+              v.organization,
+              v.host,
+              v.invitation_code,
+              v.agenda,
+              v.vehicle_plate_number,
+              v.vehicle_type,
+              v.visitor_status,
+            ];
 
-      return fields
-        .filter(Boolean)
-        .some((field) =>
-          String(field).toLowerCase().includes(keyword)
-        );
+      return fields.filter(Boolean).some((field) => String(field).toLowerCase().includes(keyword));
     });
   }, [visitorsSource, debouncedKeyword, typeVisitor]);
 
@@ -2781,10 +2801,7 @@ const OperatorView = () => {
   const handleJoyrideCallback = (data: any) => {
     const { status } = data;
 
-    if (
-      status === STATUS.FINISHED ||
-      status === STATUS.SKIPPED
-    ) {
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRunTour(false);
     }
   };
@@ -2799,56 +2816,56 @@ const OperatorView = () => {
   const tourSteps = useMemo(
     () => [
       {
-        target: "#tour-search",
+        target: '#tour-search',
         content:
-          "Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.",
+          'Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.',
       },
       {
-        target: "#tour-visitor-info",
-        content: "Menampilkan informasi utama visitor, seperti nama, perusahaan, dan detail kunjungan,dll.",
-      },
-      {
-        target: "#tour-visitor-detail",
-        content: "Menampilkan informasi detail visitor, termasuk data tambahan dan riwayat yang berkaitan dengan kunjungan.",
-      },
-      {
-        target: "#tour-action-panel",
-        content: "Semua aksi operator tersedia di sini.",
-      },
-      {
-        target: "#tour-visitor-list",
+        target: '#tour-visitor-info',
         content:
-          "Menampilkan daftar Related Visitor yang terhubung dengan kode undangan (Invitation Code) yang telah dimasukkan. Berbeda dengan Live Visitor yang menampilkan seluruh visitor yang akan datang atau berada di area.",
+          'Menampilkan informasi utama visitor, seperti nama, perusahaan, dan detail kunjungan,dll.',
+      },
+      {
+        target: '#tour-visitor-detail',
+        content:
+          'Menampilkan informasi detail visitor, termasuk data tambahan dan riwayat yang berkaitan dengan kunjungan.',
+      },
+      {
+        target: '#tour-action-panel',
+        content: 'Semua aksi operator tersedia di sini.',
+      },
+      {
+        target: '#tour-visitor-list',
+        content:
+          'Menampilkan daftar Related Visitor yang terhubung dengan kode undangan (Invitation Code) yang telah dimasukkan. Berbeda dengan Live Visitor yang menampilkan seluruh visitor yang akan datang atau berada di area.',
       },
       {
         target: '#tour-select-multiple',
-        content: "Aktifkan mode Multiple Selection untuk memilih lebih dari satu visitor.",
+        content: 'Aktifkan mode Multiple Selection untuk memilih lebih dari satu visitor.',
       },
       {
-        target: "#tour-host-info",
-        content: "Menampilkan informasi host atau PIC yang menerima kunjungan visitor.",
+        target: '#tour-host-info',
+        content: 'Menampilkan informasi host atau PIC yang menerima kunjungan visitor.',
       },
       {
-        target: "#tour-occupancy",
-        content: "Menampilkan daftar tipe kunjungan. Klik salah satu tipe untuk melihat detail informasi.",
+        target: '#tour-occupancy',
+        content:
+          'Menampilkan daftar tipe kunjungan. Klik salah satu tipe untuk melihat detail informasi.',
       },
       {
-        target: "#tour-identity-image",
-        content: "Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.",
+        target: '#tour-identity-image',
+        content: 'Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.',
       },
       {
-        target: "#tour-alert",
-        content: "Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor.",
+        target: '#tour-alert',
+        content:
+          'Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor.',
       },
     ],
-    []
+    [],
   );
 
-  const totalCount =
-    typeVisitor === "related"
-      ? filteredVisitors.length
-      : recordsTotal;
-
+  const totalCount = typeVisitor === 'related' ? filteredVisitors.length : liveRecordsTotal;
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -2858,12 +2875,10 @@ const OperatorView = () => {
           display: 'flex',
           flexDirection: { xs: 'column', xl: 'row' },
           // height: isFullscreen ? '100vh' : '100%',
-
+          // backgroundColor: 'red',
           // height: '100%',
           // height: isFullscreen ? '100vh' : '100%',
-          height: isFullscreen
-            ? (isMobile ? '100%' : '100vh')
-            : '100%',
+          height: isFullscreen ? (isMobile ? '100%' : '100vh') : '100%',
           // overflow: 'hidden',
           width: '100%',
           position: 'relative',
@@ -2880,7 +2895,7 @@ const OperatorView = () => {
             height: '100%',
           }}
         >
-          <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }} >
+          <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
             <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}
@@ -2906,11 +2921,15 @@ const OperatorView = () => {
             </Grid>
           </Grid>
 
-          <Grid container spacing={1} alignItems="stretch"
+          <Grid
+            container
+            spacing={1}
+            alignItems="stretch"
             sx={{
               flex: 1,
               minHeight: 0,
-            }}>
+            }}
+          >
             <Grid
               container
               spacing={2}
@@ -2923,7 +2942,6 @@ const OperatorView = () => {
             >
               <Grid
                 size={{ xs: 12, lg: 4.5 }}
-
                 sx={{
                   borderRadius: '15px',
                   // backgroundColor: '#fff',
@@ -2970,6 +2988,7 @@ const OperatorView = () => {
                   flexDirection: 'column',
                   gap: 1,
                   minHeight: 0,
+                  // height: '100%',
                 }}
               >
                 <ActionPanelCard
@@ -3021,10 +3040,12 @@ const OperatorView = () => {
                   handleApplyBulkAction={handleApplyBulkAction}
                   handleChooseCard={handleChooseCard}
                   handlePrintClick={handlePrintClick}
-                  page={page}
-                  rowsPerPage={rowsPerPage}
-                  totalCount={totalCount}
-                  setPage={setPage}
+                  page={livePage}
+                  rowsPerPage={liveRowsPerPage}
+                  totalCount={liveRecordsFiltered}
+                  setPage={setLivePage}
+                  liveCount={liveRecordsFiltered}
+                  relatedCount={totalCountVisitor}
                 />
               </Grid>
 
@@ -3044,16 +3065,15 @@ const OperatorView = () => {
                   handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
                   getColorByName={getColorByName}
                   todayVisitingPurpose={upcomingPurpose}
-                  recordsFiltered={recordsTotal}
+                  // recordsFiltered={liveRecordsFiltered}
+                  recordsFiltered={liveRecordsFiltered}
                 />
               </Grid>
             </Grid>
-
           </Grid>
 
           <Footer />
         </Box>
-
 
         {/* Print */}
         <PrintDialogBulk
@@ -3082,17 +3102,18 @@ const OperatorView = () => {
         />
         {/* Detail Purpose */}
         <DetailVisitingPurpose
+          loading={loadingPurposeVisitor}
           open={openDetailVisitingPurpose}
           onClose={() => setOpenDetailVistingPurpose(false)}
-          data={filteredUpcomingVisitors}
+          data={upcomingPurposeVisitors}
           purposeName={selectedPurpose}
-          page={page}
-          setPage={setPage}
-          totalCount={recordsTotal}
-          rowsPerPage={rowsPerPage}
-          setRowsPerPage={setRowsPerPage}
-          searchKeyword={searchKeyword}
-          setSearchKeyword={setSearchKeyword}
+          page={purposePage}
+          setPage={setPurposePage}
+          totalCount={purposeRecordsFiltered}
+          rowsPerPage={purposeRowsPerPage}
+          setRowsPerPage={setPurposeRowsPerPage}
+          searchKeyword={purposeSearch}
+          setSearchKeyword={setPurposeSearch}
         />
         {/* Search Visitor */}
         <SearchVisitorDialog
@@ -3165,7 +3186,7 @@ const OperatorView = () => {
           handleOpenSwipeDialog={handleOpenSwipeDialog}
           handleConfirmChooseCards={handleConfirmChooseCards}
           setAccessIssuance={setAccessIssuance}
-        // setSelectedCurrentCards={setSelectedCurrentCards}
+          // setSelectedCurrentCards={setSelectedCurrentCards}
         />
 
         {/* Dialog Swipe Card */}
@@ -3395,14 +3416,18 @@ const OperatorView = () => {
           run={runTour}
           onEvent={handleJoyrideCallback}
           continuous={true}
-          options={{ buttons: ['skip', 'back', 'close', 'primary'], showProgress: true, overlayClickAction: "close" }}
+          options={{
+            buttons: ['skip', 'back', 'close', 'primary'],
+            showProgress: true,
+            overlayClickAction: 'close',
+          }}
           scrollToFirstStep={true}
           steps={tourSteps}
           styles={{
             tooltip: {
               borderRadius: 16,
               padding: 26,
-              boxShadow: "0 20px 60px rgba(0,0,0,.25)",
+              boxShadow: '0 20px 60px rgba(0,0,0,.25)',
             },
             tooltipTitle: {
               fontSize: 24,
@@ -3413,18 +3438,18 @@ const OperatorView = () => {
               lineHeight: 1.6,
             },
             beaconWrapper: {
-              accentColor: "#2563EB",
+              accentColor: '#2563EB',
             },
             buttonSkip: {
-              color: "#6B7280",
+              color: '#6B7280',
             },
             buttonBack: {
-              color: "#6B7280",
+              color: '#6B7280',
             },
           }}
         />
       </Box>
-    </PageContainer >
+    </PageContainer>
   );
 };
 

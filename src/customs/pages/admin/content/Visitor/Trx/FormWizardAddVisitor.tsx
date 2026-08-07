@@ -6042,7 +6042,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
     setInputValues({});
     fetchVisitorTypeDetails();
-  }, [formData.visitor_type, visitorType]);
+  }, [formData.visitor_type]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
@@ -6129,7 +6129,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
 
   return (
-    <PageContainer title="Visitor" description="this is Add Visitor page">
+    <PageContainer title="Live Visitor" description="this is Add Visitor page">
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
           {!isMobile ? (

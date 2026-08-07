@@ -196,7 +196,7 @@ const Content = () => {
 
     showSwal(
       'success',
-      edittingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createdSuccess", { name: 'Access Control' }),
+      edittingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createSuccess", { name: 'Access Control' }),
     );
   };
 

@@ -5,11 +5,13 @@ import {
   IconButton,
   InputAdornment,
   Skeleton,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
 import { IconFilterFilled, IconSearch } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { IconPlus } from '@tabler/icons-react';
 
 interface TransactionVisitorListProps {
   mdUp: boolean;
@@ -50,7 +52,7 @@ const TransactionVisitorList = ({
   setSelectedGroupId,
   handleDuplicate,
   handleCancel,
-  fetchNextPage
+  fetchNextPage,
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -138,6 +140,25 @@ const TransactionVisitorList = ({
                 <Typography>End : {group.visitor_period_end}</Typography>
 
                 <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
+                  {group.remarks === 'PraRegister' && (
+                    <Tooltip title="Add" arrow>
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // handleAdd(group);
+                        }}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'primary.dark',
+                          },
+                        }}
+                      >
+                        <IconPlus size={20} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <Button
                     variant="outlined"
                     sx={{

@@ -2,16 +2,33 @@ import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
-const DetailVisitingPurpose = ({ open, onClose, totalCount, data, purposeName, page, setPage, rowsPerPage, setRowsPerPage, searchKeyword, setSearchKeyword }: any) => {
-
+const DetailVisitingPurpose = ({
+  loading,
+  open,
+  onClose,
+  totalCount,
+  data,
+  purposeName,
+  page,
+  setPage,
+  rowsPerPage,
+  setRowsPerPage,
+  searchKeyword,
+  setSearchKeyword,
+}: any) => {
   return (
     <div>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth={false}
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth={false}
         PaperProps={{
           sx: {
             width: '100vw',
           },
-        }}>
+        }}
+      >
         <DialogTitle>{purposeName?.name}</DialogTitle>
 
         <IconButton
@@ -27,10 +44,13 @@ const DetailVisitingPurpose = ({ open, onClose, totalCount, data, purposeName, p
           <IconX />
         </IconButton>
         <DialogContent dividers>
-          <DynamicTable data={data}
+          <DynamicTable
+            loading={loading}
+            data={data}
             isHaveChecked={false}
             isNoActionTableHead
             isHaveSearch
+          
             // selectedRows={selectedRows}
             isHavePagination={true}
             defaultRowsPerPage={rowsPerPage}

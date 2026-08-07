@@ -397,7 +397,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         if (formData.can_track_cctv && analyticsPayload.data.length > 0) {
           await createVisitorTypeAnalyticsBulk(analyticsPayload);
         }
-        showSwal('success', t('createdSuccess', { name: 'Visitor Type' }));
+        showSwal('success', t('createSuccess', { name: 'Visitor Type' }));
       }
 
       onSuccess?.();

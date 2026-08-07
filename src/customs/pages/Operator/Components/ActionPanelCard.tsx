@@ -81,7 +81,7 @@ const ActionPanelCard: FC<Props> = ({
           height: isFullscreen ? '100%' : 'auto',
           //   maxHeight: isFullscreen ? '100%' : 400,
           maxHeight: isFullscreen
-            ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
+            ? { xs: '100%', sm: '100%', lg: '100%', xl: '100%' }
             : { xs: '100%', sm: '100%', xl: '400px' },
           overflow: isFullscreen ? 'hidden' : 'visible',
           //   display: 'flex',

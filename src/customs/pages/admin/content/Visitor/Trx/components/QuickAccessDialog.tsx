@@ -68,7 +68,6 @@ export const QuickAccessDialog = ({
     setOpenQuickAccess(true);
   };
 
-
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const [openQrQuickAccess, setOpenQrQuickAccess] = useState(false);
   const { visitorProviders } = useVisitorProvider();
@@ -95,7 +94,9 @@ export const QuickAccessDialog = ({
 
   const handleSubmit = async () => {
     try {
-      const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
+      const selectedProvider = visitorProviders?.find(
+        (item: any) => item.id === form.visitorProviderId,
+      );
 
       const needPlateNumber =
         selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
@@ -126,10 +127,12 @@ export const QuickAccessDialog = ({
       // console.log('payload', payload);
       await onSubmit?.(payload);
       setOpenQuickAccess(false);
-    } catch (error) { }
+    } catch (error) {}
   };
 
-  const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
+  const selectedProvider = visitorProviders?.find(
+    (item: any) => item.id === form.visitorProviderId,
+  );
   const showVehiclePlate = selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
 
   const qrRef = useRef<HTMLDivElement>(null);

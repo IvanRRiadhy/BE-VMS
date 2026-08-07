@@ -110,7 +110,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
         )}
 
         {/* Kanan: Mode, Notifikasi, Profile */}
-        <Stack spacing={1} direction="row" alignItems="center">
+        <Stack spacing={1} direction="row" alignItems="center"> 
           {/* <IconButton color="inherit" onClick={handleToggleTheme}>
             {isDark ? <IconMoonFilled size={20} /> : <IconMoon size={20} />}
           </IconButton> */}

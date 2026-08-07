@@ -172,7 +172,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
         'success',
         editingId
           ? t('updatedSuccess', { name: 'Visitor Provider' })
-          : t('createdSuccess', { name: 'Visitor Provider' }),
+          : t('createSuccess', { name: 'Visitor Provider' }),
       );
 
       onSuccess?.();

@@ -4,8 +4,13 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   Grid2 as Grid,
+  IconButton,
   MenuItem,
   Select,
   Typography,
@@ -114,6 +119,7 @@ import { Fragment, useState } from 'react';
 import VisitingPurposeDialog from '../Dialog/VisitingPurposeDialog';
 import PreviewImageDialog from '../Dialog/PreviewImageDialog';
 import AlertCard from './AlertCard';
+import { IconX } from '@tabler/icons-react';
 
 interface VisitorImageProps {
   faceImage?: string | null;
@@ -127,8 +133,6 @@ interface VisitorImageProps {
   todayVisitingPurpose?: any;
   recordsFiltered?: any;
 }
-
-
 
 const VisitorImage = ({
   faceImage,
@@ -159,6 +163,18 @@ const VisitorImage = ({
 
   const [openAlertDialog, setOpenAlertDialog] = useState(false);
 
+  const visiblePurposes = todayVisitingPurpose?.slice(0, 4) ?? [];
+  const remainingCount = Math.max((todayVisitingPurpose?.length ?? 0) - 4, 0);
+
+  const [openAllPurpose, setOpenAllPurpose] = useState(false);
+  const handleOpenAllVisitingPurpose = () => {
+    setOpenAllPurpose(true);
+  };
+
+  const handleCloseAllVisitingPurpose = () => {
+    setOpenAllPurpose(false);
+  };
+
   return (
     <Grid
       container
@@ -175,7 +191,10 @@ const VisitorImage = ({
             onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
           />
         </Grid> */}{' '}
-      <Card sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }} id="tour-occupancy">
+      <Card
+        sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }}
+        id="tour-occupancy"
+      >
         <Box
           sx={{
             display: 'flex',
@@ -203,7 +222,7 @@ const VisitorImage = ({
             </Select>
           </FormControl>
         </Box>
-
+        {/* 
         <Grid container spacing={2} mt={2}>
           {todayVisitingPurpose?.length > 0 ? (
             todayVisitingPurpose.map((item: any) => (
@@ -229,13 +248,69 @@ const VisitorImage = ({
                     <Typography fontWeight={600}>{item.name}</Typography>
 
                     <Typography variant="h4" fontWeight="bold" mt={1}>
-                      {/* {item.count} */}
-                      {recordsFiltered}
+                      {item.count}
+               
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
             ))
+          ) : (
+            <Grid size={12}>
+              <Card
+                variant="outlined"
+                sx={{
+                  py: 5,
+                  textAlign: 'center',
+                  borderStyle: 'dashed',
+                }}
+              >
+                <Typography color="text.secondary">No visiting purpose available.</Typography>
+              </Card>
+            </Grid>
+          )}
+        </Grid> */}
+        <Grid container spacing={2} mt={2}>
+          {visiblePurposes.length > 0 ? (
+            <>
+              {visiblePurposes.map((item: any) => (
+                <Grid size={{ xs: 12, lg: 6 }} key={item.id}>
+                  <Card
+                    sx={{
+                      flex: 1,
+                      p: 0,
+                      borderRadius: 1,
+                      background: getColorByName(item.name),
+                      boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                      },
+                      color: '#fff',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleOpenDetailVistingPurpose(item)}
+                  >
+                    <CardContent sx={{ p: '15px !important' }}>
+                      <Typography fontWeight={600}>{item.name}</Typography>
+
+                      <Typography variant="h4" fontWeight="bold" mt={1}>
+                        {item.count}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+
+              {remainingCount > 0 && (
+                <Grid size={12}>
+                  <Button fullWidth variant="outlined" onClick={handleOpenAllVisitingPurpose}>
+                    View All ({todayVisitingPurpose.length})
+                  </Button>
+                </Grid>
+              )}
+            </>
           ) : (
             <Grid size={12}>
               <Card
@@ -281,7 +356,50 @@ const VisitorImage = ({
         onClose={() => setOpenMore(false)}
         data={todayVisitingPurpose}
       />
-    </Grid >
+      <Dialog open={openAllPurpose} onClose={handleCloseAllVisitingPurpose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Live Occupancy
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAllVisitingPurpose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            {todayVisitingPurpose.map((item: any) => (
+              <Grid size={{ xs: 12, sm: 6 }} key={item.id}>
+                <Card
+                  sx={{
+                    background: getColorByName(item.name),
+                    color: '#fff',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    handleCloseAllVisitingPurpose();
+                    handleOpenDetailVistingPurpose(item);
+                  }}
+                >
+                  <CardContent>
+                    <Typography fontWeight={600}>{item.name}</Typography>
+
+                    <Typography variant="h4">{item.count}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+      </Dialog>
+    </Grid>
   );
 };
 
