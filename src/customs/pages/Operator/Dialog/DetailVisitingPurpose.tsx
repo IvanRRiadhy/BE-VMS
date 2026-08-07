@@ -54,7 +54,7 @@ const DetailVisitingPurpose = ({
             // selectedRows={selectedRows}
             isHavePagination={true}
             defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[8, 10, 50, 100]}
+            rowsPerPageOptions={[10, 50, 100]}
             totalCount={totalCount}
             currentPage={page}
             onPaginationChange={(page, rowsPerPage) => {

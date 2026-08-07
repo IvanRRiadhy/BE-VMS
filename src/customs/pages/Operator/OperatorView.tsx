@@ -2475,7 +2475,7 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
     } catch (error: any) {
-      showSwal('error', error.message || 'Failed to return card');
+      showSwal('error', error.message || error?.response?.data?.msg || 'Failed to return card');
     } finally {
       setLoadingAccess(false);
     }
@@ -2545,12 +2545,10 @@ const OperatorView = () => {
   //   fetchData();
   // }, [selectedPurpose, page, rowsPerPage]);
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(8);
   const sortDir = 'desc';
 
   const [livePage, setLivePage] = useState(0);
-  const [liveRowsPerPage, setLiveRowsPerPage] = useState(8);
+  const [liveRowsPerPage, setLiveRowsPerPage] = useState(10);
   const [liveSearch, setLiveSearch] = useState('');
 
   const liveVisitorQuery = useUpcomingVisitors({
@@ -2683,6 +2681,7 @@ const OperatorView = () => {
   const { WS_URL } = getConfig();
 
   useEffect(() => {
+    if (!WS_URL) return;
     const socket = new WebSocket(WS_URL);
 
     socketRef.current = socket;
@@ -2817,55 +2816,52 @@ const OperatorView = () => {
     () => [
       {
         target: '#tour-search',
-        content:
-          'Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.',
+        content: t('tour.search'),
       },
       {
         target: '#tour-visitor-info',
-        content:
-          'Menampilkan informasi utama visitor, seperti nama, perusahaan, dan detail kunjungan,dll.',
+        content: t('tour.visitorInfo'),
       },
       {
         target: '#tour-visitor-detail',
-        content:
-          'Menampilkan informasi detail visitor, termasuk data tambahan dan riwayat yang berkaitan dengan kunjungan.',
+        content: t('tour.visitorDetail'),
       },
       {
         target: '#tour-action-panel',
-        content: 'Semua aksi operator tersedia di sini.',
+        content: t('tour.actionPanel'),
       },
       {
         target: '#tour-visitor-list',
-        content:
-          'Menampilkan daftar Related Visitor yang terhubung dengan kode undangan (Invitation Code) yang telah dimasukkan. Berbeda dengan Live Visitor yang menampilkan seluruh visitor yang akan datang atau berada di area.',
+        content: t('tour.visitorList'),
       },
       {
         target: '#tour-select-multiple',
-        content: 'Aktifkan mode Multiple Selection untuk memilih lebih dari satu visitor.',
+        content: t('tour.selectMultiple'),
       },
       {
         target: '#tour-host-info',
-        content: 'Menampilkan informasi host atau PIC yang menerima kunjungan visitor.',
+        content: t('tour.hostInfo'),
       },
       {
         target: '#tour-occupancy',
-        content:
-          'Menampilkan daftar tipe kunjungan. Klik salah satu tipe untuk melihat detail informasi.',
+        content: t('tour.occupancy'),
       },
       {
         target: '#tour-identity-image',
-        content: 'Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.',
+        content: t('tour.identityImage'),
       },
       {
         target: '#tour-alert',
-        content:
-          'Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor.',
+        content: t('tour.alert'),
       },
     ],
-    [],
+    [t],
   );
 
   const totalCount = typeVisitor === 'related' ? filteredVisitors.length : liveRecordsTotal;
+
+  const [relatedPage, setRelatedPage] = useState(0);
+  const [relatedRowsPerPage, setRelatedRowsPerPage] = useState(10);
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3042,10 +3038,25 @@ const OperatorView = () => {
                   handlePrintClick={handlePrintClick}
                   page={livePage}
                   rowsPerPage={liveRowsPerPage}
-                  totalCount={liveRecordsFiltered}
+                  // totalCount={liveRecordsFiltered}
+                  totalCount={liveVisitorQuery.data?.recordsTotal ?? 0}
                   setPage={setLivePage}
                   liveCount={liveRecordsFiltered}
                   relatedCount={totalCountVisitor}
+                  livePagination={{
+                    page: livePage,
+                    rowsPerPage: liveRowsPerPage,
+                    totalCount: liveVisitorQuery.data?.recordsTotal ?? 0,
+                    setPage: setLivePage,
+                    setRowsPerPage: setLiveRowsPerPage,
+                  }}
+                  relatedPagination={{
+                    page: relatedPage,
+                    rowsPerPage: relatedRowsPerPage,
+                    totalCount: totalCountVisitor,
+                    setPage: setRelatedPage,
+                    setRowsPerPage: setRelatedRowsPerPage,
+                  }}
                 />
               </Grid>
 

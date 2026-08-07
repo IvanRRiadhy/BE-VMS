@@ -150,10 +150,22 @@
   "otherTooltip": "Undangan ini ditujukan untuk orang lain atau tamu.",
   "questionInvitation": "Apakah Anda mengisi undangan ini untuk diri sendiri atau orang lain?",
   "subtitleQuestionInvitation": "Pilih apakah Anda membuat undangan untuk diri sendiri atau untuk orang lain.",
-    "unsavedChangesTitle": "Perubahan Belum Disimpan",
+  "unsavedChangesTitle": "Perubahan Belum Disimpan",
   "unsavedChangesMessage": "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin melanjutkan tanpa menyimpan perubahan?",
   "cancel": "Batal",
   "discardAndContinue": "Ya, Buang Perubahan dan Lanjutkan",
   "viewAll": "Lihat Semua",
-  "checkConnection": "Cek Koneksi"
+  "checkConnection": "Cek Koneksi",
+  "tour": {
+    "search": "Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.",
+    "visitorInfo": "Menampilkan informasi utama visitor, seperti nama, perusahaan, detail kunjungan, dan lainnya.",
+    "visitorDetail": "Menampilkan informasi detail visitor, termasuk data tambahan dan riwayat yang berkaitan dengan kunjungan.",
+    "actionPanel": "Semua aksi operator yang tersedia dapat diakses di sini.",
+    "visitorList": "Menampilkan daftar Related Visitor yang terhubung dengan Invitation Code yang telah dimasukkan. Berbeda dengan Live Visitor yang menampilkan seluruh visitor yang akan datang atau sedang berada di area.",
+    "selectMultiple": "Aktifkan mode Multiple Selection untuk memilih lebih dari satu visitor.",
+    "hostInfo": "Menampilkan informasi host atau PIC yang menerima kunjungan visitor.",
+    "occupancy": "Menampilkan daftar tipe kunjungan. Klik salah satu tipe kunjungan untuk melihat detail informasinya.",
+    "identityImage": "Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.",
+    "alert": "Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor."
+  }
 }

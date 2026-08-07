@@ -54,11 +54,12 @@ const PrintDialog = ({ open, onClose, invitationData, printData, onPrint }: any)
       const escpos = await render(
         <Printer type="epson" width={printData.printer_paper_size || 58} characterSet="korea">
           <Text size={{ width: 2, height: 2 }} align="center">
-            General Visitor
+            {/* General Visitor */}
+            {invitationData?.visitor_type_name ?? 'General Visitor'}
           </Text>
 
           <Image
-            src={`${axiosInstance2.defaults.baseURL}/cdn/${printData.logo}`}
+            src={`${axiosInstance2.defaults.baseURL}/cdn${printData.logo}`}
             align="center"
             width={80}
           />
@@ -167,7 +168,7 @@ const PrintDialog = ({ open, onClose, invitationData, printData, onPrint }: any)
           </Text>
           {printData && (
             <Image
-              src={`${axiosInstance2.defaults.baseURL}/cdn/${printData.logo}`}
+              src={`${axiosInstance2.defaults.baseURL}/cdn${printData.logo}`}
               align="center"
               height={100}
               width={100}

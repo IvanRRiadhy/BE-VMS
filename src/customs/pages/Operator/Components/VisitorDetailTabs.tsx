@@ -380,7 +380,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
         </Box>
       )}
 
-      {tabValue === 2 && (
+      {/* {tabValue === 2 && (
         <Box sx={{ mt: 2, height: '230px' }}>
           <Grid container spacing={2}>
             {invitationCode?.[0]?.card?.map((card: any) => (
@@ -399,7 +399,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                     },
                   }}
                 >
-                  {/* Header */}
+        
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Box
@@ -448,7 +448,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
 
                   <Divider sx={{ my: 0.5 }} />
 
-                  {/* Status */}
+         
                   <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography color="text.secondary">Status</Typography>
 
@@ -466,7 +466,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                     />
                   </Stack>
 
-                  {/* Issued */}
+       
                   {card.issued_at && (
                     <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1 }}>
                       <Box
@@ -496,6 +496,144 @@ const VisitorDetailTabs: React.FC<Props> = ({
               </Grid>
             ))}
           </Grid>
+        </Box>
+      )} */}
+      {tabValue === 2 && (
+        <Box
+          sx={{
+            mt: 2,
+            display: 'flex',
+            gap: 2,
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            scrollSnapType: 'x mandatory',
+            pb: 1,
+
+            '&::-webkit-scrollbar': {
+              height: 8,
+            },
+
+            '&::-webkit-scrollbar-thumb': {
+              bgcolor: 'grey.400',
+              borderRadius: 999,
+            },
+          }}
+        >
+          {invitationCode?.[0]?.card?.map((card: any) => (
+            <Paper
+              key={card.id}
+              elevation={0}
+              sx={{
+                flex: {
+                  xs: '0 0 100%',
+                  md: '0 0 calc(50% - 8px)',
+                },
+                minWidth: 0,
+                scrollSnapAlign: 'start',
+
+                p: 1.5,
+                borderRadius: 3,
+                border: '2px solid',
+                borderColor: card.current_used ? 'primary.main' : 'divider',
+
+                transition: 'all .25s',
+
+                '&:hover': {
+                  boxShadow: 4,
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              {/* Header */}
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 2,
+                      bgcolor: 'primary.lighter',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {card.card_type?.toLowerCase() === 'ble' ? (
+                      <IconBluetooth size={30} color="#1976d2" />
+                    ) : (
+                      <IconBarcode size={30} color="#1976d2" />
+                    )}
+                  </Box>
+
+                  <Box>
+                    <Typography variant="h5" fontWeight={700} lineHeight={1.1}>
+                      {card.card_number}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">
+                      {card.card_type}
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                {card.current_used && (
+                  <Chip
+                    icon={<IconCheck size={16} />}
+                    label="Current Card"
+                    color="success"
+                    sx={{
+                      fontWeight: 700,
+                      borderRadius: 999,
+                    }}
+                  />
+                )}
+              </Stack>
+
+              <Divider sx={{ my: 1 }} />
+
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography color="text.secondary">Status</Typography>
+
+                <Chip
+                  label={card.card_status}
+                  color={
+                    card.card_status === 'Issued'
+                      ? 'success'
+                      : card.card_status === 'Returned'
+                        ? 'default'
+                        : 'warning'
+                  }
+                  size="small"
+                />
+              </Stack>
+
+              {card.issued_at && (
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 2 }}>
+                  <Box
+                    sx={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 2,
+                      bgcolor: 'grey.100',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <IconCalendarEvent size={22} color="#1976d2" />
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Issued
+                    </Typography>
+
+                    <Typography fontWeight={600}>{formatDateTime(card.issued_at)}</Typography>
+                  </Box>
+                </Stack>
+              )}
+            </Paper>
+          ))}
         </Box>
       )}
       {tabValue === 3 && (

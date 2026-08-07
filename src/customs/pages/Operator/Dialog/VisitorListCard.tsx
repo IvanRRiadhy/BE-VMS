@@ -81,6 +81,8 @@ interface VisitorListCardProps {
   setPage?: any;
   liveCount?: any;
   relatedCount?: any;
+  livePagination?: any;
+  relatedPagination?: any;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -103,8 +105,6 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   containerRef,
   CustomTextField,
   getCdnUrl,
-  formatDateTime,
-  setAnchorEl,
   setTypeVisitor,
   setSearchKeyword,
   setSelectMultiple,
@@ -122,17 +122,13 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   setPage,
   liveCount,
   relatedCount,
+  livePagination,
+  relatedPagination,
 }) => {
-  // const ITEMS_PER_PAGE = 8;
+  // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 10));
+  const pagination = typeVisitor === 'live' ? livePagination : relatedPagination;
 
-  // const [page, setPage] = useState(1);
-
-  // const totalPages = Math.ceil(filteredVisitors.length / ITEMS_PER_PAGE);
-
-  // const pagedVisitors = filteredVisitors.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-  // const totalPages = Math.ceil(totalCount / rowsPerPage);
-  // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 8));
-  const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 8));
+  const totalPages = Math.ceil(pagination.totalCount / pagination.rowsPerPage);
   return (
     <Card
       sx={{
@@ -262,10 +258,21 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           <Typography display="flex">
             {`${totalPages === 0 ? 0 : page + 1} / ${totalPages}`}
           </Typography>
-          <IconButton
+          {/* <IconButton
             size="small"
             onClick={() => setPage(page + 1)}
             disabled={totalPages === 0 || page >= totalPages}
+          >
+            <ChevronRight />
+          </IconButton> */}
+          <IconButton
+            size="small"
+            disabled={totalPages === 0 || page >= totalPages - 1}
+            onClick={() => {
+              if (page < totalPages - 1) {
+                setPage(page + 1);
+              }
+            }}
           >
             <ChevronRight />
           </IconButton>
@@ -288,7 +295,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               xs: 'repeat(2, 1fr)',
               sm: 'repeat(3, 1fr)',
               md: 'repeat(4, 1fr)',
-              xl: 'repeat(4, 1fr)',
+              xl: 'repeat(5, 1fr)',
             },
             gap: 1,
           }}

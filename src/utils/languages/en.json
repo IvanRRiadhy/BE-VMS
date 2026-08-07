@@ -156,5 +156,17 @@
   "cancel": "Cancel",
   "discardAndContinue": "Yes, Discard and Continue",
   "viewAll": "View All",
-  "checkConnection": "Check Connection"
+  "checkConnection": "Check Connection",
+  "tour": {
+    "search": "Use Search to find visitors by invitation code or keywords. Click Clear to reset the results to their initial state.",
+    "visitorInfo": "Displays the visitor’s main information, such as name, company, visit details, and more.",
+    "visitorDetail": "Displays detailed visitor information, including additional data and visit-related history.",
+    "actionPanel": "All available operator actions can be accessed here.",
+    "visitorList": "Displays the list of Related Visitors associated with the entered Invitation Code. Unlike Live Visitor, which displays all visitors who are expected to arrive or are currently on-site.",
+    "selectMultiple": "Enable Multiple Selection mode to select more than one visitor.",
+    "hostInfo": "Displays information about the host or PIC receiving the visitor.",
+    "occupancy": "Displays the available visit types. Click a visit type to view its detailed information.",
+    "identityImage": "Displays the identity photo or document uploaded by the visitor.",
+    "alert": "Displays important information or alerts that require attention regarding the visitor."
+  }
 }

@@ -5680,7 +5680,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       showSwal(
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
-          err.response?.data?.message ||
+          err.response?.data?.message || err.response?.data?.msg ||
           'Failed to create visitor.',
       );
 

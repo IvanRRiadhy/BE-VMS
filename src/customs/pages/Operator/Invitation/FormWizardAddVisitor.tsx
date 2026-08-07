@@ -5248,7 +5248,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
 
-        console.log('invitationCode', invitationCode);
         if (invitationCode) {
           onInvitationCreated?.(invitationCode);
         }
@@ -5268,6 +5267,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
           err.response?.data?.message ||
+          err.response?.data?.msg ||
           'Failed to create visitor.',
       );
 

@@ -8,7 +8,7 @@ export const getInvitationSite = async (): Promise<any> => {
     // if (error.response?.status === 404) {
     //   return { collection: [] };
     // }
-    throw error;
+    // throw error;
   }
 };
 
@@ -20,7 +20,7 @@ export const getInvitationAccessControl = async (): Promise<any> => {
     // if (error.response?.status === 404) {
     //   return { collection: [] };
     // }
-    throw error;
+    // throw error;
   }
 };
 
@@ -32,7 +32,7 @@ export const getInvitationVisitorType = async (): Promise<any> => {
     // if (error.response?.status === 404) {
     //   return { collection: [] };
     // }
-    throw error;
+    // throw error;
   }
 };
 
@@ -48,7 +48,7 @@ export const getInvitationVisitor = async (params?: {
 
     return response.data;
   } catch (error: any) {
-    throw error;
+    // throw error;
   }
 };
 
@@ -64,7 +64,7 @@ export const getInvitationVisitorEmployee = async (params?: {
 
     return response.data;
   } catch (error: any) {
-    throw error;
+    // throw error;
   }
 };
 
@@ -82,6 +82,6 @@ export const getInvitationVisitorHost = async (params?: {
     // if (error.response?.status === 404) {
     //   return { collection: [] };
     // }
-    throw error;
+    // throw error;
   }
 };

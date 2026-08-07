@@ -14,6 +14,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { IconArrowRight } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { useTranslation } from 'react-i18next';
 
 type SiteType = {
   id: string;
@@ -59,6 +60,7 @@ const RegisteredSiteDialog: React.FC<Props> = ({
 
     onSubmit(selectedSite);
   };
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onClose={handleCloseClick} fullWidth maxWidth="sm">
@@ -83,7 +85,7 @@ const RegisteredSiteDialog: React.FC<Props> = ({
       </DialogContent>
       <DialogActions>
         <Button variant="contained" onClick={handleNext} endIcon={<IconArrowRight width={18} />}>
-          Next
+          {t('next')}
         </Button>
       </DialogActions>
     </Dialog>
