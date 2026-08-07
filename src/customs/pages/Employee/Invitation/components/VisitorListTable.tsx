@@ -90,7 +90,7 @@ export default function VisitorListTable({
                 </IconButton>
               </TableCell>
 
-              <TableCell colSpan={8}>
+              <TableCell colSpan={9}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography
                     sx={{

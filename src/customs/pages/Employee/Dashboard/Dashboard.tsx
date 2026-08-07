@@ -679,7 +679,7 @@ const DashboardEmployee = () => {
             flexDirection: 'column',
           }}
         >
-          <AccessPassEmployee activeAccessPass={accessPass} onClick={handleOpenAccess} />
+          {/* <AccessPassEmployee activeAccessPass={accessPass} onClick={handleOpenAccess} /> */}
           <Button
             variant="contained"
             color="primary"

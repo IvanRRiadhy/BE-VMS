@@ -4028,6 +4028,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         case 'phone':
                                           return { ...item, answer_text: selected?.phone || '' };
 
+                                        case 'employee':
+                                          return { ...item, answer_text: selected?.id || '' };
+
                                         case 'organization':
                                           return {
                                             ...item,

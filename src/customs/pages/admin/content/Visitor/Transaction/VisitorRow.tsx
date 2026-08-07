@@ -16,7 +16,7 @@ function VisitorRow({
   index: number;
   selectedVisitor?: any;
   setSelectedVisitor?: any;
-  handleRemoveVisitor: () => void;
+  handleRemoveVisitor?: () => void;
 }) {
   const [open, setOpen] = useState(true);
   const statusBgMap: Record<string, string> = {
@@ -72,15 +72,17 @@ function VisitorRow({
             {visitor.visitor_status}
           </Box>
         </TableCell>
-        <TableCell>
-          <Tooltip title="Remove Visitor" arrow>
-            <span>
-              <IconButton color="error" disabled={!selectedVisitor} onClick={handleRemoveVisitor}>
-                <IconTrash size={26} />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </TableCell>
+        {isAdmin && (
+          <TableCell>
+            <Tooltip title="Remove Visitor" arrow>
+              <span>
+                <IconButton color="error" disabled={!selectedVisitor} onClick={handleRemoveVisitor}>
+                  <IconTrash size={26} />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </TableCell>
+        )}
       </TableRow>
     </>
   );
