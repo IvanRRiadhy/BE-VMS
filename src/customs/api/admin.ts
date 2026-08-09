@@ -294,8 +294,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-          ? false
-          : status;
+        ? false
+        : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -1210,8 +1210,11 @@ export const getAllDistrictsPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    'search[value]': keyword,
   };
+
+  if (keyword) {
+    params['search[value]'] = keyword;
+  }
 
   if (sortDir) {
     params.sort_dir = sortDir;
@@ -1283,8 +1286,11 @@ export const getAllDepartmentsPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    'search[value]': keyword,
   };
+
+  if (keyword) {
+    params['search[value]'] = keyword;
+  }
 
   if (sortDir) {
     params.sort_dir = sortDir;
@@ -1358,8 +1364,12 @@ export const getAllOrganizationPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    'search[value]': keyword,
+    // 'search[value]': keyword,
   };
+
+  if (keyword) {
+    params['search[value]'] = keyword;
+  }
 
   if (sortDir) {
     params.sort_dir = sortDir;

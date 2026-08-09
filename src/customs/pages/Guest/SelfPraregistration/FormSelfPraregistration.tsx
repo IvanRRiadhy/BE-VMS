@@ -511,7 +511,7 @@ const FormSelfPraregistration = ({
         setLoading(false);
         // showSwal('success', 'Group visitor created successfully.', 1000);
         resetGroupFormState();
-        navigate('/invitation-share/success');
+        navigate('/invitation-share/success', { replace: true });
       } else {
         if (!sectionsData.length) {
           toast('Minimal isi 1 data visitor.', 'warning');
@@ -2678,8 +2678,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
                                         const originalIndex = page?.form?.findIndex(
                                           (f: any) => f.custom_field_id === field.custom_field_id,
                                         );
@@ -2706,7 +2706,9 @@ const FormSelfPraregistration = ({
                                               {
                                                 showLabel: true,
                                                 // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  field.custom_field_id
+                                                }`,
                                               },
                                             )}
                                           </Box>
@@ -2786,8 +2788,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
 
                                         return (
                                           <TableCell key={field.custom_field_id}>
@@ -2816,7 +2818,9 @@ const FormSelfPraregistration = ({
                                               undefined,
                                               {
                                                 showLabel: false,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  field.custom_field_id
+                                                }`,
                                                 details: page.form || [],
                                               },
                                             )}
@@ -3286,7 +3290,10 @@ const FormSelfPraregistration = ({
       resetSingleFormState();
       navigate('/invitation-share/success', { replace: true });
     } catch (err: any) {
-      showSwal('error', err?.response.data.message ?? 'Failed to create visitor.');
+      showSwal(
+        'error',
+        err?.response.data.msg ?? err?.response.data.message ?? 'Failed to create visitor.',
+      );
       setLoading(false);
     }
   };
@@ -3412,8 +3419,8 @@ const FormSelfPraregistration = ({
                                     backgroundColor: snapshot.isDragging
                                       ? '#1976d2'
                                       : activeStep === index + 1
-                                        ? 'primary.main'
-                                        : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                     color:
                                       snapshot.isDragging || activeStep === index + 1
                                         ? '#fff'

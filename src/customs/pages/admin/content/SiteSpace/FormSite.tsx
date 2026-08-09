@@ -33,8 +33,6 @@ import {
   CreateSiteRequest,
   CreateSiteRequestSchema,
   Item,
-  Parking,
-  Tracking,
   UpdateSiteRequestSchema,
 } from 'src/customs/api/models/Admin/Sites';
 import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
@@ -389,8 +387,6 @@ const FormSite = ({
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
 
-        console.log(updateData);
-
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
@@ -478,7 +474,7 @@ const FormSite = ({
           );
         }
 
-        showSwal('success', t('updateSuccess', { name: 'Site Space' }));
+        showSwal('success', t('updatedSuccess', { name: 'Site Space' }));
         setDeletedSiteDocuments([]);
         setNewSiteDocuments([]);
       } else {

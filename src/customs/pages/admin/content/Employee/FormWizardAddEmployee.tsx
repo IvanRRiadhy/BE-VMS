@@ -42,7 +42,7 @@ import { useTranslation } from 'react-i18next';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { IconDeviceFloppy } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconDeviceFloppy } from '@tabler/icons-react';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -116,8 +116,8 @@ const FormWizardAddEmployee = ({
 
     const serverPath =
       localForm.faceimage &&
-        !localForm.faceimage.startsWith('data:') &&
-        !/^https?:\/\//i.test(localForm.faceimage)
+      !localForm.faceimage.startsWith('data:') &&
+      !/^https?:\/\//i.test(localForm.faceimage)
         ? localForm.faceimage
         : null;
 
@@ -468,8 +468,6 @@ const FormWizardAddEmployee = ({
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
-
-
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) {
@@ -478,9 +476,9 @@ const FormWizardAddEmployee = ({
       showSwal(
         'error',
         err?.response.data?.msg ??
-        err?.response.data?.message ??
-        err?.message ??
-        'Failed to submit. Please try again.',
+          err?.response.data?.message ??
+          err?.message ??
+          'Failed to submit. Please try again.',
       );
     }
   };
@@ -1336,7 +1334,14 @@ const FormWizardAddEmployee = ({
 
                         <Divider sx={{ my: 2 }} />
 
-                        <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            textAlign: 'right',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: 0.5,
+                          }}
+                        >
                           <Button onClick={handleClear} color="error" sx={{ mr: 2 }}>
                             Clear Foto
                           </Button>
@@ -1468,12 +1473,18 @@ const FormWizardAddEmployee = ({
               disabled={activeStep === 0 || loading}
               onClick={handleBack}
               sx={{ backgroundColor: '#edf3ff' }}
+              startIcon={<IconArrowLeft />}
             >
               {t('back')}
             </Button>
             <Box flex="1 1 auto" />
             {activeStep !== steps.length - 1 ? (
-              <Button onClick={handleNext} variant="contained" color="primary">
+              <Button
+                onClick={handleNext}
+                variant="contained"
+                color="primary"
+                endIcon={<IconArrowRight />}
+              >
                 {t('next')}
               </Button>
             ) : (

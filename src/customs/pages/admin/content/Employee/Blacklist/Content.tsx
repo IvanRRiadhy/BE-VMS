@@ -21,6 +21,7 @@ import { IconUsers } from '@tabler/icons-react';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useEmployeeBlacklistPagination } from 'src/hooks/Employee/useEmployeeBlacklistPagination';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 type EmployeesTableRow = {
   id: string;
@@ -60,8 +61,7 @@ const Content = () => {
 
   const totalRecords = employeeBlacklistQuery.data?.RecordsTotal ?? 0;
 
-  const totalFilteredRecords =
-    employeeBlacklistQuery.data?.RecordsFiltered ?? 0;
+  const totalFilteredRecords = employeeBlacklistQuery.data?.RecordsFiltered ?? 0;
 
   const loading = employeeBlacklistQuery.isPending;
   const tableRowEmployee = useMemo(() => {
@@ -73,7 +73,11 @@ const Content = () => {
       phone: item.employee?.phone ?? '-',
       email: item.employee?.email ?? '-',
       gender: item.employee?.gender ?? '-',
+      faceimage: item.employee?.faceimage ?? '',
       reason: item.reason ?? '-',
+      approved: item.approved_by_name ?? '-',
+      blacklist_at: formatDateTime(item.blacklist_at) ?? '-',
+      status: item.employee.status_employee ?? '-',
     }));
   }, [employeeBlacklistQuery.data]);
   const cards = [
@@ -117,7 +121,7 @@ const Content = () => {
                 isHaveAction={false}
                 isHaveSearch={true}
                 isHaveImage={true}
-                searchPlaceholder='Search blacklist employee'
+                searchPlaceholder="Search blacklist employee"
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHavePagination={true}

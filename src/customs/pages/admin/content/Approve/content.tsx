@@ -158,7 +158,7 @@ const Content = ({
     await showSwal(
       'success',
       edittingId
-        ? t('updateSuccess', { name: "Approval Workflow" })
+        ? t('updatedSuccess', { name: "Approval Workflow" })
         : t('createSuccess', { name: "Approval Workflow" }),
     );
   };

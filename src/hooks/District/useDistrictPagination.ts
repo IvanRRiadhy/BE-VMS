@@ -5,7 +5,7 @@ interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
-  searchKeyword: string;
+  searchKeyword?: string;
 }
 
 export const useDistrictPagination = ({ page, rowsPerPage, sortDir, searchKeyword }: Props) => {

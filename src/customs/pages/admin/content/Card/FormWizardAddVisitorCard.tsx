@@ -210,7 +210,7 @@ const FormWizardAddVisitorCard = ({
             }),
           );
 
-          showSwal('success', t('updateSuccess', { name: 'Card' }));
+          showSwal('success', t('updatedSuccess', { name: 'Card' }));
           resetEnabledFields();
           onSuccess?.();
         } catch (err) {
@@ -233,7 +233,7 @@ const FormWizardAddVisitorCard = ({
           id: edittingId,
           data: updatedData,
         });
-        showSwal('success', t('updateSuccess', { name: 'Card' }));
+        showSwal('success', t('updatedSuccess', { name: 'Card' }));
       } else {
         const createdData: CreateVisitorCardRequest = {
           ...data,

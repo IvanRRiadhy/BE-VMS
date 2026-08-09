@@ -1639,7 +1639,7 @@ const TableRowItem = React.memo(
                     </IconButton>
                   </Tooltip>
                   <Tooltip
-                    title={row.is_blacklist ? 'Whitelist Visitor' : 'Blacklist Visitor'}
+                    title={row.is_blacklist ? 'Whitelist' : 'Blacklist'}
                     arrow
                     placement="top"
                     slotProps={{
@@ -1674,7 +1674,7 @@ const TableRowItem = React.memo(
               ) : isActionListVisitor ? (
                 <>
                   <Tooltip
-                    title="Blacklist Visitor"
+                    title="Blacklist"
                     arrow
                     placement="top"
                     slotProps={{
@@ -1784,7 +1784,7 @@ const TableRowItem = React.memo(
                   )}
                   {isHaveBlacklist && (
                     <Tooltip
-                      title={row.is_blacklist ? 'Whitelist Visitor' : 'Blacklist Visitor'}
+                      title={row.is_blacklist ? 'Whitelist' : 'Blacklist'}
                       arrow
                       placement="top"
                       slotProps={{

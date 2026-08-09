@@ -124,7 +124,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
           data: payload,
         });
 
-        showSwal('success', t("updateSuccess", { resource: 'Time Access' }));
+        showSwal('success', t("updatedSuccess", { resource: 'Time Access' }));
         onSuccess?.();
       }
     } catch (err: any) {

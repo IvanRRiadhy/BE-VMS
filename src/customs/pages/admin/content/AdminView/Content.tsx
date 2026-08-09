@@ -323,7 +323,6 @@ const Content = () => {
   };
 
   useEffect(() => {
-
     const fetchData = async () => {
       const res = await getPrintBadgeConfig();
       setPrintData(res?.collection ?? []);
@@ -576,8 +575,6 @@ const Content = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-
-
       try {
         setLoading(true);
         const [vtRes, permissionRes] = await Promise.allSettled([
@@ -664,9 +661,9 @@ const Content = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...v,
+                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : v,
         ),
       );
@@ -675,9 +672,9 @@ const Content = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-              ...item,
-              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...item,
+                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : item,
         ),
       );
@@ -714,7 +711,6 @@ const Content = () => {
   }, [containerRef]);
 
   useEffect(() => {
-
     const fetchData = async () => {
       try {
         const [siteRes, employeeRes] = await Promise.allSettled([
@@ -858,7 +854,7 @@ const Content = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch { }
+    } catch {}
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
@@ -1079,7 +1075,7 @@ const Content = () => {
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-      const freshVisitors = await getInvitationOperatorRelated(invitationId,);
+      const freshVisitors = await getInvitationOperatorRelated(invitationId);
       const scannedNumber = data[0]?.visitor_number;
 
       const matchedIds = freshVisitors.collection
@@ -1189,7 +1185,7 @@ const Content = () => {
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
-    const relatedRes = await getInvitationOperatorRelated(invitationId,);
+    const relatedRes = await getInvitationOperatorRelated(invitationId);
     const relatedData = relatedRes.collection ?? [];
 
     const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
@@ -1244,7 +1240,7 @@ const Content = () => {
           ...inv,
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
         };
       }),
     );
@@ -1677,10 +1673,10 @@ const Content = () => {
         prev.map((v) =>
           v.id === selectedVisitorId
             ? {
-              ...v,
-              visitor_status: action,
-              is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-            }
+                ...v,
+                visitor_status: action,
+                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
+              }
             : v,
         ),
       );
@@ -2007,10 +2003,10 @@ const Content = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-        relatedVisitors.find(
-          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-        ),
-      ].filter(Boolean);
+          relatedVisitors.find(
+            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+          ),
+        ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -2119,9 +2115,9 @@ const Content = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-            ...f,
-            sort: f.sort ?? i,
-          }))
+              ...f,
+              sort: f.sort ?? i,
+            }))
           : [];
 
         return {
@@ -2272,9 +2268,7 @@ const Content = () => {
         return;
       }
 
-      const results = await Promise.all(
-        visitorList.map((v) => getDetailInvitationForm(v.id)),
-      );
+      const results = await Promise.all(visitorList.map((v) => getDetailInvitationForm(v.id)));
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
 
@@ -2427,11 +2421,11 @@ const Content = () => {
             case 'site_place':
               options = sitePlaceName
                 ? [
-                  {
-                    value: field.answer_text || sitePlaceId,
-                    name: sitePlaceName,
-                  },
-                ]
+                    {
+                      value: field.answer_text || sitePlaceId,
+                      name: sitePlaceName,
+                    },
+                  ]
                 : [];
               break;
 
@@ -3099,7 +3093,7 @@ const Content = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
                   }
 
                   return fieldPayload;
@@ -3118,10 +3112,10 @@ const Content = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              is_praregister_done: true,
-              visitor_status: 'Preregis',
-            }
+                ...v,
+                is_praregister_done: true,
+                visitor_status: 'Preregis',
+              }
             : v,
         ),
       );
@@ -3985,7 +3979,6 @@ const Content = () => {
             invitationCode={invitationCode}
             containerRef={containerRef.current}
             fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
-            fetchUpcomingPurpose={fetchUpcomingPurpose}
             registeredSite={registerSiteOperator}
           />
 

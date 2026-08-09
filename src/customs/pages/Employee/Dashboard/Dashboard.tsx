@@ -667,9 +667,9 @@ const DashboardEmployee = () => {
         onExport={handleExportPdf}
         isExporting={isExporting}
       />
-      <Grid container spacing={2} sx={{ mt: 0 }} ref={exportRef}>
+      <Grid container spacing={2} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
+          <TopCards items={CardItems} size={{ xs: 12, lg: 3 }} />
         </Grid>
 
         <Grid
@@ -677,22 +677,25 @@ const DashboardEmployee = () => {
           sx={{
             display: 'flex',
             flexDirection: 'column',
+            // height: '100%',
+            alignSelf: 'stretch',
+            gap: 1,
           }}
         >
           {/* <AccessPassEmployee activeAccessPass={accessPass} onClick={handleOpenAccess} /> */}
           <Button
             variant="contained"
             color="primary"
-            sx={{ mt: 0.5 }}
+            sx={{ flex: 1 }}
             onClick={handleOpenInviteOrCreateLink}
             startIcon={<IconPlus />}
           >
-            Invite
+            Invitation
           </Button>
           <Button
             variant="contained"
             color="secondary"
-            sx={{ mt: 0.5 }}
+            sx={{ flex: 1 }}
             onClick={() => setOpenQuickAccess(true)}
             startIcon={<IconBolt />}
           >

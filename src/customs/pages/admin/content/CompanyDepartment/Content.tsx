@@ -66,8 +66,8 @@ const entityLabel = (e?: DialogEntity) =>
     ? e === 'Organizations'
       ? 'Organization'
       : e === 'Departments'
-        ? 'Department'
-        : 'District'
+      ? 'Department'
+      : 'District'
     : '';
 
 const Content = () => {
@@ -93,9 +93,9 @@ const Content = () => {
         const res = await getAllEmployee();
         const map = Array.isArray(res?.collection)
           ? res.collection.reduce((acc: any, emp: any) => {
-            acc[emp.id] = emp.name;
-            return acc;
-          }, {})
+              acc[emp.id] = emp.name;
+              return acc;
+            }, {})
           : {};
         setEmployeeMap(map);
       } catch (err) {
@@ -103,12 +103,8 @@ const Content = () => {
       }
     };
 
-
-
     fetchEmployees();
   }, []);
-
-
 
   useEffect(() => {
     setPage(0);
@@ -139,14 +135,12 @@ const Content = () => {
   const { removeOrganization: deleteOrganization } = useOrganizationMutation();
   const { remove: deleteDistrict } = useDistrictMutation();
 
-
-
   const currentQuery =
     selectedType === 'organization'
       ? organizationQuery
       : selectedType === 'department'
-        ? departmentQuery
-        : districtQuery;
+      ? departmentQuery
+      : districtQuery;
 
   const response = currentQuery.data;
   const employeeLoading = Object.keys(employeeMap).length === 0;
@@ -166,26 +160,32 @@ const Content = () => {
   const hasFetched = currentQuery.isSuccess;
   const loading = currentQuery.isLoading || currentQuery.isFetching || employeeLoading;
 
-  const totalsQueries = useQueries({
-    queries: [
-      {
-        queryKey: ['organization-total'],
-        queryFn: () => getAllOrganizationPagination(0, 1, sortDir),
-      },
-      {
-        queryKey: ['department-total'],
-        queryFn: () => getAllDepartmentsPagination(0, 1, sortDir),
-      },
-      {
-        queryKey: ['district-total'],
-        queryFn: () => getAllDistrictsPagination(0, 1, sortDir),
-      },
-    ],
-  });
+  // const totalsQueries = useQueries({
+  //   queries: [
+  //     {
+  //       queryKey: ['organization-total'],
+  //       queryFn: () => getAllOrganizationPagination(0, 1, sortDir),
+  //     },
+  //     {
+  //       queryKey: ['department-total'],
+  //       queryFn: () => getAllDepartmentsPagination(0, 1, sortDir),
+  //     },
+  //     {
+  //       queryKey: ['district-total'],
+  //       queryFn: () => getAllDistrictsPagination(0, 1, sortDir),
+  //     },
+  //   ],
+  // });
+  // const totals = {
+  //   organization: totalsQueries[0].data?.RecordsTotal ?? 0,
+  //   department: totalsQueries[1].data?.RecordsTotal ?? 0,
+  //   district: totalsQueries[2].data?.RecordsTotal ?? 0,
+  // };
+
   const totals = {
-    organization: totalsQueries[0].data?.RecordsTotal ?? 0,
-    department: totalsQueries[1].data?.RecordsTotal ?? 0,
-    district: totalsQueries[2].data?.RecordsTotal ?? 0,
+    organization: organizationQuery.data?.RecordsTotal ?? 0,
+    department: departmentQuery.data?.RecordsTotal ?? 0,
+    district: districtQuery.data?.RecordsTotal ?? 0,
   };
 
   const cards = useMemo(
@@ -212,7 +212,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [t, totals.organization, totals.department, totals.district]
+    [t, totals.organization, totals.department, totals.district],
   );
 
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -284,7 +284,7 @@ const Content = () => {
       const confirmed = await showConfirmDelete(
         t('confirmDelete', {
           name: `${selectedType} "${row.name}"`,
-        })
+        }),
       );
 
       if (!confirmed) return;
@@ -296,31 +296,31 @@ const Content = () => {
           case 'department':
             await deleteDepartment.mutateAsync({
               id: row.id,
-
             });
-            successText = `${t("deleteSuccess", { name: 'Department' })}`;
+            successText = `${t('deleteSuccess', { name: 'Department' })}`;
             break;
 
           case 'district':
             await deleteDistrict.mutateAsync({
               id: row.id,
-
             });
-            successText = `${t("deleteSuccess", { name: 'District' })}`;
+            successText = `${t('deleteSuccess', { name: 'District' })}`;
             break;
           case 'organization':
           default:
             await deleteOrganization.mutateAsync({
               id: row.id,
-
             });
-            successText = `${t("deleteSuccess", { name: 'Organization' })}`;
+            successText = `${t('deleteSuccess', { name: 'Organization' })}`;
             break;
         }
 
         showSwal('success', successText);
       } catch (error: any) {
-        showSwal('error', error?.message ?? t("deleteFailed", { name: `${selectedType} "${row.name}"` }));
+        showSwal(
+          'error',
+          error?.message ?? t('deleteFailed', { name: `${selectedType} "${row.name}"` }),
+        );
       }
     },
     [selectedType, deleteDepartment, deleteDistrict, deleteOrganization],
@@ -328,7 +328,9 @@ const Content = () => {
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
-    const confirmed = await showConfirmDelete(`${t("confirmDeleteMultiple", { count: rows.length, name: `${selectedType}` })}`);
+    const confirmed = await showConfirmDelete(
+      `${t('confirmDeleteMultiple', { count: rows.length, name: `${selectedType}` })}`,
+    );
     if (!confirmed) return;
     try {
       await Promise.all(
@@ -337,25 +339,25 @@ const Content = () => {
             case 'department':
               return deleteDepartment.mutateAsync({
                 id: row.id,
-
               });
 
             case 'district':
               return deleteDistrict.mutateAsync({
                 id: row.id,
-
               });
 
             default:
               return deleteOrganization.mutateAsync({
                 id: row.id,
-
               });
           }
         }),
       );
 
-      showSwal('success', `${t("deleteSuccessMultiple", { count: rows.length, name: `${selectedType}` })}`);
+      showSwal(
+        'success',
+        `${t('deleteSuccessMultiple', { count: rows.length, name: `${selectedType}` })}`,
+      );
       setSelectedRows([]);
     } catch (err: any) {
       showSwal('error', err.message || 'Failed to delete some items.');
@@ -606,7 +608,11 @@ const Content = () => {
         onClose={() => setConfirmDialogOpen(false)}
         onDiscard={handleDiscard}
       />
-      <GlobalBackdropLoading open={deleteDistrict.isPending || deleteOrganization.isPending || deleteDepartment.isPending} />
+      <GlobalBackdropLoading
+        open={
+          deleteDistrict.isPending || deleteOrganization.isPending || deleteDepartment.isPending
+        }
+      />
     </PageContainer>
   );
 };
