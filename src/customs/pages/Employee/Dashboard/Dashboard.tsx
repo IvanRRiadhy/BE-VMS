@@ -690,7 +690,7 @@ const DashboardEmployee = () => {
             onClick={handleOpenInviteOrCreateLink}
             startIcon={<IconPlus />}
           >
-            Invitation
+            Register Visitor
           </Button>
           <Button
             variant="contained"
@@ -772,7 +772,7 @@ const DashboardEmployee = () => {
             isHaveHeaderTitle
             isHavePeriod={true}
             onView={(row: any) => handleView(row)}
-            titleHeader="Ongoing Invitation"
+            titleHeader="Invitation Monitoring"
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
@@ -785,7 +785,7 @@ const DashboardEmployee = () => {
             defaultRowsPerPage={10}
             data={activites}
             isHaveHeaderTitle
-            titleHeader="Activities"
+            titleHeader="Recent Activity"
             // height={420}
             overflowX="auto"
           />

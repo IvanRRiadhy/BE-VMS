@@ -1423,6 +1423,9 @@ const OperatorView = () => {
       }
 
       await createInvitationActionOperator(id!, payload);
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      });
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -2202,6 +2205,9 @@ const OperatorView = () => {
       }
       await queryClient.invalidateQueries({
         queryKey: ['upcoming-purpose'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-visitors'],
       });
     } catch (error: any) {
       showSwal(

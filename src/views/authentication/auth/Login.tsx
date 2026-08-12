@@ -580,7 +580,7 @@ const Login = () => {
                               Login
                               {/* )} */}
                             </Button>
-                            <Divider sx={{ my: 1 }} />
+                            {/* <Divider sx={{ my: 1 }} />
                             <Button
                               color="primary"
                               variant="outlined"
@@ -601,15 +601,10 @@ const Login = () => {
                                 },
                               }}
                             >
-                              {/* {loading ? (
-                              <>
-                                {' '}
-                                <CircularProgress sx={{ color: 'white' }} size={24} />
-                              </>
-                            ) : ( */}
+                            
                               Register
-                              {/* )} */}
-                            </Button>
+                          
+                            </Button> */}
                           </Box>
 
                           <Box
