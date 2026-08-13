@@ -306,8 +306,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-          ? false
-          : status;
+        ? false
+        : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -2223,19 +2223,33 @@ export const getAccessControlsById = async (id: string): Promise<GetAccessContro
 export const getAllAccessControlPagination = async (
   start: number,
   length: number,
-  sortColumn: string,
   keyword?: string,
+  sortDir?: string,
 ): Promise<GetAccessControlPaginationResponse> => {
   try {
+    const params: Record<string, any> = {
+      start,
+      length,
+      sort_dir: sortDir,
+    };
+
+    if (keyword?.trim()) {
+      params['search[value]'] = keyword.trim();
+    }
+
     const response = await axiosInstance.get(`/access-control/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-      headers: { Accept: 'application/json' },
+      params,
+      headers: {
+        Accept: 'application/json',
+      },
     });
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data as ValidationErrorResponse;
     }
+
     throw error;
   }
 };

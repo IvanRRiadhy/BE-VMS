@@ -55,6 +55,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
     setValue,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<FormType>({
     resolver: zodResolver(CreateAccessControlRequestSchema),
@@ -86,25 +87,31 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
   useEffect(() => {
     if (!editingId) return;
 
-    (async () => {
+    const loadData = async () => {
       const res = await getAccessControlsById(editingId);
       const d = res?.collection;
 
+      console.log('API TYPE:', d?.type);
+
       if (d) {
         reset({
-          // brand_id: d.brand_id ?? '',
           integration_id: d.integration_id ?? '',
-          type: d.type,
-          name: d.name,
+          type: d.type ?? '',
+          name: d.name ?? '',
           description: d.description ?? '',
-          channel: d.channel,
-          door_id: d.door_id,
-          raw: d.raw,
-          // brand_name: d.brand_name,
+          channel: d.channel ?? '',
+          door_id: d.door_id ?? '',
+          raw: d.raw ?? '{}',
+        });
+
+        setTimeout(() => {
+          console.log('RHF TYPE AFTER RESET:', getValues('type'));
         });
       }
-    })();
-  }, [editingId, reset]);
+    };
+
+    loadData();
+  }, [editingId, reset, getValues]);
 
   const { createMutation, updateMutation } = useAccessControlMutation();
 
@@ -115,7 +122,6 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         const payload = UpdateAccessControlRequestSchema.parse({
           ...data,
         });
-        console.log('payload', payload);
         await updateMutation.mutateAsync({ id: editingId, data: payload });
       } else {
         const payload = CreateAccessControlRequestSchema.parse({

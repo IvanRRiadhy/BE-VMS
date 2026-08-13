@@ -51,7 +51,7 @@ const Content = () => {
   const { data, isLoading } = useAccessControlPagination({
     page,
     rowsPerPage,
-    sortColumn,
+    sort_dir: 'desc ',
     search,
   });
 
@@ -231,7 +231,7 @@ const Content = () => {
               <DynamicTable
                 loading={isLoading}
                 isHavePagination={true}
-                isAccessControlType={true}
+                // isAccessControlType={true}
                 selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
