@@ -540,7 +540,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
 
                 '&:hover': {
                   boxShadow: 4,
-                  transform: 'translateY(-2px)',
+                  // transform: 'translateY(-2px)',
                 },
               }}
             >

@@ -14,6 +14,7 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
 import { useBlacklistPagination } from 'src/hooks/Visitor/useBlacklistPagination';
 import { useListVisitor } from 'src/hooks/Visitor/useListVisitor';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
@@ -44,10 +45,14 @@ const Content = () => {
     data?.collection.map((item: any) => ({
       id: item.id,
       name: item.visitor.name || '-',
+      indentity_id: item.visitor.identity_id || '-',
+      email: item.visitor.email || '-',
       phone: item.visitor.phone || '-',
       reason: item.reason || '-',
-      is_active: item.is_active,
       approved_by: item.approved_by_name || '-',
+      faceimage: item.visitor.indentity_image,
+      blacklist_at: formatDateTime(item.blacklist_at),
+      // is_active: item.is_active,
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
@@ -79,7 +84,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [t, totalFilteredRecords, totalActive, totalNonActive]
+    [t, totalFilteredRecords, totalActive, totalNonActive],
   );
 
   const { data: visitors = [], isLoading: isLoadingVisitor } = useListVisitor();
@@ -132,8 +137,9 @@ const Content = () => {
                 isHaveAction={false}
                 isHaveSearch={true}
                 isHaveFilter={false}
-                searchPlaceholder='Search blacklist'
+                searchPlaceholder="Search blacklist"
                 isHaveFilterDuration={false}
+                isHaveImage={true}
                 isHaveAddData={false}
                 isNoActionTableHead={true}
                 isHaveFilterMore={true}

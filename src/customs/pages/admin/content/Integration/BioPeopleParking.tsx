@@ -60,8 +60,9 @@ import {
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useNavigate } from 'react-router';
 
-const BioPeopleParking = ({ id }: { id: string }) => {
+const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
   const [totals, setTotals] = useState<{ [key: string]: number }>({
     visitor_type: 0,
     area: 0,
@@ -449,7 +450,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-
     let cancelled = false;
 
     const loadOptions = async () => {
@@ -479,7 +479,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
     loadOptions();
 
-    return () => { };
+    return () => {};
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -761,6 +761,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/admin/manage/integration');
+  };
+
   return (
     <>
       <PageContainer
@@ -787,6 +793,9 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                   isSelectedType={selectedType !== 'badge_status'}
                   isDataVerified={true}
                   isHaveActionOnlyEdit={true}
+                  isHaveBack={true}
+                  onBack={handleBack}
+                  isTitleIntegration={`${integrationName || 'Bio People Parking'}`}
                   isHaveSearch={false}
                   isHaveFilter={false}
                   isHaveExportPdf={false}
@@ -950,7 +959,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       </Dialog>
 
       {/* Block */}
-      <Dialog open={editDialogType === 'Block'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
+      <Dialog
+        open={editDialogType === 'Block'}
+        fullWidth
+        maxWidth="md"
+        onClose={handleCloseDialog}
+        transitionDuration={0}
+      >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -1024,7 +1039,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       </Dialog>
 
       {/* Area */}
-      <Dialog open={editDialogType === 'Area'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
+      <Dialog
+        open={editDialogType === 'Area'}
+        fullWidth
+        maxWidth="md"
+        onClose={handleCloseDialog}
+        transitionDuration={0}
+      >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -1130,7 +1151,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       </Dialog>
 
       {/* Slot */}
-      <Dialog open={editDialogType === 'Slot'} fullWidth maxWidth="md" onClose={handleCloseDialog} transitionDuration={0}>
+      <Dialog
+        open={editDialogType === 'Slot'}
+        fullWidth
+        maxWidth="md"
+        onClose={handleCloseDialog}
+        transitionDuration={0}
+      >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
@@ -1228,7 +1255,9 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         <DialogContent sx={{ pt: 2 }} dividers>
           {!cardForm ? (
-            <Box sx={{ py: 2 }}><CircularProgress /></Box>
+            <Box sx={{ py: 2 }}>
+              <CircularProgress />
+            </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {/* Vehicle Type */}

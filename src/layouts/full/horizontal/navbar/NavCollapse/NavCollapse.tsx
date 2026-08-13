@@ -278,12 +278,9 @@ const NavCollapse = ({
     borderRadius: `${customizer.borderRadius}px`,
     position: 'relative',
     whiteSpace: 'nowrap',
-    color:
-      open || isActive
-        ? theme.palette.common.white
-        : theme.palette.text.secondary,
-    backgroundColor:
-      open || isActive ? theme.palette.primary.main : 'transparent',
+   
+    color: open || isActive ? theme.palette.common.white : theme.palette.text.secondary,
+    backgroundColor: open || isActive ? theme.palette.primary.main : 'transparent',
     transition: 'all 0.2s ease',
     '&:hover': {
       backgroundColor: theme.palette.primary.main,

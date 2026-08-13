@@ -55,9 +55,7 @@ const Content = () => {
   const { organizations } = useOrganization();
   const queryClient = useQueryClient();
   const { data, isLoading } = useUsers();
-  const {
-    deleteMutation: deleteUser,
-  } = useUsersMutation();
+  const { deleteMutation: deleteUser } = useUsersMutation();
 
   const filteredData = useMemo(() => {
     if (!data?.collection) return [];
@@ -87,7 +85,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [totalRecords]
+    [totalRecords],
   );
 
   const handleAdd = () => {
@@ -124,7 +122,6 @@ const Content = () => {
     try {
       await deleteUser.mutateAsync(id);
       showSwal('success', t('deleteSuccess', { name: 'User' }));
-
     } catch (error: any) {
       showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'User' }));
     }
@@ -143,7 +140,6 @@ const Content = () => {
     if (pendingEditId) handleEdit(pendingEditId);
     setPendingEditId(null);
   };
-
 
   const handleAssign = (row: any) => {
     setSelectedUser(row);
@@ -191,7 +187,6 @@ const Content = () => {
       showSwal('error', error?.response?.data?.msg || 'Failed to unassign employee');
     }
   };
-
 
   const handleAssignTracking = async (row: any) => {
     const res = await getLinkAccountTracking(row.id);
@@ -247,8 +242,8 @@ const Content = () => {
       showSwal(
         'error',
         error?.response?.data?.collection?.[0]?.message ||
-        error?.response?.data?.msg ||
-        'Failed to assign tracking',
+          error?.response?.data?.msg ||
+          'Failed to assign tracking',
       );
     }
   };
@@ -320,6 +315,39 @@ const Content = () => {
     setSelectedAvailable(null);
   };
 
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!rows.length) return false;
+
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', {
+        count: rows.length,
+        name: 'User',
+      }),
+    );
+
+    if (!confirmed) return false;
+
+    try {
+      for (const row of rows) {
+        await deleteUser.mutateAsync(row.id);
+      }
+      setSelectedRows([]);
+
+      showSwal(
+        'success',
+        t('deleteSuccessMultiple', {
+          count: rows.length,
+          name: 'user',
+        }),
+      );
+
+      return true;
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to delete some items.');
+      return false;
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -348,7 +376,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
-                searchPlaceholder='Search user'
+                searchPlaceholder="Search user"
                 searchKeyword={search}
                 isHaveAssign={false}
                 isHaveUnAssign={true}
@@ -360,6 +388,7 @@ const Content = () => {
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
                 onAddData={handleAdd}
               />
             </Grid>

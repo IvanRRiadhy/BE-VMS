@@ -248,6 +248,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const { t } = useTranslation();
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
     Record<number, string[]>
@@ -2896,6 +2898,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <TableCell
             sx={{
               display: item.remarks === 'employee' ? 'none' : 'table-cell',
+              borderBottom: 'none',
             }}
           >
             {!isVisitorPeriodPair && (
@@ -3767,6 +3770,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openStartPicker}
+                                onOpen={() => setOpenStartPicker(true)}
+                                onClose={() => setOpenStartPicker(false)}
                                 value={
                                   startItem.answer_datetime
                                     ? dayjs(startItem.answer_datetime)
@@ -3800,6 +3806,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
+                                    onClick: () => {
+                                      setOpenStartPicker(true);
+                                    },
                                     helperText: startError,
                                     FormHelperTextProps: {
                                       sx: {
@@ -3838,6 +3847,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openEndPicker}
+                                onOpen={() => setOpenEndPicker(true)}
+                                onClose={() => setOpenEndPicker(false)}
                                 value={
                                   endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
                                 }
@@ -3867,6 +3879,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!endError,
+                                    onClick: () => {
+                                      setOpenEndPicker(true);
+                                    },
                                     helperText: endError,
                                     FormHelperTextProps: {
                                       sx: {

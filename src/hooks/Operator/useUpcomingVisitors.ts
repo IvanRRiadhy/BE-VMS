@@ -106,6 +106,7 @@ export const useUpcomingVisitors = ({
           visitor_status: items.visitor_status,
           vehicle_type: items.vehicle_type,
           vehicle_plate_number: items.vehicle_plate_number,
+          selfie_image: items.selfie_image,
         })),
       };
     },

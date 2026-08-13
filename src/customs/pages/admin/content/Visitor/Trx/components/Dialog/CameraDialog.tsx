@@ -1,4 +1,14 @@
-import { Box, Button, Dialog, Divider, Grid2 as Grid, IconButton, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  Divider,
+  Grid2 as Grid,
+  IconButton,
+  LinearProgress,
+  Typography,
+} from '@mui/material';
 import Webcam from 'react-webcam';
 import { IconCamera, IconDeviceFloppy, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { RefObject } from 'react';
@@ -12,6 +22,7 @@ interface CameraDialogProps {
   facingMode: 'user' | 'environment';
   onSwitchCamera: () => void;
   onCapture: () => void;
+  isUploading?: any;
   onClear: () => void;
   onSubmit: () => void;
 }
@@ -23,6 +34,7 @@ const CameraDialog = ({
   screenshot,
   facingMode,
   onSwitchCamera,
+  isUploading,
   onCapture,
   onClear,
   onSubmit,
@@ -34,10 +46,7 @@ const CameraDialog = ({
           <Typography variant="h6" mb={2}>
             Take Photo From Camera
           </Typography>
-          <IconButton
-            onClick={onClose}
-            sx={{ position: 'absolute', top: 10, right: 10 }}
-          >
+          <IconButton onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
             <IconX size={22} />
           </IconButton>
         </Box>
@@ -108,18 +117,59 @@ const CameraDialog = ({
           </Grid>
         </Grid>
 
+        {isUploading && (
+          <Box
+            sx={{
+              mt: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <LinearProgress
+              sx={{
+                width: '220px',
+                height: 6,
+                borderRadius: 3,
+              }}
+            />
+
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+              Uploading file...
+            </Typography>
+          </Box>
+        )}
+
         <Divider sx={{ my: 2 }} />
 
         <Box display="flex" justifyContent="flex-end">
-          <Button color="error" startIcon={<IconTrash />} onClick={onClear} sx={{ mr: 1 }}>
+          <Button
+            color="error"
+            startIcon={<IconTrash />}
+            onClick={onClear}
+            sx={{ mr: 1 }}
+            disabled={isUploading}
+          >
             Clear Photo
           </Button>
 
-          <Button variant="contained" startIcon={<IconCamera />} onClick={onCapture}>
-            Take Photo
+          <Button
+            variant="contained"
+            disabled={isUploading}
+            startIcon={
+              isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+            }
+            onClick={onCapture}
+          >
+            {isUploading ? 'Uploading...' : 'Take Photo'}
           </Button>
 
-          <Button sx={{ ml: 1 }} startIcon={<IconDeviceFloppy />} onClick={onSubmit}>
+          <Button
+            sx={{ ml: 1 }}
+            startIcon={<IconDeviceFloppy />}
+            onClick={onSubmit}
+            disabled={isUploading}
+          >
             Submit
           </Button>
         </Box>

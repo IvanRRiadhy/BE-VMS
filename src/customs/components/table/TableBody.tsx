@@ -149,26 +149,8 @@ export const TableBodyContent = ({
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105;
   const INDEX_COL_WIDTH = 56;
-  const DATA_COL_WIDTH = 180;
-  const STICKY_DATA_COUNT = 2;
-
   const COLUMN_WIDTHS: Record<string, number> = {
-    is_vip: 50,
-    // is_employee: 50,
-    // active: 70,
-    // quick_access: 70,
-    // current_used: 70,
-    // is_blacklist: 70,
-
-    // document_text: 70,
-
-    // name: 220,
-    // email: 260,
-    // phone: 150,
-
-    // approval_status: 150,
-    // visitor_status: 150,
-    // visitor_period_start: 180,
+    type: 50,
   };
 
   const getLeftBase = () =>
@@ -506,25 +488,12 @@ const TableRowItem = React.memo(
     const ACTION_COL_WIDTH = 105;
     const INDEX_COL_WIDTH = 56;
     const DATA_COL_WIDTH = 180;
+
     const STICKY_DATA_COUNT = 2;
     const COLUMN_WIDTHS: Record<string, number> = {
       is_vip: 30,
-      email: 260,
-      // is_employee: 50,
-      // active: 70,
-      // quick_access: 70,
-      // current_used: 70,
-      // is_blacklist: 70,
-
-      // document_text: 70,
-
-      // name: 220,
       // email: 260,
-      // phone: 150,
-
-      // approval_status: 150,
-      // visitor_status: 150,
-      // visitor_period_start: 180,
+      type: 20,
     };
 
     const getLeftBase = () =>
@@ -733,26 +702,43 @@ const TableRowItem = React.memo(
         </TableCell>
         {columns.map((col: any, idx: any) => {
           const makeSticky = isStickyVisitorCol(idx);
-          const columnWidth = COLUMN_WIDTHS[col] ?? DATA_COL_WIDTH;
+          // const columnWidth = COLUMN_WIDTHS[col] ?? DATA_COL_WIDTH;
+          const columnWidth = COLUMN_WIDTHS[col];
           return (
             <TableCell
               key={col}
+              // sx={{
+              //   ...(makeSticky && {
+              //     position: { xs: 'static', lg: 'sticky' },
+              //     left: getStickyLeft(idx),
+              //     zIndex: 3,
+              //     // background: 'white',
+              //     bgcolor: 'background.paper',
+              //     minWidth: DATA_COL_WIDTH,
+              //     maxWidth: DATA_COL_WIDTH,
+              //     // minWidth: columnWidth,
+              //     // maxWidth: columnWidth,
+              //     // width: columnWidth,
+              //   }),
+              //   // minWidth: columnWidth,
+              //   // maxWidth: columnWidth,
+              //   // width: columnWidth,
+              //   fontSize: '0.85rem !important',
+              // }}
               sx={{
+                ...(columnWidth && {
+                  width: `${columnWidth}px`,
+                  minWidth: `${columnWidth}px`,
+                  maxWidth: `${columnWidth}px`,
+                }),
+
                 ...(makeSticky && {
                   position: { xs: 'static', lg: 'sticky' },
                   left: getStickyLeft(idx),
                   zIndex: 3,
-                  // background: 'white',
                   bgcolor: 'background.paper',
-                  minWidth: DATA_COL_WIDTH,
-                  maxWidth: DATA_COL_WIDTH,
-                  // minWidth: columnWidth,
-                  // maxWidth: columnWidth,
-                  // width: columnWidth,
                 }),
-                // minWidth: columnWidth,
-                // maxWidth: columnWidth,
-                // width: columnWidth,
+
                 fontSize: '0.85rem !important',
               }}
             >

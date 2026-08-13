@@ -34,6 +34,7 @@ interface TransactionVisitorListProps {
   handleDuplicate: (group: any) => void;
   handleCancel: (id: string) => void;
   fetchNextPage?: any;
+  handleAdd?: any;
 }
 
 const TransactionVisitorList = ({
@@ -53,6 +54,7 @@ const TransactionVisitorList = ({
   handleDuplicate,
   handleCancel,
   fetchNextPage,
+  handleAdd
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -145,7 +147,7 @@ const TransactionVisitorList = ({
                       <IconButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          // handleAdd(group);
+                          handleAdd(group);
                         }}
                         sx={{
                           bgcolor: 'primary.main',

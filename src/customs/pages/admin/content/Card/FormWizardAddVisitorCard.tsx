@@ -16,6 +16,7 @@ import {
   Switch,
   FormHelperText,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -35,6 +36,9 @@ import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { InfoOutlined } from '@mui/icons-material';
+import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
@@ -213,8 +217,13 @@ const FormWizardAddVisitorCard = ({
           showSwal('success', t('updatedSuccess', { name: 'Card' }));
           resetEnabledFields();
           onSuccess?.();
-        } catch (err) {
-          showSwal('error', 'Some cards failed to update.');
+        } catch (err: any) {
+          showSwal(
+            'error',
+            err?.response?.data?.message ??
+              err?.response?.data?.msg ??
+              'Some cards failed to update.',
+          );
         } finally {
           setLoading(false);
         }
@@ -253,7 +262,10 @@ const FormWizardAddVisitorCard = ({
       if (messages.length > 0) {
         showSwal('error', messages.join('\n'));
       } else {
-        showSwal('error', 'Failed to submit data.');
+        showSwal(
+          'error',
+          error?.response?.data?.message ?? error?.response?.data?.msg ?? 'Failed to create card.',
+        );
       }
     }
   };
@@ -439,36 +451,60 @@ const FormWizardAddVisitorCard = ({
                 }}
                 htmlFor="card-type"
               >
-                <Typography variant="caption">Registered Site</Typography>
-                <FormControlLabel
-                  value={localForm.is_multi_site}
-                  label=""
-                  sx={{ marginRight: 0 }}
-                  control={
-                    <Switch
-                      checked={localForm.is_multi_site}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="caption">Registered Site</Typography>
 
-                        setLocalForm((prev) => ({
-                          ...prev,
-                          is_multi_site: checked,
-                          registered_site: checked ? null : prev.registered_site,
-                        }));
-                        setIsDirty?.(true);
-
-                        setErrors((prev) => {
-                          if (checked) {
-                            const { registered_site, ...rest } = prev;
-                            return rest;
-                          }
-                          return prev;
-                        });
+                  <Tooltip
+                    title="Select a site when disabled. Enable for multiple sites"
+                    placement="top"
+                    arrow
+                  >
+                    <InfoOutlined
+                      sx={{
+                        fontSize: 18,
+                        color: 'text.secondary',
+                        cursor: 'pointer',
                       }}
                     />
-                  }
-                />
+                  </Tooltip>
+                </Box>
+
+                <Tooltip
+                  title="Select a site when disabled. Enable for multiple sites"
+                  placement="top"
+                  arrow
+                >
+                  <FormControlLabel
+                    value={localForm.is_multi_site}
+                    label=""
+                    sx={{ marginRight: 0 }}
+                    control={
+                      <Switch
+                        checked={localForm.is_multi_site}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+
+                          setLocalForm((prev) => ({
+                            ...prev,
+                            is_multi_site: checked,
+                            registered_site: checked ? null : prev.registered_site,
+                          }));
+                          setIsDirty?.(true);
+
+                          setErrors((prev) => {
+                            if (checked) {
+                              const { registered_site, ...rest } = prev;
+                              return rest;
+                            }
+                            return prev;
+                          });
+                        }}
+                      />
+                    }
+                  />
+                </Tooltip>
               </CustomFormLabel>
+
               <Autocomplete
                 fullWidth
                 options={siteSpaceRes}
@@ -653,19 +689,25 @@ const FormWizardAddVisitorCard = ({
 
           <>
             <Box>{handleSteps(activeStep)}</Box>
-
-            <Box display="flex" flexDirection="row" mt={3}>
+            <Divider sx={{ my: 2 }} />
+            <Box display="flex" flexDirection="row" mt={0}>
               <Button
                 color="primary"
                 disabled={activeStep === 0 || loading}
                 onClick={handleBack}
                 sx={{ mr: 1 }}
+                startIcon={<IconArrowLeft />}
               >
                 {t('back')}
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (
-                <Button onClick={handleNext} variant="contained" color="primary">
+                <Button
+                  onClick={handleNext}
+                  variant="contained"
+                  color="primary"
+                  endIcon={<IconArrowRight />}
+                >
                   {t('next')}
                 </Button>
               ) : (
@@ -682,15 +724,7 @@ const FormWizardAddVisitorCard = ({
           </>
         </Box>
       </PageContainer>
-      <Backdrop
-        open={loading}
-        sx={{
-          color: 'primary',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={loading} />
     </form>
   );
 };

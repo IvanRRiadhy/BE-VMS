@@ -17,6 +17,7 @@ type Props = {
   enableInvitationTypeStep?: boolean;
   isLoadingEmployee?: any;
   duplicateData?: any;
+  isAddTransaction?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

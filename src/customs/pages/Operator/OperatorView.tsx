@@ -348,30 +348,38 @@ const OperatorView = () => {
   }, [relatedVisitors, selectedVisitors]);
 
   const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    if (!payloads.length) return;
+
     setLoadingAccess(true);
 
     try {
-      if (!payloads.length) return;
-
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
 
       await createMultipleGrantAccess({
         data: payloads,
       });
+
       resetSwipeStates();
-      showSwal('success', 'Cards swapped successfully!');
 
       await fetchRelatedVisitorsByInvitationId(invitationId as string);
-    } catch (err: any) {
-      showSwal(
-        'error',
-        Array.isArray(err?.response?.data?.collection)
-          ? err.response.data.collection.join('\n')
-          : err?.response?.data?.collection || 'Failed to swap cards',
-      );
-    } finally {
+
       setLoadingAccess(false);
+
+      requestAnimationFrame(() => {
+        showSwal('success', 'Cards swapped successfully!');
+      });
+    } catch (err: any) {
+      setLoadingAccess(false);
+
+      requestAnimationFrame(() => {
+        showSwal(
+          'error',
+          Array.isArray(err?.response?.data?.collection)
+            ? err.response.data.collection.join('\n')
+            : err?.response?.data?.collection || 'Failed to swap cards',
+        );
+      });
     }
   };
 
@@ -701,6 +709,7 @@ const OperatorView = () => {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
     } catch {}
+    setCurrentAction(null);
     setActionButton(null);
     setTorchOn(false);
     setOpenDialogIndex(null);
@@ -953,7 +962,6 @@ const OperatorView = () => {
       if (currentAction) {
         setSelectedVisitors([invitationId]);
         await handleConfirmStatus(currentAction);
-        setCurrentAction(null);
         handleCloseScanQR();
         return;
       }
@@ -961,27 +969,23 @@ const OperatorView = () => {
       if (actionButton == 'extend') {
         setSelectedVisitors([invitationId]);
         setOpenExtendVisit(true);
-        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'card') {
         setSelectedVisitors([invitationId]);
         // handleChooseCard();
         setOpenChooseCardDialog(true);
-        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'access') {
         setSelectedVisitors([invitationId]);
         // setOpenAccessData(true);
         setAccessIssuance(true);
-        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'open') {
         setSelectedVisitors([invitationId]);
         setOpenTriggeredAccess(true);
-        setActionButton(null);
         handleCloseScanQR();
         return;
       }
@@ -1232,7 +1236,8 @@ const OperatorView = () => {
             swap_card_from_card: currentUsed?.card_number ?? null,
             swap_card_from_card_id: currentUsed?.id ?? null,
             swap_card_from_site_id: registerSiteOperator,
-            is_swapcard: !!currentUsed,
+            // is_swapcard: !!currentUsed,
+            is_swapcard: false,
             swap_type: currentUsed ? 'Other' : null,
             visitorName: visitor.name || visitorId,
             registered_site_id: registerSiteOperator,
@@ -1687,6 +1692,8 @@ const OperatorView = () => {
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
+        await queryClient.invalidateQueries({ queryKey: ['upcoming-visitors'] });
+        await queryClient.invalidateQueries({ queryKey: ['upcoming-purpose'] });
       }
       setSelectedVisitors([]);
       setBulkAction('');
@@ -2564,7 +2571,6 @@ const OperatorView = () => {
     search: liveSearch,
     allVisitorType: true,
   });
-
   const upcomingPurposeQuery = useUpcomingPurpose();
 
   // const upcomingVisitorQuery = useUpcomingVisitors({
@@ -2707,6 +2713,7 @@ const OperatorView = () => {
     socket.onmessage = async (event) => {
       const raw = event.data;
       // console.log('📥 WS message:', raw);
+
       try {
         // =========================
         // IMAGE STREAM
@@ -2724,7 +2731,7 @@ const OperatorView = () => {
         // =========================
         const msg = JSON.parse(raw);
 
-        console.log('💬 WS JSON:', msg);
+        // console.log('💬 WS JSON:', msg);
 
         // =========================
         // BARCODE

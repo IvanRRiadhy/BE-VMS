@@ -40,9 +40,9 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useNavigate } from 'react-router';
 
-const BioPeopleTracking = ({ id }: { id: string }) => {
-
+const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
   const handleTrackingBleSyncIntegration = async () => {
     if (!id) {
       return;
@@ -229,9 +229,11 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
             resAllSite.collection.find(
               (site: any) => String(site.id).toUpperCase() === String(item.site_id).toUpperCase(),
             )?.name ?? item.site_id,
-          visitor_type: visitoTypeOptions.find(
-            (site: any) => String(site.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
-          )?.label ?? item.visitor_type_id,
+          visitor_type:
+            visitoTypeOptions.find(
+              (site: any) =>
+                String(site.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
+            )?.label ?? item.visitor_type_id,
           active: item.active ? 'Active' : 'Inactive',
         }));
         setListData(rows ?? []);
@@ -335,8 +337,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   }, [editDialogType, detailData]);
 
   useEffect(() => {
-
-
     let cancelled = false;
 
     const loadOptions = async () => {
@@ -368,7 +368,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
     loadOptions();
 
-    return () => { };
+    return () => {};
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -432,6 +432,12 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   const isSiteAccess = cardAccessForm?.access_tracking_type === 'Site';
   const isVisitorTypeAccess = cardAccessForm?.access_tracking_type === 'VisitorType';
 
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/admin/manage/integration');
+  };
+
   return (
     <>
       <PageContainer
@@ -449,7 +455,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                 <DynamicTable
                   loading={loading}
                   isHavePagination
-                  rowsPerPageOptions={[5, 10, 25, 50, 100, 250, 500]}
+                  rowsPerPageOptions={[10, 50, 100]}
                   overflowX={'auto'}
                   data={listData}
                   selectedRows={selectedRows}
@@ -460,6 +466,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                   isHaveSearch={false}
                   isDataVerified={true}
                   isHaveFilter={false}
+                  isHaveBack={true}
+                  onBack={handleBack}
+                  isTitleIntegration={`${integrationName || 'Bio People Tracking'}`}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
@@ -512,7 +521,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!cardAccessForm ? (
-            <Box sx={{ py: 2 }}><CircularProgress /></Box>
+            <Box sx={{ py: 2 }}>
+              <CircularProgress />
+            </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>

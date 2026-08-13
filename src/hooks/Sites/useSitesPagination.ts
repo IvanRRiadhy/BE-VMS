@@ -25,7 +25,6 @@ export const useSitePagination = ({
     queryKey: ['sites', page, rowsPerPage, sortDir, searchKeyword, type, parent, isChild],
     queryFn: async () => {
       try {
-
         const result = await getAllSitePagination(
           page * rowsPerPage,
           rowsPerPage,
@@ -36,7 +35,20 @@ export const useSitePagination = ({
           isChild,
         );
         return result;
-      } catch (error) {
+      } catch (error: any) {
+        const status = error?.response?.status;
+        const statusCode = error?.response?.data?.status_code;
+
+        // Search tidak menemukan data
+        if (status === 404 || statusCode === 404) {
+          return {
+            collection: [],
+            RecordsTotal: 0,
+            RecordsFiltered: 0,
+            Draw: 0,
+          };
+        }
+
         throw error;
       }
     },

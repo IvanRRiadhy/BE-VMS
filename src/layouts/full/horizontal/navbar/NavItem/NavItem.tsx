@@ -50,6 +50,7 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
       level > 1 && pathDirect === item.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
+    borderBottom: level > 1 ? '1px solid rgba(0,0,0,0.10) !important' : 'none',
 
     '&:hover': {
       backgroundColor: theme.palette.primary.light,

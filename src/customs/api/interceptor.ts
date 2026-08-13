@@ -72,6 +72,21 @@ export const setClearTokenCallback = (callback: () => void) => {
 
 const responseInterceptor = (response: any) => response;
 const errorInterceptor = (error: any) => {
+  if (error.response?.status === 404) {
+    return Promise.resolve({
+      ...error.response,
+      data: {
+        status: false,
+        status_code: 404,
+        title: 'Not Found',
+        msg: 'Data not found',
+        collection: [],
+        RecordsTotal: 0,
+        RecordsFiltered: 0,
+        Draw: 0,
+      },
+    });
+  }
   if (
     axios.isAxiosError(error) &&
     (error.response?.status === 401 || error.response?.status === 403)
@@ -90,11 +105,6 @@ const errorInterceptor = (error: any) => {
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (config.url?.includes('/visitor-type/')) {
-      console.log('REQUEST', config.url);
-      console.trace();
-    }
-
     const token = localStorage.getItem('token');
 
     if (token) {

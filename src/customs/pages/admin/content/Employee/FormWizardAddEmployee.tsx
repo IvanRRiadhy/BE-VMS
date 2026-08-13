@@ -314,14 +314,31 @@ const FormWizardAddEmployee = ({
     });
   };
 
+  // const handleNext = () => {
+  //   if (!validateStep(activeStep)) return;
+
+  //   let newSkipped = skipped;
+  //   if (isStepSkipped(activeStep)) {
+  //     newSkipped = new Set(newSkipped.values());
+  //     newSkipped.delete(activeStep);
+  //   }
+  //   setActiveStep((prev) => prev + 1);
+  //   setSkipped(newSkipped);
+
+  //   setAlertType('info');
+  //   setAlertMessage('Complete the following data properly and correctly');
+  // };
+
   const handleNext = () => {
     if (!validateStep(activeStep)) return;
 
     let newSkipped = skipped;
+
     if (isStepSkipped(activeStep)) {
       newSkipped = new Set(newSkipped.values());
       newSkipped.delete(activeStep);
     }
+
     setActiveStep((prev) => prev + 1);
     setSkipped(newSkipped);
 
@@ -1130,7 +1147,7 @@ const FormWizardAddEmployee = ({
 
             <Grid2 size={{ xs: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_phone">
-                <Typography variant="caption">Emergency Contact Name</Typography>
+                <Typography variant="caption">Emergency Contact Phone</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="emergency_contact_phone"
@@ -1143,7 +1160,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_relation">
-                <Typography variant="caption">Emergency Contact Name</Typography>
+                <Typography variant="caption">Emergency Contact Relation</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="emergency_contact_relation"
@@ -1455,10 +1472,16 @@ const FormWizardAddEmployee = ({
             />
           </>
         ) : (
-          <Stepper activeStep={activeStep}>
+          <Stepper activeStep={activeStep} nonLinear>
             {steps.map((label, index) => (
-              <Step key={label} completed={false}>
-                <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
+              <Step key={label}>
+                <StepButton
+                  onClick={() => {
+                    setActiveStep(index);
+                  }}
+                >
+                  {label}
+                </StepButton>
               </Step>
             ))}
           </Stepper>

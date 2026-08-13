@@ -8,9 +8,13 @@ export const useVisitorCardSummary = () => {
     queryFn: async () => {
       const res = await getAllVisitorCard();
 
-      const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
+      const activeCount = res.collection.filter(
+        (item: any) => item.card_status === 'Active',
+      ).length;
 
-      const nonActiveCount = res.collection.filter((item: any) => item.card_status === 0).length;
+      const nonActiveCount = res.collection.filter(
+        (item: any) => item.card_status === 'NonActive',
+      ).length;
 
       const usedCard = res.collection.filter((item: any) => item.is_used).length;
 

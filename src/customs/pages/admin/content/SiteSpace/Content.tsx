@@ -11,10 +11,7 @@ import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
-import {
-  getAllSite,
-  getSiteById,
-} from 'src/customs/api/admin';
+import { getAllSite, getSiteById } from 'src/customs/api/admin';
 import { IconSitemap } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
@@ -358,23 +355,28 @@ const Content = () => {
 
     if (!confirm) return;
 
-    if (confirm) {
-      try {
-        await remove.mutateAsync({
-          id,
-        });
+    try {
+      await remove.mutateAsync({
+        id,
+      });
 
-        showSwal('success', t('deleteSuccess', { name: 'Site Space' }));
-      } catch (error: any) {
-        showSwal('error', error.response?.data?.msg || t('deleteFailed', { name: 'Site Space' }));
-      }
+      // PENTING: refresh hasil search/table
+      await refetch();
+
+      setSelectedRows((prev) => prev.filter((row) => row.id !== id));
+
+      showSwal('success', t('deleteSuccess', { name: 'Site Space' }));
+    } catch (error: any) {
+      showSwal('error', error.response?.data?.msg || t('deleteFailed', { name: 'Site Space' }));
     }
   };
 
   const handleBatchDelete = async (rows: SiteTableRow[]) => {
     if (rows.length === 0) return false;
 
-    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Site Space' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Site Space' }),
+    );
     if (!confirmed) return false;
 
     try {
@@ -471,7 +473,7 @@ const Content = () => {
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
-      setLoadingBackdrop(true);;
+      setLoadingBackdrop(true);
       await updateActive.mutateAsync({
         id: row.id,
         active: checked,

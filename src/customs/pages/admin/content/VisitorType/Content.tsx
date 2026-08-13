@@ -12,9 +12,7 @@ import {
   CreateVisitorTypeRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/VisitorType';
-import {
-  getVisitorTypeById,
-} from 'src/customs/api/admin';
+import { getVisitorTypeById } from 'src/customs/api/admin';
 import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -265,15 +263,21 @@ const Content = () => {
   const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
     if (rows.length === 0) return;
 
-    const result = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Visitor Type' }));
+    const result = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Visitor Type' }),
+    );
     if (result) {
-
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
-        showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Visitor Type' }));
         setSelectedRows([]);
+        showSwal(
+          'success',
+          t('deleteSuccessMultiple', { count: rows.length, name: 'Visitor Type' }),
+        );
+        return true;
       } catch (error) {
         showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'Visitor Type' }));
+        return false;
       }
     }
   };
@@ -397,7 +401,7 @@ const Content = () => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
-                searchPlaceholder='Search visitor type'
+                searchPlaceholder="Search visitor type"
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

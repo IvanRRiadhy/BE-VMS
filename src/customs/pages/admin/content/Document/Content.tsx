@@ -153,10 +153,12 @@ const Content = () => {
           }),
         );
 
-        showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }));
         setSelectedRows([]);
+        showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }));
+        return true;
       } catch (error: any) {
         showSwal('error', error?.response?.data?.msg || t("deleteSuccessMultiple", { count: rows.length, name: 'Document' }));
+        return false;
       }
     }
   };

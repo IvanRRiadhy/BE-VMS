@@ -46,16 +46,16 @@ const IntegrationDetail = () => {
 
   switch (true) {
     case name == 'honeywell ipsotek' && brandType == 'CameraAnalytics':
-      return <Ipsotek id={integration.id} />;
+      return <Ipsotek id={integration.id} integrationName={integration.name} />;
 
     case brand == 'Honeywell' || name == 'Honeywell':
-      return <Honeywell id={integration.id} />;
+      return <Honeywell id={integration.id} integrationName={integration.name} />;
 
     case brand == 'Bio Experience' && name == 'bio people tracking system':
-      return <BioPeopleTracking id={integration.id} />;
+      return <BioPeopleTracking id={integration.id} integrationName={integration.name} />;
 
     case brand == 'Bio Experience' && name == 'bio parking system':
-      return <BioPeopleParking id={integration.id} />;
+      return <BioPeopleParking id={integration.id} integrationName={integration.name} />;
     default:
       return <div></div>;
   }

@@ -9,9 +9,7 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import {
-  getAccessControlsById,
-} from 'src/customs/api/admin';
+import { getAccessControlsById } from 'src/customs/api/admin';
 import { CreateAccessControlRequest } from 'src/customs/api/models/Admin/AccessControl';
 
 interface Item {
@@ -81,7 +79,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [t, totalRecords]
+    [t, totalRecords],
   );
 
   const defaultFormData: CreateAccessControlRequest = {
@@ -160,16 +158,14 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(
-      t("confirmDelete", { name: 'Access Control' }),
-    );
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Access Control' }));
 
     if (confirmed) {
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', t("deleteSuccess", { name: 'Access Control' }));
+        showSwal('success', t('deleteSuccess', { name: 'Access Control' }));
       } catch (error: any) {
-        showSwal('error', error?.message ?? t("deleteFailed", { name: 'Access Control' }));
+        showSwal('error', error?.message ?? t('deleteFailed', { name: 'Access Control' }));
       }
     }
   };
@@ -177,15 +173,25 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Access Control' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Access Control' }),
+    );
 
     if (confirmed) {
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
-        showSwal('success', `${t("deleteSuccessMultiple", { count: rows.length, name: 'Access Control' })}`);
         setSelectedRows([]);
+        showSwal(
+          'success',
+          `${t('deleteSuccessMultiple', { count: rows.length, name: 'Access Control' })}`,
+        );
+        return true;
       } catch (error: any) {
-        showSwal('error', error?.message ?? t("deleteFailed", { name: 'Access Control' }));
+        showSwal(
+          'error',
+          error?.response?.data?.msg ?? t('deleteFailed', { name: 'Access Control' }),
+        );
+        return false;
       }
     }
   };
@@ -196,7 +202,9 @@ const Content = () => {
 
     showSwal(
       'success',
-      edittingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createSuccess", { name: 'Access Control' }),
+      edittingId
+        ? t('updatedSuccess', { name: 'Access Control' })
+        : t('createSuccess', { name: 'Access Control' }),
     );
   };
 
@@ -235,7 +243,7 @@ const Content = () => {
                 overflowX={'auto'}
                 data={tableData}
                 isHaveChecked={true}
-                searchPlaceholder='Search access control'
+                searchPlaceholder="Search access control"
                 isHaveAction={true}
                 isHaveSearch={true}
                 currentPage={page}

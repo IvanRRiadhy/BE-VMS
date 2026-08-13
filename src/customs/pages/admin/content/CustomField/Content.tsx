@@ -1,8 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-} from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -12,9 +9,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import {
-  getCustomFieldById,
-} from 'src/customs/api/admin';
+import { getCustomFieldById } from 'src/customs/api/admin';
 import {
   CreateCustomFieldRequest,
   Item,
@@ -52,18 +47,13 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const { t } = useTranslation();
 
-  const {
-    data,
-    isLoading,
-  } = useCustomFieldPagination({
+  const { data, isLoading } = useCustomFieldPagination({
     page,
     rowsPerPage,
     search,
   });
 
-  const {
-    deleteMutation,
-  } = useCustomFieldMutation();
+  const { deleteMutation } = useCustomFieldMutation();
 
   const tableData = data?.collection ?? [];
   const totalRecords = data?.totalRecords ?? 0;
@@ -143,14 +133,12 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete(t("confirmDelete", { name: 'Custom Field' }));
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Custom Field' }));
 
     if (confirm) {
-
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', t("deleteSuccess", { name: 'Custom Field' }));
-
+        showSwal('success', t('deleteSuccess', { name: 'Custom Field' }));
       } catch (error: any) {
         showSwal('error', error.response.data.msg ?? 'Failed to delete custom field.');
       }
@@ -160,18 +148,26 @@ const Content = () => {
   const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Custom Field' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Custom Field' }),
+    );
 
     if (confirmed) {
-
       try {
-        await Promise.all(
-          rows.map((row) => deleteMutation.mutateAsync(row.id)),
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
+        setSelectedRows([]);
+        showSwal(
+          'success',
+          t('deleteSuccessMultiple', { count: rows.length, name: 'Custom Field' }),
         );
-        showSwal('success', t("deleteSuccessMultiple", { count: rows.length, name: 'Custom Field' }));
-
+        return true;
       } catch (error: any) {
-        showSwal('error', error.response.data.msg ?? t("deleteSuccessMultiple", { count: rows.length, name: 'Custom Field' }));
+        showSwal(
+          'error',
+          error.response.data.msg ??
+            t('deleteSuccessMultiple', { count: rows.length, name: 'Custom Field' }),
+        );
+        return false;
       }
     }
   };
@@ -216,7 +212,7 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveSearch={true}
                 isHaveFilter={false}
-                searchPlaceholder='Search custom field'
+                searchPlaceholder="Search custom field"
                 isHaveExportPdf={false}
                 isNoActionTableHead={false}
                 isHaveExportXlf={false}

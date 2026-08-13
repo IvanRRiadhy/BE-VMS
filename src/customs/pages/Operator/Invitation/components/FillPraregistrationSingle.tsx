@@ -81,8 +81,8 @@ const FillPraregistrationSingle: React.FC<Props> = ({
 
                 void Promise.all([
                   fetchRelatedVisitorsByInvitationId(targetId),
-                  queryClient.invalidateQueries({ queryKey: ['upcoming-purpose'] }),
-                  queryClient.invalidateQueries({ queryKey: ['upcoming-visitors'] }),
+                  // queryClient.invalidateQueries({ queryKey: ['upcoming-purpose'] }),
+                  // queryClient.invalidateQueries({ queryKey: ['upcoming-visitors'] }),
 
                 ]);
               }}

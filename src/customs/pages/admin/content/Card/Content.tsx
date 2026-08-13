@@ -171,26 +171,18 @@ const Content = () => {
         title: t('totalCardActive'),
         icon: IconCreditCard,
         subTitle: `${cardActiveCount}`,
-        subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 1).length,
+        subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 'Active').length,
         color: 'none',
       },
       {
         title: t('totalCardNonActive'),
         icon: IconCreditCardOff,
         subTitle: `${cardInactiveCount}`,
-        subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 0).length,
+        subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 'NonActive').length,
         color: 'none',
       },
     ],
-    [
-      t,
-      totalRecords,
-      usedCard,
-      unUsedCard,
-      cardActiveCount,
-      cardInactiveCount,
-      tableVisitorCard,
-    ],
+    [t, totalRecords, usedCard, unUsedCard, cardActiveCount, cardInactiveCount, tableVisitorCard],
   );
 
   const handleOpenDialog = () => {
@@ -222,16 +214,40 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
+  const typeMap: Record<string, number> = {
+    'Non Access Card': 0,
+    RFID: 1,
+    'RFID Card': 1,
+    BLE: 2,
+  };
+
+  const cardStatusMap: Record<string, number> = {
+    'Not Found': 0,
+    Active: 1,
+    Lost: 2,
+    Broken: 3,
+    'Not Returned': 4,
+  };
+
   const handleEdit = async (id: string) => {
     const existingData = tableVisitorCard.find((item) => item.id === id);
-    // const existingData = await getVisitorCardById(id);
-    // const data = existingData.collection;
+
     if (!existingData) return;
 
     const parsedData = {
       ...existingData,
       registered_site: existingData.registered_site ?? '',
-      type: typeMap[existingData.type] ?? 0,
+
+      // GET API -> form number
+      type:
+        typeof existingData.type === 'number'
+          ? existingData.type
+          : (typeMap[existingData.type] ?? 0),
+
+      card_status:
+        typeof existingData.card_status === 'number'
+          ? existingData.card_status
+          : (cardStatusMap[existingData.card_status] ?? 0),
     } as CreateVisitorCardRequest;
 
     setEdittingId(id);
@@ -241,14 +257,14 @@ const Content = () => {
   };
 
   const handleDeleteVisitorCard = async (id: string) => {
-    const confirmed = await showConfirmDelete(t("confirmDelete", { name: 'Card' }));
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Card' }));
 
     if (confirmed) {
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', t("deleteSuccess", { name: 'Card' }));
+        showSwal('success', t('deleteSuccess', { name: 'Card' }));
       } catch (error: any) {
-        showSwal('error', error?.response?.data?.msg || t("deleteFailed", { name: 'Card' }));
+        showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'Card' }));
       }
     }
   };
@@ -264,17 +280,19 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Card' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Card' }),
+    );
 
     if (confirmed) {
       try {
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
         setSelectedRows([]);
 
-        showSwal('success', `${t("deleteSuccessMultiple", { count: rows.length, name: 'Card' })}`);
+        showSwal('success', `${t('deleteSuccessMultiple', { count: rows.length, name: 'Card' })}`);
         return true;
       } catch (error: any) {
-        showSwal('error', error?.message ?? t("deleteFailed", { name: 'Card' }));
+        showSwal('error', error?.message ?? t('deleteFailed', { name: 'Card' }));
         return false;
       }
     }
@@ -453,7 +471,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isDataVerified={true}
-                searchPlaceholder='Search card'
+                searchPlaceholder="Search card"
                 sortColumns={['name']}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => {

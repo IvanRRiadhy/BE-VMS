@@ -86,6 +86,8 @@ const RenderDetailRows = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
 
   useEffect(() => {
     if (invitation?.site?.id && selectedSiteParentIds.length === 0) {
@@ -516,7 +518,7 @@ const RenderDetailRows = ({
 
         return (
           <TableRow key={key}>
-            <TableCell>
+            <TableCell sx={{ borderBottom: 'none' }}>
               {!isVisitorPeriodPair && (
                 <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                   <Typography variant="subtitle2" fontWeight={600}>
@@ -1058,6 +1060,9 @@ const RenderDetailRows = ({
                                       ? dayjs.utc(startItem.answer_datetime).local()
                                       : null
                                   }
+                                  open={openStartPicker}
+                                  onOpen={() => setOpenStartPicker(true)}
+                                  onClose={() => setOpenStartPicker(false)}
                                   ampm={false}
                                   onChange={(newValue) => {
                                     if (newValue) {
@@ -1087,6 +1092,9 @@ const RenderDetailRows = ({
                                       fullWidth: true,
                                       error: !!startError,
                                       helperText: startError,
+                                      onClick: () => {
+                                        setOpenStartPicker(true);
+                                      },
                                       sx: {
                                         '& .MuiInputBase-root.Mui-disabled': {
                                           backgroundColor: '#f3f4f6',
@@ -1130,6 +1138,9 @@ const RenderDetailRows = ({
                               <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                                 <DateTimePicker
                                   disabled={endLocked}
+                                  open={openEndPicker}
+                                  onOpen={() => setOpenEndPicker(true)}
+                                  onClose={() => setOpenEndPicker(false)}
                                   value={
                                     endItem.answer_datetime
                                       ? dayjs.utc(endItem.answer_datetime).local()
@@ -1159,6 +1170,9 @@ const RenderDetailRows = ({
                                       fullWidth: true,
                                       error: !!endError,
                                       helperText: endError,
+                                      onClick: () => {
+                                        setOpenEndPicker(true);
+                                      },
                                       sx: {
                                         '& .MuiInputBase-root.Mui-disabled': {
                                           backgroundColor: '#f3f4f6',

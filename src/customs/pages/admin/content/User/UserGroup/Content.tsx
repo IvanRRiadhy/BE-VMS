@@ -16,6 +16,7 @@ import {
   deletePermissionOrganization,
   deletePermissionRegisterSite,
   deletePermissionSite,
+  deleteUser,
   getAllPermission,
   getAllPermissionManageVisitor,
   getAllPermissionOrganization,
@@ -84,9 +85,7 @@ const Content = () => {
     [sites],
   );
 
-  const {
-    deleteMutation: deleteUserGroup,
-  } = useUserGroupMutation();
+  const { deleteMutation: deleteUserGroup } = useUserGroupMutation();
 
   const collection = data?.collection || [];
   const totalRecords = data?.collection.length || 0;
@@ -101,7 +100,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [totalRecords]
+    [totalRecords],
   );
 
   const handleAdd = () => {
@@ -139,6 +138,40 @@ const Content = () => {
     }
   };
 
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!rows.length) return false;
+
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', {
+        count: rows.length,
+        name: 'User Group',
+      }),
+    );
+
+    if (!confirmed) return false;
+
+    try {
+      for (const row of rows) {
+        await deleteUserGroup.mutateAsync(row.id);
+      }
+
+      setSelectedRows([]);
+
+      showSwal(
+        'success',
+        t('deleteSuccessMultiple', {
+          count: rows.length,
+          name: 'user group',
+        }),
+      );
+
+      return true;
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to delete some items.');
+
+      return false;
+    }
+  };
 
   const handlePermission = async (row: any) => {
     try {
@@ -598,13 +631,13 @@ const Content = () => {
 
     return (
       JSON.stringify(originalData.permissions ?? []) !==
-      JSON.stringify(formData.permissions ?? []) ||
+        JSON.stringify(formData.permissions ?? []) ||
       JSON.stringify(originalData.organization ?? []) !==
-      JSON.stringify(formData.organization ?? []) ||
+        JSON.stringify(formData.organization ?? []) ||
       JSON.stringify(originalData.registeredSite ?? []) !==
-      JSON.stringify(formData.registeredSite ?? []) ||
+        JSON.stringify(formData.registeredSite ?? []) ||
       JSON.stringify(originalData.manageVisitor ?? []) !==
-      JSON.stringify(permissionSites['ManageVisitor'] ?? []) ||
+        JSON.stringify(permissionSites['ManageVisitor'] ?? []) ||
       JSON.stringify(originalData.accesses ?? []) !== JSON.stringify(formData.accesses ?? []) ||
       JSON.stringify(originalData.manageSite ?? []) !== JSON.stringify(formData.manageSite ?? []) ||
       JSON.stringify(originalData.visitorType ?? []) !== JSON.stringify(formData.visitorType ?? [])
@@ -673,7 +706,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 isNoActionTableHead={true}
                 defaultRowsPerPage={rowsPerPage}
-                searchPlaceholder='Search user group'
+                searchPlaceholder="Search user group"
                 rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(newPage, newRowsPerPage) => {
                   setPage(newPage);
@@ -698,6 +731,7 @@ const Content = () => {
                 onAddData={handleAdd}
                 isHavePermission={true}
                 onPermission={(row) => handlePermission(row)}
+                onBatchDelete={handleBatchDelete}
               />
             </Grid>
           </Grid>

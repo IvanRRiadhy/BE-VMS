@@ -228,18 +228,18 @@ const FormSite = ({
 
     const mappedAccess = Array.isArray(site)
       ? site.map((a: any, idx: number) => {
-        const master = accessControlList.find(
-          (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
-        );
+          const master = accessControlList.find(
+            (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
+          );
 
-        return {
-          id: a.id,
-          sort: idx,
-          access_control_id: a.access_control_id,
-          name: master?.name ?? '',
-          early_access: a.early_access ?? false,
-        };
-      })
+          return {
+            id: a.id,
+            sort: idx,
+            access_control_id: a.access_control_id,
+            name: master?.name ?? '',
+            early_access: a.early_access ?? false,
+          };
+        })
       : [];
 
     setInitialTracking(mappedTracking);
@@ -327,7 +327,7 @@ const FormSite = ({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      showSwal('error', 'Please complete all required fields.');
+      showSwal('error',  'Please complete all required fields.');
       return false;
     }
 
@@ -354,7 +354,6 @@ const FormSite = ({
     }
 
     try {
-
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
 
@@ -417,9 +416,7 @@ const FormSite = ({
               early_access: t.early_access ?? false,
             };
 
-            return t.id
-              ? updateSiteTracking(t.id, payload)
-              : createSiteTracking(payload);
+            return t.id ? updateSiteTracking(t.id, payload) : createSiteTracking(payload);
           }),
         );
 
@@ -432,9 +429,7 @@ const FormSite = ({
               early_access: p.early_access ?? false,
             };
 
-            return p.id
-              ? updateSiteParking(p.id, payload)
-              : createSiteParking(payload);
+            return p.id ? updateSiteParking(p.id, payload) : createSiteParking(payload);
           }),
         );
 
@@ -455,21 +450,16 @@ const FormSite = ({
           }
         } else {
           // Hapus document yang memang dihapus user
-          await Promise.all(
-            deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)),
-          );
+          await Promise.all(deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)));
 
           // Tambah document baru
           await Promise.all(
             newSiteDocuments.map((doc) =>
-              createSiteDocument(
-                {
-                  site_id: editingId,
-                  document_id: doc.document_id,
-                  retention_time: doc.retention_time,
-                },
-
-              ),
+              createSiteDocument({
+                site_id: editingId,
+                document_id: doc.document_id,
+                retention_time: doc.retention_time,
+              }),
             ),
           );
         }
@@ -496,7 +486,6 @@ const FormSite = ({
         // console.log('finalFormData', JSON.stringify(finalFormData, null, 2));
         const createData = CreateSiteRequestSchema.parse(finalFormData);
         const res = await create.mutateAsync({
-
           data: createData,
         });
         const newSiteId = res.collection?.id as string;
@@ -564,8 +553,6 @@ const FormSite = ({
   };
 
   const createSiteDocumentsForNewSite = async () => {
-
-
     const allSitesRes = await getAllSite();
     const newSite = allSitesRes.collection.find(
       (site: any) => site.name === localForm.name && site.description === localForm.description,
@@ -1445,49 +1432,51 @@ const FormSite = ({
                     />
                   </Box>
                 </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
-                  <Box>
-                    <Box display="flex" alignItems="center" gap={0.5}>
-                      <CustomFormLabel
-                        htmlFor="approval_workflow_id"
-                        required={localForm.need_approval}
-                        sx={{ mt: 0.5 }}
-                      >
-                        Type Approval
-                      </CustomFormLabel>
+                {localForm.need_approval && (
+                  <Grid size={{ xs: 12, xl: 6 }}>
+                    <Box>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CustomFormLabel
+                          htmlFor="approval_workflow_id"
+                          required={localForm.need_approval}
+                          sx={{ mt: 0.5 }}
+                        >
+                          Type Approval
+                        </CustomFormLabel>
 
-                      <Tooltip title="Select the approval workflow type" arrow>
-                        <IconButton size="small">
-                          <IconInfoCircle size={16} />
-                        </IconButton>
-                      </Tooltip>
+                        <Tooltip title="Select the approval workflow type" arrow>
+                          <IconButton size="small">
+                            <IconInfoCircle size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      <CustomSelect
+                        id="approval_workflow_id"
+                        name="approval_workflow_id"
+                        value={localForm.approval_workflow_id ?? ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          // const value = Number(e.target.value);
+                          setLocalForm((prev) => ({
+                            ...prev,
+                            approval_workflow_id: e.target.value,
+                            need_approval: e.target.value !== '0' ? true : false,
+                          }));
+                        }}
+                        fullWidth
+                        required={localForm.need_approval}
+                        sx={{ mb: 2 }}
+                        disabled={!localForm.need_approval || isBatchEdit}
+                      >
+                        <MenuItem value="">Select Type Approval</MenuItem>
+                        {approvalData.map((item) => (
+                          <MenuItem key={item.value} value={item.value}>
+                            {item.label}
+                          </MenuItem>
+                        ))}
+                      </CustomSelect>
                     </Box>
-                    <CustomSelect
-                      id="approval_workflow_id"
-                      name="approval_workflow_id"
-                      value={localForm.approval_workflow_id ?? ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        // const value = Number(e.target.value);
-                        setLocalForm((prev) => ({
-                          ...prev,
-                          approval_workflow_id: e.target.value,
-                          need_approval: e.target.value !== '0' ? true : false,
-                        }));
-                      }}
-                      fullWidth
-                      required={localForm.need_approval}
-                      sx={{ mb: 2 }}
-                      disabled={!localForm.need_approval || isBatchEdit}
-                    >
-                      <MenuItem value="">Select Type Approval</MenuItem>
-                      {approvalData.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </CustomSelect>
-                  </Box>
-                </Grid>
+                  </Grid>
+                )}
 
                 <Grid size={{ xs: 12, sm: 12 }}>
                   <Divider sx={{ my: 0.1 }} />
@@ -1627,15 +1616,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.parking ||
                     (localForm.parking.length === 0 && localForm.can_visited)) && (
-                      <MuiButton
-                        size="small"
-                        onClick={() => handleAddDetail('parking')}
-                        variant="contained"
-                        color="primary"
-                      >
-                        Add New
-                      </MuiButton>
-                    )}
+                    <MuiButton
+                      size="small"
+                      onClick={() => handleAddDetail('parking')}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Add New
+                    </MuiButton>
+                  )}
                 </Box>
               </Paper>
             </Grid>
@@ -1679,15 +1668,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.tracking ||
                     (localForm.tracking.length === 0 && localForm.can_visited)) && (
-                      <MuiButton
-                        size="small"
-                        onClick={() => handleAddDetail('tracking')}
-                        variant="contained"
-                        color="primary"
-                      >
-                        Add New
-                      </MuiButton>
-                    )}
+                    <MuiButton
+                      size="small"
+                      onClick={() => handleAddDetail('tracking')}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Add New
+                    </MuiButton>
+                  )}
                 </Box>
               </Paper>
             </Grid>

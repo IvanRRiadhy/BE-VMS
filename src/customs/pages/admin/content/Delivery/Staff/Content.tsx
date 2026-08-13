@@ -101,11 +101,9 @@ const Content = () => {
 
   const tableData = driverQuery.data?.collection ?? [];
 
-  const totalRecords =
-    driverQuery.data?.RecordsTotal ?? 0;
+  const totalRecords = driverQuery.data?.RecordsTotal ?? 0;
 
-  const totalFilteredRecords =
-    driverQuery.data?.RecordsFiltered ?? 0;
+  const totalFilteredRecords = driverQuery.data?.RecordsFiltered ?? 0;
 
   const loading = driverQuery.isLoading;
 
@@ -119,7 +117,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [totalRecords]
+    [totalRecords],
   );
 
   const tableRowEmployee = useMemo(() => {
@@ -131,7 +129,6 @@ const Content = () => {
       department: item.department?.name ?? '-',
     }));
   }, [tableData]);
-
 
   const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(
     CreateDriverRequestSchema.parse({}),
@@ -358,19 +355,18 @@ const Content = () => {
   const handleBatchDelete = async (rows: DriverTableRows[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       try {
         await Promise.all(rows.map((row) => deleteStaff.mutateAsync(row.id)));
 
-
-        showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
-      } catch (error) {
-        showSwal('error', 'Failed to delete some items.');
+        showSwal('success', `${rows.length} items have been deleted.`);
+        return true;
+      } catch (error: any) {
+        showSwal('error',  error?.response?.data?.msg || 'Failed to delete some items.');
+        return false;
       }
     }
   };
@@ -454,7 +450,7 @@ const Content = () => {
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHavePagination={true}
-                searchPlaceholder='Search staff'
+                searchPlaceholder="Search staff"
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
                 currentPage={page}

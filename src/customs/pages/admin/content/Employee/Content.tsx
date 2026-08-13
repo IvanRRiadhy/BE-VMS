@@ -1,12 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid2 as Grid,
-  IconButton,
-} from '@mui/material';
+import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
@@ -17,10 +10,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
-import {
-  CreateEmployeeRequestSchema,
-  Item,
-} from 'src/customs/api/models/Admin/Employee';
+import { CreateEmployeeRequestSchema, Item } from 'src/customs/api/models/Admin/Employee';
 import { getEmployeeById } from 'src/customs/api/admin';
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
@@ -99,38 +89,33 @@ const Content = () => {
     filters,
   });
 
-  const tableData = useMemo<Item[]>(() => {
-    return employeeQuery.data?.collection ?? [];
-  }, [employeeQuery.data]);
+  const collection = employeeQuery.data?.collection ?? [];
+
+  const tableData = collection;
 
   const totalRecords = employeeQuery.data?.RecordsTotal ?? 0;
   const totalFilteredRecords = employeeQuery.data?.RecordsFiltered ?? 0;
-  const cards = useMemo(
-    () => [
-      {
-        title: t('total_employee'),
-        icon: IconUsers,
-        subTitle: `${totalRecords}`,
-        subTitleSetting: 10,
-        color: 'none',
-      },
-    ],
-    [t, totalRecords]
-  );
+
+  const cards = [
+    {
+      title: t('total_employee'),
+      icon: IconUsers,
+      subTitle: `${totalRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
+
   const loading = employeeQuery.isPending;
-  const tableRowEmployee = useMemo(() => {
-    const collection = employeeQuery.data?.collection ?? [];
 
-    return collection.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      organization: item.organization?.name ?? item.Organization?.name ?? '-',
-      department: item.department?.name ?? item.Department?.name ?? '-',
-      faceimage: item.faceimage,
-      is_blacklist: item.is_blacklist,
-    }));
-  }, [employeeQuery.data]);
-
+  const tableRowEmployee = collection.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    organization: item.organization?.name ?? item.Organization?.name ?? '-',
+    department: item.department?.name ?? item.Department?.name ?? '-',
+    faceimage: item.faceimage,
+    is_blacklist: item.is_blacklist,
+  }));
 
   const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
   const [formDataAddEmployee, setFormDataAddEmployee] = useState(
@@ -148,8 +133,17 @@ const Content = () => {
     setEdittingId('');
   };
 
+  const getDefaultExitDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 110);
+    return date.toISOString().split('T')[0];
+  };
+
   const handleAdd = () => {
-    const fresh = CreateEmployeeRequestSchema.parse({});
+    const fresh = {
+      ...CreateEmployeeRequestSchema.parse({}),
+      exit_date: getDefaultExitDate(),
+    };
 
     setFormDataAddEmployee(fresh);
     setInitialFormData(fresh);
@@ -164,7 +158,6 @@ const Content = () => {
     //   (item) => item.id === id
     // );
     if (!existingData) return;
-
 
     const toNum = (
       v: unknown,
@@ -310,9 +303,7 @@ const Content = () => {
   const handleDelete = async (row: EmployeesTableRow) => {
     const name = row.name || '-';
 
-    const confirmed = await showConfirmDelete(
-      t('confirmDelete', { name: `employee "${name}"` }),
-    );
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: `employee "${name}"` }));
 
     if (confirmed) {
       try {
@@ -322,7 +313,10 @@ const Content = () => {
 
         showSwal('success', t('deleteSuccess', { name: `employee "${name}"` }));
       } catch (error: any) {
-        showSwal('error', error.reseponse.data.message || t('deleteFailed', { name: `employee "${name}"` }));
+        showSwal(
+          'error',
+          error.reseponse.data.message || t('deleteFailed', { name: `employee "${name}"` }),
+        );
       }
     }
   };
@@ -330,7 +324,9 @@ const Content = () => {
   const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'employees' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'employees' }),
+    );
 
     if (!confirmed) return false;
 
@@ -343,11 +339,11 @@ const Content = () => {
         ),
       );
 
-      showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'employees' }));
       setSelectedRows([]);
+      showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'employees' }));
       return true;
     } catch (error: any) {
-      showSwal('error', error.message || 'Failed to delete some employees.');
+      showSwal('error', error.response?.data?.msg || 'Failed to delete some employees.');
       return false;
     }
   };
@@ -463,10 +459,7 @@ const Content = () => {
     handleBlacklist(row.id, Boolean(row.is_blacklist));
   }, []);
 
-
-  const handleImportExcel = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -474,17 +467,11 @@ const Content = () => {
       await importEmployeeBatch(file);
       showSwal('success', 'Successfully imported employees');
     } catch (err: any) {
-      showSwal(
-        'error',
-        err?.msg ||
-        err?.response?.data?.msg ||
-        'Failed to import employees',
-      );
+      showSwal('error', err?.msg || err?.response?.data?.msg || 'Failed to import employees');
     } finally {
       e.target.value = '';
     }
   };
- 
 
   return (
     <PageContainer
@@ -514,7 +501,7 @@ const Content = () => {
                 onImportExcel={handleImportExcel}
                 // isListBlacklist={true}
                 isBlacklistPage={true}
-                searchPlaceholder='Search Employee'
+                searchPlaceholder="Search Employee"
                 onNavigatePage={() => {
                   navigate('/admin/manage/blacklist-employees');
                 }}

@@ -245,6 +245,18 @@ import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
 
 import { GetAllSettingResponse } from './models/Admin/Setting';
 
+export const handlePaginationError = () => {
+  return {
+    status: false,
+    status_code: 404,
+    title: 'Not Found',
+    msg: 'Data not found',
+    collection: [],
+    RecordsTotal: 0,
+    RecordsFiltered: 0,
+    Draw: 0,
+  };
+};
 //#region report
 
 export const generateReport = async (payload: any): Promise<any> => {
@@ -294,8 +306,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-        ? false
-        : status;
+          ? false
+          : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -801,7 +813,7 @@ export const getAllVisitorCardPagination = async (
   keyword: string = '',
   sort_dir?: string,
   type?: number | null,
-  cardStatus?: number, // ← ubah nama jadi camelCase
+  cardStatus?: number,
 ): Promise<GetAllVisitorCardPaginationResponse> => {
   const params: Record<string, any> = {
     start,
@@ -809,24 +821,38 @@ export const getAllVisitorCardPagination = async (
     sort_dir,
   };
 
-  if (keyword?.trim()) params['search[value]'] = keyword.trim();
+  if (keyword?.trim()) {
+    params['search[value]'] = keyword.trim();
+  }
 
   if (type !== undefined && type !== null) {
     params.type = type;
   }
 
   if (cardStatus !== undefined && cardStatus !== null) {
-    params['card-status'] = cardStatus; // API tetap butuh format snake-case / kebab-case
+    params['card-status'] = cardStatus;
   }
 
-  const response = await axiosInstance.get('/card/dt', {
-    headers: {
-      Accept: 'application/json',
-    },
-    params,
-  });
+  try {
+    const response = await axiosInstance.get('/card/dt', {
+      headers: {
+        Accept: 'application/json',
+      },
+      params,
+    });
 
-  return response.data;
+    return {
+      ...response.data,
+      collection: response.data?.collection ?? [],
+    };
+  } catch (error) {
+    return {
+      collection: [],
+      RecordsTotal: 0,
+      RecordsFiltered: 0,
+      Draw: 0,
+    } as any;
+  }
 };
 
 // create batch
@@ -1116,6 +1142,20 @@ export const getVisitorTransactionPagination = async (
   });
   return response.data;
 };
+
+// getVisitorFormTransaction
+export const getVisitorFormTransaction = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor/add-visit/form/${id}`, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const createVisitorAddTransaction = async (data: any): Promise<any> => {
+  const response = await axiosInstance.post('/visitor/add-visit', data, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
 //end visitor
 
 //#region Visitor Type
@@ -1220,14 +1260,18 @@ export const getAllDistrictsPagination = async (
     params.sort_dir = sortDir;
   }
 
-  const response = await axiosInstance.get(`/district/dt`, {
-    params,
-    headers: {
-      Accept: 'application/json',
-    },
-  });
+  try {
+    const response = await axiosInstance.get(`/district/dt`, {
+      params,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
 };
 // get by id district
 export const getDistrictById = async (id: string): Promise<GetDistrictByIdResponse> => {
@@ -1296,14 +1340,22 @@ export const getAllDepartmentsPagination = async (
     params.sort_dir = sortDir;
   }
 
-  const response = await axiosInstance.get(`/department/dt`, {
-    params,
-    headers: {
-      Accept: 'application/json',
-    },
-  });
+  try {
+    const response = await axiosInstance.get(`/department/dt`, {
+      params,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return handlePaginationError() as any;
+    }
+
+    throw error;
+  }
 };
 // get by id department
 
@@ -1375,14 +1427,22 @@ export const getAllOrganizationPagination = async (
     params.sort_dir = sortDir;
   }
 
-  const response = await axiosInstance.get(`/organization/dt`, {
-    params,
-    headers: {
-      Accept: 'application/json',
-    },
-  });
+  try {
+    const response = await axiosInstance.get(`/organization/dt`, {
+      params,
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return handlePaginationError() as any;
+    }
+
+    throw error;
+  }
 };
 
 // get by id organization

@@ -2476,7 +2476,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       return (
         <TableRow key={key}>
-          <TableCell>
+          <TableCell sx={{ borderBottom: 'none' }}>
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                 <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>

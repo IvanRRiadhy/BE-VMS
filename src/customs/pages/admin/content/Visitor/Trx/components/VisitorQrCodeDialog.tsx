@@ -25,6 +25,7 @@ const VisitorQrCodeDialog = ({
     visitorDetail,
 }: Props) => {
     const visitorNumber = visitorDetail?.visitor_number ?? "";
+    const invitationCode = visitorDetail?.invitation_code ?? "";
 
 
     const qrRef = useRef<HTMLDivElement>(null);
@@ -45,57 +46,61 @@ const VisitorQrCodeDialog = ({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>Visitor QR Code
-                <IconButton
-                    aria-label="close"
-                    onClick={onClose}
-                    sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: 8,
-                        color: (theme) => theme.palette.grey[500],
-                    }}
-                >
-                    <IconX />
-                </IconButton>
-            </DialogTitle>
+      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          Visitor QR Code
+          <IconButton
+            aria-label="close"
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
 
-            <DialogContent dividers>
-                <Box
+        <DialogContent dividers>
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            bgcolor="#fff"
+            py={2}
+            p={2}
+            borderRadius={2}
+          >
+            <Box bgcolor="#fff" p={2} borderRadius={2} ref={qrRef}>
+              <QRCode value={visitorNumber} size={220} viewBox="0 0 256 256" />
+            </Box>
 
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    bgcolor="#fff"
-                    py={2}
-                    p={2}
-                    borderRadius={2}
-                >
-                    <Box bgcolor="#fff" p={2} borderRadius={2} ref={qrRef}>
-                        <QRCode
-                            value={visitorNumber}
-                            size={220}
-                            viewBox="0 0 256 256"
-                        />
-                    </Box>
+            <Typography mt={2} variant="body2">
+              Invitation Code
+            </Typography>
 
-                    <Typography mt={2} variant="body2">
-                        Visitor Number
-                    </Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {invitationCode}
+            </Typography>
 
-                    <Typography variant="h6" fontWeight={700}>
-                        {visitorNumber}
-                    </Typography>
-                </Box>
-            </DialogContent>
+            <Typography mt={2} variant="body2">
+              Visitor Number
+            </Typography>
 
-            <DialogActions>
-                <Button variant="contained" onClick={handleDownload} fullWidth>
-                    Download Qr Code
-                </Button>
-            </DialogActions>
-        </Dialog>
+            <Typography variant="h6" fontWeight={700}>
+              {visitorNumber}
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" onClick={handleDownload} fullWidth>
+            Download Qr Code
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
 };
 

@@ -43,6 +43,7 @@ import {
   FormHelperText,
   Select,
   Avatar,
+  LinearProgress,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -106,6 +107,7 @@ import VisitorSelectEmployee from 'src/customs/components/select2/VisitorSelectE
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import { useTranslation } from 'react-i18next';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -185,12 +187,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
   }>({ open: false, message: '', severity: 'info' });
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
@@ -2262,23 +2267,43 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     if (!file) return;
 
     if (trackKey) {
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
       setPreviews((prev) => ({
         ...prev,
         [trackKey]: URL.createObjectURL(file),
       }));
     }
-    const compressedFile = await compressImage(file);
-    if (compressedFile.size > 1024 * 1024) {
-      toast('File size must be under 1 MB', 'info');
-      return;
+
+    try {
+      const compressedFile = await compressImage(file);
+
+      if (compressedFile.size > 1024 * 1024) {
+        toast('File size must be under 1 MB', 'info');
+        return;
+      }
+
+      const path = await uploadFileToCDN(compressedFile);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+
+      e.target.value = '';
     }
-
-    const path = await uploadFileToCDN(compressedFile);
-
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
   };
 
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
@@ -2287,17 +2312,52 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const compressedBlob = await compressImage(
-      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-    );
-    const path = await uploadFileToCDN(compressedBlob);
-    if (!path) return;
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      setScreenshot(imageSrc);
+
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const compressedBlob = await compressImage(
+        new File([blob], 'camera.jpg', {
+          type: 'image/jpeg',
+        }),
+      );
+
+      const path = await uploadFileToCDN(compressedBlob);
+
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Capture/upload failed:', error);
+      toast('Failed to upload photo', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
   const handleRemoveFileForField = async (
@@ -3647,6 +3707,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openStartPicker}
+                                onOpen={() => setOpenStartPicker(true)}
+                                onClose={() => setOpenStartPicker(false)}
                                 value={
                                   startItem.answer_datetime
                                     ? dayjs(startItem.answer_datetime)
@@ -3680,6 +3743,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
+                                    onClick: () => {
+                                      setOpenStartPicker(true);
+                                    },
                                     helperText: startError,
                                     FormHelperTextProps: {
                                       sx: {
@@ -3718,6 +3784,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openEndPicker}
+                                onOpen={() => setOpenEndPicker(true)}
+                                onClose={() => setOpenEndPicker(false)}
                                 value={
                                   endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
                                 }
@@ -3748,6 +3817,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                     fullWidth: true,
                                     error: !!endError,
                                     helperText: endError,
+                                    onClick: () => {
+                                      setOpenEndPicker(true);
+                                    },
                                     FormHelperTextProps: {
                                       sx: {
                                         ml: 0,
@@ -3806,21 +3878,27 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 case 10: {
                   // TakePicture
                   if (remark == 'selfie_image') {
+                    const isUploading = !!uploadingFiles[key];
                     return (
                       <Box>
                         <Box
                           sx={{
+                            position: 'relative',
                             border: '2px dashed #90caf9',
                             borderRadius: 2,
                             padding: 4,
                             textAlign: 'center',
                             backgroundColor: '#f5faff',
-                            cursor: 'pointer',
+                            cursor: isUploading ? 'not-allowed' : 'pointer',
                             width: '100%',
-                            pointerEvents: 'auto',
-                            opacity: 1,
+                            pointerEvents: isUploading ? 'none' : 'auto',
+                            opacity: isUploading ? 0.6 : 1,
                           }}
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => {
+                            if (!isUploading) {
+                              fileInputRef.current?.click();
+                            }
+                          }}
                         >
                           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                           <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
@@ -3855,6 +3933,36 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                               <IconCamera /> Use Camera
                             </Typography>
                           </Box>
+
+                          {isUploading && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                mt: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <LinearProgress
+                                sx={{
+                                  width: '220px',
+                                  height: 6,
+                                  borderRadius: 3,
+                                }}
+                              />
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  mt: 0.75,
+                                }}
+                              >
+                                Uploading file...
+                              </Typography>
+                            </Box>
+                          )}
 
                           <input
                             id={`file-${key}`}
@@ -4029,6 +4137,33 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                               </Grid>
                             </Grid>
 
+                            {isUploading && (
+                              <Box
+                                sx={{
+                                  mt: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <LinearProgress
+                                  sx={{
+                                    width: '220px',
+                                    height: 6,
+                                    borderRadius: 3,
+                                  }}
+                                />
+
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ mt: 0.75 }}
+                                >
+                                  Uploading file...
+                                </Typography>
+                              </Box>
+                            )}
+
                             <Divider sx={{ my: 2 }} />
 
                             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
@@ -4042,25 +4177,35 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 }
                                 color="error"
                                 sx={{ mr: 1 }}
+                                disabled={isUploading}
                                 startIcon={<IconTrash />}
                               >
                                 Clear Foto
                               </Button>
                               <Button
                                 variant="contained"
+                                disabled={isUploading}
                                 onClick={(e) => {
                                   e.stopPropagation();
+
                                   handleCaptureForField(
                                     (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   );
                                 }}
-                                startIcon={<IconCamera />}
+                                startIcon={
+                                  isUploading ? (
+                                    <CircularProgress size={18} color="primary" />
+                                  ) : (
+                                    <IconCamera />
+                                  )
+                                }
                               >
-                                Take Foto
+                                {isUploading ? 'Uploading...' : 'Take Foto'}
                               </Button>
                               <Button
                                 startIcon={<IconDeviceFloppy />}
+                                disabled={isUploading}
                                 onClick={() => {
                                   setOpenCamera(false);
                                   setScreenshot(null);
@@ -4366,6 +4511,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           Supports: JPG, JPEG, PNG, up to
                           <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
+
                         {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
@@ -4440,21 +4586,28 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 }
 
                 case 12: {
+                  const isUploading = !!uploadingFiles[key];
                   return (
                     <Box>
                       <Box
                         sx={{
+                          position: 'relative',
                           border: '2px dashed #90caf9',
                           borderRadius: 2,
                           padding: 4,
                           textAlign: 'center',
                           backgroundColor: '#f5faff',
-                          cursor: 'pointer',
+                          cursor: isUploading ? 'not-allowed' : 'pointer',
                           width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
+                          pointerEvents: isUploading ? 'none' : 'auto',
+                          opacity: isUploading ? 0.6 : 1,
+                          transition: 'opacity 0.2s ease',
                         }}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          if (!isUploading) {
+                            fileInputRef.current?.click();
+                          }
+                        }}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                         <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
@@ -4489,6 +4642,30 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             <IconCamera /> Use Camera
                           </Typography>
                         </Box>
+
+                        {isUploading && (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: '220px',
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
 
                         <input
                           id={`file-${key}`}
@@ -4564,143 +4741,31 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           {errorMessage}
                         </Typography>
                       )}
-
-                      <Dialog
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 2 }}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            alignItems={'center'}
-                            mb={1}
-                          >
-                            <Typography variant="h6" mb={0}>
-                              Take Photo From Camera
-                            </Typography>
-                            <IconButton onClick={() => setOpenCamera(false)}>
-                              <IconX />
-                            </IconButton>
-                          </Box>
-
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Box sx={{ position: 'relative' }}>
-                                <Webcam
-                                  audio={false}
-                                  ref={webcamRef}
-                                  screenshotFormat="image/jpeg"
-                                  videoConstraints={{
-                                    facingMode,
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-
-                                <IconButton
-                                  onClick={() =>
-                                    setFacingMode((prev) =>
-                                      prev === 'environment' ? 'user' : 'environment',
-                                    )
-                                  }
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 10,
-                                    right: 10,
-                                    bgcolor: 'rgba(0,0,0,0.5)',
-                                    color: '#fff',
-                                    '&:hover': {
-                                      bgcolor: 'rgba(0,0,0,0.7)',
-                                    },
-                                  }}
-                                >
-                                  <IconRefresh />
-                                </IconButton>
-                              </Box>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {screenshot ? (
-                                <img
-                                  src={screenshot}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                            <Button
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(originalIndex, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              sx={{ mr: 1 }}
-                              startIcon={<IconTrash />}
-                            >
-                              Clear Foto
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCaptureForField(
-                                  (url) => onChange(originalIndex, 'answer_file', url),
-                                  key,
-                                );
-                              }}
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </Button>
-                            <Button
-                              startIcon={<IconDeviceFloppy />}
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ ml: 1 }}
-                            >
-                              Submit
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef as any}
+                        screenshot={screenshot}
+                        facingMode={facingMode}
+                        isUploading={isUploading}
+                        onSwitchCamera={() =>
+                          setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                        }
+                        onCapture={() =>
+                          handleCaptureForField(
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onSubmit={() => setOpenCamera(false)}
+                      />
                     </Box>
                   );
                 }

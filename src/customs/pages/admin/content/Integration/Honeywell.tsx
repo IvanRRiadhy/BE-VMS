@@ -59,7 +59,7 @@ import EditBadgeTypeDialog from './components/Honeywell/EditBadgeTypeDialog';
 import EditClearCodeDialog from './components/Honeywell/EditClearCodeDialog';
 import EditLogDevsDialog from './components/Honeywell/EditLogDevsDialog';
 
-const Honeywell = ({ id }: { id: string }) => {
+const Honeywell = ({ id, integrationName }: { id: string; integrationName: string }) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(false);
@@ -1097,6 +1097,7 @@ const Honeywell = ({ id }: { id: string }) => {
                   selectedRows={selectedRows}
                   isHaveBack={true}
                   onBack={handleBack}
+                  isTitleIntegration={`${integrationName || 'Ipsotek'}`}
                   isHaveChecked={true}
                   isHaveAction={false}
                   isHaveActionOnlyEdit={true}

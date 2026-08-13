@@ -22,6 +22,7 @@ import {
   MobileStepper,
   Tooltip,
   Paper,
+  LinearProgress,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -86,6 +87,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
@@ -158,20 +160,23 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     const key = f.remarks;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
         <Box
           sx={{
+            position: 'relative',
             border: '2px dashed #90caf9',
             borderRadius: 2,
             padding: 4,
             textAlign: 'center',
             backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
+            transition: 'opacity 0.2s ease',
           }}
           onClick={() => setOpenCamera(true)}
         >
@@ -194,6 +199,29 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             >
               Use Camera
             </Typography>
+            {isUploading && (
+              <Box
+                sx={{
+                  width: '100%',
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
             {(previewSrc || shownName) && (
               <Box
                 mt={2}
@@ -288,9 +316,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   />
                   <IconButton
                     onClick={() =>
-                      setFacingMode((prev) =>
-                        prev === 'environment' ? 'user' : 'environment',
-                      )
+                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
                     }
                     sx={{
                       position: 'absolute',
@@ -339,9 +365,33 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Grid>
             </Grid>
 
+            {isUploading && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
             <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
               <Button
+                disabled={isUploading}
                 color="error"
                 startIcon={<IconTrash />}
                 sx={{ mr: 1 }}
@@ -357,12 +407,16 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Button>
               <Button
                 variant="contained"
-                startIcon={<IconCamera />}
+                disabled={isUploading}
+                startIcon={
+                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+                }
                 onClick={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
               >
-                Take Foto
+                {isUploading ? 'Uploading...' : 'Take Foto'}
               </Button>
               <Button
+                disabled={isUploading}
                 onClick={() => setOpenCamera(false)}
                 sx={{ ml: 1 }}
                 startIcon={<IconDeviceFloppy />}
@@ -491,24 +545,32 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     const key = f.remarks;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
         <Box
           sx={{
+            position: 'relative',
             border: '2px dashed #90caf9',
             borderRadius: 2,
             padding: 4,
             textAlign: 'center',
             backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
+            transition: 'opacity 0.2s ease',
           }}
-          onClick={() => fileInputRefs.current[key]?.click()}
+          onClick={() => {
+            if (!isUploading) {
+              fileInputRefs.current[key]?.click();
+            }
+          }}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+
           <Typography variant="h6" sx={{ mt: 1, fontWeight: '500' }}>
             Upload File
           </Typography>
@@ -520,21 +582,53 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           <Typography
             variant="subtitle1"
             component="span"
-            color="primary"
-            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+            color={isUploading ? 'text.disabled' : 'primary'}
+            sx={{
+              fontWeight: 600,
+              ml: 1,
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+            }}
             onClick={(e) => {
               e.stopPropagation();
-              setOpenCamera(true);
+
+              if (!isUploading) {
+                setOpenCamera(true);
+              }
             }}
           >
-            Use Camera
+            <IconCamera size={18} style={{ verticalAlign: 'middle' }} /> Use Camera
           </Typography>
+
+          {isUploading && (
+            <Box
+              sx={{
+                width: '100%',
+                mt: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              <LinearProgress
+                sx={{
+                  width: '220px',
+                  height: 6,
+                  borderRadius: 3,
+                }}
+              />
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                Uploading file...
+              </Typography>
+            </Box>
+          )}
 
           <input
             id={`file-${key}`}
             type="file"
             accept="image/*,application/pdf"
             hidden
+            disabled={isUploading}
             ref={(el: any) => (fileInputRefs.current[key] = el)}
             onChange={(e) =>
               handleFileChangeForField(
@@ -546,7 +640,14 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           />
 
           {(previewSrc || shownName) && (
-            <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Box
+              mt={2}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
               {previewSrc ? (
                 <>
                   <img
@@ -561,18 +662,24 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                     }}
                   />
+
                   <Button
                     color="error"
                     size="small"
                     variant="outlined"
+                    disabled={isUploading}
                     sx={{ mt: 2, minWidth: 120 }}
-                    onClick={() =>
-                      handleRemoveFileForField(
-                        f.answer_file,
-                        (url) => handleChange(f.remarks, url),
-                        key,
-                      )
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      if (!isUploading) {
+                        handleRemoveFileForField(
+                          f.answer_file,
+                          (url) => handleChange(f.remarks, url),
+                          key,
+                        );
+                      }
+                    }}
                     startIcon={<IconTrash />}
                   >
                     Remove
@@ -592,37 +699,62 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             {errors[key]}
           </Typography>
         )}
+
         <Dialog
           open={openCamera}
-          onClose={() => setOpenCamera(false)}
+          onClose={isUploading ? undefined : () => setOpenCamera(false)}
           maxWidth="md"
           fullWidth
           container={containerRef.current}
           disablePortal
         >
           <Box sx={{ p: 3, position: 'relative' }}>
-            <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'} mb={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
               <Typography variant="h6" mb={0}>
                 Take Photo From Camera
               </Typography>
-              <IconButton onClick={() => setOpenCamera(false)}>
+
+              <IconButton disabled={isUploading} onClick={() => setOpenCamera(false)}>
                 <IconX />
               </IconButton>
             </Box>
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'environment' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                />
+                <Box sx={{ position: 'relative' }}>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={{
+                      facingMode: 'environment',
+                    }}
+                    style={{
+                      width: '100%',
+                      borderRadius: 8,
+                      border: '2px solid #ccc',
+                    }}
+                  />
+
+                  <IconButton
+                    disabled={isUploading}
+                    onClick={() =>
+                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                    }
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.7)',
+                      },
+                    }}
+                  >
+                    <IconRefresh />
+                  </IconButton>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -655,10 +787,40 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Grid>
             </Grid>
 
+            {isUploading && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ textAlign: 'right' }}>
+            <Box
+              sx={{
+                textAlign: 'right',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
               <Button
+                disabled={isUploading}
                 onClick={() =>
                   handleRemoveFileForField(
                     f.answer_file,
@@ -673,17 +835,24 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               >
                 Clear Foto
               </Button>
+
               <Button
                 variant="contained"
-                startIcon={<IconCamera />}
+                disabled={isUploading}
+                startIcon={
+                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+                }
                 onClick={(e) => {
                   e.stopPropagation();
+
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
                 }}
               >
-                Take Foto
+                {isUploading ? 'Uploading...' : 'Take Foto'}
               </Button>
+
               <Button
+                disabled={isUploading}
                 onClick={() => setOpenCamera(false)}
                 sx={{ ml: 1 }}
                 startIcon={<IconDeviceFloppy />}
@@ -753,29 +922,85 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     if (!file) return;
 
     if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
     }
 
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-    e.target.value = '';
+    try {
+      const path = await uploadFileToCDN(file);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+
+      e.target.value = '';
+    }
   };
 
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
-
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const path = await uploadFileToCDN(blob);
+
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Capture/upload failed:', error);
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
   const getFieldTypeByRemarks = (remarks: string): number | null => {
@@ -1195,9 +1420,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         'Failed Praregister';
 
       await new Promise((r) => setTimeout(r, 600));
-      showSwal('error', errMsg ?? "Failed Praregister");
+      showSwal('error', errMsg ?? 'Failed Praregister');
     } finally {
-        setSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -1326,7 +1551,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             disabled={activeStep === -1}
             startIcon={<IconArrowLeft />}
           >
-            {t("back")}
+            {t('back')}
           </Button>
           <Button
             variant="contained"
@@ -1335,7 +1560,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             onClick={() => setActiveStep(0)}
             endIcon={<IconArrowRight />}
           >
-            {t("next")}
+            {t('next')}
           </Button>
         </Box>
       </Box>
@@ -1425,7 +1650,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     </Button>
                   ) : (
                     <Button size="medium" variant="contained" color="primary" onClick={handleNext}>
-                      {t("next")}
+                      {t('next')}
                       <KeyboardArrowRight />
                     </Button>
                   )
@@ -1433,7 +1658,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 backButton={
                   <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
                     <KeyboardArrowLeft />
-                    {t("back")}
+                    {t('back')}
                   </Button>
                 }
               />
@@ -1447,7 +1672,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 onClick={handleBack}
                 startIcon={<IconArrowLeft size={18} />}
               >
-                {t("back")}
+                {t('back')}
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (

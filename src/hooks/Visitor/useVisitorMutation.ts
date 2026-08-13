@@ -1,8 +1,4 @@
-
-import {
-  createQuickAccess,
-} from 'src/customs/api/Admin/Visitor';
-
+import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,6 +6,7 @@ import {
   createPraRegister,
   createVisitorsGroup,
   createPraRegisterGroup,
+  createVisitorAddTransaction,
 } from 'src/customs/api/admin';
 
 export const useVisitorMutation = () => {
@@ -52,6 +49,11 @@ export const useVisitorMutation = () => {
     onSuccess: invalidate,
   });
 
+  const createVisitorAddTransactionMutation = useMutation({
+    mutationFn: createVisitorAddTransaction,
+    onSuccess: invalidate,
+  });
+
   const createQuickAccessMutation = useMutation({
     mutationFn: createQuickAccess,
     onSuccess: invalidate,
@@ -62,6 +64,7 @@ export const useVisitorMutation = () => {
     createPraRegisterMutation,
     createVisitorsGroupMutation,
     createPraRegisterGroupMutation,
-    createQuickAccessMutation
+    createQuickAccessMutation,
+    createVisitorAddTransactionMutation,
   };
 };

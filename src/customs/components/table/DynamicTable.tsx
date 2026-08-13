@@ -77,6 +77,7 @@ type DynamicTableProps<
   currentPage?: number;
   isHaveBack?: boolean;
   onBack?: any;
+  isTitleIntegration?: any;
   isHaveExportCsv?: boolean;
   isHaveAssignTracking?: boolean;
   onAssignTracking?: any;
@@ -244,6 +245,7 @@ function DynamicTableBase<
     onActiveToggle,
     isHaveExportExcel = false,
     isHaveViewAll = false,
+    isTitleIntegration,
     onHaveViewAll,
     isHavePrint = false,
     currentPage = 0,
@@ -872,15 +874,30 @@ function DynamicTableBase<
               </Grid2>
             )}
             {isHaveBack && (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<IconArrowLeft />}
-                onClick={() => onBack?.()}
-                sx={{ mb: 1 }}
-              >
-                {t('back')}
-              </Button>
+              <Box display="flex" alignItems={'center'} gap={2} mb={1}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<IconArrowLeft />}
+                  onClick={() => onBack?.()}
+                  sx={{ mb: 0 }}
+                >
+                  {t('back')}
+                </Button>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: 1.5,
+                  }}
+                >
+                  {isTitleIntegration}
+                </Typography>
+              </Box>
             )}
             {/* <Grid2
               size={{ xs: 12 }}
@@ -908,7 +925,7 @@ function DynamicTableBase<
             >
               {/* SEARCH MENU */}
 
-              <Box sx={{ display: 'flex', flex: 1, minWidth: 0 }}>
+              <Box sx={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center' }}>
                 <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
                   {isHaveSearch && (
                     <SearchToolbar
@@ -1280,14 +1297,9 @@ function DynamicTableBase<
                 aria-label="simple table"
                 sx={{
                   width: '100%',
-                  // overflowX: 'auto',
+                  minWidth: `${columns.length * DATA_COL_WIDTH + CHECKBOX_COL_WIDTH + INDEX_COL_WIDTH + ACTION_COL_WIDTH}px`,
                 }}
                 stickyHeader={stickyHeader}
-                // sx={{
-                // width: '100%',
-                // tableLayout: 'fixed',
-                // whiteSpace: 'normal', // biar teks bisa wrap
-                // }}
               >
                 <TableHead>
                   <TableRow>
@@ -1408,6 +1420,7 @@ function DynamicTableBase<
                       if (label.startsWith('is_')) {
                         label = label.replace(/^is_/, '');
                       }
+                      const columnWidth = colName === 'type' ? 90 : undefined;
 
                       const pretty = label
                         .replace(/_/g, ' ')
@@ -1416,6 +1429,11 @@ function DynamicTableBase<
                         <TableCell
                           key={`col-${idx}`}
                           sx={{
+                            ...(columnWidth && {
+                              width: `${columnWidth}px`,
+                              minWidth: `${columnWidth}px`,
+                              maxWidth: `${columnWidth}px`,
+                            }),
                             ...(makeSticky && {
                               position: { xs: 'static', lg: 'sticky' },
                               left: { xs: 'auto', lg: getStickyLeft(idx) },
@@ -1423,8 +1441,8 @@ function DynamicTableBase<
                             }),
                             // background: 'white',
                             bgcolor: 'background.paper',
-                            minWidth: DATA_COL_WIDTH,
-                            maxWidth: DATA_COL_WIDTH,
+                            // minWidth: DATA_COL_WIDTH,
+                            // maxWidth: DATA_COL_WIDTH,
                             fontSize: '0.85rem !important',
                             // ...(isEarlyAccess && { textAlign: 'center' }),
                           }}

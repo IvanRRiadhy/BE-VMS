@@ -27,7 +27,7 @@ import {
   Item,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
-import { getVisitorTransactionByIds } from 'src/customs/api/admin';
+import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { IconClipboard, IconQrcode, IconUser, IconUserPlus, IconUsers } from '@tabler/icons-react';
 
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -58,6 +58,8 @@ import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTr
 import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { Global } from 'recharts';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -496,6 +498,114 @@ const Content = () => {
     }
   };
 
+  // const [openAddVisitor, setOpenAddVisitor] = useState(false);
+  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
+  const [loadingAddVisitor, setLoadingAddVisitor] = useState(false);
+
+  const [questionPage, setQuestionPage] = useState<any[]>([]);
+  const [transactionFormData, setTransactionFormData] = useState<any>(null);
+
+  // const handleAdd = async (group: any) => {
+  //   try {
+  //     setLoadingAddTransaction(true);
+
+  //     const response = await getVisitorFormTransaction(group.id);
+  //     const data = response?.collection;
+
+  //     if (!data) return;
+
+  //     // Data yang akan dipakai oleh FormWizard,
+  //     // mengikuti struktur yang dipakai oleh duplicateData
+  //     const visitorData = {
+  //       ...data,
+
+  //       // Visitor baru → kosongkan Visitor Information
+  //       visitor_name: '',
+  //       visitor_email: '',
+  //       visitor_phone: '',
+  //       visitor_identity_id: '',
+  //       visitor_organization_name: '',
+  //       visitor_role: '',
+  //     };
+
+  //     setDuplicateData({
+  //       group: {
+  //         ...group,
+  //         group_name: data.group_name ?? group.group_name ?? '',
+  //         site_id: data.site_id ?? group.site_id ?? '',
+  //         visitor_type_id: data.visitor_type ?? group.visitor_type_id,
+  //       },
+  //       visitors: [visitorData],
+  //     });
+
+  //     // Form metadata
+  //     setFormDataAddVisitor({
+  //       visitor_type: data.visitor_type ?? group.visitor_type_id,
+  //       is_group: true,
+  //       registered_site: data.registered_site ?? group.site_id,
+  //     } as any);
+
+  //     setWizardKey((prev) => prev + 1);
+  //     setOpenPreRegistration(true);
+  //   } catch (error) {
+  //     console.error('Failed to load transaction form:', error);
+  //   } finally {
+  //     setLoadingAddTransaction(false);
+  //   }
+  // };
+
+  const [isAddTransaction, setIsAddTransaction] = useState(false);
+
+  const handleAdd = async (group: any) => {
+    try {
+      setLoadingAddTransaction(true);
+
+      const response = await getVisitorFormTransaction(group.id);
+      const data = response?.collection;
+
+      if (!data) return;
+
+      setDuplicateData({
+        group: {
+          ...group,
+          group_name: data.group_name ?? group.group_name,
+        },
+        visitors: [
+          {
+            ...data,
+            visitor_name: '',
+            visitor_email: '',
+            visitor_phone: '',
+            visitor_identity_id: '',
+            visitor_organization_name: '',
+            visitor_role: '',
+          },
+        ],
+      });
+
+      setFormDataAddVisitor({
+        ...data,
+        transaction_visitor_id: data.transaction_visitor_id ?? group.id,
+        visitor_name: '',
+        visitor_email: '',
+        visitor_phone: '',
+        visitor_identity_id: '',
+        visitor_organization_name: '',
+        visitor_role: '',
+      });
+
+      // tandai bahwa dialog dibuka dari Add Transaction
+      setIsAddTransaction(true);
+
+      setWizardKey((prev) => prev + 1);
+      setOpenPreRegistration(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingAddTransaction(false);
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -555,6 +665,7 @@ const Content = () => {
               loadingMore={isFetchingNextPage}
               hasMore={hasNextPage ?? false}
               fetchNextPage={fetchNextPage}
+              handleAdd={handleAdd}
             />
             {/* Right */}
             <TransactionVisitorDetail
@@ -620,6 +731,7 @@ const Content = () => {
         search={setHostSearch}
         isLoadingEmployee={isLoadingEmployee}
         duplicateData={duplicateData}
+        isAddTransaction={isAddTransaction}
       />
 
       {/* Select Registered Site */}
@@ -696,6 +808,7 @@ const Content = () => {
         onApply={handleApplyFilter}
         onResetFilter={handleResetFilter}
       />
+      <GlobalBackdropLoading open={loadingAddTransaction} />
     </PageContainer>
   );
 };

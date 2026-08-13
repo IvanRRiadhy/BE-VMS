@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { IconCategory, IconX } from '@tabler/icons-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
 import {
   createIpsotekCategory,
@@ -33,7 +33,7 @@ import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useTranslation } from 'react-i18next';
-const Ipsotek = ({ id: string }: any) => {
+const Ipsotek = ({ id: string, integrationName }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
   const [integration, setIntegration] = useState<any[]>([]);
@@ -51,6 +51,13 @@ const Ipsotek = ({ id: string }: any) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const cards = useMemo(
     () => [
+      // {
+      //   title: 'Integration',
+      //   subTitle: integrationName || '-',
+      //   subTitleSetting: 1,
+      //   icon: IconCategory,
+      //   color: 'none',
+      // },
       {
         title: 'Category',
         subTitle: '' + categoryAll.length,
@@ -87,9 +94,6 @@ const Ipsotek = ({ id: string }: any) => {
   useEffect(() => {
     fetchCategories();
   }, [id]);
-
-
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -165,7 +169,6 @@ const Ipsotek = ({ id: string }: any) => {
       }
       await fetchCategories();
       setOpenDialogCategory(false);
-
     } catch (error: any) {
       showSwal('error', error?.message || 'Failed to save category');
     } finally {
@@ -173,9 +176,27 @@ const Ipsotek = ({ id: string }: any) => {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/admin/manage/integration');
+  };
+
   return (
     <PageContainer title="Ipsotek">
       <Box>
+        {/* <Box mb={2}>
+          <CustomFormLabel sx={{ mb: 0.5 }}>Integration</CustomFormLabel>
+
+          <Box
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+            }}
+          >
+            {integrationName || 'Ipsotek'}
+          </Box>
+        </Box> */}
         <Grid container spacing={2} flexWrap={'wrap'}>
           <Grid size={{ xs: 12, lg: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
@@ -186,6 +207,9 @@ const Ipsotek = ({ id: string }: any) => {
               data={categoryAll}
               isHaveChecked={true}
               isHaveAction={true}
+              isHaveBack={true}
+              onBack={handleBack}
+              isTitleIntegration={`${integrationName || 'Ipsotek'}`}
               isHaveHeaderTitle={true}
               titleHeader="Category"
               isDataVerified={true}
@@ -252,7 +276,6 @@ const Ipsotek = ({ id: string }: any) => {
                 Integration
               </CustomFormLabel>
               <Autocomplete
-
                 options={integration}
                 getOptionLabel={(opt: any) => opt.name || ''}
                 value={integration.find((i) => i.id === formCategory.integration_id) || null}

@@ -9,9 +9,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import {
-  getIntegrationById,
-} from 'src/customs/api/admin';
+import { getIntegrationById } from 'src/customs/api/admin';
 import {
   Item,
   AvailableItem,
@@ -86,15 +84,9 @@ const Content = () => {
     return 0;
   }
 
-  const {
-    data: integrationResponse = [],
-    isLoading: loadingIntegration,
-  } = useIntegration();
+  const { data: integrationResponse = [], isLoading: loadingIntegration } = useIntegration();
 
-  const {
-    data: availableResponse = [],
-    isLoading: loadingAvailable,
-  } = useAvailableIntegration();
+  const { data: availableResponse = [], isLoading: loadingAvailable } = useAvailableIntegration();
 
   const loading = loadingIntegration || loadingAvailable;
 
@@ -108,6 +100,7 @@ const Content = () => {
         integration_type: item.integration_type,
         api_type_auth: item.api_type_auth,
         api_url: item.api_url || '',
+        active: item.active || false,
       })),
     [integrationResponse],
   );
@@ -123,7 +116,6 @@ const Content = () => {
   );
 
   const totalRecords = integrationResponse.length;
-
 
   const filteredData = useMemo(() => {
     if (!search) return tableData;
@@ -154,7 +146,6 @@ const Content = () => {
       api_type_auth: '',
     }),
   );
-
 
   const cards = useMemo(
     () => [
@@ -195,7 +186,6 @@ const Content = () => {
     INTERNALMODULE: IntegrationType.InternalModule,
   };
 
-
   const handleCloseDialog = () => setOpenFormAddIntegration(false);
 
   const openForm = (integration?: AvailableItem | null) => {
@@ -228,9 +218,7 @@ const Content = () => {
     openForm(integration);
   };
 
-  const {
-    deleteMutation,
-  } = useIntegrationMutation();
+  const { deleteMutation } = useIntegrationMutation();
 
   const handleEdit = async (id: string) => {
     const integration = await getIntegrationById(id);
@@ -245,32 +233,34 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const isConfirmed = await showConfirmDelete(
-      t("confirmDelete", { name: 'Integration' }),
-    );
+    const isConfirmed = await showConfirmDelete(t('confirmDelete', { name: 'Integration' }));
 
     if (!isConfirmed) return;
-
 
     try {
       // await deleteIntegration(id);
       await deleteMutation.mutateAsync(id);
-      showSwal('success', t("deleteSuccess", { name: 'Integration' }));
+      showSwal('success', t('deleteSuccess', { name: 'Integration' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || t("deleteFailed", { name: 'Integration' }));
+      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'Integration' }));
     }
   };
 
   const handleBatchDelete = async (rows: any[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t("confirmDeleteMultiple", { count: rows.length, name: 'Integration' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Integration' }),
+    );
 
     if (confirmed) {
       try {
         // await Promise.all(rows.map((row) => deleteIntegration(row.id)));
         await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
-        showSwal('success', t("deleteSuccessMultiple", { count: rows.length, name: 'Integration' }));
+        showSwal(
+          'success',
+          t('deleteSuccessMultiple', { count: rows.length, name: 'Integration' }),
+        );
         setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
@@ -285,8 +275,6 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
-
-
 
   const handleRequestClose = () => {
     if (isDirty) {
@@ -335,11 +323,12 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                searchPlaceholder='Search integration'
+                searchPlaceholder="Search integration"
                 isCopy={true}
                 onCopy={(row) => {
                   handleCopy(row.id);
                 }}
+                isHaveActive
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
                 isHaveFilterMore={false}
@@ -370,10 +359,7 @@ const Content = () => {
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
               {availableIntegration.map((integration: any, index: any) => (
                 <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-                  <IntegrationCard
-                    integration={integration}
-                    onAdd={handleAdd}
-                  />
+                  <IntegrationCard integration={integration} onAdd={handleAdd} />
                 </Grid>
               ))}
             </Grid>

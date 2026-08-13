@@ -21,6 +21,7 @@ import {
   Tooltip,
   Select,
   MenuItem,
+  LinearProgress,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -84,6 +85,7 @@ const GuestInformationStepper = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [openPreview, setOpenPreview] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -350,23 +352,47 @@ const GuestInformationStepper = () => {
     if (!file) return;
 
     if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
       setPreviews((prev) => ({
         ...prev,
         [trackKey]: URL.createObjectURL(file),
       }));
     }
-    const compressedFile = await compressImage(file);
-    if (compressedFile.size > 1024 * 1024) {
-      showSwal('info', 'File size must be under 1 MB');
-      return;
+
+    try {
+      const compressedFile = await compressImage(file);
+
+      if (compressedFile.size > 1024 * 1024) {
+        showSwal('info', 'File size must be under 1 MB');
+        return;
+      }
+
+      const path = await uploadFileToCDN(compressedFile);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+
+      e.target.value = '';
     }
-
-    const path = await uploadFileToCDN(compressedFile);
-
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
   };
 
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
@@ -375,17 +401,54 @@ const GuestInformationStepper = () => {
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const compressedBlob = await compressImage(
-      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-    );
-    const path = await uploadFileToCDN(compressedBlob);
-    if (!path) return;
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const compressedBlob = await compressImage(
+        new File([blob], 'camera.jpg', {
+          type: 'image/jpeg',
+        }),
+      );
+
+      if (compressedBlob.size > 1024 * 1024) {
+        showSwal('info', 'File size must be under 1 MB');
+        return;
+      }
+
+      const path = await uploadFileToCDN(compressedBlob);
+
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Capture/upload failed:', error);
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
   const getFieldTypeByRemarks = (remarks: string): number | null => {
@@ -405,6 +468,7 @@ const GuestInformationStepper = () => {
     const key = f.remarks;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
@@ -415,12 +479,17 @@ const GuestInformationStepper = () => {
             padding: 4,
             textAlign: 'center',
             backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
+            transition: 'opacity 0.2s ease',
           }}
-          onClick={() => setOpenCamera(true)}
+          onClick={() => {
+            if (!isUploading) {
+              setOpenCamera(true);
+            }
+          }}
         >
           <Box
             sx={{
@@ -441,6 +510,29 @@ const GuestInformationStepper = () => {
             >
               Use Camera
             </Typography>
+            {isUploading && (
+              <Box
+                sx={{
+                  width: '100%',
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
             {(previewSrc || shownName) && (
               <Box
                 mt={2}
@@ -578,11 +670,35 @@ const GuestInformationStepper = () => {
               </Grid>
             </Grid>
 
+            {isUploading && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}>
               <Button
                 color="error"
+                disabled={isUploading}
                 startIcon={<IconTrash />}
                 sx={{ mr: 2 }}
                 onClick={() =>
@@ -597,15 +713,20 @@ const GuestInformationStepper = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<IconCamera />}
+                disabled={isUploading}
+                startIcon={
+                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+                }
                 onClick={(e) => {
                   e.stopPropagation();
+
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
                 }}
               >
-                Take Foto
+                {isUploading ? 'Uploading...' : 'Take Foto'}
               </Button>
               <Button
+                disabled={isUploading}
                 onClick={() => setOpenCamera(false)}
                 sx={{ ml: 2 }}
                 startIcon={<IconDeviceFloppy />}
@@ -740,6 +861,7 @@ const GuestInformationStepper = () => {
     const key = `${section.name}_${f.remarks}`;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
@@ -750,12 +872,17 @@ const GuestInformationStepper = () => {
             padding: 4,
             textAlign: 'center',
             backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
+            transition: 'opacity 0.2s ease',
           }}
-          onClick={() => fileInputRefs.current[key]?.click()}
+          onClick={() => {
+            if (!isUploading) {
+              fileInputRefs.current[key]?.click();
+            }
+          }}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
           <Typography variant="h6" sx={{ mt: 1 }}>
@@ -779,6 +906,30 @@ const GuestInformationStepper = () => {
               <IconCamera /> Use Camera
             </Typography>
           </Box>
+
+          {isUploading && (
+            <Box
+              sx={{
+                width: '100%',
+                mt: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              <LinearProgress
+                sx={{
+                  width: '220px',
+                  height: 6,
+                  borderRadius: 3,
+                }}
+              />
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                Uploading file...
+              </Typography>
+            </Box>
+          )}
 
           <input
             id={`file-${key}`}
@@ -933,6 +1084,29 @@ const GuestInformationStepper = () => {
               </Grid>
             </Grid>
 
+            {isUploading && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
             <Box
@@ -945,6 +1119,7 @@ const GuestInformationStepper = () => {
               }}
             >
               <Button
+                disabled={isUploading}
                 onClick={() =>
                   handleRemoveFileForField(
                     f.answer_file,
@@ -960,20 +1135,23 @@ const GuestInformationStepper = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<IconCamera />}
+                disabled={isUploading}
+                startIcon={
+                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+                }
                 onClick={(e) => {
                   e.stopPropagation();
+
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
                 }}
               >
-                Take Foto
+                {isUploading ? 'Uploading...' : 'Take Foto'}
               </Button>
               <Button
-                onClick={() => {
-                  setOpenCamera(false);
-                }}
+                onClick={() => setOpenCamera(false)}
                 sx={{ ml: 2 }}
                 startIcon={<IconDeviceFloppy />}
+                disabled={isUploading}
               >
                 Submit
               </Button>
@@ -1221,7 +1399,9 @@ const GuestInformationStepper = () => {
                             }
                           : undefined
                       }
-                      placeholder={'Enter your ' + (f.long_display_text?.toLowerCase() || f.remarks)}
+                      placeholder={
+                        'Enter your ' + (f.long_display_text?.toLowerCase() || f.remarks)
+                      }
                       error={!!errors[f.remarks]}
                       helperText={errors[f.remarks]}
                     />

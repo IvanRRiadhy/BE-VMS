@@ -953,7 +953,7 @@ export default function DnDOutsideCourier({
 
         return (
           <TableRow key={`pair-${index}`}>
-            <TableCell colSpan={2} sx={{ py: 2 }}>
+            <TableCell colSpan={2} sx={{ py: 2, borderBottom: 'none' }}>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
@@ -1844,7 +1844,7 @@ export default function DnDOutsideCourier({
           };
         });
 
-        await createPrainvitationDelivery( payload);
+        await createPrainvitationDelivery(payload);
 
         setEvents((prev) => [...prev, ...groupEvents]);
       } else {
@@ -1887,7 +1887,7 @@ export default function DnDOutsideCourier({
           colour,
         };
 
-        await createPrainvitationDelivery( payload);
+        await createPrainvitationDelivery(payload);
         setEvents((prev) => [...prev, finalEvent]);
         console.log('event', finalEvent);
       }

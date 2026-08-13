@@ -43,6 +43,7 @@ import {
   Select,
   FormHelperText,
   Avatar,
+  LinearProgress,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -106,6 +107,7 @@ import { IconRefresh } from '@tabler/icons-react';
 import CameraDialog from './components/Dialog/CameraDialog';
 import { useTranslation } from 'react-i18next';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -122,6 +124,7 @@ interface FormVisitorTypeProps {
   enableInvitationTypeStep?: boolean;
   isLoadingEmployee?: any;
   duplicateData?: any;
+  isAddTransaction?: any;
 }
 
 dayjs.extend(utc);
@@ -168,6 +171,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   enableInvitationTypeStep,
   isLoadingEmployee,
   duplicateData,
+  isAddTransaction,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -194,6 +198,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -1931,6 +1937,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -2905,6 +2912,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!file) return;
 
     if (trackKey) {
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
       setPreviews((prev) => ({
         ...prev,
@@ -2912,18 +2924,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }));
     }
 
-    // compress
-    const compressedFile = await compressImage(file);
-    if (compressedFile.size > 1024 * 1024) {
-      toast('File size must be under 1 MB', 'info');
-      return;
+    try {
+      const compressedFile = await compressImage(file);
+
+      if (compressedFile.size > 1024 * 1024) {
+        toast('File size must be under 1 MB', 'info');
+        return;
+      }
+
+      const path = await uploadFileToCDN(compressedFile);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+
+      e.target.value = '';
     }
-
-    const path = await uploadFileToCDN(compressedFile);
-
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
   };
 
   const handleRemoveFileForField = async (
@@ -2969,20 +2994,52 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    setScreenshot(imageSrc);
-
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    // compress
-    const compressedBlob = await compressImage(
-      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-    );
-    const path = await uploadFileToCDN(compressedBlob);
-    if (!path) return;
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      setScreenshot(imageSrc);
+
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const compressedBlob = await compressImage(
+        new File([blob], 'camera.jpg', {
+          type: 'image/jpeg',
+        }),
+      );
+
+      const path = await uploadFileToCDN(compressedBlob);
+
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Capture/upload failed:', error);
+      toast('Failed to upload photo', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
@@ -3423,7 +3480,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
     const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
-    return filteredDetails.map((item) => {
+    return filteredDetails.map((item: any) => {
       // const key = `${activeStep - 1}:${item.id}`;
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
@@ -3447,6 +3504,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <TableCell
             sx={{
               display: item.remarks === 'employee' ? 'none' : 'table-cell',
+              borderBottom: 'none',
             }}
           >
             {!isVisitorPeriodPair && (
@@ -4340,6 +4398,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openStartPicker}
+                                onOpen={() => setOpenStartPicker(true)}
+                                onClose={() => setOpenStartPicker(false)}
                                 value={
                                   startItem.answer_datetime
                                     ? dayjs(startItem.answer_datetime)
@@ -4373,6 +4434,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
+                                    onClick: () => {
+                                      setOpenStartPicker(true);
+                                    },
                                     helperText: startError,
                                     FormHelperTextProps: {
                                       sx: {
@@ -4411,6 +4475,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                open={openEndPicker}
+                                onOpen={() => setOpenEndPicker(true)}
+                                onClose={() => setOpenEndPicker(false)}
                                 value={
                                   endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
                                 }
@@ -4439,6 +4506,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   },
                                   textField: {
                                     fullWidth: true,
+                                    onClick: () => {
+                                      setOpenEndPicker(true);
+                                    },
                                     error: !!endError,
                                     helperText: endError,
                                     FormHelperTextProps: {
@@ -4463,7 +4533,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   return (
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
+                        // open={openStartPicker}
                         value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
+                        // onOpen={() => setOpenStartPicker(true)}
+                        // onClose={() => setOpenStartPicker(false)}
                         ampm={false}
                         minDateTime={
                           item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
@@ -4488,6 +4561,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           textField: {
                             fullWidth: true,
                             error: !!errorMessage,
+                            // onClick: () => {
+                            //   setOpenStartPicker(true);
+                            // },
                             helperText: errorMessage,
                           },
                         }}
@@ -4499,21 +4575,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 case 10: {
                   // TakePicture
                   if (remark == 'selfie_image') {
+                    const isUploading = !!uploadingFiles[key];
                     return (
                       <Box>
                         <Box
                           sx={{
+                            position: 'relative',
                             border: '2px dashed #90caf9',
                             borderRadius: 2,
                             padding: 4,
                             textAlign: 'center',
                             backgroundColor: '#f5faff',
-                            cursor: 'pointer',
+                            cursor: isUploading ? 'not-allowed' : 'pointer',
                             width: '100%',
-                            pointerEvents: 'auto',
-                            opacity: 1,
+                            pointerEvents: isUploading ? 'none' : 'auto',
+                            opacity: isUploading ? 0.6 : 1,
                           }}
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => {
+                            if (!isUploading) {
+                              fileInputRef.current?.click();
+                            }
+                          }}
                         >
                           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                           <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
@@ -4548,7 +4630,35 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               <IconCamera /> Use Camera
                             </Typography>
                           </Box>
+                          {isUploading && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                mt: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <LinearProgress
+                                sx={{
+                                  width: '220px',
+                                  height: 6,
+                                  borderRadius: 3,
+                                }}
+                              />
 
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  mt: 0.75,
+                                }}
+                              >
+                                Uploading file...
+                              </Typography>
+                            </Box>
+                          )}
                           <input
                             id={`file-${key}`}
                             type="file"
@@ -4724,6 +4834,33 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               </Grid>
                             </Grid>
 
+                            {isUploading && (
+                              <Box
+                                sx={{
+                                  mt: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <LinearProgress
+                                  sx={{
+                                    width: '220px',
+                                    height: 6,
+                                    borderRadius: 3,
+                                  }}
+                                />
+
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ mt: 0.75 }}
+                                >
+                                  Uploading file...
+                                </Typography>
+                              </Box>
+                            )}
+
                             <Divider sx={{ my: 2 }} />
 
                             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
@@ -4737,25 +4874,35 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 }
                                 color="error"
                                 sx={{ mr: 1 }}
+                                disabled={isUploading}
                                 startIcon={<IconTrash />}
                               >
                                 Clear Foto
                               </Button>
                               <Button
                                 variant="contained"
+                                disabled={isUploading}
                                 onClick={(e) => {
                                   e.stopPropagation();
+
                                   handleCaptureForField(
                                     (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   );
                                 }}
-                                startIcon={<IconCamera />}
+                                startIcon={
+                                  isUploading ? (
+                                    <CircularProgress size={18} color="primary" />
+                                  ) : (
+                                    <IconCamera />
+                                  )
+                                }
                               >
-                                Take Foto
+                                {isUploading ? 'Uploading...' : 'Take Foto'}
                               </Button>
                               <Button
                                 startIcon={<IconDeviceFloppy />}
+                                disabled={isUploading}
                                 onClick={() => {
                                   setOpenCamera(false);
                                   setScreenshot(null);
@@ -5138,21 +5285,28 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
 
                 case 12: {
+                  const isUploading = !!uploadingFiles[key];
                   return (
                     <Box>
                       <Box
                         sx={{
+                          position: 'relative',
                           border: '2px dashed #90caf9',
                           borderRadius: 2,
                           padding: 4,
                           textAlign: 'center',
                           backgroundColor: '#f5faff',
-                          cursor: 'pointer',
+                          cursor: isUploading ? 'not-allowed' : 'pointer',
                           width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
+                          pointerEvents: isUploading ? 'none' : 'auto',
+                          opacity: isUploading ? 0.6 : 1,
+                          transition: 'opacity 0.2s ease',
                         }}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          if (!isUploading) {
+                            fileInputRef.current?.click();
+                          }
+                        }}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                         <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
@@ -5187,6 +5341,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <IconCamera /> Use Camera
                           </Typography>
                         </Box>
+
+                        {isUploading && (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: '220px',
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
 
                         <input
                           id={`file-${key}`}
@@ -5269,6 +5447,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         webcamRef={webcamRef as any}
                         screenshot={screenshot}
                         facingMode={facingMode}
+                        isUploading={isUploading}
                         onSwitchCamera={() =>
                           setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
                         }
@@ -5454,12 +5633,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     createPraRegisterMutation,
     createVisitorsGroupMutation,
     createPraRegisterGroupMutation,
+    createVisitorAddTransactionMutation,
   } = useVisitorMutation();
   const loading =
     createVisitorMutation.isPending ||
     createPraRegisterMutation.isPending ||
     createVisitorsGroupMutation.isPending ||
-    createPraRegisterGroupMutation.isPending;
+    createPraRegisterGroupMutation.isPending ||
+    createVisitorAddTransactionMutation.isPending;
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -5555,16 +5736,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const built = buildFinalPayload(
             rawSections,
             groupedPages,
-            // g.data_visitor.length ? g.data_visitor : dataVisitor,
             dataVisitor.length ? dataVisitor : g.data_visitor,
             {
               visitor_type: formData.visitor_type ?? '',
               is_group: true,
               type_registered: TYPE_REGISTERED,
-              tz: tz,
+              tz,
               registered_site: formData.registered_site ?? '',
             },
           );
+
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
             const original = dataVisitor[idx];
 
@@ -5604,29 +5785,73 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             group_code: g.group_code ?? '',
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
-            tz: tz,
+            tz,
             registered_site: formData.registered_site ?? '',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
             flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
+
+            ...(isAddTransaction && {
+              transaction_visitor_id: formData.transaction_visitor_id ?? '',
+            }),
           };
         });
 
-        payload = { list_group };
-        // console.log('Payload', JSON.stringify(payload, null, 2));
+        /*
+         * ==========================================
+         * ADD TRANSACTION
+         * ==========================================
+         */
+        if (isAddTransaction) {
+          const addTransactionPayload = list_group[0];
 
-        const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
-        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-        // await submitFn( parsed as any);
-        if (TYPE_REGISTERED === 0) {
-          await createPraRegisterGroupMutation.mutateAsync(parsed);
+          // optional: cek visitor terlebih dahulu
+          const hasVisitor =
+            addTransactionPayload.data_visitor?.some((visitor: any) =>
+              visitor.question_page?.some(
+                (page: any) =>
+                  page.name === 'Visitor Information' &&
+                  page.form?.some(
+                    (field: any) =>
+                      field.remarks === 'name' &&
+                      typeof field.answer_text === 'string' &&
+                      field.answer_text.trim() !== '',
+                  ),
+              ),
+            ) ?? false;
+
+          if (!hasVisitor) {
+            toast('Minimal isi 1 visitor pada Visitor Information.', 'warning');
+            return;
+          }
+
+          await createVisitorAddTransactionMutation.mutateAsync(addTransactionPayload);
+
+          showSwal('success', 'Visitor added successfully.', 3000);
+
+          resetMediaState();
+          clearAnswerFiles();
         } else {
-          await createVisitorsGroupMutation.mutateAsync(parsed);
+          /*
+           * ==========================================
+           * NORMAL GROUP
+           * ==========================================
+           */
+          payload = { list_group };
+
+          const parsed = CreateGroupVisitorRequestSchema.parse(payload);
+
+          if (TYPE_REGISTERED === 0) {
+            await createPraRegisterGroupMutation.mutateAsync(parsed);
+          } else {
+            await createVisitorsGroupMutation.mutateAsync(parsed);
+          }
+
+          showSwal('success', 'Group visitor created successfully.');
+
+          resetMediaState();
+          clearAnswerFiles();
         }
-        showSwal('success', 'Group visitor created successfully.');
-        resetMediaState();
-        clearAnswerFiles();
       } else {
         if (!sectionsData.length) {
           toast('Minimal isi 1 data visitor.', 'warning');
@@ -5677,13 +5902,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setNextDialogOpen(false);
       }, 700);
 
-      showSwal(
-        'error',
-        err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
-          err.response?.data?.message || err.response?.data?.msg ||
-          'Failed to create visitor.',
-      );
+      const errorData = err.response?.data;
 
+      const errorMessage = Array.isArray(errorData?.collection)
+        ? errorData.collection.join('\n')
+        : errorData?.message || errorData?.msg || 'Failed to create visitor.';
+
+      showSwal('error', errorMessage);
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
@@ -6400,17 +6625,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           toast('Purpose Visit saved', 'success');
         }}
       />
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
       <Portal>
         <Snackbar
           open={snackbar.open}
