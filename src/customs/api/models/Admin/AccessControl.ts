@@ -5,7 +5,7 @@ export type Item = {
   id: string;
   brand_id: string;
   brand_name: string;
-  type: number;
+  type: string;
   name: string;
   description: string;
   channel: string;
@@ -51,7 +51,7 @@ export const CreateAccessControlRequestSchema = z.object({
   brand_id: z.string().nullable().optional(),
   brand_name: z.string().nullable().optional(),
   // type: z.number().default(-1),
-  type: z.coerce.number(),
+  type: z.string().default(''),
   name: z.string().min(1, 'Name is required'),
   description: z.string().nullable(),
   channel: z.string(),
@@ -82,7 +82,7 @@ export type DeleteAccessControlResponse<T = any> = {
 export const UpdateAccessControlRequestSchema = z.object({
   brand_id: z.string().nullable().optional(),
   brand_name: z.string().nullable().optional(),
-  type: z.coerce.number(),
+  type: z.string(),
   name: z.string(),
   description: z.string().optional(),
   channel: z.string(),

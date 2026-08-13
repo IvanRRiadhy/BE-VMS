@@ -19,10 +19,7 @@ import {
   UpdateAccessControlRequestSchema,
 } from 'src/customs/api/models/Admin/AccessControl';
 
-import {
-  getAccessControlsById,
-  getAllIntegration,
-} from 'src/customs/api/admin';
+import { getAccessControlsById, getAllIntegration } from 'src/customs/api/admin';
 
 import { AccessControlType } from 'src/customs/api/models/Admin/AccessControl';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -64,7 +61,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
     defaultValues: {
       // brand_id: '',
       // brand_name: '',
-      type: 0,
+      type: '',
       name: '',
       description: '',
       channel: '',
@@ -80,9 +77,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
 
   useEffect(() => {
     (async () => {
-      const [integrationRes] = await Promise.allSettled([
-        getAllIntegration(),
-      ])
+      const [integrationRes] = await Promise.allSettled([getAllIntegration()]);
       if (integrationRes.status === 'fulfilled')
         setIntegrationList(integrationRes.value?.collection ?? []);
     })();
@@ -99,7 +94,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         reset({
           // brand_id: d.brand_id ?? '',
           integration_id: d.integration_id ?? '',
-          type: typeMap[d.type] ?? 0,
+          type: d.type,
           name: d.name,
           description: d.description ?? '',
           channel: d.channel,
@@ -120,6 +115,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
         const payload = UpdateAccessControlRequestSchema.parse({
           ...data,
         });
+        console.log('payload', payload);
         await updateMutation.mutateAsync({ id: editingId, data: payload });
       } else {
         const payload = CreateAccessControlRequestSchema.parse({
@@ -132,7 +128,9 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
       onDirty?.(false);
       showSwal(
         'success',
-        editingId ? t("updatedSuccess", { name: 'Access Control' }) : t("createSuccess", { name: 'Access Control' }),
+        editingId
+          ? t('updatedSuccess', { name: 'Access Control' })
+          : t('createSuccess', { name: 'Access Control' }),
       );
       onSuccess?.();
     } catch (err: any) {
@@ -254,19 +252,15 @@ const FormAccessControl = ({ editingId, onSuccess, onDirty }: Props) => {
               control={control}
               render={({ field }) => (
                 <CustomSelect
-                  value={String(field.value ?? '')}
-                  onChange={(e: any) => field.onChange(Number(e.target.value))}
+                  value={field.value ?? ''}
+                  onChange={(e: any) => field.onChange(e.target.value)}
                   error={!!errors.type}
                   sx={{ width: '100%' }}
                 >
                   <MenuItem value="">Select Type</MenuItem>
-                  {Object.entries(AccessControlType)
-                    .filter(([k]) => isNaN(Number(k)))
-                    .map(([key, value]) => (
-                      <MenuItem key={value} value={String(value)}>
-                        {formatEnumLabel(key)}
-                      </MenuItem>
-                    ))}
+
+                  <MenuItem value="Access">Access</MenuItem>
+                  <MenuItem value="Group">Group</MenuItem>
                 </CustomSelect>
               )}
             />

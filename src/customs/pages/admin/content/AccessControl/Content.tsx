@@ -16,7 +16,7 @@ interface Item {
   brand_id: string;
   integration_id: string;
   brand_name: string;
-  type: number;
+  type: string;
   name: string;
   description: string;
   channel: string;
@@ -87,7 +87,7 @@ const Content = () => {
     brand_name: '',
     integration_id: '',
     // integration_name: '',
-    type: -1,
+    type: '',
     name: '',
     description: '',
     channel: '',
@@ -100,7 +100,7 @@ const Content = () => {
     brand_name: item?.brand_name ?? '',
     integration_id: item?.integration_id ?? '',
     // integration_name: item?.integration_name ?? '',
-    type: item?.type ?? -1,
+    type: item?.type ?? '',
     name: item?.name ?? '',
     description: item?.description ?? '',
     channel: item?.channel ?? '',
