@@ -306,8 +306,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-        ? false
-        : status;
+          ? false
+          : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -812,6 +812,7 @@ export const getAllVisitorCardPagination = async (
   length: number,
   keyword: string = '',
   sort_dir?: string,
+  sort_column?: string,
   type?: number | null,
   cardStatus?: number,
 ): Promise<GetAllVisitorCardPaginationResponse> => {
@@ -823,6 +824,10 @@ export const getAllVisitorCardPagination = async (
 
   if (keyword?.trim()) {
     params['search[value]'] = keyword.trim();
+  }
+
+  if (sort_column !== undefined && sort_column !== null) {
+    params.sort_column = sort_column;
   }
 
   if (type !== undefined && type !== null) {
@@ -912,22 +917,22 @@ export const getListVisitorPagination = async (
   start: number,
   length: number | undefined,
   sortDir = '',
+  sort_column?: string,
   keyword: string = '',
-  // filters: Record<string, any> = {},
 ): Promise<any> => {
-  // const cleanedFilters = Object.fromEntries(
-  //   Object.entries(filters)
-  //     .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
-  //     .map(([k, v]) => [k.replace(/_/g, '-'), v]),
-  // );
-
   const params: Record<string, any> = {
     start,
     length,
     sort_dir: sortDir,
-    'search[value]': keyword,
-    // ...cleanedFilters,
   };
+
+  if (sort_column !== undefined && sort_column !== null) {
+    params.sort_column = sort_column;
+  }
+
+  if (keyword.trim() !== '') {
+    params['search[value]'] = keyword;
+  }
 
   const response = await axiosInstance.get('/visitor/invitation/dt', {
     headers: {
@@ -1189,6 +1194,7 @@ export const getAllVisitorTypePagination = async (
   start: number,
   length: number,
   sort_dir: string,
+  sort_column?: string,
   keyword: string = '',
 ): Promise<GetAllVisitorTypePaginationResponse> => {
   const response = await axiosInstance.get(`/visitor-type/dt`, {
@@ -1196,7 +1202,12 @@ export const getAllVisitorTypePagination = async (
       start,
       length,
       sort_dir: sort_dir,
-      'search[value]': keyword,
+      ...(sort_column
+        ? {
+            sort_column: sort_column,
+          }
+        : {}),
+      ...(keyword ? { 'search[value]': keyword } : {}),
     },
     headers: { Accept: 'application/json' },
   });
@@ -1243,14 +1254,18 @@ export const getAllDistricts = async (): Promise<GetAllDistrictsPaginationRespon
 export const getAllDistrictsPagination = async (
   start: number,
   length: number,
-  // sortColumn: string,
   sortDir?: string,
+  sortColumn?: string,
   keyword: string = '',
 ): Promise<GetAllDistrictsPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
   };
+
+  if (sortColumn) {
+    params['sort_column'] = sortColumn;
+  }
 
   if (keyword) {
     params['search[value]'] = keyword;
@@ -1325,6 +1340,7 @@ export const getAllDepartmentsPagination = async (
   start: number,
   length: number,
   sortDir?: string,
+  sort_column?: string,
   keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
   const params: Record<string, any> = {
@@ -1334,6 +1350,10 @@ export const getAllDepartmentsPagination = async (
 
   if (keyword) {
     params['search[value]'] = keyword;
+  }
+
+  if (sort_column) {
+    params.sort_column = sort_column;
   }
 
   if (sortDir) {
@@ -1350,10 +1370,6 @@ export const getAllDepartmentsPagination = async (
 
     return response.data;
   } catch (error: any) {
-    if (error?.response?.status === 404) {
-      return handlePaginationError() as any;
-    }
-
     throw error;
   }
 };
@@ -1410,17 +1426,20 @@ export const getAllOrganizationPagination = async (
   start: number,
   length: number,
   sortDir?: string,
+  sortColumn?: string,
   keyword: string = '',
 ): Promise<GetAllOrganizationPaginationResponse> => {
-  // bikin object params dulu
   const params: Record<string, any> = {
     start,
     length,
-    // 'search[value]': keyword,
   };
 
   if (keyword) {
     params['search[value]'] = keyword;
+  }
+
+  if (sortColumn) {
+    params.sort_column = sortColumn;
   }
 
   if (sortDir) {
@@ -1437,10 +1456,6 @@ export const getAllOrganizationPagination = async (
 
     return response.data;
   } catch (error: any) {
-    if (error?.response?.status === 404) {
-      return handlePaginationError() as any;
-    }
-
     throw error;
   }
 };
@@ -1508,6 +1523,7 @@ export const getAllDocumentPagination = async (
   start: number,
   length: number,
   sortDir?: string,
+  sort_column?: string,
   keyword?: string,
 ): Promise<any> => {
   try {
@@ -1516,6 +1532,10 @@ export const getAllDocumentPagination = async (
       length,
       sort_dir: sortDir,
     };
+
+    if (sort_column) {
+      params['sort_column'] = sort_column;
+    }
 
     if (keyword) {
       params['search[value]'] = keyword;
@@ -1778,7 +1798,7 @@ export const uploadImageEmployee = async (
 export const getAllEmployeeBlacklistPagination = async (
   start: number,
   length: number,
-  // sortColumn: string,
+  sort_column?: string,
   sortDir?: string,
   keyword: string = '',
   // joinStart?: string,
@@ -1788,10 +1808,10 @@ export const getAllEmployeeBlacklistPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
+    // sort_column: sort_column,
     sort_dir: sortDir,
   };
-
+  if (sort_column) params['sort_column'] = sort_column;
   if (keyword) params['search[value]'] = keyword;
   // if (joinStart) params['join-start'] = joinStart;
   // if (exitEnd) params['exit-end'] = exitEnd;
@@ -1815,6 +1835,7 @@ export const getAllSitePagination = async (
   type?: number,
   parent?: string,
   is_child?: boolean,
+  sort_column?: string,
 ): Promise<any> => {
   const response = await axiosInstance.get(`/site/dt`, {
     params: {
@@ -1824,6 +1845,7 @@ export const getAllSitePagination = async (
       ...(keyword ? { 'search[value]': keyword } : {}),
       ...(type !== undefined ? { type } : {}),
       ...(parent ? { parent } : {}),
+      ...(sort_column ? { sort_column } : {}),
       ...(is_child !== undefined ? { 'is-child': is_child } : {}),
     },
     headers: { Accept: 'application/json' },
@@ -2225,6 +2247,7 @@ export const getAllAccessControlPagination = async (
   length: number,
   keyword?: string,
   sortDir?: string,
+  sort_column?: string,
 ): Promise<GetAccessControlPaginationResponse> => {
   try {
     const params: Record<string, any> = {
@@ -2235,6 +2258,10 @@ export const getAllAccessControlPagination = async (
 
     if (keyword?.trim()) {
       params['search[value]'] = keyword.trim();
+    }
+
+    if (sort_column !== undefined && sort_column !== null) {
+      params.sort_column = sort_column;
     }
 
     const response = await axiosInstance.get(`/access-control/dt`, {

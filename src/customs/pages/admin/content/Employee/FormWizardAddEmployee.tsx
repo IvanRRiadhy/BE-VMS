@@ -21,12 +21,15 @@ import {
   Switch,
   Checkbox,
   StepButton,
+  LinearProgress,
+  IconButton,
 } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import imageCompression from 'browser-image-compression';
 import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
@@ -42,7 +45,14 @@ import { useTranslation } from 'react-i18next';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { IconArrowLeft, IconArrowRight, IconDeviceFloppy } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconCamera,
+  IconDeviceFloppy,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -92,6 +102,7 @@ const FormWizardAddEmployee = ({
   const isStepSkipped = (step: number) => skipped.has(step);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
@@ -139,7 +150,13 @@ const FormWizardAddEmployee = ({
   const handleClear = () => {
     setScreenshot(null);
     setPreviewUrl(null);
-    handleFileChange(null as any);
+
+    setLocalForm((prev) => ({
+      ...prev,
+      faceimage: '',
+    }));
+
+    setSiteImageFile(null);
   };
 
   const handleCapture = () => {
@@ -507,40 +524,81 @@ const FormWizardAddEmployee = ({
   ) => {
     const tasks: Promise<any>[] = [];
 
-    if (fileFromInput instanceof File) {
-      // tasks.push(uploadImageEmployee(employeeId, fileFromInput));
-      tasks.push(
-        uploadImage.mutateAsync({
-          employeeId,
-          file: fileFromInput,
-        }),
-      );
+    try {
+      setIsUploadingImage(true);
+
+      if (fileFromInput instanceof File) {
+        tasks.push(
+          uploadImage.mutateAsync({
+            employeeId,
+            file: fileFromInput,
+          }),
+        );
+      }
+
+      if (faceImage && isDataUrl(faceImage)) {
+        const blob = await fetch(faceImage).then((res) => res.blob());
+        const file = new File([blob], 'webcam.jpg', {
+          type: 'image/jpeg',
+        });
+
+        tasks.push(
+          uploadImage.mutateAsync({
+            employeeId,
+            file,
+          }),
+        );
+      }
+
+      if (tasks.length === 0) return;
+
+      await Promise.all(tasks);
+    } finally {
+      setIsUploadingImage(false);
     }
-
-    if (faceImage && isDataUrl(faceImage)) {
-      const blob = await fetch(faceImage).then((res) => res.blob());
-      const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      // tasks.push(uploadImageEmployee(employeeId, file));
-      tasks.push(
-        uploadImage.mutateAsync({
-          employeeId,
-          file,
-        }),
-      );
-    }
-
-    if (tasks.length === 0) return;
-
-    await Promise.all(tasks);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setSiteImageFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
+
+    if (!selectedFile) return;
+
+    try {
+      setIsUploadingImage(true);
+
+      // Hilangkan preview lama dulu
+      setPreviewUrl(null);
+      setSiteImageFile(null);
+
+      // Kalau memang ada proses compress, lakukan di sini
+      const compressedFile = await compressImage(selectedFile);
+
+      if (compressedFile.size > 1024 * 1024) {
+        showSwal('error', 'Image must be under 1 MB');
+        return;
+      }
+
+      // Setelah selesai baru tampilkan gambar
+      setSiteImageFile(compressedFile);
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+    } catch (error) {
+      console.error('Failed to process image:', error);
+      showSwal('error', 'Failed to process image');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
+
   const [localForm, setLocalForm] = useState(formData);
 
   useEffect(() => {
@@ -1256,58 +1314,120 @@ const FormWizardAddEmployee = ({
                       padding: 4,
                       textAlign: 'center',
                       backgroundColor: '#f5faff',
-                      cursor: isBatchEdit ? 'not-allowed' : 'pointer',
+                      cursor: isBatchEdit || isUploadingImage ? 'not-allowed' : 'pointer',
                       width: '100%',
                       margin: '0 auto',
-                      pointerEvents: isBatchEdit ? 'none' : 'auto',
-                      opacity: isBatchEdit ? 0.5 : 1,
+                      pointerEvents: isBatchEdit || isUploadingImage ? 'none' : 'auto',
+                      opacity: isBatchEdit || isUploadingImage ? 0.5 : 1,
+                      transition: 'opacity 0.2s ease',
                     }}
-                    onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                    onClick={() => {
+                      if (!isBatchEdit && !isUploadingImage) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
                   >
                     <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                    <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                      Upload Employee Image
+                    <Typography variant="h6" sx={{ mt: 1, mb: 1, fontWeight: 600 }}>
+                      Upload Photo
                     </Typography>
 
+                    <Typography variant="body1" color="textSecondary">
+                      Drag and drop or tap to seleft file.
+                    </Typography>
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         mt: 0.5,
+                        flexWrap: 'wrap',
+                        gap: 1,
                       }}
                     >
                       <Typography variant="body1" color="textSecondary">
                         Supports: JPG, JPEG, PNG, Up to:
-                        <span style={{ fontWeight: '700' }}>1 Mb</span>
+                        <span style={{ fontWeight: '700' }}>1 Mb | </span>
                       </Typography>
-                      <Typography
-                        variant="subtitle1"
-                        component="span"
-                        color="primary"
-                        sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenCamera(true);
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconCamera />
+                        <Typography
+                          variant="subtitle1"
+                          component="span"
+                          color="primary"
+                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isUploadingImage) {
+                              setOpenCamera(true);
+                            }
+                          }}
+                        >
+                          Camera
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {isUploadingImage && (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          mt: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
                         }}
                       >
-                        Camera
-                      </Typography>
-                    </Box>
+                        <LinearProgress
+                          sx={{
+                            width: 220,
+                            height: 6,
+                            borderRadius: 3,
+                          }}
+                        />
+
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                          Uploading file...
+                        </Typography>
+                      </Box>
+                    )}
 
                     <Dialog
                       open={openCamera}
-                      onClose={() => setOpenCamera(false)}
+                      onClose={() => {
+                        if (!isUploadingImage) {
+                          setOpenCamera(false);
+                        }
+                      }}
                       maxWidth="md"
                       fullWidth
                     >
                       <Box sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>
-                          Take Photo From Camera
-                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography variant="h6" mb={0}>
+                            Take Photo From Camera
+                          </Typography>
+                          <IconButton
+                            onClick={() => {
+                              if (!isUploadingImage) {
+                                setOpenCamera(false);
+                              }
+                            }}
+                          >
+                            <IconX />
+                          </IconButton>
+                        </Box>
+
+                        <Divider sx={{ my: 1 }} />
 
                         <Grid2 container spacing={2}>
-                          <Grid2 size={{ xs: 6, sm: 6 }}>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
                             <Webcam
                               audio={false}
                               ref={webcamRef}
@@ -1321,7 +1441,7 @@ const FormWizardAddEmployee = ({
                             />
                           </Grid2>
 
-                          <Grid2 size={{ xs: 6, sm: 6 }}>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
                             {screenshot ? (
                               <img
                                 src={screenshot}
@@ -1349,6 +1469,28 @@ const FormWizardAddEmployee = ({
                           </Grid2>
                         </Grid2>
 
+                        {isUploadingImage && (
+                          <Box
+                            sx={{
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: 220,
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
                         <Divider sx={{ my: 2 }} />
 
                         <Box
@@ -1356,14 +1498,25 @@ const FormWizardAddEmployee = ({
                             textAlign: 'right',
                             display: 'flex',
                             justifyContent: 'flex-end',
-                            gap: 0.5,
+                            gap: 1,
                           }}
                         >
-                          <Button onClick={handleClear} color="error" sx={{ mr: 2 }}>
+                          <Button
+                            disabled={isUploadingImage}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleClear();
+                            }}
+                            color="error"
+                            sx={{ mr: 0 }}
+                            startIcon={<IconTrash />}
+                          >
                             Clear Foto
                           </Button>
                           <Button
+                            disabled={isUploadingImage}
                             variant="contained"
+                            startIcon={<IconCamera />}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCapture();
@@ -1372,6 +1525,7 @@ const FormWizardAddEmployee = ({
                             Take Foto
                           </Button>
                           <Button
+                            disabled={isUploadingImage}
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenCamera(false);
@@ -1399,11 +1553,12 @@ const FormWizardAddEmployee = ({
                         mt={2}
                         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                       >
-                        <div
-                          style={{
-                            width: 300,
+                        <Box
+                          sx={{
+                            width: { xs: '100%', sm: 400 },
+                            maxWidth: 400,
                             aspectRatio: '16/9',
-                            borderRadius: 12,
+                            // borderRadius: 12,
                             overflow: 'hidden',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                           }}
@@ -1420,7 +1575,7 @@ const FormWizardAddEmployee = ({
                             }}
                             onClick={(e) => e.stopPropagation()}
                           />
-                        </div>
+                        </Box>
 
                         <Button
                           sx={{ mt: 1 }}

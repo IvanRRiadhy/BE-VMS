@@ -19,6 +19,7 @@ import {
   IconButton,
   Autocomplete,
   Divider,
+  LinearProgress,
 } from '@mui/material';
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -79,6 +80,7 @@ import { useSitesParking } from 'src/hooks/Sites/useSitesParking';
 import { useSitesTracking } from 'src/hooks/Sites/useSitesTracking';
 import { useSiteDocuments } from 'src/hooks/Sites/useSiteDocuments';
 import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 type EnabledFields = {
   type: boolean;
@@ -125,7 +127,7 @@ const FormSite = ({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   // const [loading, setLoading] = useState(false);
-
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [siteTypes] = useState<{ label: string; value: number }[]>([
     { label: 'Site', value: 0 },
     { label: 'Building', value: 1 },
@@ -152,10 +154,10 @@ const FormSite = ({
   // const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
   const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localForm, setLocalForm] = useState(formData);
-  const lastSentRef = useRef<string>('');
   const [newSiteDocuments, setNewSiteDocuments] = useState<any[]>([]);
   const [retentionInput, setRetentionInput] = useState('0');
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
@@ -327,7 +329,7 @@ const FormSite = ({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      showSwal('error',  'Please complete all required fields.');
+      showSwal('error', 'Please complete all required fields.');
       return false;
     }
 
@@ -433,7 +435,7 @@ const FormSite = ({
           }),
         );
 
-        handleFileUpload(editingId);
+        await handleFileUpload(editingId);
 
         if (!localForm.need_document) {
           try {
@@ -452,7 +454,6 @@ const FormSite = ({
           // Hapus document yang memang dihapus user
           await Promise.all(deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)));
 
-          // Tambah document baru
           await Promise.all(
             newSiteDocuments.map((doc) =>
               createSiteDocument({
@@ -501,7 +502,7 @@ const FormSite = ({
         }
 
         await createSiteDocumentsForNewSite();
-        handleFileUpload(newSiteId);
+        await handleFileUpload(newSiteId);
 
         showSwal('success', t('createSuccess', { name: 'Site Space' }));
       }
@@ -527,15 +528,29 @@ const FormSite = ({
     const selectedFile = e.target.files?.[0];
 
     if (!selectedFile) return;
-    const compressedFile = await compressImage(selectedFile);
-    if (compressedFile.size > 1024 * 1024) {
-      showSwal('error', 'Image must be under 1 MB');
-      return;
+
+    try {
+      setIsUploadingImage(true);
+
+      // Hilangkan preview lama selama proses
+      setPreviewUrl(null);
+      setSiteImageFile(null);
+
+      const compressedFile = await compressImage(selectedFile);
+
+      if (compressedFile.size > 1024 * 1024) {
+        showSwal('error', 'Image must be under 1 MB');
+        return;
+      }
+
+      setSiteImageFile(compressedFile);
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+    } catch (error) {
+      console.error('Failed to process image:', error);
+      showSwal('error', 'Failed to process image');
+    } finally {
+      setIsUploadingImage(false);
     }
-
-    setSiteImageFile(compressedFile);
-
-    setPreviewUrl(URL.createObjectURL(compressedFile));
   };
 
   const handleClear = () => {
@@ -545,10 +560,15 @@ const FormSite = ({
 
   const handleFileUpload = async (siteId: string) => {
     if (!siteImageFile) return;
+
     try {
+      setIsUploadingImage(true);
+
       await uploadImageSite(siteId, siteImageFile);
     } catch (err) {
       console.error('Image upload failed', err);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -795,9 +815,7 @@ const FormSite = ({
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" gap={0.5}>
-                    <CustomFormLabel sx={{ mt: 0 }} required>
-                      Site Host
-                    </CustomFormLabel>
+                    <CustomFormLabel sx={{ mt: 0 }}>Site Host</CustomFormLabel>
 
                     <Tooltip title="Select the host responsible for this site" arrow>
                       <IconButton size="small">
@@ -1056,7 +1074,7 @@ const FormSite = ({
                     disabled={isBatchEdit && !enabledFields?.signout_time}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 12 }}>
+                {/* <Grid size={{ xs: 12, sm: 12 }}>
                   <CustomFormLabel htmlFor="latitude" sx={{ mt: 0 }}>
                     Latitude
                   </CustomFormLabel>
@@ -1083,7 +1101,7 @@ const FormSite = ({
                     sx={{ mb: 2 }}
                     disabled={isBatchEdit}
                   />
-                </Grid>
+                </Grid> */}
               </Grid>
             </Paper>
           </Grid>
@@ -1909,21 +1927,52 @@ const FormSite = ({
                     padding: 4,
                     textAlign: 'center',
                     backgroundColor: '#f5faff',
-                    cursor: isBatchEdit ? 'not-allowed' : 'pointer',
+                    cursor: isBatchEdit || isUploadingImage ? 'not-allowed' : 'pointer',
                     width: '100%',
                     margin: '0 auto',
-                    pointerEvents: isBatchEdit ? 'none' : 'auto',
-                    opacity: isBatchEdit ? 0.5 : 1,
+                    pointerEvents: isBatchEdit || isUploadingImage ? 'none' : 'auto',
+                    opacity: isBatchEdit || isUploadingImage ? 0.5 : 1,
+                    transition: 'opacity 0.2s ease',
                   }}
-                  onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                  onClick={() => {
+                    if (!isBatchEdit && !isUploadingImage) {
+                      fileInputRef.current?.click();
+                    }
+                  }}
                 >
                   <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                  <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                  <Typography variant="h6" sx={{ mt: 1 }}>
                     Upload Site Image
                   </Typography>
-                  <Typography variant="caption" color="textSecondary">
+                  <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+                    Drag and drop or tap to select file.
+                  </Typography>
+                  <Typography variant="subtitle1" color="textSecondary">
                     Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
                   </Typography>
+                  {isUploadingImage && (
+                    <Box
+                      sx={{
+                        width: '100%',
+                        mt: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <LinearProgress
+                        sx={{
+                          width: 220,
+                          height: 6,
+                          borderRadius: 3,
+                        }}
+                      />
+
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                        Uploading file...
+                      </Typography>
+                    </Box>
+                  )}
                   {previewUrl && (
                     <Box
                       mt={2}
@@ -1996,15 +2045,7 @@ const FormSite = ({
         </Box>
       </form>
 
-      <Backdrop
-        open={isPending}
-        sx={{
-          color: '#fff',
-          zIndex: 999999,
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <GlobalBackdropLoading open={isPending} />
     </>
   );
 };

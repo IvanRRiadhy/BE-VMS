@@ -53,8 +53,8 @@ export type Item = {
   contact_phone?: string | null;
   is_active?: boolean | null;
   address?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  // latitude?: number | null;
+  // longitude?: number | null;
   open_time?: string | null;
   close_time?: string | null;
   // type: string;
@@ -163,8 +163,8 @@ export const CreateSiteRequestSchema = z.object({
     .optional(),
   close_time: z.string().nullable().optional(),
   open_time: z.string().nullable().optional(),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
+  // latitude: z.number().nullable().optional(),
+  // longitude: z.number().nullable().optional(),
   address: z.string().nullable().optional(),
   contact_name: z.string().nullable().optional(),
   contact_email: z.string().nullable().optional(),
@@ -309,8 +309,8 @@ export const UpdateSiteRequestSchema = z.object({
   max_capacity: z.number().default(0),
   close_time: z.string().nullable().optional(),
   open_time: z.string().nullable().optional(),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
+  // latitude: z.number().nullable().optional(),
+  // longitude: z.number().nullable().optional(),
   address: z.string().nullable().optional(),
   contact_name: z.string().nullable().optional(),
   contact_email: z.string().nullable().optional(),

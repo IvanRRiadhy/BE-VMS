@@ -5,14 +5,15 @@ interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
+  sort_column?: string;
   searchKeyword?: string;
 }
 
-export const useDepartmentPagination = ({ page, rowsPerPage, sortDir, searchKeyword }: Props) => {
+export const useDepartmentPagination = ({ page, rowsPerPage, sortDir, sort_column, searchKeyword }: Props) => {
   return useQuery({
-    queryKey: ['departments', 'pagination', page, rowsPerPage, sortDir, searchKeyword],
+    queryKey: ['departments', 'pagination', page, rowsPerPage, sortDir, sort_column, searchKeyword],
     queryFn: () =>
-      getAllDepartmentsPagination(page * rowsPerPage, rowsPerPage, sortDir, searchKeyword),
+      getAllDepartmentsPagination(page * rowsPerPage, rowsPerPage, sortDir, sort_column, searchKeyword),
     placeholderData: (previousData) => previousData,
   });
 };

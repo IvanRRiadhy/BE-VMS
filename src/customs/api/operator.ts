@@ -372,6 +372,9 @@ export const getUpComingVisitors = async (params?: {
   length?: number;
   sortDir?: string;
   search?: string;
+  showCheckout?: boolean;
+  showBlock?: boolean;
+  showExpired?: boolean;
 }): Promise<any> => {
   const response = await axiosInstance.get('/operator-invitation/upcoming-visitor', {
     headers: {
@@ -388,6 +391,15 @@ export const getUpComingVisitors = async (params?: {
       sort_dir: params?.sortDir,
       ...(params?.search?.trim() && {
         'search[value]': params.search.trim(),
+      }),
+      ...(params?.showCheckout !== undefined && {
+        'show-checkout': params.showCheckout,
+      }),
+      ...(params?.showBlock !== undefined && {
+        'show-block': params.showBlock,
+      }),
+      ...(params?.showExpired !== undefined && {
+        'show-expired': params.showExpired,
       }),
     },
   });

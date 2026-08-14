@@ -486,7 +486,7 @@ const TableRowItem = React.memo(
     } = props;
     const CHECKBOX_COL_WIDTH = 40;
     const ACTION_COL_WIDTH = 105;
-    const INDEX_COL_WIDTH = 56;
+    const INDEX_COL_WIDTH = 10;
     const DATA_COL_WIDTH = 180;
 
     const STICKY_DATA_COUNT = 2;

@@ -1,5 +1,13 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid2 as Grid,
+  IconButton,
+} from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
@@ -70,6 +78,7 @@ const Content = () => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const navigate = useNavigate();
   const { remove, blacklist } = useEmployeeMutation();
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
     exitEnd: '',
@@ -90,9 +99,7 @@ const Content = () => {
   });
 
   const collection = employeeQuery.data?.collection ?? [];
-
   const tableData = collection;
-
   const totalRecords = employeeQuery.data?.RecordsTotal ?? 0;
   const totalFilteredRecords = employeeQuery.data?.RecordsFiltered ?? 0;
 
@@ -152,71 +159,102 @@ const Content = () => {
     handleOpenDialog();
   };
 
+  // const handleEdit = async (id: string) => {
+  //   const existingData = await getEmployeeById(String(id));
+  //   // const existingData = employeeQuery.data?.collection.find(
+  //   //   (item) => item.id === id
+  //   // );
+  //   if (!existingData) return;
+
+  //   const toNum = (
+  //     v: unknown,
+  //     map: Record<string, number> = {},
+  //     fallback: number | undefined = 0,
+  //   ) => {
+  //     if (v === '' || v == null) return fallback;
+  //     if (typeof v === 'number' && Number.isFinite(v)) return v;
+  //     if (typeof v === 'boolean') return v ? 1 : 0;
+
+  //     if (typeof v === 'string') {
+  //       const t = v.trim().toLowerCase();
+
+  //       if (t in map) return map[t];
+
+  //       const n = Number(t);
+  //       return Number.isFinite(n) ? n : fallback;
+  //     }
+
+  //     return fallback;
+  //   };
+
+  //   const coerceEmployee = (s: any) => ({
+  //     ...s,
+  //     gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
+
+  //     status_employee: toNum(
+  //       s?.status_employee,
+  //       {
+  //         active: 1,
+  //         'non active': 2,
+  //         nonactive: 2,
+  //         inactive: 2,
+  //         '0': 0,
+  //         '1': 1,
+  //         '2': 2,
+  //       },
+  //       0,
+  //     ),
+
+  //     organization_id: String(s?.organization_id ?? ''),
+  //     department_id: String(s?.department_id ?? ''),
+  //     district_id: String(s?.district_id ?? ''),
+  //   });
+
+  //   const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
+
+  //   if (isDirty) {
+  //     setPendingEditId(id);
+  //     setConfirmDialogOpen(true);
+  //     return;
+  //   }
+
+  //   setEdittingId(id);
+  //   setFormDataAddEmployee(parsedData);
+  //   setInitialFormData(parsedData);
+  //   setIsDirty(false);
+
+  //   handleOpenDialog();
+  // };
+
   const handleEdit = async (id: string) => {
-    const existingData = await getEmployeeById(String(id));
-    // const existingData = employeeQuery.data?.collection.find(
-    //   (item) => item.id === id
-    // );
-    if (!existingData) return;
+    try {
+      setLoadingEdit(true);
 
-    const toNum = (
-      v: unknown,
-      map: Record<string, number> = {},
-      fallback: number | undefined = 0,
-    ) => {
-      if (v === '' || v == null) return fallback;
-      if (typeof v === 'number' && Number.isFinite(v)) return v;
-      if (typeof v === 'boolean') return v ? 1 : 0;
+      setEdittingId(id);
+      setOpenFormAddEmployee(true);
 
-      if (typeof v === 'string') {
-        const t = v.trim().toLowerCase();
+      const existingData = await getEmployeeById(String(id));
 
-        if (t in map) return map[t];
-
-        const n = Number(t);
-        return Number.isFinite(n) ? n : fallback;
+      if (!existingData) {
+        setOpenFormAddEmployee(false);
+        return;
       }
 
-      return fallback;
-    };
+      // existing normalization kamu
+      const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
 
-    const coerceEmployee = (s: any) => ({
-      ...s,
-      gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
+      setFormDataAddEmployee(parsedData);
+      setInitialFormData(parsedData);
+      setIsDirty(false);
+    } catch (error) {
+      console.error('Failed to load employee:', error);
 
-      status_employee: toNum(
-        s?.status_employee,
-        {
-          active: 1,
-          'non active': 2,
-          nonactive: 2,
-          inactive: 2,
-          '0': 0,
-          '1': 1,
-          '2': 2,
-        },
-        0,
-      ),
+      setOpenFormAddEmployee(false);
 
-      organization_id: String(s?.organization_id ?? ''),
-      department_id: String(s?.department_id ?? ''),
-      district_id: String(s?.district_id ?? ''),
-    });
-
-    const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
-
-    if (isDirty) {
-      setPendingEditId(id);
-      setConfirmDialogOpen(true);
-      return;
+      showSwal('error', 'Failed to load employee data');
+    } finally {
+      setLoadingEdit(false);
     }
-
-    setEdittingId(id);
-    setFormDataAddEmployee(parsedData);
-    setInitialFormData(parsedData);
-    setIsDirty(false);
-
-    handleOpenDialog();
   };
 
   const toNum = (
@@ -538,7 +576,6 @@ const Content = () => {
                 }}
                 onEdit={(row) => {
                   handleEdit(row.id);
-                  setEdittingId(row.id);
                 }}
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row)}
@@ -578,19 +615,34 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <FormWizardAddEmployee
-            formData={formDataAddEmployee}
-            setFormData={setFormDataAddEmployee}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            isBatchEdit={isBatchEdit}
-            selectedRows={selectedRows}
-            enabledFields={enabledFields}
-            setEnabledFields={setEnabledFields}
-            organizations={organizations}
-            department={department}
-            districts={districts}
-          />
+          {loadingEdit ? (
+            <Box
+              sx={{
+                minHeight: 500,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+              }}
+            >
+              <CircularProgress size={36} />
+            </Box>
+          ) : (
+            <FormWizardAddEmployee
+              formData={formDataAddEmployee}
+              setFormData={setFormDataAddEmployee}
+              edittingId={edittingId}
+              onSuccess={handleSuccess}
+              isBatchEdit={isBatchEdit}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+              organizations={organizations}
+              department={department}
+              districts={districts}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

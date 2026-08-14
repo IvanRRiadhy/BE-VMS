@@ -1,9 +1,11 @@
-import { Dialog, DialogTitle, DialogContent, Divider, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Divider, IconButton, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import FormSite from '../../FormSite';
+import { Box } from '@mui/system';
 
 interface DialogSiteSpaceProps {
   open: boolean;
+  loading?: any;
   editingId?: string | null;
   isBatchEdit: boolean;
   selectedRows: any[];
@@ -23,6 +25,7 @@ interface DialogSiteSpaceProps {
 
 const DialogSiteSpace = ({
   open,
+  loading,
   editingId,
   isBatchEdit,
   selectedRows,
@@ -37,22 +40,22 @@ const DialogSiteSpace = ({
   isDirty,
   setIsDirty,
 }: DialogSiteSpaceProps) => {
-const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
-  if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+  const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+      if (isDirty) {
+        onConfirmClose();
+      } else {
+        onClose();
+      }
+      return;
+    }
+
     if (isDirty) {
       onConfirmClose();
     } else {
       onClose();
     }
-    return;
-  }
-
-  if (isDirty) {
-    onConfirmClose();
-  } else {
-    onClose();
-  }
-};
+  };
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xl">
@@ -72,20 +75,41 @@ const handleClose = (event: {}, reason?: 'backdropClick' | 'escapeKeyDown') => {
       <Divider />
 
       <DialogContent sx={{ paddingTop: 0 }}>
-        <br />
+        {loading ? (
+          <Box
+            sx={{
+              minHeight: 500,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={36} />
 
-        <FormSite
-          formData={formData}
-          setFormData={setFormData}
-          onSuccess={onSuccess}
-          editingId={editingId || undefined}
-          isBatchEdit={isBatchEdit}
-          selectedRows={selectedRows}
-          enabledFields={enabledFields}
-          setEnabledFields={setEnabledFields}
-          employee={employee}
-          setIsDirty={setIsDirty}
-        />
+            {/* <Typography variant="body2" color="text.secondary">
+              Loading site information...
+            </Typography> */}
+          </Box>
+        ) : (
+          <>
+            <br />
+
+            <FormSite
+              formData={formData}
+              setFormData={setFormData}
+              onSuccess={onSuccess}
+              editingId={editingId || undefined}
+              isBatchEdit={isBatchEdit}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+              employee={employee}
+              setIsDirty={setIsDirty}
+            />
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

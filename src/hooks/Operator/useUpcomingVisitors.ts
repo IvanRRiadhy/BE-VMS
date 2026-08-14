@@ -61,7 +61,10 @@ export const useUpcomingVisitors = ({
   sortDir,
   search,
   visitorType,
-  allVisitorType = false,
+  allVisitorType,
+  showCheckout,
+  showBlock,
+  showExpired,
 }: {
   page: number;
   rowsPerPage: number;
@@ -69,6 +72,9 @@ export const useUpcomingVisitors = ({
   search?: string;
   visitorType?: string;
   allVisitorType?: boolean;
+  showCheckout?: boolean;
+  showBlock?: boolean;
+  showExpired?: boolean;
 }) => {
   return useQuery({
     queryKey: [
@@ -79,6 +85,9 @@ export const useUpcomingVisitors = ({
       search,
       visitorType,
       allVisitorType,
+      showCheckout,
+      showBlock,
+      showExpired,
     ],
     queryFn: async () => {
       const res = await getUpComingVisitors({
@@ -89,6 +98,9 @@ export const useUpcomingVisitors = ({
         length: rowsPerPage,
         sortDir,
         search,
+        showCheckout,
+        showBlock,
+        showExpired,
       });
 
       return {

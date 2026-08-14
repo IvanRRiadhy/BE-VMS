@@ -42,6 +42,7 @@ const Content = () => {
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     CreateVisitorTypeRequestSchema.parse({}),
   );
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const initialFormRef = useRef(CreateVisitorTypeRequestSchema.parse({}));
   const [edittingId, setEdittingId] = useState('');
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
@@ -51,6 +52,7 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const sort_column = 'created_at';
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
@@ -83,6 +85,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sortDir,
+    sort_column: sort_column,
     search,
   });
 
@@ -133,15 +136,22 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
+      setLoadingEdit(true);
+
+      setEdittingId(id);
+      setOpenFormCreateVisitorType(true);
+
       const resp = await getVisitorTypeById(id);
       const raw = resp?.collection;
 
+      if (!raw) {
+        setOpenFormCreateVisitorType(false);
+        return;
+      }
+
       const hydrated = normalizeDetail(raw);
 
-      setEdittingId(id);
-      setFormDataAddVisitorType(hydrated);
-
-      if (Array.isArray(raw?.visitor_type_documents)) {
+      if (Array.isArray(raw.visitor_type_documents)) {
         const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
           document_id: doc.document_id,
           identity_type:
@@ -155,11 +165,17 @@ const Content = () => {
         setDocumentIdentities([]);
       }
 
+      setFormDataAddVisitorType(hydrated);
       initialFormRef.current = hydrated;
-
-      handleOpenDialog();
+      setPendingEditId(null);
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
+
+      setOpenFormCreateVisitorType(false);
+
+      showSwal('error', 'Failed to load visitor type.');
+    } finally {
+      setLoadingEdit(false);
     }
   };
 
@@ -415,7 +431,6 @@ const Content = () => {
                 }}
                 onEdit={(row) => {
                   handleEdit(row.id);
-                  setEdittingId(row.id);
                 }}
                 onDuplicate={(row) => handleDuplicate(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
@@ -434,6 +449,7 @@ const Content = () => {
       <VisitorTypeDialog
         open={openFormCreateVisitorType}
         onClose={handleDialogClose}
+        loading={loadingEdit}
         edittingId={edittingId}
         isFormChanged={isFormChanged}
         setConfirmDialogOpen={setConfirmDialogOpen}

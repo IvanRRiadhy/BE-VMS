@@ -4120,12 +4120,12 @@ const Content = () => {
             data={parkingData}
           />
 
-          <InfoDialog
+          {/* <InfoDialog
             open={openDialogInfo}
             onClose={() => setOpenDialogInfo(false)}
             data={dataImage}
             container={containerRef ?? null}
-          />
+          /> */}
           <ReturnCardDialog
             open={openReturnCard}
             value={returnCardNumber}

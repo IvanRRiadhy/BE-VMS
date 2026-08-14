@@ -167,5 +167,10 @@
     "occupancy": "Menampilkan daftar tipe kunjungan. Klik salah satu tipe kunjungan untuk melihat detail informasinya.",
     "identityImage": "Menampilkan foto atau dokumen identitas yang telah diunggah oleh visitor.",
     "alert": "Menampilkan informasi penting atau peringatan yang perlu diperhatikan terkait visitor."
-  }
+  },
+  "hostInformation": "Penanggung jawab atas kunjungan.",
+  "agendaInformation": "Agenda acara kunjungan.",
+  "sitePlaceInformation": "Lokasi tempat kunjungan, silahkan centang dan pilih lokasi yang sesuai.",
+  "visitorPeriodStart": "Periode kunjungan dimulai pada tanggal ketika kunjungan visitor dimulai.",
+  "visitorPeriodEnd": "Periode kunjungan berakhir pada tanggal ketika kunjungan visitor selesai."
 }

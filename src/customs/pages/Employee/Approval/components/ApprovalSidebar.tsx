@@ -7,6 +7,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { IconFilter } from '@tabler/icons-react';
 import { IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
@@ -58,14 +59,14 @@ const ApprovalSidebar = ({
     >
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography variant="h6" fontSize="1rem">
-          Transaction Visitor
+          Approval
         </Typography>
       </Box>
 
       <CustomTextField
         fullWidth
         size="small"
-        placeholder="Search Transaction"
+        placeholder="Search Approval"
         value={searchKeyword}
         onChange={(e: any) => setSearchKeyword(e.target.value)}
         sx={{
@@ -76,6 +77,20 @@ const ApprovalSidebar = ({
           startAdornment: (
             <InputAdornment position="start">
               <IconSearch color="gray" size={18} />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                onClick={() => {}}
+                sx={{
+                  mr: -0.5,
+                  cursor: 'pointer',
+                }}
+              >
+                <IconFilter size={18} />
+              </IconButton>
             </InputAdornment>
           ),
         }}

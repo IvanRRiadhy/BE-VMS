@@ -19,6 +19,7 @@ export const getVisitorProvidersByDt = async (
   start: number,
   length: number,
   sort_dir: string,
+  sort_column?: string,
   keyword?: string,
   role?: string,
 ) => {

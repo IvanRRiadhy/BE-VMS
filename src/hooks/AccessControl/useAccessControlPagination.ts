@@ -6,13 +6,21 @@ interface Props {
   rowsPerPage: number;
   search: string;
   sort_dir: string;
+  sort_column?: string;
 }
 
-export const useAccessControlPagination = ({ page, rowsPerPage, search, sort_dir }: Props) => {
+export const useAccessControlPagination = ({
+  page,
+  rowsPerPage,
+  search,
+  sort_dir,
+  sort_column,
+}: Props) => {
   return useQuery({
-    queryKey: ['access-control', page, rowsPerPage, search, sort_dir],
+    queryKey: ['access-control', page, rowsPerPage, search, sort_dir, sort_column],
 
-    queryFn: () => getAllAccessControlPagination(page * rowsPerPage, rowsPerPage, search, sort_dir),
+    queryFn: () =>
+      getAllAccessControlPagination(page * rowsPerPage, rowsPerPage, search, sort_dir, sort_column),
 
     placeholderData: (previousData) => previousData,
   });

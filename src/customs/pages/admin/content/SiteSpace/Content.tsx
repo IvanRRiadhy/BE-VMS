@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
 import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 type SiteTableRow = {
   id: string;
@@ -51,7 +52,6 @@ type EnableField = {
 };
 
 const Content = () => {
-  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -71,13 +71,11 @@ const Content = () => {
   const [appliedType, setAppliedType] = useState<number>(-1);
   const { '*': wildcard } = useParams();
   const { t } = useTranslation();
-
   const handleCloseDetailType = () => {
     setSelectedType(null);
     setOpenDetailType(false);
   };
-
-  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   const typeOptions = [
     { label: 'Site', value: 0 },
@@ -96,15 +94,8 @@ const Content = () => {
     3: [], // Room →
   };
 
-  const [allData, setAllData] = useState<any[]>([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getAllSite();
-      setAllData(res.collection);
-    };
-    fetchData();
-  }, []);
-
+  const { data: allData = [] } = useSites();
+  const { employee } = useEmployees();
   useEffect(() => {
     // if (!allData) return;
     if (!allData || allData.length === 0) return;
@@ -124,7 +115,7 @@ const Content = () => {
     }
 
     const parentType = parentItem.type;
-    const allowedChildTypes = typeHierarchy[parentType] || [];
+    const allowedChildTypes = typeHierarchy[parentType as number] || [];
 
     const filtered = typeOptions.filter(
       (opt) => allowedChildTypes.includes(opt.value) && opt.value !== parentType,
@@ -132,7 +123,7 @@ const Content = () => {
 
     setAllowedTypes(filtered);
   }, [id, wildcard, allData]);
-  const { employee } = useEmployees();
+
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<any>(CreateSiteRequestSchema.parse({}));
   const [isDirty, setIsDirty] = useState(false);
@@ -168,6 +159,7 @@ const Content = () => {
     type: appliedType !== -1 ? appliedType : undefined,
     parent,
     isChild: is_child,
+    sort_column: 'created_at'
   });
 
   const totalRecords = sitePagination?.RecordsTotal ?? 0;
@@ -177,7 +169,7 @@ const Content = () => {
     () => [
       {
         title: `Total ${t('navigation.site_space')}`,
-        subTitle: `${totalFilteredRecords}`,
+        subTitle: `${totalRecords}`,
         icon: IconSitemap,
         subTitleSetting: 10,
         color: 'none',
@@ -221,11 +213,11 @@ const Content = () => {
       .map((id) => allData.find((item) => item.id === id))
       .filter(Boolean)
       .map((item) => ({
-        id: item.id,
-        name: item.name,
+        id: item?.id,
+        name: item?.name,
       }));
 
-    setBreadcrumbItems([{ id: '', name: 'Home' }, ...chain]);
+    setBreadcrumbItems([{ id: '', name: 'Home' }, ...(chain as any)]);
   }, [wildcard, allData]);
 
   const handleOpenDialog = () => {
@@ -270,10 +262,19 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
+      setLoadingEdit(true);
+
+      // Buka dialog langsung
+      setEdittingId(id);
+      setOpenFormCreateSiteSpace(true);
+
       const res = await getSiteById(id);
       const found = res?.collection ?? null;
 
-      if (!found) return;
+      if (!found) {
+        setOpenFormCreateSiteSpace(false);
+        return;
+      }
 
       const toLocalTime = (utcTime?: string | null) => {
         if (!utcTime) return '';
@@ -291,12 +292,13 @@ const Content = () => {
 
       const normalized = {
         ...found,
-        // type: safeNumber(found.type),
         type: typeof found.type === 'string' ? (siteTypeMap[found.type] ?? 0) : Number(found.type),
+
         approval_workflow_id:
           found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
             ? String(found.approval_workflow_id)
             : null,
+
         open_time: toLocalTime(found.open_time),
         close_time: toLocalTime(found.close_time),
       };
@@ -316,16 +318,21 @@ const Content = () => {
         approval_workflow_id: parsed.approval_workflow_id || null,
       };
 
-      setEdittingId(id);
       setFormDataAddSite(parsedData);
       setInitialFormSnapshot(parsedData);
       setPendingEditId(null);
       setIsDirty(false);
-      setOpenFormCreateSiteSpace(true);
     } catch (error) {
       console.error('Error fetching/parsing data:', error);
+
+      setOpenFormCreateSiteSpace(false);
+
+      showSwal('error', 'Failed to load site data');
+    } finally {
+      setLoadingEdit(false);
     }
   };
+
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
 
@@ -519,7 +526,7 @@ const Content = () => {
                   const newPath = [...currentPath, row.id].join('/');
                   navigate(`/admin/manage/site-space/${newPath}`);
                 }}
-                setCurrentId={(id: any) => setCurrentId(id)}
+                // setCurrentId={(id: any) => setCurrentId(id)}
                 searchPlaceholder={'Search site space'}
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
@@ -541,7 +548,6 @@ const Content = () => {
                 }}
                 onEdit={(row) => {
                   handleEdit(row.id);
-                  setEdittingId(row.id);
                 }}
                 isHaveFilterMore={true}
                 filterMoreContent={
@@ -566,6 +572,7 @@ const Content = () => {
 
       <DialogSiteSpace
         open={openFormCreateSiteSpace}
+        loading={loadingEdit}
         editingId={edittingId}
         isBatchEdit={isBatchEdit}
         selectedRows={selectedRows}

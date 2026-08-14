@@ -80,7 +80,7 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   // const [totalRecords, setTotalRecords] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortColumn, setSortColumn] = useState<string>('created_at');
   const [edittingId, setEdittingId] = useState('');
   // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   // const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);

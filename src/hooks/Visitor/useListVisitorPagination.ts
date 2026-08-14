@@ -15,6 +15,7 @@ interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
+  sort_column?: string;
   search: string;
   filters: VisitorFilters;
 }
@@ -23,12 +24,14 @@ export const useListVisitorPagination = ({
   page,
   rowsPerPage,
   sortDir,
+  sort_column,
   search,
   filters,
 }: Props) => {
   return useQuery({
-    queryKey: ['list-visitor', page, rowsPerPage, sortDir, search, filters],
-    queryFn: () => getListVisitorPagination(page * rowsPerPage, rowsPerPage, sortDir, search),
+    queryKey: ['list-visitor', page, rowsPerPage, sortDir, sort_column, search, filters],
+    queryFn: () =>
+      getListVisitorPagination(page * rowsPerPage, rowsPerPage, sortDir, sort_column, search),
     placeholderData: (previousData) => previousData,
   });
 };

@@ -39,7 +39,6 @@ import { useTranslation } from 'react-i18next';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 import { useDepartmentPagination } from 'src/hooks/Department/useDepartmentPagination';
 import { useDistrictPagination } from 'src/hooks/District/useDistrictPagination';
-import { useQueries } from '@tanstack/react-query';
 import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 import { useDistrictMutation } from 'src/hooks/District/useDistrictMutation';
@@ -66,8 +65,8 @@ const entityLabel = (e?: DialogEntity) =>
     ? e === 'Organizations'
       ? 'Organization'
       : e === 'Departments'
-      ? 'Department'
-      : 'District'
+        ? 'Department'
+        : 'District'
     : '';
 
 const Content = () => {
@@ -87,6 +86,7 @@ const Content = () => {
   const [page, setPage] = useState(initialPage);
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const sortColumn = 'created_at';
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
@@ -114,6 +114,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sortDir,
+    sort_column: sortColumn,
     searchKeyword,
   });
 
@@ -121,6 +122,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sortDir,
+    sort_column: sortColumn,
     searchKeyword,
   });
 
@@ -128,6 +130,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sortDir,
+    sort_column: sortColumn,
     searchKeyword,
   });
 
@@ -139,8 +142,8 @@ const Content = () => {
     selectedType === 'organization'
       ? organizationQuery
       : selectedType === 'department'
-      ? departmentQuery
-      : districtQuery;
+        ? departmentQuery
+        : districtQuery;
 
   const response = currentQuery.data;
   const employeeLoading = Object.keys(employeeMap).length === 0;
@@ -160,32 +163,10 @@ const Content = () => {
   const hasFetched = currentQuery.isSuccess;
   const loading = currentQuery.isLoading || currentQuery.isFetching || employeeLoading;
 
-  // const totalsQueries = useQueries({
-  //   queries: [
-  //     {
-  //       queryKey: ['organization-total'],
-  //       queryFn: () => getAllOrganizationPagination(0, 1, sortDir),
-  //     },
-  //     {
-  //       queryKey: ['department-total'],
-  //       queryFn: () => getAllDepartmentsPagination(0, 1, sortDir),
-  //     },
-  //     {
-  //       queryKey: ['district-total'],
-  //       queryFn: () => getAllDistrictsPagination(0, 1, sortDir),
-  //     },
-  //   ],
-  // });
-  // const totals = {
-  //   organization: totalsQueries[0].data?.RecordsTotal ?? 0,
-  //   department: totalsQueries[1].data?.RecordsTotal ?? 0,
-  //   district: totalsQueries[2].data?.RecordsTotal ?? 0,
-  // };
-
   const totals = {
-    organization: organizationQuery.data?.RecordsTotal ?? 0,
-    department: departmentQuery.data?.RecordsTotal ?? 0,
-    district: districtQuery.data?.RecordsTotal ?? 0,
+    organization: organizationQuery.data?.RecordsFiltered ?? 0,
+    department: departmentQuery.data?.RecordsFiltered ?? 0,
+    district: districtQuery.data?.RecordsFiltered ?? 0,
   };
 
   const cards = useMemo(

@@ -2560,6 +2560,11 @@ const OperatorView = () => {
 
   const sortDir = 'desc';
 
+  type VisitorStatusFilter = 'all' | 'checkout' | 'block' | 'expired';
+
+  const [visitorStatusFilter, setVisitorStatusFilter] = useState<VisitorStatusFilter>('all');
+
+
   const [livePage, setLivePage] = useState(0);
   const [liveRowsPerPage, setLiveRowsPerPage] = useState(10);
   const [liveSearch, setLiveSearch] = useState('');
@@ -2570,21 +2575,20 @@ const OperatorView = () => {
     sortDir,
     search: liveSearch,
     allVisitorType: true,
+
+    ...(visitorStatusFilter !== 'all' && {
+      showCheckout: visitorStatusFilter === 'checkout',
+      showBlock: visitorStatusFilter === 'block',
+      showExpired: visitorStatusFilter === 'expired',
+    }),
   });
   const upcomingPurposeQuery = useUpcomingPurpose();
-
-  // const upcomingVisitorQuery = useUpcomingVisitors({
-  //   page,
-  //   rowsPerPage,
-  //   sortDir,
-  //   selectedPurpose: selectedPurpose,
-  //   // all_visitor_type: 'true',
-  //   search: searchKeyword
-  // });
 
   const [purposePage, setPurposePage] = useState(0);
   const [purposeRowsPerPage, setPurposeRowsPerPage] = useState(10);
   const [purposeSearch, setPurposeSearch] = useState('');
+
+  
 
   const purposeVisitorQuery = useUpcomingVisitors({
     page: purposePage,
@@ -2593,10 +2597,6 @@ const OperatorView = () => {
     search: purposeSearch,
     visitorType: selectedPurpose?.id,
   });
-
-  // const upcomingVisitors = upcomingVisitorQuery.data?.collection ?? [];
-  // const recordsTotal = upcomingVisitorQuery.data?.recordsTotal ?? 0;
-  // const recordsFiltered = upcomingVisitorQuery.data?.recordsFiltered ?? 0;
 
   // Live Visitor
   const upcomingVisitors = liveVisitorQuery.data?.collection ?? [];
@@ -3052,16 +3052,17 @@ const OperatorView = () => {
                   page={livePage}
                   rowsPerPage={liveRowsPerPage}
                   // totalCount={liveRecordsFiltered}
-                  totalCount={liveVisitorQuery.data?.recordsTotal ?? 0}
+                  totalCount={liveRecordsFiltered}
                   setPage={setLivePage}
                   liveCount={liveRecordsFiltered}
                   relatedCount={totalCountVisitor}
                   livePagination={{
                     page: livePage,
                     rowsPerPage: liveRowsPerPage,
-                    totalCount: liveVisitorQuery.data?.recordsTotal ?? 0,
+                    totalCount: liveRecordsFiltered ?? 0,
                     setPage: setLivePage,
                     setRowsPerPage: setLiveRowsPerPage,
+                    refetch: liveVisitorQuery.refetch,
                   }}
                   relatedPagination={{
                     page: relatedPage,
@@ -3070,6 +3071,8 @@ const OperatorView = () => {
                     setPage: setRelatedPage,
                     setRowsPerPage: setRelatedRowsPerPage,
                   }}
+                  visitorStatusFilter={visitorStatusFilter}
+                  setVisitorStatusFilter={setVisitorStatusFilter}
                 />
               </Grid>
 

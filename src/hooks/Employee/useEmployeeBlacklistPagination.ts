@@ -15,6 +15,7 @@ interface Props {
     page: number;
     rowsPerPage: number;
     sortDir: string;
+    sort_column: string;
     search: string;
     filters?: Filters;
 }
@@ -23,6 +24,7 @@ export const useEmployeeBlacklistPagination = ({
     page,
     rowsPerPage,
     sortDir,
+    sort_column,
     search,
 }: Props) => {
     return useQuery({
@@ -31,6 +33,7 @@ export const useEmployeeBlacklistPagination = ({
             page,
             rowsPerPage,
             sortDir,
+            sort_column,
             search,
         ],
         queryFn: async () => {
@@ -41,6 +44,7 @@ export const useEmployeeBlacklistPagination = ({
                 rowsPerPage,
                 sortDir,
                 search,
+                sort_column,
                 true,
             );
         },

@@ -31,6 +31,7 @@ import {
   IconFilter,
 } from '@tabler/icons-react';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import VisitorFilterDialog from './VisitorFilterDialog';
 
 interface AvailableAction {
   value: string;
@@ -83,6 +84,8 @@ interface VisitorListCardProps {
   relatedCount?: any;
   livePagination?: any;
   relatedPagination?: any;
+  visitorStatusFilter: any;
+  setVisitorStatusFilter: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -124,494 +127,537 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   relatedCount,
   livePagination,
   relatedPagination,
+  visitorStatusFilter,
+  setVisitorStatusFilter,
 }) => {
   // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 10));
   const pagination = typeVisitor === 'live' ? livePagination : relatedPagination;
-
   const totalPages = Math.ceil(pagination.totalCount / pagination.rowsPerPage);
+  const [openFilter, setOpenFilter] = useState(false);
+
+  const handleOpenFilter = () => {
+    setOpenFilter(true);
+  };
+
+  const handleCloseFilter = () => {
+    setOpenFilter(false);
+  };
+
+  const handleApplyFilter = (filter: any) => {
+    setVisitorStatusFilter(filter);
+
+    if (typeVisitor === 'live') {
+      livePagination?.setPage(0);
+    }
+
+    setOpenFilter(false);
+  };
+
+  const handleResetFilter = () => {
+    setVisitorStatusFilter('all');
+    if (typeVisitor === 'live') {
+      livePagination?.setPage(0);
+    }
+
+    setOpenFilter(false);
+  };
+
   return (
-    <Card
-      sx={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-      id="tour-visitor-list"
-    >
-      <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Tabs
-            value={typeVisitor}
-            onChange={(_, value) => setTypeVisitor(value)}
-            sx={{
-              minHeight: 40,
-              '& .MuiTab-root': {
+    <>
+      <Card
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        id="tour-visitor-list"
+      >
+        <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Tabs
+              value={typeVisitor}
+              onChange={(_, value) => setTypeVisitor(value)}
+              sx={{
                 minHeight: 40,
-                textTransform: 'none',
-                fontWeight: 600,
-              },
-            }}
-          >
-            {/* <Tab value="live" label="Live Visitors" />
+                '& .MuiTab-root': {
+                  minHeight: 40,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                },
+              }}
+            >
+              {/* <Tab value="live" label="Live Visitors" />
             <Tab value="related" label="Related Visitors" /> */}
-            <Tab value="live" label={`Live Visitors (${liveCount})`} />
+              <Tab value="live" label={`Live Visitors (${liveCount})`} />
+              <Tab value="related" label={`Related Visitors (${relatedCount})`} />
+            </Tabs>
 
-            <Tab value="related" label={`Related Visitors (${relatedCount})`} />
-          </Tabs>
-
-          {/* <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
+            {/* <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
             <Typography variant="body2" color="text.secondary">
               ({totalVisitors})
             </Typography>
           </Tooltip> */}
+          </Box>
         </Box>
-      </Box>
 
-      <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          sx={{
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          <CustomTextField
-            fullWidth
-            size="medium"
-            value={searchKeyword}
-            onChange={(e: any) => setSearchKeyword(e.target.value)}
-            placeholder="Search Visitor"
-            sx={{ flex: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={18} />
-                </InputAdornment>
-              ),
+        <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{
+              flex: 1,
+              minWidth: 0,
             }}
-          />
-
-          <Tooltip title="Filter">
-            <IconButton
-              color="primary"
-              sx={{
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 2,
-                width: 48,
-                height: 48,
-                flexShrink: 0,
-              }}
-            >
-              <IconFilter size={20} />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-
-        <Box
-          display="flex"
-          gap={1}
-          alignItems="center"
-          justifyContent={'flex-end'}
-          id="tour-select-multiple"
-        >
-          <Tooltip
-            title="Click and Select more than 1 visitor"
-            slotProps={{
-              tooltip: {
-                sx: {
-                  fontSize: '8.7remrem',
-                  padding: '8px 14px',
-                },
-              },
-              popper: {
-                container: containerRef.current,
-              },
-            }}
-            arrow
           >
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={selectMultiple}
-                  onChange={(e) => {
-                    setSelectMultiple(e.target.checked);
-                    setSelectedVisitors([]);
-                  }}
-                />
-              }
-              label="Select Multiple"
-              sx={{
-                marginRight: 0,
-                whiteSpace: 'nowrap',
+            <CustomTextField
+              fullWidth
+              size="medium"
+              value={searchKeyword}
+              onChange={(e: any) => setSearchKeyword(e.target.value)}
+              placeholder="Search Visitor"
+              sx={{ flex: 1 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} />
+                  </InputAdornment>
+                ),
               }}
             />
-          </Tooltip>
-          <IconButton size="small" disabled={page === 0} onClick={() => setPage((p: any) => p - 1)}>
-            <ChevronLeft />
-          </IconButton>
 
-          <Typography display="flex">
-            {`${totalPages === 0 ? 0 : page + 1} / ${totalPages}`}
-          </Typography>
-          {/* <IconButton
+            <Tooltip title="Filter">
+              <IconButton
+                color={visitorStatusFilter !== 'all' ? 'primary' : 'default'}
+                onClick={handleOpenFilter}
+                sx={{
+                  border: 1,
+                  borderColor: visitorStatusFilter !== 'all' ? 'primary.main' : 'divider',
+                  borderRadius: 2,
+                  width: 48,
+                  height: 48,
+                  flexShrink: 0,
+                }}
+              >
+                <IconFilter size={20} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          <Box
+            display="flex"
+            gap={1}
+            alignItems="center"
+            justifyContent={'flex-end'}
+            id="tour-select-multiple"
+          >
+            <Tooltip
+              title="Click and Select more than 1 visitor"
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '8.7remrem',
+                    padding: '8px 14px',
+                  },
+                },
+                popper: {
+                  container: containerRef.current,
+                },
+              }}
+              arrow
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectMultiple}
+                    onChange={(e) => {
+                      setSelectMultiple(e.target.checked);
+                      setSelectedVisitors([]);
+                    }}
+                  />
+                }
+                label="Select Multiple"
+                sx={{
+                  marginRight: 0,
+                  whiteSpace: 'nowrap',
+                }}
+              />
+            </Tooltip>
+            <IconButton
+              size="small"
+              disabled={page === 0}
+              onClick={() => setPage((p: any) => p - 1)}
+            >
+              <ChevronLeft />
+            </IconButton>
+
+            <Typography display="flex">
+              {`${totalPages === 0 ? 0 : page + 1} / ${totalPages}`}
+            </Typography>
+            {/* <IconButton
             size="small"
             onClick={() => setPage(page + 1)}
             disabled={totalPages === 0 || page >= totalPages}
           >
             <ChevronRight />
           </IconButton> */}
-          <IconButton
-            size="small"
-            disabled={totalPages === 0 || page >= totalPages - 1}
-            onClick={() => {
-              if (page < totalPages - 1) {
-                setPage(page + 1);
-              }
-            }}
-          >
-            <ChevronRight />
-          </IconButton>
-        </Box>
-      </Box>
-
-      <Divider sx={{ mt: 1 }} />
-
-      <CardContent
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          p: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(2, 1fr)',
-              sm: 'repeat(3, 1fr)',
-              md: 'repeat(4, 1fr)',
-              xl: 'repeat(5, 1fr)',
-            },
-            gap: 1,
-          }}
-        >
-          {filteredVisitors.map((visitor, index) => {
-            const isDriving = visitor.is_driving === true;
-            const isScanned =
-              visitor.visitor_number &&
-              scannedVisitorNumber &&
-              visitor.visitor_number === scannedVisitorNumber;
-
-            const selected = selectedVisitors.includes(visitor.id);
-
-            return (
-              <Card
-                key={visitor.id || index}
-                onClick={() => {
-                  if (typeVisitor === 'live') {
-                    handleSelectLiveVisitor(visitor);
-                  } else {
-                    handleSelectRelatedVisitor(visitor);
-                  }
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  borderRadius: 3,
-                  border: selected ? '2px solid' : '1px solid',
-                  borderColor: selected ? 'primary.main' : 'divider',
-                  transition: '.2s',
-                  padding: '5px',
-
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent
-                  sx={{
-                    p: 0.5,
-                    textAlign: 'center',
-                    '&:last-child': {
-                      pb: 0.5,
-                    },
-                  }}
-                >
-                  <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                    <Avatar
-                      src={getCdnUrl(visitor.selfie_image) || undefined}
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        mx: 'auto',
-                      }}
-                    />
-
-                    {(isDriving || isScanned) && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          right: -4,
-                          bottom: -4,
-                          display: 'flex',
-                          gap: 0.5,
-                        }}
-                      >
-                        {isDriving && (
-                          <Box
-                            sx={{
-                              width: 18,
-                              height: 18,
-                              bgcolor: 'success.main',
-                              color: '#fff',
-                              borderRadius: '50%',
-                              fontSize: 10,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            P
-                          </Box>
-                        )}
-
-                        {isScanned && (
-                          <Box
-                            sx={{
-                              width: 18,
-                              height: 18,
-                              bgcolor: 'primary.main',
-                              color: '#fff',
-                              borderRadius: '50%',
-                              fontSize: 10,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            S
-                          </Box>
-                        )}
-                      </Box>
-                    )}
-                  </Box>
-
-                  <Typography variant="subtitle2" fontWeight={700} mt={1.5} noWrap>
-                    {visitor.name}
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {visitor.organization}
-                  </Typography>
-                  <br />
-
-                  <Checkbox
-                    checked={selected}
-                    sx={{ mt: 1 }}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-
-                      setSelectedVisitors((prev) => {
-                        if (selectMultiple) {
-                          return checked
-                            ? [...new Set([...prev, visitor.id])]
-                            : prev.filter((id) => id !== visitor.id);
-                        }
-
-                        // if (checked) {
-                        //   handleSelectRelatedVisitor(visitor);
-                        //   return [visitor.id];
-                        // }
-
-                        if (checked) {
-                          if (typeVisitor === 'live') {
-                            handleSelectLiveVisitor(visitor);
-                          } else {
-                            handleSelectRelatedVisitor(visitor);
-                          }
-
-                          return [visitor.id];
-                        }
-
-                        return [];
-                      });
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Box>
-      </CardContent>
-
-      <CardActions sx={{ overflow: 'visible', p: '0' }}>
-        <Divider />
-        <Box
-          display={'flex'}
-          gap={1}
-          width={'100%'}
-          sx={{
-            mt: 2,
-            justifyContent: 'space-between',
-            marginLeft: '0 !important',
-          }}
-          flexWrap={theme.breakpoints.down('lg') ? 'nowrap' : 'wrap'}
-        >
-          <Box display="flex" gap={1} ref={containerRef} sx={{ marginLeft: '0 !important' }}>
-            <Select
-              sx={{ width: '130px', height: '40px' }}
-              value={bulkAction}
-              onChange={(e) => setBulkAction(e.target.value)}
-              MenuProps={{
-                disablePortal: true,
-                container: containerRef.current,
+            <IconButton
+              size="small"
+              disabled={totalPages === 0 || page >= totalPages - 1}
+              onClick={() => {
+                if (page < totalPages - 1) {
+                  setPage(page + 1);
+                }
               }}
             >
-              {availableActions.map((action) => (
-                <MenuItem key={action.value} value={action.value}>
-                  {action.label}
-                </MenuItem>
-              ))}
-            </Select>
-
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ width: '80px', height: '40px' }}
-              disabled={!bulkAction || selectedVisitors.length === 0}
-              onClick={handleApplyBulkAction}
-            >
-              Apply
-            </Button>
+              <ChevronRight />
+            </IconButton>
           </Box>
+        </Box>
 
-          {invitationCode.length > 0 && (
-            <Box
-              display={'flex'}
-              gap={0.5}
-              alignItems={'center'}
-              justifyContent={lgUp ? 'flex-end' : 'start'}
-              flexWrap={lgUp ? 'nowrap' : 'wrap'}
-            >
-              {permissionHook.canExtend && (
-                <Tooltip
-                  title="Extend Time"
-                  placement="top"
-                  arrow
-                  slotProps={{
-                    tooltip: {
-                      sx: {
-                        fontSize: '1rem',
-                        padding: '8px 14px',
-                      },
-                    },
-                    popper: {
-                      container: containerRef.current,
-                    },
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    onClick={() => setOpenExtendVisit(true)}
-                    startIcon={<IconClock size={18} />}
-                    sx={{
-                      color: '#fff',
-                      background: !relatedVisitors.some(
-                        (v) => selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
-                      )
-                        ? undefined
-                        : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-                      '&.Mui-disabled': {
-                        background: '#BDBDBD !important',
-                        color: '#FFFFFF !important',
-                        opacity: 0.8,
-                      },
-                    }}
-                    disabled={
-                      !relatedVisitors.some(
-                        (v) => selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
-                      )
+        <Divider sx={{ mt: 1 }} />
+
+        <CardContent
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            p: 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(4, 1fr)',
+                xl: 'repeat(5, 1fr)',
+              },
+              gap: 1,
+            }}
+          >
+            {filteredVisitors.map((visitor, index) => {
+              const isDriving = visitor.is_driving === true;
+              const isScanned =
+                visitor.visitor_number &&
+                scannedVisitorNumber &&
+                visitor.visitor_number === scannedVisitorNumber;
+
+              const selected = selectedVisitors.includes(visitor.id);
+
+              return (
+                <Card
+                  key={visitor.id || index}
+                  onClick={() => {
+                    if (typeVisitor === 'live') {
+                      handleSelectLiveVisitor(visitor);
+                    } else {
+                      handleSelectRelatedVisitor(visitor);
                     }
-                  >
-                    Extend
-                  </Button>
-                </Tooltip>
-              )}
+                  }}
+                  sx={{
+                    cursor: 'pointer',
+                    borderRadius: 3,
+                    border: selected ? '2px solid' : '1px solid',
+                    borderColor: selected ? 'primary.main' : 'divider',
+                    transition: '.2s',
+                    padding: '5px',
 
-              {permissionHook.canCardIssuance && (
-                <Tooltip
-                  title="Card"
-                  placement="top"
-                  arrow
-                  slotProps={{
-                    tooltip: {
-                      sx: {
-                        fontSize: '1rem',
-                        padding: '8px 14px',
-                      },
-                    },
-                    popper: {
-                      container: containerRef.current,
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
                     },
                   }}
                 >
-                  <Button
+                  <CardContent
                     sx={{
-                      background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
-                      color: '#fff',
-                      textWrap: 'wrap',
-                      whiteSpace: 'normal',
+                      p: 0.5,
                       textAlign: 'center',
+                      '&:last-child': {
+                        pb: 0.5,
+                      },
                     }}
-                    onClick={handleChooseCard}
-                    startIcon={<IconCreditCard size={18} />}
                   >
-                    Card Issuance
-                  </Button>
-                </Tooltip>
-              )}
+                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                      <Avatar
+                        src={getCdnUrl(visitor.selfie_image) || undefined}
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          mx: 'auto',
+                        }}
+                      />
 
-              <Tooltip
-                title="Print Badge"
-                placement="top"
-                arrow
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: '1rem',
-                      padding: '8px 14px',
-                    },
-                  },
-                  popper: {
-                    container: containerRef.current,
-                  },
+                      {(isDriving || isScanned) && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            right: -4,
+                            bottom: -4,
+                            display: 'flex',
+                            gap: 0.5,
+                          }}
+                        >
+                          {isDriving && (
+                            <Box
+                              sx={{
+                                width: 18,
+                                height: 18,
+                                bgcolor: 'success.main',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                fontSize: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              P
+                            </Box>
+                          )}
+
+                          {isScanned && (
+                            <Box
+                              sx={{
+                                width: 18,
+                                height: 18,
+                                bgcolor: 'primary.main',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                fontSize: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              S
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Typography variant="subtitle2" fontWeight={700} mt={1.5} noWrap>
+                      {visitor.name}
+                    </Typography>
+
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {visitor.organization}
+                    </Typography>
+                    <br />
+
+                    <Checkbox
+                      checked={selected}
+                      sx={{ mt: 1 }}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+
+                        setSelectedVisitors((prev) => {
+                          if (selectMultiple) {
+                            return checked
+                              ? [...new Set([...prev, visitor.id])]
+                              : prev.filter((id) => id !== visitor.id);
+                          }
+
+                          // if (checked) {
+                          //   handleSelectRelatedVisitor(visitor);
+                          //   return [visitor.id];
+                          // }
+
+                          if (checked) {
+                            if (typeVisitor === 'live') {
+                              handleSelectLiveVisitor(visitor);
+                            } else {
+                              handleSelectRelatedVisitor(visitor);
+                            }
+
+                            return [visitor.id];
+                          }
+
+                          return [];
+                        });
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+        </CardContent>
+
+        <CardActions sx={{ overflow: 'visible', p: '0' }}>
+          <Divider />
+          <Box
+            display={'flex'}
+            gap={1}
+            width={'100%'}
+            sx={{
+              mt: 2,
+              justifyContent: 'space-between',
+              marginLeft: '0 !important',
+            }}
+            flexWrap={theme.breakpoints.down('lg') ? 'nowrap' : 'wrap'}
+          >
+            <Box display="flex" gap={1} ref={containerRef} sx={{ marginLeft: '0 !important' }}>
+              <Select
+                sx={{ width: '130px', height: '40px' }}
+                value={bulkAction}
+                onChange={(e) => setBulkAction(e.target.value)}
+                MenuProps={{
+                  disablePortal: true,
+                  container: containerRef.current,
                 }}
               >
-                <Button
-                  sx={{
-                    backgroundColor: '#5f5f5f',
-                    color: '#fff',
-                    '&:hover': {
-                      backgroundColor: '#5f5f5f',
+                {availableActions.map((action) => (
+                  <MenuItem key={action.value} value={action.value}>
+                    {action.label}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ width: '80px', height: '40px' }}
+                disabled={!bulkAction || selectedVisitors.length === 0}
+                onClick={handleApplyBulkAction}
+              >
+                Apply
+              </Button>
+            </Box>
+
+            {invitationCode.length > 0 && (
+              <Box
+                display={'flex'}
+                gap={0.5}
+                alignItems={'center'}
+                justifyContent={lgUp ? 'flex-end' : 'start'}
+                flexWrap={lgUp ? 'nowrap' : 'wrap'}
+              >
+                {permissionHook.canExtend && (
+                  <Tooltip
+                    title="Extend Time"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={() => setOpenExtendVisit(true)}
+                      startIcon={<IconClock size={18} />}
+                      sx={{
+                        color: '#fff',
+                        background: !relatedVisitors.some(
+                          (v) => selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
+                        )
+                          ? undefined
+                          : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                        '&.Mui-disabled': {
+                          background: '#BDBDBD !important',
+                          color: '#FFFFFF !important',
+                          opacity: 0.8,
+                        },
+                      }}
+                      disabled={
+                        !relatedVisitors.some(
+                          (v) => selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
+                        )
+                      }
+                    >
+                      Extend
+                    </Button>
+                  </Tooltip>
+                )}
+
+                {permissionHook.canCardIssuance && (
+                  <Tooltip
+                    title="Card"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <Button
+                      sx={{
+                        background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                        color: '#fff',
+                        textWrap: 'wrap',
+                        whiteSpace: 'normal',
+                        textAlign: 'center',
+                      }}
+                      onClick={handleChooseCard}
+                      startIcon={<IconCreditCard size={18} />}
+                    >
+                      Card Issuance
+                    </Button>
+                  </Tooltip>
+                )}
+
+                <Tooltip
+                  title="Print Badge"
+                  placement="top"
+                  arrow
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '1rem',
+                        padding: '8px 14px',
+                      },
+                    },
+                    popper: {
+                      container: containerRef.current,
                     },
                   }}
-                  onClick={handlePrintClick}
-                  startIcon={<IconPrinter size={18} />}
                 >
-                  Print
-                </Button>
-              </Tooltip>
-            </Box>
-          )}
-        </Box>
-      </CardActions>
-    </Card>
+                  <Button
+                    sx={{
+                      backgroundColor: '#5f5f5f',
+                      color: '#fff',
+                      '&:hover': {
+                        backgroundColor: '#5f5f5f',
+                      },
+                    }}
+                    onClick={handlePrintClick}
+                    startIcon={<IconPrinter size={18} />}
+                  >
+                    Print
+                  </Button>
+                </Tooltip>
+              </Box>
+            )}
+          </Box>
+        </CardActions>
+      </Card>
+      <VisitorFilterDialog
+        open={openFilter}
+        value={visitorStatusFilter}
+        onClose={handleCloseFilter}
+        onApply={handleApplyFilter}
+        onReset={handleResetFilter}
+      />
+    </>
   );
 };
 

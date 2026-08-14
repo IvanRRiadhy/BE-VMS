@@ -1,11 +1,19 @@
-import { Dialog, DialogTitle, DialogContent, Divider, IconButton } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Divider,
+  IconButton,
+  Box,
+  CircularProgress,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import FormVisitorType from '../FormVisitorType';
 
 interface Props {
   open: boolean;
   onClose: any;
-
+  loading?: any;
   edittingId: string;
   isFormChanged: boolean;
 
@@ -24,6 +32,7 @@ interface Props {
 export default function VisitorTypeDialog({
   open,
   onClose,
+  loading,
   edittingId,
   isFormChanged,
   setConfirmDialogOpen,
@@ -64,14 +73,29 @@ export default function VisitorTypeDialog({
       <Divider />
 
       <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
-        <FormVisitorType
-          formData={formDataAddVisitorType}
-          setFormData={setFormDataAddVisitorType}
-          onSuccess={onSuccess}
-          edittingId={edittingId}
-          initialDocuments={documentIdentities}
-          initialAccess={duplicatedAccess}
-        />
+        {loading ? (
+          <Box
+            sx={{
+              minHeight: 500,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={36} />
+          </Box>
+        ) : (
+          <FormVisitorType
+            formData={formDataAddVisitorType}
+            setFormData={setFormDataAddVisitorType}
+            onSuccess={onSuccess}
+            edittingId={edittingId}
+            initialDocuments={documentIdentities}
+            initialAccess={duplicatedAccess}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

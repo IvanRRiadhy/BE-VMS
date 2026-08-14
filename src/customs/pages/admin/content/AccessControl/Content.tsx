@@ -52,6 +52,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sort_dir: 'desc ',
+    sort_column: 'created_at',
     search,
   });
 

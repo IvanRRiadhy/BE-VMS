@@ -2875,47 +2875,27 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 </Typography>
 
                 {item.remarks === 'host' && (
-                  <Tooltip
-                    title="The host is the person in charge responsible for this visitor"
-                    arrow
-                    placement="top"
-                  >
+                  <Tooltip title={t('hostInformation')} arrow placement="top">
                     <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                   </Tooltip>
                 )}
                 {item.remarks === 'agenda' && (
-                  <Tooltip
-                    title="The agenda is the purpose of the visitor's visit"
-                    arrow
-                    placement="top"
-                  >
+                  <Tooltip title={t('agendaInformation')} arrow placement="top">
                     <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                   </Tooltip>
                 )}
                 {item.remarks === 'site_place' && (
-                  <Tooltip
-                    title="The site place is the location where the visitor will be received, please select and check the appropriate site place."
-                    arrow
-                    placement="top"
-                  >
+                  <Tooltip title={t('sitePlaceInformation')} arrow placement="top">
                     <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                   </Tooltip>
                 )}
                 {item.remarks === 'visitor_period_start' && (
-                  <Tooltip
-                    title="The visitor period start is the date when the visitor's visit begins"
-                    arrow
-                    placement="top"
-                  >
+                  <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
                     <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                   </Tooltip>
                 )}
                 {item.remarks === 'visitor_period_end' && (
-                  <Tooltip
-                    title="The visitor period end is the date when the visitor's visit ends"
-                    arrow
-                    placement="top"
-                  >
+                  <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
                     <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                   </Tooltip>
                 )}

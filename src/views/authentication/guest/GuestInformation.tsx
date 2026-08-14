@@ -888,6 +888,9 @@ const GuestInformationStepper = () => {
           <Typography variant="h6" sx={{ mt: 1 }}>
             Upload File
           </Typography>
+          <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+            Drag and drop or tap to select file.
+          </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
             <Typography variant="body1" color="textSecondary">
               Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb | </span>

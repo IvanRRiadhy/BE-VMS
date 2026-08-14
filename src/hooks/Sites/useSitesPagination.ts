@@ -10,6 +10,7 @@ interface Props {
   type?: number;
   parent?: string;
   isChild?: boolean;
+  sort_column?: string;
 }
 
 export const useSitePagination = ({
@@ -20,9 +21,10 @@ export const useSitePagination = ({
   type,
   parent,
   isChild,
+  sort_column,
 }: Props) => {
   return useQuery({
-    queryKey: ['sites', page, rowsPerPage, sortDir, searchKeyword, type, parent, isChild],
+    queryKey: ['sites', page, rowsPerPage, sortDir, searchKeyword, type, parent, isChild, sort_column],
     queryFn: async () => {
       try {
         const result = await getAllSitePagination(
@@ -33,6 +35,7 @@ export const useSitePagination = ({
           type,
           parent,
           isChild,
+          sort_column,
         );
         return result;
       } catch (error: any) {

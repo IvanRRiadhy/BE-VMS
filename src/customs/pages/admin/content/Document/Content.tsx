@@ -46,6 +46,7 @@ const Content = () => {
     page,
     rowsPerPage,
     sortDir,
+    sort_column: 'created_at',
     search,
   });
 
@@ -92,9 +93,7 @@ const Content = () => {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
     } else {
-      setFormDataAddDocument(
-        CreateDocumentRequestSchema.parse(res.collection || {}),
-      );
+      setFormDataAddDocument(CreateDocumentRequestSchema.parse(res.collection || {}));
       setOpenFormAddDocument(true);
     }
   };
@@ -106,7 +105,7 @@ const Content = () => {
     if (pendingEditId) {
       setFormDataAddDocument(
         tableData.find((item: any) => item.id === pendingEditId) ||
-        CreateDocumentRequestSchema.parse({}),
+          CreateDocumentRequestSchema.parse({}),
       );
 
       setOpenFormAddDocument(false);
@@ -141,7 +140,9 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(t('confirmDeleteMultiple', { count: rows.length, name: 'Document' }));
+    const confirmed = await showConfirmDelete(
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Document' }),
+    );
 
     if (confirmed) {
       try {
@@ -157,7 +158,11 @@ const Content = () => {
         showSwal('success', t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }));
         return true;
       } catch (error: any) {
-        showSwal('error', error?.response?.data?.msg || t("deleteSuccessMultiple", { count: rows.length, name: 'Document' }));
+        showSwal(
+          'error',
+          error?.response?.data?.msg ||
+            t('deleteSuccessMultiple', { count: rows.length, name: 'Document' }),
+        );
         return false;
       }
     }
@@ -208,7 +213,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
-                searchPlaceholder='Search document'
+                searchPlaceholder="Search document"
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
