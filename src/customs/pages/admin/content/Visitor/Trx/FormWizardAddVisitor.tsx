@@ -1580,8 +1580,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                           const originalIndex = page?.form?.findIndex(
                                             (f: any) => f.custom_field_id === field.custom_field_id,
                                           );
@@ -1721,8 +1721,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                           return (
                                             <TableCell key={field.custom_field_id}>
@@ -1877,7 +1877,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                ? next.single_page[found].foreign_id ?? resolvedForeign
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -3280,6 +3280,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmptyDate = !item.answer_datetime;
 
     switch (item.field_type) {
+      case 2: // Email
+        // Required validation
+        if (isEmptyText) {
+          errors[key] = `${label} is required`;
+          break;
+        }
+
+        // Email format validation
+        const email = String(item.answer_text).trim();
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+          errors[key] = `${label} must be a valid email address`;
+        }
+
+        break;
       case 10:
       case 11:
       case 12:
@@ -3621,17 +3638,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         if (value) clearFieldError(key);
                       }}
-                      // placeholder={
-                      //   item.remarks === 'name'
-                      //     ? ''
-                      //     : item.remarks === 'phone'
-                      //       ? ''
-                      //       : item.remarks === 'organization'
-                      //         ? ''
-                      //         : item.remarks === 'indentity_id'
-                      //           ? ''
-                      //           : ''
-                      // }
                       placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                       inputProps={
                         (item.remarks || '').toLowerCase() === 'phone'
@@ -3673,7 +3679,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
-                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
+                      placeholder={
+                        item.remarks?.toLowerCase() === 'email'
+                          ? 'Example: name@gmail.com'
+                          : 'Enter your ' + item.long_display_text.toLowerCase()
+                      }
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -3799,8 +3809,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? String(item.answer_text).split(',')
-                                : [];
+                              ? String(item.answer_text).split(',')
+                              : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -4242,8 +4252,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                              ? [String(item.answer_text)]
+                              : [];
 
                             return (
                               <FormControlLabel
@@ -6452,8 +6462,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'

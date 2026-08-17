@@ -28,6 +28,8 @@ import {
   RadioGroup,
   DialogActions,
   Radio,
+  TextField,
+  Autocomplete,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 
@@ -83,6 +85,7 @@ const VisitorFilterDialog = ({
       <Divider />
 
       <DialogContent sx={{ py: 2 }}>
+        <Typography>Status</Typography>
         <RadioGroup
           value={selectedFilter}
           onChange={(e) => {
@@ -97,11 +100,39 @@ const VisitorFilterDialog = ({
 
           <FormControlLabel value="expired" control={<Radio />} label="Expired" />
         </RadioGroup>
+
+        <Stack direction="column" spacing={2} mt={0.5}>
+          <Typography variant="subtitle2">Visit Date</Typography>
+          <TextField
+            fullWidth
+            label="Start Date"
+            type="date"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="End Date"
+            type="date"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <Typography variant="subtitle2">Visitor Type</Typography>
+          <Autocomplete
+            fullWidth
+            options={['Employee', 'Guest', 'Vendor']}
+            defaultValue=""
+            renderInput={(params) => <TextField {...params} label="" />}
+          />
+        </Stack>
       </DialogContent>
 
       <Divider />
 
-      <DialogActions >
+      <DialogActions>
         <Button color="secondary" onClick={handleReset}>
           Reset
         </Button>
