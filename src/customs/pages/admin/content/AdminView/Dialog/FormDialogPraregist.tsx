@@ -44,11 +44,11 @@ import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -85,7 +85,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
+  const { t } = useTranslation();
   const formatDateTime = (value: string | null) =>
     !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
 
@@ -94,7 +94,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       if (!id) return;
       setLoading(true);
       try {
-        const res = await getDetailInvitationForm( id);
+        const res = await getDetailInvitationForm(id);
         const data = res.collection;
         setInvitationData(data);
 
@@ -925,7 +925,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     }}
                     noOptionsText={
                       (inputValues[f.remarks] || '').length < 3
-                        ? 'Enter at least 3 characters to search.'
+                        ? t('enterMin3CharsToSearch')
                         : 'Not found'
                     }
                     value={
@@ -940,7 +940,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <TextField
                         {...params}
                         label=""
-                        placeholder="Enter at least 3 characters to search."
+                        placeholder={t('enterMin3CharsToSearch')}
                         fullWidth
                       />
                     )}
@@ -1098,7 +1098,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
       const payload = transformToSubmitPayload(invitationData);
       // console.log('Payload response:', JSON.stringify(payload, null, 2));
-      const res = await createSubmitCompletePra( payload);
+      const res = await createSubmitCompletePra(payload);
 
       const ok =
         res &&

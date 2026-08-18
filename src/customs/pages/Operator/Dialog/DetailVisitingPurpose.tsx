@@ -50,8 +50,7 @@ const DetailVisitingPurpose = ({
             isHaveChecked={false}
             isNoActionTableHead
             isHaveSearch
-          
-            // selectedRows={selectedRows}
+            isHaveDataImage
             isHavePagination={true}
             defaultRowsPerPage={rowsPerPage}
             rowsPerPageOptions={[10, 50, 100]}

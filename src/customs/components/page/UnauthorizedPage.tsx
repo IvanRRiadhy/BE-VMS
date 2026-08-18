@@ -4,6 +4,14 @@ import { useNavigate } from 'react-router-dom';
 const UnauthorizedPage = () => {
   const navigate = useNavigate();
 
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
+
   return (
     <Box
       display="flex"
@@ -14,12 +22,14 @@ const UnauthorizedPage = () => {
       textAlign="center"
     >
       <Typography variant="h3" fontWeight="bold" gutterBottom>
-        403 - Unauthorized
+        403 - Access Denied
       </Typography>
+
       <Typography variant="body1" color="text.secondary" mb={3}>
         You don’t have permission to access this page.
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => navigate(-1)}>
+
+      <Button variant="contained" color="primary" onClick={handleGoBack}>
         Go Back
       </Button>
     </Box>

@@ -15,22 +15,140 @@ const VisitorDetailCard = ({
   handleConfirmStatus,
   handleView,
 }: any) => {
-  const selectedVisitor =
-    relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||
-    relatedVisitors.find((v: any) => v.visitor_number === selectedVisitorNumber);
+  // const selectedVisitor =
+  //   relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||
+  //   relatedVisitors.find((v: any) => v.visitor_number === selectedVisitorNumber);
 
-  const data = invitationCode[0];
-  const status = data?.visitor_status;
-  const isHost = data?.is_host;
-  const isBlocked = !!data?.is_block;
+  const data = invitationCode?.[0];
+
+  const selectedVisitor =
+    relatedVisitors?.find((v: any) => v.visitor_number === selectedVisitorNumber) ||
+    relatedVisitors?.find((v: any) => v.visitor_number === data?.visitor_number) ||
+    data;
+
+  const status = selectedVisitor?.visitor_status;
+  const isHost = selectedVisitor?.is_host;
+  const isBlocked = Boolean(selectedVisitor?.is_block);
+
+  // const renderActions = () => {
+  //   if (!selectedVisitor) {
+  //     return null;
+  //   }
+  //   if (
+  //     selectedVisitor &&
+  //     (selectedVisitor.is_praregister_done == null ||
+  //       selectedVisitor.is_praregister_done === false) &&
+  //     !isHost
+  //   ) {
+  //     return (
+  //       <Button variant="contained" size="large" onClick={() => handleView(selectedVisitor.id)}>
+  //         Fill Form
+  //       </Button>
+  //     );
+  //   }
+
+  //   if (
+  //     !selectedVisitor ||
+  //     selectedVisitor.is_praregister_done == null ||
+  //     selectedVisitor.is_praregister_done === false
+  //   ) {
+  //     return null;
+  //   }
+
+  //   if (!['Checkin', 'Checkout', 'Block', 'Unblock', 'Denied'].includes(status || '')) {
+  //     return (
+  //       <Box display="flex" gap={1}>
+  //         {permissionHook.canCheckin && (
+  //           <Button
+  //             variant="contained"
+  //             onClick={() => handleConfirmStatus('Checkin')}
+  //             startIcon={<IconLogin />}
+  //             sx={{ backgroundColor: '#21c45d' }}
+  //           >
+  //             Check In
+  //           </Button>
+  //         )}
+  //         {permissionHook.canBlock && (
+  //           <Button
+  //             variant="contained"
+  //             sx={{ backgroundColor: '#000' }}
+  //             onClick={() => handleConfirmStatus('Block')}
+  //             startIcon={<IconForbid2 />}
+  //           >
+  //             Block
+  //           </Button>
+  //         )}
+  //       </Box>
+  //     );
+  //   }
+
+  //   if (status === 'Checkin' && !isBlocked) {
+  //     return (
+  //       <Box display="flex" gap={1}>
+  //         {permissionHook.canCheckout && (
+  //           <Button
+  //             variant="contained"
+  //             color="error"
+  //             onClick={() => handleConfirmStatus('Checkout')}
+  //             startIcon={<IconLogout />}
+  //           >
+  //             Check Out
+  //           </Button>
+  //         )}
+  //         {permissionHook.canBlock && (
+  //           <Button
+  //             variant="contained"
+  //             sx={{ backgroundColor: '#000' }}
+  //             onClick={() => handleConfirmStatus('Block')}
+  //             startIcon={<IconForbid2 />}
+  //           >
+  //             Block
+  //           </Button>
+  //         )}
+  //       </Box>
+  //     );
+  //   }
+
+  //   if (status === 'Checkout' && !isBlocked) {
+  //     return (
+  //       permissionHook.canBlock && (
+  //         <Button
+  //           variant="contained"
+  //           sx={{ backgroundColor: '#000' }}
+  //           onClick={() => handleConfirmStatus('Block')}
+  //           startIcon={<IconForbid2 />}
+  //         >
+  //           Block
+  //         </Button>
+  //       )
+  //     );
+  //   }
+
+  //   if (isBlocked) {
+  //     return (
+  //       permissionHook.canBlock && (
+  //         <Button
+  //           variant="contained"
+  //           sx={{ backgroundColor: '#f44336' }}
+  //           onClick={() => handleConfirmStatus('Unblock')}
+  //           startIcon={<IconBan />}
+  //         >
+  //           Unblock
+  //         </Button>
+  //       )
+  //     );
+  //   }
+
+  //   return null;
+  // };
 
   const renderActions = () => {
+    if (!selectedVisitor) {
+      return null;
+    }
     if (
-      selectedVisitor &&
-      (
-        selectedVisitor.is_praregister_done == null ||
-        selectedVisitor.is_praregister_done === false
-      ) &&
+      (selectedVisitor.is_praregister_done == null ||
+        selectedVisitor.is_praregister_done === false) &&
       !isHost
     ) {
       return (
@@ -41,41 +159,39 @@ const VisitorDetailCard = ({
     }
 
     if (
-      !selectedVisitor ||
       selectedVisitor.is_praregister_done == null ||
       selectedVisitor.is_praregister_done === false
     ) {
       return null;
     }
 
-    if (!['Checkin', 'Checkout', 'Block', 'Unblock', 'Denied'].includes(status || '')) {
+    // =========================
+    // BLOCKED
+    // =========================
+    // PRIORITY PALING TINGGI.
+    // Kalau blocked, apapun visitor_status-nya,
+    // hanya boleh Unblock.
+    if (isBlocked) {
+      if (!permissionHook.canBlock) {
+        return null;
+      }
+
       return (
-        <Box display="flex" gap={1}>
-          {permissionHook.canCheckin && (
-            <Button
-              variant="contained"
-              onClick={() => handleConfirmStatus('Checkin')}
-              startIcon={<IconLogin />}
-              sx={{ backgroundColor: '#21c45d' }}
-            >
-              Check In
-            </Button>
-          )}
-          {permissionHook.canBlock && (
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: '#000' }}
-              onClick={() => handleConfirmStatus('Block')}
-              startIcon={<IconForbid2 />}
-            >
-              Block
-            </Button>
-          )}
-        </Box>
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: '#f44336' }}
+          onClick={() => handleConfirmStatus('Unblock')}
+          startIcon={<IconBan />}
+        >
+          Unblock
+        </Button>
       );
     }
 
-    if (status === 'Checkin' && !isBlocked) {
+    // =========================
+    // CHECKIN
+    // =========================
+    if (status === 'Checkin') {
       return (
         <Box display="flex" gap={1}>
           {permissionHook.canCheckout && (
@@ -88,6 +204,7 @@ const VisitorDetailCard = ({
               Check Out
             </Button>
           )}
+
           {permissionHook.canBlock && (
             <Button
               variant="contained"
@@ -102,9 +219,43 @@ const VisitorDetailCard = ({
       );
     }
 
-    if (status === 'Checkout' && !isBlocked) {
+    // =========================
+    // CHECKOUT
+    // =========================
+    if (status === 'Checkout') {
+      if (!permissionHook.canBlock) {
+        return null;
+      }
+
       return (
-        permissionHook.canBlock && (
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: '#000' }}
+          onClick={() => handleConfirmStatus('Block')}
+          startIcon={<IconForbid2 />}
+        >
+          Block
+        </Button>
+      );
+    }
+
+    // =========================
+    // INITIAL / WAITING / OTHER
+    // =========================
+    return (
+      <Box display="flex" gap={1}>
+        {permissionHook.canCheckin && (
+          <Button
+            variant="contained"
+            onClick={() => handleConfirmStatus('Checkin')}
+            startIcon={<IconLogin />}
+            sx={{ backgroundColor: '#21c45d' }}
+          >
+            Check In
+          </Button>
+        )}
+
+        {permissionHook.canBlock && (
           <Button
             variant="contained"
             sx={{ backgroundColor: '#000' }}
@@ -113,28 +264,10 @@ const VisitorDetailCard = ({
           >
             Block
           </Button>
-        )
-      );
-    }
-
-    if (isBlocked) {
-      return (
-        permissionHook.canBlock && (
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#f44336' }}
-            onClick={() => handleConfirmStatus('Unblock')}
-            startIcon={<IconBan />}
-          >
-            Unblock
-          </Button>
-        )
-      );
-    }
-
-    return null;
+        )}
+      </Box>
+    );
   };
-
   const [activeTab, setActiveTab] = useState(0);
   const hasData = invitationCode && invitationCode.length > 0;
 

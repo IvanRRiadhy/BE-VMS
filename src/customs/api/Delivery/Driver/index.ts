@@ -82,7 +82,7 @@ export const getAllDriverPagination = async (
 export const getAllDriverPaginationFilterMore = async (
   start: number,
   length: number,
-  sortColumn: string,
+  sort_column?: string,
   sortDir?: string,
   keyword: string = '',
   gender?: number,
@@ -97,7 +97,7 @@ export const getAllDriverPaginationFilterMore = async (
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    sort_column: sort_column,
     sort_dir: sortDir,
   };
   if (keyword) params['search[value]'] = keyword;

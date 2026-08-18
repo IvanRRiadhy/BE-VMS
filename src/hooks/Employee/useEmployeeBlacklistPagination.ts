@@ -43,8 +43,8 @@ export const useEmployeeBlacklistPagination = ({
                 start,
                 rowsPerPage,
                 sortDir,
-                search,
                 sort_column,
+                search,
                 true,
             );
         },

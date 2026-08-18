@@ -296,14 +296,8 @@ function FillPraregistrationGroup({
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={
-                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
+                inputVal.length < 3 ? t("enterMin3CharsToSearch") : 'Not found'
               }
-              // value={
-              //   options.find(
-              //     (opt: { value: string; name: string }) =>
-              //       opt.value?.toLowerCase?.() === field.answer_text?.toLowerCase?.(),
-              //   ) || null
-              // }
               value={
                 options.find(
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
@@ -315,7 +309,7 @@ function FillPraregistrationGroup({
               renderInput={(params) => (
                 <CustomTextField
                   {...params}
-                  placeholder="Enter at least 3 characters to search"
+                  placeholder={t("enterMin3CharsToSearch")}
                   fullWidth
                   sx={{ minWidth: 160 }}
                 />

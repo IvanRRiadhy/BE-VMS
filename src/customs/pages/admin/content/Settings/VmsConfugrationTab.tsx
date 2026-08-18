@@ -137,7 +137,6 @@ export default function VMSConfigurationTab() {
                     : 0,
             };
 
-            console.log(payload);
 
             await updateSettingVms(payload);
 
@@ -152,334 +151,299 @@ export default function VMSConfigurationTab() {
         }
     };
     return (
-        <Box sx={{ p: { xs: 1, md: 3 } }}>
-            <Grid container spacing={3}>
-                {/* Site */}
-                <Grid size={{ xs: 12 }}>
-                    <Paper variant='outlined' sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Site
-                        </Typography>
-                        <FormControl fullWidth>
-                            <Autocomplete
-                                fullWidth
-                                options={sites}
-                                getOptionKey={(option) => option.id}
-                                value={
-                                    sites.find((site) => site.id === configuration.default_site_id) ?? null
-                                }
-                                getOptionLabel={(option) => option.name}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                onChange={(_, value) =>
-                                    handleChange('default_site_id', value?.id ?? '')
-                                }
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        placeholder="Select Default Site"
-                                    />
-                                )}
-                            />
-                        </FormControl>
+      <Box sx={{ p: { xs: 1, md: 3 } }}>
+        <Grid container spacing={3}>
+          {/* Site */}
+          <Grid size={{ xs: 12 }}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Site
+              </Typography>
+              <FormControl fullWidth>
+                <Autocomplete
+                  fullWidth
+                  options={sites}
+                  getOptionKey={(option) => option.id}
+                  value={
+                    sites.find(
+                      (site) =>
+                        String(site.id).toLowerCase() ===
+                        String(configuration.default_site_id ?? '').toLowerCase(),
+                    ) ?? null
+                  }
+                  getOptionLabel={(option) => option.name ?? ''}
+                  isOptionEqualToValue={(option, value) =>
+                    String(option.id).toLowerCase() === String(value.id).toLowerCase()
+                  }
+                  onChange={(_, value) => handleChange('default_site_id', value?.id ?? '')}
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="Select Default Site" />
+                  )}
+                />
+              </FormControl>
+            </Paper>
+          </Grid>
+          {/* Employee */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Employee Configuration
+              </Typography>
 
-                    </Paper>
-                </Grid>
-                {/* Employee */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Employee Configuration
-                        </Typography>
+              <FormControl fullWidth>
+                <InputLabel>Employee Access Mode</InputLabel>
+                <Select
+                  label="Invitation Mode"
+                  value={configuration.employeeInvitationMode}
+                  onChange={(e) => handleChange('employeeInvitationMode', e.target.value)}
+                >
+                  <MenuItem value="DirectAccess">Direct Access</MenuItem>
+                  <MenuItem value="NeedCheckIn">Need Check In</MenuItem>
+                  <MenuItem value="NeedVisitorCard">Need Visitor Card</MenuItem>
+                  <MenuItem value="TemporaryAccess">Temporary Access</MenuItem>
+                </Select>
+              </FormControl>
+            </Paper>
+          </Grid>
 
-                        <FormControl fullWidth>
-                            <InputLabel>Employee Access Mode</InputLabel>
-                            <Select
-                                label="Invitation Mode"
-                                value={configuration.employeeInvitationMode}
-                                onChange={(e) =>
-                                    handleChange('employeeInvitationMode', e.target.value)
-                                }
-                            >
-                                <MenuItem value="DirectAccess">Direct Access</MenuItem>
-                                <MenuItem value="NeedCheckIn">Need Check In</MenuItem>
-                                <MenuItem value="NeedVisitorCard">Need Visitor Card</MenuItem>
-                                <MenuItem value="TemporaryAccess">Temporary Access</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Paper>
-                </Grid>
+          {/* Visitor */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Visitor Configuration
+              </Typography>
 
-                {/* Visitor */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Visitor Configuration
-                        </Typography>
+              <FormControl fullWidth>
+                <InputLabel>Visitor Access Mode</InputLabel>
+                <Select
+                  label="Invitation Mode"
+                  value={configuration.visitorInvitationMode}
+                  onChange={(e) => handleChange('visitorInvitationMode', e.target.value)}
+                >
+                  <MenuItem value="QRCode">QR Code</MenuItem>
+                  <MenuItem value="TemporaryCard">Temporary Card</MenuItem>
+                  <MenuItem value="FaceRecognition">Face Recognition</MenuItem>
+                  <MenuItem value="ManualRegistration">Manual Registration</MenuItem>
+                </Select>
+              </FormControl>
+            </Paper>
+          </Grid>
 
-                        <FormControl fullWidth>
-                            <InputLabel>Visitor Access Mode</InputLabel>
-                            <Select
-                                label="Invitation Mode"
-                                value={configuration.visitorInvitationMode}
-                                onChange={(e) =>
-                                    handleChange('visitorInvitationMode', e.target.value)
-                                }
-                            >
-                                <MenuItem value="QRCode">QR Code</MenuItem>
-                                <MenuItem value="TemporaryCard">Temporary Card</MenuItem>
-                                <MenuItem value="FaceRecognition">Face Recognition</MenuItem>
-                                <MenuItem value="ManualRegistration">
-                                    Manual Registration
-                                </MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Paper>
-                </Grid>
+          {/* Credential */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Grant Access
+              </Typography>
 
-                {/* Credential */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Grant Access
-                        </Typography>
-
-                        <FormControl fullWidth sx={{ mt: 1 }}>
-                            <InputLabel>Mode Grant Access</InputLabel>
-                            <Select
-                                label="Grant Access"
-                                value={configuration.grant_access_mode}
-                                onChange={(e) =>
-                                    handleChange('grant_access_mode', e.target.value)
-                                }
-                            >
-                                <MenuItem value="DisableOldQRAccess">
-                                    Disable Old QR Access
-                                </MenuItem>
-                                {/* <MenuItem value={0}>Existing Card</MenuItem>
+              <FormControl fullWidth sx={{ mt: 1 }}>
+                <InputLabel>Mode Grant Access</InputLabel>
+                <Select
+                  label="Grant Access"
+                  value={configuration.grant_access_mode}
+                  onChange={(e) => handleChange('grant_access_mode', e.target.value)}
+                >
+                  <MenuItem value="DisableOldQRAccess">Disable Old QR Access</MenuItem>
+                  {/* <MenuItem value={0}>Existing Card</MenuItem>
                                 <MenuItem value={1}>Visitor Card</MenuItem>
                                 <MenuItem value={2}>QR Code</MenuItem> */}
-                            </Select>
-                        </FormControl>
+                </Select>
+              </FormControl>
 
-                        <FormControl fullWidth sx={{ mt: 3 }}>
-                            <InputLabel>When Grant Access</InputLabel>
-                            <Select
-                                label="Grant Access"
-                                value={configuration.grantAccessWhen}
-                                onChange={(e) =>
-                                    handleChange('grantAccessWhen', e.target.value)
-                                }
-                            >
-                                <MenuItem value="TimeVisit">Time Visit</MenuItem>
-                            </Select>
-                        </FormControl>
+              <FormControl fullWidth sx={{ mt: 3 }}>
+                <InputLabel>When Grant Access</InputLabel>
+                <Select
+                  label="Grant Access"
+                  value={configuration.grantAccessWhen}
+                  onChange={(e) => handleChange('grantAccessWhen', e.target.value)}
+                >
+                  <MenuItem value="TimeVisit">Time Visit</MenuItem>
+                </Select>
+              </FormControl>
+            </Paper>
+          </Grid>
 
-                    </Paper>
-                </Grid>
+          {/* Access */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Access Configuration
+              </Typography>
 
-                {/* Access */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Access Configuration
-                        </Typography>
-
-                        <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, md: 4 }}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Initial Grant Access</InputLabel>
-                                    <Select
-                                        label="Grant Access"
-                                        value={configuration.initialGrantAcess}
-                                        onChange={(e) =>
-                                            handleChange('initialGrantAcess', e.target.value)
-                                        }
-                                    >
-                                        <MenuItem value={'QRCode'}>QR Code</MenuItem>
-                                        <MenuItem value={'TimeVisit'}>TimeVisit</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, md: 4 }}>
-                                <TextField
-                                    fullWidth
-                                    type="number"
-                                    label="Before (Minutes)"
-                                    value={configuration.temporaryAccessBeforeMinutes}
-                                    onChange={(e) =>
-                                        handleChange('temporaryAccessBeforeMinutes', e.target.value)
-                                    }
-                                    slotProps={{
-                                        htmlInput: {
-                                            min: 0,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, md: 4 }}>
-                                <TextField
-                                    fullWidth
-                                    type="number"
-                                    label="After (Minutes)"
-                                    value={configuration.temporaryAccessAfterMinutes}
-                                    onChange={(e) =>
-                                        handleChange('temporaryAccessAfterMinutes', e.target.value)
-                                    }
-                                    slotProps={{
-                                        htmlInput: {
-                                            min: 0,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                        </Grid>
-                    </Paper>
-                </Grid>
-
-                {/* Automation */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Automation
-                        </Typography>
-
-                        <Stack spacing={2}>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={configuration.needHostApproval}
-                                        onChange={handleSwitch('needHostApproval')}
-                                    />
-                                }
-                                label="Need Host Approval"
-                            />
-                            {configuration.needHostApproval && (
-                                <>
-                                    <Typography variant="h6" fontWeight={600} mb={1} mt={2}>
-                                        Approval Workflow
-                                    </Typography>
-
-                                    <Autocomplete
-                                        fullWidth
-                                        options={approvalWorkflow}
-                                        value={
-                                            approvalWorkflow.find(
-                                                (item: any) => item.id === configuration.approval_workflow_id,
-                                            ) ?? null
-                                        }
-                                        getOptionLabel={(option) => option.name}
-                                        isOptionEqualToValue={(option, value) => option.id === value.id}
-                                        onChange={(_, value) =>
-                                            handleChange('approval_workflow_id', value?.id ?? '')
-                                        }
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                placeholder="Select Approval Workflow"
-                                            />
-                                        )}
-                                    />
-                                </>
-                            )}
-
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={configuration.autoCheckout}
-                                        onChange={handleSwitch('autoCheckout')}
-                                    />
-                                }
-                                label="Enable Auto Checkout"
-                            />
-
-                            {configuration.autoCheckout && (
-                                <TextField
-                                    sx={{ maxWidth: 300 }}
-                                    type="number"
-                                    label="Auto Checkout After (Minutes)"
-                                    value={configuration.autoCheckoutAfterMinutes}
-                                    onChange={(e) =>
-                                        handleChange('autoCheckoutAfterMinutes', e.target.value)
-                                    }
-                                />
-                            )}
-                        </Stack>
-                    </Paper>
-                </Grid>
-
-                {/* Visitor Card */}
-                <Grid size={12}>
-                    <Paper variant="outlined" sx={{ p: 3 }}>
-                        <Typography variant="h6" fontWeight={600} mb={2}>
-                            Visitor Card Setting
-                        </Typography>
-
-                        <Divider sx={{ mb: 2 }} />
-
-                        <Box display="flex" justifyContent="space-between" alignItems="center" >
-                            <Typography display="flex" alignItems="center" gap={1}>
-                                Initial Card Access
-                                <Tooltip title="Initial Card Access">
-                                    <IconInfoCircle size={18} />
-                                </Tooltip>
-                            </Typography>
-
-                            <Switch
-                                checked={initialCardAccessEnabled}
-                                onChange={(e) =>
-                                    setInitialCardAccessEnabled(e.target.checked)
-                                }
-                            />
-                        </Box>
-
-                        {initialCardAccessEnabled && (
-                            <Select fullWidth sx={{ mt: 2 }} value="QR">
-                                <MenuItem value="QR">Card Access (QR)</MenuItem>
-                            </Select>
-                        )}
-
-                        <Box
-                            mt={1}
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                        >
-                            <Typography display="flex" alignItems="center" gap={1}>
-                                Give Card Setting
-                                <Tooltip title="Give Card Setting">
-                                    <IconInfoCircle size={18} />
-                                </Tooltip>
-                            </Typography>
-
-                            <Switch
-                                checked={giveCardSettingEnabled}
-                                onChange={(e) =>
-                                    setGiveCardSettingEnabled(e.target.checked)
-                                }
-                            />
-                        </Box>
-
-                        {giveCardSettingEnabled && (
-                            <Select fullWidth sx={{ mt: 2 }} value="old">
-                                <MenuItem value="old">Disabled Access Old Card</MenuItem>
-                            </Select>
-                        )}
-                    </Paper>
-                </Grid>
-
-                <Grid size={12} display="flex" justifyContent="flex-end">
-                    <Button
-                        variant="contained"
-                        size="medium"
-                        onClick={handleSubmit}
-                        startIcon={<IconDeviceFloppy />}
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Initial Grant Access</InputLabel>
+                    <Select
+                      label="Grant Access"
+                      value={configuration.initialGrantAcess}
+                      onChange={(e) => handleChange('initialGrantAcess', e.target.value)}
                     >
-                        Save Configuration
-                    </Button>
+                      <MenuItem value={'QRCode'}>QR Code</MenuItem>
+                      <MenuItem value={'TimeVisit'}>TimeVisit</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
-            </Grid >
-        </Box >
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Before (Minutes)"
+                    value={configuration.temporaryAccessBeforeMinutes}
+                    onChange={(e) => handleChange('temporaryAccessBeforeMinutes', e.target.value)}
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                      },
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="After (Minutes)"
+                    value={configuration.temporaryAccessAfterMinutes}
+                    onChange={(e) => handleChange('temporaryAccessAfterMinutes', e.target.value)}
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* Automation */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Automation
+              </Typography>
+
+              <Stack spacing={2}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={configuration.needHostApproval}
+                      onChange={handleSwitch('needHostApproval')}
+                    />
+                  }
+                  label="Need Host Approval"
+                />
+                {configuration.needHostApproval && (
+                  <>
+                    <Typography variant="h6" fontWeight={600} mb={1} mt={2}>
+                      Approval Workflow
+                    </Typography>
+
+                    <Autocomplete
+                      fullWidth
+                      options={approvalWorkflow}
+                      value={
+                        approvalWorkflow.find(
+                          (item: any) => item.id === configuration.approval_workflow_id,
+                        ) ?? null
+                      }
+                      getOptionLabel={(option) => option.name}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      onChange={(_, value) => handleChange('approval_workflow_id', value?.id ?? '')}
+                      renderInput={(params) => (
+                        <TextField {...params} placeholder="Select Approval Workflow" />
+                      )}
+                    />
+                  </>
+                )}
+
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={configuration.autoCheckout}
+                      onChange={handleSwitch('autoCheckout')}
+                    />
+                  }
+                  label="Enable Auto Checkout"
+                />
+
+                {configuration.autoCheckout && (
+                  <TextField
+                    sx={{ maxWidth: 300 }}
+                    type="number"
+                    label="Auto Checkout After (Minutes)"
+                    value={configuration.autoCheckoutAfterMinutes}
+                    onChange={(e) => handleChange('autoCheckoutAfterMinutes', e.target.value)}
+                  />
+                )}
+              </Stack>
+            </Paper>
+          </Grid>
+
+          {/* Visitor Card */}
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Visitor Card Setting
+              </Typography>
+
+              <Divider sx={{ mb: 2 }} />
+
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography display="flex" alignItems="center" gap={1}>
+                  Initial Card Access
+                  <Tooltip title="Initial Card Access">
+                    <IconInfoCircle size={18} />
+                  </Tooltip>
+                </Typography>
+
+                <Switch
+                  checked={initialCardAccessEnabled}
+                  onChange={(e) => setInitialCardAccessEnabled(e.target.checked)}
+                />
+              </Box>
+
+              {initialCardAccessEnabled && (
+                <Select fullWidth sx={{ mt: 2 }} value="QR">
+                  <MenuItem value="QR">Card Access (QR)</MenuItem>
+                </Select>
+              )}
+
+              <Box mt={1} display="flex" justifyContent="space-between" alignItems="center">
+                <Typography display="flex" alignItems="center" gap={1}>
+                  Give Card Setting
+                  <Tooltip title="Give Card Setting">
+                    <IconInfoCircle size={18} />
+                  </Tooltip>
+                </Typography>
+
+                <Switch
+                  checked={giveCardSettingEnabled}
+                  onChange={(e) => setGiveCardSettingEnabled(e.target.checked)}
+                />
+              </Box>
+
+              {giveCardSettingEnabled && (
+                <Select fullWidth sx={{ mt: 2 }} value="old">
+                  <MenuItem value="old">Disabled Access Old Card</MenuItem>
+                </Select>
+              )}
+            </Paper>
+          </Grid>
+
+          <Grid size={12} display="flex" justifyContent="flex-end">
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={handleSubmit}
+              startIcon={<IconDeviceFloppy />}
+            >
+              Save Configuration
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
     );
 }

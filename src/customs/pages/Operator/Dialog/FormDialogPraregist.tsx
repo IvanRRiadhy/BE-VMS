@@ -574,30 +574,37 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           <Typography variant="h6" sx={{ mt: 1, fontWeight: '500' }}>
             Upload File
           </Typography>
-
-          <Typography variant="caption" color="textSecondary" mt={5}>
-            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+          <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+            Drag and drop or tap to select file.
           </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" color="textSecondary" mt={0}>
+              Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb | </span>
+            </Typography>
 
-          <Typography
-            variant="subtitle1"
-            component="span"
-            color={isUploading ? 'text.disabled' : 'primary'}
-            sx={{
-              fontWeight: 600,
-              ml: 1,
-              cursor: isUploading ? 'not-allowed' : 'pointer',
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
+            <Typography
+              variant="body1"
+              component="span"
+              color={isUploading ? 'text.disabled' : 'primary'}
+              sx={{
+                fontWeight: 600,
+                ml: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
 
-              if (!isUploading) {
-                setOpenCamera(true);
-              }
-            }}
-          >
-            <IconCamera size={18} style={{ verticalAlign: 'middle' }} /> Use Camera
-          </Typography>
+                if (!isUploading) {
+                  setOpenCamera(true);
+                }
+              }}
+            >
+              <IconCamera size={18} style={{ verticalAlign: 'middle' }} /> Use Camera
+            </Typography>
+          </Box>
 
           {isUploading && (
             <Box
@@ -1194,7 +1201,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     }}
                     noOptionsText={
                       (inputValues[f.remarks] || '').length < 3
-                        ? 'Enter at least 3 characters to search.'
+                        ? t('enterMin3CharsToSearch')
                         : 'Not found'
                     }
                     value={
@@ -1209,7 +1216,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <TextField
                         {...params}
                         label=""
-                        placeholder="Enter at least 3 characters to search."
+                        placeholder={t('enterMin3CharsToSearch')}
                         fullWidth
                       />
                     )}

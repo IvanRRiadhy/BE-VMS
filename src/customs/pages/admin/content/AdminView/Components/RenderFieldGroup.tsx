@@ -28,6 +28,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -106,7 +107,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     fieldErrors,
     setFieldErrors,
   } = props;
-
+  const {t} = useTranslation();
   // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const showLabel = opts?.showLabel ?? true;
   const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
@@ -248,32 +249,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                   );
                 }}
                 noOptionsText={
-                  (inputValues[index] || '').length < 3
-                    ? 'Enter at least 3 characters to search'
-                    : 'Not found'
+                  (inputValues[index] || '').length < 3 ? t('enterMin3CharsToSearch') : 'Not found'
                 }
                 value={options.filter((opt) => parents.includes(opt.value))}
-                //   onChange={(_, newValues) => {
-                //     const parentIds = newValues.map((v) => v.value);
-
-                //     setSelectedSiteParentIds((prev: any) => ({
-                //       ...prev,
-                //       [siteKey]: parentIds,
-                //     }));
-
-                //     setSiteTree((prev: any) => ({
-                //       ...prev,
-                //       [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
-                //     }));
-                //   }}
-                //   renderInput={(params) => (
-                //     <TextField
-                //       {...params}
-                //       placeholder="Enter at least 3 characters to search"
-                //       fullWidth
-                //     />
-                //   )}
-                // />
                 onChange={(_, newValues) => {
                   const parentIds = newValues.map((v) => v.value);
 
@@ -286,14 +264,12 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                     ...prev,
                     [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
                   }));
-
-                  // 🔥 simpan ke FORM (group share)
                   onChange(index, 'answer_text', parentIds.join(','));
                 }}
                 renderInput={(params) => (
                   <CustomTextField
                     {...params}
-                    placeholder="Enter at least 3 characters to search"
+                    placeholder={t('enterMin3CharsToSearch')}
                     fullWidth
                     error={!!errorMessage}
                     helperText={errorMessage}
@@ -332,9 +308,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               if (term.length < 3) return [];
               return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
             }}
-            noOptionsText={
-              inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-            }
+            noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
             value={
               options.find(
                 (opt: { value: string; name: string }) => opt.value === field.answer_text,

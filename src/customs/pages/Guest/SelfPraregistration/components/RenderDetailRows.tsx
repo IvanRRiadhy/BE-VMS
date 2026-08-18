@@ -56,6 +56,7 @@ import 'dayjs/locale/id';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useMediaQuery, useTheme } from '@mui/system';
+import { useTranslation } from 'react-i18next';
 
 const RenderDetailRows = ({
   details,
@@ -88,6 +89,7 @@ const RenderDetailRows = ({
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
   const [openStartPicker, setOpenStartPicker] = useState(false);
   const [openEndPicker, setOpenEndPicker] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (invitation?.site?.id && selectedSiteParentIds.length === 0) {
@@ -357,7 +359,7 @@ const RenderDetailRows = ({
 
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                  This site cannot be visited.
+                  {t('siteCannotBeVisited')}
                 </Typography>
               )}
             </Box>
@@ -531,47 +533,27 @@ const RenderDetailRows = ({
                   </Typography>
 
                   {item.remarks === 'host' && (
-                    <Tooltip
-                      title="The host is the person in charge responsible for this visitor"
-                      arrow
-                      placement="top"
-                    >
+                    <Tooltip title={t('hostInformation')} arrow placement="top">
                       <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                     </Tooltip>
                   )}
                   {item.remarks === 'agenda' && (
-                    <Tooltip
-                      title="The agenda is the purpose of the visitor's visit"
-                      arrow
-                      placement="top"
-                    >
+                    <Tooltip title={t('agendaInformation')} arrow placement="top">
                       <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                     </Tooltip>
                   )}
                   {item.remarks === 'site_place' && (
-                    <Tooltip
-                      title="The site place is the location where the visitor will be received"
-                      arrow
-                      placement="top"
-                    >
+                    <Tooltip title={t('sitePlaceInformation')} arrow placement="top">
                       <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                     </Tooltip>
                   )}
                   {item.remarks === 'visitor_period_start' && (
-                    <Tooltip
-                      title="The visitor period start is the date when the visitor's visit begins"
-                      arrow
-                      placement="top"
-                    >
+                    <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
                       <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                     </Tooltip>
                   )}
                   {item.remarks === 'visitor_period_end' && (
-                    <Tooltip
-                      title="The visitor period end is the date when the visitor's visit ends"
-                      arrow
-                      placement="top"
-                    >
+                    <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
                       <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
                     </Tooltip>
                   )}
@@ -759,7 +741,7 @@ const RenderDetailRows = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Select Visitor Role"
+                              placeholder={t('selectRole')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -787,15 +769,9 @@ const RenderDetailRows = ({
                                 [originalIndex]: newInputValue,
                               }));
                             }}
-                            // filterOptions={(opts, state) => {
-                            //   if (state.inputValue.length < 3) return [];
-                            //   return opts.filter((opt) =>
-                            //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                            //   );
-                            // }}
                             noOptionsText={
                               (inputValues[originalIndex] || '').length < 3
-                                ? 'Enter at least 3 characters to search'
+                                ? t('enterMin3CharsToSearch')
                                 : 'Not found'
                             }
                             value={options.filter((opt) =>
@@ -821,7 +797,7 @@ const RenderDetailRows = ({
                             renderInput={(params) => (
                               <CustomTextField
                                 {...params}
-                                placeholder="Select Site or type at least 3 characters to search"
+                                placeholder={t('selectSiteMin3Chars')}
                                 fullWidth
                                 error={!!errorMessage}
                                 helperText={errorMessage}
@@ -851,7 +827,7 @@ const RenderDetailRows = ({
                         //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
                         //   );
                         // }}
-                        noOptionsText="Enter at least 3 characters to search"
+                        noOptionsText={t('enterMin3CharsToSearch')}
                         onChange={(_, newValue) => {
                           const selectedValue = newValue ? newValue.value : '';
                           onChange(originalIndex, 'answer_text', selectedValue);
@@ -880,7 +856,7 @@ const RenderDetailRows = ({
                           value={startTime}
                           ampm={false}
                           onChange={setStartTime}
-                          format="ddd, DD - MMM - YYYY, HH:mm"
+                          format="dddd, DD MMM YYYY, HH:mm"
                           viewRenderers={{
                             hours: renderTimeViewClock,
                             minutes: renderTimeViewClock,
@@ -1040,11 +1016,7 @@ const RenderDetailRows = ({
                                   )}
                                 </Typography>
 
-                                <Tooltip
-                                  title="The visitor period start is the date when the visitor's visit begins"
-                                  arrow
-                                  placement="top"
-                                >
+                                <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
                                   <IconInfoCircle
                                     size={20}
                                     style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -1123,11 +1095,7 @@ const RenderDetailRows = ({
                                   )}
                                 </Typography>
 
-                                <Tooltip
-                                  title="The visitor period end is the date when the visitor's visit ends"
-                                  arrow
-                                  placement="top"
-                                >
+                                <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
                                   <IconInfoCircle
                                     size={20}
                                     style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -1211,7 +1179,7 @@ const RenderDetailRows = ({
                               clearFieldError(key);
                             }
                           }}
-                          format="dddd, DD   MMMM  YYYY, HH:mm"
+                          format="dddd, DD MMMM YYYY, HH:mm"
                           viewRenderers={{
                             hours: renderTimeViewClock,
                             minutes: renderTimeViewClock,
@@ -1219,7 +1187,7 @@ const RenderDetailRows = ({
                           }}
                           slotProps={{
                             actionBar: {
-                              actions: ['clear', 'accept'],
+                              actions: ['today', 'clear', 'accept'],
                             },
                             textField: {
                               fullWidth: true,

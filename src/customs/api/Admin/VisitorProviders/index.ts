@@ -28,6 +28,7 @@ export const getVisitorProvidersByDt = async (
       start,
       length,
       sort_dir,
+      ...(sort_column && { sort_column }),
       ...(keyword && { 'search[value]': keyword }),
       ...(role && { role }),
     },

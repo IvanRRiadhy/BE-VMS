@@ -191,6 +191,7 @@ import { IconUsers } from '@tabler/icons-react';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { getVisitorTypeById } from 'src/customs/api/admin';
 import PurposeVisitDialog from '../../Visitor/Trx/components/Dialog/PurposeVisitDialog';
+import { useTranslation } from 'react-i18next';
 
 type VisitorItem = {
   question_page: SectionPageVisitor[];
@@ -251,7 +252,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [openGroupPreview, setOpenGroupPreview] = useState(false);
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [isEmployeeMode, setIsEmployeeMode] = useState(false);
-
+  const { t } = useTranslation();
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
     Record<number, string[]>
@@ -2694,7 +2695,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index]
                                 : inputValues[index]) || ''
                             ).length < 3
-                              ? 'Enter at least 3 characters to search'
+                              ? t('enterMin3CharsToSearch')
                               : 'Not found'
                           }
                           value={options.filter((opt) =>
@@ -2742,7 +2743,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Enter at least 3 characters to search"
+                              placeholder={t('enterMin3CharsToSearch')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -2889,7 +2890,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         }}
                         noOptionsText={
                           (inputValues[index] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
+                            ? t('enterMin3CharsToSearch')
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -2943,7 +2944,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Enter at least 3 characters to search"
+                            placeholder={t("enterMin3CharsToSearch")}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -2970,7 +2971,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[index] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
+                          ? t("enterMin3CharsToSearch")
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -2982,7 +2983,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
-                          placeholder="Enter at least 3 characters to search"
+                          placeholder={t("enterMin3CharsToSearch")}
                           fullWidth
                           error={!!errorMessage}
                           helperText={errorMessage}
@@ -4252,7 +4253,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
-        const backendResponse = await submitFn( parsed);
+        const backendResponse = await submitFn(parsed);
         console.log('Payload Single:', backendResponse);
 
         const successMessage =
@@ -4649,9 +4650,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const resVisitorType = await getVisitorTypeById(
-        formData.visitor_type as string,
-      );
+      const resVisitorType = await getVisitorTypeById(formData.visitor_type as string);
 
       let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
 
@@ -5048,7 +5047,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
                 onClick={handleOnSubmit}
               >
-                {loading ? 'Submit' : 'Submit'}
+               Submit
               </Button>
             ) : (
               <Button

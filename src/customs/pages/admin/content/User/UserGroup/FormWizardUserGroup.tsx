@@ -107,7 +107,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} sx={{ mb: 2 }}>
-          <Grid2 size={{ xs: 12, lg: 6 }}>
+          <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="name" sx={{ mt: 0.5 }}>
               Name
             </CustomFormLabel>
@@ -124,7 +124,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
             />
           </Grid2>
 
-          <Grid2 size={{ xs: 12, lg: 6 }}>
+          {/* <Grid2 size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel htmlFor="homepage" sx={{ mt: 0.5 }}>
               Homepage
             </CustomFormLabel>
@@ -139,7 +139,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
               // required
               disabled={loading}
             />
-          </Grid2>
+          </Grid2> */}
 
           <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="role_access" sx={{ mt: 0.5 }}>

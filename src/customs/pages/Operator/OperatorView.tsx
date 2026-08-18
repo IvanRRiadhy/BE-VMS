@@ -946,22 +946,12 @@ const OperatorView = () => {
         };
       });
 
-      // setAccessData([...mergedAccess]);
       setAccessData(mergedAccess);
-
-      // const resAccess = await getInvitationAccessControl(token as string);
-      // const rowsAccess = resAccess.collection.map((item: any) => ({
-      //   id: item.Id,
-      //   name: item.Name ?? '-',
-      //   description: item.Description ?? '-',
-      // }));
-      // console.log('resAccess', resAccess);
-      // setAccessData(resAccess.collection ?? []);
-      // setAccessData(rowsAccess ?? []);
 
       if (currentAction) {
         setSelectedVisitors([invitationId]);
         await handleConfirmStatus(currentAction);
+        setActionButton(null);
         handleCloseScanQR();
         return;
       }
@@ -969,23 +959,27 @@ const OperatorView = () => {
       if (actionButton == 'extend') {
         setSelectedVisitors([invitationId]);
         setOpenExtendVisit(true);
+        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'card') {
         setSelectedVisitors([invitationId]);
         // handleChooseCard();
         setOpenChooseCardDialog(true);
+        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'access') {
         setSelectedVisitors([invitationId]);
         // setOpenAccessData(true);
         setAccessIssuance(true);
+        setActionButton(null);
         handleCloseScanQR();
         return;
       } else if (actionButton == 'open') {
         setSelectedVisitors([invitationId]);
         setOpenTriggeredAccess(true);
+        setActionButton(null);
         handleCloseScanQR();
         return;
       }
@@ -1045,6 +1039,7 @@ const OperatorView = () => {
       visitor_code: v.visitor_code ?? '-',
       vehicle_plate_number: v.vehicle_plate_number ?? '-',
       vehicle_type: v.vehicle_type ?? '-',
+      is_group: v.is_group ?? false,
       group_code: v.visitor_group_code ?? '-',
       group_name: v.group_name ?? '-',
       card: v.card ?? [],
@@ -1060,22 +1055,35 @@ const OperatorView = () => {
       checkin_at: v.checkin_at ?? '-',
       is_host: v.is_host ?? false,
     }));
-
     setInvitationCode((prev) =>
       prev.map((inv) => {
         const updatedVisitor = mappedVisitors.find(
           (v: any) =>
             v.id?.toLowerCase() === inv.id?.toLowerCase() ||
-            v.trx_visitor_id?.toLowerCase?.() === inv.id?.toLowerCase(),
+            v.visitor_number === inv.visitor_number,
         );
 
         if (!updatedVisitor) return inv;
 
         return {
           ...inv,
+
+          // data visitor terbaru dari API
+          visitor_status: updatedVisitor.visitor_status,
+          is_block: updatedVisitor.is_block,
+          block_by: updatedVisitor.block_by,
+
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
+
           card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+
+          visitor: {
+            ...inv.visitor,
+            visitor_status: updatedVisitor.visitor_status,
+            is_block: updatedVisitor.is_block,
+            block_by: updatedVisitor.block_by,
+          },
         };
       }),
     );
@@ -1345,8 +1353,172 @@ const OperatorView = () => {
     }
   };
 
+  // const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
+  //   const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+  //   const actionLabelMap: Record<string, string> = {
+  //     Checkin: 'check in',
+  //     Checkout: 'check out',
+  //     Block: 'block this visitor',
+  //     Unblock: 'unblock this visitor',
+  //   };
+
+  //   let reason = '';
+
+  //   try {
+  //     if (action === 'Block' || action === 'Unblock') {
+  //       const { value: inputReason } = await Swal.fire({
+  //         // imageUrl: '/assets/images/BI_Logo.png',
+  //         icon: 'warning',
+  //         imageWidth: 80,
+  //         imageHeight: 80,
+  //         imageAlt: 'Logo',
+  //         target: containerRef.current,
+  //         title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+  //         text:
+  //           action === 'Block'
+  //             ? 'Please provide a reason for blocking this visitor:'
+  //             : 'Please provide a reason for unblocking this visitor:',
+  //         input: 'text',
+  //         inputPlaceholder: 'Enter reason...',
+  //         inputAttributes: { maxlength: '200' },
+  //         showCloseButton: true,
+  //         showCancelButton: true,
+  //         confirmButtonText: 'Yes',
+  //         confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#16a34a' : '#16a34a',
+  //         cancelButtonText: 'Cancel',
+  //         reverseButtons: true,
+  //         customClass: {
+  //           title: 'swal2-title-custom',
+  //           popup: 'swal-popup-custom',
+  //           closeButton: 'swal-close-red',
+  //         },
+  //         inputValidator: (value) => {
+  //           if (!value || value.trim().length < 3) {
+  //             return 'Reason must be at least 3 characters long.';
+  //           }
+  //           return null;
+  //         },
+  //       });
+
+  //       if (!inputReason) return;
+  //       reason = inputReason.trim();
+  //     } else {
+  //       const confirm = await Swal.fire({
+  //         title: `Do you want to ${actionLabelMap[action]}?`,
+  //         // imageUrl: '/assets/images/BI_Logo.png',
+  //         icon: 'success',
+  //         imageWidth: 80,
+  //         imageHeight: 80,
+  //         imageAlt: 'Logo',
+  //         showCancelButton: true,
+  //         confirmButtonText: 'Yes',
+  //         cancelButtonText: 'Cancel',
+  //         showCloseButton: true,
+  //         target: containerRef.current,
+  //         confirmButtonColor: '#4caf50',
+  //         reverseButtons: true,
+  //         customClass: {
+  //           title: 'swal2-title-custom',
+  //           popup: 'swal-popup-custom',
+  //           closeButton: 'swal-close-red',
+  //         },
+  //       });
+
+  //       if (!confirm.isConfirmed) return;
+  //     }
+
+  //     setLoadingAccess(true);
+
+  //     const payload: any = { action };
+
+  //     if (reason) {
+  //       payload.reason = reason;
+  //     }
+
+  //     await createInvitationActionOperator(id!, payload);
+  //     await queryClient.invalidateQueries({
+  //       queryKey: ['upcoming-purpose'],
+  //     });
+  //     const currentVisitor =
+  //       relatedVisitors?.find((v: any) => v.id === selectedVisitorId) || invitationCode?.[0];
+
+  //     // Block / Unblock TIDAK mengubah visitor_status
+  //     const newStatus =
+  //       action === 'Block' || action === 'Unblock' ? currentVisitor?.visitor_status : action;
+
+  //     const newIsBlock =
+  //       action === 'Block'
+  //         ? true
+  //         : action === 'Unblock'
+  //           ? false
+  //           : (currentVisitor?.is_block ?? false);
+
+  //     setRelatedVisitors((prev) =>
+  //       prev.map((v) =>
+  //         v.id === selectedVisitorId
+  //           ? {
+  //               ...v,
+  //               visitor_status: newStatus,
+  //               is_block: newIsBlock,
+  //             }
+  //           : v,
+  //       ),
+  //     );
+
+  //     setInvitationCode((prev) => {
+  //       if (!prev.length) return prev;
+
+  //       const updated = {
+  //         ...prev[0],
+  //         visitor_status: newStatus,
+  //         is_block: newIsBlock,
+
+  //         visitor: {
+  //           ...prev[0].visitor,
+  //           visitor_status: newStatus,
+  //           is_block: newIsBlock,
+  //         },
+  //       };
+
+  //       return [updated];
+  //     });
+  //     setSelectedVisitors((prev) => {
+  //       if (!selectedVisitorId) return prev;
+  //       if (!prev.includes(selectedVisitorId)) {
+  //         return [...prev, selectedVisitorId];
+  //       }
+  //       return prev;
+  //     });
+
+  //     const invitationId = invitationCode?.[0]?.id;
+  //     if (invitationId) {
+  //       const previousSelected = [...selectedVisitors];
+  //       const previousSelectedId = selectedVisitorId;
+
+  //       await new Promise((r) => setTimeout(r, 600));
+  //       await fetchRelatedVisitorsByInvitationId(invitationId);
+
+  //       setSelectedVisitors(previousSelected);
+  //       setSelectedVisitorId(previousSelectedId);
+  //     }
+  //     showSwal('success', `${action} successfully.`);
+  //   } catch (e: any) {
+  //     const message =
+  //       e?.response?.data?.msg ??
+  //       e?.response?.data?.message ??
+  //       e?.message ??
+  //       'Failed to update visitor status.';
+
+  //     showSwal('error', message);
+  //   } finally {
+  //     setLoadingAccess(false);
+  //   }
+  // };
+
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
-    const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+    // const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+    const id = selectedVisitorId ?? selectedVisitors[0] ?? invitationCode?.[0]?.id;
+
     const actionLabelMap: Record<string, string> = {
       Checkin: 'check in',
       Checkout: 'check out',
@@ -1355,60 +1527,119 @@ const OperatorView = () => {
     };
 
     let reason = '';
+    if (action === 'Checkin' || action === 'Checkout') {
+      const visitor = relatedVisitors.find((v) => v.id?.toLowerCase() === id?.toLowerCase());
+
+      const isPraRegisterDone =
+        visitor?.is_praregister_done ?? invitationCode?.[0]?.is_praregister_done;
+
+      const visitorStatus = visitor?.visitor_status ?? invitationCode?.[0]?.visitor_status;
+
+      // Pra Register belum selesai
+      if (!isPraRegisterDone) {
+        showSwal('info', 'Visitor must complete Pra Register before Checkin/Checkout.', 3000);
+        return false;
+      }
+
+      // Belum Checkin → tidak boleh Checkout
+      if (action === 'Checkout' && visitorStatus !== 'Checkin') {
+        showSwal('info', 'Visitor must Checkin first before Checkout.', 3000);
+        return false;
+      }
+
+      // Sudah Checkin → tidak boleh Checkin lagi
+      if (action === 'Checkin' && visitorStatus === 'Checkin') {
+        showSwal('info', 'Visitor is already Checked In.', 3000);
+        return false;
+      }
+
+      // Sudah Checkout → tidak boleh Checkin/Checkout lagi
+      if (visitorStatus === 'Checkout') {
+        showSwal('info', 'Visitor has already Checked Out.', 3000);
+        return false;
+      }
+    }
 
     try {
+      // =========================================================
+      // CONFIRM BLOCK / UNBLOCK
+      // =========================================================
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
-          // imageUrl: '/assets/images/BI_Logo.png',
           icon: 'warning',
           imageWidth: 80,
           imageHeight: 80,
           imageAlt: 'Logo',
           target: containerRef.current,
+
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+
           text:
             action === 'Block'
               ? 'Please provide a reason for blocking this visitor:'
               : 'Please provide a reason for unblocking this visitor:',
+
           input: 'text',
           inputPlaceholder: 'Enter reason...',
-          inputAttributes: { maxlength: '200' },
+          inputAttributes: {
+            maxlength: '200',
+          },
+
           showCloseButton: true,
           showCancelButton: true,
+
           confirmButtonText: 'Yes',
-          confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#16a34a' : '#16a34a',
+          confirmButtonColor: '#16a34a',
+
           cancelButtonText: 'Cancel',
           reverseButtons: true,
+
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
             closeButton: 'swal-close-red',
           },
+
           inputValidator: (value) => {
             if (!value || value.trim().length < 3) {
               return 'Reason must be at least 3 characters long.';
             }
+
             return null;
           },
         });
 
-        if (!inputReason) return;
+        if (!inputReason) {
+          return;
+        }
+
         reason = inputReason.trim();
-      } else {
+      }
+
+      // =========================================================
+      // CONFIRM CHECKIN / CHECKOUT
+      // =========================================================
+      else {
         const confirm = await Swal.fire({
           title: `Do you want to ${actionLabelMap[action]}?`,
-          // imageUrl: '/assets/images/BI_Logo.png',
+
           icon: 'success',
+
           imageWidth: 80,
           imageHeight: 80,
           imageAlt: 'Logo',
+
           showCancelButton: true,
-          confirmButtonText: 'Yes',
-          cancelButtonText: 'Cancel',
           showCloseButton: true,
-          target: containerRef.current,
+
+          confirmButtonText: 'Yes',
           confirmButtonColor: '#4caf50',
+
+          cancelButtonText: 'Cancel',
           reverseButtons: true,
+
+          target: containerRef.current,
+
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
@@ -1416,69 +1647,58 @@ const OperatorView = () => {
           },
         });
 
-        if (!confirm.isConfirmed) return;
+        if (!confirm.isConfirmed) {
+          return;
+        }
       }
 
+      // =========================================================
+      // LOADING
+      // =========================================================
       setLoadingAccess(true);
 
-      const payload: any = { action };
+      // =========================================================
+      // PAYLOAD
+      // =========================================================
+      const payload: any = {
+        action,
+      };
 
       if (reason) {
         payload.reason = reason;
       }
 
+      // =========================================================
+      // EXECUTE ACTION
+      // =========================================================
       await createInvitationActionOperator(id!, payload);
+
+      // =========================================================
+      // INVALIDATE RELATED QUERY
+      // =========================================================
       await queryClient.invalidateQueries({
         queryKey: ['upcoming-purpose'],
       });
 
-      setRelatedVisitors((prev) =>
-        prev.map((v) =>
-          v.id === selectedVisitorId
-            ? {
-                ...v,
-                visitor_status: action,
-                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-              }
-            : v,
-        ),
-      );
-
-      setInvitationCode((prev) => {
-        if (!prev.length) return prev;
-        const updated = {
-          ...prev[0],
-          visitor_status: action,
-          is_block: action === 'Block' ? true : action === 'Unblock' ? false : prev[0].is_block,
-          visitor: {
-            ...prev[0].visitor,
-            visitor_status: action,
-            is_block:
-              action === 'Block' ? true : action === 'Unblock' ? false : prev[0].visitor?.is_block,
-          },
-        };
-        return [JSON.parse(JSON.stringify(updated))];
-      });
-
-      setSelectedVisitors((prev) => {
-        if (!selectedVisitorId) return prev;
-        if (!prev.includes(selectedVisitorId)) {
-          return [...prev, selectedVisitorId];
-        }
-        return prev;
-      });
-
+      // =========================================================
+      // REFETCH VISITOR FROM API
+      // =========================================================
       const invitationId = invitationCode?.[0]?.id;
+
       if (invitationId) {
         const previousSelected = [...selectedVisitors];
         const previousSelectedId = selectedVisitorId;
 
-        await new Promise((r) => setTimeout(r, 600));
         await fetchRelatedVisitorsByInvitationId(invitationId);
 
+        // Restore selection after refresh
         setSelectedVisitors(previousSelected);
         setSelectedVisitorId(previousSelectedId);
       }
+
+      // =========================================================
+      // SUCCESS
+      // =========================================================
       showSwal('success', `${action} successfully.`);
     } catch (e: any) {
       const message =
@@ -1492,7 +1712,6 @@ const OperatorView = () => {
       setLoadingAccess(false);
     }
   };
-
   const formsOf = (section: any) =>
     Array.isArray(section?.['visit_form']) ? section['visit_form'] : [];
 
@@ -2488,7 +2707,13 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
     } catch (error: any) {
-      showSwal('error', error.message || error?.response?.data?.msg || 'Failed to return card');
+      const message =
+        error?.response?.data?.msg ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to return card';
+
+      showSwal('error', message);
     } finally {
       setLoadingAccess(false);
     }
@@ -2516,54 +2741,11 @@ const OperatorView = () => {
     setOpenChooseCardDialog(false);
   };
 
-  // const fetchUpcomingPurpose = async () => {
-  //   const res = await getUpComingPurpose({
-  //     today: 'true',
-  //     all_visitor_type: 'true',
-  //   });
-
-  //   setUpcomingPurpose(res?.collection ?? []);
-  // };
-
-  // useEffect(() => {
-  //   fetchUpcomingPurpose();
-  // }, []);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const res = await getUpComingVisitors({
-  //       today: 'true',
-  //       // all_visitor_type: 'true',
-  //       visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
-  //       start: page * rowsPerPage,
-  //       length: rowsPerPage,
-  //       sortDir: sortDir,
-  //     });
-
-  //     const rows = res.collection.map((items: any) => ({
-  //       id: items.id,
-  //       name: items.visitor_name,
-  //       host: items.host_name,
-  //       invitation_code: items.invitation_code,
-  //       organization: items.visitor_organization_name,
-  //       agenda: items.agenda,
-  //       visitor_period_start: formatDateTime(items.visitor_period_start),
-  //       visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
-  //       visitor_status: items.visitor_status,
-  //       vehicle_type: items.vehicle_type,
-  //       vehicle_plate_number: items.vehicle_plate_number,
-  //     }));
-  //     setUpcomingVisitors(rows ?? []);
-  //   };
-  //   fetchData();
-  // }, [selectedPurpose, page, rowsPerPage]);
-
   const sortDir = 'desc';
 
   type VisitorStatusFilter = 'all' | 'checkout' | 'block' | 'expired';
 
   const [visitorStatusFilter, setVisitorStatusFilter] = useState<VisitorStatusFilter>('all');
-
 
   const [livePage, setLivePage] = useState(0);
   const [liveRowsPerPage, setLiveRowsPerPage] = useState(10);
@@ -2587,8 +2769,6 @@ const OperatorView = () => {
   const [purposePage, setPurposePage] = useState(0);
   const [purposeRowsPerPage, setPurposeRowsPerPage] = useState(10);
   const [purposeSearch, setPurposeSearch] = useState('');
-
-  
 
   const purposeVisitorQuery = useUpcomingVisitors({
     page: purposePage,
@@ -3029,6 +3209,7 @@ const OperatorView = () => {
                   invitationCode={invitationCode}
                   availableActions={availableActions}
                   lgUp={lgUp}
+                  onRefresh={()=>{}}
                   theme={theme}
                   permissionHook={permissionHook}
                   containerRef={containerRef}

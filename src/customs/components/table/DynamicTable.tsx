@@ -39,7 +39,6 @@ import { AddCircle, ArrowLeft, CalendarMonth, ChecklistOutlined } from '@mui/ico
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import Calendar from '../calendar/Calendar';
-import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { useTranslation } from 'react-i18next';
@@ -398,6 +397,8 @@ function DynamicTableBase<
     'ticket_id',
     'employee_linked',
     'is_blacklist',
+    'selfie image',
+    'selfie_image',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -510,7 +511,7 @@ function DynamicTableBase<
       .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1));
   };
 
-  const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
+  const imageFields = ['faceimage', 'photo', 'avatar', 'image', 'selfie image', 'selfie_image'];
   const objectFields = ['multiple_option_fields'];
   const [openRow, setOpenRow] = useState<number | null>(null);
 
@@ -833,8 +834,26 @@ function DynamicTableBase<
       )}
 
       {/*  TABLE */}
-      <BlankCard sx={{ height: { height } }} borderRadius={borderRadius}>
-        <CardContent sx={{ height: { height } }}>
+      {/* <BlankCard sx={{ height: { height } }} borderRadius={borderRadius}>
+        <CardContent sx={{ height: { height } }}> */}
+      <BlankCard
+        sx={{
+          height: height ?? '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+        borderRadius={borderRadius}
+      >
+        <CardContent
+          sx={{
+            height: height ?? '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            boxSizing: 'border-box',
+          }}
+        >
           <Grid2 container sx={{ marginBottom: 0.1 }}>
             {isSiteSpaceName && (
               <Grid2
@@ -899,18 +918,6 @@ function DynamicTableBase<
                 </Typography>
               </Box>
             )}
-            {/* <Grid2
-              size={{ xs: 12 }}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              flexWrap={'wrap'}
-              sx={{
-                mb: 1,
-                gap: { xs: 1.5, md: 0 },
-              }}
-              width="100%"
-            > */}
             <Grid2
               size={{ xs: 12 }}
               display="flex"
@@ -923,8 +930,6 @@ function DynamicTableBase<
               }}
               width="100%"
             >
-              {/* SEARCH MENU */}
-
               <Box sx={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center' }}>
                 <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
                   {isHaveSearch && (
@@ -1248,12 +1253,20 @@ function DynamicTableBase<
               </Grid2>
             )}
           </Grid2>
-          <TableContainer
+          {/* <TableContainer
             sx={{
               overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
               overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
               width: '100%',
-              // height: '100%',
+            }}
+          > */}
+          <TableContainer
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
+              overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
+              width: '100%',
             }}
           >
             {paginatedData.length === 0 && !loading ? (

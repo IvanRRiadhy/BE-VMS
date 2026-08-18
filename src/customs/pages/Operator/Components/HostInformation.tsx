@@ -9,11 +9,10 @@ import {
   useTheme,
   Grid2 as Grid,
 } from '@mui/material';
-import {
-  IconBrandWhatsapp,
-  IconPhone,
-} from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconPhone } from '@tabler/icons-react';
 import { Email } from '@mui/icons-material';
+import axiosInstance, { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
+import axios from 'axios';
 
 interface InvitationQrCardProps {
   invitationCode?: any;
@@ -65,6 +64,8 @@ const HostInformation = ({
 }: InvitationQrCardProps) => {
   const data = invitationCode[0];
   const whatsappNumber = data?.hosts[0].phone?.replace(/\D/g, '');
+  // const host = invitationCode.find((item: any) => item.is_host === true);
+  const host = data?.hosts?.[0];
   return (
     <>
       <Card
@@ -92,7 +93,17 @@ const HostInformation = ({
           }}
         >
           <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            <Avatar style={{ width: '100px', height: '100px' }} />
+            <Avatar
+              src={
+                host?.faceimage ? `${axiosInstance2.defaults.baseURL}/cdn${host?.faceimage}` : undefined
+              }
+              sx={{
+                width: 100,
+                height: 100,
+              }}
+            >
+              {!host?.faceimage && host?.name?.charAt(0).toUpperCase()}
+            </Avatar>
             <Box>
               <Box
                 sx={{
@@ -100,7 +111,7 @@ const HostInformation = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   gap: 2,
-                  mb: 1
+                  mb: 1,
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" mb={0}>

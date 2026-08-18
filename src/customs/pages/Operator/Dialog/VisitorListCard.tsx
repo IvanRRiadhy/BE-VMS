@@ -32,7 +32,7 @@ import {
 } from '@tabler/icons-react';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import VisitorFilterDialog from './VisitorFilterDialog';
-
+import { IconRefresh } from '@tabler/icons-react';
 interface AvailableAction {
   value: string;
   label: string;
@@ -55,6 +55,7 @@ interface VisitorListCardProps {
   totalVisitors: number;
   filteredVisitors: any[];
   relatedVisitors: any[];
+  onRefresh: () => void;
   invitationCode: any[];
   availableActions: AvailableAction[];
   lgUp: boolean;
@@ -105,6 +106,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   lgUp,
   theme,
   permissionHook,
+  onRefresh,
   containerRef,
   CustomTextField,
   getCdnUrl,
@@ -188,18 +190,30 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                 },
               }}
             >
-              {/* <Tab value="live" label="Live Visitors" />
-            <Tab value="related" label="Related Visitors" /> */}
               <Tab value="live" label={`Live Visitors (${liveCount})`} />
               <Tab value="related" label={`Related Visitors (${relatedCount})`} />
             </Tabs>
-
-            {/* <Tooltip arrow title={`Total visitor: ${totalVisitors}`} placement="top">
-            <Typography variant="body2" color="text.secondary">
-              ({totalVisitors})
-            </Typography>
-          </Tooltip> */}
           </Box>
+          <Tooltip title="Refresh Visitor List" placement="top" arrow>
+            <Button
+              onClick={onRefresh}
+              startIcon={<IconRefresh size={20} />}
+              sx={{
+                minWidth: 40,
+                height: 40,
+                px: 1.5,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                color: 'text.primary',
+                flexShrink: 0,
+              }}
+            >
+              Refresh
+            </Button>
+          </Tooltip>
         </Box>
 
         <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>

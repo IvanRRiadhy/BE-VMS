@@ -15,6 +15,7 @@ interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
+  sort_column?: string;
   search: string;
   filters: Filters;
 }
@@ -23,17 +24,19 @@ export const useEmployeePagination = ({
   page,
   rowsPerPage,
   sortDir,
+  sort_column,
   search,
   filters, 
 }: Props) => {
   return useQuery({
-    queryKey: ['employees', page, rowsPerPage, sortDir, search, filters],
+    queryKey: ['employees', page, rowsPerPage, sortDir, sort_column, search, filters],
 
     queryFn: () =>
       getAllEmployeePaginationFilterMore(
         page * rowsPerPage,
         rowsPerPage,
         sortDir,
+        sort_column,
         search,
         filters.gender === 0 ? undefined : filters.gender,
         filters.joinStart,

@@ -73,6 +73,8 @@ import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import InvitationScheduleDetailDialog from './Dialog/InvitationScheduleDetailDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CameraDialog from './Dialog/CameraDialog';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 export interface CalendarEvent {
   id: number;
@@ -141,6 +143,7 @@ export default function DnDOutsideCourier({
   const [openDialogReschedule, setOpenDialogReschedule] = useState(false);
   const [tempEvent, setTempEvent] = useState<any | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const { t } = useTranslation();
   const reloadCalendar = () => {
     if (!lastRange.start || !lastRange.end) return;
 
@@ -1174,7 +1177,7 @@ export default function DnDOutsideCourier({
                       }}
                       noOptionsText={
                         (inputValues[index] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -1185,7 +1188,7 @@ export default function DnDOutsideCourier({
                         <CustomTextField
                           {...params}
                           label=""
-                          placeholder="Enter at least 3 characters to search"
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
                         />
                       )}
@@ -2067,9 +2070,7 @@ export default function DnDOutsideCourier({
                 if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-              }
+              noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
               value={
                 options.find(
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
@@ -2081,7 +2082,7 @@ export default function DnDOutsideCourier({
               renderInput={(params) => (
                 <CustomTextField
                   {...params}
-                  placeholder="Enter at least 3 characters to search."
+                  placeholder={t('enterMin3CharsToSearch')}
                   fullWidth
                   sx={{ minWidth: 160 }}
                 />
@@ -2821,17 +2822,7 @@ export default function DnDOutsideCourier({
           </Button>
         </DialogActions>
       </Dialog>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </div>
   );
 }

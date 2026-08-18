@@ -13,6 +13,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { Box } from '@mui/system';
 import Swal from 'sweetalert2';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import { useTranslation } from 'react-i18next';
 interface Site {
   id: string;
   name: string;
@@ -50,6 +51,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
     question_page: [],
   });
 
+  const { t } = useTranslation();
   const [originalVisitorTypeId, setOriginalVisitorTypeId] = useState<string | null>(null);
   useEffect(() => {
     if (defaultValue) {
@@ -225,7 +227,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
 
       console.log('Payload to submit:', payload);
       await onSubmit(payload);
-
     } catch (error: any) {
       const backendMessage = error.msg || error.collection;
 
@@ -457,9 +458,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
 
               return opts.filter((opt) => opt.name.toLowerCase().includes(input));
             }}
-            noOptionsText={
-              inputValue.length < 3 ? 'Enter at least 3 characters to search' : 'Not found'
-            }
+            noOptionsText={inputValue.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
             // value={siteParentOptions.filter((opt) => selectedSiteParentIds.includes(opt.id))}
             value={siteParentOptions.filter((opt) =>
               selectedSiteParentIds.includes(opt.id?.toLowerCase()),
@@ -484,11 +483,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
               );
             }}
             renderInput={(params) => (
-              <CustomTextField
-                {...params}
-                placeholder="Enter at least 3 characters to search"
-                fullWidth
-              />
+              <CustomTextField {...params} placeholder={t('enterMin3CharsToSearch')} fullWidth />
             )}
           />
           {siteTree.length > 0 && (

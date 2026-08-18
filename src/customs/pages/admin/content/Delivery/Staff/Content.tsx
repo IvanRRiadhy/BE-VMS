@@ -93,7 +93,7 @@ const Content = () => {
   const driverQuery = useDriverPagination({
     page,
     rowsPerPage,
-    sortColumn,
+    sort_column: 'created_at',
     sortDir,
     search,
     filters: appliedFilters,
@@ -365,7 +365,7 @@ const Content = () => {
         showSwal('success', `${rows.length} items have been deleted.`);
         return true;
       } catch (error: any) {
-        showSwal('error',  error?.response?.data?.msg || 'Failed to delete some items.');
+        showSwal('error', error?.response?.data?.msg || 'Failed to delete some items.');
         return false;
       }
     }

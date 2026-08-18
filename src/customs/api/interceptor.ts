@@ -70,9 +70,12 @@ export const setClearTokenCallback = (callback: () => void) => {
   clearTokenCallback = callback;
 };
 
+let isHandling401 = false;
+
 const responseInterceptor = (response: any) => response;
 const errorInterceptor = (error: any) => {
-  if (error.response?.status === 404) {
+  const status = error.response?.status;
+  if (status === 404) {
     return Promise.resolve({
       ...error.response,
       data: {
@@ -87,18 +90,32 @@ const errorInterceptor = (error: any) => {
       },
     });
   }
-  if (
-    axios.isAxiosError(error) &&
-    (error.response?.status === 401 || error.response?.status === 403)
-  ) {
-    // if (clearTokenCallback) {
-    //   clearTokenCallback();
-    // }
-    // window.location.href = '/';
-    //  if (error.response?.status === 401) {
-    //    clearTokenCallback?.();
-    //    window.location.href = '/';
-    //  }
+  // if (
+  //   axios.isAxiosError(error) &&
+  //   (error.response?.status === 401 || error.response?.status === 403)
+  // ) {
+  //   // if (clearTokenCallback) {
+  //   //   clearTokenCallback();
+  //   // }
+  //   // window.location.href = '/';
+  //   //  if (error.response?.status === 401) {
+  //   //    clearTokenCallback?.();
+  //   //    window.location.href = '/';
+  //   //  }
+  // }
+  if (status === 401) {
+    if (!isHandling401) {
+      isHandling401 = true;
+      clearTokenCallback?.();
+    }
+
+    return Promise.reject(error);
+  }
+
+  if (status === 403) {
+    // Jangan logout
+    // Jangan clear token
+    return Promise.reject(error);
   }
   return Promise.reject(error);
 };

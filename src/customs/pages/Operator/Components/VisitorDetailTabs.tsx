@@ -81,6 +81,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Available: 'gray',
   };
 
+
   return (
     <>
       <Tabs value={tabValue} onChange={(_, newValue) => onTabChange(newValue)} variant="fullWidth">

@@ -177,14 +177,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  // const [loading, setLoading] = useState(false);
-  const [activeStep, setActiveStep] = useState(enableInvitationTypeStep ? -1 : 0);
+  const [activeStep, setActiveStep] = useState(
+    isAddTransaction ? 0 : enableInvitationTypeStep ? -1 : 0,
+  );
   const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
   const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
-  const totalSteps = 1 + draggableSteps.length;
+  const totalSteps = isAddTransaction ? draggableSteps.length : 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
   const [isSingle, setIsSingle] = useState(false);
   const [isGroup, setIsGroup] = useState(false);
@@ -193,7 +194,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
   const [rawSections, setRawSections] = useState<any[]>([]);
-  const firstStep = enableInvitationTypeStep ? -1 : 0;
+  const firstStep = enableInvitationTypeStep && !isAddTransaction ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
@@ -206,6 +207,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     message: string;
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
+  useEffect(() => {
+    if (!open) return;
+
+    setActiveStep(0);
+  }, [open, isAddTransaction]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
@@ -704,7 +710,85 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
+  // const handleSelectVisitor = (gIdx: number, v: any) => {
+  //   if (!v) {
+  //     const resetKeys = [
+  //       'name',
+  //       'email',
+  //       'phone',
+  //       'organization',
+  //       'indentity_id',
+  //       'gender',
+  //       'employee',
+  //     ];
+
+  //     setDataVisitor((prev) => {
+  //       const next = [...prev];
+  //       const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+  //       if (!page?.form) return prev;
+
+  //       page.form = page.form.map((item: any) => {
+  //         if (resetKeys.includes(item.remarks)) {
+  //           clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+  //           return {
+  //             ...item,
+  //             answer_text: '',
+  //           };
+  //         }
+
+  //         return item;
+  //       });
+
+  //       return next;
+  //     });
+
+  //     return;
+  //   }
+
+  //   let genderValue: string | undefined;
+
+  //   if (v.gender === 'Male') genderValue = '1';
+  //   else if (v.gender === 'Female') genderValue = '0';
+  //   else if (v.gender === 'Prefer not to say') genderValue = '2';
+
+  //   const mapping: Record<string, string | undefined> = {
+  //     name: v.name,
+  //     email: v.email,
+  //     phone: v.phone,
+  //     // organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+  //     organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
+  //     indentity_id: v.identity_id,
+  //     gender: genderValue,
+  //     employee: v.id,
+  //   };
+  //   setDataVisitor((prev) => {
+  //     const next = [...prev];
+  //     const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+  //     if (!page?.form) return prev;
+
+  //     page.form = page.form.map((item: any) => {
+  //       if (mapping[item.remarks] !== undefined) {
+  //         clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+
+  //         return {
+  //           ...item,
+  //           answer_text: mapping[item.remarks]!,
+  //         };
+  //       }
+
+  //       return item;
+  //     });
+
+  //     return next;
+  //   });
+  // };
+
   const handleSelectVisitor = (gIdx: number, v: any) => {
+    const sectionIndex = getSectionIndex(activeStep);
+
     if (!v) {
       const resetKeys = [
         'name',
@@ -712,19 +796,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         'phone',
         'organization',
         'indentity_id',
+        'identity_id',
         'gender',
         'employee',
       ];
 
       setDataVisitor((prev) => {
         const next = [...prev];
-        const page = next[gIdx]?.question_page?.[activeStep - 1];
+        const page = next[gIdx]?.question_page?.[sectionIndex];
 
         if (!page?.form) return prev;
 
         page.form = page.form.map((item: any) => {
           if (resetKeys.includes(item.remarks)) {
-            clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+            clearFieldError(`${sectionIndex}:${gIdx}:${item.custom_field_id}`);
 
             return {
               ...item,
@@ -751,25 +836,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       name: v.name,
       email: v.email,
       phone: v.phone,
-      // organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
-      organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
+      organization: v.Organization?.name ?? v.organization?.name ?? v.organization ?? '',
       indentity_id: v.identity_id,
+      identity_id: v.identity_id,
       gender: genderValue,
       employee: v.id,
     };
+
     setDataVisitor((prev) => {
       const next = [...prev];
-      const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+      const page = next[gIdx]?.question_page?.[sectionIndex];
 
       if (!page?.form) return prev;
 
       page.form = page.form.map((item: any) => {
-        if (mapping[item.remarks] !== undefined) {
-          clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
+        const value = mapping[item.remarks];
+
+        if (value !== undefined) {
+          clearFieldError(`${sectionIndex}:${gIdx}:${item.custom_field_id}`);
 
           return {
             ...item,
-            answer_text: mapping[item.remarks]!,
+            answer_text: value,
           };
         }
 
@@ -1023,7 +1112,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </RadioGroup>
         </Box>
       );
-    } else if (step == 0) {
+    } else if (step == 0 && !isAddTransaction) {
       return (
         <Box>
           <Grid container spacing={2}>
@@ -1347,16 +1436,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
     }
 
-    const currentSection = sectionsData[step - 1];
+    const currentSection = isAddTransaction ? sectionsData[step] : sectionsData[step - 1];
 
     if (!currentSection) return null;
-
     return (
       <>
         {isSingle && (
           <Grid>
             {(() => {
-              const section = currentSection;
+              // const section = currentSection;
+              const sectionIndex = getSectionIndex(activeStep);
+              const section = sectionsData[sectionIndex];
               const sectionType = getSectionType(section);
               const isEmployee = isEmployeeSection(section);
               if (sectionType === 'visitor_information') {
@@ -1375,7 +1465,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             {renderDetailRows(formsOf(section), (index, field, value) => {
                               setSectionsData((prev) =>
                                 prev.map((s, sIdx) =>
-                                  sIdx !== activeStep - 1
+                                  sIdx !== sectionIndex
                                     ? s
                                     : updateSectionForm(s, (arr) =>
                                         arr.map((item, i) =>
@@ -1398,7 +1488,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(formsOf(section), (index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
+                            sIdx !== sectionIndex
                               ? s
                               : updateSectionForm(s, (arr) =>
                                   arr.map((item, i) =>
@@ -1416,9 +1506,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   <Table>
                     <TableBody>
                       {renderDetailRows(formsOf(section), (index, field, value) => {
+                        // Add Transaction tidak boleh mengubah Purpose Visit
+                        if (isAddTransaction) return;
+
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
+                            sIdx !== (isAddTransaction ? activeStep : sectionIndex)
                               ? s
                               : updateSectionForm(s, (arr) =>
                                   arr.map((item, i) =>
@@ -1438,7 +1531,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(formsOf(section), (index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
+                            sIdx !== sectionIndex
                               ? s
                               : updateSectionForm(s, (arr) =>
                                   arr.map((item, i) =>
@@ -1458,7 +1551,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(formsOf(section), (index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
+                            sIdx !== sectionIndex
                               ? s
                               : updateSectionForm(s, (arr) =>
                                   arr.map((item, i) =>
@@ -1478,7 +1571,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(formsOf(section), (index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
+                            sIdx !== sectionIndex
                               ? s
                               : updateSectionForm(s, (arr) =>
                                   arr.map((item, i) =>
@@ -1500,7 +1593,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         {isGroup && (
           <Grid>
             {(() => {
-              const section = currentSection;
+              const sectionIndex = getSectionIndex(activeStep);
+              const section = sectionsData[sectionIndex];
+
               const sectionType = getSectionType(section);
 
               if (sectionType === 'visitor_information_group') {
@@ -1512,7 +1607,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <>
                             {dataVisitor.length > 0 ? (
                               dataVisitor.map((group, gIdx) => {
-                                const page = group.question_page[activeStep - 1];
+                                const page = group.question_page[sectionIndex];
                                 if (!page) return null;
                                 const isEmployee =
                                   dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
@@ -1580,8 +1675,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
                                           const originalIndex = page?.form?.findIndex(
                                             (f: any) => f.custom_field_id === field.custom_field_id,
                                           );
@@ -1594,7 +1689,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 (idx, fieldKey, value) => {
                                                   setDataVisitor((prev) => {
                                                     const next = [...prev];
-                                                    const s = activeStep - 1;
+                                                    const s = sectionIndex;
                                                     if (
                                                       !next[gIdx]?.question_page?.[s]?.form?.[
                                                         originalIndex || fIdx
@@ -1615,8 +1710,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 // undefined,
                                                 {
                                                   showLabel: true,
-                                                  // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  // uniqueKey: `${sectionIndex}:${gIdx}:${fIdx}`,
+                                                  uniqueKey: `${sectionIndex}:${gIdx}:${
                                                     field.custom_field_id
                                                   }`,
                                                 },
@@ -1659,7 +1754,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 <TableCell>
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
-                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || [])
+                                {(dataVisitor[0]?.question_page[sectionIndex]?.form || [])
                                   .filter(
                                     (f: any) => (f.remarks || '').toLowerCase() !== 'employee',
                                   )
@@ -1681,7 +1776,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <TableBody>
                               {dataVisitor.length > 0 ? (
                                 dataVisitor.map((group, gIdx) => {
-                                  const page = group.question_page[activeStep - 1];
+                                  const page = group.question_page[sectionIndex];
                                   if (!page?.form) return null;
 
                                   const fields = page.form;
@@ -1721,8 +1816,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
 
                                           return (
                                             <TableCell key={field.custom_field_id}>
@@ -1732,7 +1827,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 (idx, fieldKey, value) => {
                                                   setDataVisitor((prev) => {
                                                     const next = [...prev];
-                                                    const s = activeStep - 1;
+                                                    const s = sectionIndex;
 
                                                     if (!next[gIdx]?.question_page?.[s]?.form)
                                                       return prev;
@@ -1750,7 +1845,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 },
                                                 {
                                                   showLabel: false,
-                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                  uniqueKey: `${sectionIndex}:${gIdx}:${
                                                     field.custom_field_id
                                                   }`,
                                                   details: page.form || [],
@@ -1853,7 +1948,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                   if (!isVisible) return;
                   const fieldId = item.custom_field_id || item.id;
-                  const key = `${activeStep - 1}:${fieldId}`;
+                  const key = `${sectionIndex}:${fieldId}`;
 
                   validateField(item, key, errors);
                 });
@@ -1877,7 +1972,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2147,7 +2242,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   }}
                   noOptionsText={
                     (inputValues[index] || '').length < 3
-                      ? 'Enter at least 3 characters to search'
+                      ? t('enterMin3CharsToSearch')
                       : 'Not found'
                   }
                   value={options.filter((opt) => parents.includes(opt.value))}
@@ -2168,7 +2263,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   renderInput={(params) => (
                     <CustomTextField
                       {...params}
-                      placeholder="Enter at least 3 characters to search"
+                      placeholder={t('enterMin3CharsToSearch')}
                       fullWidth
                       error={!!errorMessage}
                       helperText={errorMessage}
@@ -2200,9 +2295,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 error={!!errorMessage}
                 helperText={errorMessage}
                 sx={{ minWidth: 160, maxWidth: '100%' }}
-                placeholder="Select Role"
+                placeholder={t('selectRole')}
               >
-                <MenuItem value="">Select Role</MenuItem>
+                <MenuItem value="">{t('selectRole')}</MenuItem>
 
                 {visitorRoles.map((role: any) => (
                   <MenuItem key={role.id} value={role.role}>
@@ -2228,9 +2323,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-              }
+              noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
               value={
                 options.find(
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
@@ -2244,7 +2337,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               renderInput={(params) => (
                 <CustomTextField
                   {...params}
-                  placeholder="Enter at least 3 characters to search"
+                  placeholder={t('enterMin3CharsToSearch')}
                   fullWidth
                   disabled={shouldDisable}
                   sx={{ minWidth: 160 }}
@@ -3230,7 +3323,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                  This site cannot be visited.
+                  {t('siteCannotBeVisited')}
                 </Typography>
               )}
             </Box>
@@ -3446,6 +3539,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
     groupIdx?: string | undefined,
     isSelfOnly: boolean = false,
+    options?: {
+      disabled?: boolean;
+    },
   ) => {
     if (!Array.isArray(details)) {
       return (
@@ -3715,7 +3811,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       // disabled: site.can_visited === false,
                       disabled: site.is_drop_point === true,
                       can_visited: site.can_visited,
-                      helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
+                      helperText: site.can_visited === false ? t('siteCannotBeVisited') : '',
                     }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
@@ -3754,12 +3850,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               }));
                             }
                           }}
-                          // filterOptions={(opts, state) => {
-                          //   if (state.inputValue.length < 3) return [];
-                          //   return opts.filter((opt) =>
-                          //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                          //   );
-                          // }}
                           filterOptions={(opts, state) => {
                             const keyword = state.inputValue.trim().toLowerCase();
 
@@ -3778,7 +3868,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
                                 : inputValues[originalIndex]) || ''
                             ).length < 3
-                              ? 'Enter at least 3 characters to search'
+                              ? t('enterMin3CharsToSearch')
                               : 'Not found'
                           }
                           value={options.filter((opt) =>
@@ -3809,8 +3899,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? String(item.answer_text).split(',')
-                              : [];
+                                ? String(item.answer_text).split(',')
+                                : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3860,7 +3950,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Select Site or type at least 3 characters to search"
+                              placeholder={t('selectSiteMin3Chars')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -4011,7 +4101,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select PIC Host or type at least 3 characters to search"
+                            placeholder={t('selectPicHostMin3Chars')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -4049,7 +4139,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         }}
                         noOptionsText={
                           (inputValues[originalIndex] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
+                            ? t('enterMin3CharsToSearch')
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -4106,7 +4196,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Enter at least 3 characters to search"
+                            placeholder={t('enterMin3CharsToSearch')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -4133,7 +4223,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select Role"
+                            placeholder={t('selectRole')}
                             error={!!errorMessage}
                             helperText={errorMessage}
                           />
@@ -4159,7 +4249,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[originalIndex] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -4171,7 +4261,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
-                          placeholder="Enter at least 3 characters to search"
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
                           error={!!errorMessage}
                           helperText={errorMessage}
@@ -4252,8 +4342,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? [String(item.answer_text)]
-                              : [];
+                                ? [String(item.answer_text)]
+                                : [];
 
                             return (
                               <FormControlLabel
@@ -4350,11 +4440,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 )}
                               </Typography>
 
-                              <Tooltip
-                                title="The visitor period start is the date when the visitor's visit begins"
-                                arrow
-                                placement="top"
-                              >
+                              <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
                                 <IconInfoCircle
                                   size={20}
                                   style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -4446,11 +4532,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 )}
                               </Typography>
 
-                              <Tooltip
-                                title="The visitor period end is the date when the visitor's visit ends"
-                                arrow
-                                placement="top"
-                              >
+                              <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
                                 <IconInfoCircle
                                   size={20}
                                   style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -5793,7 +5875,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz,
-            registered_site: formData.registered_site ?? '',
+            registered_site: formData.registered_site ?? null,
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
             flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
@@ -6320,7 +6402,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return o;
   };
 
-  const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
+  const stepLabels = useMemo(() => {
+    if (isAddTransaction) {
+      return draggableSteps;
+    }
+
+    return ['User Type', ...draggableSteps];
+  }, [draggableSteps, isAddTransaction]);
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -6363,6 +6451,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
 
+  const getSectionIndex = (step: number) => (isAddTransaction ? step : step - 1);
+
   return (
     <PageContainer title="Live Visitor" description="this is Add Visitor page">
       <form onSubmit={handleOnSubmit}>
@@ -6390,15 +6480,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Stepper
                       activeStep={activeStep}
                       alternativeLabel
+                      connector={isAddTransaction ? <></> : undefined}
                       sx={{
                         width: '100%',
                         flexWrap: 'nowrap',
                         justifyContent: 'flex-start',
-                        // columnGap: 6,
+
                         '& .MuiStep-root': {
                           flex: '1 1 0',
-                          // px: 1.5,
                         },
+                        ...(isAddTransaction && {
+                          '& > .MuiStepConnector-root': {
+                            '&:first-of-type': {
+                              display: 'none !important',
+                            },
+                          },
+                        }),
+
                         '& .MuiStepLabel-label': {
                           fontSize: '0.875rem',
                           whiteSpace: 'nowrap',
@@ -6407,37 +6505,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           textWrap: 'wrap',
                           textAlign: 'center',
                         },
+
                         '& .MuiStepIcon-root': {
                           width: 30,
                           height: 30,
                         },
                       }}
                     >
-                      <Step
-                        key="User Type"
-                        completed={false}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          m: 0,
-                        }}
-                      >
-                        <StepLabel
-                          // onClick={() => setActiveStep(0)}
-                          onClick={() => handleStepChange(0)}
-                          StepIconProps={{ sx: { width: 30, height: 30 } }}
+                      {!isAddTransaction && (
+                        <Step
+                          key="User Type"
+                          completed={false}
                           sx={{
-                            '& .MuiStepLabel-label': {
-                              fontWeight: activeStep === 0 ? 600 : 400,
-                              color: activeStep === 0 ? 'primary.main' : 'text.secondary',
-                            },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            m: 0,
                           }}
                         >
-                          User Type
-                        </StepLabel>
-                      </Step>
+                          <StepLabel
+                            // onClick={() => setActiveStep(0)}
+                            onClick={() => handleStepChange(0)}
+                            StepIconProps={{ sx: { width: 30, height: 30 } }}
+                            sx={{
+                              '& .MuiStepLabel-label': {
+                                fontWeight: activeStep === 0 ? 600 : 400,
+                                color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                              },
+                            }}
+                          >
+                            User Type
+                          </StepLabel>
+                        </Step>
+                      )}
 
                       {/* Dynamic Draggable Steps */}
                       {draggableSteps.map((label, index) => (
@@ -6455,17 +6556,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 cursor: 'pointer',
                               }}
                               // onClick={() => setActiveStep(index + 1)}
-                              onClick={() => handleStepChange(index + 1)}
+                              // onClick={() => handleStepChange(index + 1)}
+                              onClick={() => handleStepChange(isAddTransaction ? index : index + 1)}
                             >
                               <Box
                                 sx={{
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
-                                    : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                    : activeStep === (isAddTransaction ? index : index + 1)
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
-                                    snapshot.isDragging || activeStep === index + 1
+                                    snapshot.isDragging ||
+                                    activeStep === (isAddTransaction ? index : index + 1)
                                       ? '#fff'
                                       : '#fff',
                                   width: 30,
@@ -6480,14 +6583,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   marginRight: -2,
                                 }}
                               >
-                                {index + 2}
+                                {/* {index + 2} */}
+                                {isAddTransaction ? index + 1 : index + 2}
                               </Box>
                               <StepLabel
                                 sx={{
                                   '& .MuiStepLabel-label': {
-                                    fontWeight: activeStep === index + 1 ? 600 : 400,
+                                    fontWeight:
+                                      activeStep === (isAddTransaction ? index : index + 1)
+                                        ? 600
+                                        : 400,
+
                                     color:
-                                      activeStep === index + 1 ? 'primary.main' : 'text.secondary',
+                                      activeStep === (isAddTransaction ? index : index + 1)
+                                        ? 'primary.main'
+                                        : 'text.secondary',
                                   },
                                 }}
                               >
@@ -6560,11 +6670,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   disabled={loading || !formData.visitor_type}
-                  onClick={handleSaveGroup}
+                  onClick={isAddTransaction ? handleOnSubmit : handleSaveGroup}
                 >
-                  {loading ? 'Saving...' : 'Save Group'}
+                  {loading
+                    ? isAddTransaction
+                      ? 'Submitting...'
+                      : 'Saving Group'
+                    : isAddTransaction
+                      ? 'Submit'
+                      : 'Save Group'}
                 </Button>
-              ) : activeStep === 0 ? (
+              ) : !isAddTransaction && activeStep === 0 ? (
                 <Button
                   variant="contained"
                   color="primary"
@@ -6594,7 +6710,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
                 onClick={handleOnSubmit}
               >
-                {loading ? <CircularProgress size={20} /> : 'Submit'}
+                Submit
               </Button>
             ) : (
               <Button

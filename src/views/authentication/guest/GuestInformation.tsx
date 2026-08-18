@@ -65,6 +65,7 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
 import imageCompression from 'browser-image-compression';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -1960,16 +1961,7 @@ const GuestInformationStepper = () => {
         invitationData={invitationData}
         formValues={formValues}
       />
-      <Backdrop
-        open={submitting}
-        sx={{
-          zIndex: 99999,
-        }}
-      >
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress color="primary" />
-        </Box>
-      </Backdrop>
+      <GlobalBackdropLoading open={submitting} />
 
       <Snackbar
         open={snackbar.open}

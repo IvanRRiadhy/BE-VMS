@@ -1788,8 +1788,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
                                           const handleChangeGroup = (
                                             idx: number,
                                             fieldKey: keyof FormVisitor,
@@ -1961,8 +1961,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             const proxyField = hasAns(field)
                                               ? field
                                               : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                                ? { ...field, ...pickAns(shared) }
+                                                : field;
                                             const handleChangeGroup = (
                                               idx: number,
                                               fieldKey: keyof FormVisitor,
@@ -2171,7 +2171,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2625,7 +2625,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                  This site cannot be visited.
+                  {t('siteCannotBeVisited')}
                 </Typography>
               )}
             </Box>
@@ -3113,7 +3113,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       // disabled: site.can_visited === false,
                       disabled: site.is_drop_point === true,
                       can_visited: site.can_visited,
-                      helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
+                      helperText: site.can_visited === false ? t('siteCannotBeVisited') : '',
                     }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
@@ -3176,7 +3176,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
                                 : inputValues[originalIndex]) || ''
                             ).length < 3
-                              ? 'Enter at least 3 characters to search'
+                              ? t('enterMin3CharsToSearch')
                               : 'Not found'
                           }
                           value={options.filter((opt) =>
@@ -3207,8 +3207,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? String(item.answer_text).split(',')
-                              : [];
+                                ? String(item.answer_text).split(',')
+                                : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3258,7 +3258,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Select Site or type at least 3 characters to search"
+                              placeholder={t('selectSiteMin3Chars')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -3415,7 +3415,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select PIC Host or type at least 3 characters to search"
+                            placeholder={t('selectPicHostMin3Chars')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -3453,7 +3453,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         }}
                         noOptionsText={
                           (inputValues[originalIndex] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
+                            ? t('enterMin3CharsToSearch')
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -3507,7 +3507,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Enter at least 3 characters to search"
+                            placeholder={t("enterMin3CharsToSearch")}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -3534,7 +3534,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select Role"
+                            placeholder={t('selectRole')}
                             error={!!errorMessage}
                             helperText={errorMessage}
                           />
@@ -3560,7 +3560,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[originalIndex] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -3572,7 +3572,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
-                          placeholder="Enter at least 3 characters to search"
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
                           error={!!errorMessage}
                           helperText={errorMessage}
@@ -3653,8 +3653,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? [String(item.answer_text)]
-                              : [];
+                                ? [String(item.answer_text)]
+                                : [];
 
                             return (
                               <FormControlLabel
@@ -3949,7 +3949,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         }}
                         slotProps={{
                           actionBar: {
-                            actions: ['clear', 'accept'],
+                            actions: ['today', 'clear', 'accept'],
                           },
                           textField: {
                             fullWidth: true,
@@ -5272,7 +5272,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('payload', payload);
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
@@ -5938,8 +5938,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'

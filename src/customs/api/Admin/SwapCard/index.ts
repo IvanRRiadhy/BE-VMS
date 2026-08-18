@@ -12,8 +12,14 @@ export const swapCard = async (data: any): Promise<any> => {
 };
 
 export const returnCard = async (data: any): Promise<any> => {
-  const response = await axiosInstance.put('/operator-invitation/return-access-card', data);
-  return response.data;
+  try {
+    const response = await axiosInstance.put('/operator-invitation/return-access-card', data);
+
+    return response.data;
+  } catch (error) {
+    console.error('Failed to return access card:', error);
+    throw error;
+  }
 };
 
 export const getRegisteredSiteOperator = async (): Promise<any> => {

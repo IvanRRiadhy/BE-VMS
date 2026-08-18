@@ -40,9 +40,11 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement>(null);
-
+  const submitLockRef = useRef(false);
   useEffect(() => {
     if (!open) {
+      submitLockRef.current = false;
+
       setQrValue('');
       setQrMode('manual');
       setHasDecoded(false);
@@ -55,15 +57,24 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
 
   const handleSubmitManual = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!qrValue.trim()) return;
+    if (submitLockRef.current) return;
+
+    submitLockRef.current = true;
+    setIsSubmitting(true);
+    // Tutup dialog SEGERA
+    onClose();
+
     try {
-      setIsSubmitting(true);
-      await handleSubmitQRCode(qrValue);
-      onClose();
+      await handleSubmitQRCode(qrValue.trim());
+    } catch (error) {
+      console.error('MANUAL QR ERROR:', error);
     } finally {
-      setTimeout(() => setIsSubmitting(false), 400);
+      submitLockRef.current = false;
+      setIsSubmitting(false);
     }
   };
-
   const handleSubmitScan = async (value: string) => {
     setIsSubmitting(true);
     setQrValue(value);

@@ -788,21 +788,28 @@ const TableRowItem = React.memo(
                   <IconUserX size={20} color="red" />
                 )
               ) : isHaveDataImage && col === 'name' ? (
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center" gap={1.2}>
                   <Avatar
-                    src={
-                      // row.image
-                      //   ? row.image.startsWith('http') || row.image.startsWith('data:image')
-                      //     ? row.image
-                      //     : `${BASE_URL}${row.image}`
-                      //   : undefined
-                      undefined
-                    }
-                    sx={{ width: 32, height: 32 }}
+                    src={(() => {
+                      const image = row.selfie_image || row.faceimage;
+
+                      if (!image) return undefined;
+
+                      if (image.startsWith('data:image')) return image;
+                      if (image.startsWith('http')) return image;
+
+                      return `${BASE_URL}${image}`;
+                    })()}
+                    sx={{
+                      width: 36,
+                      height: 36,
+                    }}
                   >
-                    {/* {String(row.name ?? '')
-                      .charAt(0)
-                      .toUpperCase()} */}
+                    {!row.selfie_image &&
+                      !row.faceimage &&
+                      String(row.name ?? '')
+                        .charAt(0)
+                        .toUpperCase()}
                   </Avatar>
 
                   <Typography variant="body2">{row.name ?? '-'}</Typography>

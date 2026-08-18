@@ -172,5 +172,14 @@
   "agendaInformation": "Agenda acara kunjungan.",
   "sitePlaceInformation": "Lokasi tempat kunjungan, silahkan centang dan pilih lokasi yang sesuai.",
   "visitorPeriodStart": "Periode kunjungan dimulai pada tanggal ketika kunjungan visitor dimulai.",
-  "visitorPeriodEnd": "Periode kunjungan berakhir pada tanggal ketika kunjungan visitor selesai."
+  "visitorPeriodEnd": "Periode kunjungan berakhir pada tanggal ketika kunjungan visitor selesai.",
+  "siteCannotBeVisited": "Site ini tidak dapat dikunjungi",
+  "selectSiteMin3Chars": "Pilih Site atau ketik minimal 3 karakter untuk mencari",
+  "searchingHost": "Mencari Host...",
+  "selectPicHostMin3Chars": "Pilih PIC Host atau ketik minimal 3 karakter untuk mencari",
+  "enterMin3CharsToSearch": "Masukkan minimal 3 karakter untuk mencari",
+  "selectRole": "Pilih Role",
+  "visitorPeriodStartDescription": "Periode mulai kunjungan adalah tanggal saat kunjungan visitor dimulai",
+  "visitorPeriodEndDescription": "Periode akhir kunjungan adalah tanggal saat kunjungan visitor berakhir",
+  "dragDropOrTapToSelectFile": "Seret dan lepas atau ketuk untuk memilih file."
 }

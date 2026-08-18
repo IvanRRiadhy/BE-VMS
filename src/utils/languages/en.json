@@ -173,5 +173,14 @@
   "agendaInformation": "The agenda is the purpose of the visitor's visit",
   "sitePlaceInformation": "The site place is the location where the visitor will be received, please select and check the appropriate site place.",
   "visitorPeriodStart": "The visitor period start is the date when the visitor's visit begins",
-  "visitorPeriodEnd": "The visitor period end is the date when the visitor's visit ends"
+  "visitorPeriodEnd": "The visitor period end is the date when the visitor's visit ends",
+  "siteCannotBeVisited": "This site cannot be visited",
+  "selectSiteMin3Chars": "Select Site or type at least 3 characters to search",
+  "searchingHost": "Searching Host...",
+  "selectPicHostMin3Chars": "Select PIC Host or type at least 3 characters to search",
+  "enterMin3CharsToSearch": "Enter at least 3 characters to search",
+  "selectRole": "Select Role",
+  "visitorPeriodStartDescription": "The visitor period start is the date when the visitor's visit begins",
+  "visitorPeriodEndDescription": "The visitor period end is the date when the visitor's visit ends",
+  "dragDropOrTapToSelectFile": "Drag and drop or tap to select file."
 }

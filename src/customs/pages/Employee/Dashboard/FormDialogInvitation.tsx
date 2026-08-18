@@ -20,7 +20,6 @@ import {
   Backdrop,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
@@ -44,7 +43,6 @@ import {
   getDetailInvitationForm,
   submitPraFormEmployee,
 } from 'src/customs/api/visitor';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { IconArrowRight } from '@tabler/icons-react';
@@ -54,6 +52,7 @@ import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { useTranslation } from 'react-i18next';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -86,6 +85,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const { t } = useTranslation();
 
   const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
     if (!dateStr) return '-';
@@ -130,16 +130,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     fetchData();
   }, [id]);
 
-  // const validateStep = (section: any) => {
-  //   const newErrors: Record<string, string> = {};
-  //   section?.form?.forEach((f: any) => {
-  //     if (f.mandatory && !formValues[f.remarks]) {
-  //       newErrors[f.remarks] = `${f.long_display_text} is required`;
-  //     }
-  //   });
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0;
-  // };
 
   const handleChange = (remarks: string, value: any) =>
     setFormValues((prev) => ({ ...prev, [remarks]: value }));
@@ -904,7 +894,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                     }}
                     noOptionsText={
                       (inputValues[f.remarks] || '').length < 3
-                        ? 'Enter at least 3 characters to search.'
+                        ? t('enterMin3CharsToSearch')
                         : 'Not found'
                     }
                     value={
@@ -919,7 +909,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                       <TextField
                         {...params}
                         label=""
-                        placeholder="Enter at least 3 characters to search"
+                        placeholder={t('enterMin3CharsToSearch')}
                         fullWidth
                       />
                     )}
@@ -1083,7 +1073,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
 
       const payload = transformToSubmitPayload(invitationData);
       // console.log('payload:', JSON.stringify(payload, null, 2));
-      const res = await submitPraFormEmployee( payload);
+      const res = await submitPraFormEmployee(payload);
 
       const ok =
         res &&

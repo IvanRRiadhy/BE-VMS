@@ -2,27 +2,27 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
 
 interface DriverPaginationProps {
-    page: number;
-    rowsPerPage: number;
-    sortColumn: string;
-    sortDir: string;
-    search: string;
-    filters: {
-        gender: number;
-        organization: string;
-        department: string;
-        district: string;
-        joinStart: string;
-        exitEnd: string;
-        statusEmployee: number;
-    };
+  page: number;
+  rowsPerPage: number;
+  sort_column?: string;
+  sortDir: string;
+  search: string;
+  filters: {
+    gender: number;
+    organization: string;
+    department: string;
+    district: string;
+    joinStart: string;
+    exitEnd: string;
+    statusEmployee: number;
+  };
 }
 
 
 export const useDriverPagination = ({
     page,
     rowsPerPage,
-    sortColumn,
+    sort_column,
     sortDir,
     search,
     filters,
@@ -32,7 +32,7 @@ export const useDriverPagination = ({
             ['staff', 'pagination'],
             page,
             rowsPerPage,
-            sortColumn,
+            sort_column,
             sortDir,
             search,
             filters,
@@ -44,7 +44,7 @@ export const useDriverPagination = ({
             return getAllDriverPaginationFilterMore(
                 start,
                 rowsPerPage,
-                sortColumn,
+                sort_column,
                 sortDir,
                 search,
                 filters.gender === 0 ? undefined : filters.gender,

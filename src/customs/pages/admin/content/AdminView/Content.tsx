@@ -2453,9 +2453,7 @@ const Content = () => {
                 if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-              }
+              noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
               // value={
               //   options.find(
               //     (opt: { value: string; name: string }) =>
@@ -2473,7 +2471,7 @@ const Content = () => {
               renderInput={(params) => (
                 <CustomTextField
                   {...params}
-                  placeholder="Enter at least 3 characters to search"
+                  placeholder={t('enterMin3CharsToSearch')}
                   fullWidth
                   sx={{ minWidth: 160 }}
                 />

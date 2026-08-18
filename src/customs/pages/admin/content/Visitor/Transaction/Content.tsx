@@ -59,7 +59,6 @@ import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/u
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { Global } from 'recharts';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -126,6 +125,8 @@ const Content = () => {
   const [hostSearch, setHostSearch] = useState('');
   const debouncedSearch = useDebounce(hostSearch, 500);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
+  const [isAddTransaction, setIsAddTransaction] = useState(false);
   const [tab, setTab] = useState<any>(0);
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
@@ -281,14 +282,9 @@ const Content = () => {
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     setDuplicateData(null);
-
-    // reset edit mode
     setEdittingId('');
-
-    // reset wizard
+    setIsAddTransaction(false);
     setWizardKey((prev) => prev + 1);
-
-    // reset form
     setFormDataAddVisitor({
       visitor_type: '',
       is_group: false,
@@ -309,7 +305,7 @@ const Content = () => {
 
     // reset wizard
     setWizardKey((prev) => prev + 1);
-
+    setIsAddTransaction(false);
     // reset form
     setFormDataAddVisitor({
       visitor_type: '',
@@ -497,64 +493,6 @@ const Content = () => {
       showSwal('error', err?.response?.data?.msg ?? 'Failed to remove visitor');
     }
   };
-
-  // const [openAddVisitor, setOpenAddVisitor] = useState(false);
-  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
-  const [loadingAddVisitor, setLoadingAddVisitor] = useState(false);
-
-  const [questionPage, setQuestionPage] = useState<any[]>([]);
-  const [transactionFormData, setTransactionFormData] = useState<any>(null);
-
-  // const handleAdd = async (group: any) => {
-  //   try {
-  //     setLoadingAddTransaction(true);
-
-  //     const response = await getVisitorFormTransaction(group.id);
-  //     const data = response?.collection;
-
-  //     if (!data) return;
-
-  //     // Data yang akan dipakai oleh FormWizard,
-  //     // mengikuti struktur yang dipakai oleh duplicateData
-  //     const visitorData = {
-  //       ...data,
-
-  //       // Visitor baru → kosongkan Visitor Information
-  //       visitor_name: '',
-  //       visitor_email: '',
-  //       visitor_phone: '',
-  //       visitor_identity_id: '',
-  //       visitor_organization_name: '',
-  //       visitor_role: '',
-  //     };
-
-  //     setDuplicateData({
-  //       group: {
-  //         ...group,
-  //         group_name: data.group_name ?? group.group_name ?? '',
-  //         site_id: data.site_id ?? group.site_id ?? '',
-  //         visitor_type_id: data.visitor_type ?? group.visitor_type_id,
-  //       },
-  //       visitors: [visitorData],
-  //     });
-
-  //     // Form metadata
-  //     setFormDataAddVisitor({
-  //       visitor_type: data.visitor_type ?? group.visitor_type_id,
-  //       is_group: true,
-  //       registered_site: data.registered_site ?? group.site_id,
-  //     } as any);
-
-  //     setWizardKey((prev) => prev + 1);
-  //     setOpenPreRegistration(true);
-  //   } catch (error) {
-  //     console.error('Failed to load transaction form:', error);
-  //   } finally {
-  //     setLoadingAddTransaction(false);
-  //   }
-  // };
-
-  const [isAddTransaction, setIsAddTransaction] = useState(false);
 
   const handleAdd = async (group: any) => {
     try {

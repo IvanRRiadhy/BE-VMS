@@ -28,6 +28,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -111,6 +112,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
   const showLabel = opts?.showLabel ?? true;
   const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
   const errorMessage = fieldErrors[errorKey];
+  const { t } = useTranslation();
   let shouldDisable = false;
   const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
     onChange(idx, fieldKey, value);
@@ -280,9 +282,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                   );
                 }}
                 noOptionsText={
-                  (inputValues[index] || '').length < 3
-                    ? 'Enter at least 3 characters to search'
-                    : 'Not found'
+                  (inputValues[index] || '').length < 3 ? t('enterMin3CharsToSearch') : 'Not found'
                 }
                 value={options.filter((opt) => parents.includes(opt.value))}
                 onChange={(_, newValues) => {
@@ -302,19 +302,13 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 renderInput={(params) => (
                   <CustomTextField
                     {...params}
-                    placeholder="Enter at least 3 characters to search"
+                    placeholder={t('enterMin3CharsToSearch')}
                     fullWidth
                     error={!!errorMessage}
                     helperText={errorMessage}
                   />
                 )}
               />
-
-              {/* {field.remarks === 'site_place' && siteTree.length > 0 && (
-                            <SimpleTreeView>
-                              {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
-                            </SimpleTreeView>
-                          )} */}
               {siteTree[siteKey as any]?.length > 0 && (
                 <SimpleTreeView>
                   {siteTree[siteKey as any].map((node: any) =>
@@ -347,7 +341,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               helperText={errorMessage}
               sx={{ minWidth: '160px' }}
             >
-              <MenuItem value="">Select Role</MenuItem>
+              <MenuItem value="">{t("selectRole")}</MenuItem>
 
               {visitorRoles.map((role: any) => (
                 <MenuItem key={role.id} value={role.role}>
@@ -375,9 +369,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               if (term.length < 3) return [];
               return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
             }}
-            noOptionsText={
-              inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-            }
+            noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
             value={
               options.find(
                 (opt: { value: string; name: string }) => opt.value === field.answer_text,

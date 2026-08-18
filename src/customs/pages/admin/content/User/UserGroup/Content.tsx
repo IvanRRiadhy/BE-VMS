@@ -49,6 +49,7 @@ import useUserGroups from 'src/hooks/UserGroup/useUserGroupPagination';
 import useUserGroupMutation from 'src/hooks/UserGroup/useUserGroupMutation';
 import { useSites } from 'src/hooks/Sites/useSites';
 import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -68,6 +69,7 @@ const Content = () => {
   const [sortDir, setSortDir] = useState('desc');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { t } = useTranslation();
+  const [permissionLoading, setPermissionLoading] = useState(false);
   const { data, isLoading, refetch } = useUserGroups({
     page,
     rowsPerPage,
@@ -167,13 +169,18 @@ const Content = () => {
 
       return true;
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg ?? 'Failed to delete some items.');
+      showSwal(
+        'error',
+        error?.response?.data?.msg ?? t('deleteFailedMultiple', { name: 'user group' }),
+      );
 
       return false;
     }
   };
 
   const handlePermission = async (row: any) => {
+    setPermissionLoading(true);
+    setOpenPermission(true);
     try {
       setEdittingId(row.id);
       setSelectedRoleAccess(row.role_access?.toLowerCase() ?? '');
@@ -320,10 +327,10 @@ const Content = () => {
         visitorType,
         manageSite,
       });
-
-      setOpenPermission(true);
     } catch (error) {
       showSwal('error', 'Failed to load permission data.');
+    } finally {
+      setPermissionLoading(false);
     }
   };
 
@@ -751,6 +758,7 @@ const Content = () => {
       <DialogPermissionUserGroup
         open={openPermission}
         onClose={handleRequestClosePermission}
+        loading={permissionLoading}
         onSubmit={handleSubmitPermission}
         selectedRoleAccess={selectedRoleAccess}
         formData={formData}
@@ -769,17 +777,7 @@ const Content = () => {
         onDiscard={handleDiscard}
       />
 
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 99999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </PageContainer>
   );
 };

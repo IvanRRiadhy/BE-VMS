@@ -5,6 +5,7 @@ interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
+  sort_column?: string;
   search: string;
 }
 
@@ -12,6 +13,7 @@ export const useVisitorProviderPagination = ({
   page,
   rowsPerPage,
   sortDir,
+  sort_column,
   search,
 }: Props) => {
   return useQuery({
@@ -20,6 +22,7 @@ export const useVisitorProviderPagination = ({
       page,
       rowsPerPage,
       sortDir,
+      sort_column,
       search,
     ],
 
@@ -28,6 +31,7 @@ export const useVisitorProviderPagination = ({
         page * rowsPerPage,
         rowsPerPage,
         sortDir,
+        sort_column,
         search,
       ),
 

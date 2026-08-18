@@ -51,7 +51,6 @@ import dayjs from 'dayjs';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import { useActivities } from 'src/hooks/Dashboard/useActivity';
 import PendingInvitationDialog from '../Components/Dialog/PendingInvitationDialog';
-import AccessPassEmployee from '../Components/AccessPassEmployee';
 import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';

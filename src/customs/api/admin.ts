@@ -1707,6 +1707,7 @@ export const getAllEmployeePaginationFilterMore = async (
   start: number,
   length: number,
   sortDir?: string,
+  sort_column?: string,
   keyword: string = '',
   gender?: number,
   joinStart?: string,
@@ -1723,6 +1724,7 @@ export const getAllEmployeePaginationFilterMore = async (
   };
 
   if (keyword) params['search[value]'] = keyword;
+  if (sort_column) params.sort_column = sort_column;
   if (gender !== undefined && gender !== -1) params.gender = gender;
   if (joinStart) params['join-start'] = joinStart;
   if (exitEnd) params['exit-end'] = exitEnd;
@@ -1798,8 +1800,8 @@ export const uploadImageEmployee = async (
 export const getAllEmployeeBlacklistPagination = async (
   start: number,
   length: number,
-  sort_column?: string,
   sortDir?: string,
+  sort_column?: string,
   keyword: string = '',
   // joinStart?: string,
   // exitEnd?: string,

@@ -1102,8 +1102,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                         const originalIndex = page?.form?.findIndex(
                                           (f: any) => f.custom_field_id === field.custom_field_id,
                                         );
@@ -1241,8 +1241,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
 
                                           return (
                                             <TableCell key={field.custom_field_id}>
@@ -1395,7 +1395,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -1651,7 +1651,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 helperText={errorMessage}
                 sx={{ minWidth: 160, maxWidth: '100%' }}
               >
-                <MenuItem value="">Select Role</MenuItem>
+                <MenuItem value="">{t('selectRole')}</MenuItem>
 
                 {visitorRoles.map((role: any) => (
                   <MenuItem key={role.id} value={role.role}>
@@ -1678,9 +1678,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
-              }
+              noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
               value={
                 options.find(
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
@@ -1694,7 +1692,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               renderInput={(params) => (
                 <CustomTextField
                   {...params}
-                  placeholder="Enter at least 3 characters to search"
+                  placeholder={t('enterMin3CharsToSearch')}
                   fullWidth
                   disabled={shouldDisable}
                   sx={{ minWidth: 160 }}
@@ -2599,7 +2597,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                  This site cannot be visited.
+                  {t('siteCannotBeVisited')}
                 </Typography>
               )}
             </Box>
@@ -3075,7 +3073,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       // disabled: site.can_visited === false,
                       disabled: site.is_drop_point === true,
                       can_visited: site.can_visited,
-                      helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
+                      helperText: site.can_visited === false ? t('siteCannotBeVisited') : '',
                     }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
@@ -3138,7 +3136,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
                                 : inputValues[originalIndex]) || ''
                             ).length < 3
-                              ? 'Enter at least 3 characters to search'
+                              ? t('enterMin3CharsToSearch')
                               : 'Not found'
                           }
                           value={options.filter((opt) =>
@@ -3169,8 +3167,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? String(item.answer_text).split(',')
-                              : [];
+                                ? String(item.answer_text).split(',')
+                                : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3220,7 +3218,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Select Site or type at least 3 characters to search"
+                              placeholder={t('selectSiteMin3Chars')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -3363,7 +3361,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select PIC Host or type at least 3 characters to search"
+                            placeholder={t('selectPicHostMin3Chars')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -3401,7 +3399,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         }}
                         noOptionsText={
                           (inputValues[originalIndex] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
+                            ? t('enterMin3CharsToSearch')
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -3455,7 +3453,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Enter at least 3 characters to search"
+                            placeholder={t('enterMin3CharsToSearch')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -3482,7 +3480,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Select Role"
+                            placeholder={t('selectRole')}
                             error={!!errorMessage}
                             helperText={errorMessage}
                           />
@@ -3508,7 +3506,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[originalIndex] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -3520,7 +3518,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
-                          placeholder="Enter at least 3 characters to search"
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
                           error={!!errorMessage}
                           helperText={errorMessage}
@@ -3601,8 +3599,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? [String(item.answer_text)]
-                              : [];
+                                ? [String(item.answer_text)]
+                                : [];
 
                             return (
                               <FormControlLabel
@@ -3698,11 +3696,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 )}
                               </Typography>
 
-                              <Tooltip
-                                title="The visitor period start is the date when the visitor's visit begins"
-                                arrow
-                                placement="top"
-                              >
+                              <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
                                 <IconInfoCircle
                                   size={20}
                                   style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -3743,7 +3737,22 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 }}
                                 slotProps={{
                                   actionBar: {
-                                    actions: ['clear', 'accept'],
+                                    actions: ['today', 'clear', 'accept'],
+                                    sx: {
+                                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                                        color: 'secondary !important',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                                        backgroundColor: '#d32f2f !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                                        backgroundColor: '#055499 !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                    },
                                   },
                                   textField: {
                                     fullWidth: true,
@@ -3816,15 +3825,31 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 }}
                                 slotProps={{
                                   actionBar: {
-                                    actions: ['clear', 'accept'],
+                                    actions: ['today', 'clear', 'accept'],
+                                    sx: {
+                                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                                        color: 'secondary !important',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                                        backgroundColor: '#d32f2f !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                                        backgroundColor: '#055499 !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                    },
                                   },
+
                                   textField: {
                                     fullWidth: true,
-                                    error: !!endError,
-                                    helperText: endError,
                                     onClick: () => {
                                       setOpenEndPicker(true);
                                     },
+                                    error: !!endError,
+                                    helperText: endError,
                                     FormHelperTextProps: {
                                       sx: {
                                         ml: 0,
@@ -3867,7 +3892,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         }}
                         slotProps={{
                           actionBar: {
-                            actions: ['clear', 'accept'],
+                            actions: ['today','clear', 'accept'],
                           },
                           textField: {
                             fullWidth: true,
@@ -5715,8 +5740,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'
