@@ -196,7 +196,7 @@ const OperatorView = () => {
   const wsOcrQueueRef = useRef<string[]>([]);
   const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
   const [tick, forceTick] = useState(0);
-  const socketRef = useRef<WebSocket | null>(null);
+  // const socketRef = useRef<WebSocket | null>(null);
   const [resetStep, setResetStep] = useState(0);
   const [openAccessIssuance, setAccessIssuance] = useState(false);
   const [openReturnCard, setOpenReturnCard] = useState(false);
@@ -2715,15 +2715,15 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
     } catch (error: any) {
-     const message =
-       error?.response?.data?.msg ||
-       error?.response?.data?.message ||
-       error?.message ||
-       'Failed to return card';
+      const message =
+        error?.response?.data?.msg ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to return card';
 
-     const cleanMessage = message.replace(/^Failed Message:\s*/i, '');
+      const cleanMessage = message.replace(/^Failed Message:\s*/i, '');
 
-     showSwal('error', cleanMessage);
+      showSwal('error', cleanMessage);
     } finally {
       setLoadingAccess(false);
     }
@@ -3004,7 +3004,7 @@ const OperatorView = () => {
     }
   };
 
-  const { isOnline: isWebSocketOnline } = useWebSocket({
+  const { socket: socketRef, isOnline: isWebSocketOnline } = useWebSocket({
     url: WS_URL,
 
     onBarcodeScan: handleBarcodeScan,
@@ -3033,15 +3033,23 @@ const OperatorView = () => {
   });
 
   const sendWs = (payload: any) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(payload));
-    } else {
-      console.warn('WS not connected');
+    const socket = socketRef.current;
+
+    if (!socket) {
+      console.warn('WS socket belum tersedia');
+      return false;
     }
+
+    if (socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    socket.send(JSON.stringify(payload));
+
+    return true;
   };
 
   const handleSelectLiveVisitor = async (visitor: any) => {
-    // Reset pagination Related
     setRelatedPage(0);
 
     // Reset action/dialog dari visitor sebelumnya
@@ -3051,7 +3059,7 @@ const OperatorView = () => {
     setSelectedVisitors([visitor.id]);
 
     await handleSubmitQRCode(visitor.invitation_code);
-  };;
+  };
 
   const [runTour, setRunTour] = useState(false);
   const handleJoyrideCallback = (data: any) => {

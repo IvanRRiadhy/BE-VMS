@@ -75,11 +75,10 @@ let isHandling401 = false;
 const responseInterceptor = (response: any) => response;
 const errorInterceptor = (error: any) => {
   const status = error.response?.status;
-  const url = error.config?.url;
-  if (status === 404) {
-    if (url?.includes('/operator-invitation/return-access-card')) {
-      return Promise.reject(error);
-    }
+  const method = error.config?.method?.toLowerCase();
+
+  // 404 untuk GET dianggap sebagai data kosong
+  if (status === 404 && method === 'get') {
     return Promise.resolve({
       ...error.response,
       data: {

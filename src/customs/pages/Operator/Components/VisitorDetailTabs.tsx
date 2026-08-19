@@ -276,25 +276,29 @@ const VisitorDetailTabs: React.FC<Props> = ({
               </Box>
             </Grid>
 
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconCar />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Vehicle Type</CustomFormLabel>
-                  <Typography>{data?.vehicle_type || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
+            {!data?.is_host && (
+              <>
+                <Grid size={{ xs: 6, md: 6 }}>
+                  <Box display="flex" gap={2}>
+                    <IconCar />
+                    <Box>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Vehicle Type</CustomFormLabel>
+                      <Typography>{data?.vehicle_type || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
 
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconLicense />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Vehicle Plate No.</CustomFormLabel>
-                  <Typography>{data?.vehicle_plate_number || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
+                <Grid size={{ xs: 6, md: 6 }}>
+                  <Box display="flex" gap={2}>
+                    <IconLicense />
+                    <Box>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Vehicle Plate No.</CustomFormLabel>
+                      <Typography>{data?.vehicle_plate_number || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </>
+            )}
           </Grid>
         </Box>
       )}
