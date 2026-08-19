@@ -429,7 +429,7 @@ const Content = () => {
 
       showSwal('success', 'Transaction successfully cancelled');
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message ?? 'Failed to cancel visitor');
+      showSwal('error', error?.msg ?? 'Failed to cancel visitor');
     }
   };
 
@@ -746,7 +746,9 @@ const Content = () => {
         onApply={handleApplyFilter}
         onResetFilter={handleResetFilter}
       />
-      <GlobalBackdropLoading open={loadingAddTransaction} />
+      <GlobalBackdropLoading
+        open={loadingAddTransaction || removeMutation.isPending || cancelMutation.isPending}
+      />
     </PageContainer>
   );
 };

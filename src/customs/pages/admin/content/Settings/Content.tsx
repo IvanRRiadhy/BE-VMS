@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  Paper,
-  Tab,
-  Tabs,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
+import { Box, Grid2 as Grid, Paper, Tab, Tabs, useTheme, useMediaQuery } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
@@ -118,10 +110,7 @@ const Content = () => {
     setShowForm(true);
   };
 
-  const {
-    data,
-    isLoading,
-  } = useApprovalWorkflowPagination({
+  const { data, isLoading } = useApprovalWorkflowPagination({
     page,
     rowsPerPage,
     search,
@@ -148,7 +137,6 @@ const Content = () => {
     ],
     [settingData.length, totalRecords],
   );
-
 
   return (
     <PageContainer
@@ -186,6 +174,7 @@ const Content = () => {
               <Tab label="Configuration" />
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
+              <Tab label="Apikey Setting" />
               {/* <Tab label="Visitor Card Setting" /> */}
               <Tab label="Notification Setting" />
             </Tabs>
@@ -197,9 +186,7 @@ const Content = () => {
               }}
             >
               {/* vms configuration */}
-              {tabIndex === 0 && (
-                <VMSConfigurationTab />
-              )}
+              {tabIndex === 0 && <VMSConfigurationTab />}
               {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
@@ -221,8 +208,8 @@ const Content = () => {
                       isHaveHeader={false}
                       // onCheckedChange={setSelectedRows}
                       onEdit={(row) => handleEdit(row.id)}
-                    // onDelete={(row) => handleDelete(row.id.toString())}
-                    // onSearchKeywordChange={search}
+                      // onDelete={(row) => handleDelete(row.id.toString())}
+                      // onSearchKeywordChange={search}
                     />
                   ) : (
                     <FormSetting
@@ -235,7 +222,6 @@ const Content = () => {
                   )}
                 </Box>
               ) : null}
-
               {tabIndex === 2 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
@@ -257,6 +243,12 @@ const Content = () => {
                 </Box>
               ) : null} */}
               {tabIndex === 3 ? (
+                <Container title="Apikey Setting">
+                  <DynamicTable data={[]} />
+                </Container>
+              ) : null}
+              ;
+              {tabIndex === 4 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <NotificationSetting /> : null}
                 </Box>

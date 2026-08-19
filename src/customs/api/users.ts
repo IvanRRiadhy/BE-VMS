@@ -58,7 +58,7 @@ export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => 
 export const revokeToken = async (token?: string | null): Promise<RevokeTokenResponse> => {
   try {
     const response = await axiosInstance.get<RevokeTokenResponse>(`/_Auth/RevokeToken`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
@@ -156,14 +156,17 @@ export const getPermission = async (): Promise<any> => {
     throw error;
   }
 };
-
 export const cancelVisitor = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.delete(`/visitor-transaction/${id}`, {
-      headers: {
-        Accept: 'application/json',
+    const response = await axiosInstance.post(
+      `/visitor/transaction/${id}/cancel`,
+      {},
+      {
+        headers: {
+          Accept: 'application/json',
+        },
       },
-    });
+    );
 
     return response.data;
   } catch (error) {

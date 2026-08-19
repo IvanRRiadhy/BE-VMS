@@ -31,7 +31,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
 import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
@@ -182,6 +182,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
         }
       }}
       fullWidth
+      transitionDuration={0}
       maxWidth="md"
     >
       <DialogTitle sx={{ textTransform: 'capitalize' }}>
@@ -314,35 +315,42 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                             {formData.accesses.map((row: any, index: number) => (
                               <TableRow key={index}>
                                 <TableCell>
-                                  <FormControl size="small" fullWidth>
-                                    <Select
-                                      value={row.access_control_id}
-                                      onChange={(e) => {
-                                        const value = e.target.value as string;
-
-                                        setFormData((prev: any) => ({
-                                          ...prev,
-                                          accesses: prev.accesses.map((r: any, i: number) =>
-                                            i === index ? { ...r, access_control_id: value } : r,
-                                          ),
-                                        }));
-                                      }}
-                                    >
-                                      {accessControl.map((acessControl: any) => (
-                                        <MenuItem
-                                          key={acessControl.id}
-                                          value={acessControl.id}
-                                          disabled={formData.accesses.some(
-                                            (x: any, i: any) =>
-                                              x.access_control_id === acessControl.id &&
-                                              i !== index,
-                                          )}
-                                        >
-                                          {acessControl.name}
-                                        </MenuItem>
-                                      ))}
-                                    </Select>
-                                  </FormControl>
+                                  <Autocomplete
+                                    size="small"
+                                    fullWidth
+                                    options={accessControl}
+                                    value={
+                                      accessControl.find(
+                                        (ac: any) => ac.id === row.access_control_id,
+                                      ) ?? null
+                                    }
+                                    getOptionLabel={(option: any) => option.name ?? ''}
+                                    isOptionEqualToValue={(option: any, value: any) =>
+                                      option.id === value.id
+                                    }
+                                    getOptionDisabled={(option: any) =>
+                                      formData.accesses.some(
+                                        (x: any, i: number) =>
+                                          x.access_control_id === option.id && i !== index,
+                                      )
+                                    }
+                                    onChange={(_, newValue: any) => {
+                                      setFormData((prev: any) => ({
+                                        ...prev,
+                                        accesses: prev.accesses.map((r: any, i: number) =>
+                                          i === index
+                                            ? {
+                                                ...r,
+                                                access_control_id: newValue?.id ?? '',
+                                              }
+                                            : r,
+                                        ),
+                                      }));
+                                    }}
+                                    renderInput={(params) => (
+                                      <CustomTextField {...params} placeholder="Select access" />
+                                    )}
+                                  />
                                 </TableCell>
 
                                 <TableCell align="center">
@@ -428,7 +436,11 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                         </Table>
 
                         <Box sx={{ p: 2 }}>
-                          <Button variant="contained" onClick={handleAddSiteAssignment}>
+                          <Button
+                            variant="contained"
+                            onClick={handleAddSiteAssignment}
+                            startIcon={<IconPlus />}
+                          >
                             Add Access
                           </Button>
                         </Box>
