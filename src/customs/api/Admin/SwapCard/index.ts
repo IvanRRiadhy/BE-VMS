@@ -17,7 +17,6 @@ export const returnCard = async (data: any): Promise<any> => {
 
     return response.data;
   } catch (error) {
-    console.error('Failed to return access card:', error);
     throw error;
   }
 };

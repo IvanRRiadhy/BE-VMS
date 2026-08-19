@@ -420,7 +420,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                 }}
               />
             </Tooltip>
-            <IconButton
+            {/* <IconButton
               size="small"
               disabled={page === 0}
               onClick={() => setPage((p: any) => p - 1)}
@@ -431,19 +431,35 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             <Typography display="flex">
               {`${totalPages === 0 ? 0 : page + 1} / ${totalPages}`}
             </Typography>
-            {/* <IconButton
-            size="small"
-            onClick={() => setPage(page + 1)}
-            disabled={totalPages === 0 || page >= totalPages}
-          >
-            <ChevronRight />
-          </IconButton> */}
             <IconButton
               size="small"
               disabled={totalPages === 0 || page >= totalPages - 1}
               onClick={() => {
                 if (page < totalPages - 1) {
                   setPage(page + 1);
+                }
+              }}
+            >
+              <ChevronRight />
+            </IconButton> */}
+            <IconButton
+              size="small"
+              disabled={pagination.page === 0}
+              onClick={() => pagination.setPage((p: number) => p - 1)}
+            >
+              <ChevronLeft />
+            </IconButton>
+
+            <Typography display="flex">
+              {`${totalPages === 0 ? 0 : pagination.page + 1} / ${totalPages}`}
+            </Typography>
+
+            <IconButton
+              size="small"
+              disabled={totalPages === 0 || pagination.page >= totalPages - 1}
+              onClick={() => {
+                if (pagination.page < totalPages - 1) {
+                  pagination.setPage((p: number) => p + 1);
                 }
               }}
             >

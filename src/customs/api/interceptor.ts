@@ -75,7 +75,11 @@ let isHandling401 = false;
 const responseInterceptor = (response: any) => response;
 const errorInterceptor = (error: any) => {
   const status = error.response?.status;
+  const url = error.config?.url;
   if (status === 404) {
+    if (url?.includes('/operator-invitation/return-access-card')) {
+      return Promise.reject(error);
+    }
     return Promise.resolve({
       ...error.response,
       data: {

@@ -992,7 +992,7 @@ const OperatorView = () => {
       }
       handleCloseScanQR();
       setTypeVisitor('related');
-
+      setRelatedPage(0);
       const matched = freshVisitors.collection.find((v: any) => v.visitor_number === scannedNumber);
 
       if (matched) {
@@ -2715,13 +2715,15 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
     } catch (error: any) {
-      const message =
-        error?.response?.data?.msg ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to return card';
+     const message =
+       error?.response?.data?.msg ||
+       error?.response?.data?.message ||
+       error?.message ||
+       'Failed to return card';
 
-      showSwal('error', message);
+     const cleanMessage = message.replace(/^Failed Message:\s*/i, '');
+
+     showSwal('error', cleanMessage);
     } finally {
       setLoadingAccess(false);
     }
@@ -3039,10 +3041,17 @@ const OperatorView = () => {
   };
 
   const handleSelectLiveVisitor = async (visitor: any) => {
+    // Reset pagination Related
+    setRelatedPage(0);
+
+    // Reset action/dialog dari visitor sebelumnya
+    setActionButton('');
+    setAccessIssuance(false);
+
     setSelectedVisitors([visitor.id]);
 
     await handleSubmitQRCode(visitor.invitation_code);
-  };
+  };;
 
   const [runTour, setRunTour] = useState(false);
   const handleJoyrideCallback = (data: any) => {
