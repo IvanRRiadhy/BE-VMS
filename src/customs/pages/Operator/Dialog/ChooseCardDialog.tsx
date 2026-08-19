@@ -411,6 +411,7 @@ const ChooseCardDialog = ({
                       <Checkbox
                         checked={isChosen}
                         // disabled={!isChosen}
+                        disabled={isDisabled}
                         onChange={() => {
                           // if (isDisabled) return;
                           handleToggleCard(card.card_number);
