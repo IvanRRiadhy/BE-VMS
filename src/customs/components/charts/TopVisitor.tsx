@@ -71,7 +71,7 @@ const TopVisitor = () => {
         rotate: 0,
         style: {
           colors: '#000',
-          fontSize: '12px',
+          fontSize: '13px',
         },
         formatter: (value: any) => {
           if (value === null || value === undefined) return '';
@@ -101,7 +101,7 @@ const TopVisitor = () => {
       borderColor: '#e5e7eb',
       strokeDashArray: 4,
     },
-    colors: [theme === 'dark' ? '#055499' : '#055499'],
+    colors: [theme === 'dark' ? '#055499' : '#05367a'],
     tooltip: {
       theme: theme === 'dark' ? 'dark' : 'light',
       x: {

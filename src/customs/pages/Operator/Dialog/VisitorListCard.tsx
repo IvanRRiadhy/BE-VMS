@@ -55,9 +55,11 @@ interface VisitorListCardProps {
   totalVisitors: number;
   filteredVisitors: any[];
   relatedVisitors: any[];
-  onRefresh: () => void;
+  onRefresh?: () => Promise<void>;
   invitationCode: any[];
+  isReconnecting?: any;
   availableActions: AvailableAction[];
+  isWebSocketOnline?: any;
   lgUp: boolean;
   theme: any;
   permissionHook: PermissionHook;
@@ -101,12 +103,14 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   totalVisitors,
   filteredVisitors,
   relatedVisitors,
+  isWebSocketOnline,
   invitationCode,
   availableActions,
   lgUp,
   theme,
   permissionHook,
   onRefresh,
+  isReconnecting,
   containerRef,
   CustomTextField,
   getCdnUrl,
@@ -163,7 +167,27 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
 
     setOpenFilter(false);
   };
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const handleRefresh = async () => {
+    const startTime = Date.now();
+
+    try {
+      setIsRefreshing(true);
+
+      await onRefresh?.();
+
+      const elapsed = Date.now() - startTime;
+      const minimumDuration = 600;
+      const remaining = Math.max(minimumDuration - elapsed, 0);
+
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   return (
     <>
       <Card
@@ -194,26 +218,123 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               <Tab value="related" label={`Related Visitors (${relatedCount})`} />
             </Tabs>
           </Box>
-          <Tooltip title="Refresh Visitor List" placement="top" arrow>
-            <Button
-              onClick={onRefresh}
-              startIcon={<IconRefresh size={20} />}
+          <Box display="flex" alignItems="center" gap={1.5}>
+            {/* Online Indicator */}
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={0.7}
               sx={{
-                minWidth: 40,
+                px: 1.2,
                 height: 40,
-                px: 1.5,
                 border: 1,
-                borderColor: 'divider',
+                borderColor: isWebSocketOnline ? 'success.light' : 'error.light',
                 borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                color: 'text.primary',
-                flexShrink: 0,
+
+                animation: 'wsStatusPulse 2s ease-in-out infinite',
+
+                '@keyframes wsStatusPulse': {
+                  '0%': {
+                    opacity: 0.75,
+                    transform: 'scale(0.98)',
+                  },
+                  '50%': {
+                    opacity: 1,
+                    transform: 'scale(1)',
+                  },
+                  '100%': {
+                    opacity: 0.75,
+                    transform: 'scale(0.98)',
+                  },
+                },
               }}
             >
-              Refresh
-            </Button>
-          </Tooltip>
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  bgcolor: isWebSocketOnline ? 'success.main' : 'error.main',
+
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: -4,
+                    borderRadius: '50%',
+                    border: '2px solid',
+                    borderColor: isWebSocketOnline ? 'success.main' : 'error.main',
+                    animation: 'wsDotPulse 1.5s ease-out infinite',
+                  },
+
+                  '@keyframes wsDotPulse': {
+                    '0%': {
+                      transform: 'scale(0.7)',
+                      opacity: 0.8,
+                    },
+                    '70%': {
+                      transform: 'scale(1.7)',
+                      opacity: 0,
+                    },
+                    '100%': {
+                      transform: 'scale(1.7)',
+                      opacity: 0,
+                    },
+                  },
+                }}
+              />
+
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                color={isWebSocketOnline ? 'success.main' : 'error.main'}
+              >
+                {isWebSocketOnline ? 'Online' : 'Offline'}
+              </Typography>
+            </Box>
+
+            {/* Refresh */}
+            <Tooltip title="Refresh Visitor List" placement="top" arrow>
+              <Button
+                onClick={handleRefresh}
+                startIcon={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      animation: isRefreshing ? 'refreshSpin 0.8s linear infinite' : 'none',
+
+                      '@keyframes refreshSpin': {
+                        '0%': {
+                          transform: 'rotate(0deg)',
+                        },
+                        '100%': {
+                          transform: 'rotate(360deg)',
+                        },
+                      },
+                    }}
+                  >
+                    <IconRefresh size={20} />
+                  </Box>
+                }
+                sx={{
+                  minWidth: 40,
+                  height: 40,
+                  px: 1.5,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  flexShrink: 0,
+                }}
+              >
+                Refresh
+              </Button>
+            </Tooltip>
+          </Box>
         </Box>
 
         <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>

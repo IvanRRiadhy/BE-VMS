@@ -5,9 +5,10 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTopVisitingPurpose } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import dayjs from 'dayjs';
 
 const COLORS = [
-  '#055499',
+  '#05367a',
   // '#f97316',
   // '#22c55e',
   // '#eab308',
@@ -30,15 +31,14 @@ const TopVisitingPurposeChart = () => {
     colors: [],
   });
 
-  const start = startDate?.toISOString().split('T')[0];
-  const end = endDate?.toISOString().split('T')[0];
-
+  // const start = startDate?.toISOString().split('T')[0];
+  // const end = endDate?.toISOString().split('T')[0];
+  const start = startDate ? dayjs(startDate).format('YYYY-MM-DD') : undefined;
+  const end = endDate ? dayjs(endDate).format('YYYY-MM-DD') : undefined;
   useEffect(() => {
- 
-
     const fetchData = async () => {
       try {
-        const res = await getTopVisitingPurpose( start, end);
+        const res = await getTopVisitingPurpose(start, end);
 
         const labels = res.collection.map((item: any) => item.name);
         const values = res.collection.map((item: any) => item.count);
@@ -51,7 +51,7 @@ const TopVisitingPurposeChart = () => {
     };
 
     fetchData();
-  }, [ start, end]);
+  }, [start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {

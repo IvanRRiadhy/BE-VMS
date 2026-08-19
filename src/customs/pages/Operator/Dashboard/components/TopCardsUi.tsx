@@ -1,39 +1,98 @@
-import { Grid2 as Grid, Card, Typography, Box, Stack, Button } from '@mui/material';
-
+import { Grid2 as Grid, Card, Typography, Box, Stack } from '@mui/material';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
-import { IconBolt } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { getVisitorChart } from 'src/customs/api/admin';
+import { useSelector } from 'react-redux';
 
-const CardItems = [
-  {
-    title: 'Visitors Expected',
-    value: 20,
-  },
-  {
-    title: 'Completed Meetings',
-    value: 10,
-  },
-  {
-    title: 'Defaulted Visitors',
-    value: 5,
-  },
-  {
-    title: 'Pending Visits',
-    value: 21,
-  },
-];
+interface VisitorStatusItem {
+  visitor_status: string;
+  Count: number;
+}
+
+interface ApiDateGroup {
+  date: string;
+  status: VisitorStatusItem[];
+}
 
 export default function TopCardsUI({ onOpenQuick }: any) {
-  const navigate = useNavigate();
-  const handleMoveAddVisitor = () => {
-    navigate('/operator/view');
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+
+  const [stats, setStats] = useState<Record<string, number>>({});
+
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   };
+
+  const start = formatLocalDate(startDate);
+  const end = formatLocalDate(endDate);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getVisitorChart(start, end);
+
+        const collection: ApiDateGroup[] = res.collection ?? [];
+
+        const currentTotals: Record<string, number> = {};
+
+        const rangeStart = new Date(`${start}T00:00:00`);
+        const rangeEnd = new Date(`${end}T23:59:59.999`);
+
+        collection.forEach((day) => {
+          const dayDate = new Date(`${day.date.split('T')[0]}T00:00:00`);
+
+          if (dayDate < rangeStart || dayDate > rangeEnd) {
+            return;
+          }
+
+          (day.status || []).forEach((item) => {
+            const key = item.visitor_status.trim().toLowerCase();
+
+            currentTotals[key] = (currentTotals[key] || 0) + Number(item.Count || 0);
+          });
+        });
+
+        setStats(currentTotals);
+      } catch (err) {
+        console.error('Failed to fetch visitor count:', err);
+        setStats({});
+      }
+    };
+
+    fetchData();
+  }, [start, end]);
+
+  const CardItems = [
+    {
+      title: 'Visitors Expected',
+      value: stats['preregis'] ?? 0,
+    },
+    {
+      title: 'Checked In Visitors',
+      value: stats['checkin'] ?? 0,
+    },
+    {
+      title: 'Check Out Visitors',
+      value: stats['checkout'] ?? 0,
+    },
+    {
+      title: 'Defaulted Visitors',
+      value: stats['denied'] ?? 0,
+    },
+    {
+      title: 'Pending Visits',
+      value: (stats['waiting'] ?? 0) + (stats['queue'] ?? 0) + (stats['pracheckin'] ?? 0),
+    },
+  ];
 
   return (
     <Grid container spacing={2} alignItems="stretch">
       {CardItems.map((item, index) => (
-        <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} sx={{ display: 'flex' }}>
+        <Grid key={index} size={{ xs: 12, sm: 6, md: 3, lg: 2.4 }} sx={{ display: 'flex' }}>
           <Card
             sx={{
               flex: 1,
@@ -58,17 +117,8 @@ export default function TopCardsUI({ onOpenQuick }: any) {
                 >
                   {item.value}
                 </Typography>
-
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: '#A0A0A0',
-                    mt: 0.5,
-                  }}
-                >
-                  Today
-                </Typography>
               </Box>
+
               <Box
                 sx={{
                   width: 50,
@@ -101,79 +151,6 @@ export default function TopCardsUI({ onOpenQuick }: any) {
           </Card>
         </Grid>
       ))}
-      <Grid size={{ xs: 12, md: 12, lg: 2.4 }} sx={{ display: 'flex' }}>
-        {/* <Card
-          onClick={() => {}}
-          sx={{
-            flex: 1,
-            borderRadius: 4,
-            cursor: 'pointer',
-            minHeight: 120,
-            // backgroundColor: 'primary.main',
-            boxShadow: '0px 2px 10px rgba(0,0,0,0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
-              color: '#fff',
-            },
-          }}
-        > */}
-        <Box
-          display={'flex'}
-          flexDirection={'column'}
-          gap={2}
-          width={'100%'}
-          justifyContent={'flex-start'}
-        >
-          <Button
-            variant="contained"
-            startIcon={<AddBoxOutlinedIcon />}
-            onClick={handleMoveAddVisitor}
-            fullWidth
-            sx={{
-              color: '#fff',
-              // backgroundColor: 'transparent !important',
-              fontSize: 16,
-              fontWeight: 600,
-              textTransform: 'none',
-              '& .MuiButton-startIcon svg': {
-                fontSize: 32,
-              },
-              '&:hover': {
-                backgroundColor: 'primary.main',
-                color: '#fff',
-              },
-            }}
-          >
-            Add Visitor
-          </Button>
-          {/* <Button
-            startIcon={<IconBolt />}
-            variant="contained"
-            color="secondary"
-            onClick={onOpenQuick}
-            sx={{
-              color: '#fff',
-              fontSize: 16,
-              fontWeight: 600,
-              textTransform: 'none',
-              '& .MuiButton-startIcon svg': {
-                fontSize: 32,
-              },
-              '&:hover': {
-                backgroundColor: 'secondary',
-                color: '#fff',
-              },
-            }}
-          >
-            Quick Access
-          </Button> */}
-        </Box>
-        {/* </Card> */}
-      </Grid>
     </Grid>
   );
 }

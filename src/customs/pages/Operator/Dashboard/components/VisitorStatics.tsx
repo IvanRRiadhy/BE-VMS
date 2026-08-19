@@ -1,21 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
-import { Card, CardContent, Box, Typography, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { Card, CardContent, Box, Typography } from '@mui/material';
 import { ApexOptions } from 'apexcharts';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { getTopVisitors } from 'src/customs/api/admin';
+import dayjs from 'dayjs';
 
 const VisitorStatistics = () => {
-  const [filter, setFilter] = React.useState('week');
+  const { t } = useTranslation();
 
-  const handleChange = (event: React.MouseEvent<HTMLElement>, newFilter: string) => {
-    if (newFilter !== null) {
-      setFilter(newFilter);
-    }
-  };
+  const [labels, setLabels] = useState<string[]>([]);
+  const [values, setValues] = useState<number[]>([]);
+
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+
+  // const start = startDate?.toISOString().split('T')[0];
+  // const end = endDate?.toISOString().split('T')[0];
+
+  const start = startDate ? dayjs(startDate).format('YYYY-MM-DD') : undefined;
+  const end = endDate ? dayjs(endDate).format('YYYY-MM-DD') : undefined;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getTopVisitors(start ?? '', end ?? '');
+
+        const sliced = (res?.collection ?? []).slice(0, 10);
+
+        setLabels(sliced.map((item: any) => item.name));
+        setValues(sliced.map((item: any) => item.count));
+      } catch (error) {
+        setLabels([]);
+        setValues([]);
+      }
+    };
+
+    fetchData();
+  }, [start, end]);
 
   const series = [
     {
       name: 'Visits',
-      data: [60, 78, 25, 70, 50, 75, 92],
+      data: values,
     },
   ];
 
@@ -26,49 +53,65 @@ const VisitorStatistics = () => {
         show: false,
       },
     },
+
     plotOptions: {
       bar: {
         borderRadius: 6,
         columnWidth: '45%',
       },
     },
+
     dataLabels: {
       enabled: false,
     },
+
     stroke: {
       show: false,
     },
+
     xaxis: {
-      categories: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      categories: labels,
+
       axisBorder: {
         show: false,
       },
+
       axisTicks: {
         show: false,
       },
+
       labels: {
         style: {
           fontSize: '12px',
+          fontWeight: '400',
+          fontFamily: "Plus Jakarta Sans', sans-serif",
         },
       },
     },
+
     yaxis: {
+      min: 0,
+
       labels: {
         style: {
           fontSize: '12px',
         },
       },
     },
+
     grid: {
       borderColor: '#f1f1f1',
       strokeDashArray: 4,
     },
+
     tooltip: {
       y: {
         formatter: (val) => `${val} Visits`,
       },
     },
-    colors: ['#3B5BFF'],
+
+    colors: ['#05367a'],
+
     states: {
       hover: {
         filter: {
@@ -86,17 +129,11 @@ const VisitorStatistics = () => {
         height: '410px',
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: 1 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h6" fontWeight={700}>
-            Visitor Statistic
+            Top Visitor Statistic
           </Typography>
-
-          <ToggleButtonGroup value={filter} exclusive onChange={handleChange} size="small">
-            <ToggleButton value="week">Week</ToggleButton>
-            <ToggleButton value="month">Month</ToggleButton>
-            <ToggleButton value="year">Year</ToggleButton>
-          </ToggleButtonGroup>
         </Box>
 
         <Chart options={options} series={series} type="bar" height={300} />

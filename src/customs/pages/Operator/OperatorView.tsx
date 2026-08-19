@@ -99,6 +99,7 @@ import { Joyride, STATUS } from 'react-joyride';
 import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
 import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
 import { useQueryClient } from '@tanstack/react-query';
+import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -1019,7 +1020,7 @@ const OperatorView = () => {
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
       visitor_id: v.visitor_id ?? '-',
-      name: v.visitor?.name ?? '-',
+      name: v.visitor_name ?? '-',
       selfie_image: v.selfie_image ?? '-',
       identity_image: v.identity_image ?? '-',
       visitor_period_start: v.visitor_period_start ?? '-',
@@ -2408,7 +2409,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       await createSubmitCompletePraMultiple(payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -2872,108 +2873,155 @@ const OperatorView = () => {
   const bulkPrintingRef = useRef(false);
   const { WS_URL } = getConfig();
 
-  useEffect(() => {
-    if (!WS_URL) return;
-    const socket = new WebSocket(WS_URL);
+  // useEffect(() => {
+  //   if (!WS_URL) return;
+  //   const socket = new WebSocket(WS_URL);
 
-    socketRef.current = socket;
+  //   socketRef.current = socket;
 
-    socket.onopen = () => {
-      console.log('🟢 WS connected');
-    };
+  //   socket.onopen = () => {
+  //     console.log('🟢 WS connected');
+  //   };
 
-    socket.onerror = (err) => {
-      // console.error('❌ WS error:', err);
-    };
+  //   socket.onerror = (err) => {
+  //     // console.error('❌ WS error:', err);
+  //   };
 
-    socket.onclose = () => {
-      console.warn('🔌 WS disconnected');
-    };
+  //   socket.onclose = () => {
+  //     console.warn('🔌 WS disconnected');
+  //   };
 
-    socket.onmessage = async (event) => {
-      const raw = event.data;
-      // console.log('📥 WS message:', raw);
+  //   socket.onmessage = async (event) => {
+  //     const raw = event.data;
+  //     // console.log('📥 WS message:', raw);
 
-      try {
-        // =========================
-        // IMAGE STREAM
-        // =========================
-        if (typeof raw === 'string' && raw.includes('|data:image')) {
-          wsImageQueueRef.current.push(raw);
+  //     try {
+  //       // =========================
+  //       // IMAGE STREAM
+  //       // =========================
+  //       if (typeof raw === 'string' && raw.includes('|data:image')) {
+  //         wsImageQueueRef.current.push(raw);
 
-          forceTick((v) => v + 1);
+  //         forceTick((v) => v + 1);
 
-          return;
-        }
+  //         return;
+  //       }
 
-        // =========================
-        // JSON EVENT
-        // =========================
-        const msg = JSON.parse(raw);
+  //       // =========================
+  //       // JSON EVENT
+  //       // =========================
+  //       const msg = JSON.parse(raw);
 
-        // console.log('💬 WS JSON:', msg);
+  //       // console.log('💬 WS JSON:', msg);
 
-        // =========================
-        // BARCODE
-        // =========================
-        if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
-          const value = String(msg.data).trim();
+  //       // =========================
+  //       // BARCODE
+  //       // =========================
+  //       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+  //         const value = String(msg.data).trim();
 
-          if (!value) return;
-          if (scanLockRef.current) return;
-          if (lastScanRef.current === value) return;
+  //         if (!value) return;
+  //         if (scanLockRef.current) return;
+  //         if (lastScanRef.current === value) return;
 
-          scanLockRef.current = true;
-          lastScanRef.current = value;
+  //         scanLockRef.current = true;
+  //         lastScanRef.current = value;
 
-          try {
-            await handleSubmitQRCode(value);
-          } finally {
-            setTimeout(() => {
-              scanLockRef.current = false;
-              lastScanRef.current = '';
-            }, 2000);
-          }
+  //         try {
+  //           await handleSubmitQRCode(value);
+  //         } finally {
+  //           setTimeout(() => {
+  //             scanLockRef.current = false;
+  //             lastScanRef.current = '';
+  //           }, 2000);
+  //         }
 
-          return;
-        }
+  //         return;
+  //       }
 
-        // =========================
-        // OCR RESULT
-        // =========================
-        if (msg?.event === 'OCR_RESULT') {
-          wsOcrQueueRef.current.push(msg.data);
+  //       // =========================
+  //       // OCR RESULT
+  //       // =========================
+  //       if (msg?.event === 'OCR_RESULT') {
+  //         wsOcrQueueRef.current.push(msg.data);
 
-          forceTick((v) => v + 1);
+  //         forceTick((v) => v + 1);
 
-          return;
-        }
+  //         return;
+  //       }
 
-        // =========================
-        // PRINT RESULT
-        // =========================
-        if (msg?.event === 'PRINT_RESULT') {
-          if (bulkPrintingRef.current) {
-            return;
-          }
+  //       // =========================
+  //       // PRINT RESULT
+  //       // =========================
+  //       if (msg?.event === 'PRINT_RESULT') {
+  //         if (bulkPrintingRef.current) {
+  //           return;
+  //         }
 
-          if (msg.success) {
-            showSwal('success', 'Printed successfully');
-          } else {
-            showSwal('error', msg.message || 'Print failed');
-          }
+  //         if (msg.success) {
+  //           showSwal('success', 'Printed successfully');
+  //         } else {
+  //           showSwal('error', msg.message || 'Print failed');
+  //         }
 
-          return;
-        }
-      } catch (err) {
-        console.error('⚠️ WS parse error:', err);
+  //         return;
+  //       }
+  //     } catch (err) {
+  //       console.error('⚠️ WS parse error:', err);
+  //     }
+  //   };
+
+  //   return () => {
+  //     socket.close();
+  //   };
+  // }, []);
+
+  const handleBarcodeScan = async (value: string) => {
+    if (!value) return;
+
+    if (scanLockRef.current) return;
+    if (lastScanRef.current === value) return;
+
+    scanLockRef.current = true;
+    lastScanRef.current = value;
+
+    try {
+      await handleSubmitQRCode(value);
+    } finally {
+      setTimeout(() => {
+        scanLockRef.current = false;
+        lastScanRef.current = '';
+      }, 2000);
+    }
+  };
+
+  const { isOnline: isWebSocketOnline } = useWebSocket({
+    url: WS_URL,
+
+    onBarcodeScan: handleBarcodeScan,
+
+    onOcrResult: (data) => {
+      wsOcrQueueRef.current.push(data);
+      forceTick((v) => v + 1);
+    },
+
+    onImageStream: (data) => {
+      wsImageQueueRef.current.push(data);
+      forceTick((v) => v + 1);
+    },
+
+    onPrintResult: (result) => {
+      if (bulkPrintingRef.current) {
+        return;
       }
-    };
 
-    return () => {
-      socket.close();
-    };
-  }, []);
+      if (result.success) {
+        showSwal('success', 'Printed successfully');
+      } else {
+        showSwal('error', result.message || 'Print failed');
+      }
+    },
+  });
 
   const sendWs = (payload: any) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -3051,10 +3099,22 @@ const OperatorView = () => {
     [t],
   );
 
-  const totalCount = typeVisitor === 'related' ? filteredVisitors.length : liveRecordsTotal;
-
   const [relatedPage, setRelatedPage] = useState(0);
   const [relatedRowsPerPage, setRelatedRowsPerPage] = useState(10);
+  const handleRefreshVisitorList = async () => {
+    try {
+      if (typeVisitor === 'live') {
+        await liveVisitorQuery.refetch();
+        return;
+      }
+
+      if (typeVisitor === 'related' && invitationCode?.[0]?.id) {
+        await fetchRelatedVisitorsByInvitationId(invitationCode[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to refresh visitor list:', error);
+    }
+  };
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3201,6 +3261,7 @@ const OperatorView = () => {
                   searchKeyword={searchKeyword}
                   selectMultiple={selectMultiple}
                   bulkAction={bulkAction}
+                  isWebSocketOnline={isWebSocketOnline}
                   selectedVisitors={selectedVisitors}
                   scannedVisitorNumber={scannedVisitorNumber}
                   totalVisitors={totalVisitors}
@@ -3209,7 +3270,7 @@ const OperatorView = () => {
                   invitationCode={invitationCode}
                   availableActions={availableActions}
                   lgUp={lgUp}
-                  onRefresh={()=>{}}
+                  onRefresh={handleRefreshVisitorList}
                   theme={theme}
                   permissionHook={permissionHook}
                   containerRef={containerRef}

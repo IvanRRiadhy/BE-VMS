@@ -64,6 +64,7 @@ import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation'
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
+import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -635,15 +636,17 @@ const DashboardEmployee = () => {
   };
 
   const {
-    data: activites = [],
+    data: activities,
     isLoading: isLoadingActivities,
-    error,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
   } = useActivities({
-    start: 0,
-    length: 5,
     start_date: startDate.toISOString().split('T')[0],
     end_date: endDate.toISOString().split('T')[0],
   });
+
+  const activites = activities?.activities ?? [];
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -778,7 +781,7 @@ const DashboardEmployee = () => {
           <Heatmap />
         </Grid>
         <Grid size={{ xs: 12, lg: 12 }}>
-          <DynamicTable
+          {/* <DynamicTable
             loading={isLoadingActivities}
             isHavePagination={false}
             defaultRowsPerPage={10}
@@ -787,6 +790,13 @@ const DashboardEmployee = () => {
             titleHeader="Recent Activity"
             // height={420}
             overflowX="auto"
+          /> */}
+          <LastVisitsCard
+            activites={activites}
+            loading={isLoadingActivities}
+            loadingMore={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            onLoadMore={fetchNextPage}
           />
         </Grid>
       </Grid>

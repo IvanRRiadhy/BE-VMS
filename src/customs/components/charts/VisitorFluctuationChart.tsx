@@ -6,6 +6,7 @@ import { getVisitorChart } from 'src/customs/api/admin';
 import { t } from 'i18next';
 import { useSelector } from 'react-redux';
 import Chart from 'react-apexcharts';
+import dayjs from 'dayjs';
 
 type VisitorSeries = {
   id: string;
@@ -20,15 +21,14 @@ const VisitorFluctuationChart = () => {
   const [series, setSeries] = useState<VisitorSeries[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
-  const start = startDate?.toISOString().split('T')[0];
-  const end = endDate?.toISOString().split('T')[0];
-
+  // const start = startDate?.toISOString().split('T')[0];
+  // const end = endDate?.toISOString().split('T')[0];
+  const start = startDate ? dayjs(startDate).format('YYYY-MM-DD') : undefined;
+  const end = endDate ? dayjs(endDate).format('YYYY-MM-DD') : undefined;
   useEffect(() => {
-
-
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart( start, end);
+        const res = await getVisitorChart(start, end);
         const rows = res?.collection ?? [];
 
         setDates(rows.map((item: any) => new Date(item.date).getTime()));
@@ -72,7 +72,7 @@ const VisitorFluctuationChart = () => {
     };
 
     fetchData();
-  }, [ start, end]);
+  }, [start, end]);
 
   return (
     <>
