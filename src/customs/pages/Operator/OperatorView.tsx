@@ -811,8 +811,6 @@ const OperatorView = () => {
   };
 
   const handleOpenAction = (value: string) => {
-    setActionButton(value);
-
     const hasInvitation = invitationCode.length > 0 && relatedVisitors.length > 0;
     if (value === 'card') {
       if (!hasInvitation) {
@@ -825,6 +823,7 @@ const OperatorView = () => {
     }
 
     if (value === 'enable' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
       handleEnableEditing();
       return;
     }
@@ -835,29 +834,36 @@ const OperatorView = () => {
     // }
 
     if (value === 'extend' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
       setOpenExtendVisit(true);
       return;
     }
     if (value === 'open' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
       setOpenTriggeredAccess(true);
       return;
     }
     if (value === 'return' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
       setOpenReturnCard(true);
       return;
     }
     if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
       setAccessIssuance(true);
       return;
     }
+
     if (value === 'parking') {
       if (!hasInvitation) {
         setOpenParking(true);
       } else {
         setOpenParking(true);
       }
+      setActionButton('');
       return;
     }
+    setActionButton(value);
     setOpenDialogIndex(1);
   };
 
@@ -2693,6 +2699,7 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       const payload = {
+        trx_visitor_id: selectedVisitorId,
         card_number: returnCardNumber.trim(),
         registered_site_id: registerSiteOperator,
       };
@@ -3486,7 +3493,10 @@ const OperatorView = () => {
         {/* Dialog QR Access Issuance */}
         <GrantAccessDialog
           open={openAccessIssuance}
-          onClose={() => setAccessIssuance(false)}
+          onClose={() => {
+            setAccessIssuance(false);
+            setActionButton('');
+          }}
           invitationCode={invitationCode}
           selectedCards={selectedCards}
           handleToggleCard={handleToggleCard}
