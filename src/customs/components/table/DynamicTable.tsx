@@ -212,6 +212,14 @@ type DynamicTableProps<
   onAddData?: (add: boolean) => void;
   onPaginationChange?: (page: number, rowsPerPage: number) => void;
   onBooleanSwitchChange?: (row: any, field: string, value: boolean) => void;
+  isHaveSecret?: boolean;
+  visibleSecrets?: any;
+  loadingSecrets?: any;
+  onRevealSecret?: any;
+  onHideSecret?: any;
+
+  isHaveGenerateApiKey?: boolean;
+  onGenerateApiKey?: (row: T) => void;
 };
 
 function DynamicTableBase<
@@ -369,6 +377,13 @@ function DynamicTableBase<
     onAddData,
     onPaginationChange,
     onBooleanSwitchChange,
+    isHaveSecret,
+    visibleSecrets,
+    loadingSecrets,
+    onRevealSecret,
+    onHideSecret,
+    isHaveGenerateApiKey,
+    onGenerateApiKey,
   } = props;
   const [checkedIds, setCheckedIds] = useState<Array<T['id']>>([]);
   const [selectedColumn, setSelectedColumn] = useState<string>('');
@@ -1734,6 +1749,13 @@ function DynamicTableBase<
                   onDelete={onDelete}
                   isHaveDuplicate={isHaveDuplicate}
                   onDuplicate={onDuplicate}
+                  isHaveSecret={isHaveSecret}
+                  visibleSecrets={visibleSecrets}
+                  loadingSecrets={loadingSecrets}
+                  onRevealSecret={onRevealSecret}
+                  onHideSecret={onHideSecret}
+                  isHaveGenerateApiKey={isHaveGenerateApiKey}
+                  onGenerateApiKey={onGenerateApiKey}
                 />
               </Table>
             )}

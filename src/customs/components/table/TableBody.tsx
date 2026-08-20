@@ -45,6 +45,7 @@ import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import { IconStarFilled } from '@tabler/icons-react';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import RichHtmlCell from './RichHtmlCell';
+import { useTranslation } from 'react-i18next';
 
 export const TableBodyContent = ({
   loading,
@@ -144,7 +145,15 @@ export const TableBodyContent = ({
   // CHECKBOX_COL_WIDTH,
   // ACTION_COL_WIDTH,
   // INDEX_COL_WIDTH,
+  isHaveSecret,
+  visibleSecrets,
+  loadingSecrets,
+  onRevealSecret,
+  onHideSecret,
   onDelete,
+
+  isHaveGenerateApiKey,
+  onGenerateApiKey,
 }: any) => {
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105;
@@ -374,6 +383,14 @@ export const TableBodyContent = ({
                 onIsButtonDisabled,
                 isHaveVisitor,
                 onDelete,
+                isHaveSecret,
+                visibleSecrets,
+                loadingSecrets,
+                onRevealSecret,
+                onHideSecret,
+
+                isHaveGenerateApiKey,
+                onGenerateApiKey,
               }}
             />
           ))
@@ -483,7 +500,16 @@ const TableRowItem = React.memo(
       onDelete,
       onPrint,
       onDetail,
+      isHaveSecret,
+      visibleSecrets,
+      loadingSecrets,
+      onRevealSecret,
+      onHideSecret,
+
+      isHaveGenerateApiKey,
+      onGenerateApiKey,
     } = props;
+    const { t } = useTranslation();
     const CHECKBOX_COL_WIDTH = 40;
     const ACTION_COL_WIDTH = 105;
     const INDEX_COL_WIDTH = 10;
@@ -989,7 +1015,7 @@ const TableRowItem = React.memo(
                 />
               ) : isHaveImage && imageFields.includes(col) ? (
                 <></>
-              ) : isHaveActive && col === 'active' ? (
+              ) : (isHaveActive && col === 'active') || col === 'is_active' ? (
                 <Box display="flex" alignItems="center" justifyContent="start" width="100%">
                   <Switch
                     checked={Boolean(row.active)}
@@ -1103,6 +1129,58 @@ const TableRowItem = React.memo(
                       </Tooltip>
                     ))}
                 </Box>
+              ) : col === 'apikey' ? (
+                <Box
+                  display="inline-flex"
+                  alignItems="center"
+                  gap={0.5}
+                  justifyContent="start"
+                  width="100%"
+                >
+                  {isHaveSecret ? (
+                    visibleSecrets?.[row.id] ? (
+                      <>
+                        <span>{String(visibleSecrets[row.id])}</span>
+
+                        <Tooltip title="Hide API Key">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onHideSecret?.(row.id);
+                            }}
+                          >
+                            <IconEyeOff size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    ) : loadingSecrets?.[row.id] ? (
+                      <Skeleton variant="text" width={120} height={24} animation="wave" />
+                    ) : (
+                      <Tooltip title="Reveal API Key">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRevealSecret?.(row.id);
+                          }}
+                          sx={{
+                            bgcolor: 'grey.200',
+                            '&:hover': {
+                              bgcolor: 'grey.300',
+                            },
+                            borderRadius: '50%',
+                            p: 0.5,
+                          }}
+                        >
+                          <IconEye size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  ) : (
+                    '••••••••'
+                  )}
+                </Box>
               ) : col === 'password' ? (
                 <Box
                   display="inline-flex"
@@ -1115,7 +1193,7 @@ const TableRowItem = React.memo(
                     visiblePasswords[row.id] ? (
                       <>
                         <span>{String(row[col] ?? '-')}</span>
-                        <Tooltip title="Hide Password">
+                        <Tooltip title={t('hidePassword')}>
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1128,7 +1206,7 @@ const TableRowItem = React.memo(
                         </Tooltip>
                       </>
                     ) : (
-                      <Tooltip title="Show Password">
+                      <Tooltip title={t('showPassword')}>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -1357,6 +1435,71 @@ const TableRowItem = React.memo(
                 >
                   {getAccessActions(row)}
                 </TableCell>
+              ) : isHaveGenerateApiKey ? (
+                <>
+                  <Tooltip title="Generate New API Key" arrow>
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onGenerateApiKey?.(row);
+                      }}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#055499',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: '#033d70',
+                          color: 'white'
+                        },
+                      }}
+                    >
+                      <IconRefresh width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit" arrow>
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete" arrow>
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                </>
               ) : isHaveDuplicate ? (
                 <Box
                   sx={{

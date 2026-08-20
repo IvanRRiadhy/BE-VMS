@@ -164,10 +164,10 @@ const Content = () => {
 
       if (edittingId) {
         await updateSmtp(validated, edittingId);
-        showSwal('success', t('successUpdate', { name: 'SMTP Provider' }));
+        showSwal('success', t('updatedSuccess', { name: 'SMTP Provider' }));
       } else {
         await createSmtp(validated);
-        showSwal('success', t('successCreate', { name: 'SMTP Provider' }));
+        showSwal('success', t('createSuccess', { name: 'SMTP Provider' }));
       }
 
       setRefreshTrigger((p) => p + 1);

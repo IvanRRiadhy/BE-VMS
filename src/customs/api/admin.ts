@@ -245,18 +245,7 @@ import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
 
 import { GetAllSettingResponse } from './models/Admin/Setting';
 
-export const handlePaginationError = () => {
-  return {
-    status: false,
-    status_code: 404,
-    title: 'Not Found',
-    msg: 'Data not found',
-    collection: [],
-    RecordsTotal: 0,
-    RecordsFiltered: 0,
-    Draw: 0,
-  };
-};
+
 //#region report
 
 export const generateReport = async (payload: any): Promise<any> => {

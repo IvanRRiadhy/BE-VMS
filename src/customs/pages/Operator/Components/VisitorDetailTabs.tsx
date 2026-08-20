@@ -81,7 +81,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Available: 'gray',
   };
 
-
   return (
     <>
       <Tabs value={tabValue} onChange={(_, newValue) => onTabChange(newValue)} variant="fullWidth">
@@ -509,19 +508,14 @@ const VisitorDetailTabs: React.FC<Props> = ({
             mt: 2,
             display: 'flex',
             gap: 2,
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box',
             overflowX: 'auto',
             overflowY: 'hidden',
             scrollSnapType: 'x mandatory',
             pb: 1,
-
-            '&::-webkit-scrollbar': {
-              height: 8,
-            },
-
-            '&::-webkit-scrollbar-thumb': {
-              bgcolor: 'grey.400',
-              borderRadius: 999,
-            },
           }}
         >
           {invitationCode?.[0]?.card?.map((card: any) => (
@@ -533,20 +527,18 @@ const VisitorDetailTabs: React.FC<Props> = ({
                   xs: '0 0 100%',
                   md: '0 0 calc(50% - 8px)',
                 },
+
+                width: 0,
                 minWidth: 0,
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+
                 scrollSnapAlign: 'start',
 
                 p: 1.5,
                 borderRadius: 3,
                 border: '2px solid',
                 borderColor: card.current_used ? 'primary.main' : 'divider',
-
-                transition: 'all .25s',
-
-                '&:hover': {
-                  boxShadow: 4,
-                  // transform: 'translateY(-2px)',
-                },
               }}
             >
               {/* Header */}
@@ -571,7 +563,16 @@ const VisitorDetailTabs: React.FC<Props> = ({
                   </Box>
 
                   <Box>
-                    <Typography variant="h5" fontWeight={700} lineHeight={1.1}>
+                    <Typography
+                      variant="h5"
+                      fontWeight={700}
+                      lineHeight={1.1}
+                      sx={{
+                        whiteSpace: 'normal',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                      }}
+                    >
                       {card.card_number}
                     </Typography>
 

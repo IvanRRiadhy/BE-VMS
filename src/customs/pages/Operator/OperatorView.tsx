@@ -2699,7 +2699,7 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       const payload = {
-        trx_visitor_id: selectedVisitorId,
+        // trx_visitor_id: selectedVisitorId,
         card_number: returnCardNumber.trim(),
         registered_site_id: registerSiteOperator,
       };
@@ -3221,6 +3221,7 @@ const OperatorView = () => {
                   gap: 1,
                   display: 'flex',
                   flexDirection: 'column',
+       
                 }}
               >
                 <VisitorInformation
@@ -3674,7 +3675,10 @@ const OperatorView = () => {
           open={openReturnCard}
           value={returnCardNumber}
           loading={loadingAccess}
-          onClose={() => setOpenReturnCard(false)}
+          onClose={() => {
+            setOpenReturnCard(false);
+            setReturnCardNumber('');
+          }}
           onChange={setReturnCardNumber}
           onSubmit={handleSubmitReturnCard}
         />

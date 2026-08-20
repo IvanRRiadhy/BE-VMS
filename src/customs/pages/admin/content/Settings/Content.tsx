@@ -18,6 +18,8 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import NotificationSetting from './NotificationSetting';
 import VMSConfigurationTab from './VmsConfugrationTab';
 import useApprovalWorkflowPagination from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowPagination';
+import ThirdPartyIntegration from './ThirdPartyIntegration';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
 
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
@@ -55,34 +57,26 @@ const Content = () => {
     setShowForm(false);
   };
 
+  const { organizations } = useOrganization();
   useEffect(() => {
     setLoading(true);
 
     const fetchData = async () => {
       try {
-        const [settingRes, orgRes] = await Promise.allSettled([
-          getSetting(),
-          getAllOrganizations(),
-        ]);
-        let raw: any = null;
-        if (settingRes.status === 'fulfilled') {
-          raw = settingRes.value.collection;
-        }
+        const settingRes = await getSetting();
+
+        const raw = settingRes?.collection;
 
         let data: any[] = [];
+
         if (Array.isArray(raw)) {
           data = raw;
         } else if (raw) {
           data = [raw];
         }
 
-        let orgs: any[] = [];
-        if (orgRes.status === 'fulfilled') {
-          orgs = orgRes.value.collection ?? [];
-        }
-
         const enriched = data.map((item) => {
-          const org = orgs.find((o: any) => o.id === item.organization_id);
+          const org = organizations?.find((o: any) => o.id === item.organization_id);
 
           return {
             id: item.id,
@@ -99,8 +93,10 @@ const Content = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    if (organizations) {
+      fetchData();
+    }
+  }, [organizations]);
 
   const handleEdit = (id: number) => {
     const row = settingData.find((x) => x.id === id);
@@ -242,12 +238,7 @@ const Content = () => {
                   {!showForm ? <VisitorCardSetting /> : null}
                 </Box>
               ) : null} */}
-              {tabIndex === 3 ? (
-                <Container title="Apikey Setting">
-                  <DynamicTable data={[]} />
-                </Container>
-              ) : null}
-              ;
+              {tabIndex === 3 ? <ThirdPartyIntegration /> : null};
               {tabIndex === 4 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <NotificationSetting /> : null}

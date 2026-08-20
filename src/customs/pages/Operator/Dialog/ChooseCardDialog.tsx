@@ -212,12 +212,25 @@ const ChooseCardDialog = ({
                     >
                       <Box
                         flexGrow={1}
+                        minHeight={0}
+                        width="100%"
                         display="flex"
                         flexDirection="column"
                         justifyContent="center"
                         alignItems="center"
+                        overflow="hidden"
                       >
-                        <Typography variant="h1" color="text.secondary" mt={1}>
+                        <Typography
+                          variant="h1"
+                          color="text.secondary"
+                          mt={1}
+                          sx={{
+                            maxWidth: '100%',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal',
+                          }}
+                        >
                           {card.card_number}
                         </Typography>
 

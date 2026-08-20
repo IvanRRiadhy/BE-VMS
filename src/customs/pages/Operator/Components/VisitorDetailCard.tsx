@@ -272,6 +272,29 @@ const VisitorDetailCard = ({
   const hasData = invitationCode && invitationCode.length > 0;
 
   return (
+    // <Grid
+    //   size={{ xs: 12 }}
+    //   sx={{
+    //     display: 'flex',
+    //     flexDirection: 'column',
+    //     gap: 1,
+    //     height: '100%',
+
+    //   }}
+    //   id="tour-visitor-detail"
+    // >
+    //   <Card
+    //     sx={{
+    //       flex: 1,
+    //       display: 'flex',
+    //       flexDirection: 'column',
+    //       boxShadow: 'none',
+    //       p: 1,
+
+    //       // minHeight: 450,
+    //       borderRadius: 2,
+    //     }}
+    //   >
     <Grid
       size={{ xs: 12 }}
       sx={{
@@ -279,22 +302,32 @@ const VisitorDetailCard = ({
         flexDirection: 'column',
         gap: 1,
         height: '100%',
+        minWidth: 0,
+        minHeight: 0,
       }}
-      id="tour-visitor-detail"
     >
       <Card
         sx={{
           flex: 1,
+          minWidth: 0,
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           boxShadow: 'none',
           p: 1,
-
-          // minHeight: 450,
           borderRadius: 2,
+          overflow: 'hidden',
         }}
       >
-        <CardContent sx={{ p: '0px !important' }}>
+        <CardContent
+          sx={{
+            p: '0px !important',
+            minWidth: 0,
+            minHeight: 0,
+            flex: 1,
+            overflow: 'hidden',
+          }}
+        >
           <VisitorDetailTabs
             invitationCode={invitationCode}
             activeVisitor={activeVisitor}

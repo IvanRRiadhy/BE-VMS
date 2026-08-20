@@ -50,6 +50,8 @@
   "invitationCodeNotFound": "Invitation Code not found",
   "verify": "Verify",
   "forgotPassword": "Forgot password?",
+  "hidePassword": "Hide Password",
+  "showPassword": "Show Password",
   "export ": "Export",
   "top_visitor": "Top 5 Visitor",
   "top_visitor_purpose": "Top Visiting Purpose",

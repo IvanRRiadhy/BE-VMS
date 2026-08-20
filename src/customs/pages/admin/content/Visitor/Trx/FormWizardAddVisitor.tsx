@@ -1661,7 +1661,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       {page.form
                                         ?.filter(
                                           (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                            (field.remarks || '').toLowerCase() !== 'employee' &&
+                                            field.is_enable === true,
                                         )
                                         .map((field: any, fIdx: any) => {
                                           const matchedKey = Object.keys(
@@ -1756,7 +1757,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 </TableCell>
                                 {(dataVisitor[0]?.question_page[sectionIndex]?.form || [])
                                   .filter(
-                                    (f: any) => (f.remarks || '').toLowerCase() !== 'employee',
+                                    (f: any) =>
+                                      (f.remarks || '').toLowerCase() !== 'employee' &&
+                                      f.is_enable === true,
                                   )
                                   .map((f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -1800,7 +1803,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       {fields
                                         .filter(
                                           (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                            (field.remarks || '').toLowerCase() !== 'employee' &&
+                                            field.is_enable === true,
                                         )
                                         .map((field: any) => {
                                           const matchedKey = Object.keys(
@@ -2075,6 +2079,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void,
     opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] },
   ) => {
+    if (field.is_enable !== true) {
+      return null;
+    }
     const showLabel = opts?.showLabel ?? true;
     const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
     const errorMessage = fieldErrors[errorKey];
@@ -3557,6 +3564,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const visibilityMap: any = getVisibilityMap(details);
     const filteredDetails = details.filter((item) => {
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
@@ -3594,7 +3604,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
     return filteredDetails.map((item: any) => {
-      // const key = `${activeStep - 1}:${item.id}`;
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
 
@@ -5875,7 +5887,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz,
-            registered_site: formData.registered_site ?? null,
+            registered_site: formData.registered_site ?? "",
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
             flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
@@ -5927,8 +5939,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
            * ==========================================
            */
           payload = { list_group };
+          console.log("payload", payload);
 
           const parsed = CreateGroupVisitorRequestSchema.parse(payload);
+          console.log('parsed', parsed);
 
           if (TYPE_REGISTERED === 0) {
             await createPraRegisterGroupMutation.mutateAsync(parsed);

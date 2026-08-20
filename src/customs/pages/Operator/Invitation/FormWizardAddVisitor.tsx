@@ -3507,7 +3507,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder={t("enterMin3CharsToSearch")}
+                            placeholder={t('enterMin3CharsToSearch')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -5276,7 +5276,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
-        const backendResponse = await submitFn(parsed);
+        const backendResponse: any = await submitFn(parsed);
         // console.log('Payload Single:', backendResponse);
 
         const successMessage =
@@ -5286,7 +5286,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         showSwal('success', successMessage, 3000);
         const invitationCode =
-          (backendResponse?.collection?.visitors?.[0] as { invitation_code?: string })
+          (backendResponse?.collection?.list_visitor?.[0] as { invitation_code?: string })
             ?.invitation_code ?? null;
         resetMediaState();
         clearAnswerFiles();

@@ -5,6 +5,7 @@ import AsyncSelect from 'react-select/async';
 import {
   getAllEmployee,
   getListVisitor,
+  getListVisitorPagination,
   getVisitorEmployee,
   getVisitorInvitation,
 } from 'src/customs/api/admin';
@@ -59,7 +60,16 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
         list = res?.collection ?? [];
       } else {
         // const res = await getInvitationVisitor(token);
-        const res = await getListVisitor();
+        // const res = await getListVisitor();
+        // list = res?.collection ?? [];
+        const res = await getListVisitorPagination(
+          0, // start
+          10, // length
+          'desc', // sortDir
+          'created_at', // sort_column
+          inputValue.trim(), // keyword
+        );
+
         list = res?.collection ?? [];
       }
 
@@ -136,7 +146,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
         }}
       >
         <Avatar
-          src={imageUrl }
+          src={imageUrl}
           alt={data.name || 'Profile'}
           style={{
             width: 40,
