@@ -1762,19 +1762,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         />
                                       </Box>
 
-                                      {page?.form
-                                        // ?.filter((field: any) => {
-                                        //   if (
-                                        //     field.remarks === 'employee' &&
-                                        //     !showEmployeeSearchHeader
-                                        //   )
-                                        //     return false;
-
-                                        //   return true;
-                                        // })
+                                     {page.form
                                         ?.filter(
                                           (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                            (field.remarks || '').toLowerCase() !== 'employee' &&
+                                            field.is_enable === true,
                                         )
                                         .map((field: any, fIdx: any) => {
                                           const matchedKey = Object.keys(
@@ -1944,10 +1936,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           />
                                         </TableCell>
 
-                                        {form
-                                          .filter(
+                                        {page.form
+                                          ?.filter(
                                             (field: any) =>
-                                              (field.remarks || '').toLowerCase() !== 'employee',
+                                              (field.remarks || '').toLowerCase() !== 'employee' &&
+                                              field.is_enable === true,
                                           )
                                           .map((field: any, fIdx: any) => {
                                             const matchedKey = Object.keys(
@@ -2859,6 +2852,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const visibilityMap: any = getVisibilityMap(details);
     const filteredDetails = details.filter((item) => {
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
@@ -2896,7 +2892,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
     return filteredDetails.map((item) => {
-      // const key = `${activeStep - 1}:${item.id}`;
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
 
@@ -5236,10 +5234,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
 
         payload = { list_group };
-        // console.log('🚀 Final Payload (Group):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
         const submitFn =
           TYPE_REGISTERED === 0 ? createPraRegisterGroupOperator : createVisitorsGroupOperator;
         await submitFn(parsed as any);
@@ -5269,15 +5265,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        // console.log('payload', payload);
-
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
         const backendResponse: any = await submitFn(parsed);
-        // console.log('Payload Single:', backendResponse);
 
         const successMessage =
           TYPE_REGISTERED === 0
@@ -5296,10 +5289,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         }
       }
 
-      // setTimeout(() => {
       setLoading(false);
       onSuccess?.();
-      // }, 500);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);

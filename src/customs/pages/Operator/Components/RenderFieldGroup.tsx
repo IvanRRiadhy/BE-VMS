@@ -108,7 +108,10 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     setFieldErrors,
   } = props;
 
-  // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  if (field.is_enable !== true) {
+    return null;
+  }
+
   const showLabel = opts?.showLabel ?? true;
   const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
   const errorMessage = fieldErrors[errorKey];
@@ -341,7 +344,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               helperText={errorMessage}
               sx={{ minWidth: '160px' }}
             >
-              <MenuItem value="">{t("selectRole")}</MenuItem>
+              <MenuItem value="">{t('selectRole')}</MenuItem>
 
               {visitorRoles.map((role: any) => (
                 <MenuItem key={role.id} value={role.role}>

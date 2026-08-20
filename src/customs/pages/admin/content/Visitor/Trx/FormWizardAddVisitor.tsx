@@ -5939,10 +5939,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
            * ==========================================
            */
           payload = { list_group };
-          console.log("payload", payload);
 
           const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-          console.log('parsed', parsed);
 
           if (TYPE_REGISTERED === 0) {
             await createPraRegisterGroupMutation.mutateAsync(parsed);

@@ -1092,59 +1092,67 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                       </Box>
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
-                                        const originalIndex = page?.form?.findIndex(
-                                          (f: any) => f.custom_field_id === field.custom_field_id,
-                                        );
+                                      {page.form
+                                        ?.filter(
+                                          (field: any) =>
+                                            // (field.remarks || '').toLowerCase() !== 'employee' &&
+                                            field.is_enable === true,
+                                        )
+                                        .map((field: any, fIdx: any) => {
+                                          const matchedKey = Object.keys(
+                                            groupedPages.batch_page || {},
+                                          ).find((k) =>
+                                            sameField(groupedPages.batch_page[k], field),
+                                          );
+                                          const shared = matchedKey
+                                            ? groupedPages.batch_page[matchedKey]
+                                            : undefined;
+                                          const proxyField = hasAns(field)
+                                            ? field
+                                            : shared
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
+                                          const originalIndex = page?.form?.findIndex(
+                                            (f: any) => f.custom_field_id === field.custom_field_id,
+                                          );
 
-                                        return (
-                                          <Box key={fIdx} sx={{ mb: 2 }}>
-                                            {renderFieldInput(
-                                              proxyField,
-                                              originalIndex || fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (
-                                                    !next[gIdx]?.question_page?.[s]?.form?.[
+                                          return (
+                                            <Box key={fIdx} sx={{ mb: 2 }}>
+                                              {renderFieldInput(
+                                                proxyField,
+                                                originalIndex || fIdx,
+                                                (idx, fieldKey, value) => {
+                                                  setDataVisitor((prev) => {
+                                                    const next = [...prev];
+                                                    const s = activeStep - 1;
+                                                    if (
+                                                      !next[gIdx]?.question_page?.[s]?.form?.[
+                                                        originalIndex || fIdx
+                                                      ]
+                                                    )
+                                                      return prev;
+                                                    next[gIdx].question_page[s].form[
                                                       originalIndex || fIdx
-                                                    ]
-                                                  )
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[
-                                                    originalIndex || fIdx
-                                                  ] = {
-                                                    ...next[gIdx].question_page[s].form[
-                                                      originalIndex || fIdx
-                                                    ],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              {
-                                                showLabel: true,
-                                                // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${
-                                                  field.custom_field_id
-                                                }`,
-                                              },
-                                            )}
-                                          </Box>
-                                        );
-                                      })}
+                                                    ] = {
+                                                      ...next[gIdx].question_page[s].form[
+                                                        originalIndex || fIdx
+                                                      ],
+                                                      [fieldKey]: value,
+                                                    };
+                                                    return next;
+                                                  });
+                                                },
+                                                {
+                                                  showLabel: true,
+                                                  // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                    field.custom_field_id
+                                                  }`,
+                                                },
+                                              )}
+                                            </Box>
+                                          );
+                                        })}
                                     </AccordionDetails>
                                   </Accordion>
                                 );
@@ -1225,7 +1233,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       {fields
                                         .filter(
                                           (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee',
+                                            (field.remarks || '').toLowerCase() !== 'employee' &&
+                                            field.is_enable === true,
                                         )
                                         .map((field: any) => {
                                           const matchedKey = Object.keys(
@@ -2820,6 +2829,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     const visibilityMap: any = getVisibilityMap(details);
     const filteredDetails = details.filter((item) => {
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
@@ -2857,7 +2869,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
 
     return filteredDetails.map((item) => {
-      // const key = `${activeStep - 1}:${item.id}`;
+      if (item.is_enable !== true) {
+        return false;
+      }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
 
@@ -3892,7 +3906,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         }}
                         slotProps={{
                           actionBar: {
-                            actions: ['today','clear', 'accept'],
+                            actions: ['today', 'clear', 'accept'],
                           },
                           textField: {
                             fullWidth: true,
@@ -5174,15 +5188,19 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       setActiveStep(0);
       onSuccess?.();
     } catch (err: any) {
-      showSwal(
-        'error',
+      const errorMessage =
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
-          err.response?.data?.message ||
-          'Failed to create visitor.',
-      );
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        'Failed to create visitor.';
+
+      showSwal('error', errorMessage);
+
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
+
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
+
         setErrors(fieldErrors);
       } else if (err?.errors) {
         setErrors(err.errors);
