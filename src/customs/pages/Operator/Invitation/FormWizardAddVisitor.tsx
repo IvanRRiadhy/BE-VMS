@@ -5278,15 +5278,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : 'Invitation Visitor created successfully.';
 
         showSwal('success', successMessage, 3000);
-        const invitationCode =
-          (backendResponse?.collection?.list_visitor?.[0] as { invitation_code?: string })
-            ?.invitation_code ?? null;
+        // const invitationCode =
+        //   (backendResponse?.collection?.list_visitor?.[0] as { invitation_code?: string })
+        //     ?.invitation_code ?? null;
         resetMediaState();
         clearAnswerFiles();
 
-        if (invitationCode) {
-          onInvitationCreated?.(invitationCode);
-        }
+        // if (invitationCode) {
+        //   onInvitationCreated?.(invitationCode);
+        // }
       }
 
       setLoading(false);
