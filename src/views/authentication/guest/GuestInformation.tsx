@@ -1502,14 +1502,15 @@ const GuestInformationStepper = () => {
     e.preventDefault();
     const currentSection = formSections[activeStep];
     if (!validateStep(currentSection)) return;
-
+    if (!validateFillerData()) return;
     try {
       setSubmitting(true);
-      if (!validateFillerData()) return;
+
       const payload = transformToSubmitPayload(invitationData);
       // console.log('payload', JSON.stringify(payload, null, 2));
       const visitorId = invitationData?.id;
       if (!visitorId) {
+        showSwal('error', 'Visitor ID not found');
         return;
       }
 
@@ -1526,12 +1527,15 @@ const GuestInformationStepper = () => {
 
       if (status === 'process') {
         setSubmitting(false);
+        setOpenPreview(false);
+
         navigate('/portal/waiting', { replace: true });
         return;
       }
 
       if (token) {
         await saveToken(token);
+        setOpenPreview(false);
         showSwal('success', 'Successfully Pra Register Visitor');
 
         navigate('/guest/dashboard', { replace: true });
@@ -1955,7 +1959,7 @@ const GuestInformationStepper = () => {
         open={openPreview}
         onClose={() => setOpenPreview(false)}
         onConfirm={(e: any) => {
-          setOpenPreview(false);
+          // setOpenPreview(false);
           handleSubmit(e);
         }}
         invitationData={invitationData}

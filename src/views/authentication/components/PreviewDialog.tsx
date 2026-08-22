@@ -141,7 +141,7 @@ const PreviewDialog = ({ open, onClose, onConfirm, invitationData, formValues }:
       <DialogActions>
         <Button onClick={onClose}>Back</Button>
         <Button variant="contained" color="primary" onClick={onConfirm}>
-          Confirm & Submit
+          Submit
         </Button>
       </DialogActions>
     </Dialog>
