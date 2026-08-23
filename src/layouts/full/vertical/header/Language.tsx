@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
-import { Avatar, IconButton, Menu, MenuItem, Typography, Stack } from '@mui/material';
+import { Avatar, IconButton, Menu, MenuItem, Typography, Stack, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { setLanguage } from 'src/store/customizer/CustomizerSlice';
 import FlagEn from 'src/assets/images/flag/icon-flag-en.svg';
@@ -12,6 +12,7 @@ import FlagSa from 'src/assets/images/flag/icon-flag-sa.svg';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { AppState } from 'src/store/Store';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const Languages = [
   {
@@ -57,7 +58,7 @@ const Language = () => {
     if (savedLang) {
       dispatch(setLanguage(savedLang));
     } else {
-      const browserLang = navigator.language.split('-')[0]; 
+      const browserLang = navigator.language.split('-')[0];
 
       const supportedLang = Languages.find((l) => l.value === browserLang);
 
@@ -69,16 +70,59 @@ const Language = () => {
 
   return (
     <>
-      <IconButton
-        aria-label="more"
-        id="long-button"
-        aria-controls={open ? 'long-menu' : undefined}
-        aria-expanded={open ? 'true' : undefined}
-        aria-haspopup="true"
+      <Box
         onClick={handleClick}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.6,
+          px: 1.25,
+          py: 0.7,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          cursor: 'pointer',
+
+          // lebih fokus terlihat
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
+
+          transition: 'all 0.2s ease',
+
+          '&:hover': {
+            backgroundColor: 'action.hover',
+            boxShadow: '0 3px 10px rgba(0, 0, 0, 0.18)',
+          },
+        }}
       >
-        <Avatar src={currentLang.icon} alt={currentLang.value} sx={{ width: 20, height: 20 }} />
-      </IconButton>
+        <Avatar
+          src={currentLang.icon}
+          alt={currentLang.value}
+          sx={{
+            width: 19,
+            height: 19,
+          }}
+        />
+
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            fontSize: 12,
+            textTransform: 'uppercase',
+            lineHeight: 1,
+          }}
+        >
+          {currentLang.value}
+        </Typography>
+
+        <KeyboardArrowDownIcon
+          sx={{
+            fontSize: 18,
+            color: 'text.secondary',
+            ml: 0.1,
+          }}
+        />
+      </Box>
       <Menu
         id="long-menu"
         anchorEl={anchorEl}
@@ -97,7 +141,8 @@ const Language = () => {
             onClick={() => {
               localStorage.setItem('lang', option.value);
               dispatch(setLanguage(option.value));
-            }} 
+              handleClose();
+            }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar src={option.icon} alt={option.icon} sx={{ width: 20, height: 20 }} />

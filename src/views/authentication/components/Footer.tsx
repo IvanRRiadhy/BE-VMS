@@ -15,7 +15,7 @@ const Footer = () => {
 
   return (
     <Box>
-      <Box
+      {/* <Box
         sx={{
           backgroundImage: `url(${FooterBg})`,
           backgroundSize: 'cover',
@@ -136,10 +136,10 @@ const Footer = () => {
             <Typography variant="h6">Contact Center Bank Indonesia Bicara</Typography>
             <Typography variant="h6">Telp. : 131 dan 1500131 (dari luar negeri)</Typography>
             <Typography variant="h6">E-mail : bicara@bi.go.id</Typography>
-            {/* <Typography variant="h6">Chatbot LISA : 081 131 131 131</Typography> */}
+
           </Stack>
         </Container>
-      </Box>
+      </Box> */}
       <Box
         sx={{
           backgroundColor: 'primary.main',

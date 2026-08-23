@@ -159,7 +159,7 @@ const FormWizardAddEmployee = ({
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setScreenshot(imageSrc);
-        setPreviewUrl(imageSrc); 
+        setPreviewUrl(imageSrc);
         setFormData((prev) => ({
           ...prev,
           faceimage: imageSrc,
@@ -170,7 +170,6 @@ const FormWizardAddEmployee = ({
 
   useEffect(() => {
     const fetchData = async () => {
-
       const [orgRes, deptRes, distRes] = await Promise.all([
         getAllOrganizations(),
         getAllDepartments(),
@@ -209,7 +208,7 @@ const FormWizardAddEmployee = ({
     };
 
     fetchData();
-  }, [ edittingId, isBatchEdit]);
+  }, [edittingId, isBatchEdit]);
 
   // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
@@ -387,8 +386,6 @@ const FormWizardAddEmployee = ({
     setErrors({});
 
     try {
-    
-
       /** 🧩 Batch Edit Mode */
       if (isBatchEdit && selectedRows.length > 0) {
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
@@ -419,16 +416,12 @@ const FormWizardAddEmployee = ({
         }
 
         for (const row of selectedRows) {
-          await updateEmployee(
-            row.id,
-            {
-              ...row,
-              ...payload,
-              vehicle_plate_number: payload.vehicle_plate_number,
-              vehicle_type: payload.vehicle_type,
-            },
-       
-          );
+          await updateEmployee(row.id, {
+            ...row,
+            ...payload,
+            vehicle_plate_number: payload.vehicle_plate_number,
+            vehicle_type: payload.vehicle_type,
+          });
         }
 
         showSwal('success', 'Batch update successfully!');
@@ -1248,7 +1241,7 @@ const FormWizardAddEmployee = ({
 
                     <Typography variant="caption" color="textSecondary">
                       Supports: JPG, JPEG, PNG, Up to{' '}
-                      <span style={{ fontWeight: '700' }}>1 Mb</span>
+                      <span style={{ fontWeight: '700' }}>5 MB</span>
                     </Typography>
                     <Typography
                       variant="subtitle1"

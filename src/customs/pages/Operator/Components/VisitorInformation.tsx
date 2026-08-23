@@ -169,9 +169,7 @@ const VisitorInformation = ({
         </Card>
       </Grid>
       <Grid size={{ xs: 12, xl: 8 }}>
-        <Card
-          elevation={0}
-        >
+        <Card elevation={0}>
           <CardContent sx={{ padding: '0px !important' }}>
             <Stack direction="row" spacing={2}>
               <Box flex={1}>
@@ -184,7 +182,7 @@ const VisitorInformation = ({
                   sx={{ textTransform: 'capitalize' }}
                 >
                   {invitationCode[0]?.visitor_name ?? 'Name'}
-                  {invitationCode[0]?.visitor_name && (
+                  {/* {invitationCode[0]?.visitor_name && (
                     <Box
                       sx={{
                         width: 18,
@@ -198,7 +196,7 @@ const VisitorInformation = ({
                     >
                       <IconCheck size={14} color="white" stroke={3} />
                     </Box>
-                  )}
+                  )} */}
                 </Typography>
 
                 {/* <Typography variant="body2" color="text.secondary" mb={1.5}>
@@ -237,7 +235,7 @@ const VisitorInformation = ({
 
                 <InfoRow
                   icon={<IconCreditCard size={18} />}
-                  label="Identity ID"
+                  label="Citizenship ID"
                   value={invitationCode[0]?.visitor_identity_id}
                 />
 
@@ -249,7 +247,7 @@ const VisitorInformation = ({
 
                 <InfoRow
                   icon={<IconUser size={18} />}
-                  label="Occupancy"
+                  label="Visitor Type"
                   value={invitationCode[0]?.visitor_role}
                 />
               </Box>

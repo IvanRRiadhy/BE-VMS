@@ -170,12 +170,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       }
       showSwal(
         'success',
-        edittingId ? t("updatedSuccess", { name: "Document" }) : t("createSuccess", { name: "Document" }),
+        edittingId
+          ? t('updatedSuccess', { name: 'Document' })
+          : t('createSuccess', { name: 'Document' }),
       );
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', err?.response?.data.msg || t("updatedFailed", { name: "Document" }));
+      showSwal('error', err?.response?.data.msg || t('updatedFailed', { name: 'Document' }));
     }
   };
 
@@ -246,8 +248,8 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                   localForm.can_declined === true
                     ? 'true'
                     : localForm.can_declined === false
-                      ? 'false'
-                      : ''
+                    ? 'false'
+                    : ''
                 }
                 onChange={(e) => {
                   setLocalForm((prev) => ({
@@ -275,8 +277,8 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 localForm.can_signed === true
                   ? 'true'
                   : localForm.can_signed === false
-                    ? 'false'
-                    : ''
+                  ? 'false'
+                  : ''
               }
               onChange={(e) =>
                 setLocalForm((prev) => ({
@@ -301,8 +303,8 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 localForm.can_upload === true
                   ? 'true'
                   : localForm.can_upload === false
-                    ? 'false'
-                    : ''
+                  ? 'false'
+                  : ''
               }
               onChange={(e) => {
                 setLocalForm((prev) => ({
@@ -375,7 +377,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Supports: PDF, Up to: <span style={{ fontWeight: '700' }}>1 Mb</span>
+                          Supports: PDF, Up to: <span style={{ fontWeight: '700' }}>5 MB</span>
                         </Typography>
 
                         {(preview || file) && (
@@ -461,7 +463,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 variant="contained"
                 type="submit"
                 disabled={loading}
-              // startIcon={loading ? <CircularProgress size={18} /> : undefined}
+                // startIcon={loading ? <CircularProgress size={18} /> : undefined}
               >
                 Submit
               </Button>

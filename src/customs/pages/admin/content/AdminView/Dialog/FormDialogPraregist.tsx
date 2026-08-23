@@ -365,7 +365,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
           </Typography>
           <input
             id={`file-${key}`}
@@ -478,7 +478,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary" mt={5}>
-            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
           </Typography>
 
           <Typography

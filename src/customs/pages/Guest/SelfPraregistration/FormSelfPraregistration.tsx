@@ -1129,7 +1129,7 @@ const FormSelfPraregistration = ({
     }
     const compressedFile = await compressImage(file);
     if (compressedFile.size > 1024 * 1024) {
-      toast('File size must be under 1 MB', 'info');
+      toast('File size must be under 5 MB', 'info');
       return;
     }
 

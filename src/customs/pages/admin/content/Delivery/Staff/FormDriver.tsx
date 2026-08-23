@@ -84,8 +84,8 @@ const FormDriver = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
-  // setIsFormChanged,
-}: FormEmployeeProps) => {
+}: // setIsFormChanged,
+FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -121,8 +121,8 @@ const FormDriver = ({
 
     const serverPath =
       localForm.faceimage &&
-        !localForm.faceimage.startsWith('data:') &&
-        !/^https?:\/\//i.test(localForm.faceimage)
+      !localForm.faceimage.startsWith('data:') &&
+      !/^https?:\/\//i.test(localForm.faceimage)
         ? localForm.faceimage
         : null;
 
@@ -279,7 +279,7 @@ const FormDriver = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       setFormData(localForm);
-    }, 300); 
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [localForm]);
@@ -372,10 +372,7 @@ const FormDriver = ({
 
   const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
 
-  const {
-    createMutation: createStaff,
-    updateMutation: updateStaff,
-  } = useStaffMutation();
+  const { createMutation: createStaff, updateMutation: updateStaff } = useStaffMutation();
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,12 +479,12 @@ const FormDriver = ({
         setLocalForm(CreateDriverRequestSchema.parse({}));
       }
 
-      onSuccess?.()
+      onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -1133,7 +1130,7 @@ const FormDriver = ({
                     </Typography>
 
                     <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG, Up to 1 Mb
+                      Supports: JPG, JPEG, PNG, Up to 5 MB
                     </Typography>
                     <Typography
                       variant="subtitle1"
@@ -1207,7 +1204,12 @@ const FormDriver = ({
                         <Divider sx={{ my: 2 }} />
 
                         <Box sx={{ textAlign: 'right', display: 'flex', gap: 1 }}>
-                          <Button onClick={handleClear} color="warning" sx={{ mr: 2 }} startIcon={<IconTrash />}>
+                          <Button
+                            onClick={handleClear}
+                            color="warning"
+                            sx={{ mr: 2 }}
+                            startIcon={<IconTrash />}
+                          >
                             Clear Foto
                           </Button>
                           <Button
@@ -1338,12 +1340,12 @@ const FormDriver = ({
               onClick={handleBack}
               sx={{ backgroundColor: '#edf3ff' }}
             >
-              {t("back")}
+              {t('back')}
             </Button>
             <Box flex="1 1 auto" />
             {activeStep !== steps.length - 1 ? (
               <Button onClick={handleNext} variant="contained" color="primary">
-                {t("next")}
+                {t('next')}
               </Button>
             ) : (
               <Button

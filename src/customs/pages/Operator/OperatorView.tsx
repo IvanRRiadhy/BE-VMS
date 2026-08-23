@@ -1083,7 +1083,7 @@ const OperatorView = () => {
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
 
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
 
           visitor: {
             ...inv.visitor,
@@ -2403,7 +2403,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
                   }
 
                   return fieldPayload;
@@ -3168,7 +3168,7 @@ const OperatorView = () => {
             height: '100%',
           }}
         >
-          <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
+          {/* <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
             <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
               <VisitorSearchInput
                 onOpenSearch={() => setOpenSearch(true)}
@@ -3192,7 +3192,7 @@ const OperatorView = () => {
                 containerRef={containerRef as any}
               />
             </Grid>
-          </Grid>
+          </Grid> */}
 
           <Grid
             container
@@ -3221,7 +3221,6 @@ const OperatorView = () => {
                   gap: 1,
                   display: 'flex',
                   flexDirection: 'column',
-       
                 }}
               >
                 <VisitorInformation
@@ -3281,6 +3280,7 @@ const OperatorView = () => {
                 />
                 <VisitorListCard
                   isFullscreen={isFullscreen}
+                  onClear={handleClearAll}
                   typeVisitor={typeVisitor}
                   anchorEl={anchorEl}
                   searchKeyword={searchKeyword}
@@ -3365,8 +3365,6 @@ const OperatorView = () => {
               </Grid>
             </Grid>
           </Grid>
-
-          <Footer />
         </Box>
 
         {/* Print */}
@@ -3749,6 +3747,7 @@ const OperatorView = () => {
           }}
         />
       </Box>
+      <Footer />
     </PageContainer>
   );
 };

@@ -1762,7 +1762,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         />
                                       </Box>
 
-                                     {page.form
+                                      {page.form
                                         ?.filter(
                                           (field: any) =>
                                             (field.remarks || '').toLowerCase() !== 'employee' &&
@@ -1780,8 +1780,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                           const handleChangeGroup = (
                                             idx: number,
                                             fieldKey: keyof FormVisitor,
@@ -1954,8 +1954,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             const proxyField = hasAns(field)
                                               ? field
                                               : shared
-                                                ? { ...field, ...pickAns(shared) }
-                                                : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
                                             const handleChangeGroup = (
                                               idx: number,
                                               fieldKey: keyof FormVisitor,
@@ -2164,7 +2164,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                ? next.single_page[found].foreign_id ?? resolvedForeign
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2360,7 +2360,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     // compress
     const compressedFile = await compressImage(file);
     if (compressedFile.size > 1024 * 1024) {
-      toast('File size must be under 1 MB', 'info');
+      toast('File size must be under 5 MB', 'info');
       return;
     }
 
@@ -3205,8 +3205,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? String(item.answer_text).split(',')
-                                : [];
+                              ? String(item.answer_text).split(',')
+                              : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3651,8 +3651,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                              ? [String(item.answer_text)]
+                              : [];
 
                             return (
                               <FormControlLabel
@@ -3991,7 +3991,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
-                              <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                              <span style={{ fontWeight: '700' }}> 5 MB | </span>
                             </Typography>
 
                             <Typography
@@ -4523,7 +4523,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
+                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
                         </Typography>
                         {/*preview  */}
                         {(previewSrc || shownName) && (
@@ -4627,7 +4627,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         >
                           <Typography variant="body1" color="textSecondary">
                             Supports: JPG, PNG, JPEG, Up to
-                            <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                            <span style={{ fontWeight: '700' }}> 5 MB | </span>
                           </Typography>
 
                           <Typography
@@ -5929,8 +5929,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'

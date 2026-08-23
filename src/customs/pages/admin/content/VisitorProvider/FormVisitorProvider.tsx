@@ -40,11 +40,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { t } = useTranslation();
 
-  const {
-    createMutation,
-    updateMutation,
-    uploadLogoMutation,
-  } = useVisitorProviderMutation();
+  const { createMutation, updateMutation, uploadLogoMutation } = useVisitorProviderMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,19 +95,23 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
     const tasks: Promise<any>[] = [];
 
     if (fileFromInput instanceof File) {
-      tasks.push(await uploadLogoMutation.mutateAsync({
-        id,
-        file: fileFromInput,
-      }));
+      tasks.push(
+        await uploadLogoMutation.mutateAsync({
+          id,
+          file: fileFromInput,
+        }),
+      );
     }
 
     if (image && isDataUrl(image)) {
       const blob = await fetch(image).then((res) => res.blob());
       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-      tasks.push(await uploadLogoMutation.mutateAsync({
-        id,
-        file,
-      }));
+      tasks.push(
+        await uploadLogoMutation.mutateAsync({
+          id,
+          file,
+        }),
+      );
     }
 
     if (tasks.length === 0) return;
@@ -150,7 +150,6 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
         auto_approve: form.auto_approve,
         is_quick_access: form.is_quick_access,
       };
-
 
       let id = editingId;
 
@@ -474,7 +473,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
               >
                 <Typography variant="body1" color="textSecondary">
                   Supports: JPG, JPEG, PNG, Up to:
-                  <span style={{ fontWeight: '700' }}>1 Mb</span>
+                  <span style={{ fontWeight: '700' }}>5 MB</span>
                 </Typography>
               </Box>
 
@@ -484,7 +483,7 @@ const FormVisitorProvider = ({ editingId, onSuccess, form, setForm }: Props) => 
                 hidden
                 ref={fileInputRef}
                 onChange={handleFileChange}
-              //   disabled={isBatchEdit}
+                //   disabled={isBatchEdit}
               />
 
               {previewUrl && (

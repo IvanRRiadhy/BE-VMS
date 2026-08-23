@@ -1103,12 +1103,12 @@ export default function DnDOutsideCourier({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                              ? ''
-                              : item.remarks === 'indentity_id'
-                                ? ''
-                                : ''
+                          ? ''
+                          : item.remarks === 'organization'
+                          ? ''
+                          : item.remarks === 'indentity_id'
+                          ? ''
+                          : ''
                       }
                       fullWidth
                     />
@@ -1272,8 +1272,8 @@ export default function DnDOutsideCourier({
                         const answerArray = Array.isArray(item.answer_text)
                           ? item.answer_text
                           : item.answer_text
-                            ? [String(item.answer_text)]
-                            : [];
+                          ? [String(item.answer_text)]
+                          : [];
 
                         return (
                           <FormControlLabel
@@ -1573,7 +1573,7 @@ export default function DnDOutsideCourier({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JEPG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
+                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
                         </Typography>
 
                         {/*preview  */}
@@ -1660,7 +1660,7 @@ export default function DnDOutsideCourier({
                         >
                           <Typography variant="caption" color="textSecondary">
                             Supports: JPG, JPEG, PNG, up to
-                            <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                            <span style={{ fontWeight: '700' }}> 5 MB</span>
                           </Typography>
 
                           <Typography

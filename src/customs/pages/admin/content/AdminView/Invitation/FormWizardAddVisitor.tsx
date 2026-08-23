@@ -1574,8 +1574,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                           const handleChangeGroup = (
                                             idx: number,
                                             fieldKey: keyof FormVisitor,
@@ -1770,8 +1770,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             const proxyField = hasAns(field)
                                               ? field
                                               : shared
-                                                ? { ...field, ...pickAns(shared) }
-                                                : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
                                             const handleChangeGroup = (
                                               idx: number,
                                               fieldKey: keyof FormVisitor,
@@ -1805,7 +1805,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                     onChange={handleChangeGroup}
                                                     opts={{
                                                       showLabel: false,
-                                                      uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                      uniqueKey: `${activeStep - 1}:${gIdx}:${
+                                                        field.custom_field_id
+                                                      }`,
                                                     }}
                                                     employee={employee}
                                                     allVisitorEmployee={allVisitorEmployee}
@@ -1952,7 +1954,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                ? next.single_page[found].foreign_id ?? resolvedForeign
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2582,12 +2584,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                              ? ''
-                              : item.remarks === 'indentity_id'
-                                ? ''
-                                : ''
+                          ? ''
+                          : item.remarks === 'organization'
+                          ? ''
+                          : item.remarks === 'indentity_id'
+                          ? ''
+                          : ''
                       }
                       fullWidth
                       error={!!errorMessage}
@@ -2944,7 +2946,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder={t("enterMin3CharsToSearch")}
+                            placeholder={t('enterMin3CharsToSearch')}
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}
@@ -2971,7 +2973,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[index] || '').length < 3
-                          ? t("enterMin3CharsToSearch")
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -2983,7 +2985,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
-                          placeholder={t("enterMin3CharsToSearch")}
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
                           error={!!errorMessage}
                           helperText={errorMessage}
@@ -3064,8 +3066,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                              ? [String(item.answer_text)]
+                              : [];
 
                             return (
                               <FormControlLabel
@@ -3548,7 +3550,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
+                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
                         </Typography>
                         {(previewSrc || shownName) && (
                           <Box
@@ -3652,7 +3654,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="caption" color="textSecondary">
                           Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                          <span style={{ fontWeight: '700' }}> 5 MB</span>
                         </Typography>
 
                         <Typography
@@ -4917,8 +4919,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'
@@ -5047,7 +5049,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
                 onClick={handleOnSubmit}
               >
-               Submit
+                Submit
               </Button>
             ) : (
               <Button

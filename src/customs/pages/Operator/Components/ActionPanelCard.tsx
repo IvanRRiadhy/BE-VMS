@@ -156,7 +156,6 @@ const ActionPanelCard: FC<Props> = ({
                         fontWeight: 600,
                         px: 2.5,
 
-                        // boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
                         zIndex: 999,
                         width: '100%',
                         height: '50px',
@@ -178,7 +177,6 @@ const ActionPanelCard: FC<Props> = ({
                         textTransform: 'none',
                         fontWeight: 600,
                         px: 2.5,
-                        // boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
                         zIndex: 999,
                         width: '100%',
                         height: '50px',
@@ -193,7 +191,7 @@ const ActionPanelCard: FC<Props> = ({
                 )
               )}
 
-              <Grid container spacing={isFullscreen ? 1 : 1.5}>
+              <Grid container spacing={isFullscreen ? 1 : 1}>
                 {/* Checkin */}
                 {loading ? (
                   <ButtonSkeleton />
@@ -220,7 +218,7 @@ const ActionPanelCard: FC<Props> = ({
                         }}
                       >
                         <Typography variant="h6" color="white">
-                          Checkin
+                          Check In
                         </Typography>
                       </Button>
                     </Grid>
@@ -252,7 +250,7 @@ const ActionPanelCard: FC<Props> = ({
                         }}
                       >
                         <Typography variant="h6" color="white">
-                          Checkout
+                          Check Out
                         </Typography>
                       </Button>
                     </Grid>
@@ -287,7 +285,7 @@ const ActionPanelCard: FC<Props> = ({
                         }}
                       >
                         <Typography variant="h6" color="white">
-                          Card Issuance
+                          Card Issue
                         </Typography>
                       </Button>
                     </Grid>
@@ -308,11 +306,9 @@ const ActionPanelCard: FC<Props> = ({
                           fontWeight: 600,
                           px: '10px !important',
 
-                          background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
+                          // background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
                           boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
-                          },
+
                           zIndex: 999,
                           width: '100%',
                           height: '50px',
@@ -356,7 +352,7 @@ const ActionPanelCard: FC<Props> = ({
                       }}
                     >
                       <Typography variant="h6" color="white">
-                        Access Issuance
+                        Access Alocation
                       </Typography>
                     </Button>
                   </Grid>
@@ -364,7 +360,7 @@ const ActionPanelCard: FC<Props> = ({
               )}
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
-              <Grid container spacing={isFullscreen ? 1.5 : 1.5}>
+              <Grid container spacing={isFullscreen ? 1.5 : 1.2}>
                 {/* Parking */}
                 {loading ? (
                   <ButtonSkeleton />
@@ -396,7 +392,7 @@ const ActionPanelCard: FC<Props> = ({
                   )
                 )}
 
-                {/* Report */}
+                {/* Open */}
                 {loading ? (
                   <ButtonSkeleton />
                 ) : (
@@ -483,7 +479,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid size={{ xs: 6, lg: 6 }}>
+                {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
                     size="large"
@@ -503,7 +499,7 @@ const ActionPanelCard: FC<Props> = ({
                   >
                     Print
                   </Button>
-                </Grid>
+                </Grid> */}
                 {loading ? (
                   <ButtonSkeleton />
                 ) : (
@@ -534,7 +530,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Grid>
                   )
                 )}
-                <Grid size={{ xs: 6, lg: 6 }}>
+                <Grid size={{ xs: 12, lg: 6 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconPencil size={25} />}
@@ -555,11 +551,11 @@ const ActionPanelCard: FC<Props> = ({
                     }}
                   >
                     <Typography variant="h6" color="white">
-                      Enable Edit
+                      Edit Schedule
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid size={{ xs: 6, lg: 6 }}>
+                <Grid size={{ xs: 12, lg: 12 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconPencil size={25} />}
@@ -578,7 +574,7 @@ const ActionPanelCard: FC<Props> = ({
                     }}
                   >
                     <Typography variant="h6" color="white">
-                      Edit Form
+                      Edit Visitor Information
                     </Typography>
                   </Button>
                 </Grid>

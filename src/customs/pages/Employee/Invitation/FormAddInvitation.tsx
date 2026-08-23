@@ -1110,8 +1110,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                           const originalIndex = page?.form?.findIndex(
                                             (f: any) => f.custom_field_id === field.custom_field_id,
                                           );
@@ -1250,8 +1250,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                           return (
                                             <TableCell key={field.custom_field_id}>
@@ -1404,7 +1404,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                ? next.single_page[found].foreign_id ?? resolvedForeign
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2294,7 +2294,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const compressedFile = await compressImage(file);
 
       if (compressedFile.size > 1024 * 1024) {
-        toast('File size must be under 1 MB', 'info');
+        toast('File size must be under 5 MB', 'info');
         return;
       }
 
@@ -3181,8 +3181,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? String(item.answer_text).split(',')
-                                : [];
+                              ? String(item.answer_text).split(',')
+                              : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -3613,8 +3613,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                              ? [String(item.answer_text)]
+                              : [];
 
                             return (
                               <FormControlLabel
@@ -3954,7 +3954,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
-                              <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                              <span style={{ fontWeight: '700' }}> 5 MB | </span>
                             </Typography>
 
                             <Typography
@@ -4553,7 +4553,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
+                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
                         </Typography>
 
                         {/*preview  */}
@@ -4663,7 +4663,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         >
                           <Typography variant="body1" color="textSecondary">
                             Supports: JPG, PNG, JPEG, Up to
-                            <span style={{ fontWeight: '700' }}> 1 Mb | </span>
+                            <span style={{ fontWeight: '700' }}> 5 MB | </span>
                           </Typography>
 
                           <Typography
@@ -5758,8 +5758,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'

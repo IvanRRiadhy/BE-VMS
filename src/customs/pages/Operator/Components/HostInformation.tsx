@@ -75,7 +75,7 @@ const HostInformation = ({
           border: '1px solid #e0e0e0',
           backgroundColor: 'background.paper',
           p: 1,
-          mt: 0.5,
+          // mt: 0.5,
         }}
         id="tour-host-info"
       >
@@ -117,7 +117,7 @@ const HostInformation = ({
                 <Typography variant="h6" fontWeight="bold" mb={0}>
                   {data?.hosts[0].name || '-'}
                 </Typography>
-                {data && (
+                {/* {data && (
                   <Typography
                     sx={{
                       backgroundColor: 'success.main',
@@ -128,7 +128,7 @@ const HostInformation = ({
                   >
                     Available
                   </Typography>
-                )}
+                )} */}
               </Box>
               <Typography variant="h6" color="text.secondary" mb={2} fontWeight={'semibold'}>
                 {data?.host_organization_name || '-'}
@@ -183,8 +183,8 @@ const HostInformation = ({
               </Box>
             </Box>
           </Box>
-          <Divider sx={{ my: 1 }} />
-          <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+          {/* <Divider sx={{ my: 1 }} /> */}
+          {/* <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
             <Box
               component="a"
               href={data?.hosts[0].phone ? `tel:${data?.hosts[0].phone}` : undefined}
@@ -252,7 +252,7 @@ const HostInformation = ({
               <Email />
               Email
             </Box>
-          </Box>
+          </Box> */}
         </CardContent>
       </Card>
     </>

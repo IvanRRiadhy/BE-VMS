@@ -263,16 +263,6 @@ const Login = () => {
               flexDirection: 'column',
               minHeight: '100vh',
               position: 'relative',
-              // '&:before': {
-              //   content: '""',
-              //   background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
-              //   backgroundSize: '400% 400%',
-              //   animation: 'gradient 15s ease infinite',
-              //   position: 'absolute',
-              //   height: '100%',
-              //   width: '100%',
-              //   opacity: '0.3',
-              // },
             }}
           >
             <Box
@@ -288,8 +278,9 @@ const Login = () => {
                 // height={'100%'}
                 // sx={{ height: { xs: '100vh', lg: '95vh' } }}
                 sx={{
-                  minHeight: 'calc(100vh - 250px)', // sisakan ruang footer
+                  minHeight: 'calc(100vh - 100px)', // sisakan ruang footer
                   py: { xs: 2, md: 3, lg: 4 },
+
                 }}
               >
                 <Grid
@@ -341,13 +332,10 @@ const Login = () => {
                       mt={4}
                       fontWeight={600}
                     >
-                      {/* Bank Indonesia - Di Setiap Makna Indonesia */}
                       {t('titleLogin')}
                     </Typography>
 
                     <Typography sx={{ color: '#fff', lineHeight: 1.5 }} fontSize={16} mb={2} mt={5}>
-                      {/* Indonesia adalah Bank Sentral Republik Indonesia dengan Satu Tujuan Tunggal
-                      yaitu Mencapai dan Memelihara Kestabilan Nilai Rupiah. */}
                       {t('subTitleLogin')}
                     </Typography>
                   </Card>
@@ -434,11 +422,6 @@ const Login = () => {
                           iconPosition="start"
                           label="Guest/Visitor"
                         />
-                        {/* <Tab
-                      icon={<IconUserPlus size={18} />}
-                      iconPosition="start"
-                      label="Guest Login"
-                    /> */}
                       </Tabs>
                     </Box>
 
@@ -546,7 +529,7 @@ const Login = () => {
                                 onClick={handleForgotPassword}
                                 sx={{
                                   // opacity: 0.6,
-                                  color: "primary.main",
+                                  color: 'primary.main',
                                   cursor: 'pointer',
                                   mt: 0,
                                   fontSize: 14,
@@ -571,14 +554,7 @@ const Login = () => {
                               type="submit"
                               disabled={loading}
                             >
-                              {/* {loading ? (
-                              <>
-                                {' '}
-                                <CircularProgress sx={{ color: 'white' }} size={24} />
-                              </>
-                            ) : ( */}
                               Login
-                              {/* )} */}
                             </Button>
                             {/* <Divider sx={{ my: 1 }} />
                             <Button
@@ -644,7 +620,7 @@ const Login = () => {
                               id="guest-id"
                               variant="outlined"
                               fullWidth
-                              placeholder='Enter your invitation code'
+                              placeholder="Enter your invitation code"
                               value={guestCode}
                               onChange={(e) => {
                                 setGuestCode(e.target.value);
@@ -652,7 +628,6 @@ const Login = () => {
                               }}
                               error={guestError}
                             />
-
                           </Box>
                           {/* {showCaptcha && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>

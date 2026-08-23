@@ -43,6 +43,7 @@ import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
+  IconArrowRight,
   IconGenderTransgender,
   IconMan,
   IconRefresh,
@@ -66,6 +67,8 @@ import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
 import imageCompression from 'browser-image-compression';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import Language from 'src/layouts/full/vertical/header/Language';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -89,6 +92,7 @@ const GuestInformationStepper = () => {
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [openPreview, setOpenPreview] = useState(false);
+  const { t } = useTranslation();
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -156,23 +160,40 @@ const GuestInformationStepper = () => {
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code') || '';
   const isEmpty = (val: any) => val === undefined || val === null || val === '';
-
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
+
+    const isDriving = formValues.is_driving === true;
+
     section?.form?.forEach((f: any) => {
-      if (
-        f.mandatory &&
-        isEmpty(formValues[f.remarks])
-        // &&
-        // !(
-        //   ['vehicle_plate', 'vehicle_type'].includes(f.remarks) &&
-        //   formValues['is_driving'] !== 'true'
-        // )
-      ) {
-        newErrors[f.remarks] = `${f.long_display_text} is required`;
+      const value = formValues[f.remarks];
+
+      // Kalau tidak driving, vehicle tidak perlu divalidasi
+      if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+        return;
+      }
+
+      if (f.mandatory && isEmpty(value)) {
+        newErrors[f.remarks] = `${f.long_display_text || f.remarks} is required`;
       }
     });
+
+    // Vehicle hanya divalidasi jika field vehicle memang
+    // ada di section yang sedang dibuka
+    const hasVehicleType = section?.form?.some((f: any) => f.remarks === 'vehicle_type');
+
+    const hasVehiclePlate = section?.form?.some((f: any) => f.remarks === 'vehicle_plate');
+
+    if (isDriving && hasVehicleType && isEmpty(formValues.vehicle_type)) {
+      newErrors.vehicle_type = 'Vehicle Type is required';
+    }
+
+    if (isDriving && hasVehiclePlate && isEmpty(formValues.vehicle_plate)) {
+      newErrors.vehicle_plate = 'Vehicle Plate Number is required';
+    }
+
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -204,7 +225,9 @@ const GuestInformationStepper = () => {
         forms.forEach((f: any) => {
           if (!f) return;
 
-          if (f.field_type === 9) {
+          if (f.remarks === 'is_driving') {
+            initial[f.remarks] = f.answer_text ?? false;
+          } else if (f.field_type === 9) {
             initial[f.remarks] = f.answer_datetime;
           } else if ([10, 11, 12].includes(f.field_type)) {
             initial[f.remarks] = f.answer_file;
@@ -235,7 +258,10 @@ const GuestInformationStepper = () => {
     setActiveStep((prev) => prev + 1);
   };
 
-  const handleBack = () => setActiveStep((prev) => prev - 1);
+  const handleBack = () => {
+    setErrors({});
+    setActiveStep((prev) => prev - 1);
+  };
 
   const CustomStepIcon = (props: any) => {
     const { icon, active } = props;
@@ -262,7 +288,7 @@ const GuestInformationStepper = () => {
     return (
       <Box
         sx={{
-          height: '80vh',
+          height: '100vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -373,7 +399,7 @@ const GuestInformationStepper = () => {
       const compressedFile = await compressImage(file);
 
       if (compressedFile.size > 1024 * 1024) {
-        showSwal('info', 'File size must be under 1 MB');
+        showSwal('info', 'File size must be under 5 MB');
         return;
       }
 
@@ -419,7 +445,7 @@ const GuestInformationStepper = () => {
       );
 
       if (compressedBlob.size > 1024 * 1024) {
-        showSwal('info', 'File size must be under 1 MB');
+        showSwal('info', 'File size must be under 5 MB');
         return;
       }
 
@@ -766,7 +792,7 @@ const GuestInformationStepper = () => {
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
           </Typography>
 
           {/* Hidden input */}
@@ -894,7 +920,7 @@ const GuestInformationStepper = () => {
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
             <Typography variant="body1" color="textSecondary">
-              Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb | </span>
+              Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>5 MB or </span>
             </Typography>
 
             <Typography
@@ -1295,17 +1321,41 @@ const GuestInformationStepper = () => {
                     )}
                   </>
                 )}
-
                 {f.remarks === 'is_driving' && (
                   <FormControl component="fieldset">
                     <RadioGroup
-                      value={formValues[f.remarks] || ''}
-                      onChange={(e) => handleChange(f.remarks, e.target.value)}
-                      sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                      value={formValues[f.remarks] ?? 'false'}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        handleChange('is_driving', value);
+
+                        // Kalau No, kosongkan vehicle
+                        if (value === 'false') {
+                          setFormValues((prev) => ({
+                            ...prev,
+                            is_driving: 'false',
+                            vehicle_type: '',
+                            vehicle_plate: '',
+                          }));
+
+                          setErrors((prev) => {
+                            const { vehicle_type, vehicle_plate, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
+                      sx={{
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                      }}
                     >
                       <FormControlLabel value="true" control={<Radio />} label="Yes" />
+
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
+
                     {errors[f.remarks] && (
                       <Typography variant="caption" color="error">
                         {errors[f.remarks]}
@@ -1456,7 +1506,14 @@ const GuestInformationStepper = () => {
               form: (section.form ?? []).map((f: any) => {
                 const fieldDef =
                   sectionDef?.visit_form?.find((vf: any) => vf.remarks === f.remarks) || {};
-                const value = formValues[f.remarks];
+                let value = formValues[f.remarks];
+
+                if (
+                  formValues.is_driving !== true &&
+                  ['vehicle_type', 'vehicle_plate'].includes(f.remarks)
+                ) {
+                  value = null;
+                }
                 const base = {
                   sort: f.sort,
                   short_name: f.short_name,
@@ -1571,16 +1628,31 @@ const GuestInformationStepper = () => {
             <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
               <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
                 <Box
-                  textAlign="center"
-                  mb={3}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
+                  sx={{
+                    position: 'relative',
+                    mb: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
                 >
+                  {/* Logo */}
                   <img src={Logo} width={100} height={100} alt="Logo" />
+
+                  {/* Language */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                    }}
+                  >
+                    <Language />
+                  </Box>
+
                   {code && (
                     <Typography variant="h6" fontWeight={600} mt={2}>
-                      Invitation Code: {code}
+                      {t('invitationCode')}: {code}
                     </Typography>
                   )}
                 </Box>
@@ -1600,11 +1672,11 @@ const GuestInformationStepper = () => {
                     }}
                   >
                     <Typography variant="h5" fontWeight={700} mb={1}>
-                      Are you filling this invitation for yourself or someone else?
+                      {t('questionInvitation')}
                     </Typography>
 
                     <Typography color="text.secondary" mb={4}>
-                      Please select whether you are filling out this form.
+                      {t('subtitleQuestionInvitation')}
                     </Typography>
 
                     <Grid container spacing={3} justifyContent="center">
@@ -1650,7 +1722,7 @@ const GuestInformationStepper = () => {
                             </Box>
 
                             <Typography variant="h5" fontWeight={700}>
-                              Self
+                              {t('self')}
                             </Typography>
 
                             <Typography
@@ -1659,11 +1731,11 @@ const GuestInformationStepper = () => {
                               mt={1}
                               textAlign="center"
                             >
-                              I am filling out this form for myself
+                              {t('filling_form_self')}
                             </Typography>
 
                             <Button fullWidth variant="contained" sx={{ mt: 3 }}>
-                              Continue as Self
+                              {t('continue_as_self')}
                             </Button>
                           </Box>
                         </Card>
@@ -1695,23 +1767,44 @@ const GuestInformationStepper = () => {
                           }}
                         >
                           <Box display="flex" flexDirection="column" alignItems="center">
-                            <Box
-                              sx={{
-                                width: 70,
-                                height: 70,
-                                borderRadius: '50%',
-                                bgcolor: 'secondary.light',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mb: 2,
-                              }}
-                            >
-                              <IconMan size={36} color="#9c27b0" />
+                            <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                              {/* Person 1 */}
+                              <Box
+                                sx={{
+                                  width: 70,
+                                  height: 70,
+                                  borderRadius: '50%',
+                                  bgcolor: 'primary.light',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  // mb: 2,
+                                }}
+                              >
+                                <IconMan size={36} color="#1976d2" />
+                              </Box>
+
+                              <IconArrowRight size={32} color="#1976d2" />
+
+                              {/* Person 2 */}
+                              <Box
+                                sx={{
+                                  width: 70,
+                                  height: 70,
+                                  borderRadius: '50%',
+                                  bgcolor: 'primary.light',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  // mb: 2,
+                                }}
+                              >
+                                <IconMan size={36} color="#1976d2" />
+                              </Box>
                             </Box>
 
                             <Typography variant="h5" fontWeight={700}>
-                              Others
+                              {t('others')}
                             </Typography>
 
                             <Typography
@@ -1720,11 +1813,11 @@ const GuestInformationStepper = () => {
                               mt={1}
                               textAlign="center"
                             >
-                              I am filling out this form for someone else
+                              {t('filling_form_other')}
                             </Typography>
 
                             <Button fullWidth variant="outlined" sx={{ mt: 3 }}>
-                              Continue as Others
+                              {t('continue_as_others')}
                             </Button>
                           </Box>
                         </Card>
@@ -1793,13 +1886,13 @@ const GuestInformationStepper = () => {
                         }}
                       >
                         <Typography variant="h6" fontWeight={700} mb={2}>
-                          Person Filling This Form
+                          {t('person_filling_this_form')}
                         </Typography>
 
                         <Grid container spacing={2}>
                           <Grid size={{ xs: 12, md: 4 }}>
                             <CustomFormLabel required sx={{ mt: 0 }}>
-                              Your Name
+                              {t('your_name')}
                             </CustomFormLabel>
 
                             <CustomTextField
@@ -1817,7 +1910,7 @@ const GuestInformationStepper = () => {
 
                           <Grid size={{ xs: 12, md: 4 }}>
                             <CustomFormLabel required sx={{ mt: 0 }}>
-                              Your Email
+                              {t('your_email')}
                             </CustomFormLabel>
 
                             <CustomTextField
@@ -1836,7 +1929,7 @@ const GuestInformationStepper = () => {
 
                           <Grid size={{ xs: 12, md: 4 }}>
                             <CustomFormLabel required sx={{ mt: 0 }}>
-                              Your Phone
+                              {t('your_phone')}
                             </CustomFormLabel>
 
                             <CustomTextField
@@ -1881,7 +1974,7 @@ const GuestInformationStepper = () => {
                                 color="primary"
                                 onClick={handleNext}
                               >
-                                Next
+                                {t('next')}
                                 <KeyboardArrowRight />
                               </Button>
                             )
@@ -1900,7 +1993,7 @@ const GuestInformationStepper = () => {
                               disabled={activeStep === 0 && selfRegisterData === null}
                             >
                               <KeyboardArrowLeft />
-                              Back
+                              {t('back')}
                             </Button>
                           }
                         />
@@ -1909,41 +2002,65 @@ const GuestInformationStepper = () => {
 
                     <>
                       {!isMobile && (
-                        <Box display="flex" flexDirection="row" mt={4}>
-                          <Button
-                            disabled={activeStep === 0 && selfRegisterData === null}
-                            onClick={() => {
-                              if (activeStep === 0) {
-                                setSelfRegisterData(null);
-                                return;
-                              }
+                        <>
+                          <Box sx={{ mt: 2 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: 'block',
+                                fontStyle: 'italic',
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                sx={{
+                                  color: 'error.main',
+                                  fontWeight: 700,
+                                  mr: 0.5,
+                                }}
+                              >
+                                *
+                              </Box>{' '}
+                              {t('required_field_note')}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" flexDirection="row" mt={2}>
+                            <Button
+                              disabled={activeStep === 0 && selfRegisterData === null}
+                              onClick={() => {
+                                if (activeStep === 0) {
+                                  setSelfRegisterData(null);
+                                  return;
+                                }
 
-                              handleBack();
-                            }}
-                            startIcon={<KeyboardArrowLeft />}
-                          >
-                            Back
-                          </Button>
-                          <Box flex="1 1 auto" />
-                          {activeStep !== steps.length - 1 ? (
-                            <Button
-                              onClick={handleNext}
-                              variant="contained"
-                              endIcon={<KeyboardArrowRight />}
+                                handleBack();
+                              }}
+                              startIcon={<KeyboardArrowLeft />}
                             >
-                              Next
+                              {t('back')}
                             </Button>
-                          ) : (
-                            <Button
-                              // onClick={handleSubmit}
-                              onClick={() => setOpenPreview(true)}
-                              variant="contained"
-                              color="primary"
-                            >
-                              Submit
-                            </Button>
-                          )}
-                        </Box>
+                            <Box flex="1 1 auto" />
+                            {activeStep !== steps.length - 1 ? (
+                              <Button
+                                onClick={handleNext}
+                                variant="contained"
+                                endIcon={<KeyboardArrowRight />}
+                              >
+                                {t('next')}
+                              </Button>
+                            ) : (
+                              <Button
+                                // onClick={handleSubmit}
+                                onClick={() => setOpenPreview(true)}
+                                variant="contained"
+                                color="primary"
+                              >
+                                Submit
+                              </Button>
+                            )}
+                          </Box>
+                        </>
                       )}
                     </>
                   </>

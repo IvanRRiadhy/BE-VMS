@@ -95,7 +95,7 @@ const ImageCard = ({
               minHeight: {
                 xs: 120,
                 md: 150,
-                xl: 180,
+                xl: 210,
               },
               display: 'flex',
               alignItems: 'center',
@@ -204,7 +204,7 @@ const VisitorImage = ({
           }}
         >
           <Typography variant="h5" fontWeight="bold">
-            Live Occupancy
+            Visitor Type
           </Typography>
 
           <FormControl size="small">
@@ -222,54 +222,7 @@ const VisitorImage = ({
             </Select>
           </FormControl>
         </Box>
-        {/* 
-        <Grid container spacing={2} mt={2}>
-          {todayVisitingPurpose?.length > 0 ? (
-            todayVisitingPurpose.map((item: any) => (
-              <Grid size={{ xs: 12, lg: 6 }} key={item.id}>
-                <Card
-                  sx={{
-                    flex: 1,
-                    p: 0,
-                    borderRadius: 1,
-                    background: getColorByName(item.name),
-                    boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
-                    },
-                    color: '#fff',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => handleOpenDetailVistingPurpose(item)}
-                >
-                  <CardContent sx={{ p: '15px !important', color: '#fff', }}>
-                    <Typography fontWeight={600}>{item.name}</Typography>
 
-                    <Typography variant="h4" fontWeight="bold" mt={1}>
-                      {item.count}
-               
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))
-          ) : (
-            <Grid size={12}>
-              <Card
-                variant="outlined"
-                sx={{
-                  py: 5,
-                  textAlign: 'center',
-                  borderStyle: 'dashed',
-                }}
-              >
-                <Typography color="text.secondary">No visiting purpose available.</Typography>
-              </Card>
-            </Grid>
-          )}
-        </Grid> */}
         <Grid container spacing={2} mt={2}>
           {visiblePurposes.length > 0 ? (
             <>
@@ -358,7 +311,7 @@ const VisitorImage = ({
       />
       <Dialog open={openAllPurpose} onClose={handleCloseAllVisitingPurpose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Live Occupancy
+          Visitor Type
           <IconButton
             aria-label="close"
             onClick={handleCloseAllVisitingPurpose}

@@ -66,7 +66,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
       baseTime.add(extendMinutes, 'minutes');
     }
 
-    return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
+    return baseTime.tz(moment.tz.guess()).format('DD MMMM YYYY, HH:mm');
   };
 
   const statusBgMap: Record<string, string> = {
@@ -81,101 +81,68 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Available: 'gray',
   };
 
+  const statusLabelMap: Record<string, string> = {
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
+    Block: 'Block',
+    Deny: 'Deny',
+    Approve: 'Approve',
+    Pracheckin: 'Precheckin',
+    Preregis: 'Praregis',
+    Waiting: 'Waiting',
+    Available: 'Available',
+  };
+
   return (
     <>
-      <Tabs value={tabValue} onChange={(_, newValue) => onTabChange(newValue)} variant="fullWidth">
-        {/* <Tab label="Info" /> */}
-        <Tab label="Visit Information" />
-        <Tab label="Purpose Visit" />
-        <Tab label="Card" />
-        {/* <Tab label="Parking" /> */}
-        <Tab label="History" />
-        {/* <Tab label="Barcode" /> */}
-      </Tabs>
+      <Box
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+        }}
+      >
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => onTabChange(newValue)}
+          variant="fullWidth"
+          sx={{
+            minHeight: 44,
 
-      {/* TAB 1 — INFO */}
-      {/* {tabValue === 0 && (
-        <Box sx={{ mt: 2 }}>
-          <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
-  
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2} alignItems="flex-start">
-                <IconBrandGmail />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
-                  <Typography
-                    sx={{
-                      wordBreak: 'break-word',
-                      overflowWrap: 'anywhere',
-                      whiteSpace: 'normal',
-                    }}
-                  >
-                    {data?.email || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
+            '& .MuiTab-root': {
+              minHeight: 44,
+              fontSize: 13,
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRight: '1px solid',
+              borderColor: 'divider',
 
+              '&:last-of-type': {
+                borderRight: 'none',
+              },
+            },
 
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2} alignItems="flex-start">
-                <IconPhone />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                  <Typography>{data?.phone || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
+            '& .Mui-selected': {
+              color: 'primary.main',
+              fontWeight: 700,
+              backgroundColor: 'action.hover',
+            },
 
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2} alignItems="flex-start">
-                <IconGenderMale />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                  <Typography>{data?.gender || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
-                <IconTicket />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invitation Code</CustomFormLabel>
-                  <Typography>{data?.invitation_code || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
+            '& .MuiTabs-indicator': {
+              height: 3,
+            },
+          }}
+        >
+          <Tab label="Visit Information" />
+          <Tab label="Purpose Visit" />
+          <Tab label="Card Information" />
+          <Tab label="Visitor Tracker" />
+        </Tabs>
+      </Box>
 
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2} alignItems="flex-start">
-                <IconBuildingSkyscraper />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Organization</CustomFormLabel>
-                  <Typography>{data?.organization || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-  
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" justifyContent="space-between">
-                <Box display="flex" gap={2} alignItems={'center'}>
-                  <IconCards />
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
-                </Box>
-
-                <Box>
-                  {currentCard?.card_number?.trim() && (
-                    <Typography fontWeight={600}>{currentCard.card_number}</Typography>
-                  )}
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      )} */}
-
-      {/* TAB 2 — VISIT INFORMATION */}
+      {/* TAB 1 — VISIT INFORMATION */}
       {tabValue === 0 && (
         <Box sx={{ position: 'relative', mt: 2 }}>
           <Divider
@@ -269,7 +236,10 @@ const VisitorDetailTabs: React.FC<Props> = ({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    <Typography>{data?.visitor_status || '-'}</Typography>
+                    <Typography>
+                      {' '}
+                      {statusLabelMap[data?.visitor_status] || data?.visitor_status || '-'}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
@@ -291,7 +261,9 @@ const VisitorDetailTabs: React.FC<Props> = ({
                   <Box display="flex" gap={2}>
                     <IconLicense />
                     <Box>
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Vehicle Plate No.</CustomFormLabel>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                        License Plate Number
+                      </CustomFormLabel>
                       <Typography>{data?.vehicle_plate_number || '-'}</Typography>
                     </Box>
                   </Box>
@@ -606,8 +578,8 @@ const VisitorDetailTabs: React.FC<Props> = ({
                     card.card_status === 'Issued'
                       ? 'success'
                       : card.card_status === 'Returned'
-                        ? 'default'
-                        : 'warning'
+                      ? 'default'
+                      : 'warning'
                   }
                   size="small"
                 />

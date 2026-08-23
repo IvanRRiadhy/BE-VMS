@@ -24,29 +24,29 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
     icon: IconHome,
     href: '/guest/dashboard',
   },
-  {
-    id: uniqueId(),
-    title: 'Invitation',
-    icon: IconMail,
-    chipColor: 'secondary',
-    href: '/guest/invitation',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Invitation',
+  //   icon: IconMail,
+  //   chipColor: 'secondary',
+  //   href: '/guest/invitation',
+  // },
 
-  {
-    id: uniqueId(),
-    title: 'Parking',
-    icon: IconCar,
-    chipColor: 'secondary',
-    href: '/parking',
-    target: '_blank',
-  },
-  {
-    id: uniqueId(),
-    title: 'Report',
-    icon: IconReport,
-    chipColor: 'secondary',
-    href: '/guest/report',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Parking',
+  //   icon: IconCar,
+  //   chipColor: 'secondary',
+  //   href: '/parking',
+  //   target: '_blank',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Report',
+  //   icon: IconReport,
+  //   chipColor: 'secondary',
+  //   href: '/guest/report',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'History',
@@ -54,13 +54,13 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
   //   chipColor: 'secondary',
   //   href: '/guest/history',
   // },
-  {
-    id: uniqueId(),
-    title: 'Notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/guest/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/guest/notification',
+  // },
 ];
 
 export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
@@ -75,29 +75,29 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     href: '/guest/dashboard',
   },
 
-  {
-    id: uniqueId(),
-    title: 'Invitation',
-    icon: IconParkingCircle,
-    chipColor: 'secondary',
-    href: '/guest/invitation',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Invitation',
+  //   icon: IconParkingCircle,
+  //   chipColor: 'secondary',
+  //   href: '/guest/invitation',
+  // },
 
-  {
-    id: uniqueId(),
-    title: 'Parking',
-    icon: IconCar,
-    chipColor: 'secondary',
-    href: '/parking',
-    target: '_blank',
-  },
-  {
-    id: uniqueId(),
-    title: 'Report',
-    icon: IconReport,
-    chipColor: 'secondary',
-    href: '/guest/report',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Parking',
+  //   icon: IconCar,
+  //   chipColor: 'secondary',
+  //   href: '/parking',
+  //   target: '_blank',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Report',
+  //   icon: IconReport,
+  //   chipColor: 'secondary',
+  //   href: '/guest/report',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'History',
@@ -105,11 +105,11 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   chipColor: 'secondary',
   //   href: '/guest/history',
   // },
-  {
-    id: uniqueId(),
-    title: 'Notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/guest/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/guest/notification',
+  // },
 ];

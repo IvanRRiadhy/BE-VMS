@@ -175,7 +175,7 @@ const ChooseCardDialog = ({
 
         {currentUsedCards.map((visitorItem: any) => (
           <Box key={visitorItem.visitorId} mb={3}>
-            <Typography variant="h5" fontWeight={700} mb={2} color="warning.main">
+            <Typography variant="h5" fontWeight={700} mb={2} color="">
               Current Card - {visitorItem.visitorName}
             </Typography>
 
@@ -326,8 +326,8 @@ const ChooseCardDialog = ({
                     backgroundColor: isUsed
                       ? theme.palette.action.disabledBackground
                       : isChosen
-                        ? theme.palette.primary.light
-                        : 'background.paper',
+                      ? theme.palette.primary.light
+                      : 'background.paper',
 
                     opacity: isUsed ? 0.6 : 1,
                     // transition: theme.transitions.create(
@@ -440,7 +440,7 @@ const ChooseCardDialog = ({
           })}
         </Grid>
 
-        <Box mt={3} display="flex" gap={1}>
+        {/* <Box mt={3} display="flex" gap={1}>
           <Typography>
             Cards chosen: {selectedCards.length} / {availableCount}
           </Typography>
@@ -448,7 +448,7 @@ const ChooseCardDialog = ({
           <Typography>
             Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
           </Typography>
-        </Box>
+        </Box> */}
       </DialogContent>
 
       <DialogActions>
@@ -462,12 +462,22 @@ const ChooseCardDialog = ({
         >
           Swipe
         </Button>
+        {/* <Button
+          fullWidth
+          variant="contained"
+          color="error"
+          // startIcon={<i />}
+          onClick={handleOpenSwipeDialog}
+          // disabled={isSwipeDisabled}
+        >
+          Cancel
+        </Button> */}
 
         <Button
           fullWidth
           variant="contained"
           color="primary"
-          startIcon={<IconCards />}
+          // startIcon={<IconCards />}
           onClick={handleConfirmChooseCards}
         >
           Give

@@ -130,7 +130,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     fetchData();
   }, [id]);
 
-
   const handleChange = (remarks: string, value: any) =>
     setFormValues((prev) => ({ ...prev, [remarks]: value }));
 
@@ -417,7 +416,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
           </Typography>
 
           {/* Hidden input */}
@@ -566,7 +565,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, PNG, JPEG, Up to <b>1 Mb</b>
+            Supports: JPG, PNG, JPEG, Up to <b>5 MB</b>
           </Typography>
 
           <Typography

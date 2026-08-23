@@ -29,6 +29,7 @@ import {
   IconCreditCard,
   IconPrinter,
   IconFilter,
+  IconX,
 } from '@tabler/icons-react';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import VisitorFilterDialog from './VisitorFilterDialog';
@@ -46,6 +47,7 @@ interface PermissionHook {
 interface VisitorListCardProps {
   isFullscreen: boolean;
   typeVisitor: any;
+  onClear?: any;
   anchorEl: HTMLElement | null;
   searchKeyword: string;
   selectMultiple: boolean;
@@ -94,6 +96,7 @@ interface VisitorListCardProps {
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
   isFullscreen,
   typeVisitor,
+  onClear,
   anchorEl,
   searchKeyword,
   selectMultiple,
@@ -201,16 +204,43 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
         id="tour-visitor-list"
       >
         <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            sx={{
+              display: 'inline-flex',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1.5,
+              overflow: 'hidden',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
+            }}
+          >
             <Tabs
               value={typeVisitor}
               onChange={(_, value) => setTypeVisitor(value)}
               sx={{
-                minHeight: 40,
+                minHeight: 50,
+
                 '& .MuiTab-root': {
-                  minHeight: 40,
+                  minHeight: 50,
+                  px: 2,
                   textTransform: 'none',
                   fontWeight: 600,
+                  fontSize: 13,
+                  borderRight: '1px solid',
+                  borderColor: 'divider',
+
+                  '&:last-of-type': {
+                    borderRight: 'none',
+                  },
+                },
+
+                '& .Mui-selected': {
+                  color: 'primary.main',
+                  backgroundColor: 'action.hover',
+                },
+
+                '& .MuiTabs-indicator': {
+                  height: 2,
                 },
               }}
             >
@@ -292,8 +322,18 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                 {isWebSocketOnline ? 'Online' : 'Offline'}
               </Typography>
             </Box>
-
+            <Tooltip title="Clear data information">
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<IconX size={18} />}
+                onClick={onClear}
+              >
+                Clear
+              </Button>
+            </Tooltip>
             {/* Refresh */}
+
             <Tooltip title="Refresh Visitor List" placement="top" arrow>
               <Button
                 onClick={handleRefresh}
@@ -337,7 +377,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           </Box>
         </Box>
 
-        <Box display={'flex'} gap={2} mt={2} justifyContent={'space-between'}>
+        <Box display={'flex'} gap={2} mt={1} justifyContent={'space-between'}>
           <Stack
             direction="row"
             spacing={1}
@@ -352,8 +392,8 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               size="medium"
               value={searchKeyword}
               onChange={(e: any) => setSearchKeyword(e.target.value)}
-              placeholder="Search Visitor"
-              sx={{ flex: 1 }}
+              placeholder="Search Visitor Name or Organization"
+              sx={{ width: lgUp ? '350px' : '100%' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -388,7 +428,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             justifyContent={'flex-end'}
             id="tour-select-multiple"
           >
-            <Tooltip
+            {/* <Tooltip
               title="Click and Select more than 1 visitor"
               slotProps={{
                 tooltip: {
@@ -419,7 +459,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                   whiteSpace: 'nowrap',
                 }}
               />
-            </Tooltip>
+            </Tooltip> */}
             {/* <IconButton
               size="small"
               disabled={page === 0}
@@ -639,7 +679,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           </Box>
         </CardContent>
 
-        <CardActions sx={{ overflow: 'visible', p: '0' }}>
+        {/* <CardActions sx={{ overflow: 'visible', p: '0' }}>
           <Divider />
           <Box
             display={'flex'}
@@ -799,7 +839,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               </Box>
             )}
           </Box>
-        </CardActions>
+        </CardActions> */}
       </Card>
       <VisitorFilterDialog
         open={openFilter}

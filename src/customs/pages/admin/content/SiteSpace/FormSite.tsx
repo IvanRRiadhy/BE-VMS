@@ -539,7 +539,7 @@ const FormSite = ({
       const compressedFile = await compressImage(selectedFile);
 
       if (compressedFile.size > 1024 * 1024) {
-        showSwal('error', 'Image must be under 1 MB');
+        showSwal('error', 'Image must be under 5 MB');
         return;
       }
 
@@ -1948,7 +1948,7 @@ const FormSite = ({
                     Drag and drop or tap to select file.
                   </Typography>
                   <Typography variant="subtitle1" color="textSecondary">
-                    Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
+                    Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
                   </Typography>
                   {isUploadingImage && (
                     <Box

@@ -7,26 +7,26 @@ const Footer = () => {
       sx={{
         // mt: 'auto',
         width: '100%',
-        bgcolor: 'background.paper',
+        bgcolor: 'primary.main',
         borderTop: '1px solid',
         borderColor: 'divider',
-        py: 1.5,
-        px: 1,
+        // py: 1.5,
+        // px: 1,
         height: '50px',
         // overflow: 'hidden',
-        marginTop: '1px',
+        marginTop: '5px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         flexShrink: 0,
       }}
     >
-      <Typography variant="body2" color="text.secondary" fontWeight={'bold'}>
-        Copyright © 2026{' '}
-        <span style={{ color: 'red' }}>
+      <Typography variant="h6" color="white" fontWeight={'bold'}>
+        © 2026 Bank Indonesia
+        {/* <span style={{ color: 'red' }}>
           <img src={beImage} style={{ width: '15px', marginRight: '5px', marginLeft: '5px' }} />
         </span>
-        . All Rights Reserved.
+        . All Rights Reserved. */}
       </Typography>
     </Box>
   );

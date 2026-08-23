@@ -94,7 +94,8 @@ const PreviewDialog = ({ open, onClose, onConfirm, invitationData, formValues }:
                       <Typography variant="caption" color="text.secondary">
                         {f.long_display_text}
                       </Typography>
-                      <Typography>{formValues[f.remarks] == 'true' ? 'Yes' : 'No'}</Typography>
+
+                      <Typography> {formValues[f.remarks] === 'true' ? 'Yes' : 'No'}</Typography>
                     </Grid>
                   );
                 }
