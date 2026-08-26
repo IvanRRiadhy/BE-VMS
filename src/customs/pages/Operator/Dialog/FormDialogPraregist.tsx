@@ -55,6 +55,7 @@ import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
+import toast from 'src/customs/components/alerts/toast';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -94,6 +95,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const [isDragging, setIsDragging] = useState(false);
   const { t } = useTranslation();
   const formatDateTime = (value: string | null) =>
     !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
@@ -110,7 +112,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         const initial: Record<string, any> = {};
         data?.question_page?.forEach((section: any) => {
           section.form?.forEach((f: any) => {
-            if (f.field_type === 9) initial[f.remarks] = f.answer_datetime;
+            if (f.remarks === 'is_driving') {
+              initial[f.remarks] = f.answer_text ?? 'false';
+            } else if (f.field_type === 9) initial[f.remarks] = f.answer_datetime;
             else if ([10, 11, 12].includes(f.field_type)) initial[f.remarks] = f.answer_file;
             else initial[f.remarks] = f.answer_text ?? null;
           });
@@ -460,16 +464,18 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            accept="image/jpeg,image/png, image/jpg"
             hidden
             ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
+                e.target.files?.[0],
                 (url) => handleChange(f.remarks, url),
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
           {(previewSrc || shownName) && (
             <Box
@@ -552,26 +558,67 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         <Box
           sx={{
             position: 'relative',
-            border: '2px dashed #90caf9',
+            border: '2px dashed',
+            borderColor: isDragging ? 'primary.main' : '#90caf9',
             borderRadius: 2,
             padding: 4,
             textAlign: 'center',
-            backgroundColor: '#f5faff',
+            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
             cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
             pointerEvents: isUploading ? 'none' : 'auto',
             opacity: isUploading ? 0.6 : 1,
-            transition: 'opacity 0.2s ease',
           }}
           onClick={() => {
             if (!isUploading) {
               fileInputRefs.current[key]?.click();
             }
           }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isUploading) {
+              setIsDragging(true);
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+
+            if (isUploading) return;
+
+            handleFileChangeForField(
+              e.dataTransfer.files?.[0],
+              (url) => {
+                handleChange(f.remarks, url);
+
+                if (url) {
+                  setErrors((prev) => {
+                    const { [f.remarks]: _, ...rest } = prev;
+                    return rest;
+                  });
+                }
+              },
+              key,
+            );
+          }}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
 
-          <Typography variant="h6" sx={{ mt: 1, fontWeight: '500' }}>
+          <Typography variant="h6" sx={{ mt: 1, fontWeight: '600' }}>
             Upload File
           </Typography>
           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
@@ -579,7 +626,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="body1" color="textSecondary" mt={0}>
-              Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB | </span>
+              Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB or </span>
             </Typography>
 
             <Typography
@@ -633,17 +680,22 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/jpg"
             hidden
-            disabled={isUploading}
-            ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            ref={(el: HTMLInputElement | null) => {
+              fileInputRefs.current[key] = el;
+            }}
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
-                (url) => handleChange(f.remarks, url),
+                e.target.files?.[0],
+                (url) => {
+                  handleChange(f.remarks, url);
+                },
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
 
           {(previewSrc || shownName) && (
@@ -913,20 +965,39 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
       console.error('Delete failed:', e);
     } finally {
       setRemoving((s) => ({ ...s, [inputId]: false }));
     }
   };
-
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
+
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
 
     if (trackKey) {
       setUploadingFiles((prev) => ({
@@ -946,6 +1017,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     }
 
     try {
+      // Compression sementara disabled
       const path = await uploadFileToCDN(file);
 
       if (path) {
@@ -953,6 +1025,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       }
     } catch (error) {
       console.error('Upload failed:', error);
+      toast('Failed to upload file', 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({
@@ -960,8 +1033,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           [trackKey]: false,
         }));
       }
-
-      e.target.value = '';
     }
   };
 
@@ -1436,116 +1507,136 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   if (activeStep === -1) {
     return (
       <Box mt={0}>
-        <CustomFormLabel sx={{ mt: 0, fontSize: '16px' }}>
-          Are you filling this invitation for yourself or someone else?
-        </CustomFormLabel>
-
-        <RadioGroup
-          value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-          onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+        <Box
+          sx={{
+            p: 3,
+            mb: 2,
+            borderRadius: 4,
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+                : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
         >
-          <Grid container spacing={2}>
-            {/* SELF */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: '2px solid',
-                  transition: 'all 0.25s ease',
-                  borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
-                  backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={() => setIsSelfInvitation(true)}
-              >
-                <FormControlLabel
-                  value="self"
-                  control={<Radio checked={isSelfInvitation === true} />}
-                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                  label={
-                    <Box ml={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography fontWeight={700} fontSize={18}>
-                          Self
+          <Box mb={3}>
+            <CustomFormLabel sx={{ mt: 0, fontSize: '18px', fontWeight: 600 }}>
+              {t('questionInvitation')}
+            </CustomFormLabel>
+            <CustomFormLabel sx={{ mt: 0, fontSize: '12px' }}>
+              {t('subtitleQuestionInvitation')}
+            </CustomFormLabel>
+          </Box>
+
+          <RadioGroup
+            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+          >
+            <Grid container spacing={2}>
+              {/* SELF */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(true)}
+                >
+                  <FormControlLabel
+                    value="self"
+                    control={<Radio checked={isSelfInvitation === true} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            {t('self')}
+                          </Typography>
+
+                          <Tooltip title="This invitation is intended for yourself." arrow>
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          {t('selfOption')}
                         </Typography>
-
-                        <Tooltip title="This invitation is intended for yourself." arrow>
-                          <InfoOutlined
-                            fontSize="small"
-                            color="action"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        </Tooltip>
                       </Box>
+                    }
+                  />
+                </Paper>
+              </Grid>
 
-                      <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Use this option if you are registering yourself.
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </Paper>
-            </Grid>
+              {/* OTHER */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(false)}
+                >
+                  <FormControlLabel
+                    value="other"
+                    control={<Radio checked={isSelfInvitation === false} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            {t('others')}
+                          </Typography>
 
-            {/* OTHER */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: '2px solid',
-                  transition: 'all 0.25s ease',
-                  borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
-                  backgroundColor:
-                    isSelfInvitation === false ? 'primary.light' : 'background.paper',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={() => setIsSelfInvitation(false)}
-              >
-                <FormControlLabel
-                  value="other"
-                  control={<Radio checked={isSelfInvitation === false} />}
-                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                  label={
-                    <Box ml={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography fontWeight={700} fontSize={18}>
-                          Other
+                          <Tooltip
+                            title="This invitation is intended for another person or guest."
+                            arrow
+                          >
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          {t('othersOption')}
                         </Typography>
-
-                        <Tooltip
-                          title="This invitation is intended for another person or guest."
-                          arrow
-                        >
-                          <InfoOutlined
-                            fontSize="small"
-                            color="action"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        </Tooltip>
                       </Box>
-
-                      <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Use this option if you are creating an invitation for someone else.
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </Paper>
+                    }
+                  />
+                </Paper>
+              </Grid>
             </Grid>
-          </Grid>
-        </RadioGroup>
+          </RadioGroup>
+        </Box>
 
         <Divider sx={{ my: 0.5 }} />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>

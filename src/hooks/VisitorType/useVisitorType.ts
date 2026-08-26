@@ -6,7 +6,8 @@ export const useVisitorType = () => {
     queryKey: ['visitor-type'],
     queryFn: async () => {
       const res = await getAllVisitorType();
-      return res.collection ?? [];
+
+      return (res.collection ?? []).filter((item: any) => item.is_quick_access !== true);
     },
     placeholderData: (prev) => prev,
   });

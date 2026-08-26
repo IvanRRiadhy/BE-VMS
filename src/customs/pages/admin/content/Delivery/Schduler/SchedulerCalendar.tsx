@@ -1660,7 +1660,7 @@ export default function DnDOutsideCourier({
                         >
                           <Typography variant="caption" color="textSecondary">
                             Supports: JPG, JPEG, PNG, up to
-                            <span style={{ fontWeight: '700' }}> 5 MB</span>
+                            <span style={{ fontWeight: '700' }}> 5 MB or </span>
                           </Typography>
 
                           <Typography

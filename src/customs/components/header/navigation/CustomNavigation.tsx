@@ -7,6 +7,8 @@ import CustomSidebarItems, { ItemDataCustomSidebarItems } from './CustomSidebarI
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import CurrentTime from './CurrentTIme';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
 
 interface CustomNavigationProps {
   itemDataCustomNavListing: ItemDataCustomNavListing[];
@@ -22,33 +24,31 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
+  const { data: profile } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorVMS';
+  const { toolbar } = useOperatorToolbar();
   if (xl) {
     return (
       <Box
         sx={{
-          // borderBottom: '1px solid rgba(0,0,0,0.05)',
-          // position: 'sticky', // ✅ bikin nempel
-          // top: 0, // ✅ nempel di atas
-          // zIndex: 1100,
-          // background: 'white',
           bgcolor: 'background.paper',
           width: '100%',
           px: xl ? '10px !important' : '5px !important',
           py: 2,
           borderRadius: 0,
-
-          // overflow: 'hidden',
-          // position: 'fixed'
         }}
       >
         <Box
-          sx={{ px: 1, zIndex: 9999, position: 'sticky', top: 0, }}
+          sx={{ px: 1, zIndex: 9999, position: 'sticky', top: 0 }}
           display={'flex'}
           justifyContent={'space-between'}
           alignItems={'center'}
         >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          {xlUp && <CurrentTime />}
+          <Box display={'flex'} alignItems={'center'} gap={1}>
+            {toolbar}
+            {xlUp && <CurrentTime />}
+          </Box>
         </Box>
       </Box>
     );

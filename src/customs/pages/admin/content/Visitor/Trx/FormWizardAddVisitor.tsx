@@ -216,6 +216,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
@@ -1676,8 +1677,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
                                           const originalIndex = page?.form?.findIndex(
                                             (f: any) => f.custom_field_id === field.custom_field_id,
                                           );
@@ -1818,8 +1819,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const proxyField = hasAns(field)
                                             ? field
                                             : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
 
                                           return (
                                             <TableCell key={field.custom_field_id}>
@@ -1972,7 +1973,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -2622,16 +2623,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) =>
+                      onChange={(e) => {
                         handleFileChangeForField(
-                          e as React.ChangeEvent<HTMLInputElement>,
+                          e.target.files?.[0],
                           (url) => {
                             onChange(index, 'answer_file', url);
-                            if (url) clearFieldError(errorKey);
+
+                            if (url) {
+                              clearFieldError(key);
+                            }
                           },
                           key,
-                        )
-                      }
+                        );
+
+                        e.target.value = '';
+                      }}
                     />
                   </Box>
                 )}
@@ -2710,16 +2716,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   type="file"
                   accept="*"
                   hidden
-                  onChange={(e) =>
+                  onChange={(e) => {
                     handleFileChangeForField(
-                      e as React.ChangeEvent<HTMLInputElement>,
+                      e.target.files?.[0],
                       (url) => {
                         onChange(index, 'answer_file', url);
-                        if (url) clearFieldError(errorKey);
+
+                        if (url) {
+                          clearFieldError(key);
+                        }
                       },
                       key,
-                    )
-                  }
+                    );
+
+                    e.target.value = '';
+                  }}
                 />
 
                 {fileUrl && (
@@ -2817,16 +2828,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     type="file"
                     accept="*"
                     hidden
-                    onChange={(e) =>
+                    onChange={(e) => {
                       handleFileChangeForField(
-                        e as React.ChangeEvent<HTMLInputElement>,
+                        e.target.files?.[0],
                         (url) => {
                           onChange(index, 'answer_file', url);
-                          if (url) clearFieldError(errorKey);
+
+                          if (url) {
+                            clearFieldError(key);
+                          }
                         },
                         key,
-                      )
-                    }
+                      );
+
+                      e.target.value = '';
+                    }}
                   />
 
                   {!!(field as any).answer_file && (
@@ -2956,6 +2972,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
+
+
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2999,13 +3017,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
-    fullscreenHandle?: any,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
+
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
 
     if (trackKey) {
       setUploadingFiles((prev) => ({
@@ -3013,7 +3049,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         [trackKey]: true,
       }));
 
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
       setPreviews((prev) => ({
         ...prev,
         [trackKey]: URL.createObjectURL(file),
@@ -3021,19 +3061,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     try {
-      const compressedFile = await compressImage(file);
-
-      if (compressedFile.size > 1024 * 1024) {
-        toast('File size must be under 5 MB', 'info');
-        return;
-      }
-
-      const path = await uploadFileToCDN(compressedFile);
+      // Compression sementara disabled
+      const path = await uploadFileToCDN(file);
 
       if (path) {
         setAnswerFile(path);
       }
     } catch (error) {
+      console.error('Upload failed:', error);
       toast('Failed to upload file', 'error');
     } finally {
       if (trackKey) {
@@ -3042,8 +3077,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           [trackKey]: false,
         }));
       }
-
-      e.target.value = '';
     }
   };
 
@@ -3067,8 +3100,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
-      console.error('Delete failed:', e);
+      toast('Failed to delete file', 'error');
     } finally {
       setRemoving((s) => ({ ...s, [inputId]: false }));
     }
@@ -3126,7 +3160,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       setAnswerFile(path);
     } catch (error) {
-      console.error('Capture/upload failed:', error);
       toast('Failed to upload photo', 'error');
     } finally {
       if (trackKey) {
@@ -3340,17 +3373,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
-      const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
+      const field = details.find((f: any) => f.remarks?.toLowerCase() === key.toLowerCase());
 
       if (!field) return false;
 
-      const val = field.answer_text;
+      const value = String(field.answer_text ?? '')
+        .trim()
+        .toLowerCase();
 
-      if (Array.isArray(val)) {
-        return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
-      }
-
-      return ['true', '1', 'yes', 'true'].includes(String(val).toLowerCase());
+      return ['true', 'yes', '1'].includes(value);
     };
 
     const isDriving = getFlag('is_driving');
@@ -3365,7 +3396,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const validateField = (item: any, key: string, errors: Record<string, string>) => {
     const label = item.long_display_text || item.remarks || 'This field';
-
     const isEmptyText =
       item.answer_text === null ||
       item.answer_text === undefined ||
@@ -3410,13 +3440,170 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
+  // const validateCurrentStep = () => {
+  //   if (activeStep === 0) return true;
+
+  //   const errors: Record<string, string> = {};
+  //   const section = sectionsData[activeStep - 1];
+  //   if (isGroup) {
+  //     // Purpose Visit (shared page)
+  //     if (section.name === 'Purpose Visit') {
+  //       const sameField = (a: any, b: any) =>
+  //         (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
+  //         (a?.remarks && b?.remarks && a.remarks === b.remarks);
+
+  //       const mergedFields = formsOf(section).map((f: any) => {
+  //         const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
+
+  //         return shared
+  //           ? {
+  //               ...f,
+  //               answer_text: shared.answer_text,
+  //               answer_datetime: shared.answer_datetime,
+  //               answer_file: shared.answer_file,
+  //             }
+  //           : f;
+  //       });
+
+  //       const visibilityMap: any = getVisibilityMap(mergedFields);
+
+  //       mergedFields.forEach((item: any) => {
+  //         if (!item?.mandatory) return;
+
+  //         const remark = (item.remarks || '').toLowerCase();
+  //         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //         if (!isVisible) return;
+
+  //         const fieldId = item.custom_field_id || item.id;
+
+  //         validateField(item, `${activeStep - 1}:${fieldId}`, errors);
+  //       });
+  //     }
+
+  //     // Semua page visitor (Visitor Information, Vehicle, dll)
+  //     else {
+  //       dataVisitor.forEach((visitor, gIdx) => {
+  //         const page = visitor.question_page?.[activeStep - 1];
+  //         if (!page?.form) return;
+
+  //         const details = page.form;
+  //         const visibilityMap: any = getVisibilityMap(details);
+
+  //         details.forEach((item: any) => {
+  //           if (!item?.mandatory) return;
+
+  //           const remark = (item.remarks || '').toLowerCase();
+  //           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //           if (!isVisible) return;
+
+  //           const fieldId = item.custom_field_id || item.id;
+
+  //           validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
+  //         });
+  //       });
+  //     }
+  //   } else {
+  //     const section = sectionsData[activeStep - 1];
+
+  //     const details = formsOf(section);
+
+  //     const visibilityMap: any = getVisibilityMap(details);
+
+  //     details.forEach((item: any, index: number) => {
+  //       if (!item?.mandatory) return;
+
+  //       const remark = (item.remarks || '').toLowerCase();
+  //       const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+  //       if (!isVisible) return;
+
+  //       const fieldId = item.custom_field_id || item.id;
+  //       const key = `${activeStep - 1}:${fieldId}`;
+
+  //       validateField(item, key, errors);
+  //     });
+  //   }
+
+  //   setFieldErrors(errors);
+  //   return Object.keys(errors).length === 0;
+  // };
+
   const validateCurrentStep = () => {
     if (activeStep === 0) return true;
 
     const errors: Record<string, string> = {};
-    const section = sectionsData[activeStep - 1];
+    sectionsData.forEach((section: any) => {
+      const forms = formsOf(section);
+
+      forms.forEach((item: any) => {
+        if (
+          item.remarks?.toLowerCase() === 'is_driving' &&
+          (item.answer_text === undefined || item.answer_text === null || item.answer_text === '')
+        ) {
+          item.answer_text = 'false';
+        }
+      });
+    });
+
+    const isFieldMandatory = (item: any, visibilityMap: any) => {
+      const remark = (item.remarks || '').toLowerCase();
+
+      // is_driving wajib, tetapi false adalah value yang valid
+      if (remark === 'is_driving') {
+        return true;
+      }
+
+      // vehicle wajib hanya jika is_driving = true
+      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+        return true;
+      }
+
+      // mandatory normal
+      return !!item.mandatory;
+    };
+
+    /**
+     * Get visibility berdasarkan kondisi field.
+     *
+     * is_driving:
+     *   "Yes" / "true" / true / "1" -> true
+     *   "No" / "false" / false / "0" -> false
+     */
+    const getVisibilityMapForValidation = (details: any[]) => {
+      const getFlag = (remarkName: string) => {
+        const field = details.find(
+          (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
+        );
+
+        if (!field) return false;
+
+        const value = String(field.answer_text ?? '')
+          .trim()
+          .toLowerCase();
+
+        return ['true', 'yes', '1'].includes(value);
+      };
+
+      const isDriving = getFlag('is_driving');
+      const isEmployee = getFlag('is_employee');
+
+      return {
+        vehicle_type: isDriving,
+        vehicle_plate: isDriving,
+        employee: isEmployee,
+      };
+    };
+
     if (isGroup) {
+      // ============================================================
+      // GROUP VISITOR
+      // ============================================================
+
       // Purpose Visit (shared page)
+      const section = sectionsData[activeStep - 1];
+
       if (section.name === 'Purpose Visit') {
         const sameField = (a: any, b: any) =>
           (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
@@ -3435,15 +3622,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             : f;
         });
 
-        const visibilityMap: any = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMapForValidation(mergedFields);
 
         mergedFields.forEach((item: any) => {
-          if (!item?.mandatory) return;
-
           const remark = (item.remarks || '').toLowerCase();
-          const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+          const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+            ? visibilityMap[remark]
+            : true;
+
+          // Field tidak terlihat -> tidak perlu divalidasi
           if (!isVisible) return;
+
+          // Mandatory normal + conditional mandatory
+          if (!isFieldMandatory(item, visibilityMap)) return;
 
           const fieldId = item.custom_field_id || item.id;
 
@@ -3451,22 +3643,32 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
       }
 
-      // Semua page visitor (Visitor Information, Vehicle, dll)
+      // ============================================================
+      // SEMUA PAGE VISITOR
+      // Visitor Information, Vehicle, dll
+      // ============================================================
       else {
         dataVisitor.forEach((visitor, gIdx) => {
           const page = visitor.question_page?.[activeStep - 1];
+
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap: any = getVisibilityMap(details);
+
+          const visibilityMap: any = getVisibilityMapForValidation(details);
 
           details.forEach((item: any) => {
-            if (!item?.mandatory) return;
-
             const remark = (item.remarks || '').toLowerCase();
-            const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+            const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+              ? visibilityMap[remark]
+              : true;
+
+            // Field tidak terlihat -> tidak perlu divalidasi
             if (!isVisible) return;
+
+            // Mandatory normal + conditional mandatory
+            if (!isFieldMandatory(item, visibilityMap)) return;
 
             const fieldId = item.custom_field_id || item.id;
 
@@ -3475,21 +3677,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
       }
     } else {
+      // ============================================================
+      // SINGLE VISITOR
+      // ============================================================
+
       const section = sectionsData[activeStep - 1];
 
       const details = formsOf(section);
 
-      const visibilityMap: any = getVisibilityMap(details);
+      const visibilityMap: any = getVisibilityMapForValidation(details);
 
-      details.forEach((item: any, index: number) => {
-        if (!item?.mandatory) return;
-
+      details.forEach((item: any) => {
         const remark = (item.remarks || '').toLowerCase();
-        const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+        const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+          ? visibilityMap[remark]
+          : true;
+
+        // Field tidak terlihat -> tidak perlu divalidasi
         if (!isVisible) return;
 
+        // Mandatory normal + conditional mandatory
+        if (!isFieldMandatory(item, visibilityMap)) return;
+
         const fieldId = item.custom_field_id || item.id;
+
         const key = `${activeStep - 1}:${fieldId}`;
 
         validateField(item, key, errors);
@@ -3497,9 +3709,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     setFieldErrors(errors);
+
     return Object.keys(errors).length === 0;
   };
-
   const clearFieldError = (key: string) => {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
@@ -3907,8 +4119,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const currentAnswers = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? String(item.answer_text).split(',')
-                              : [];
+                                ? String(item.answer_text).split(',')
+                                : [];
 
                             // hanya simpan child yang masih valid
                             const filteredChildren = currentAnswers.filter((id: string) =>
@@ -4304,20 +4516,52 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <>
                       <FormControl component="fieldset" error={!!errorMessage}>
                         <RadioGroup
-                          value={String(item.answer_text)}
+                          value={String(
+                            item.answer_text === null ||
+                              item.answer_text === undefined ||
+                              item.answer_text === ''
+                              ? 'false'
+                              : item.answer_text,
+                          )}
                           onChange={(e) => {
-                            onChange(originalIndex, 'answer_text', e.target.value);
-                            if (e.target.value) clearFieldError(key);
+                            const value = e.target.value;
+
+                            onChange(originalIndex, 'answer_text', value);
+
+                            if (value) {
+                              clearFieldError(key);
+                            }
+
+                            if ((item.remarks || '').toLowerCase() === 'is_driving') {
+                              const isDriving = ['true', 'yes', '1'].includes(value.toLowerCase());
+                              if (!isDriving) {
+                                details.forEach((field: any, fieldIndex: number) => {
+                                  const remark = (field.remarks || '').toLowerCase();
+
+                                  if (remark === 'vehicle_type' || remark === 'vehicle_plate') {
+                                    onChange(fieldIndex, 'answer_text', null);
+                                  }
+                                });
+                              }
+                            }
                           }}
-                          sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                          sx={{
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                          }}
                         >
                           {(item.multiple_option_fields || [])
-                            // .sort((a: any, b: any) => Number(a.value) - Number(b.value))
                             .sort((a: any, b: any) => {
                               if (item.remarks === 'is_driving') {
-                                const order: Record<string, number> = { true: 0, false: 1 };
+                                const order: Record<string, number> = {
+                                  true: 0,
+                                  false: 1,
+                                };
+
                                 return order[a.value] - order[b.value];
                               }
+
                               return 0;
                             })
                             .map((opt: any, idx: number) => (
@@ -4330,7 +4574,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ))}
                         </RadioGroup>
                       </FormControl>
+
                       <br />
+
                       {errorMessage && (
                         <Typography variant="caption" color="error">
                           {errorMessage}
@@ -4338,7 +4584,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       )}
                     </>
                   );
-
                 case 6: // Checkbox
                   return (
                     <>
@@ -4350,8 +4595,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             const answerArray = Array.isArray(item.answer_text)
                               ? item.answer_text
                               : item.answer_text
-                              ? [String(item.answer_text)]
-                              : [];
+                                ? [String(item.answer_text)]
+                                : [];
 
                             return (
                               <FormControlLabel
@@ -4668,18 +4913,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
                 // TakePicture
                 case 10: {
+                  const isUploading = !!uploadingFiles[key];
                   if (remark == 'selfie_image') {
-                    const isUploading = !!uploadingFiles[key];
                     return (
                       <Box>
                         <Box
                           sx={{
                             position: 'relative',
-                            border: '2px dashed #90caf9',
+                            border: '2px dashed',
+                            borderColor: isDragging ? 'primary.main' : '#90caf9',
                             borderRadius: 2,
                             padding: 4,
                             textAlign: 'center',
-                            backgroundColor: '#f5faff',
+                            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
                             cursor: isUploading ? 'not-allowed' : 'pointer',
                             width: '100%',
                             pointerEvents: isUploading ? 'none' : 'auto',
@@ -4689,6 +4935,44 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             if (!isUploading) {
                               fileInputRef.current?.click();
                             }
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (!isUploading) {
+                              setIsDragging(true);
+                            }
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+
+                            if (isUploading) return;
+
+                            handleFileChangeForField(
+                              e.dataTransfer.files?.[0],
+                              (url) => {
+                                onChange(originalIndex, 'answer_file', url);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
+                              },
+                              key,
+                            );
                           }}
                         >
                           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
@@ -4703,7 +4987,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
-                              <span style={{ fontWeight: '700' }}> 5 MB | </span>
+                              <span style={{ fontWeight: '700' }}> 5 MB or </span>
                             </Typography>
 
                             <Typography
@@ -4758,19 +5042,25 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <input
                             id={`file-${key}`}
                             type="file"
-                            accept="*"
+                            // accept="*"
+                            accept="image/jpeg,image/png,image/jpg"
                             hidden
                             ref={fileInputRef}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               handleFileChangeForField(
-                                e as React.ChangeEvent<HTMLInputElement>,
+                                e.target.files?.[0],
                                 (url) => {
                                   onChange(originalIndex, 'answer_file', url);
-                                  if (url) clearFieldError(key);
+
+                                  if (url) {
+                                    clearFieldError(key);
+                                  }
                                 },
                                 key,
-                              )
-                            }
+                              );
+
+                              e.target.value = '';
+                            }}
                           />
                           {(previewSrc || shownName) && (
                             <Box
@@ -4831,185 +5121,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             {errorMessage}
                           </Typography>
                         )}
-
-                        <Dialog
+                        <CameraDialog
                           open={openCamera}
                           onClose={() => setOpenCamera(false)}
-                          maxWidth="md"
-                          fullWidth
-                        >
-                          <Box sx={{ p: 2 }}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={'space-between'}
-                              alignItems={'center'}
-                              mb={1}
-                            >
-                              <Typography variant="h6" mb={0}>
-                                Take Photo From Camera
-                              </Typography>
-                              <IconButton onClick={() => setOpenCamera(false)}>
-                                <IconX />
-                              </IconButton>
-                            </Box>
-
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Grid container spacing={2}>
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                <Box sx={{ position: 'relative' }}>
-                                  <Webcam
-                                    audio={false}
-                                    ref={webcamRef}
-                                    screenshotFormat="image/jpeg"
-                                    videoConstraints={{
-                                      facingMode,
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      borderRadius: 8,
-                                      height: '250px',
-                                      objectFit: 'cover',
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-
-                                  <IconButton
-                                    onClick={() =>
-                                      setFacingMode((prev) =>
-                                        prev === 'environment' ? 'user' : 'environment',
-                                      )
-                                    }
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 10,
-                                      right: 10,
-                                      bgcolor: 'rgba(0,0,0,0.5)',
-                                      color: '#fff',
-                                      '&:hover': {
-                                        bgcolor: 'rgba(0,0,0,0.7)',
-                                      },
-                                    }}
-                                  >
-                                    <IconRefresh />
-                                  </IconButton>
-                                </Box>
-                              </Grid>
-
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                {screenshot ? (
-                                  <img
-                                    src={screenshot}
-                                    alt="Captured"
-                                    style={{
-                                      width: '100%',
-                                      borderRadius: 8,
-                                      height: '250px',
-                                      objectFit: 'cover',
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-                                ) : (
-                                  <Box
-                                    sx={{
-                                      width: '100%',
-                                      height: '100%',
-                                      border: '2px dashed #ccc',
-                                      borderRadius: 8,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      minHeight: 240,
-                                    }}
-                                  >
-                                    <Typography color="text.secondary">
-                                      No Photos Have Been Taken Yet
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </Grid>
-                            </Grid>
-
-                            {isUploading && (
-                              <Box
-                                sx={{
-                                  mt: 2,
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <LinearProgress
-                                  sx={{
-                                    width: '220px',
-                                    height: 6,
-                                    borderRadius: 3,
-                                  }}
-                                />
-
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ mt: 0.75 }}
-                                >
-                                  Uploading file...
-                                </Typography>
-                              </Box>
-                            )}
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                              <Button
-                                onClick={() =>
-                                  handleRemoveFileForField(
-                                    (item as any).answer_file,
-                                    (url) => onChange(originalIndex, 'answer_file', url),
-                                    key,
-                                  )
-                                }
-                                color="error"
-                                sx={{ mr: 1 }}
-                                disabled={isUploading}
-                                startIcon={<IconTrash />}
-                              >
-                                Clear Foto
-                              </Button>
-                              <Button
-                                variant="contained"
-                                disabled={isUploading}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-
-                                  handleCaptureForField(
-                                    (url) => onChange(originalIndex, 'answer_file', url),
-                                    key,
-                                  );
-                                }}
-                                startIcon={
-                                  isUploading ? (
-                                    <CircularProgress size={18} color="primary" />
-                                  ) : (
-                                    <IconCamera />
-                                  )
-                                }
-                              >
-                                {isUploading ? 'Uploading...' : 'Take Foto'}
-                              </Button>
-                              <Button
-                                startIcon={<IconDeviceFloppy />}
-                                disabled={isUploading}
-                                onClick={() => {
-                                  setOpenCamera(false);
-                                  setScreenshot(null);
-                                }}
-                                sx={{ ml: 1 }}
-                              >
-                                Submit
-                              </Button>
-                            </Box>
-                          </Box>
-                        </Dialog>
+                          webcamRef={webcamRef as any}
+                          screenshot={screenshot}
+                          facingMode={facingMode}
+                          isUploading={isUploading}
+                          onSwitchCamera={() =>
+                            setFacingMode((prev) =>
+                              prev === 'environment' ? 'user' : 'environment',
+                            )
+                          }
+                          onCapture={() =>
+                            handleCaptureForField(
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onClear={() =>
+                            handleRemoveFileForField(
+                              (item as any).answer_file,
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onSubmit={() => {
+                            setOpenCamera(false);
+                            setScreenshot(null);
+                          }}
+                        />
                       </Box>
                     );
                   }
@@ -5068,16 +5209,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
+                              e.target.files?.[0],
                               (url) => {
                                 onChange(originalIndex, 'answer_file', url);
-                                if (url) clearFieldError(key);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
                               },
                               key,
-                            )
-                          }
+                            );
+
+                            e.target.value = '';
+                          }}
                         />
                         <br />
                       </Box>
@@ -5133,149 +5279,34 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
                       )}
 
-                      <Dialog
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 3 }}>
-                          <Box>
-                            <Typography variant="h6" mb={2}>
-                              Take Photo From Camera
-                            </Typography>
-                            <IconButton
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ position: 'absolute', top: 10, right: 10 }}
-                            >
-                              <IconX size={22} />
-                            </IconButton>
-                          </Box>
-                          <Divider sx={{ mb: 2 }} />
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Box sx={{ position: 'relative' }}>
-                                <Webcam
-                                  audio={false}
-                                  ref={webcamRef}
-                                  screenshotFormat="image/jpeg"
-                                  videoConstraints={{
-                                    facingMode,
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-
-                                <IconButton
-                                  onClick={() =>
-                                    setFacingMode((prev) =>
-                                      prev === 'environment' ? 'user' : 'environment',
-                                    )
-                                  }
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 10,
-                                    right: 10,
-                                    bgcolor: 'rgba(0,0,0,0.5)',
-                                    color: '#fff',
-                                    '&:hover': {
-                                      bgcolor: 'rgba(0,0,0,0.7)',
-                                    },
-                                  }}
-                                >
-                                  <IconRefresh />
-                                </IconButton>
-                              </Box>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {previews[key] ? (
-                                <img
-                                  src={previews[key] as string}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    height: '250px',
-                                    objectFit: 'cover',
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box
-                            sx={{
-                              textAlign: 'right',
-                              display: 'flex',
-                              justifyContent: 'flex-end',
-                              gap: 1,
-                            }}
-                          >
-                            <MuiButton
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(originalIndex, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              startIcon={<IconTrash />}
-                              sx={{ mr: 1 }}
-                            >
-                              Clear Foto
-                            </MuiButton>
-                            <MuiButton
-                              variant="contained"
-                              onClick={() =>
-                                handleCaptureForField((url) => {
-                                  onChange(originalIndex, 'answer_file', url);
-                                  if (url) clearFieldError(key);
-                                }, key)
-                              }
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </MuiButton>
-                            <MuiButton
-                              startIcon={<IconDeviceFloppy />}
-                              onClick={() => {
-                                setOpenCamera(false);
-                                setScreenshot(null);
-                              }}
-                              sx={{ ml: 1 }}
-                            >
-                              Submit
-                            </MuiButton>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef as any}
+                        screenshot={previews[key] as string | null}
+                        facingMode={facingMode}
+                        isUploading={!!uploadingFiles[key]}
+                        onSwitchCamera={() =>
+                          setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                        }
+                        onCapture={() =>
+                          handleCaptureForField((url) => {
+                            onChange(originalIndex, 'answer_file', url);
+                            if (url) clearFieldError(key);
+                          }, key)
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onSubmit={() => {
+                          setOpenCamera(false);
+                          setScreenshot(null);
+                        }}
+                      />
                     </Box>
                   );
                 }
@@ -5386,21 +5417,60 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <Box
                         sx={{
                           position: 'relative',
-                          border: '2px dashed #90caf9',
+                          border: '2px dashed',
+                          borderColor: isDragging ? 'primary.main' : '#90caf9',
                           borderRadius: 2,
                           padding: 4,
                           textAlign: 'center',
-                          backgroundColor: '#f5faff',
+                          backgroundColor: isDragging ? 'action.hover' : '#f5faff',
                           cursor: isUploading ? 'not-allowed' : 'pointer',
                           width: '100%',
                           pointerEvents: isUploading ? 'none' : 'auto',
                           opacity: isUploading ? 0.6 : 1,
-                          transition: 'opacity 0.2s ease',
+                          transition: 'all 0.2s ease',
                         }}
                         onClick={() => {
                           if (!isUploading) {
                             fileInputRef.current?.click();
                           }
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          if (!isUploading) {
+                            setIsDragging(true);
+                          }
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setIsDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setIsDragging(false);
+
+                          if (isUploading) return;
+
+                          handleFileChangeForField(
+                            e.dataTransfer.files?.[0],
+                            (url) => {
+                              onChange(originalIndex, 'answer_file', url);
+
+                              if (url) {
+                                clearFieldError(key);
+                              }
+                            },
+                            key,
+                          );
                         }}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
@@ -5415,7 +5485,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         >
                           <Typography variant="body1" color="textSecondary">
                             Supports: JPG, PNG, JPEG, Up to
-                            <span style={{ fontWeight: '700' }}> 5 MB | </span>
+                            <span style={{ fontWeight: '700' }}> 5 MB or </span>
                           </Typography>
 
                           <Typography
@@ -5466,19 +5536,24 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         <input
                           id={`file-${key}`}
                           type="file"
-                          accept="*"
+                          accept="image/jpeg,image/png,image/jpg"
                           hidden
                           ref={fileInputRef}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
+                              e.target.files?.[0],
                               (url) => {
                                 onChange(originalIndex, 'answer_file', url);
-                                if (url) clearFieldError(key);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
                               },
                               key,
-                            )
-                          }
+                            );
+
+                            e.target.value = '';
+                          }}
                         />
                         {(previewSrc || shownName) && (
                           <Box
@@ -6421,7 +6496,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    if (!validateCurrentStep()) return;
+    const result = validateCurrentStep();
+
+    if (!result) {
+      return;
+    }
+
     setActiveStep((prev) => prev + 1);
   };
 
@@ -6572,8 +6652,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === (isAddTransaction ? index : index + 1)
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging ||
                                     activeStep === (isAddTransaction ? index : index + 1)
@@ -6685,8 +6765,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       ? 'Submitting...'
                       : 'Saving Group'
                     : isAddTransaction
-                    ? 'Submit'
-                    : 'Save Group'}
+                      ? 'Submit'
+                      : 'Save Group'}
                 </Button>
               ) : !isAddTransaction && activeStep === 0 ? (
                 <Button
@@ -6762,13 +6842,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: 2000 }}
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
             severity={snackbar.severity}
-            sx={{ width: '100%' }}
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
             variant="filled"
           >
             {snackbar.message}

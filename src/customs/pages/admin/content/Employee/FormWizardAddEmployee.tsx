@@ -583,8 +583,8 @@ const FormWizardAddEmployee = ({
       // Kalau memang ada proses compress, lakukan di sini
       const compressedFile = await compressImage(selectedFile);
 
-      if (compressedFile.size > 1024 * 1024) {
-        showSwal('error', 'Image must be under 5 MB');
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        showSwal('info', 'Image must be under 5 MB');
         return;
       }
 
@@ -1347,7 +1347,7 @@ const FormWizardAddEmployee = ({
                     >
                       <Typography variant="body1" color="textSecondary">
                         Supports: JPG, JPEG, PNG, Up to:
-                        <span style={{ fontWeight: '700' }}>5 MB | </span>
+                        <span style={{ fontWeight: '700' }}>5 MB or </span>
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconCamera />
@@ -1363,7 +1363,7 @@ const FormWizardAddEmployee = ({
                             }
                           }}
                         >
-                          Camera
+                          Use Camera
                         </Typography>
                       </Box>
                     </Box>

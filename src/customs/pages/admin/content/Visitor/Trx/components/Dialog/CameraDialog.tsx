@@ -18,7 +18,7 @@ interface CameraDialogProps {
   open: boolean;
   onClose: () => void;
   webcamRef: RefObject<Webcam>;
-  screenshot: string | null;
+  screenshot?: string | null;
   facingMode: 'user' | 'environment';
   onSwitchCamera: () => void;
   onCapture: () => void;
@@ -85,36 +85,37 @@ const CameraDialog = ({
               </IconButton>
             </Box>
           </Grid>
-
-          <Grid size={{ xs: 12, sm: 6 }}>
-            {screenshot ? (
-              <img
-                src={screenshot}
-                alt="Captured"
-                style={{
-                  width: '100%',
-                  height: '250px',
-                  objectFit: 'cover',
-                  borderRadius: 8,
-                  border: '2px solid #ccc',
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  minHeight: 250,
-                  border: '2px dashed #ccc',
-                  borderRadius: 2,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-              </Box>
-            )}
-          </Grid>
+   
+            <Grid size={{ xs: 12, sm: 6 }}>
+              {screenshot ? (
+                <img
+                  src={screenshot}
+                  alt="Captured"
+                  style={{
+                    width: '100%',
+                    height: '250px',
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    border: '2px solid #ccc',
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: '100%',
+                    minHeight: 250,
+                    border: '2px dashed #ccc',
+                    borderRadius: 2,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
+                </Box>
+              )}
+            </Grid>
+          
         </Grid>
 
         {isUploading && (

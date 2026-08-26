@@ -100,6 +100,7 @@ import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
 import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
+import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -336,9 +337,7 @@ const OperatorView = () => {
     return relatedVisitors
       .filter((v) => selectedVisitors.includes(v.id))
       .map((visitor) => {
-        const currentCards = (visitor.card ?? []).filter(
-          (c: any) => c.card_type !== 'Barcode' && c.current_used === true,
-        );
+        const currentCards = (visitor.card ?? []).filter((c: any) => c.current_used === true);
 
         return {
           visitorId: visitor.id,
@@ -1036,6 +1035,7 @@ const OperatorView = () => {
       organization: v.visitor_organization_name ?? '-',
       extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
+      visitor_type_name: v.visitor_type_name ?? '-',
       email: v.visitor_email ?? '-',
       phone: v.visitor_phone ?? '-',
       gender: v.visitor_gender ?? '-',
@@ -1083,7 +1083,7 @@ const OperatorView = () => {
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
 
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
 
           visitor: {
             ...inv.visitor,
@@ -1296,7 +1296,7 @@ const OperatorView = () => {
         }),
       );
       const message = payloads
-        .map((p: any) => `• ${p.visitorName} (Card: ${p.card_number})`)
+        .map((p: any) => `• ${p.visitorName}\n  Card: ${p.card_number}`)
         .join('\n');
 
       setInvitationCode((prev) =>
@@ -1320,7 +1320,7 @@ const OperatorView = () => {
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      showSwal('success', `Successfully assigned card(s): \n${message}`);
+      showSwal('success', `Successfully assigned card: \n${message}`);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
@@ -1544,25 +1544,25 @@ const OperatorView = () => {
 
       // Pra Register belum selesai
       if (!isPraRegisterDone) {
-        showSwal('info', 'Visitor must complete Pra Register before Checkin/Checkout.', 3000);
+        showSwal('info', 'Visitor must complete Pra Register before Check in/Check out.', 3000);
         return false;
       }
 
       // Belum Checkin → tidak boleh Checkout
       if (action === 'Checkout' && visitorStatus !== 'Checkin') {
-        showSwal('info', 'Visitor must Checkin first before Checkout.', 3000);
+        showSwal('info', 'Visitor must Check in first before Check out.', 3000);
         return false;
       }
 
       // Sudah Checkin → tidak boleh Checkin lagi
       if (action === 'Checkin' && visitorStatus === 'Checkin') {
-        showSwal('info', 'Visitor is already Checked In.', 3000);
+        showSwal('info', 'Visitor is already Check In.', 3000);
         return false;
       }
 
       // Sudah Checkout → tidak boleh Checkin/Checkout lagi
       if (visitorStatus === 'Checkout') {
-        showSwal('info', 'Visitor has already Checked Out.', 3000);
+        showSwal('info', 'Visitor has already Check Out.', 3000);
         return false;
       }
     }
@@ -1573,14 +1573,12 @@ const OperatorView = () => {
       // =========================================================
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
-          icon: 'warning',
+          icon: 'info',
           imageWidth: 80,
           imageHeight: 80,
           imageAlt: 'Logo',
           target: containerRef.current,
-
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-
           text:
             action === 'Block'
               ? 'Please provide a reason for blocking this visitor:'
@@ -2403,7 +2401,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;
@@ -2696,18 +2694,25 @@ const OperatorView = () => {
         showSwal('warning', t('card.inputCardNumber'));
         return;
       }
+
       setLoadingAccess(true);
 
+      const cardNumber = returnCardNumber.trim();
+
       const payload = {
-        // trx_visitor_id: selectedVisitorId,
-        card_number: returnCardNumber.trim(),
+        card_number: cardNumber,
         registered_site_id: registerSiteOperator,
       };
 
       await returnCard(payload);
-      showSwal('success', t('successReturnCard'));
+
+      const message = `Successfully returned card\n  Card: ${cardNumber}`;
+
+      showSwal('success', message);
+
       setOpenReturnCard(false);
       setReturnCardNumber('');
+
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
@@ -3140,6 +3145,30 @@ const OperatorView = () => {
     }
   };
 
+  const { setToolbar } = useOperatorToolbar();
+
+  useEffect(() => {
+    setToolbar(
+      <OperatorToolbar
+        registeredSite={registeredSite}
+        selectedSite={registerSiteOperator}
+        onChangeSite={setRegisterSiteOperator}
+        onClear={handleClearAll}
+        onOpenList={handleOpenListVisitor}
+        onOpenBlacklist={handleOpenBlacklistVisitor}
+        onOpenInfo={handleOpenInfo}
+        onOpenVehicle={handleOpenVehicle}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        containerRef={containerRef as any}
+      />,
+    );
+
+    return () => {
+      setToolbar(null);
+    };
+  }, [registeredSite, registerSiteOperator, isFullscreen]);
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3147,16 +3176,9 @@ const OperatorView = () => {
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', xl: 'row' },
-          // height: isFullscreen ? '100vh' : '100%',
-          // backgroundColor: 'red',
-          // height: '100%',
-          // height: isFullscreen ? '100vh' : '100%',
           height: isFullscreen ? (isMobile ? '100%' : '100vh') : '100%',
-          // overflow: 'hidden',
           width: '100%',
           position: 'relative',
-          // overflowY: isFullscreen ? 'hidden' : 'auto',
-          // overflowX: 'hidden',
         }}
       >
         <Box
@@ -3696,7 +3718,7 @@ const OperatorView = () => {
             open={snackbar.open}
             autoHideDuration={3000}
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             sx={{ zIndex: 999999 }}
           >
             <Alert

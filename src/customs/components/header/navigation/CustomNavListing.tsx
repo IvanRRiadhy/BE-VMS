@@ -14,6 +14,8 @@ export interface ItemDataCustomNavListing {
   chip?: string;
   chipColor?: string;
   children?: ItemDataCustomNavListing[];
+  backgroundColor?: string;
+  color?: string;
 }
 
 interface CustomNavListingProps {

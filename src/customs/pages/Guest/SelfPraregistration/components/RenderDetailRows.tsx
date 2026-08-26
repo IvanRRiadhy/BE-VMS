@@ -397,9 +397,9 @@ const RenderDetailRows = ({
       }));
     }
     const compressedFile = await compressImage(file);
-    if (compressedFile.size > 1024 * 1024) {
-      // toast('File size must be under 5 MB', 'info');
-      showSwal('info', 'File size must be under 5 MB');
+    if (compressedFile.size > 5 * 1024 * 1024) {
+      // toast('Maximum file size is 5 MB', 'info');
+      showSwal('info', 'Maximum file size is 5 MB');
       return;
     }
 
@@ -618,12 +618,12 @@ const RenderDetailRows = ({
                           item.remarks === 'name'
                             ? ''
                             : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                            ? ''
-                            : item.remarks === 'indentity_id'
-                            ? ''
-                            : ''
+                              ? ''
+                              : item.remarks === 'organization'
+                                ? ''
+                                : item.remarks === 'indentity_id'
+                                  ? ''
+                                  : ''
                         }
                         inputProps={
                           (item.remarks || '').toLowerCase() === 'phone'
@@ -683,20 +683,20 @@ const RenderDetailRows = ({
                       options = invitation?.host
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
                         : Array.isArray(employee)
-                        ? employee.map((emp: any) => ({
-                            value: emp.id,
-                            name: emp.name,
-                          }))
-                        : [];
+                          ? employee.map((emp: any) => ({
+                              value: emp.id,
+                              name: emp.name,
+                            }))
+                          : [];
                     } else if (item.remarks === 'employee') {
                       options = invitation?.host
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
                         : Array.isArray(allVisitorEmployee)
-                        ? allVisitorEmployee.map((emp: any) => ({
-                            value: emp.id,
-                            name: emp.name,
-                          }))
-                        : [];
+                          ? allVisitorEmployee.map((emp: any) => ({
+                              value: emp.id,
+                              name: emp.name,
+                            }))
+                          : [];
                     } else if (item.remarks === 'site_place') {
                       options = invitation?.site
                         ? [
@@ -920,8 +920,8 @@ const RenderDetailRows = ({
                               const answerArray = Array.isArray(item.answer_text)
                                 ? item.answer_text
                                 : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
+                                  ? [String(item.answer_text)]
+                                  : [];
 
                               return (
                                 <FormControlLabel
@@ -1916,7 +1916,7 @@ const RenderDetailRows = ({
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
-                              <span style={{ fontWeight: '700' }}> 5 MB | </span>
+                              <span style={{ fontWeight: '700' }}> 5 MB or </span>
                             </Typography>
 
                             <Typography

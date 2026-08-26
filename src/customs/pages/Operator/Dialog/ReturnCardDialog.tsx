@@ -63,7 +63,7 @@ const ReturnCardDialog = ({
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          {loading ? <CircularProgress size={20} /> : 'Submit'}
+          Submit
         </Button>
       </DialogActions>
     </Dialog>

@@ -1128,8 +1128,8 @@ const FormSelfPraregistration = ({
       }));
     }
     const compressedFile = await compressImage(file);
-    if (compressedFile.size > 1024 * 1024) {
-      toast('File size must be under 5 MB', 'info');
+    if (compressedFile.size > 5 * 1024 * 1024) {
+      toast('Maximum file size is 5 MB', 'info');
       return;
     }
 
@@ -2678,8 +2678,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                         const originalIndex = page?.form?.findIndex(
                                           (f: any) => f.custom_field_id === field.custom_field_id,
                                         );
@@ -2788,8 +2788,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                         return (
                                           <TableCell key={field.custom_field_id}>
@@ -3419,8 +3419,8 @@ const FormSelfPraregistration = ({
                                     backgroundColor: snapshot.isDragging
                                       ? '#1976d2'
                                       : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                        ? 'primary.main'
+                                        : '#9e9e9e',
                                     color:
                                       snapshot.isDragging || activeStep === index + 1
                                         ? '#fff'

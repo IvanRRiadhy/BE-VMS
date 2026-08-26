@@ -85,8 +85,36 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
         {...listItemProps}
         disabled={item.disabled}
         selected={pathDirect === item.href}
-        sx={{ zIndex: '10000' }}
-        // onClick={onClick}
+        sx={{
+          zIndex: '10000',
+
+          ...(item.backgroundColor && {
+            backgroundColor: item.backgroundColor,
+            color: item.color || '#fff',
+
+            '& .MuiListItemIcon-root': {
+              color: item.color || '#fff',
+            },
+
+            '&:hover': {
+              backgroundColor: item.backgroundColor,
+              opacity: 0.9,
+            },
+
+            '&.Mui-selected': {
+              backgroundColor: item.backgroundColor,
+              color: item.color || '#fff',
+
+              '& .MuiListItemIcon-root': {
+                color: item.color || '#fff',
+              },
+
+              '&:hover': {
+                backgroundColor: item.backgroundColor,
+              },
+            },
+          }),
+        }}
       >
         <ListItemIcon
           sx={{

@@ -565,7 +565,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, PNG, JPEG, Up to <b>5 MB</b>
+            Supports: JPG, PNG, JPEG, Up to <b>5 MB</b> or
           </Typography>
 
           <Typography

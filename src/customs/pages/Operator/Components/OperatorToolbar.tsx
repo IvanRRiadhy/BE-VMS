@@ -4,11 +4,14 @@ import {
   IconArrowsMaximize,
   IconCar,
   IconCaretDownFilled,
+  IconHelpCircle,
   IconInfoCircle,
+  IconQuestionMark,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface OperatorToolbarProps {
   onClear: () => void;
@@ -56,38 +59,39 @@ const OperatorToolbar = ({
     setAnchorEl(null);
   };
 
-  const selectedValue =
-    registeredSite?.some((item) => item.id === selectedSite)
-      ? selectedSite
-      : '';
+  const { t } = useTranslation();
+
+  const selectedValue = registeredSite?.some((item) => item.id === selectedSite)
+    ? selectedSite
+    : '';
 
   return (
     <Box
       display="flex"
       gap={0.5}
       alignItems="center"
-      sx={{
-        width: '100%',
-        flexWrap: 'nowrap',
-      }}
+      // sx={{
+      //   width: '100%',
+      //   flexWrap: 'nowrap',
+      // }}
     >
       <Select
         value={selectedValue}
         onChange={(e) => onChangeSite?.(e.target.value)}
         displayEmpty
-        size="medium"
+        size="small"
         // disabled={(registeredSite?.length ?? 0) === 1}
         sx={{
           width: {
             xs: '100%',
             md: 150,
-            lg: 200,
+            lg: 180,
           },
           backgroundColor: 'background.paper',
         }}
       >
         <MenuItem value="" disabled>
-          Select Site
+          {t('selectSite')}
         </MenuItem>
 
         {registeredSite?.map((item: any) => (
@@ -96,7 +100,7 @@ const OperatorToolbar = ({
           </MenuItem>
         ))}
       </Select>
-      <Tooltip title="Visitor Menu" {...tooltipProps}>
+      {/* <Tooltip title="Visitor Menu" {...tooltipProps}>
         <Button
           variant="contained"
           startIcon={<IconUser size={18} />}
@@ -138,9 +142,9 @@ const OperatorToolbar = ({
             Visitor Site
           </Box>
         </Button>
-      </Tooltip>
+      </Tooltip> */}
 
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+      {/* <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem
           onClick={() => {
             handleClose();
@@ -158,13 +162,13 @@ const OperatorToolbar = ({
         >
           Blacklist Visitor
         </MenuItem>
-      </Menu>
+      </Menu> */}
       <Tooltip title="Information Guide Operator" {...tooltipProps}>
         <Button variant="contained" onClick={onOpenInfo} sx={{ width: 18, height: 36, p: 0.7 }}>
-          <IconInfoCircle size={25} />
+          <IconHelpCircle size={25} />
         </Button>
       </Tooltip>
-
+      {/* 
       <Tooltip title="Tap to toggle Fullscreen" {...tooltipProps}>
         <IconButton
           onClick={onToggleFullscreen}
@@ -189,7 +193,7 @@ const OperatorToolbar = ({
             }}
           />
         </IconButton>
-      </Tooltip>
+      </Tooltip> */}
     </Box>
   );
 };

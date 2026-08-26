@@ -2,6 +2,7 @@ import { Box, Card, CardContent, CardHeader, Divider, Typography, useTheme } fro
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { useTranslation } from 'react-i18next';
 
 interface InvitationQrCardProps {
   invitationCode: any;
@@ -16,9 +17,8 @@ const InvitationQrCard = ({
 }: InvitationQrCardProps) => {
   // const data = invitationCode[0];
   const data = activeVisitor;
-
   const theme = useTheme();
-  const lg = theme.breakpoints.up('lg');
+  const { t } = useTranslation();
 
   return (
     <Card
@@ -74,25 +74,25 @@ const InvitationQrCard = ({
                 No QR/Card Available
               </Typography>
               <Typography variant="body1" color="text.disabled">
-                Scan a visitor to show QR code
+                Scan a visitor/tap card to show QR code
               </Typography>
             </Box>
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" fontWeight={'semibold'}>
-              Invitation Code
+              {t('invitationCode')}
             </Typography>
             <Typography variant="body1" fontWeight={500}>
               {data?.invitation_code || '-'}
             </Typography>
             <Typography variant="h6" fontWeight={'semibold'}>
-              Check In Time
+              {t('checkInTime')}
             </Typography>
             <Typography variant="body1" fontWeight={500}>
               {formatDateTime(data?.checkin_at) ?? '-'}
             </Typography>
             <Typography variant="h6" fontWeight={'semibold'}>
-              Check Out Time
+              {t('checkOutTime')}
             </Typography>
             <Typography variant="body1" fontWeight={500}>
               {formatDateTime(data?.checkout_at) ?? '-'}

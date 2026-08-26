@@ -297,6 +297,8 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     title: 'evacuate',
     icon: IconRun,
     href: '/admin/evacuate',
+    backgroundColor: '#D32F2F',
+    color: '#FFFFFF',
   },
   // {
   //   id: uniqueId(),

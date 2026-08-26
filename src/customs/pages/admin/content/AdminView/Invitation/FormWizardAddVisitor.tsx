@@ -3654,7 +3654,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="caption" color="textSecondary">
                           Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: '700' }}> 5 MB</span>
+                          <span style={{ fontWeight: '700' }}> 5 MB</span> or
                         </Typography>
 
                         <Typography

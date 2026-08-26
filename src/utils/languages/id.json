@@ -51,6 +51,7 @@
   "confirmationInputCode": "Silakan masukkan kode undangan Anda",
   "invitationCode": "Kode Undangan",
   "invitationCodeNotFound": "Kode Undangan Tidak Ditemukan",
+  "invalidImageFormat": "Hanya gambar JPG, JPEG, atau PNG yang diperbolehkan.",
   "verify": "Verifikasi",
   "export": "Ekspor",
   "top_visitor": "Pengunjung 5 Teratas",
@@ -107,6 +108,7 @@
   "totalApprove": "Total Disetujui",
   "totalReject": "Total Ditolak",
   "totalPending": "Total Menunggu Persetujuan",
+  "maxFileSize": "Ukuran file maksimal 5 MB.",
   "approve": "Setuju",
   "reject": "Tolak",
   "selectVisitor": "Pilih Pengunjung",
@@ -116,7 +118,7 @@
   "selectGroupFromTheList": "Pilih grup dari daftar disamping",
   "card": {
     "number": "Nomor Kartu",
-    "inputCardNumber": "Masukkan Nomor Kartu",
+    "inputCardNumber": "Masukkan Nomor Kartu atau Tap Kartu",
     "returnCard": "Pengembalian Kartu"
   },
   "noImage": "Tidak ada gambar",
@@ -138,6 +140,7 @@
   "successSendInvitation": "Berhasil mengirim undangan.",
   "successSendShareLink": "Berhasil mengirim link",
   "pleaseSendAtleastOneEmail": "Minimal kirim satu email.",
+  "selectSite": "Pilih Tujuan Kunjungan",
   "loadMore": "Lihat Selengkapnya",
   "noDataFound": "Tidak ada data ditemukan.",
   "moreThanOneVisitor": "Lebih dari satu pengunjung.",
@@ -160,13 +163,18 @@
   "your_name": "Nama Anda",
   "your_email": "Email Anda",
   "your_phone": "Nomor Telepon Anda",
-  "required_field_note": "Kolom bertanda * wajib diisi",
+
+  "required_fields": "Kolom yang wajib diisi",
+  "required_field_note": "Pastikan semua kolom bertanda * telah diisi sebelum melanjutkan",
+
   "unsavedChangesTitle": "Perubahan Belum Disimpan",
   "unsavedChangesMessage": "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin melanjutkan tanpa menyimpan perubahan?",
   "cancel": "Batal",
   "discardAndContinue": "Ya, Buang Perubahan dan Lanjutkan",
   "viewAll": "Lihat Semua",
   "checkConnection": "Cek Koneksi",
+  "checkInTime": "Waktu Check In",
+  "checkOutTime": "Waktu Check Out",
   "tour": {
     "search": "Gunakan Search untuk mencari visitor berdasarkan kode undangan atau kata kunci. Klik Clear untuk mengembalikan hasil ke kondisi awal.",
     "visitorInfo": "Menampilkan informasi utama visitor, seperti nama, perusahaan, detail kunjungan, dan lainnya.",

@@ -79,6 +79,57 @@ const VisitorInformation = ({
   const handleClose = () => {
     setOpen(false);
   };
+
+  const visitorTypeDefaults = [
+    {
+      id: 'general-visitor',
+      name: 'General Visitor',
+      background: '#E8F3FF',
+      text: '#2F80ED',
+    },
+    {
+      id: 'all-access-vip',
+      name: 'All Access (VIP)',
+      background: '#FFF4D6',
+      text: '#B77900',
+    },
+    {
+      id: 'staff',
+      name: 'Staff',
+      background: '#EAF8F1',
+      text: '#249B62',
+    },
+    {
+      id: 'remise',
+      name: 'Remise',
+      background: '#FFF6E5',
+      text: '#D99000',
+    },
+    {
+      id: 'utility-maintenance',
+      name: 'Utility Maintenance',
+      background: '#F1EDFF',
+      text: '#7257C7',
+    },
+    {
+      id: 'perkasan',
+      name: 'Perkasan',
+      background: '#EAF7F7',
+      text: '#168B8B',
+    },
+    {
+      id: 'office-dku',
+      name: 'Office DKU',
+      background: '#E8F1FB',
+      text: '#3B6EA5',
+    },
+  ];
+
+  const visitorType = visitorTypeDefaults.find(
+    (type) =>
+      type.name.toLowerCase() === invitationCode[0]?.visitor_type_name?.trim().toLowerCase(),
+  );
+
   return (
     <Box
       sx={{
@@ -182,33 +233,17 @@ const VisitorInformation = ({
                   sx={{ textTransform: 'capitalize' }}
                 >
                   {invitationCode[0]?.visitor_name ?? 'Name'}
-                  {/* {invitationCode[0]?.visitor_name && (
-                    <Box
-                      sx={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: '50%',
-                        bgcolor: 'success.main',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IconCheck size={14} color="white" stroke={3} />
-                    </Box>
-                  )} */}
                 </Typography>
-
-                {/* <Typography variant="body2" color="text.secondary" mb={1.5}>
-                  {invitationCode?.jabatan ?? 'Marketing'}
-                </Typography> */}
-
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1} mt={1.5}>
                   {invitationCode[0]?.visitor_type_name?.trim() && (
                     <Chip
                       size="small"
                       label={invitationCode[0].visitor_type_name}
-                      color="secondary"
+                      sx={{
+                        backgroundColor: visitorType?.background ?? '#F5F5F5',
+                        color: visitorType?.text ?? '#666',
+                        fontWeight: 600,
+                      }}
                     />
                   )}
                 </Stack>

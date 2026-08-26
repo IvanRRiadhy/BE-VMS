@@ -1,19 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import {
-  Grid2 as Grid,
-  Portal,
-  Backdrop,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import {
-  IconCircleMinus,
-  IconLogin,
-  IconLogout,
-  IconX,
-} from '@tabler/icons-react';
+import { Grid2 as Grid, Portal, Backdrop, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
@@ -70,77 +58,118 @@ const Dashboard = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getActiveInvitation();
-        const response = res.collection?.map((item: any) => ({
-          id: item.id,
-          name: item.visitor_name,
-          email: item.visitor_email,
-          organization: item.visitor_organization_name,
-          agenda: item.agenda,
-          visitor_period_start: item.visitor_period_start,
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          host: item.host_name ?? '-',
-          visitor_status: item.transaction_status,
-        }));
-        setActiveVisitData(response ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchData();
-  }, []);
+  // const handleDownloadPDF = async () => {
+  //   if (!printRef.current) return;
+  //   setIsGenerating(true);
 
+  //   try {
+  //     const clone = printRef.current.cloneNode(true) as HTMLElement;
 
+  //     const logoEl = document.createElement('img');
+  //     logoEl.src = '/src/assets/images/logos/BI_Logo.png';
+  //     logoEl.style.width = '100px';
+  //     logoEl.style.height = '100px';
+  //     logoEl.style.display = 'block';
+  //     logoEl.style.margin = '0 auto';
+  //     clone.prepend(logoEl);
 
-  function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-    const timezone = dayjs.tz.guess();
-    const startLocal = dayjs.utc(startUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
-    const endLocal = dayjs.utc(endUtc).tz(timezone).format('dddd, DD MMMM YYYY HH:mm');
+  //     clone.querySelectorAll('.no-print').forEach((el) => {
+  //       (el as HTMLElement).style.display = 'none';
+  //     });
 
-    return `${startLocal} - ${endLocal}`;
-  }
+  //     clone.style.position = 'fixed';
+  //     clone.style.left = '-9999px';
+  //     document.body.appendChild(clone);
+
+  //     const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+  //     const imgData = canvas.toDataURL('image/png');
+
+  //     const pdf = new jsPDF('p', 'mm', 'a4');
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  //     pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
+
+  //     clone.remove();
+  //   } finally {
+  //     setIsGenerating(false);
+  //   }
+  // };
 
   const handleDownloadPDF = async () => {
-    if (!printRef.current) return;
+    if (!exportRef.current || isGenerating) return;
+
+    let clone: HTMLElement | null = null;
+
     setIsGenerating(true);
 
     try {
-      const clone = printRef.current.cloneNode(true) as HTMLElement;
+      clone = exportRef.current.cloneNode(true) as HTMLElement;
 
-      const logoEl = document.createElement('img');
-      logoEl.src = '/src/assets/images/logos/BI_Logo.png';
-      logoEl.style.width = '100px';
-      logoEl.style.height = '100px';
-      logoEl.style.display = 'block';
-      logoEl.style.margin = '0 auto';
-      clone.prepend(logoEl);
-
+      // Hilangkan tombol download dan elemen lain
+      // yang memiliki class no-print
       clone.querySelectorAll('.no-print').forEach((el) => {
         (el as HTMLElement).style.display = 'none';
       });
 
+      // Posisikan clone di luar layar
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = `${exportRef.current.offsetWidth}px`;
+      clone.style.backgroundColor = '#fff';
+
       document.body.appendChild(clone);
 
-      const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+      // Tunggu render selesai
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(clone, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#fff',
+      });
+
       const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
 
-      clone.remove();
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const margin = 10;
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = margin;
+
+      // Page pertama
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+
+      heightLeft -= pdfHeight - margin * 2;
+
+      // Jika lebih dari 1 halaman
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + margin;
+
+        pdf.addPage();
+
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+
+        heightLeft -= pdfHeight - margin * 2;
+      }
+
+      pdf.save(`Visitor Code-${accessPass?.visitor_number || 'Visitor'}.pdf`);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
     } finally {
+      if (clone) {
+        clone.remove();
+      }
+
       setIsGenerating(false);
     }
   };
@@ -231,7 +260,7 @@ const Dashboard = () => {
           );
         }}
       />
-      <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'} ref={exportRef}>
+      {/* <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'} ref={exportRef}>
         <Grid size={{ xs: 12, xl: 9 }}>
           <TopCard items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
@@ -248,47 +277,9 @@ const Dashboard = () => {
             onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
           />
         </Grid>
+      </Grid> */}
 
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <DynamicTable
-            height={470}
-            isHavePagination={false}
-            overflowX={'auto'}
-            data={activeVisitData}
-            isHaveChecked={false}
-            // isHaveAction={false}
-            isHaveSearch={false}
-            isHaveFilter={false}
-            isHaveExportPdf={false}
-            isHaveExportXlf={false}
-            isHaveHeaderTitle={true}
-            isHavePeriod={true}
-            titleHeader="Active Visit"
-            // isHaveAction={true}
-            // isActionEmployee={true}
-            // onView={(row) => {
-            //   handleView(row.id);
-            // }}
-            // isActionVisitor={true}
-            // defaultRowsPerPage={rowsPerPage}
-            // rowsPerPageOptions={[10, 50, 100]}
-            // onPaginationChange={(page, rowsPerPage) => {
-            //   setPage(page);
-            //   setRowsPerPage(rowsPerPage);
-            // }}
-            isHaveFilterDuration={false}
-            isHaveAddData={false}
-            isHaveHeader={false}
-            isHaveFilterMore={false}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          {/* <VisitorStatusPieChart /> */}
-          <Heatmap />
-        </Grid>
-      </Grid>
-
-      <AccessPassDialog
+      {/* <AccessPassDialog
         open={openAccess}
         onClose={handleCloseAccess}
         data={accessPass}
@@ -298,17 +289,42 @@ const Dashboard = () => {
         onOpenParking={handleOpenParkingBlocker}
         formatVisitorPeriodLocal={formatVisitorPeriodLocal}
         printRef={printRef}
-      />
+      /> */}
 
-      <InputInvitationCodeDialog
-        open={openInputInvitationCode}
-        invitationCode={invitationCode}
-        onClose={() => setOpenInputInvitationCode(false)}
-        onChangeInvitationCode={setInvitationCode}
-        onSubmit={() => {
-          console.log(invitationCode);
-        }}
-      />
+      <Grid
+        container
+        spacing={2}
+        sx={{ mt: 0 }}
+        alignItems="stretch"
+        ref={exportRef}
+        justifyContent={'center'}
+      >
+        {/* =========================
+          QUICK STATS
+      ========================== */}
+        <Grid size={{ xs: 12, xl: 8 }}>
+          <TopCard items={CardItems} size={{ xs: 12, sm: 6 }} />
+        </Grid>
+
+        {/* =========================
+          DIGITAL ACCESS PASS
+      ========================== */}
+        <Grid size={{ xs: 12, xl: 8 }}>
+          {/* <GuestAccessPass
+            accessPass={accessPass}
+            onOpenAccess={handleOpenAccess}
+            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
+          /> */}
+          <GuestAccessPass
+            accessPass={accessPass}
+            onOpenAccess={handleOpenAccess}
+            onDownload={handleDownloadPDF}
+            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
+            onOpenParking={handleOpenParkingBlocker}
+            isParkingLoading={isParkingLoading}
+          />
+        </Grid>
+      </Grid>
 
       <Portal>
         <Snackbar
@@ -321,7 +337,17 @@ const Dashboard = () => {
             position: 'fixed',
           }}
         >
-          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            variant="filled"
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

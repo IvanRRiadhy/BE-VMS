@@ -8,7 +8,6 @@ export const useAccessPass = () => {
       const res = await getAccessPass();
       return res ?? [];
     },
-    staleTime: 1 * 60 * 1000,
   });
 
   return {

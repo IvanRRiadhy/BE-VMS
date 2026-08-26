@@ -538,8 +538,8 @@ const FormSite = ({
 
       const compressedFile = await compressImage(selectedFile);
 
-      if (compressedFile.size > 1024 * 1024) {
-        showSwal('error', 'Image must be under 5 MB');
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        showSwal('info', 'Image must be under 5 MB');
         return;
       }
 

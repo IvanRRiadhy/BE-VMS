@@ -22,6 +22,7 @@ import {
   Select,
   MenuItem,
   LinearProgress,
+  AlertColor,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -62,13 +63,15 @@ import { useTheme, useMediaQuery, MobileStepper } from '@mui/material';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import Footer from '../components/Footer';
-import { KeyboardArrowUp } from '@mui/icons-material';
+import { InfoOutlined, KeyboardArrowUp } from '@mui/icons-material';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
 import imageCompression from 'browser-image-compression';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
+// import toast from 'src/customs/components/alerts/toast';
+import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -92,12 +95,18 @@ const GuestInformationStepper = () => {
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [openPreview, setOpenPreview] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   const { t } = useTranslation();
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [selfRegisterData, setSelfRegisterData] = useState<{
     is_self_registered: boolean;
@@ -318,7 +327,7 @@ const GuestInformationStepper = () => {
       }
 
       setAnswerFile('');
-      // setScreenshot(null);
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -326,6 +335,7 @@ const GuestInformationStepper = () => {
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
       console.error('Delete failed:', e);
     } finally {
@@ -369,14 +379,85 @@ const GuestInformationStepper = () => {
     return compressedFile;
   };
 
+  // const handleFileChangeForField = async (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setAnswerFile: (url: string) => void,
+  //   trackKey?: string,
+  //   fullscreenHandle?: any,
+  // ) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   if (trackKey) {
+  //     setUploadingFiles((prev) => ({
+  //       ...prev,
+  //       [trackKey]: true,
+  //     }));
+
+  //     setUploadNames((prev) => ({
+  //       ...prev,
+  //       [trackKey]: file.name,
+  //     }));
+
+  //     setPreviews((prev) => ({
+  //       ...prev,
+  //       [trackKey]: URL.createObjectURL(file),
+  //     }));
+  //   }
+
+  //   try {
+  //     const compressedFile = await compressImage(file);
+
+  //     if (compressedFile.size > 5 * 1024 * 1024) {
+  //       toast(t('maxFileSize'), 'info');
+  //       return;
+  //     }
+
+  //     const path = await uploadFileToCDN(compressedFile);
+
+  //     if (path) {
+  //       setAnswerFile(path);
+  //     }
+  //   } catch (error) {
+  //     console.error('Upload failed:', error);
+  //   } finally {
+  //     if (trackKey) {
+  //       setUploadingFiles((prev) => ({
+  //         ...prev,
+  //         [trackKey]: false,
+  //       }));
+  //     }
+
+  //     e.target.value = '';
+  //   }
+  // };
+
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
-    fullscreenHandle?: any,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
+
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
 
     if (trackKey) {
       setUploadingFiles((prev) => ({
@@ -396,20 +477,15 @@ const GuestInformationStepper = () => {
     }
 
     try {
-      const compressedFile = await compressImage(file);
-
-      if (compressedFile.size > 1024 * 1024) {
-        showSwal('info', 'File size must be under 5 MB');
-        return;
-      }
-
-      const path = await uploadFileToCDN(compressedFile);
+      // Compression sementara disabled
+      const path = await uploadFileToCDN(file);
 
       if (path) {
         setAnswerFile(path);
       }
     } catch (error) {
       console.error('Upload failed:', error);
+      toast('Failed to upload file', 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({
@@ -417,11 +493,8 @@ const GuestInformationStepper = () => {
           [trackKey]: false,
         }));
       }
-
-      e.target.value = '';
     }
   };
-
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
 
@@ -436,6 +509,7 @@ const GuestInformationStepper = () => {
     }
 
     try {
+      setScreenshot(imageSrc);
       const blob = await fetch(imageSrc).then((res) => res.blob());
 
       const compressedBlob = await compressImage(
@@ -445,7 +519,7 @@ const GuestInformationStepper = () => {
       );
 
       if (compressedBlob.size > 1024 * 1024) {
-        showSwal('info', 'File size must be under 5 MB');
+        showSwal('info', 'Maximum file size is 5 MBB');
         return;
       }
 
@@ -799,16 +873,18 @@ const GuestInformationStepper = () => {
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            accept="image/jpeg,image/png, image/jpg"
             hidden
             ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
+                e.target.files?.[0],
                 (url) => handleChange(f.remarks, url),
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
 
           {/* Preview Section */}
@@ -894,21 +970,63 @@ const GuestInformationStepper = () => {
       <Box>
         <Box
           sx={{
-            border: '2px dashed #90caf9',
+            position: 'relative',
+            border: '2px dashed',
+            borderColor: isDragging ? 'primary.main' : '#90caf9',
             borderRadius: 2,
             padding: 4,
             textAlign: 'center',
-            backgroundColor: '#f5faff',
+            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
             cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
             pointerEvents: isUploading ? 'none' : 'auto',
             opacity: isUploading ? 0.6 : 1,
-            transition: 'opacity 0.2s ease',
           }}
           onClick={() => {
             if (!isUploading) {
               fileInputRefs.current[key]?.click();
             }
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isUploading) {
+              setIsDragging(true);
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+
+            if (isUploading) return;
+
+            handleFileChangeForField(
+              e.dataTransfer.files?.[0],
+              (url) => {
+                handleChange(f.remarks, url);
+
+                if (url) {
+                  setErrors((prev) => {
+                    const { [f.remarks]: _, ...rest } = prev;
+                    return rest;
+                  });
+                }
+              },
+              key,
+            );
           }}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
@@ -964,16 +1082,22 @@ const GuestInformationStepper = () => {
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/jpg"
             hidden
-            ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            ref={(el: HTMLInputElement | null) => {
+              fileInputRefs.current[key] = el;
+            }}
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
-                (url) => handleChange(f.remarks, url),
+                e.target.files?.[0],
+                (url) => {
+                  handleChange(f.remarks, url);
+                },
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
 
           {(previewSrc || shownName) && (
@@ -1024,170 +1148,30 @@ const GuestInformationStepper = () => {
             {errors[key]}
           </Typography>
         )}
-
-        <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
-          <Box sx={{ p: 3, position: 'relative' }}>
-            <Box>
-              <Typography variant="h6" mb={2}>
-                Take Photo From Camera
-              </Typography>
-              <IconButton
-                onClick={() => setOpenCamera(false)}
-                sx={{ position: 'absolute', top: 10, right: 10 }}
-              >
-                <IconX size={22} />
-              </IconButton>
-            </Box>
-
-            <Divider sx={{ mb: 2 }} />
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box sx={{ position: 'relative' }}>
-                  <Webcam
-                    audio={false}
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    videoConstraints={{
-                      facingMode,
-                    }}
-                    style={{
-                      width: '100%',
-                      borderRadius: 8,
-                      height: '250px',
-                      objectFit: 'cover',
-                      border: '2px solid #ccc',
-                    }}
-                  />
-
-                  <IconButton
-                    onClick={() =>
-                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
-                    }
-                    sx={{
-                      position: 'absolute',
-                      top: 10,
-                      right: 10,
-                      bgcolor: 'rgba(0,0,0,0.5)',
-                      color: '#fff',
-                      '&:hover': {
-                        bgcolor: 'rgba(0,0,0,0.7)',
-                      },
-                    }}
-                  >
-                    <IconRefresh />
-                  </IconButton>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                {previewSrc ? (
-                  <img
-                    src={previewSrc}
-                    alt="Captured"
-                    style={{
-                      // width: lg ? 350 : 220,
-                      width: '100%',
-                      height: '250px',
-                      // height: 200,
-                      // height: '100%',
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      border: '2px dashed #ccc',
-                      borderRadius: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minHeight: 240,
-                    }}
-                  >
-                    <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                  </Box>
-                )}
-              </Grid>
-            </Grid>
-
-            {isUploading && (
-              <Box
-                sx={{
-                  mt: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <LinearProgress
-                  sx={{
-                    width: '220px',
-                    height: 6,
-                    borderRadius: 3,
-                  }}
-                />
-
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
-                  Uploading file...
-                </Typography>
-              </Box>
-            )}
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box
-              sx={{
-                textAlign: 'right',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                // flexWrap: 'wrap',
-                // gap: 1,
-              }}
-            >
-              <Button
-                disabled={isUploading}
-                onClick={() =>
-                  handleRemoveFileForField(
-                    f.answer_file,
-                    (url) => handleChange(f.remarks, url),
-                    key,
-                  )
-                }
-                color="error"
-                startIcon={<IconTrash />}
-                sx={{ mr: 2 }}
-              >
-                Clear Foto
-              </Button>
-              <Button
-                variant="contained"
-                disabled={isUploading}
-                startIcon={
-                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-
-                  handleCaptureForField((url) => handleChange(f.remarks, url), key);
-                }}
-              >
-                {isUploading ? 'Uploading...' : 'Take Foto'}
-              </Button>
-              <Button
-                onClick={() => setOpenCamera(false)}
-                sx={{ ml: 2 }}
-                startIcon={<IconDeviceFloppy />}
-                disabled={isUploading}
-              >
-                Submit
-              </Button>
-            </Box>
-          </Box>
-        </Dialog>
+        <CameraDialog
+          open={openCamera}
+          onClose={() => setOpenCamera(false)}
+          webcamRef={webcamRef as any}
+          screenshot={screenshot}
+          facingMode={facingMode}
+          isUploading={isUploading}
+          onSwitchCamera={() =>
+            setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+          }
+          onCapture={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
+          onClear={() =>
+            handleRemoveFileForField(
+              // value file yang sedang aktif
+              section.form?.find((field: any) => field.remarks === f.remarks)?.answer_file ?? '',
+              (url) => handleChange(f.remarks, url),
+              key,
+            )
+          }
+          onSubmit={() => {
+            setOpenCamera(false);
+            setScreenshot(null);
+          }}
+        />
       </Box>
     );
   };
@@ -1593,7 +1577,7 @@ const GuestInformationStepper = () => {
       if (token) {
         await saveToken(token);
         setOpenPreview(false);
-        showSwal('success', 'Successfully Pra Register Visitor');
+        showSwal('success', 'Successfully submitted visitor pre-registration.');
 
         navigate('/guest/dashboard', { replace: true });
         localStorage.removeItem('visitor_ref_code');
@@ -1947,22 +1931,80 @@ const GuestInformationStepper = () => {
                         </Grid>
                       </Card>
                     )}
-                    <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+                    <Box mt={2}>
+                      {' '}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: '#EFF6FF',
+                          border: '1px solid',
+                          borderColor: '#BFDBFE',
+                          mt: 2,
+                        }}
+                      >
+                        <InfoOutlined
+                          sx={{
+                            color: '#2563EB',
+                            fontSize: 20,
+                            mt: 0.15,
+                          }}
+                        />
+
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            lineHeight: 1.5,
+                            color: '#475569',
+                          }}
+                        >
+                          <Box
+                            component="span"
+                            sx={{
+                              fontWeight: 600,
+                              color: '#1E3A8A',
+                            }}
+                          >
+                            {t('required_fields')}{' '}
+                            <Box
+                              component="span"
+                              sx={{
+                                color: 'error.main',
+                                fontWeight: 700,
+                              }}
+                            >
+                              *
+                            </Box>
+                            <br />
+                          </Box>
+
+                          {t('required_field_note')}
+                        </Typography>
+                      </Box>
+                      {StepContent(formSections[activeStep])}
+                    </Box>
 
                     {isMobile && (
                       <Box sx={{ mt: 2 }}>
+                        {/* Mobile Navigation */}
                         <MobileStepper
                           variant="dots"
                           steps={steps.length}
                           position="static"
                           activeStep={activeStep}
+                          sx={{
+                            backgroundColor: 'transparent',
+                            p: 0,
+                          }}
                           nextButton={
                             activeStep === steps.length - 1 ? (
                               <Button
                                 size="medium"
                                 variant="contained"
                                 color="primary"
-                                // onClick={handleSubmit}
                                 onClick={() => setOpenPreview(true)}
                               >
                                 Submit
@@ -2003,28 +2045,7 @@ const GuestInformationStepper = () => {
                     <>
                       {!isMobile && (
                         <>
-                          <Box sx={{ mt: 2 }}>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{
-                                display: 'block',
-                                fontStyle: 'italic',
-                              }}
-                            >
-                              <Box
-                                component="span"
-                                sx={{
-                                  color: 'error.main',
-                                  fontWeight: 700,
-                                  mr: 0.5,
-                                }}
-                              >
-                                *
-                              </Box>{' '}
-                              {t('required_field_note')}
-                            </Typography>
-                          </Box>
+                          <Divider sx={{ my: 2 }} />
                           <Box display="flex" flexDirection="row" mt={2}>
                             <Button
                               disabled={activeStep === 0 && selfRegisterData === null}
@@ -2093,7 +2114,12 @@ const GuestInformationStepper = () => {
         <Alert
           severity={snackbar.severity as any}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+            py: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
         >
           {snackbar.message}
         </Alert>

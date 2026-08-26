@@ -95,7 +95,7 @@ const ImageCard = ({
               minHeight: {
                 xs: 120,
                 md: 150,
-                xl: 210,
+                xl: 190,
               },
               display: 'flex',
               alignItems: 'center',
@@ -175,6 +175,78 @@ const VisitorImage = ({
     setOpenAllPurpose(false);
   };
 
+  const visitorTypeDefaults = [
+    {
+      id: 'general-visitor',
+      name: 'General Visitor',
+      background: '#E8F3FF',
+      text: '#2F80ED',
+    },
+    {
+      id: 'all-access-vip',
+      name: 'All Access (VIP)',
+      background: '#FFF4D6',
+      text: '#B77900',
+    },
+
+    {
+      id: 'staff',
+      name: 'Staff',
+      background: '#EAF8F1',
+      text: '#249B62',
+    },
+    {
+      id: 'remise',
+      name: 'Remise',
+      background: '#FFF6E5',
+      text: '#D99000',
+    },
+    {
+      id: 'utility-maintenance',
+      name: 'Utility Maintenance',
+      background: '#F1EDFF',
+      text: '#7257C7',
+    },
+    {
+      id: 'perkasan',
+      name: 'Perkasan',
+      background: '#EAF7F7',
+      text: '#168B8B',
+    },
+    {
+      id: 'office-dku',
+      name: 'Office DKU',
+      background: '#E8F1FB',
+      text: '#3B6EA5',
+    },
+  ];
+
+  const visiblePurposess = visitorTypeDefaults
+    .map((type) => {
+      const item = todayVisitingPurpose?.find(
+        (item: any) => item.name?.toLowerCase() === type.name.toLowerCase(),
+      );
+
+      return {
+        ...type,
+        count: item?.count ?? 0,
+        originalData: item,
+      };
+    })
+    .slice(0, 4);
+
+  const allVisitorTypes = visitorTypeDefaults.map((type) => {
+    const item = todayVisitingPurpose?.find(
+      (item: any) => item.name?.toLowerCase() === type.name.toLowerCase(),
+    );
+
+    return {
+      ...type,
+      count: item?.count ?? 0,
+      originalData: item,
+    };
+  });
+
   return (
     <Grid
       container
@@ -226,40 +298,49 @@ const VisitorImage = ({
         <Grid container spacing={2} mt={2}>
           {visiblePurposes.length > 0 ? (
             <>
-              {visiblePurposes.map((item: any) => (
-                <Grid size={{ xs: 12, lg: 6 }} key={item.id}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      p: 0,
-                      borderRadius: 1,
-                      background: getColorByName(item.name),
-                      boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
-                      },
-                      color: '#fff',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleOpenDetailVistingPurpose(item)}
-                  >
-                    <CardContent sx={{ p: '15px !important' }}>
-                      <Typography fontWeight={600}>{item.name}</Typography>
+              {visiblePurposess.map((item: any) => {
+                return (
+                  <Grid size={{ xs: 12, lg: 6 }} key={item.id}>
+                    <Card
+                      sx={{
+                        flex: 1,
+                        p: 0,
+                        borderRadius: 2,
+                        backgroundColor: item.background,
+                        color: item.text,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-3px)',
+                          boxShadow: '0 8px 18px rgba(0, 0, 0, 0.1)',
+                        },
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => handleOpenDetailVistingPurpose(item)}
+                    >
+                      <CardContent sx={{ p: '15px !important' }}>
+                        <Typography fontWeight={600}>{item.name}</Typography>
 
-                      <Typography variant="h4" fontWeight="bold" mt={1}>
-                        {item.count}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                        <Typography variant="h4" fontWeight="bold" mt={1}>
+                          {item.count}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
 
-              {remainingCount > 0 && (
+              {/* {remainingCount > 0 && (
                 <Grid size={12}>
                   <Button fullWidth variant="outlined" onClick={handleOpenAllVisitingPurpose}>
                     View All ({todayVisitingPurpose.length})
+                  </Button>
+                </Grid>
+              )} */}
+              {visitorTypeDefaults.length > 4 && (
+                <Grid size={12}>
+                  <Button fullWidth variant="outlined" onClick={handleOpenAllVisitingPurpose}>
+                    View All
                   </Button>
                 </Grid>
               )}
@@ -309,7 +390,7 @@ const VisitorImage = ({
         onClose={() => setOpenMore(false)}
         data={todayVisitingPurpose}
       />
-      <Dialog open={openAllPurpose} onClose={handleCloseAllVisitingPurpose} maxWidth="sm" fullWidth>
+      <Dialog open={openAllPurpose} onClose={handleCloseAllVisitingPurpose} maxWidth="md" fullWidth>
         <DialogTitle>
           Visitor Type
           <IconButton
@@ -328,23 +409,37 @@ const VisitorImage = ({
 
         <DialogContent dividers>
           <Grid container spacing={2}>
-            {todayVisitingPurpose.map((item: any) => (
+            {allVisitorTypes.map((item: any) => (
               <Grid size={{ xs: 12, sm: 6 }} key={item.id}>
                 <Card
                   sx={{
-                    background: getColorByName(item.name),
-                    color: '#fff',
+                    backgroundColor: item.background,
+                    color: item.text,
                     cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 3,
+                    },
                   }}
                   onClick={() => {
                     handleCloseAllVisitingPurpose();
-                    handleOpenDetailVistingPurpose(item);
+
+                    // Kalau datanya tidak ada di API,
+                    // tetap kirim data dengan count 0
+                    handleOpenDetailVistingPurpose({
+                      ...item,
+                      ...(item.originalData ?? {}),
+                      count: item.count,
+                    });
                   }}
                 >
                   <CardContent>
                     <Typography fontWeight={600}>{item.name}</Typography>
 
-                    <Typography variant="h4">{item.count}</Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {item.count}
+                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>
