@@ -116,7 +116,7 @@ const Content = () => {
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
-  const secdrawerWidth = 340;
+  const secdrawerWidth = 350;
   const [search, setSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [openGroup, setOpenGroup] = useState(true);

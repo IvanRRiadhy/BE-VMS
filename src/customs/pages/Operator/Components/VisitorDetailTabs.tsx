@@ -88,7 +88,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Deny: 'Deny',
     Approve: 'Approve',
     Pracheckin: 'Precheckin',
-    Preregis: 'Praregis',
+    Preregis: 'Preregis',
     Waiting: 'Waiting',
     Available: 'Available',
   };

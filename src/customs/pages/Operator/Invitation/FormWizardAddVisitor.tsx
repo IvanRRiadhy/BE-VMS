@@ -259,6 +259,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   >({});
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
+
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
       const next = [...prev];
@@ -1339,7 +1340,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <TableCell>Group Name</TableCell>
                           <TableCell>Code</TableCell>
                           <TableCell>Visitor Form</TableCell>
-                          <TableCell>Fill Form Scanner</TableCell>
+                          {/* <TableCell>Fill Form Scanner</TableCell> */}
                           <TableCell align="center">Action</TableCell>
                         </TableRow>
                       </TableHead>
@@ -1398,7 +1399,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 Visitor Form
                               </Button>
                             </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               <Button
                                 variant="outlined"
                                 color="primary"
@@ -1438,7 +1439,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   setOpenGroupPreview(true);
                                 }}
                               />
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell align="center">
                               <Tooltip title="Delete Group" arrow>
                                 <IconButton
@@ -1810,6 +1811,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           const originalIndex = page?.form?.findIndex(
                                             (f: any) => f.custom_field_id === field.custom_field_id,
                                           );
+                                          const isDriving =
+                                            page.form?.find(
+                                              (f: any) =>
+                                                (f.remarks || '').toLowerCase() === 'is_driving',
+                                            )?.answer_text === 'true';
 
                                           return (
                                             <Box key={fIdx} sx={{ mb: 2 }}>
@@ -1853,6 +1859,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 setActiveGroupIdx={setActiveGroupIdx}
                                                 fieldErrors={fieldErrors}
                                                 setFieldErrors={setFieldErrors}
+                                                isDriving={isDriving}
+                                                uploadingFiles={uploadingFiles}
                                               />
                                             </Box>
                                           );
@@ -1927,6 +1935,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   const isEmployee =
                                     dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
                                       (f) => f.remarks === 'is_employee',
+                                    )?.answer_text === 'true';
+                                  const isDriving =
+                                    page.form?.find(
+                                      (f: any) => (f.remarks || '').toLowerCase() === 'is_driving',
                                     )?.answer_text === 'true';
                                   return (
                                     <React.Fragment key={gIdx}>
@@ -2039,6 +2051,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                     setActiveGroupIdx={setActiveGroupIdx}
                                                     fieldErrors={fieldErrors}
                                                     setFieldErrors={setFieldErrors}
+                                                    isDriving={isDriving}
+                                                    uploadingFiles={uploadingFiles}
                                                   />
                                                 </TableCell>
                                               </>
@@ -2794,8 +2808,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const remark = (item.remarks || '').toLowerCase();
 
       // is_driving wajib, tetapi false adalah value yang valid
-      if (remark === 'is_driving') {
-        return true;
+      if (remark === 'is_driving' || remark === 'is_employee') {
+        return false;
       }
 
       // vehicle wajib hanya jika is_driving = true

@@ -39,34 +39,46 @@ interface VisitorFilterDialogProps {
   open: boolean;
   value: VisitorStatusFilter;
   onClose: () => void;
-  onApply: (value: VisitorStatusFilter) => void;
+  startDate: string;
+  endDate: string;
+  // onApply: (value: VisitorStatusFilter) => void;
+  onApply: (status: VisitorStatusFilter, startDate: string, endDate: string) => void;
   onReset: () => void;
 }
 
 const VisitorFilterDialog = ({
   open,
   value,
+  startDate,
+  endDate,
   onClose,
   onApply,
   onReset,
 }: VisitorFilterDialogProps) => {
   const [selectedFilter, setSelectedFilter] = useState<VisitorStatusFilter>(value);
 
+  const [selectedStartDate, setSelectedStartDate] = useState(startDate);
+  const [selectedEndDate, setSelectedEndDate] = useState(endDate);
+
   React.useEffect(() => {
     if (open) {
       setSelectedFilter(value);
+      setSelectedStartDate(startDate);
+      setSelectedEndDate(endDate);
     }
-  }, [open, value]);
+  }, [open, value, startDate, endDate]);
 
   const handleReset = () => {
     setSelectedFilter('all');
+    setSelectedStartDate('');
+    setSelectedEndDate('');
+
     onReset();
   };
 
   const handleApply = () => {
-    onApply(selectedFilter);
+    onApply(selectedFilter, selectedStartDate, selectedEndDate);
   };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle
@@ -103,10 +115,13 @@ const VisitorFilterDialog = ({
 
         <Stack direction="column" spacing={2} mt={0.5}>
           <Typography variant="subtitle2">Visit Date</Typography>
+
           <TextField
             fullWidth
             label="Start Date"
             type="date"
+            value={selectedStartDate}
+            onChange={(e) => setSelectedStartDate(e.target.value)}
             InputLabelProps={{
               shrink: true,
             }}
@@ -116,16 +131,11 @@ const VisitorFilterDialog = ({
             fullWidth
             label="End Date"
             type="date"
+            value={selectedEndDate}
+            onChange={(e) => setSelectedEndDate(e.target.value)}
             InputLabelProps={{
               shrink: true,
             }}
-          />
-          <Typography variant="subtitle2">Visitor Type</Typography>
-          <Autocomplete
-            fullWidth
-            options={['Employee', 'Guest', 'Vendor']}
-            defaultValue=""
-            renderInput={(params) => <TextField {...params} label="" />}
           />
         </Stack>
       </DialogContent>

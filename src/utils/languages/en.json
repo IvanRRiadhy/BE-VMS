@@ -199,5 +199,9 @@
   "selectRole": "Select Role",
   "visitorPeriodStartDescription": "The visitor period start is the date when the visitor's visit begins",
   "visitorPeriodEndDescription": "The visitor period end is the date when the visitor's visit ends",
-  "dragDropOrTapToSelectFile": "Drag and drop or tap to select file."
+  "dragDropOrTapToSelectFile": "Drag and drop or tap to select file.",
+  "blacklistReason": "Please provide a reason for blacklisting this visitor.",
+  "successBlacklist": "Successfully blacklisted visitor.",
+  "whitelistReason": "Please provide a reason for whitelisting this visitor.",
+  "successWhitelist": "Successfully whitelisted visitor."
 }

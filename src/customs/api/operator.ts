@@ -364,8 +364,6 @@ export const createOperatorBlacklist = async (data: any): Promise<any> => {
 
 export const getUpComingVisitors = async (params?: {
   today?: string;
-  start_date?: string;
-  end_date?: string;
   visitor_type?: string;
   all_visitor_type?: string;
   start?: number;
@@ -375,6 +373,8 @@ export const getUpComingVisitors = async (params?: {
   showCheckout?: boolean;
   showBlock?: boolean;
   showExpired?: boolean;
+  startDate?: string;
+  endDate?: string;
 }): Promise<any> => {
   const response = await axiosInstance.get('/operator-invitation/upcoming-visitor', {
     headers: {
@@ -382,8 +382,8 @@ export const getUpComingVisitors = async (params?: {
     },
     params: {
       today: params?.today,
-      'start-date': params?.start_date,
-      'end-date': params?.end_date,
+      'start-date': params?.startDate,
+      'end-date': params?.endDate,
       'visitor-type': params?.visitor_type,
       'all-visitor-type': params?.all_visitor_type,
       start: params?.start,

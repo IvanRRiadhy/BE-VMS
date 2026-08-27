@@ -12,6 +12,8 @@ export const useUpcomingVisitors = ({
   showCheckout,
   showBlock,
   showExpired,
+  startDate,
+  endDate,
 }: {
   page: number;
   rowsPerPage: number;
@@ -22,6 +24,8 @@ export const useUpcomingVisitors = ({
   showCheckout?: boolean;
   showBlock?: boolean;
   showExpired?: boolean;
+  startDate?: string;
+  endDate?: string;
 }) => {
   return useQuery({
     queryKey: [
@@ -35,6 +39,8 @@ export const useUpcomingVisitors = ({
       showCheckout,
       showBlock,
       showExpired,
+      startDate,
+      endDate,
     ],
     queryFn: async () => {
       const res = await getUpComingVisitors({
@@ -48,6 +54,8 @@ export const useUpcomingVisitors = ({
         showCheckout,
         showBlock,
         showExpired,
+        startDate,
+        endDate,
       });
 
       return {

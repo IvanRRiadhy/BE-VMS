@@ -95,7 +95,7 @@ const InvitationQrCard = ({
               {t('checkOutTime')}
             </Typography>
             <Typography variant="body1" fontWeight={500}>
-              {formatDateTime(data?.checkout_at) ?? '-'}
+              {formatDateTime(data?.checkout_at || data?.visitor_period_end)}
             </Typography>
           </Box>
         </Box>

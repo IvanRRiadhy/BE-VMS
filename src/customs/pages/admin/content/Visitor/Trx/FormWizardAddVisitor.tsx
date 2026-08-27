@@ -2034,6 +2034,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -2101,6 +2102,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const employeeSelected = !!opts?.details?.find(
         (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
       );
+      const isDrivingField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'is_driving',
+      );
+
+      const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
 
       switch (field.field_type) {
         case 0: // Text
@@ -2138,7 +2144,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               helperText={errorMessage}
               disabled={
                 shouldDisable ||
-                ((field.remarks || '').toLowerCase() === 'name' && employeeSelected)
+                ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
               }
             />
           );
@@ -2293,13 +2300,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 value={field.answer_text || ''}
                 onChange={(e) => {
                   const selectedRole = e.target.value;
+
                   onChange(index, 'answer_text', selectedRole);
-                  if (selectedRole) clearFieldError(errorKey);
+
+                  if (selectedRole) {
+                    clearFieldError(errorKey);
+                  }
                 }}
                 error={!!errorMessage}
                 helperText={errorMessage}
-                sx={{ minWidth: 160, maxWidth: '100%' }}
-                placeholder={t('selectRole')}
+                sx={{
+                  minWidth: 160,
+                  maxWidth: '100%',
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                }}
               >
                 <MenuItem value="">{t('selectRole')}</MenuItem>
 
@@ -2407,6 +2423,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   if (value) clearFieldError(errorKey);
                 }}
                 fullWidth
+                disabled={!isDriving}
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
@@ -2422,27 +2439,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
               <>
-                <FormControl error={!!errorMessage}>
+                <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
                   <RadioGroup
                     row
-                    value={field.answer_text || ''}
+                    value={field.answer_text || 'false'}
                     onChange={(e) => {
                       onChange(index, 'answer_text', e.target.value);
                       if (e.target.value) clearFieldError(errorKey);
                     }}
                     sx={{
-                      justifyContent: 'center',
+                      width: '100%',
+                      display: 'flex',
                       flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
-                    {field.multiple_option_fields?.map((opt: any) => (
-                      <FormControlLabel
-                        key={opt.id}
-                        value={opt.value}
-                        control={<Radio size="small" />}
-                        label={opt.name}
-                      />
-                    ))}
+                    {field.multiple_option_fields
+                      ?.sort((a: any, b: any) => {
+                        if (a.name === 'Yes') return -1;
+                        if (b.name === 'Yes') return 1;
+                        return 0;
+                      })
+                      .map((opt: any) => (
+                        <FormControlLabel
+                          key={opt.id}
+                          value={opt.value}
+                          control={<Radio size="small" />}
+                          label={opt.name}
+                        />
+                      ))}
                   </RadioGroup>
                 </FormControl>
                 <br />
@@ -2609,20 +2635,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           p: 0.5,
                           textAlign: 'center',
                           backgroundColor: '#f5faff',
-                          cursor: 'pointer',
+                          cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
                           width: '100%',
+                          opacity: uploadingFiles[key] ? 0.6 : 1,
                         }}
                       >
-                        <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                        <Typography variant="subtitle1">Upload File</Typography>
+                        {uploadingFiles[key] ? (
+                          <>
+                            <CircularProgress size={20} />
+                            <Typography variant="subtitle1">Uploading...</Typography>
+                          </>
+                        ) : (
+                          <>
+                            <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                            <Typography variant="subtitle1">Upload File</Typography>
+                          </>
+                        )}
                       </Box>
                     </label>
 
                     <input
                       id={key}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpg,image/jpeg,image/png"
                       hidden
+                      disabled={!!uploadingFiles[key]}
                       onChange={(e) => {
                         handleFileChangeForField(
                           e.target.files?.[0],
@@ -2639,6 +2676,47 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         e.target.value = '';
                       }}
                     />
+
+                    {!!(field as any).answer_file && !uploadingFiles[key] && (
+                      <Box
+                        mt={0.5}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        gap={1}
+                        sx={{
+                          overflow: 'hidden',
+                          width: '100%',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          noWrap
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          {uploadNames[key] || 'File uploaded'}
+                        </Typography>
+
+                        <IconButton
+                          size="small"
+                          color="error"
+                          disabled={!!removing[key]}
+                          onClick={() =>
+                            handleRemoveFileForField(
+                              (field as any).answer_file,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        >
+                          <IconX size={16} />
+                        </IconButton>
+                      </Box>
+                    )}
                   </Box>
                 )}
 
@@ -2667,22 +2745,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               )}
             </>
           );
-        // return (
-        //   <>
-        //     <CameraUpload
-        //       value={field.answer_file as string | undefined}
-        //       onChange={(url) => {
-        //         onChange(index, 'answer_file', url);
-        //         if (url) clearFieldError(errorKey);
-        //       }}
-        //     />
-        //     {errorMessage && (
-        //       <Typography variant="caption" color="error">
-        //         {errorMessage}
-        //       </Typography>
-        //     )}
-        //   </>
-        // );
 
         case 11: {
           const key = opts?.uniqueKey ?? String(index);
@@ -2810,24 +2872,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         p: 0.5,
                         textAlign: 'center',
                         backgroundColor: '#f5faff',
-                        cursor: 'pointer',
+                        cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
                         width: '100%',
                         transition: '0.2s',
-                        '&:hover': { backgroundColor: '#e3f2fd' },
+                        opacity: uploadingFiles[key] ? 0.6 : 1,
+                        '&:hover': {
+                          backgroundColor: uploadingFiles[key] ? '#f5faff' : '#e3f2fd',
+                        },
                       }}
                     >
-                      <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
-                        Upload File
-                      </Typography>
+                      {uploadingFiles[key] ? (
+                        <>
+                          <CircularProgress size={20} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Uploading...
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Upload File
+                          </Typography>
+                        </>
+                      )}
                     </Box>
                   </label>
 
                   <input
                     id={key}
                     type="file"
-                    accept="*"
+                    accept="image/jpg, image/jpeg, image/png"
                     hidden
+                    disabled={!!uploadingFiles[key]}
                     onChange={(e) => {
                       handleFileChangeForField(
                         e.target.files?.[0],
@@ -2845,22 +2922,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     }}
                   />
 
-                  {!!(field as any).answer_file && (
+                  {!!(field as any).answer_file && !uploadingFiles[key] && (
                     <Box
                       mt={0.5}
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
+                      gap={1}
+                      sx={{
+                        overflow: 'hidden',
+                        width: '100%',
+                      }}
                     >
                       <Typography
                         variant="caption"
                         color="text.secondary"
                         noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
                       >
-                        {uploadNames[key] ?? ''}
+                        {uploadNames[key] || 'File uploaded'}
                       </Typography>
+
                       <IconButton
                         size="small"
                         color="error"
@@ -2971,8 +3056,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return null;
     }
   };
-
-
 
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
@@ -3551,8 +3634,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const remark = (item.remarks || '').toLowerCase();
 
       // is_driving wajib, tetapi false adalah value yang valid
-      if (remark === 'is_driving') {
-        return true;
+      if (remark === 'is_driving' || remark === 'is_employee') {
+        return false;
       }
 
       // vehicle wajib hanya jika is_driving = true
@@ -6075,9 +6158,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }, 700);
 
       const errorData = err.response?.data;
-
       const errorMessage = Array.isArray(errorData?.collection)
-        ? errorData.collection.join('\n')
+        ? errorData.collection
+            .flatMap((item: any) =>
+              Array.isArray(item.error) ? item.error.map((err: any) => err.message) : [],
+            )
+            .filter(Boolean)
+            .join('\n')
         : errorData?.message || errorData?.msg || 'Failed to create visitor.';
 
       showSwal('error', errorMessage);

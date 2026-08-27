@@ -163,10 +163,8 @@
   "your_name": "Nama Anda",
   "your_email": "Email Anda",
   "your_phone": "Nomor Telepon Anda",
-
   "required_fields": "Kolom yang wajib diisi",
   "required_field_note": "Pastikan semua kolom bertanda * telah diisi sebelum melanjutkan",
-
   "unsavedChangesTitle": "Perubahan Belum Disimpan",
   "unsavedChangesMessage": "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin melanjutkan tanpa menyimpan perubahan?",
   "cancel": "Batal",
@@ -200,5 +198,9 @@
   "selectRole": "Pilih Role",
   "visitorPeriodStartDescription": "Periode mulai kunjungan adalah tanggal saat kunjungan visitor dimulai",
   "visitorPeriodEndDescription": "Periode akhir kunjungan adalah tanggal saat kunjungan visitor berakhir",
-  "dragDropOrTapToSelectFile": "Seret dan lepas atau ketuk untuk memilih file."
+  "dragDropOrTapToSelectFile": "Seret dan lepas atau ketuk untuk memilih file.",
+  "blacklistReason": "Silakan berikan alasan untuk memasukkan pengunjung ini ke blacklist.",
+  "successBlacklist": "Berhasil memasukkan pengunjung ke blacklist.",
+  "whitelistReason": "Silakan berikan alasan untuk memasukkan pengunjung ini ke whitelist.",
+  "successWhitelist": "Berhasil memasukkan pengunjung ke whitelist."
 }

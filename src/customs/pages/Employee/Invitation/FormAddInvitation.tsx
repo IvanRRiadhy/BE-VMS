@@ -1786,7 +1786,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 <FormControl error={!!errorMessage}>
                   <RadioGroup
                     row
-                    value={field.answer_text || ''}
+                    value={field.answer_text || 'false'}
                     onChange={(e) => {
                       onChange(index, 'answer_text', e.target.value);
                       if (e.target.value) clearFieldError(errorKey);
@@ -2790,8 +2790,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const remark = (item.remarks || '').toLowerCase();
 
       // is_driving wajib, tetapi false adalah value yang valid
-      if (remark === 'is_driving') {
-        return true;
+      if (remark === 'is_driving' || remark === 'is_employee') {
+        return false;
       }
 
       // vehicle wajib hanya jika is_driving = true

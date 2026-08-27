@@ -273,7 +273,8 @@ const ActionPanelCard: FC<Props> = ({
                           fontWeight: 600,
 
                           px: '10px !important',
-                          background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                          // background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+
                           boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
                           '&:hover': {
                             background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
@@ -324,40 +325,6 @@ const ActionPanelCard: FC<Props> = ({
                 )}
               </Grid>
               {/* Access */}
-              {loading ? (
-                <ButtonSkeleton />
-              ) : (
-                canAccess && (
-                  <Grid size={{ xs: 6, lg: 6 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<IconLockAccess size={25} />}
-                      onClick={() => handleOpenAction('access')}
-                      // onClick={() => setAccessIssuance(true)}
-                      size="large"
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: '10px !important',
-                        // px: 2.5,
-                        background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-                        boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
-                        },
-                        zIndex: 999,
-                        width: '100%',
-                        height: '50px',
-                        p: 0,
-                      }}
-                    >
-                      <Typography variant="h6" color="white">
-                        Access Alocation
-                      </Typography>
-                    </Button>
-                  </Grid>
-                )
-              )}
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.2}>
@@ -441,7 +408,8 @@ const ActionPanelCard: FC<Props> = ({
                           fontWeight: 600,
                           px: 2.5,
                           boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                          background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                          // background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                          backgroundColor: '#FFCA28',
                           zIndex: 999,
                           width: '100%',
                           height: '50px',
@@ -479,6 +447,40 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+                {loading ? (
+                  <ButtonSkeleton />
+                ) : (
+                  canAccess && (
+                    <Grid size={{ xs: 12, lg: 12 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<IconLockAccess size={25} />}
+                        onClick={() => handleOpenAction('access')}
+                        // onClick={() => setAccessIssuance(true)}
+                        size="large"
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: '10px !important',
+                          // px: 2.5,
+                          background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                          boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
+                          },
+                          zIndex: 999,
+                          width: '100%',
+                          height: '50px',
+                          p: 0,
+                        }}
+                      >
+                        <Typography variant="h6" color="white">
+                          Access Alocation
+                        </Typography>
+                      </Button>
+                    </Grid>
+                  )
+                )}
                 {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -500,7 +502,7 @@ const ActionPanelCard: FC<Props> = ({
                     Print
                   </Button>
                 </Grid> */}
-                {loading ? (
+                {/* {loading ? (
                   <ButtonSkeleton />
                 ) : (
                   canBlacklist && (
@@ -529,8 +531,8 @@ const ActionPanelCard: FC<Props> = ({
                       </Button>
                     </Grid>
                   )
-                )}
-                <Grid size={{ xs: 12, lg: 6 }}>
+                )} */}
+                {/* <Grid size={{ xs: 12, lg: 6 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconPencil size={25} />}
@@ -577,7 +579,7 @@ const ActionPanelCard: FC<Props> = ({
                       Edit Visitor Information
                     </Typography>
                   </Button>
-                </Grid>
+                </Grid> */}
                 {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     onClick={connect}

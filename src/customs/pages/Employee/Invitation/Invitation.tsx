@@ -121,7 +121,7 @@ const Content = () => {
   const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const secdrawerWidth = 300;
+  const secdrawerWidth = 350;
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleEmployeeClick = (employeeId: string) => {

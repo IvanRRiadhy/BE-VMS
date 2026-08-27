@@ -151,16 +151,14 @@ const Content = () => {
       const { value: inputReason } = await Swal.fire({
         icon: isBlacklistAction ? 'warning' : 'question',
         title: isBlacklistAction ? 'Blacklist Visitor' : 'Whitelist Visitor',
-        text: isBlacklistAction
-          ? 'Please provide a reason for blacklist this visitor'
-          : 'Please provide a reason for whitelist this visitor',
+        text: isBlacklistAction ? t('blacklistReason') : t('whitelistReason'),
         input: 'text',
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Yes',
-        confirmButtonColor: isBlacklistAction ? '#dc2626' : '#16a34a',
+        confirmButtonColor: isBlacklistAction ? '#16a34a' : '#16a34a',
         cancelButtonText: 'Cancel',
         reverseButtons: true,
         inputValidator: (value) => {
@@ -183,12 +181,14 @@ const Content = () => {
       // await createBlacklist(payload);
       await blacklistMutation.mutateAsync(payload);
 
-      showSwal(
-        'success',
-        isBlacklistAction ? 'Successfully blacklisted visitor' : 'Successfully whitelisted visitor',
-      );
+      showSwal('success', isBlacklistAction ? t('successBlacklist') : t('successWhitelist'));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist visitor.');
+      showSwal(
+        'error',
+        error?.response?.data?.msg ??
+          error?.response?.data?.message ??
+          'Failed to blacklist or whitelist visitor.',
+      );
     } finally {
       setLoadingData(false);
     }

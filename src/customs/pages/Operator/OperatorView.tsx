@@ -1058,8 +1058,8 @@ const OperatorView = () => {
       is_block: v.is_block ?? false,
       invited_by_name: v.invited_by_name ?? '-',
       visitor_role: v.visitor_role ?? '-',
-      checkout_at: v.checkout_at ?? '-',
-      checkin_at: v.checkin_at ?? '-',
+      checkout_at: v.checkout_at ?? null,
+      checkin_at: v.checkin_at ?? null,
       is_host: v.is_host ?? false,
     }));
     setInvitationCode((prev) =>
@@ -1340,10 +1340,7 @@ const OperatorView = () => {
 
   const handleBlacklistStatus = async (id: string) => {
     try {
-      const reason = await showReasonDialog(
-        'Blacklist Visitor',
-        'Please provide a reason for blacklisting this visitor.',
-      );
+      const reason = await showReasonDialog('Blacklist Visitor', t('blacklistReason'));
 
       if (!reason) return;
 
@@ -1354,7 +1351,7 @@ const OperatorView = () => {
       };
       await createOperatorBlacklist(payload);
 
-      showSwal('success', 'Visitor has been successfully blacklisted.');
+      showSwal('success', t('successBlacklist'));
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to blacklist visitor.');
     }
@@ -2765,6 +2762,8 @@ const OperatorView = () => {
   const [livePage, setLivePage] = useState(0);
   const [liveRowsPerPage, setLiveRowsPerPage] = useState(10);
   const [liveSearch, setLiveSearch] = useState('');
+  const [visitorStartDate, setVisitorStartDate] = useState('');
+  const [visitorEndDate, setVisitorEndDate] = useState('');
 
   const liveVisitorQuery = useUpcomingVisitors({
     page: livePage,
@@ -2772,7 +2771,13 @@ const OperatorView = () => {
     sortDir,
     search: liveSearch,
     allVisitorType: true,
+    ...(visitorStartDate && {
+      startDate: visitorStartDate,
+    }),
 
+    ...(visitorEndDate && {
+      endDate: visitorEndDate,
+    }),
     ...(visitorStatusFilter !== 'all' && {
       showCheckout: visitorStatusFilter === 'checkout',
       showBlock: visitorStatusFilter === 'block',
@@ -2808,26 +2813,6 @@ const OperatorView = () => {
   const upcomingPurpose = upcomingPurposeQuery.data ?? [];
   // const upcomingPurpose = upcomingPurposeQuery.data ?? [];
 
-  const filteredUpcomingVisitors = useMemo(() => {
-    if (!searchKeyword.trim()) return upcomingVisitors;
-
-    const keyword = searchKeyword.toLowerCase();
-
-    return upcomingVisitors.filter((item: any) =>
-      [
-        item.name,
-        item.host,
-        item.organization,
-        item.invitation_code,
-        item.agenda,
-        item.vehicle_plate_number,
-        item.vehicle_type,
-        item.visitor_status,
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(keyword)),
-    );
-  }, [upcomingVisitors, searchKeyword]);
 
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
@@ -2886,109 +2871,6 @@ const OperatorView = () => {
 
   const bulkPrintingRef = useRef(false);
   const { WS_URL } = getConfig();
-
-  // useEffect(() => {
-  //   if (!WS_URL) return;
-  //   const socket = new WebSocket(WS_URL);
-
-  //   socketRef.current = socket;
-
-  //   socket.onopen = () => {
-  //     console.log('🟢 WS connected');
-  //   };
-
-  //   socket.onerror = (err) => {
-  //     // console.error('❌ WS error:', err);
-  //   };
-
-  //   socket.onclose = () => {
-  //     console.warn('🔌 WS disconnected');
-  //   };
-
-  //   socket.onmessage = async (event) => {
-  //     const raw = event.data;
-  //     // console.log('📥 WS message:', raw);
-
-  //     try {
-  //       // =========================
-  //       // IMAGE STREAM
-  //       // =========================
-  //       if (typeof raw === 'string' && raw.includes('|data:image')) {
-  //         wsImageQueueRef.current.push(raw);
-
-  //         forceTick((v) => v + 1);
-
-  //         return;
-  //       }
-
-  //       // =========================
-  //       // JSON EVENT
-  //       // =========================
-  //       const msg = JSON.parse(raw);
-
-  //       // console.log('💬 WS JSON:', msg);
-
-  //       // =========================
-  //       // BARCODE
-  //       // =========================
-  //       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
-  //         const value = String(msg.data).trim();
-
-  //         if (!value) return;
-  //         if (scanLockRef.current) return;
-  //         if (lastScanRef.current === value) return;
-
-  //         scanLockRef.current = true;
-  //         lastScanRef.current = value;
-
-  //         try {
-  //           await handleSubmitQRCode(value);
-  //         } finally {
-  //           setTimeout(() => {
-  //             scanLockRef.current = false;
-  //             lastScanRef.current = '';
-  //           }, 2000);
-  //         }
-
-  //         return;
-  //       }
-
-  //       // =========================
-  //       // OCR RESULT
-  //       // =========================
-  //       if (msg?.event === 'OCR_RESULT') {
-  //         wsOcrQueueRef.current.push(msg.data);
-
-  //         forceTick((v) => v + 1);
-
-  //         return;
-  //       }
-
-  //       // =========================
-  //       // PRINT RESULT
-  //       // =========================
-  //       if (msg?.event === 'PRINT_RESULT') {
-  //         if (bulkPrintingRef.current) {
-  //           return;
-  //         }
-
-  //         if (msg.success) {
-  //           showSwal('success', 'Printed successfully');
-  //         } else {
-  //           showSwal('error', msg.message || 'Print failed');
-  //         }
-
-  //         return;
-  //       }
-  //     } catch (err) {
-  //       console.error('⚠️ WS parse error:', err);
-  //     }
-  //   };
-
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, []);
 
   const handleBarcodeScan = async (value: string) => {
     if (!value) return;
@@ -3362,6 +3244,10 @@ const OperatorView = () => {
                   }}
                   visitorStatusFilter={visitorStatusFilter}
                   setVisitorStatusFilter={setVisitorStatusFilter}
+                  visitorStartDate={visitorStartDate}
+                  visitorEndDate={visitorEndDate}
+                  setVisitorStartDate={setVisitorStartDate}
+                  setVisitorEndDate={setVisitorEndDate}
                 />
               </Grid>
 

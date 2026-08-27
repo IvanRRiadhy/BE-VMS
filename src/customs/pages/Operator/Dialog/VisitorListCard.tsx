@@ -91,6 +91,10 @@ interface VisitorListCardProps {
   relatedPagination?: any;
   visitorStatusFilter: any;
   setVisitorStatusFilter: React.Dispatch<React.SetStateAction<any>>;
+  visitorStartDate: string;
+  visitorEndDate: string;
+  setVisitorStartDate: React.Dispatch<React.SetStateAction<string>>;
+  setVisitorEndDate: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -138,6 +142,10 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   relatedPagination,
   visitorStatusFilter,
   setVisitorStatusFilter,
+  visitorStartDate,
+  visitorEndDate,
+  setVisitorStartDate,
+  setVisitorEndDate,
 }) => {
   // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 10));
   const pagination = typeVisitor === 'live' ? livePagination : relatedPagination;
@@ -152,11 +160,17 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
     setOpenFilter(false);
   };
 
-  const handleApplyFilter = (filter: any) => {
+  const handleApplyFilter = (filter: any, startDate: string, endDate: string) => {
     setVisitorStatusFilter(filter);
+    setVisitorStartDate(startDate);
+    setVisitorEndDate(endDate);
 
     if (typeVisitor === 'live') {
       livePagination?.setPage(0);
+    }
+
+    if (typeVisitor === 'related') {
+      relatedPagination?.setPage(0);
     }
 
     setOpenFilter(false);
@@ -164,8 +178,15 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
 
   const handleResetFilter = () => {
     setVisitorStatusFilter('all');
+    setVisitorStartDate('');
+    setVisitorEndDate('');
+
     if (typeVisitor === 'live') {
       livePagination?.setPage(0);
+    }
+
+    if (typeVisitor === 'related') {
+      relatedPagination?.setPage(0);
     }
 
     setOpenFilter(false);
@@ -844,6 +865,8 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
       <VisitorFilterDialog
         open={openFilter}
         value={visitorStatusFilter}
+        startDate={visitorStartDate}
+        endDate={visitorEndDate}
         onClose={handleCloseFilter}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}

@@ -2,6 +2,7 @@ import {
   Autocomplete,
   Box,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -59,7 +60,7 @@ type RenderFieldGroupProps = {
   activeStep: number;
 
   containerRef: React.RefObject<any>;
-
+  uploadingFiles: Record<string, boolean>;
   uploadMethods: Record<string, string>;
   handleUploadMethodChange: Function;
   handleFileChangeForField: Function;
@@ -72,6 +73,7 @@ type RenderFieldGroupProps = {
   setActiveGroupIdx: (v: number) => void;
   fieldErrors: Record<string, string>;
   setFieldErrors: React.Dispatch<React.SetStateAction<any>>;
+  isDriving: boolean;
 };
 
 const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
@@ -106,6 +108,8 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     setActiveGroupIdx,
     fieldErrors,
     setFieldErrors,
+    isDriving,
+    uploadingFiles,
   } = props;
 
   if (field.is_enable !== true) {
@@ -143,6 +147,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     const employeeSelected = !!opts?.details?.find(
       (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
     );
+
     switch (field.field_type) {
       case 0: // Text
         return (
@@ -178,7 +183,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             error={!!errorMessage}
             helperText={errorMessage}
             disabled={
-              shouldDisable || ((field.remarks || '').toLowerCase() === 'name' && employeeSelected)
+              shouldDisable ||
+              ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
+              ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
             }
           />
         );
@@ -328,21 +335,25 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               select
               size="small"
               fullWidth
-              // Nilai role untuk visitor ini saja
               value={field.answer_text || ''}
               onChange={(e) => {
                 const selectedRole = e.target.value;
 
                 onChange(index, 'answer_text', selectedRole);
 
-                // Bersihkan validation error jika ada
-                //  if (selectedRole) {
-                //    clearFieldError(key);
-                //  }
+                if (selectedRole) {
+                  clearFieldError(errorKey);
+                }
               }}
               error={!!errorMessage}
               helperText={errorMessage}
-              sx={{ minWidth: '160px' }}
+              sx={{
+                minWidth: 160,
+                maxWidth: '100%',
+              }}
+              SelectProps={{
+                displayEmpty: true,
+              }}
             >
               <MenuItem value="">{t('selectRole')}</MenuItem>
 
@@ -436,33 +447,36 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
 
         if (field.remarks === 'vehicle_type') {
           return (
-            <Select
-              // select
+            <CustomTextField
+              select
               size="small"
               value={field.answer_text || ''}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              fullWidth
-              MenuProps={{
-                disablePortal: true,
-                container: containerRef?.current || null,
+              onChange={(e) => {
+                const value = e.target.value;
+                onChange(index, 'answer_text', value);
+                if (value) clearFieldError(errorKey);
               }}
+              fullWidth
+              disabled={!isDriving}
+              error={!!errorMessage}
+              helperText={errorMessage}
             >
               {field.multiple_option_fields?.map((opt: any) => (
                 <MenuItem key={opt.id} value={opt.value}>
                   {opt.name}
                 </MenuItem>
               ))}
-            </Select>
+            </CustomTextField>
           );
         }
 
         if (field.remarks === 'is_employee') {
           return (
             <>
-              <FormControl error={!!errorMessage}>
+              <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
                 <RadioGroup
                   row
-                  value={field.answer_text || ''}
+                  value={field.answer_text || 'false'}
                   onChange={(e) => {
                     const value = e.target.value;
 
@@ -476,14 +490,20 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                     justifyContent: 'center',
                   }}
                 >
-                  {field.multiple_option_fields?.map((opt: any) => (
-                    <FormControlLabel
-                      key={opt.id}
-                      value={opt.value}
-                      control={<Radio size="small" />}
-                      label={opt.name}
-                    />
-                  ))}
+                  {field.multiple_option_fields
+                    ?.sort((a: any, b: any) => {
+                      if (a.name === 'Yes') return -1;
+                      if (b.name === 'Yes') return 1;
+                      return 0;
+                    })
+                    .map((opt: any) => (
+                      <FormControlLabel
+                        key={opt.id}
+                        value={opt.value}
+                        control={<Radio size="small" />}
+                        label={opt.name}
+                      />
+                    ))}
                 </RadioGroup>
               </FormControl>
               <br />
@@ -499,23 +519,29 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
         if (field.remarks === 'is_driving') {
           return (
             <>
-              <FormControl error={!!errorMessage} sx={{ minWidth: '150px' }}>
+              <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
                 <RadioGroup
                   row
-                  value={field.answer_text || ''}
+                  value={field.answer_text || 'false'}
                   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                   sx={{
                     justifyContent: 'center',
                   }}
                 >
-                  {field.multiple_option_fields?.map((opt: any) => (
-                    <FormControlLabel
-                      key={opt.id}
-                      value={opt.value}
-                      control={<Radio size="small" />}
-                      label={opt.name}
-                    />
-                  ))}
+                  {field.multiple_option_fields
+                    ?.sort((a: any, b: any) => {
+                      if (a.name === 'Yes') return -1;
+                      if (b.name === 'Yes') return 1;
+                      return 0;
+                    })
+                    .map((opt: any) => (
+                      <FormControlLabel
+                        key={opt.id}
+                        value={opt.value}
+                        control={<Radio size="small" />}
+                        label={opt.name}
+                      />
+                    ))}
                 </RadioGroup>
               </FormControl>
               <br />
@@ -644,6 +670,147 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
         );
 
       case 10: // Camera
+        if ((field.remarks || '').toLowerCase() === 'selfie_image') {
+          // const key = opts?.uniqueKey ?? String(index);
+          const key = `camera_${opts?.uniqueKey ?? index}`;
+
+          return (
+            <Box
+              display="flex"
+              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
+              alignItems={{ xs: 'stretch', md: 'center' }}
+              // justifyContent="space-between"
+              gap={1.5}
+              width="100%"
+              sx={{ maxWidth: 400 }}
+            >
+              <TextField
+                select
+                size="small"
+                value={uploadMethods[key] || 'file'}
+                onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+                fullWidth
+                sx={{ width: { xs: '100%', md: '200px' } }}
+              >
+                <MenuItem value="file">Choose File</MenuItem>
+                <MenuItem value="camera">Take Photo</MenuItem>
+              </TextField>
+
+              {(uploadMethods[key] || 'file') === 'camera' ? (
+                <CameraUpload
+                  value={field.answer_file as string | undefined}
+                  onChange={(url) => {
+                    onChange(index, 'answer_file', url);
+                    if (url) clearFieldError(errorKey);
+                  }}
+                />
+              ) : (
+                <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+                  <label htmlFor={key}>
+                    <Box
+                      sx={{
+                        border: '2px dashed #90caf9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1.5,
+                        borderRadius: 2,
+                        p: 0.5,
+                        textAlign: 'center',
+                        backgroundColor: '#f5faff',
+                        cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
+                        width: '100%',
+                        opacity: uploadingFiles[key] ? 0.6 : 1,
+                      }}
+                    >
+                      {uploadingFiles[key] ? (
+                        <>
+                          <CircularProgress size={20} />
+                          <Typography variant="subtitle1">Uploading...</Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                          <Typography variant="subtitle1">Upload File</Typography>
+                        </>
+                      )}
+                    </Box>
+                  </label>
+
+                  <input
+                    id={key}
+                    type="file"
+                    accept="image/jpg,image/jpeg,image/png"
+                    hidden
+                    disabled={!!uploadingFiles[key]}
+                    onChange={(e) => {
+                      handleFileChangeForField(
+                        e.target.files?.[0],
+                        (url: any) => {
+                          onChange(index, 'answer_file', url);
+
+                          if (url) {
+                            clearFieldError(key);
+                          }
+                        },
+                        key,
+                      );
+
+                      e.target.value = '';
+                    }}
+                  />
+
+                  {!!(field as any).answer_file && !uploadingFiles[key] && (
+                    <Box
+                      mt={0.5}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      gap={1}
+                      sx={{
+                        overflow: 'hidden',
+                        width: '100%',
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        {uploadNames[key] || 'File uploaded'}
+                      </Typography>
+
+                      <IconButton
+                        size="small"
+                        color="error"
+                        disabled={!!removing[key]}
+                        onClick={() =>
+                          handleRemoveFileForField(
+                            (field as any).answer_file,
+                            (url: any) => onChange(index, 'answer_file', url),
+                            key,
+                          )
+                        }
+                      >
+                        <IconX size={16} />
+                      </IconButton>
+                    </Box>
+                  )}
+                </Box>
+              )}
+
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </Box>
+          );
+        }
         return (
           <>
             <CameraUpload
