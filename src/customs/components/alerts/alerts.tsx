@@ -140,7 +140,7 @@ export const showSwal = (
       showCancelButton: true,
       confirmButtonText: 'Yes',
       cancelButtonText: 'Cancel',
-      reverseButtons: false,
+      reverseButtons: true,
       confirmButtonColor: '#16a34a',
       cancelButtonColor: '#9ca3af',
       background: '#fff',
@@ -154,10 +154,10 @@ export const showSwal = (
   const isMultiline = text.includes('\n');
   const formattedText = isMultiline
     ? text
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .join('<br>')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join('<br>')
     : text;
 
   const config: SweetAlertOptions = {
@@ -207,10 +207,7 @@ export const showDialogError = (htmlContent: string) => {
   });
 };
 
-type ReasonDialogOptions = Omit<
-  SweetAlertOptions,
-  'input' | 'inputValidator' | 'preConfirm'
->;
+type ReasonDialogOptions = Omit<SweetAlertOptions, 'input' | 'inputValidator' | 'preConfirm'>;
 
 export const showReasonDialog = async (
   title: string,

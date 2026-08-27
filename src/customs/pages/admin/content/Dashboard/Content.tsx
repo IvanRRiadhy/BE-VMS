@@ -49,7 +49,7 @@ const Content = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    // { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
     { title: 'waiting', key: 'waiting', icon: <IconHourglass size={25} /> },
     {
@@ -198,7 +198,7 @@ const Content = () => {
           <div ref={exportRef}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, lg: 12 }}>
-                <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2 }} />
+                <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} />
               </Grid>
               <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
                 <Grid size={{ xs: 12, md: 6, xl: 3 }}>

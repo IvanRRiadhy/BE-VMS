@@ -34,6 +34,11 @@ import {
   Typography,
   Box,
   Grid2 as Grid,
+  LinearProgress,
+  AlertColor,
+  Portal,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import dayjs, { Dayjs, tz } from 'dayjs';
@@ -57,6 +62,7 @@ import { IconInfoCircle } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useMediaQuery, useTheme } from '@mui/system';
 import { useTranslation } from 'react-i18next';
+import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 
 const RenderDetailRows = ({
   details,
@@ -79,6 +85,7 @@ const RenderDetailRows = ({
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [isDragging, setIsDragging] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const webcamRef = useRef<Webcam>(null);
@@ -90,6 +97,15 @@ const RenderDetailRows = ({
   const [openStartPicker, setOpenStartPicker] = useState(false);
   const [openEndPicker, setOpenEndPicker] = useState(false);
   const { t } = useTranslation();
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
 
   useEffect(() => {
     if (invitation?.site?.id && selectedSiteParentIds.length === 0) {
@@ -381,33 +397,66 @@ const RenderDetailRows = ({
   };
 
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
-    fullscreenHandle?: any,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
 
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
+
     if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
       setPreviews((prev) => ({
         ...prev,
         [trackKey]: URL.createObjectURL(file),
       }));
     }
-    const compressedFile = await compressImage(file);
-    if (compressedFile.size > 5 * 1024 * 1024) {
-      // toast('Maximum file size is 5 MB', 'info');
-      showSwal('info', 'Maximum file size is 5 MB');
-      return;
+
+    try {
+      // Compression sementara disabled
+      const path = await uploadFileToCDN(file);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
     }
-
-    const path = await uploadFileToCDN(compressedFile);
-
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
   };
 
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
@@ -439,6 +488,8 @@ const RenderDetailRows = ({
     }
   };
 
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
@@ -459,6 +510,7 @@ const RenderDetailRows = ({
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
       console.error('Delete failed:', e);
     } finally {
@@ -614,17 +666,7 @@ const RenderDetailRows = ({
 
                           if (value) clearFieldError(key);
                         }}
-                        placeholder={
-                          item.remarks === 'name'
-                            ? ''
-                            : item.remarks === 'phone'
-                              ? ''
-                              : item.remarks === 'organization'
-                                ? ''
-                                : item.remarks === 'indentity_id'
-                                  ? ''
-                                  : ''
-                        }
+                        placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                         inputProps={
                           (item.remarks || '').toLowerCase() === 'phone'
                             ? {
@@ -664,7 +706,11 @@ const RenderDetailRows = ({
                           onChange(originalIndex, 'answer_text', e.target.value);
                           if (e.target.value) clearFieldError(key);
                         }}
-                        placeholder={item.remarks === 'email' ? '' : ''}
+                        placeholder={
+                          item.remarks?.toLowerCase() === 'email'
+                            ? 'Example: name@gmail.com'
+                            : 'Enter your ' + item.long_display_text.toLowerCase()
+                        }
                         fullWidth
                         error={!!errorMessage}
                         helperText={errorMessage}
@@ -1213,39 +1259,86 @@ const RenderDetailRows = ({
                   case 10: {
                     // TakePicture (Assuming image capture from device camera)
                     const remark = (item.remarks || '').toLowerCase();
-                    if (remark === 'selfie_image') {
+                    const isUploading = !!uploadingFiles[key];
+
+                    if (remark == 'selfie_image') {
                       return (
                         <Box>
                           <Box
                             sx={{
-                              border: '2px dashed #90caf9',
+                              position: 'relative',
+                              border: '2px dashed',
+                              borderColor: isDragging ? 'primary.main' : '#90caf9',
                               borderRadius: 2,
                               padding: 4,
                               textAlign: 'center',
-                              backgroundColor: '#f5faff',
-                              cursor: 'pointer',
+                              backgroundColor: isDragging ? 'action.hover' : '#f5faff',
+                              cursor: isUploading ? 'not-allowed' : 'pointer',
                               width: '100%',
-                              pointerEvents: 'auto',
-                              opacity: 1,
+                              pointerEvents: isUploading ? 'none' : 'auto',
+                              opacity: isUploading ? 0.6 : 1,
                             }}
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={() => {
+                              if (!isUploading) {
+                                fileInputRef.current?.click();
+                              }
+                            }}
+                            onDragEnter={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              if (!isUploading) {
+                                setIsDragging(true);
+                              }
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              setIsDragging(false);
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              setIsDragging(false);
+
+                              if (isUploading) return;
+
+                              handleFileChangeForField(
+                                e.dataTransfer.files?.[0],
+                                (url) => {
+                                  onChange(originalIndex, 'answer_file', url);
+
+                                  if (url) {
+                                    clearFieldError(key);
+                                  }
+                                },
+                                key,
+                              );
+                            }}
                           >
                             <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                             <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
                               Upload File
                             </Typography>
-
+                            <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+                              Drag and drop or tap to select file.
+                            </Typography>
                             <Box
                               sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                flexWrap: 'wrap',
                               }}
                             >
                               <Typography variant="body1" color="textSecondary">
                                 Supports: JPG, PNG, JPEG, Up to
-                                <span style={{ fontWeight: '700' }}> 5 MB | </span>
+                                <span style={{ fontWeight: '700' }}> 5 MB or </span>
                               </Typography>
 
                               <Typography
@@ -1268,23 +1361,57 @@ const RenderDetailRows = ({
                                 <IconCamera /> Use Camera
                               </Typography>
                             </Box>
+                            {isUploading && (
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  mt: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <LinearProgress
+                                  sx={{
+                                    width: '220px',
+                                    height: 6,
+                                    borderRadius: 3,
+                                  }}
+                                />
 
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    mt: 0.75,
+                                  }}
+                                >
+                                  Uploading file...
+                                </Typography>
+                              </Box>
+                            )}
                             <input
                               id={`file-${key}`}
                               type="file"
-                              accept="*"
+                              // accept="*"
+                              accept="image/jpeg,image/png,image/jpg"
                               hidden
                               ref={fileInputRef}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 handleFileChangeForField(
-                                  e as React.ChangeEvent<HTMLInputElement>,
+                                  e.target.files?.[0],
                                   (url) => {
                                     onChange(originalIndex, 'answer_file', url);
-                                    if (url) clearFieldError(key);
+
+                                    if (url) {
+                                      clearFieldError(key);
+                                    }
                                   },
                                   key,
-                                )
-                              }
+                                );
+
+                                e.target.value = '';
+                              }}
                             />
                             {(previewSrc || shownName) && (
                               <Box
@@ -1345,176 +1472,36 @@ const RenderDetailRows = ({
                               {errorMessage}
                             </Typography>
                           )}
-
-                          <Dialog
+                          <CameraDialog
                             open={openCamera}
                             onClose={() => setOpenCamera(false)}
-                            maxWidth="md"
-                            fullWidth
-                          >
-                            <Box sx={{ p: 2 }}>
-                              <Box
-                                display={'flex'}
-                                justifyContent={'space-between'}
-                                alignItems={'center'}
-                                mb={1}
-                              >
-                                <Typography variant="h6" mb={0}>
-                                  Take Photo From Camera
-                                </Typography>
-                                <IconButton onClick={() => setOpenCamera(false)}>
-                                  <IconX />
-                                </IconButton>
-                              </Box>
-
-                              <Divider sx={{ mb: 2 }} />
-
-                              <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                  <Box sx={{ position: 'relative' }}>
-                                    <Webcam
-                                      audio={false}
-                                      ref={webcamRef}
-                                      screenshotFormat="image/jpeg"
-                                      videoConstraints={{
-                                        facingMode,
-                                      }}
-                                      style={{
-                                        width: '100%',
-                                        borderRadius: 8,
-                                        height: '250px',
-                                        objectFit: 'cover',
-                                        border: '2px solid #ccc',
-                                      }}
-                                    />
-
-                                    <IconButton
-                                      onClick={() =>
-                                        setFacingMode((prev) =>
-                                          prev === 'environment' ? 'user' : 'environment',
-                                        )
-                                      }
-                                      sx={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
-                                        bgcolor: 'rgba(0,0,0,0.5)',
-                                        color: '#fff',
-                                        '&:hover': {
-                                          bgcolor: 'rgba(0,0,0,0.7)',
-                                        },
-                                      }}
-                                    >
-                                      <IconRefresh />
-                                    </IconButton>
-                                  </Box>
-                                </Grid>
-
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                  {/* {screenshot ? (
-                                    <img
-                                      src={screenshot}
-                                      alt="Captured"
-                                      style={{
-                                        width: '100%',
-                                        borderRadius: 8,
-                                        border: '2px solid #ccc',
-                                      }}
-                                    />
-                                  ) : (
-                                    <Box
-                                      sx={{
-                                        width: '100%',
-                                        height: '100%',
-                                        border: '2px dashed #ccc',
-                                        borderRadius: 8,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: 240,
-                                      }}
-                                    >
-                                      <Typography color="text.secondary">
-                                        No Photos Have Been Taken Yet
-                                      </Typography>
-                                    </Box>
-                                  )} */}
-                                  {previews[key] ? (
-                                    <img
-                                      src={previews[key] as string}
-                                      alt="Captured"
-                                      style={{
-                                        width: '100%',
-                                        borderRadius: 8,
-                                        height: '250px',
-                                        objectFit: 'cover',
-                                        border: '2px solid #ccc',
-                                      }}
-                                    />
-                                  ) : (
-                                    <Box
-                                      sx={{
-                                        width: '100%',
-                                        height: '100%',
-                                        border: '2px dashed #ccc',
-                                        borderRadius: 8,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minHeight: 240,
-                                      }}
-                                    >
-                                      <Typography color="text.secondary">
-                                        No Photos Have Been Taken Yet
-                                      </Typography>
-                                    </Box>
-                                  )}
-                                </Grid>
-                              </Grid>
-
-                              <Divider sx={{ my: 2 }} />
-
-                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                <Button
-                                  onClick={() =>
-                                    handleRemoveFileForField(
-                                      (item as any).answer_file,
-                                      (url) => onChange(originalIndex, 'answer_file', url),
-                                      key,
-                                    )
-                                  }
-                                  color="error"
-                                  sx={{ mr: 1 }}
-                                  startIcon={<IconTrash />}
-                                >
-                                  Clear Foto
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCaptureForField(
-                                      (url) => onChange(originalIndex, 'answer_file', url),
-                                      key,
-                                    );
-                                  }}
-                                  startIcon={<IconCamera />}
-                                >
-                                  Take Foto
-                                </Button>
-                                <Button
-                                  startIcon={<IconDeviceFloppy />}
-                                  onClick={() => {
-                                    setOpenCamera(false);
-                                    // setScreenshot(null);
-                                  }}
-                                  sx={{ ml: 1 }}
-                                >
-                                  Submit
-                                </Button>
-                              </Box>
-                            </Box>
-                          </Dialog>
+                            webcamRef={webcamRef as any}
+                            screenshot={screenshot}
+                            facingMode={facingMode}
+                            isUploading={isUploading}
+                            onSwitchCamera={() =>
+                              setFacingMode((prev) =>
+                                prev === 'environment' ? 'user' : 'environment',
+                              )
+                            }
+                            onCapture={() =>
+                              handleCaptureForField(
+                                (url) => onChange(originalIndex, 'answer_file', url),
+                                key,
+                              )
+                            }
+                            onClear={() =>
+                              handleRemoveFileForField(
+                                (item as any).answer_file,
+                                (url) => onChange(originalIndex, 'answer_file', url),
+                                key,
+                              )
+                            }
+                            onSubmit={() => {
+                              setOpenCamera(false);
+                              setScreenshot(null);
+                            }}
+                          />
                         </Box>
                       );
                     }
@@ -1566,19 +1553,25 @@ const RenderDetailRows = ({
                           <input
                             id={`file-${key}`}
                             type="file"
-                            accept="*"
                             hidden
                             ref={fileInputRef}
-                            onChange={(e) =>
+                            accept="image/jpg,image/jpeg,image/png"
+                            disabled={!!uploadingFiles[key]}
+                            onChange={(e) => {
                               handleFileChangeForField(
-                                e as React.ChangeEvent<HTMLInputElement>,
+                                e.target.files?.[0],
                                 (url) => {
-                                  onChange(originalIndex, 'answer_file', url);
-                                  if (url) clearFieldError(key);
+                                  onChange(index, 'answer_file', url);
+
+                                  if (url) {
+                                    clearFieldError(key);
+                                  }
                                 },
                                 key,
-                              )
-                            }
+                              );
+
+                              e.target.value = '';
+                            }}
                           />
                           <br />
                         </Box>
@@ -1633,150 +1626,36 @@ const RenderDetailRows = ({
                           </Typography>
                         )}
 
-                        <Dialog
+                        <CameraDialog
                           open={openCamera}
                           onClose={() => setOpenCamera(false)}
-                          maxWidth="md"
-                          fullWidth
-                        >
-                          <Box sx={{ p: 3 }}>
-                            <Box>
-                              <Typography variant="h6" mb={2}>
-                                Take Photo From Camera
-                              </Typography>
-                              {/* close button */}
-                              <IconButton
-                                onClick={() => setOpenCamera(false)}
-                                sx={{ position: 'absolute', top: 10, right: 10 }}
-                              >
-                                <IconX size={22} />
-                              </IconButton>
-                            </Box>
-                            <Divider sx={{ mb: 2 }} />
-                            <Grid container spacing={2}>
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                <Box sx={{ position: 'relative' }}>
-                                  <Webcam
-                                    audio={false}
-                                    ref={webcamRef}
-                                    screenshotFormat="image/jpeg"
-                                    videoConstraints={{
-                                      facingMode,
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      borderRadius: 8,
-                                      height: '200px',
-                                      objectFit: 'cover',
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-
-                                  <IconButton
-                                    onClick={() =>
-                                      setFacingMode((prev) =>
-                                        prev === 'environment' ? 'user' : 'environment',
-                                      )
-                                    }
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 10,
-                                      right: 10,
-                                      bgcolor: 'rgba(0,0,0,0.5)',
-                                      color: '#fff',
-                                      '&:hover': {
-                                        bgcolor: 'rgba(0,0,0,0.7)',
-                                      },
-                                    }}
-                                  >
-                                    <IconRefresh />
-                                  </IconButton>
-                                </Box>
-                              </Grid>
-
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                {previews[key] ? (
-                                  <img
-                                    src={previews[key] as string}
-                                    alt="Captured"
-                                    style={{
-                                      width: '100%',
-                                      height: '250px',
-                                      objectFit: 'cover',
-                                      borderRadius: 8,
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-                                ) : (
-                                  <Box
-                                    sx={{
-                                      width: '100%',
-                                      height: '100%',
-                                      border: '2px dashed #ccc',
-                                      borderRadius: 8,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      minHeight: 240,
-                                    }}
-                                  >
-                                    <Typography color="text.secondary">
-                                      No Photos Have Been Taken Yet
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </Grid>
-                            </Grid>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <Box
-                              sx={{
-                                textAlign: 'right',
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                gap: 1,
-                              }}
-                            >
-                              <Button
-                                onClick={() =>
-                                  handleRemoveFileForField(
-                                    (item as any).answer_file,
-                                    (url) => onChange(originalIndex, 'answer_file', url),
-                                    key,
-                                  )
-                                }
-                                color="error"
-                                startIcon={<IconTrash />}
-                                sx={{ mr: 1 }}
-                              >
-                                Clear Foto
-                              </Button>
-                              <Button
-                                variant="contained"
-                                onClick={() =>
-                                  handleCaptureForField((url) => {
-                                    onChange(originalIndex, 'answer_file', url);
-                                    if (url) clearFieldError(key);
-                                  }, key)
-                                }
-                                startIcon={<IconCamera />}
-                              >
-                                Take Foto
-                              </Button>
-                              <Button
-                                startIcon={<IconDeviceFloppy />}
-                                onClick={() => {
-                                  setOpenCamera(false);
-                                  setScreenshot(null);
-                                }}
-                                sx={{ ml: 1 }}
-                              >
-                                Submit
-                              </Button>
-                            </Box>
-                          </Box>
-                        </Dialog>
+                          webcamRef={webcamRef as any}
+                          screenshot={screenshot}
+                          facingMode={facingMode}
+                          isUploading={isUploading}
+                          onSwitchCamera={() =>
+                            setFacingMode((prev) =>
+                              prev === 'environment' ? 'user' : 'environment',
+                            )
+                          }
+                          onCapture={() =>
+                            handleCaptureForField(
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onClear={() =>
+                            handleRemoveFileForField(
+                              (item as any).answer_file,
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onSubmit={() => {
+                            setOpenCamera(false);
+                            setScreenshot(null);
+                          }}
+                        />
                       </Box>
                     );
                   }
@@ -1885,34 +1764,77 @@ const RenderDetailRows = ({
                   }
 
                   case 12: {
+                    const isUploading = !!uploadingFiles[key];
                     return (
                       <Box>
                         <Box
                           sx={{
-                            border: '2px dashed #90caf9',
+                            position: 'relative',
+                            border: '2px dashed',
+                            borderColor: isDragging ? 'primary.main' : '#90caf9',
                             borderRadius: 2,
                             padding: 4,
                             textAlign: 'center',
-                            backgroundColor: '#f5faff',
-                            cursor: 'pointer',
+                            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
+                            cursor: isUploading ? 'not-allowed' : 'pointer',
                             width: '100%',
-                            pointerEvents: 'auto',
-                            opacity: 1,
+                            pointerEvents: isUploading ? 'none' : 'auto',
+                            opacity: isUploading ? 0.6 : 1,
+                            transition: 'all 0.2s ease',
                           }}
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => {
+                            if (!isUploading) {
+                              fileInputRef.current?.click();
+                            }
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (!isUploading) {
+                              setIsDragging(true);
+                            }
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+
+                            if (isUploading) return;
+
+                            handleFileChangeForField(
+                              e.dataTransfer.files?.[0],
+                              (url) => {
+                                onChange(originalIndex, 'answer_file', url);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
+                              },
+                              key,
+                            );
+                          }}
                         >
                           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                           <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
                             Upload File
                           </Typography>
-
+                          <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+                            {t('dragDropOrTapToSelectFile')}
+                          </Typography>
                           <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexWrap: 'wrap',
-                            }}
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
                             <Typography variant="body1" color="textSecondary">
                               Supports: JPG, PNG, JPEG, Up to
@@ -1936,30 +1858,60 @@ const RenderDetailRows = ({
                                 setOpenCamera(true);
                               }}
                             >
-                              <IconCamera />
-                              Use Camera
+                              <IconCamera /> Use Camera
                             </Typography>
                           </Box>
+
+                          {isUploading && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                mt: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <LinearProgress
+                                sx={{
+                                  width: '220px',
+                                  height: 6,
+                                  borderRadius: 3,
+                                }}
+                              />
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.75 }}
+                              >
+                                Uploading file...
+                              </Typography>
+                            </Box>
+                          )}
 
                           <input
                             id={`file-${key}`}
                             type="file"
-                            accept="*"
+                            accept="image/jpeg,image/png,image/jpg"
                             hidden
                             ref={fileInputRef}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               handleFileChangeForField(
-                                e as React.ChangeEvent<HTMLInputElement>,
+                                e.target.files?.[0],
                                 (url) => {
                                   onChange(originalIndex, 'answer_file', url);
-                                  if (url) clearFieldError(key);
+
+                                  if (url) {
+                                    clearFieldError(key);
+                                  }
                                 },
                                 key,
-                              )
-                            }
-                          />
+                              );
 
-                          {/*preview  */}
+                              e.target.value = '';
+                            }}
+                          />
                           {(previewSrc || shownName) && (
                             <Box
                               mt={2}
@@ -1975,10 +1927,14 @@ const RenderDetailRows = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
+                                      // width: 350,
+                                      // height: 200,
                                       width: lg ? 350 : 220,
                                       height: 200,
+                                      borderRadius: 12,
                                       objectFit: 'cover',
-                                      borderRadius: 8,
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                     }}
                                   />
                                   <Button
@@ -1986,7 +1942,7 @@ const RenderDetailRows = ({
                                     size="small"
                                     variant="outlined"
                                     sx={{ mt: 2, minWidth: 120 }}
-                                    onClick={(e) => {
+                                    onClick={(e: any) => {
                                       e.stopPropagation();
                                       handleRemoveFileForField(
                                         (item as any).answer_file,
@@ -2018,154 +1974,33 @@ const RenderDetailRows = ({
                           </Typography>
                         )}
 
-                        <Dialog
+                        <CameraDialog
                           open={openCamera}
                           onClose={() => setOpenCamera(false)}
-                          maxWidth="md"
-                          fullWidth
-                        >
-                          <Box sx={{ p: 2 }}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={'space-between'}
-                              alignItems={'center'}
-                              mb={1}
-                            >
-                              <Typography variant="h6" mb={0}>
-                                Take Photo From Camera
-                              </Typography>
-                              <IconButton onClick={() => setOpenCamera(false)}>
-                                <IconX />
-                              </IconButton>
-                            </Box>
-
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Grid container spacing={2}>
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                <Box sx={{ position: 'relative' }}>
-                                  <Webcam
-                                    audio={false}
-                                    ref={webcamRef}
-                                    screenshotFormat="image/jpeg"
-                                    videoConstraints={{
-                                      facingMode,
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      borderRadius: 8,
-                                      height: '250px',
-                                      objectFit: 'cover',
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-
-                                  <IconButton
-                                    onClick={() =>
-                                      setFacingMode((prev) =>
-                                        prev === 'environment' ? 'user' : 'environment',
-                                      )
-                                    }
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 10,
-                                      right: 10,
-                                      bgcolor: 'rgba(0,0,0,0.5)',
-                                      color: '#fff',
-                                      '&:hover': {
-                                        bgcolor: 'rgba(0,0,0,0.7)',
-                                      },
-                                    }}
-                                  >
-                                    <IconRefresh />
-                                  </IconButton>
-                                </Box>
-                              </Grid>
-
-                              <Grid size={{ xs: 12, sm: 6 }}>
-                                {previews[key] ? (
-                                  <img
-                                    src={previews[key] as string}
-                                    alt="Captured"
-                                    style={{
-                                      width: '100%',
-                                      height: '250px',
-                                      objectFit: 'cover',
-                                      borderRadius: 8,
-                                      border: '2px solid #ccc',
-                                    }}
-                                  />
-                                ) : (
-                                  <Box
-                                    sx={{
-                                      width: '100%',
-                                      height: '100%',
-                                      border: '2px dashed #ccc',
-                                      borderRadius: 8,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      minHeight: 240,
-                                    }}
-                                  >
-                                    <Typography color="text.secondary">
-                                      No Photos Have Been Taken Yet
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </Grid>
-                            </Grid>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <Box
-                              sx={{
-                                textAlign: 'right',
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                gap: 1,
-                              }}
-                            >
-                              <Button
-                                onClick={() =>
-                                  handleRemoveFileForField(
-                                    (item as any).answer_file,
-                                    (url) => onChange(originalIndex, 'answer_file', url),
-                                    key,
-                                  )
-                                }
-                                color="error"
-                                sx={{ mr: 1 }}
-                                startIcon={<IconTrash />}
-                              >
-                                Clear Foto
-                              </Button>
-                              <Button
-                                variant="contained"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCaptureForField(
-                                    (url) => onChange(originalIndex, 'answer_file', url),
-                                    key,
-                                  );
-                                }}
-                                startIcon={<IconCamera />}
-                              >
-                                Take Foto
-                              </Button>
-                              <Button
-                                startIcon={<IconDeviceFloppy />}
-                                onClick={() => {
-                                  setOpenCamera(false);
-                                  setScreenshot(null);
-                                }}
-                                sx={{ ml: 1 }}
-                              >
-                                Submit
-                              </Button>
-                            </Box>
-                          </Box>
-                        </Dialog>
+                          webcamRef={webcamRef as any}
+                          screenshot={screenshot}
+                          facingMode={facingMode}
+                          isUploading={isUploading}
+                          onSwitchCamera={() =>
+                            setFacingMode((prev) =>
+                              prev === 'environment' ? 'user' : 'environment',
+                            )
+                          }
+                          onCapture={() =>
+                            handleCaptureForField(
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onClear={() =>
+                            handleRemoveFileForField(
+                              (item as any).answer_file,
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onSubmit={() => setOpenCamera(false)}
+                        />
                       </Box>
                     );
                   }
@@ -2187,6 +2022,29 @@ const RenderDetailRows = ({
           </TableRow>
         );
       })}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 2000 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </>
   );
 };

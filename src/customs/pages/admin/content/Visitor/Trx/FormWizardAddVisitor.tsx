@@ -2160,7 +2160,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 onChange(index, 'answer_text', e.target.value);
                 if (e.target.value) clearFieldError(errorKey);
               }}
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               error={!!errorMessage}
               helperText={errorMessage}
@@ -2853,6 +2855,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
                   value={field.answer_file as string | undefined}
+                
                   onChange={(url) => {
                     onChange(index, 'answer_file', url);
                     if (url) clearFieldError(errorKey);
@@ -5063,7 +5066,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             Upload File
                           </Typography>
                           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                            Drag and drop or tap to select file.
+                            {t('dragDropOrTapToSelectFile')}
                           </Typography>
                           <Box
                             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -5561,7 +5564,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                          Drag and drop or tap to select file.
+                          {t('dragDropOrTapToSelectFile')}
                         </Typography>
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}

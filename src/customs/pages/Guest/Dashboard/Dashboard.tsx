@@ -1,6 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import { Grid2 as Grid, Portal, Backdrop, CircularProgress, Snackbar, Alert } from '@mui/material';
+import {
+  Grid2 as Grid,
+  Portal,
+  Backdrop,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Box,
+  Typography,
+  Card,
+} from '@mui/material';
 import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -185,12 +195,21 @@ const Dashboard = () => {
 
   const handleOpenParkingBlocker = async () => {
     if (!accessPass?.id) return;
+
+    const result = await showSwal('confirm', 'Are you sure  to open the parking blocker?');
+
+    if (!result?.isConfirmed) return;
+
     setIsParkingLoading(true);
+
     try {
-      await openParkingBlocker({ trx_visitor_id: accessPass.id });
+      await openParkingBlocker({
+        trx_visitor_id: accessPass.id,
+      });
+
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
-      showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');
+      showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
     } finally {
       setTimeout(() => setIsParkingLoading(false), 600);
     }
@@ -243,7 +262,7 @@ const Dashboard = () => {
 
   return (
     <PageContainer title="Dashboard">
-      <VisitorActionBar
+      {/* <VisitorActionBar
         open={open}
         startDate={startDate}
         endDate={endDate}
@@ -259,7 +278,7 @@ const Dashboard = () => {
             }),
           );
         }}
-      />
+      /> */}
       {/* <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'} ref={exportRef}>
         <Grid size={{ xs: 12, xl: 9 }}>
           <TopCard items={CardItems} size={{ xs: 12, lg: 6 }} />
@@ -302,13 +321,158 @@ const Dashboard = () => {
         {/* =========================
           QUICK STATS
       ========================== */}
-        <Grid size={{ xs: 12, xl: 8 }}>
+        {/* <Grid size={{ xs: 12, xl: 8 }}>
           <TopCard items={CardItems} size={{ xs: 12, sm: 6 }} />
-        </Grid>
+        </Grid> */}
+        <Grid size={{ xs: 12, xl: 8 }}>
+          <Card
+            sx={{
+              width: '100%',
+              borderRadius: 2,
+              p: {
+                xs: 2,
+                sm: 2.5,
+                md: 3,
+              },
+            }}
+          >
+            <Typography
+              variant="h6"
+              fontWeight={700}
+              sx={{
+                mb: 2.5,
+                textAlign: 'center',
+                fontSize: {
+                  xs: '1rem',
+                  sm: '1.1rem',
+                },
+              }}
+            >
+              Visit Status
+            </Typography>
 
-        {/* =========================
-          DIGITAL ACCESS PASS
-      ========================== */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: '1fr 1fr',
+                },
+                gap: 2,
+              }}
+            >
+              {/* CHECK IN */}
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: '#66BB6A',
+                  backgroundColor: '#E8F5E9',
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'success.main',
+                      color: 'white',
+                    }}
+                  >
+                    <IconLogin size={18} />
+                  </Box>
+
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Check In
+                  </Typography>
+                </Box>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  Check In At
+                </Typography>
+
+                <Typography variant="body1" fontWeight={600} sx={{ mb: 1.5 }}>
+                  {accessPass?.checkin_at ? formatDateTime(accessPass.checkin_at) : '-'}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  Checked In By
+                </Typography>
+
+                <Typography variant="body1" fontWeight={600}>
+                  {accessPass?.checkin_by ?? '-'}
+                </Typography>
+              </Box>
+
+              {/* CHECK OUT */}
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: accessPass?.checkout_at ? '#EF5350' : '#EF5350',
+                  backgroundColor: accessPass?.checkout_at ? '#FFEBEE' : '#edc2c0',
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'red',
+                      color: 'white',
+                    }}
+                  >
+                    <IconLogout size={18} />
+                  </Box>
+
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Check Out
+                  </Typography>
+                </Box>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  Check Out At
+                </Typography>
+
+                <Typography variant="body1" fontWeight={600} sx={{ mb: 1.5 }}>
+                  {accessPass?.checkout_at ? formatDateTime(accessPass.checkout_at) : '-'}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  Checked Out By
+                </Typography>
+
+                <Typography variant="body1" fontWeight={600}>
+                  {accessPass?.checkout_by ?? '-'}
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
+        </Grid>
         <Grid size={{ xs: 12, xl: 8 }}>
           {/* <GuestAccessPass
             accessPass={accessPass}

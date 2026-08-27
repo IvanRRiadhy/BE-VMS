@@ -100,7 +100,7 @@
 
 // export default GuestAccessPass;
 
-import { Box, Button, Card, Divider, Typography } from '@mui/material';
+import { Box, Button, Card, Divider, Tooltip, Typography } from '@mui/material';
 import { IconCar, IconCards, IconDownload } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
@@ -213,6 +213,30 @@ const GuestAccessPass = ({
     );
   }
 
+  const statusBgMap: Record<string, string> = {
+    Checkin: '#21c45d',
+    Checkout: '#F44336',
+    Block: '#000000',
+    Deny: '#8B0000',
+    Approve: '#21c45d',
+    Pracheckin: '#21c45d',
+    Preregis: '#a5a5a5ff',
+    Waiting: '#4abfd4',
+    Available: 'gray',
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
+    Block: 'Block',
+    Deny: 'Deny',
+    Approve: 'Approve',
+    Pracheckin: 'Precheckin',
+    Preregis: 'Preregis',
+    Waiting: 'Waiting',
+    Available: 'Available',
+  };
+
   return (
     <Card
       sx={{
@@ -283,25 +307,27 @@ const GuestAccessPass = ({
             Visitor Code
           </Typography>
 
-          <Button
-            className="no-print"
-            variant="contained"
-            onClick={(event) => {
-              event.stopPropagation();
-              onDownload();
-            }}
-            sx={{
-              position: 'absolute',
-              right: 0,
-              minWidth: 40,
-              width: 40,
-              height: 40,
-              p: 0,
-              borderRadius: 1.5,
-            }}
-          >
-            <IconDownload size={19} />
-          </Button>
+          <Tooltip title="Download Visitor Code" arrow>
+            <Button
+              className="no-print"
+              variant="contained"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDownload();
+              }}
+              sx={{
+                position: 'absolute',
+                right: 0,
+                minWidth: 40,
+                width: 40,
+                height: 40,
+                p: 0,
+                borderRadius: 1.5,
+              }}
+            >
+              <IconDownload size={19} />
+            </Button>
+          </Tooltip>
         </Box>
         {/* ================================
             MAIN ACCESS PASS CONTENT
@@ -336,8 +362,9 @@ const GuestAccessPass = ({
             }}
           >
             <Field label="Invitation Code" value={accessPass.invitation_code} />
+            <Field label="Agenda" value={accessPass.agenda} />
 
-            <Field label="Host" value={accessPass.host_name} />
+            <Field label="Host Name" value={accessPass.host_name} />
 
             <Field label="Visit Start">{formatDateTime(accessPass.visitor_period_start)}</Field>
 
@@ -408,9 +435,30 @@ const GuestAccessPass = ({
             <Field label="Visitor Number" value={accessPass.visitor_number} />
             <Field label="Group Name" value={accessPass.group_name} />
 
-            <Field label="Status" value={accessPass.visitor_status ?? '-'} />
+            <Field label="Status">
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  px: 1.2,
+                  py: 0.4,
+                  borderRadius: 2,
+                  fontSize: {
+                    xs: '0.75rem',
+                    sm: '0.8rem',
+                  },
+                  fontWeight: 600,
+                  color: '#fff',
+                  backgroundColor: statusBgMap[accessPass?.visitor_status] ?? '#9e9e9e',
+                }}
+              >
+                {statusLabelMap[accessPass?.visitor_status] ?? accessPass?.visitor_status ?? '-'}
+              </Box>
+            </Field>
 
-            <Field label="Gedung" value={accessPass.site_place_name ?? '-'} />
+            <Field label="Site" value={accessPass.site_place_name ?? '-'} />
           </Box>
         </Box>
 
@@ -456,13 +504,14 @@ const GuestAccessPass = ({
               sm: 3,
             },
             textAlign: 'center',
+            textTransform: 'capitalize',
           }}
         >
           <Field label="Parking Area" value={accessPass.parking_area} />
 
           <Field label="Parking Slot" value={accessPass.parking_slot} />
 
-          <Field label="Vehicle Plate" value={accessPass.vehicle_plate} />
+          <Field label="Vehicle Plate" value={accessPass.vehicle_plate_number} />
 
           <Field label="Vehicle Type" value={accessPass.vehicle_type} />
         </Box>
@@ -477,10 +526,9 @@ const GuestAccessPass = ({
           startIcon={<IconCar size={18} />}
           disabled={
             isParkingLoading ||
-            !onOpenParking ||
-            accessPass?.can_parking !== true ||
-            !accessPass?.parking_area ||
-            !accessPass?.parking_slot
+            !accessPass.can_parking ||
+            !accessPass.vehicle_type ||
+            !accessPass.vehicle_plate_number
           }
           onClick={(event) => {
             event.stopPropagation();

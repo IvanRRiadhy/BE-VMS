@@ -95,7 +95,12 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
           gap: 2,
         }}
       >
-        <Button size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />} fullWidth>
+        <Button
+          size="small"
+          onClick={() => setOpen(true)}
+          startIcon={<PhotoCameraIcon />}
+          fullWidth
+        >
           Camera
         </Button>
         {previewUrl && (
@@ -158,6 +163,8 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
                   }}
                   style={{
                     width: '100%',
+                    height: '250px',
+                    objectFit: 'cover',
                     borderRadius: 8,
                     border: '2px solid #ccc',
                   }}
@@ -193,13 +200,12 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
                 <Box
                   sx={{
                     width: '100%',
-                    height: '100%',
+                    minHeight: 250,
                     border: '2px dashed #ccc',
-                    borderRadius: 8,
+                    borderRadius: 2,
                     display: 'flex',
-                    alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: 240,
+                    alignItems: 'center',
                   }}
                 >
                   <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
@@ -209,7 +215,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
           </Grid>
 
           <Divider sx={{ my: 2 }} />
-          <Box textAlign="right" display="flex" justifyContent="flex-end" gap={1} >
+          <Box textAlign="right" display="flex" justifyContent="flex-end" gap={1}>
             <Button color="error" sx={{ mr: 1 }} onClick={clearLocal} startIcon={<IconTrash />}>
               Clear
             </Button>

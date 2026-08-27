@@ -14,6 +14,7 @@ import {
   getPublicVisitorHost,
 } from 'src/customs/api/Public';
 import { IconUsers } from '@tabler/icons-react';
+import Language from 'src/layouts/full/vertical/header/Language';
 
 export default function InvitationShare() {
   const [searchParams] = useSearchParams();
@@ -149,64 +150,78 @@ export default function InvitationShare() {
           sx={{ minHeight: '100vh', backgroundColor: '#f4f6f8' }}
         >
           <Grid size={{ xs: 12, sm: 11, xl: 11 }} sx={{ p: { xs: 2 } }}>
-            <Card
-              elevation={10}
-              sx={{
-                p: 3,
-                borderTopRightRadius: '10px !important',
-                borderTopLeftRadius: '10px !important',
-                borderBottomLeftRadius: '0px !important',
-                borderBottomRightRadius: '0px !important',
-                bgcolor: 'white',
-                pb: '0 !important',
-              }}
-            >
+            <Box sx={{ position: 'relative' }}>
+              {/* Language */}
               <Box
-                textAlign="center"
-                mb={0}
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  zIndex: 10,
+                }}
               >
-                <img src={Logo} width={100} height={100} alt="Logo" />
-                <Box
-                  sx={{
-                    mt: 2,
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: 2,
-                    backgroundColor: 'primary.light',
-                    color: 'primary.main',
-                    fontWeight: 500,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <IconUsers size={16} />
-                  Capacity: {invitation?.current_usage ?? 0} / {invitation?.max_usage ?? 0}
-                </Box>
+                <Language />
               </Box>
-            </Card>
-            <Box
-              sx={{
-                mt: 0,
-                backgroundColor: 'white',
-                p: 3,
-                borderTopRightRadius: '0px !important',
-                borderTopLeftRadius: '0px !important',
-                borderBottomRightRadius: 6,
-                borderBottomLeftRadius: 6,
-              }}
-            >
-              <FormSelfPraregistration
-                invitation={invitation}
-                code={code}
-                timestamp={timestamp}
-                sites={sites}
-                employee={employee}
-                allVisitorEmployee={allVisitorEmployee}
-              />
+
+              <Card
+                elevation={10}
+                sx={{
+                  p: 3,
+                  borderTopRightRadius: '10px !important',
+                  borderTopLeftRadius: '10px !important',
+                  borderBottomLeftRadius: '0px !important',
+                  borderBottomRightRadius: '0px !important',
+                  bgcolor: 'white',
+                  pb: '0 !important',
+                }}
+              >
+                <Box
+                  textAlign="center"
+                  mb={0}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                >
+                  <img src={Logo} width={100} height={100} alt="Logo" />
+                  <Box
+                    sx={{
+                      mt: 2,
+                      px: 2,
+                      py: 0.5,
+                      borderRadius: 2,
+                      backgroundColor: 'primary.light',
+                      color: 'primary.main',
+                      fontWeight: 500,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <IconUsers size={16} />
+                    Capacity: {invitation?.current_usage ?? 0} / {invitation?.max_usage ?? 0}
+                  </Box>
+                </Box>
+              </Card>
+              <Box
+                sx={{
+                  mt: 0,
+                  backgroundColor: 'white',
+                  p: 3,
+                  borderTopRightRadius: '0px !important',
+                  borderTopLeftRadius: '0px !important',
+                  borderBottomRightRadius: 6,
+                  borderBottomLeftRadius: 6,
+                }}
+              >
+                <FormSelfPraregistration
+                  invitation={invitation}
+                  code={code}
+                  timestamp={timestamp}
+                  sites={sites}
+                  employee={employee}
+                  allVisitorEmployee={allVisitorEmployee}
+                />
+              </Box>
             </Box>
           </Grid>
         </Grid>

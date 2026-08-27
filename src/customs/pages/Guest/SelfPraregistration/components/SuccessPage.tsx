@@ -28,7 +28,7 @@ export default function SuccessPage() {
           container
           justifyContent="center"
           alignItems="center"
-          sx={{ minHeight: '80vh', backgroundColor: '#f4f6f8' }}
+          sx={{ minHeight: '100vh', backgroundColor: '#f4f6f8' }}
         >
           <Grid size={{ xs: 12, sm: 10, md: 8, xl: 6 }} sx={{ p: { xs: 2 } }}>
             <Card

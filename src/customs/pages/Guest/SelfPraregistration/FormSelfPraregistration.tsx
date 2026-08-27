@@ -129,6 +129,8 @@ const FormSelfPraregistration = ({
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
   const [otherForm, setOtherForm] = useState({
     name: '',
     email: '',
@@ -696,9 +698,76 @@ const FormSelfPraregistration = ({
     if (activeStep === 0) return true;
 
     const errors: Record<string, string> = {};
-    const section = sectionsData[activeStep - 1];
+    sectionsData.forEach((section: any) => {
+      const forms = formsOf(section);
+
+      forms.forEach((item: any) => {
+        if (
+          item.remarks?.toLowerCase() === 'is_driving' &&
+          (item.answer_text === undefined || item.answer_text === null || item.answer_text === '')
+        ) {
+          item.answer_text = 'false';
+        }
+      });
+    });
+
+    const isFieldMandatory = (item: any, visibilityMap: any) => {
+      const remark = (item.remarks || '').toLowerCase();
+
+      // is_driving wajib, tetapi false adalah value yang valid
+      if (remark === 'is_driving' || remark === 'is_employee') {
+        return false;
+      }
+
+      // vehicle wajib hanya jika is_driving = true
+      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+        return true;
+      }
+
+      // mandatory normal
+      return !!item.mandatory;
+    };
+
+    /**
+     * Get visibility berdasarkan kondisi field.
+     *
+     * is_driving:
+     *   "Yes" / "true" / true / "1" -> true
+     *   "No" / "false" / false / "0" -> false
+     */
+    const getVisibilityMapForValidation = (details: any[]) => {
+      const getFlag = (remarkName: string) => {
+        const field = details.find(
+          (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
+        );
+
+        if (!field) return false;
+
+        const value = String(field.answer_text ?? '')
+          .trim()
+          .toLowerCase();
+
+        return ['true', 'yes', '1'].includes(value);
+      };
+
+      const isDriving = getFlag('is_driving');
+      const isEmployee = getFlag('is_employee');
+
+      return {
+        vehicle_type: isDriving,
+        vehicle_plate: isDriving,
+        employee: isEmployee,
+      };
+    };
+
     if (isGroup) {
+      // ============================================================
+      // GROUP VISITOR
+      // ============================================================
+
       // Purpose Visit (shared page)
+      const section = sectionsData[activeStep - 1];
+
       if (section.name === 'Purpose Visit') {
         const sameField = (a: any, b: any) =>
           (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
@@ -717,15 +786,20 @@ const FormSelfPraregistration = ({
             : f;
         });
 
-        const visibilityMap: any = getVisibilityMap(mergedFields);
+        const visibilityMap: any = getVisibilityMapForValidation(mergedFields);
 
         mergedFields.forEach((item: any) => {
-          if (!item?.mandatory) return;
-
           const remark = (item.remarks || '').toLowerCase();
-          const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+          const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+            ? visibilityMap[remark]
+            : true;
+
+          // Field tidak terlihat -> tidak perlu divalidasi
           if (!isVisible) return;
+
+          // Mandatory normal + conditional mandatory
+          if (!isFieldMandatory(item, visibilityMap)) return;
 
           const fieldId = item.custom_field_id || item.id;
 
@@ -733,22 +807,32 @@ const FormSelfPraregistration = ({
         });
       }
 
-      // Semua page visitor (Visitor Information, Vehicle, dll)
+      // ============================================================
+      // SEMUA PAGE VISITOR
+      // Visitor Information, Vehicle, dll
+      // ============================================================
       else {
         dataVisitor.forEach((visitor, gIdx) => {
           const page = visitor.question_page?.[activeStep - 1];
+
           if (!page?.form) return;
 
           const details = page.form;
-          const visibilityMap: any = getVisibilityMap(details);
+
+          const visibilityMap: any = getVisibilityMapForValidation(details);
 
           details.forEach((item: any) => {
-            if (!item?.mandatory) return;
-
             const remark = (item.remarks || '').toLowerCase();
-            const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+            const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+              ? visibilityMap[remark]
+              : true;
+
+            // Field tidak terlihat -> tidak perlu divalidasi
             if (!isVisible) return;
+
+            // Mandatory normal + conditional mandatory
+            if (!isFieldMandatory(item, visibilityMap)) return;
 
             const fieldId = item.custom_field_id || item.id;
 
@@ -757,21 +841,31 @@ const FormSelfPraregistration = ({
         });
       }
     } else {
+      // ============================================================
+      // SINGLE VISITOR
+      // ============================================================
+
       const section = sectionsData[activeStep - 1];
 
       const details = formsOf(section);
 
-      const visibilityMap: any = getVisibilityMap(details);
+      const visibilityMap: any = getVisibilityMapForValidation(details);
 
-      details.forEach((item: any, index: number) => {
-        if (!item?.mandatory) return;
-
+      details.forEach((item: any) => {
         const remark = (item.remarks || '').toLowerCase();
-        const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
+        const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+          ? visibilityMap[remark]
+          : true;
+
+        // Field tidak terlihat -> tidak perlu divalidasi
         if (!isVisible) return;
 
+        // Mandatory normal + conditional mandatory
+        if (!isFieldMandatory(item, visibilityMap)) return;
+
         const fieldId = item.custom_field_id || item.id;
+
         const key = `${activeStep - 1}:${fieldId}`;
 
         validateField(item, key, errors);
@@ -779,6 +873,7 @@ const FormSelfPraregistration = ({
     }
 
     setFieldErrors(errors);
+
     return Object.keys(errors).length === 0;
   };
 
@@ -1112,32 +1207,66 @@ const FormSelfPraregistration = ({
   };
 
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
-    fullscreenHandle?: any,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
 
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
+
     if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
       setPreviews((prev) => ({
         ...prev,
         [trackKey]: URL.createObjectURL(file),
       }));
     }
-    const compressedFile = await compressImage(file);
-    if (compressedFile.size > 5 * 1024 * 1024) {
-      toast('Maximum file size is 5 MB', 'info');
-      return;
+
+    try {
+      // Compression sementara disabled
+      const path = await uploadFileToCDN(file);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
     }
-
-    const path = await uploadFileToCDN(compressedFile);
-
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
   };
 
   const handleUploadMethodChange = (ukey: string, v: string) => {
@@ -1396,6 +1525,13 @@ const FormSelfPraregistration = ({
     const errorMessage = fieldErrors[errorKey];
 
     let shouldDisable = false;
+    const isDrivingField = opts?.details?.find(
+      (f: any) => (f.remarks || '').toLowerCase() === 'is_driving',
+    );
+    const employeeSelected = !!opts?.details?.find(
+      (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
+    );
+    const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
     const renderInput = () => {
       switch (field.field_type) {
         case 0: // Text
@@ -1455,12 +1591,17 @@ const FormSelfPraregistration = ({
                     }
                   : undefined
               }
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
               error={!!errorMessage}
               helperText={errorMessage}
-              disabled={shouldDisable}
+              disabled={
+                shouldDisable ||
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
+              }
             />
           );
 
@@ -1474,7 +1615,9 @@ const FormSelfPraregistration = ({
                 onChange(index, 'answer_text', e.target.value);
                 if (e.target.value) clearFieldError(errorKey);
               }}
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               error={!!errorMessage}
               helperText={errorMessage}
@@ -1491,7 +1634,9 @@ const FormSelfPraregistration = ({
                 onChange(index, 'answer_text', e.target.value);
                 if (e.target.value) clearFieldError(errorKey);
               }}
-              placeholder=""
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
               error={!!errorMessage}
@@ -1587,7 +1732,7 @@ const FormSelfPraregistration = ({
                 renderInput={(params) => (
                   <CustomTextField
                     {...params}
-                    placeholder="Select Visitor Role"
+                    placeholder="Select Role"
                     fullWidth
                     error={!!errorMessage}
                     helperText={errorMessage}
@@ -1695,6 +1840,7 @@ const FormSelfPraregistration = ({
                   if (value) clearFieldError(errorKey);
                 }}
                 fullWidth
+                disabled={!isDriving}
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
@@ -1710,27 +1856,36 @@ const FormSelfPraregistration = ({
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
               <Box key={`${field.custom_field_id}-${index}`}>
-                <FormControl error={!!errorMessage}>
+                <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
                   <RadioGroup
                     row
-                    value={field.answer_text || ''}
+                    value={field.answer_text || 'false'}
                     onChange={(e) => {
                       onChange(index, 'answer_text', e.target.value);
                       if (e.target.value) clearFieldError(errorKey);
                     }}
                     sx={{
-                      justifyContent: 'center',
+                      width: '100%',
+                      display: 'flex',
                       flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
-                    {field.multiple_option_fields?.map((opt: any) => (
-                      <FormControlLabel
-                        key={opt.value}
-                        value={opt.value}
-                        control={<Radio size="small" />}
-                        label={opt.name}
-                      />
-                    ))}
+                    {field.multiple_option_fields
+                      ?.sort((a: any, b: any) => {
+                        if (a.name === 'Yes') return -1;
+                        if (b.name === 'Yes') return 1;
+                        return 0;
+                      })
+                      .map((opt: any) => (
+                        <FormControlLabel
+                          key={opt.id}
+                          value={opt.value}
+                          control={<Radio size="small" />}
+                          label={opt.name}
+                        />
+                      ))}
                   </RadioGroup>
                 </FormControl>
                 <br />
@@ -1851,6 +2006,147 @@ const FormSelfPraregistration = ({
           );
 
         case 10: // Camera
+          if ((field.remarks || '').toLowerCase() === 'selfie_image') {
+            // const key = opts?.uniqueKey ?? String(index);
+            const key = `camera_${opts?.uniqueKey ?? index}`;
+
+            return (
+              <Box
+                display="flex"
+                flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
+                alignItems={{ xs: 'stretch', md: 'center' }}
+                // justifyContent="space-between"
+                gap={1.5}
+                width="100%"
+                sx={{ maxWidth: 400 }}
+              >
+                <TextField
+                  select
+                  size="small"
+                  value={uploadMethods[key] || 'file'}
+                  onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+                  fullWidth
+                  sx={{ width: { xs: '100%', md: '200px' } }}
+                >
+                  <MenuItem value="file">Choose File</MenuItem>
+                  <MenuItem value="camera">Take Photo</MenuItem>
+                </TextField>
+
+                {(uploadMethods[key] || 'file') === 'camera' ? (
+                  <CameraUpload
+                    value={field.answer_file as string | undefined}
+                    onChange={(url) => {
+                      onChange(index, 'answer_file', url);
+                      if (url) clearFieldError(errorKey);
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+                    <label htmlFor={key}>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1.5,
+                          borderRadius: 2,
+                          p: 0.5,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
+                          cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
+                          width: '100%',
+                          opacity: uploadingFiles[key] ? 0.6 : 1,
+                        }}
+                      >
+                        {uploadingFiles[key] ? (
+                          <>
+                            <CircularProgress size={20} />
+                            <Typography variant="subtitle1">Uploading...</Typography>
+                          </>
+                        ) : (
+                          <>
+                            <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                            <Typography variant="subtitle1">Upload File</Typography>
+                          </>
+                        )}
+                      </Box>
+                    </label>
+
+                    <input
+                      id={key}
+                      type="file"
+                      accept="image/jpg,image/jpeg,image/png"
+                      hidden
+                      disabled={!!uploadingFiles[key]}
+                      onChange={(e) => {
+                        handleFileChangeForField(
+                          e.target.files?.[0],
+                          (url) => {
+                            onChange(index, 'answer_file', url);
+
+                            if (url) {
+                              clearFieldError(key);
+                            }
+                          },
+                          key,
+                        );
+
+                        e.target.value = '';
+                      }}
+                    />
+
+                    {!!(field as any).answer_file && !uploadingFiles[key] && (
+                      <Box
+                        mt={0.5}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        gap={1}
+                        sx={{
+                          overflow: 'hidden',
+                          width: '100%',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          noWrap
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          {uploadNames[key] || 'File uploaded'}
+                        </Typography>
+
+                        <IconButton
+                          size="small"
+                          color="error"
+                          disabled={!!removing[key]}
+                          onClick={() =>
+                            handleRemoveFileForField(
+                              (field as any).answer_file,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        >
+                          <IconX size={16} />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {errorMessage && (
+                  <Typography variant="caption" color="error">
+                    {errorMessage}
+                  </Typography>
+                )}
+              </Box>
+            );
+          }
           return (
             <>
               <CameraUpload
@@ -1900,16 +2196,21 @@ const FormSelfPraregistration = ({
                   type="file"
                   accept="*"
                   hidden
-                  onChange={(e) =>
+                  onChange={(e) => {
                     handleFileChangeForField(
-                      e as React.ChangeEvent<HTMLInputElement>,
+                      e.target.files?.[0],
                       (url) => {
                         onChange(index, 'answer_file', url);
-                        if (url) clearFieldError(errorKey);
+
+                        if (url) {
+                          clearFieldError(key);
+                        }
                       },
                       key,
-                    )
-                  }
+                    );
+
+                    e.target.value = '';
+                  }}
                 />
 
                 {fileUrl && (
@@ -1989,52 +2290,80 @@ const FormSelfPraregistration = ({
                         p: 0.5,
                         textAlign: 'center',
                         backgroundColor: '#f5faff',
-                        cursor: 'pointer',
+                        cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
                         width: '100%',
                         transition: '0.2s',
-                        '&:hover': { backgroundColor: '#e3f2fd' },
+                        opacity: uploadingFiles[key] ? 0.6 : 1,
+                        '&:hover': {
+                          backgroundColor: uploadingFiles[key] ? '#f5faff' : '#e3f2fd',
+                        },
                       }}
                     >
-                      <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
-                        Upload File
-                      </Typography>
+                      {uploadingFiles[key] ? (
+                        <>
+                          <CircularProgress size={20} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Uploading...
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Upload File
+                          </Typography>
+                        </>
+                      )}
                     </Box>
                   </label>
 
                   <input
                     id={key}
                     type="file"
-                    accept="*"
+                    accept="image/jpg, image/jpeg, image/png"
                     hidden
-                    onChange={(e) =>
+                    disabled={!!uploadingFiles[key]}
+                    onChange={(e) => {
                       handleFileChangeForField(
-                        e as React.ChangeEvent<HTMLInputElement>,
+                        e.target.files?.[0],
                         (url) => {
                           onChange(index, 'answer_file', url);
-                          if (url) clearFieldError(errorKey);
+
+                          if (url) {
+                            clearFieldError(key);
+                          }
                         },
                         key,
-                      )
-                    }
+                      );
+
+                      e.target.value = '';
+                    }}
                   />
 
-                  {!!(field as any).answer_file && (
+                  {!!(field as any).answer_file && !uploadingFiles[key] && (
                     <Box
                       mt={0.5}
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
+                      gap={1}
+                      sx={{
+                        overflow: 'hidden',
+                        width: '100%',
+                      }}
                     >
                       <Typography
                         variant="caption"
                         color="text.secondary"
                         noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
                       >
-                        {uploadNames[key] ?? ''}
+                        {uploadNames[key] || 'File uploaded'}
                       </Typography>
+
                       <IconButton
                         size="small"
                         color="error"
@@ -3497,11 +3826,11 @@ const FormSelfPraregistration = ({
               <Box p={3} pb={3}>
                 <Box mb={3}>
                   <Typography variant="h5" fontWeight={700}>
-                    Person Filling This Form
+                    {t('person_filling_this_form')}
                   </Typography>
 
                   <Typography variant="body2" color="text.secondary" mt={0.5}>
-                    Please fill in the data of the person registering this visitor.
+                    {t('subtitlePersonFiling')}
                   </Typography>
                 </Box>
 
@@ -3513,7 +3842,7 @@ const FormSelfPraregistration = ({
 
                     <CustomTextField
                       fullWidth
-                      placeholder="Input Your Name"
+                      placeholder="Enter your name"
                       value={otherForm.name}
                       onChange={(e: any) =>
                         setOtherForm((prev) => ({
@@ -3532,7 +3861,7 @@ const FormSelfPraregistration = ({
                     <CustomTextField
                       fullWidth
                       type="email"
-                      placeholder="Input Your Email"
+                      placeholder="Enter your email"
                       value={otherForm.email}
                       onChange={(e: any) =>
                         setOtherForm((prev) => ({
@@ -3550,7 +3879,7 @@ const FormSelfPraregistration = ({
 
                     <CustomTextField
                       fullWidth
-                      placeholder="Input Your Phone Number"
+                      placeholder="Enter your phone number"
                       value={otherForm.phone}
                       onChange={(e: any) =>
                         setOtherForm((prev) => ({
