@@ -577,7 +577,7 @@ const OperatorView = () => {
 
   const handleOpenDetailVistingPurpose = (item: any) => {
     setSelectedPurpose({
-      id: item.id,
+      id: item.originalData?.id ?? item.id,
       name: item.name,
     });
     setOpenDetailVistingPurpose(true);
@@ -2812,7 +2812,6 @@ const OperatorView = () => {
   // Card Purpose
   const upcomingPurpose = upcomingPurposeQuery.data ?? [];
   // const upcomingPurpose = upcomingPurposeQuery.data ?? [];
-
 
   const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
 
