@@ -50,11 +50,10 @@ import {
   IconArrowLeft,
   IconCamera,
   IconCheck,
-  IconDeviceFloppy,
   IconPencil,
-  IconScan,
   IconTrash,
   IconUser,
+  IconArrowRight,
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -71,7 +70,6 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 import imageCompression from 'browser-image-compression';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
@@ -88,8 +86,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
 import { DateTimePicker, renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
-import { IconX } from '@tabler/icons-react';
-import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   createPraRegisterGroupOperator,
@@ -184,6 +180,7 @@ import { IconRefresh } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import ScanningDialog from '../Dialog/ScanningDialog';
 import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -1555,6 +1552,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       <>
         {isSingle && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               const section = sectionsData[activeStep - 1];
               const isEmployee = isEmployeeSection(section);
@@ -1700,6 +1698,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         {isGroup && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               const section = sectionsData[activeStep - 1];
               const sectionType = getSectionType(section);
@@ -1817,6 +1816,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 (f.remarks || '').toLowerCase() === 'is_driving',
                                             )?.answer_text === 'true';
 
+                                          const vehicleTypeField = page.form?.find(
+                                            (f: any) =>
+                                              (f.remarks || '').toLowerCase() === 'vehicle_type',
+                                          );
+
+                                          const vehicleType = String(
+                                            vehicleTypeField?.answer_text ?? '',
+                                          )
+                                            .trim()
+                                            .toLowerCase();
+
+                                          const isBicycle = vehicleType === 'bicycle';
+
                                           return (
                                             <Box key={fIdx} sx={{ mb: 2 }}>
                                               <CustomFormLabel required={field.mandatory === true}>
@@ -1861,6 +1873,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 setFieldErrors={setFieldErrors}
                                                 isDriving={isDriving}
                                                 uploadingFiles={uploadingFiles}
+                                                isBicycle={isBicycle}
                                               />
                                             </Box>
                                           );
@@ -1883,7 +1896,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               fullWidth
                               startIcon={<IconPlus />}
                             >
-                              Add New
+                              {t('addVisitor')}
                             </Button>
                           </>
                         ) : (
@@ -1998,6 +2011,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 f.custom_field_id === field.custom_field_id,
                                             );
 
+                                            const vehicleTypeField = page.form?.find(
+                                              (f: any) =>
+                                                (f.remarks || '').toLowerCase() === 'vehicle_type',
+                                            );
+
+                                            const vehicleType = String(
+                                              vehicleTypeField?.answer_text ?? '',
+                                            )
+                                              .trim()
+                                              .toLowerCase();
+
+                                            const isBicycle = vehicleType === 'bicycle';
+
                                             return (
                                               <>
                                                 <TableCell
@@ -2053,6 +2079,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                     setFieldErrors={setFieldErrors}
                                                     isDriving={isDriving}
                                                     uploadingFiles={uploadingFiles}
+                                                    isBicycle={isBicycle}
                                                   />
                                                 </TableCell>
                                               </>
@@ -2104,7 +2131,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     variant="contained"
                                     startIcon={<IconPlus />}
                                   >
-                                    Add New
+                                    {t('addVisitor')}
                                   </MuiButton>
                                 </TableCell>
                               </TableRow>
@@ -2821,34 +2848,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return !!item.mandatory;
     };
 
-    /**
-     * Get visibility berdasarkan kondisi field.
-     *
-     * is_driving:
-     *   "Yes" / "true" / true / "1" -> true
-     *   "No" / "false" / false / "0" -> false
-     */
     const getVisibilityMapForValidation = (details: any[]) => {
-      const getFlag = (remarkName: string) => {
+      const getFieldValue = (remarkName: string) => {
         const field = details.find(
           (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
         );
 
-        if (!field) return false;
-
-        const value = String(field.answer_text ?? '')
+        return String(field?.answer_text ?? '')
           .trim()
           .toLowerCase();
-
-        return ['true', 'yes', '1'].includes(value);
       };
 
-      const isDriving = getFlag('is_driving');
-      const isEmployee = getFlag('is_employee');
+      const isDriving = ['true', 'yes', '1'].includes(getFieldValue('is_driving'));
+
+      const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
+
+      const vehicleType = getFieldValue('vehicle_type');
+
+      const isBicycle = vehicleType === 'bicycle';
 
       return {
         vehicle_type: isDriving,
-        vehicle_plate: isDriving,
+
+        // Vehicle plate tidak berlaku untuk Bicycle
+        vehicle_plate: isDriving && !isBicycle,
+
         employee: isEmployee,
       };
     };
@@ -3033,6 +3057,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'vehicle_plate') {
+        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_type');
+        const vehicleTypeValue = String(vehicleType?.answer_text || '').toLowerCase();
+        if (vehicleTypeValue === 'bicycle') {
+          if (item.answer_text) {
+            onChange(originalIndex, 'answer_text', null);
+          }
+          return false;
+        }
+      }
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
       if (!visible && item.answer_text) {

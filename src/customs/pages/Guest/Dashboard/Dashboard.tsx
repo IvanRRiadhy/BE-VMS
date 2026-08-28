@@ -10,8 +10,16 @@ import {
   Box,
   Typography,
   Card,
+  IconButton,
 } from '@mui/material';
-import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconCircleMinus,
+  IconLogin,
+  IconLogout,
+  IconX,
+} from '@tabler/icons-react';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
@@ -43,13 +51,23 @@ import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import VisitorActionBar from './components/VisitorActionBar';
 import GuestAccessPass from './components/GuestAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import VisitStatusCard from './components/VisitorStatusCard';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
   const [openAccess, setOpenAccess] = useState(false);
   const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
   const [invitationCode, setInvitationCode] = useState('');
-  const { accessPass, loading: loadingAccessPass } = useAccessPass();
+  const { accessPass = [], loading: loadingAccessPass } = useAccessPass();
+  const [activePassIndex, setActivePassIndex] = useState(0);
+  const handlePreviousPass = () => {
+    setActivePassIndex((prev) => (prev === 0 ? accessPass.length - 1 : prev - 1));
+  };
+
+  const handleNextPass = () => {
+    setActivePassIndex((prev) => (prev === accessPass.length - 1 ? 0 : prev + 1));
+  };
+  const currentAccessPass = accessPass?.[activePassIndex];
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
@@ -61,52 +79,15 @@ const Dashboard = () => {
     setOpenAccess(true);
   };
 
+  useEffect(() => {
+    if (activePassIndex >= accessPass.length) {
+      setActivePassIndex(0);
+    }
+  }, [accessPass.length, activePassIndex]);
+
   const handleCloseAccess = () => {
     setOpenAccess(false);
   };
-
-  const CardItems = [
-    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
-    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-  ];
-
-  // const handleDownloadPDF = async () => {
-  //   if (!printRef.current) return;
-  //   setIsGenerating(true);
-
-  //   try {
-  //     const clone = printRef.current.cloneNode(true) as HTMLElement;
-
-  //     const logoEl = document.createElement('img');
-  //     logoEl.src = '/src/assets/images/logos/BI_Logo.png';
-  //     logoEl.style.width = '100px';
-  //     logoEl.style.height = '100px';
-  //     logoEl.style.display = 'block';
-  //     logoEl.style.margin = '0 auto';
-  //     clone.prepend(logoEl);
-
-  //     clone.querySelectorAll('.no-print').forEach((el) => {
-  //       (el as HTMLElement).style.display = 'none';
-  //     });
-
-  //     clone.style.position = 'fixed';
-  //     clone.style.left = '-9999px';
-  //     document.body.appendChild(clone);
-
-  //     const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
-  //     const imgData = canvas.toDataURL('image/png');
-
-  //     const pdf = new jsPDF('p', 'mm', 'a4');
-  //     const pdfWidth = pdf.internal.pageSize.getWidth();
-  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  //     pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
-
-  //     clone.remove();
-  //   } finally {
-  //     setIsGenerating(false);
-  //   }
-  // };
 
   const handleDownloadPDF = async () => {
     if (!exportRef.current || isGenerating) return;
@@ -194,7 +175,7 @@ const Dashboard = () => {
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
   const handleOpenParkingBlocker = async () => {
-    if (!accessPass?.id) return;
+    if (!currentAccessPass?.id) return;
 
     const result = await showSwal('confirm', 'Are you sure  to open the parking blocker?');
 
@@ -204,7 +185,7 @@ const Dashboard = () => {
 
     try {
       await openParkingBlocker({
-        trx_visitor_id: accessPass.id,
+        trx_visitor_id: currentAccessPass.id,
       });
 
       showSwal('success', 'Parking blocker opened successfully.');
@@ -279,214 +260,41 @@ const Dashboard = () => {
           );
         }}
       /> */}
-      {/* <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'} ref={exportRef}>
-        <Grid size={{ xs: 12, xl: 9 }}>
-          <TopCard items={CardItems} size={{ xs: 12, lg: 6 }} />
-        </Grid>
-        <Grid
-          size={{ xs: 12, xl: 3 }}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <GuestAccessPass
-            accessPass={accessPass}
-            onOpenAccess={handleOpenAccess}
-            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
-          />
-        </Grid>
-      </Grid> */}
-
-      {/* <AccessPassDialog
-        open={openAccess}
-        onClose={handleCloseAccess}
-        data={accessPass}
-        isGenerating={isGenerating}
-        isParkingLoading={isParkingLoading}
-        onDownload={handleDownloadPDF}
-        onOpenParking={handleOpenParkingBlocker}
-        formatVisitorPeriodLocal={formatVisitorPeriodLocal}
-        printRef={printRef}
-      /> */}
 
       <Grid
         container
-        spacing={2}
+        spacing={1}
         sx={{ mt: 0 }}
-        alignItems="stretch"
+        alignItems="center"
         ref={exportRef}
         justifyContent={'center'}
+        flexDirection={'column'}
       >
-        {/* =========================
-          QUICK STATS
-      ========================== */}
-        {/* <Grid size={{ xs: 12, xl: 8 }}>
-          <TopCard items={CardItems} size={{ xs: 12, sm: 6 }} />
-        </Grid> */}
-        <Grid size={{ xs: 12, xl: 8 }}>
-          <Card
+        <Grid size={{ xs: 12, xl: 4 }}>
+          <VisitStatusCard accessPass={currentAccessPass} />
+        </Grid>
+        <Grid size={{ xs: 12, xl: 4 }}>
+          <Box
             sx={{
+              position: 'relative',
               width: '100%',
-              borderRadius: 2,
-              p: {
-                xs: 2,
-                sm: 2.5,
-                md: 3,
-              },
+              // overflow: 'hidden',
             }}
           >
-            <Typography
-              variant="h6"
-              fontWeight={700}
-              sx={{
-                mb: 2.5,
-                textAlign: 'center',
-                fontSize: {
-                  xs: '1rem',
-                  sm: '1.1rem',
-                },
-              }}
-            >
-              Visit Status
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: '1fr 1fr',
-                },
-                gap: 2,
-              }}
-            >
-              {/* CHECK IN */}
-              <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: '#66BB6A',
-                  backgroundColor: '#E8F5E9',
-                  borderRadius: 2,
-                  p: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: 1.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'success.main',
-                      color: 'white',
-                    }}
-                  >
-                    <IconLogin size={18} />
-                  </Box>
-
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Check In
-                  </Typography>
-                </Box>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  Check In At
-                </Typography>
-
-                <Typography variant="body1" fontWeight={600} sx={{ mb: 1.5 }}>
-                  {accessPass?.checkin_at ? formatDateTime(accessPass.checkin_at) : '-'}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  Checked In By
-                </Typography>
-
-                <Typography variant="body1" fontWeight={600}>
-                  {accessPass?.checkin_by ?? '-'}
-                </Typography>
-              </Box>
-
-              {/* CHECK OUT */}
-              <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: accessPass?.checkout_at ? '#EF5350' : '#EF5350',
-                  backgroundColor: accessPass?.checkout_at ? '#FFEBEE' : '#edc2c0',
-                  borderRadius: 2,
-                  p: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: 1.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'red',
-                      color: 'white',
-                    }}
-                  >
-                    <IconLogout size={18} />
-                  </Box>
-
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Check Out
-                  </Typography>
-                </Box>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  Check Out At
-                </Typography>
-
-                <Typography variant="body1" fontWeight={600} sx={{ mb: 1.5 }}>
-                  {accessPass?.checkout_at ? formatDateTime(accessPass.checkout_at) : '-'}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  Checked Out By
-                </Typography>
-
-                <Typography variant="body1" fontWeight={600}>
-                  {accessPass?.checkout_by ?? '-'}
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, xl: 8 }}>
-          {/* <GuestAccessPass
-            accessPass={accessPass}
-            onOpenAccess={handleOpenAccess}
-            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
-          /> */}
-          <GuestAccessPass
-            accessPass={accessPass}
-            onOpenAccess={handleOpenAccess}
-            onDownload={handleDownloadPDF}
-            onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
-            onOpenParking={handleOpenParkingBlocker}
-            isParkingLoading={isParkingLoading}
-          />
+            <GuestAccessPass
+              accessPass={currentAccessPass}
+              onOpenAccess={handleOpenAccess}
+              onDownload={handleDownloadPDF}
+              onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
+              onOpenParking={handleOpenParkingBlocker}
+              isParkingLoading={isParkingLoading}
+              activePassIndex={activePassIndex}
+              totalPass={accessPass.length}
+              onPreviousPass={handlePreviousPass}
+              onNextPass={handleNextPass}
+              onSelectPass={setActivePassIndex}
+            />
+          </Box>
         </Grid>
       </Grid>
 

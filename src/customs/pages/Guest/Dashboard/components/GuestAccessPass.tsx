@@ -100,12 +100,20 @@
 
 // export default GuestAccessPass;
 
-import { Box, Button, Card, Divider, Tooltip, Typography } from '@mui/material';
-import { IconCar, IconCards, IconDownload } from '@tabler/icons-react';
+import { Box, Button, Card, Divider, IconButton, Tooltip, Typography } from '@mui/material';
+import {
+  IconCar,
+  IconCards,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCopy,
+  IconDownload,
+} from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'react-qr-code';
 import dayjs from 'dayjs';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { useState } from 'react';
 
 type GuestAccessPassData = {
   id?: string;
@@ -129,12 +137,17 @@ type GuestAccessPassData = {
 };
 
 type GuestAccessPassProps = {
-  accessPass?: GuestAccessPassData | null;
+  accessPass?: any | null;
   onOpenAccess: () => void;
   onDownload: () => void;
   onInsertInvitationCode: () => void;
   onOpenParking?: () => void;
   isParkingLoading?: boolean;
+  activePassIndex?: number;
+  totalPass?: number;
+  onPreviousPass?: () => void;
+  onNextPass?: () => void;
+  onSelectPass?: (index: number) => void;
 };
 
 const GuestAccessPass = ({
@@ -144,6 +157,11 @@ const GuestAccessPass = ({
   onInsertInvitationCode,
   onOpenParking,
   isParkingLoading = false,
+  activePassIndex = 0,
+  totalPass = 0,
+  onPreviousPass,
+  onNextPass,
+  onSelectPass,
 }: GuestAccessPassProps) => {
   const { t } = useTranslation();
 
@@ -188,6 +206,65 @@ const GuestAccessPass = ({
     </Box>
   );
 
+  const statusBgMap: Record<string, string> = {
+    Checkin: '#21c45d',
+    Checkout: '#F44336',
+    Block: '#000000',
+    Deny: '#8B0000',
+    Approve: '#21c45d',
+    Pracheckin: '#21c45d',
+    Preregis: '#a5a5a5ff',
+    Waiting: '#4abfd4',
+    Available: 'gray',
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
+    Block: 'Block',
+    Deny: 'Deny',
+    Approve: 'Approve',
+    Pracheckin: 'Precheckin',
+    Preregis: 'Preregis',
+    Waiting: 'Waiting',
+    Available: 'Available',
+  };
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyInvitationCode = async () => {
+    const text = accessPass?.invitation_code;
+
+    if (!text) return;
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to copy invitation code:', error);
+    }
+  };
+
   if (!accessPass) {
     return (
       <Card
@@ -213,36 +290,14 @@ const GuestAccessPass = ({
     );
   }
 
-  const statusBgMap: Record<string, string> = {
-    Checkin: '#21c45d',
-    Checkout: '#F44336',
-    Block: '#000000',
-    Deny: '#8B0000',
-    Approve: '#21c45d',
-    Pracheckin: '#21c45d',
-    Preregis: '#a5a5a5ff',
-    Waiting: '#4abfd4',
-    Available: 'gray',
-  };
-
-  const statusLabelMap: Record<string, string> = {
-    Checkin: 'Check In',
-    Checkout: 'Check Out',
-    Block: 'Block',
-    Deny: 'Deny',
-    Approve: 'Approve',
-    Pracheckin: 'Precheckin',
-    Preregis: 'Preregis',
-    Waiting: 'Waiting',
-    Available: 'Available',
-  };
-
   return (
     <Card
       sx={{
+        position: 'relative',
         width: '100%',
         borderRadius: 2,
-        overflow: 'hidden',
+        // overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       {/* ================================
@@ -361,7 +416,6 @@ const GuestAccessPass = ({
               },
             }}
           >
-            <Field label="Invitation Code" value={accessPass.invitation_code} />
             <Field label="Agenda" value={accessPass.agenda} />
 
             <Field label="Host Name" value={accessPass.host_name} />
@@ -408,9 +462,59 @@ const GuestAccessPass = ({
                 fontSize: '0.8rem',
               }}
             >
-              Show this while visiting
+              Invitation Code
             </Typography>
 
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.5,
+              }}
+            >
+              <Typography
+                variant="body1"
+                fontWeight={700}
+                sx={{
+                  fontSize: '0.9rem',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {accessPass.invitation_code ?? '-'}
+              </Typography>
+
+              {accessPass.invitation_code && (
+                <Tooltip title={copied ? 'Copied!' : 'Copy invitation code'} arrow>
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleCopyInvitationCode();
+                    }}
+                    sx={{
+                      border: 0,
+                      background: 'transparent',
+                      p: 0.3,
+                      m: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'primary.main',
+                      borderRadius: 1,
+
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
+                  >
+                    <IconCopy size={15} />
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
             <Typography variant="caption" color="text.secondary" textAlign="center">
               ID: {accessPass.visitor_number ?? '-'}
             </Typography>
@@ -461,7 +565,6 @@ const GuestAccessPass = ({
             <Field label="Site" value={accessPass.site_place_name ?? '-'} />
           </Box>
         </Box>
-
         {/* ================================
             DIVIDER
         ================================= */}
@@ -473,7 +576,6 @@ const GuestAccessPass = ({
             },
           }}
         />
-
         {/* ================================
             PARKING & FACILITIES
         ================================= */}
@@ -491,7 +593,6 @@ const GuestAccessPass = ({
         >
           Parking & Facilities
         </Typography>
-
         <Box
           sx={{
             display: 'grid',
@@ -515,7 +616,6 @@ const GuestAccessPass = ({
 
           <Field label="Vehicle Type" value={accessPass.vehicle_type} />
         </Box>
-
         {/* ================================
             PARKING BUTTON
         ================================= */}
@@ -544,6 +644,113 @@ const GuestAccessPass = ({
         >
           {isParkingLoading ? 'Opening...' : 'Open Parking Blocker'}
         </Button>
+
+        {/* PAGINATION */}
+        {/* PAGINATION */}
+        {totalPass > 1 && (
+          <Box
+            className="no-print"
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              mt: 3,
+              gap: 0.5,
+            }}
+          >
+            {/* NAVIGATION + DOTS */}
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              {/* PREVIOUS */}
+              <IconButton
+                size="small"
+                onClick={onPreviousPass}
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  width: 36,
+                  height: 36,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                <IconChevronLeft size={20} />
+              </IconButton>
+
+              {/* DOTS */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                {Array.from({ length: totalPass }).map((_, index) => (
+                  <Box
+                    key={index}
+                    onClick={() => onSelectPass?.(index)}
+                    sx={{
+                      width: index === activePassIndex ? 18 : 10,
+                      height: 10,
+                      borderRadius: 5,
+                      cursor: 'pointer',
+
+                      backgroundColor:
+                        index === activePassIndex ? 'primary.main' : 'action.disabled',
+
+                      transition: 'all 0.2s ease',
+
+                      '&:hover': {
+                        backgroundColor: 'primary.main',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+
+              {/* NEXT */}
+              <IconButton
+                size="small"
+                onClick={onNextPass}
+                sx={{
+                  position: 'absolute',
+                  right: 0,
+                  width: 36,
+                  height: 36,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                <IconChevronRight size={20} />
+              </IconButton>
+            </Box>
+
+            {/* NUMBER */}
+            <Typography variant="body2" fontWeight={600} color="text.primary">
+              {activePassIndex + 1} of {totalPass}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Card>
   );

@@ -9,6 +9,9 @@ import {
   Portal,
   Snackbar,
   Alert,
+  DialogActions,
+  Button,
+  TextField,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
@@ -101,6 +104,8 @@ import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
 import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import EditVisitorDialog from './Dialog/EditVisitorDialog';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -302,6 +307,8 @@ const OperatorView = () => {
       invited_by: string;
       is_host: boolean;
       visitor_id: string;
+      is_vehicle_arrived: boolean;
+      vehicle_captured: string;
     }[]
   >([]);
 
@@ -1061,6 +1068,8 @@ const OperatorView = () => {
       checkout_at: v.checkout_at ?? null,
       checkin_at: v.checkin_at ?? null,
       is_host: v.is_host ?? false,
+      is_vehicle_arrived: v.is_vehicle_arrived ?? false,
+      vehicle_captured: v.vehicle_captured ?? null,
     }));
     setInvitationCode((prev) =>
       prev.map((inv) => {
@@ -1530,6 +1539,13 @@ const OperatorView = () => {
       Unblock: 'unblock this visitor',
     };
 
+    const successActionLabel: Record<string, string> = {
+      Checkin: 'Check In',
+      Checkout: 'Check Out',
+      Block: 'Block',
+      Unblock: 'Unblock',
+    };
+
     let reason = '';
     if (action === 'Checkin' || action === 'Checkout') {
       const visitor = relatedVisitors.find((v) => v.id?.toLowerCase() === id?.toLowerCase());
@@ -1568,54 +1584,136 @@ const OperatorView = () => {
       // =========================================================
       // CONFIRM BLOCK / UNBLOCK
       // =========================================================
+      // if (action === 'Block' || action === 'Unblock') {
+      //   const { value: inputReason } = await Swal.fire({
+      //     icon: 'info',
+      //     imageWidth: 80,
+      //     imageHeight: 80,
+      //     imageAlt: 'Logo',
+      //     target: containerRef.current,
+      //     title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+      //     text:
+      //       action === 'Block'
+      //         ? 'Please provide a reason for blocking this visitor:'
+      //         : 'Please provide a reason for unblocking this visitor:',
+
+      //     input: 'text',
+      //     inputPlaceholder: 'Enter reason...',
+      //     inputAttributes: {
+      //       maxlength: '200',
+      //     },
+
+      //     showCloseButton: true,
+      //     showCancelButton: true,
+
+      //     confirmButtonText: 'Yes',
+      //     confirmButtonColor: '#16a34a',
+
+      //     cancelButtonText: 'Cancel',
+      //     reverseButtons: true,
+
+      //     customClass: {
+      //       title: 'swal2-title-custom',
+      //       popup: 'swal-popup-custom',
+      //       closeButton: 'swal-close-red',
+      //     },
+
+      //     inputValidator: (value) => {
+      //       if (!value || value.trim().length < 3) {
+      //         return 'Reason must be at least 3 characters long.';
+      //       }
+
+      //       return null;
+      //     },
+      //   });
+
+      //   if (!inputReason) {
+      //     return;
+      //   }
+
+      //   reason = inputReason.trim();
+      // }
+
       if (action === 'Block' || action === 'Unblock') {
-        const { value: inputReason } = await Swal.fire({
+        const reasonOptions =
+          action === 'Block'
+            ? [
+                'Security Violation',
+                'Unauthorized Access',
+                'Policy Violation',
+                'Suspicious Activity',
+                'Visitor Requested',
+                'Others',
+              ]
+            : [
+                'Issue Resolved',
+                'Access Restored',
+                'Approved by Management',
+                'Visitor Request',
+                'Others',
+              ];
+        const { value: formValue } = await Swal.fire({
           icon: 'info',
-          imageWidth: 80,
-          imageHeight: 80,
-          imageAlt: 'Logo',
           target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-          text:
-            action === 'Block'
-              ? 'Please provide a reason for blocking this visitor:'
-              : 'Please provide a reason for unblocking this visitor:',
-
-          input: 'text',
-          inputPlaceholder: 'Enter reason...',
-          inputAttributes: {
-            maxlength: '200',
-          },
-
+          html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions.map((option) => `<option value="${option}">${option}</option>`).join('')} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
           showCloseButton: true,
           showCancelButton: true,
-
-          confirmButtonText: 'Yes',
+          confirmButtonText: action === 'Block' ? 'Yes' : 'Yes',
           confirmButtonColor: '#16a34a',
-
           cancelButtonText: 'Cancel',
           reverseButtons: true,
-
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
             closeButton: 'swal-close-red',
           },
-
-          inputValidator: (value) => {
-            if (!value || value.trim().length < 3) {
-              return 'Reason must be at least 3 characters long.';
+          didOpen: () => {
+            const select = document.getElementById(
+              'swal-reason-select',
+            ) as HTMLSelectElement | null;
+            const textarea = document.getElementById(
+              'swal-reason-other',
+            ) as HTMLTextAreaElement | null;
+            select?.addEventListener('change', () => {
+              if (!textarea) return;
+              textarea.style.display = select.value === 'Others' ? 'block' : 'none';
+              if (select.value !== 'Others') {
+                textarea.value = '';
+              }
+            });
+          },
+          preConfirm: () => {
+            const select = document.getElementById(
+              'swal-reason-select',
+            ) as HTMLSelectElement | null;
+            const textarea = document.getElementById(
+              'swal-reason-other',
+            ) as HTMLTextAreaElement | null;
+            const selectedReason = select?.value ?? '';
+            if (!selectedReason) {
+              Swal.showValidationMessage('Please select a reason.');
+              return false;
             }
-
-            return null;
+            if (selectedReason === 'Others') {
+              const customReason = textarea?.value.trim() ?? '';
+              if (!customReason) {
+                Swal.showValidationMessage('Please enter a reason.');
+                return false;
+              }
+              if (customReason.length < 3) {
+                Swal.showValidationMessage('Reason must be at least 3 characters long.');
+                return false;
+              }
+              return customReason;
+            }
+            return selectedReason;
           },
         });
-
-        if (!inputReason) {
+        if (!formValue) {
           return;
         }
-
-        reason = inputReason.trim();
+        reason = formValue;
       }
 
       // =========================================================
@@ -1653,15 +1751,7 @@ const OperatorView = () => {
           return;
         }
       }
-
-      // =========================================================
-      // LOADING
-      // =========================================================
       setLoadingAccess(true);
-
-      // =========================================================
-      // PAYLOAD
-      // =========================================================
       const payload: any = {
         action,
       };
@@ -1669,15 +1759,8 @@ const OperatorView = () => {
       if (reason) {
         payload.reason = reason;
       }
-
-      // =========================================================
-      // EXECUTE ACTION
-      // =========================================================
       await createInvitationActionOperator(id!, payload);
 
-      // =========================================================
-      // INVALIDATE RELATED QUERY
-      // =========================================================
       await queryClient.invalidateQueries({
         queryKey: ['upcoming-purpose'],
       });
@@ -1701,7 +1784,7 @@ const OperatorView = () => {
       // =========================================================
       // SUCCESS
       // =========================================================
-      showSwal('success', `${action} successfully.`);
+      showSwal('success', `Successfully ${successActionLabel[action] ?? action}`);
     } catch (e: any) {
       const message =
         e?.response?.data?.msg ??
@@ -2669,6 +2752,7 @@ const OperatorView = () => {
 
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
+  const activeCaptureVehicle= getCdnUrl(activeVisitor?.vehicle_captured);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
 
   const handlePrint = () => {
@@ -3050,6 +3134,10 @@ const OperatorView = () => {
     };
   }, [registeredSite, registerSiteOperator, isFullscreen]);
 
+  const [openEnableEdit, setOpenEnableEdit] = useState(false);
+
+  const handleOpenEnableEdit = () => setOpenEnableEdit(true);
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3057,6 +3145,7 @@ const OperatorView = () => {
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', xl: 'row' },
+          minHeight: 'calc(100vh - 70px)',
           height: isFullscreen ? (isMobile ? '100%' : '100vh') : '100%',
           width: '100%',
           position: 'relative',
@@ -3066,9 +3155,10 @@ const OperatorView = () => {
           sx={{
             flex: 1,
             display: 'flex',
-            flexDirection: 'column',
+            // flexDirection: 'column',
             minHeight: 0,
-            height: '100%',
+            width: '100%',
+            // height: '100%',
           }}
         >
           {/* <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
@@ -3140,6 +3230,7 @@ const OperatorView = () => {
                   getColorByName={getColorByName}
                   backgroundnodata={backgroundnodata}
                   t={t}
+                  handleOpenEnableEdit={handleOpenEnableEdit}
                 />
 
                 <VisitorDetailCard
@@ -3207,7 +3298,7 @@ const OperatorView = () => {
                   formatDateTime={formatDateTime}
                   setAnchorEl={setAnchorEl}
                   setTypeVisitor={
-                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
+                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live' | 'today-activity'>>
                   }
                   setSearchKeyword={setSearchKeyword}
                   setSelectMultiple={setSelectMultiple}
@@ -3259,6 +3350,7 @@ const OperatorView = () => {
                 <VisitorImage
                   faceImage={activeSelfie}
                   identityImage={activeKTP}
+                  captureVehicle={activeCaptureVehicle}
                   isFullscreen={isFullscreen}
                   openMore={openMore}
                   setOpenMore={setOpenMore}
@@ -3273,6 +3365,16 @@ const OperatorView = () => {
             </Grid>
           </Grid>
         </Box>
+
+        {/* Dialog Edit */}
+        <EditVisitorDialog
+          open={openEnableEdit}
+          onClose={() => setOpenEnableEdit(false)}
+          visitor={invitationCode?.[0]}
+          onSubmit={(data) => {
+            console.log('Edit visitor:', data);
+          }}
+        />
 
         {/* Print */}
         <PrintDialogBulk

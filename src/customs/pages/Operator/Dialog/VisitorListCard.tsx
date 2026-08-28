@@ -70,7 +70,7 @@ interface VisitorListCardProps {
   getCdnUrl: (path?: string) => string;
   formatDateTime: (date?: string, extend?: any) => string;
   setAnchorEl: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
-  setTypeVisitor: React.Dispatch<React.SetStateAction<'related' | 'live'>>;
+  setTypeVisitor: React.Dispatch<React.SetStateAction<'related' | 'live' | 'today-activity'>>;
   setSearchKeyword: React.Dispatch<React.SetStateAction<string>>;
   setSelectMultiple: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedVisitors: React.Dispatch<React.SetStateAction<string[]>>;
@@ -129,13 +129,6 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   setOpenExtendVisit,
   handleSelectRelatedVisitor,
   handleSelectLiveVisitor,
-  handleApplyBulkAction,
-  handleChooseCard,
-  handlePrintClick,
-  page,
-  rowsPerPage,
-  totalCount,
-  setPage,
   liveCount,
   relatedCount,
   livePagination,
@@ -267,9 +260,10 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             >
               <Tab value="live" label={`Live Visitors (${liveCount})`} />
               <Tab value="related" label={`Related Visitors (${relatedCount})`} />
+              <Tab value="today-activity" label={`Today Activity`} />
             </Tabs>
           </Box>
-          <Box display="flex" alignItems="center" gap={1.5}>
+          <Box display="flex" alignItems="center" gap={0.5}>
             {/* Online Indicator */}
             <Box
               display="flex"
@@ -281,9 +275,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                 border: 1,
                 borderColor: isWebSocketOnline ? 'success.light' : 'error.light',
                 borderRadius: 2,
-
                 animation: 'wsStatusPulse 2s ease-in-out infinite',
-
                 '@keyframes wsStatusPulse': {
                   '0%': {
                     opacity: 0.75,
@@ -397,7 +389,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             </Tooltip>
           </Box>
         </Box>
-
+{typeVisitor !== 'today-activity' && (
         <Box display={'flex'} gap={2} mt={1} justifyContent={'space-between'}>
           <Stack
             direction="row"
@@ -528,6 +520,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             </IconButton>
           </Box>
         </Box>
+      )}
 
         <Divider sx={{ mt: 1 }} />
 
@@ -538,166 +531,172 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             p: 1,
           }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(3, 1fr)',
-                md: 'repeat(4, 1fr)',
-                xl: 'repeat(5, 1fr)',
-              },
-              gap: 1,
-            }}
-          >
-            {filteredVisitors.map((visitor, index) => {
-              const isDriving = visitor.is_driving === true;
-              const isScanned =
-                visitor.visitor_number &&
-                scannedVisitorNumber &&
-                visitor.visitor_number === scannedVisitorNumber;
+          {' '}
+          {typeVisitor === 'today-activity' ? (
+            // <TodayActivityList activities={todayActivities} />
+            <Box></Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: 'repeat(2, 1fr)',
+                  sm: 'repeat(3, 1fr)',
+                  md: 'repeat(4, 1fr)',
+                  xl: 'repeat(5, 1fr)',
+                },
+                gap: 1,
+              }}
+            >
+              {filteredVisitors.map((visitor, index) => {
+                const isDriving = visitor.is_driving === true;
+                const isScanned =
+                  visitor.visitor_number &&
+                  scannedVisitorNumber &&
+                  visitor.visitor_number === scannedVisitorNumber;
 
-              const selected = selectedVisitors.includes(visitor.id);
+                const selected = selectedVisitors.includes(visitor.id);
 
-              return (
-                <Card
-                  key={visitor.id || index}
-                  onClick={() => {
-                    if (typeVisitor === 'live') {
-                      handleSelectLiveVisitor(visitor);
-                    } else {
-                      handleSelectRelatedVisitor(visitor);
-                    }
-                  }}
-                  sx={{
-                    cursor: 'pointer',
-                    borderRadius: 3,
-                    border: selected ? '2px solid' : '1px solid',
-                    borderColor: selected ? 'primary.main' : 'divider',
-                    transition: '.2s',
-                    padding: '5px',
-
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                >
-                  <CardContent
+                return (
+                  <Card
+                    key={visitor.id || index}
+                    onClick={() => {
+                      if (typeVisitor === 'live') {
+                        handleSelectLiveVisitor(visitor);
+                      } else {
+                        handleSelectRelatedVisitor(visitor);
+                      }
+                    }}
                     sx={{
-                      p: 0.5,
-                      textAlign: 'center',
-                      '&:last-child': {
-                        pb: 0.5,
+                      cursor: 'pointer',
+                      borderRadius: 3,
+                      border: selected ? '2px solid' : '1px solid',
+                      borderColor: selected ? 'primary.main' : 'divider',
+                      transition: '.2s',
+                      padding: '5px',
+
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: 4,
                       },
                     }}
                   >
-                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                      <Avatar
-                        src={getCdnUrl(visitor.selfie_image) || undefined}
-                        sx={{
-                          width: 64,
-                          height: 64,
-                          mx: 'auto',
-                        }}
-                      />
-
-                      {(isDriving || isScanned) && (
-                        <Box
+                    <CardContent
+                      sx={{
+                        p: 0.5,
+                        textAlign: 'center',
+                        '&:last-child': {
+                          pb: 0.5,
+                        },
+                      }}
+                    >
+                      <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                        <Avatar
+                          src={getCdnUrl(visitor.selfie_image) || undefined}
                           sx={{
-                            position: 'absolute',
-                            right: -4,
-                            bottom: -4,
-                            display: 'flex',
-                            gap: 0.5,
+                            width: 64,
+                            height: 64,
+                            mx: 'auto',
                           }}
-                        >
-                          {isDriving && (
-                            <Box
-                              sx={{
-                                width: 18,
-                                height: 18,
-                                bgcolor: 'success.main',
-                                color: '#fff',
-                                borderRadius: '50%',
-                                fontSize: 10,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              P
-                            </Box>
-                          )}
+                        />
 
-                          {isScanned && (
-                            <Box
-                              sx={{
-                                width: 18,
-                                height: 18,
-                                bgcolor: 'primary.main',
-                                color: '#fff',
-                                borderRadius: '50%',
-                                fontSize: 10,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              S
-                            </Box>
-                          )}
-                        </Box>
-                      )}
-                    </Box>
+                        {(isDriving || isScanned) && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              right: -4,
+                              bottom: -4,
+                              display: 'flex',
+                              gap: 0.5,
+                            }}
+                          >
+                            {isDriving && (
+                              <Box
+                                sx={{
+                                  width: 18,
+                                  height: 18,
+                                  bgcolor: 'success.main',
+                                  color: '#fff',
+                                  borderRadius: '50%',
+                                  fontSize: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                P
+                              </Box>
+                            )}
 
-                    <Typography variant="subtitle2" fontWeight={700} mt={1.5} noWrap>
-                      {visitor.name}
-                    </Typography>
+                            {isScanned && (
+                              <Box
+                                sx={{
+                                  width: 18,
+                                  height: 18,
+                                  bgcolor: 'primary.main',
+                                  color: '#fff',
+                                  borderRadius: '50%',
+                                  fontSize: 10,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                S
+                              </Box>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
 
-                    <Typography variant="caption" color="text.secondary" noWrap>
-                      {visitor.organization}
-                    </Typography>
-                    <br />
+                      <Typography variant="subtitle2" fontWeight={700} mt={1.5} noWrap>
+                        {visitor.name}
+                      </Typography>
 
-                    <Checkbox
-                      checked={selected}
-                      sx={{ mt: 1 }}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {visitor.organization}
+                      </Typography>
+                      <br />
 
-                        setSelectedVisitors((prev) => {
-                          if (selectMultiple) {
-                            return checked
-                              ? [...new Set([...prev, visitor.id])]
-                              : prev.filter((id) => id !== visitor.id);
-                          }
+                      <Checkbox
+                        checked={selected}
+                        sx={{ mt: 1 }}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
 
-                          // if (checked) {
-                          //   handleSelectRelatedVisitor(visitor);
-                          //   return [visitor.id];
-                          // }
-
-                          if (checked) {
-                            if (typeVisitor === 'live') {
-                              handleSelectLiveVisitor(visitor);
-                            } else {
-                              handleSelectRelatedVisitor(visitor);
+                          setSelectedVisitors((prev) => {
+                            if (selectMultiple) {
+                              return checked
+                                ? [...new Set([...prev, visitor.id])]
+                                : prev.filter((id) => id !== visitor.id);
                             }
 
-                            return [visitor.id];
-                          }
+                            // if (checked) {
+                            //   handleSelectRelatedVisitor(visitor);
+                            //   return [visitor.id];
+                            // }
 
-                          return [];
-                        });
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </Box>
+                            if (checked) {
+                              if (typeVisitor === 'live') {
+                                handleSelectLiveVisitor(visitor);
+                              } else {
+                                handleSelectRelatedVisitor(visitor);
+                              }
+
+                              return [visitor.id];
+                            }
+
+                            return [];
+                          });
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </Box>
+          )}
         </CardContent>
 
         {/* <CardActions sx={{ overflow: 'visible', p: '0' }}>

@@ -132,6 +132,7 @@ interface VisitorImageProps {
   getColorByName?: any;
   todayVisitingPurpose?: any;
   recordsFiltered?: any;
+  captureVehicle?: any;
 }
 
 const VisitorImage = ({
@@ -145,6 +146,7 @@ const VisitorImage = ({
   getColorByName,
   todayVisitingPurpose,
   recordsFiltered,
+  captureVehicle,
 }: VisitorImageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -370,14 +372,21 @@ const VisitorImage = ({
           onClick={() => identityImage && handleOpen(identityImage, 'Identity Image')}
         />
       </Grid>
-      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }} id="tour-alert">
-        <AlertCard
+      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }}>
+        <ImageCard
+          title="Capture Vehicle"
+          imageSrc={captureVehicle}
+          emptyText="No Capture Vehicle"
+          isFullscreen={isFullscreen}
+          onClick={() => captureVehicle && handleOpen(captureVehicle, 'Capture Vehicle')}
+        />
+        {/* <AlertCard
           isFullscreen={isFullscreen}
           title="Alerts"
           data={alertData || []}
           onViewAll={() => setOpenAlertDialog(true)}
           onItemClick={(item) => console.log(item)}
-        />
+        /> */}
       </Grid>
       <PreviewImageDialog
         open={open}
@@ -424,9 +433,6 @@ const VisitorImage = ({
                   }}
                   onClick={() => {
                     handleCloseAllVisitingPurpose();
-
-                    // Kalau datanya tidak ada di API,
-                    // tetap kirim data dengan count 0
                     handleOpenDetailVistingPurpose({
                       ...item,
                       ...(item.originalData ?? {}),

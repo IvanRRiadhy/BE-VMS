@@ -4,14 +4,11 @@ import { getAccessPass } from 'src/customs/api/admin';
 export const useAccessPass = () => {
   const query = useQuery({
     queryKey: ['access-pass'],
-    queryFn: async () => {
-      const res = await getAccessPass();
-      return res ?? [];
-    },
+    queryFn: getAccessPass,
   });
 
   return {
-    accessPass: query.data ?? [],
+    accessPass: query.data?.collection ?? [],
     loading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error,

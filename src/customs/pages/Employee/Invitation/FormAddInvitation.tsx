@@ -108,6 +108,7 @@ import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import { useTranslation } from 'react-i18next';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -887,6 +888,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       <>
         {isSingle && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               const section = currentSection;
               const sectionType = getSectionType(section);
@@ -1034,6 +1036,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         )}
         {isGroup && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               const section = currentSection;
               const sectionType = getSectionType(section);
@@ -1172,7 +1175,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                               fullWidth
                               startIcon={<IconPlus />}
                             >
-                              Add New
+                              {t('addVisitor')}
                             </MuiButton>
                           </>
                         ) : (
@@ -1336,7 +1339,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                     variant="contained"
                                     startIcon={<IconPlus />}
                                   >
-                                    Add New
+                                    {t("addVisitor")}
                                   </MuiButton>
                                 </TableCell>
                               </TableRow>

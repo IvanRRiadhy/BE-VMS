@@ -74,6 +74,7 @@ type RenderFieldGroupProps = {
   fieldErrors: Record<string, string>;
   setFieldErrors: React.Dispatch<React.SetStateAction<any>>;
   isDriving: boolean;
+  isBicycle?: boolean;
 };
 
 const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
@@ -110,6 +111,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     setFieldErrors,
     isDriving,
     uploadingFiles,
+    isBicycle,
   } = props;
 
   if (field.is_enable !== true) {
@@ -185,7 +187,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             disabled={
               shouldDisable ||
               ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
-              ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
+              ((field.remarks || '').toLowerCase() === 'vehicle_plate' && (!isDriving || isBicycle))
             }
           />
         );

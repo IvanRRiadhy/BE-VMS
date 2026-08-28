@@ -108,6 +108,7 @@ import CameraDialog from './components/Dialog/CameraDialog';
 import { useTranslation } from 'react-i18next';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -1444,6 +1445,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       <>
         {isSingle && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               // const section = currentSection;
               const sectionIndex = getSectionIndex(activeStep);
@@ -1459,7 +1461,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
 
-                    <Accordion key={activeStep} expanded sx={{ mt: 2 }}>
+                    <Accordion key={activeStep} expanded sx={{ mt: 0 }}>
                       <AccordionDetails sx={{ paddingTop: 0 }}>
                         <Table>
                           <TableBody>
@@ -1593,6 +1595,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         )}
         {isGroup && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               const sectionIndex = getSectionIndex(activeStep);
               const section = sectionsData[sectionIndex];
@@ -1737,7 +1740,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               fullWidth
                               startIcon={<IconPlus />}
                             >
-                              Add New
+                              {t('addVisitor')}
                             </MuiButton>
                           </>
                         ) : (
@@ -1901,7 +1904,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     variant="contained"
                                     startIcon={<IconPlus />}
                                   >
-                                    Add New
+                                    {t('addVisitor')}
                                   </MuiButton>
                                 </TableCell>
                               </TableRow>
@@ -2107,6 +2110,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
 
       const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
+      const vehicleTypeField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'vehicle_type',
+      );
+
+      const vehicleType = String(vehicleTypeField?.answer_text ?? '')
+        .trim()
+        .toLowerCase();
+
+      const isBicycle = vehicleType === 'bicycle';
 
       switch (field.field_type) {
         case 0: // Text
@@ -2145,7 +2157,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               disabled={
                 shouldDisable ||
                 ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
-                ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&    (!isDriving || isBicycle))
               }
             />
           );
@@ -2855,7 +2867,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
                   value={field.answer_file as string | undefined}
-                
                   onChange={(url) => {
                     onChange(index, 'answer_file', url);
                     if (url) clearFieldError(errorKey);
@@ -3650,34 +3661,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return !!item.mandatory;
     };
 
-    /**
-     * Get visibility berdasarkan kondisi field.
-     *
-     * is_driving:
-     *   "Yes" / "true" / true / "1" -> true
-     *   "No" / "false" / false / "0" -> false
-     */
     const getVisibilityMapForValidation = (details: any[]) => {
-      const getFlag = (remarkName: string) => {
+      const getFieldValue = (remarkName: string) => {
         const field = details.find(
           (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
         );
 
-        if (!field) return false;
-
-        const value = String(field.answer_text ?? '')
+        return String(field?.answer_text ?? '')
           .trim()
           .toLowerCase();
-
-        return ['true', 'yes', '1'].includes(value);
       };
 
-      const isDriving = getFlag('is_driving');
-      const isEmployee = getFlag('is_employee');
+      const isDriving = ['true', 'yes', '1'].includes(getFieldValue('is_driving'));
+
+      const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
+
+      const vehicleType = getFieldValue('vehicle_type');
+
+      const isBicycle = vehicleType === 'bicycle';
 
       return {
         vehicle_type: isDriving,
-        vehicle_plate: isDriving,
+
+        // Vehicle plate tidak berlaku untuk Bicycle
+        vehicle_plate: isDriving && !isBicycle,
+
         employee: isEmployee,
       };
     };
@@ -3863,6 +3871,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'vehicle_plate') {
+        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_type');
+        const vehicleTypeValue = String(vehicleType?.answer_text || '').toLowerCase();
+        if (vehicleTypeValue === 'bicycle') {
+          if (item.answer_text) {
+            onChange(originalIndex, 'answer_text', null);
+          }
+          return false;
+        }
+      }
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
       if (!visible && item.answer_text) {

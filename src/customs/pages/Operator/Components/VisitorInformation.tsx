@@ -9,13 +9,19 @@ import {
   Grid2 as Grid,
   Divider,
   Avatar,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   IconCheck,
   IconCreditCard,
+  IconGenderAgender,
   IconGenderBigender,
+  IconMan,
+  IconPencil,
   IconPhone,
   IconUser,
+  IconWoman,
   IconWorld,
 } from '@tabler/icons-react';
 import { IconBuilding, IconMail } from '@tabler/icons-react';
@@ -35,7 +41,12 @@ const InfoRow = ({
   <Stack direction="row" alignItems="center" spacing={1.5} sx={{ py: 0.8 }}>
     <Box
       sx={{
+        width: 24,
+        minWidth: 24,
+        height: 24,
         display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         color: 'text.secondary',
       }}
     >
@@ -63,6 +74,7 @@ const VisitorInformation = ({
   isFullscreen,
   faceImage,
   lgUp,
+  handleOpenEnableEdit,
 }: any) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -224,17 +236,40 @@ const VisitorInformation = ({
           <CardContent sx={{ padding: '0px !important' }}>
             <Stack direction="row" spacing={2}>
               <Box flex={1}>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  display="flex"
-                  alignItems="center"
-                  gap={1}
-                  sx={{ textTransform: 'capitalize' }}
-                >
-                  {invitationCode[0]?.visitor_name ?? 'Name'}
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1} mt={1.5}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    display="flex"
+                    alignItems="center"
+                    gap={1}
+                    sx={{ textTransform: 'capitalize' }}
+                  >
+                    {invitationCode[0]?.visitor_name ?? 'Name'}
+                  </Typography>
+
+                  {invitationCode?.[0] && (
+                    <Tooltip title="Edit Visitor Information" arrow placement="top">
+                      <IconButton
+                        size="small"
+                        onClick={handleOpenEnableEdit}
+                        sx={{
+                          color: 'white',
+                          bgcolor: 'primary.main',
+                          borderRadius: 3,
+                          p: '7px',
+                          '&:hover': {
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                          },
+                        }}
+                      >
+                        <IconPencil size={20} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1} mt={1}>
                   {invitationCode[0]?.visitor_type_name?.trim() && (
                     <Chip
                       size="small"
@@ -273,9 +308,19 @@ const VisitorInformation = ({
                   label="Citizenship ID"
                   value={invitationCode[0]?.visitor_identity_id}
                 />
-
                 <InfoRow
-                  icon={<IconGenderBigender size={18} />}
+                  icon={
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <IconMan size={17} /> /
+                      <IconWoman size={17} style={{ marginLeft: -5 }} />
+                    </Box>
+                  }
                   label="Gender"
                   value={invitationCode[0]?.visitor_gender}
                 />

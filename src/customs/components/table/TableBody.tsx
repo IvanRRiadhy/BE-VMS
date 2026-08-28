@@ -540,6 +540,17 @@ const TableRowItem = React.memo(
       Rejected: '#f44336',
     };
 
+    const statusLabelMap: Record<string, string> = {
+      Checkin: 'Check In',
+      Checkout: 'Check Out',
+      Block: 'Block',
+      Deny: 'Deny',
+      Approve: 'Approve',
+      Pracheckin: 'Pre Check In',
+      Approved: 'Approved',
+      Rejected: 'Rejected',
+    };
+
     const defaultBg = '#9E9E9E';
 
     const GENDER_MAP: Record<string, string> = {
@@ -874,7 +885,7 @@ const TableRowItem = React.memo(
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {row.visitor_status || '-'}
+                  {statusLabelMap[row.visitor_status] || row.visitor_status || '-'}
                 </Box>
               ) : col === 'document_type' ? (
                 (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
@@ -1453,7 +1464,7 @@ const TableRowItem = React.memo(
                         borderRadius: '50%',
                         '&:hover': {
                           backgroundColor: '#033d70',
-                          color: 'white'
+                          color: 'white',
                         },
                       }}
                     >

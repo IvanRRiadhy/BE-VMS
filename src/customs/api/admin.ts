@@ -245,7 +245,6 @@ import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
 
 import { GetAllSettingResponse } from './models/Admin/Setting';
 
-
 //#region report
 
 export const generateReport = async (payload: any): Promise<any> => {
@@ -572,9 +571,15 @@ export const updateExtend = async (data: any): Promise<any> => {
   return response.data;
 };
 export const getAccessPass = async (): Promise<any> => {
-  const response = await axiosInstance.get('/dashboard/access-pass');
-  // console.log('response', response);
-  return response.data.collection[0];
+  try {
+    const response = await axiosInstance.get('/dashboard/access-pass');
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
 };
 
 // #region Setting

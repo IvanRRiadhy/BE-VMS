@@ -83,6 +83,7 @@ import { useNavigate } from 'react-router';
 import Swal from 'sweetalert2';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
+import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
 type VisitorItem = {
   question_page: SectionPageVisitor[];
   single_page: FormField[];
@@ -2886,6 +2887,7 @@ const FormSelfPraregistration = ({
       <>
         {isSingle && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               // const section = sectionsData[activeStep - 1];
               const section = currentSection;
@@ -2950,6 +2952,7 @@ const FormSelfPraregistration = ({
         )}
         {isGroup && (
           <Grid>
+            <RequiredFieldNotice />
             {(() => {
               // const section = sectionsData[activeStep - 1];
               const section = currentSection;
@@ -3061,7 +3064,7 @@ const FormSelfPraregistration = ({
                               fullWidth
                               startIcon={<IconPlus />}
                             >
-                              Add New
+                              {t('addVisitor')}
                             </Button>
                           </>
                         ) : (
@@ -3889,25 +3892,6 @@ const FormSelfPraregistration = ({
                       }
                     />
                   </Grid>
-                  {/* <Grid size={{ xs: 12, md: 12 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        onClick={() => {
-                          if (!otherForm.name || !otherForm.email || !otherForm.phone) {
-                            // showSwal('warning', 'Please complete PIC information');
-                            showSwal('info', 'Please complete name, email, and phone information');
-                            return;
-                          }
-
-                          setPicCompleted(true);
-                        }}
-                        endIcon={<IconArrowRight />}
-                      >
-                        Next
-                      </Button>
-                    </Box>
-                  </Grid> */}
                 </Grid>
               </Box>
             </Card>
@@ -3933,7 +3917,7 @@ const FormSelfPraregistration = ({
                 }}
                 startIcon={<IconArrowLeft width={18} />}
               >
-                Back
+                {t('back')}
               </Button>
 
               {isGroup ? (
@@ -3961,7 +3945,7 @@ const FormSelfPraregistration = ({
                     onClick={handleNext}
                     endIcon={<IconArrowRight width={18} />}
                   >
-                    Next
+                    {t('next')}
                   </Button>
                 )
               ) : isLastStep ? (
@@ -3986,7 +3970,7 @@ const FormSelfPraregistration = ({
                   endIcon={<IconArrowRight width={18} />}
                   disabled={!isSingle && !isGroup}
                 >
-                  Next
+                  {t('next')}
                 </Button>
               )}
             </Box>
