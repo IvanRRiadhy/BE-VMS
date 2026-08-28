@@ -14,6 +14,7 @@ import moment from 'moment-timezone';
 import {
   IconBolt,
   IconCircleMinus,
+  IconHourglass,
   IconLogin,
   IconLogout,
   IconPlus,
@@ -70,7 +71,7 @@ const DashboardEmployee = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'waiting', key: 'Waiting', icon: <IconHourglass size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
   ];
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
@@ -635,15 +636,25 @@ const DashboardEmployee = () => {
     }
   };
 
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
   const {
     data: activities,
     isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    refetch: refetchActivities,
   } = useActivities({
-    start_date: startDate.toISOString().split('T')[0],
-    end_date: endDate.toISOString().split('T')[0],
+    start_date: formatLocalDate(startDate),
+    end_date: formatLocalDate(endDate),
   });
 
   const activites = activities?.activities ?? [];
@@ -797,6 +808,8 @@ const DashboardEmployee = () => {
             loadingMore={isFetchingNextPage}
             hasNextPage={hasNextPage}
             onLoadMore={fetchNextPage}
+            onRefresh={() => refetchActivities()}
+            refreshing={isFetchingActivities && !isFetchingNextPage}
           />
         </Grid>
       </Grid>

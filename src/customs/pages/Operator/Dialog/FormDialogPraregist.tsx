@@ -23,6 +23,10 @@ import {
   Tooltip,
   Paper,
   LinearProgress,
+  AlertColor,
+  Portal,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -55,7 +59,8 @@ import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
-import toast from 'src/customs/components/alerts/toast';
+import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+// import toast from 'src/customs/components/alerts/toast';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -96,10 +101,21 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
   const [isDragging, setIsDragging] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   const { t } = useTranslation();
   const formatDateTime = (value: string | null) =>
     !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
@@ -108,15 +124,28 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         const res = await getDetailInvitationForm(id);
         const data = res.collection;
         setInvitationData(data);
+        console.log('data', data);
 
         const initial: Record<string, any> = {};
         data?.question_page?.forEach((section: any) => {
           section.form?.forEach((f: any) => {
             if (f.remarks === 'is_driving') {
               initial[f.remarks] = f.answer_text ?? 'false';
-            } else if (f.field_type === 9) initial[f.remarks] = f.answer_datetime;
-            else if ([10, 11, 12].includes(f.field_type)) initial[f.remarks] = f.answer_file;
-            else initial[f.remarks] = f.answer_text ?? null;
+            } else if (f.field_type === 9) {
+              initial[f.remarks] = f.answer_datetime;
+            } else if ([10, 11, 12].includes(f.field_type)) {
+              initial[f.remarks] = f.answer_file;
+            } else if (f.remarks === 'visitor_role') {
+              const roles = data?.visitor_type_data?.visitor_roles ?? [];
+
+              // const defaultRole = roles.find(
+              //   (role: any) => role.active === true && role.is_default === true,
+              // );
+
+              initial[f.remarks] = f.answer_text || roles?.role || '';
+            } else {
+              initial[f.remarks] = f.answer_text ?? null;
+            }
           });
         });
         setFormValues(initial);
@@ -547,8 +576,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     );
   };
 
-  const renderUploadWithCamera = (f: any, idx: number) => {
-    const key = f.remarks;
+  const renderUploadWithCamera = (f: any, idx: number, section: any) => {
+    // const key = f.remarks;
+    const key = `${section.name}_${f.remarks}`;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
     const isUploading = !!uploadingFiles[key];
@@ -759,7 +789,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
         )}
 
-        <Dialog
+        {/* <Dialog
           open={openCamera}
           onClose={isUploading ? undefined : () => setOpenCamera(false)}
           maxWidth="md"
@@ -920,7 +950,31 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Button>
             </Box>
           </Box>
-        </Dialog>
+        </Dialog> */}
+        <CameraDialog
+          open={openCamera}
+          onClose={() => setOpenCamera(false)}
+          webcamRef={webcamRef as any}
+          screenshot={screenshot}
+          facingMode={facingMode}
+          isUploading={isUploading}
+          onSwitchCamera={() =>
+            setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+          }
+          onCapture={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
+          onClear={() =>
+            handleRemoveFileForField(
+              // value file yang sedang aktif
+              section.form?.find((field: any) => field.remarks === f.remarks)?.answer_file ?? '',
+              (url) => handleChange(f.remarks, url),
+              key,
+            )
+          }
+          onSubmit={() => {
+            setOpenCamera(false);
+            setScreenshot(null);
+          }}
+        />
       </Box>
     );
   };
@@ -1106,7 +1160,14 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     setFormValues((prev) => ({
       ...prev,
       [remarks]: prev[remarks] === value ? '' : value,
+      ...(remarks === 'vehicle_type' && value === 'bicycle' ? { vehicle_plate: '' } : {}),
     }));
+    if (remarks === 'vehicle_type' && value === 'bicycle') {
+      setErrors((prev) => {
+        const { vehicle_plate, ...rest } = prev;
+        return rest;
+      });
+    }
   };
 
   const StepContent = (section: any) => (
@@ -1121,10 +1182,18 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             displayValue = invitationData.host_name || displayValue;
           } else if (f.remarks === 'site_place') {
             displayValue = invitationData.site_place_name || displayValue;
+          } else if (f.remarks === 'visitor_role') {
+            displayValue = invitationData?.visitor_type_data.visitor_roles?.role || '';
+            console.log('displayValue', displayValue);
           }
 
           const gridSize = { xs: 12 };
-
+          const hideVehiclePlate =
+            f.remarks === 'vehicle_plate' &&
+            (formValues['is_driving'] !== 'true' || formValues['vehicle_type'] === 'bicycle');
+          if (hideVehiclePlate) {
+            return null;
+          }
           return (
             <Grid key={idx} size={gridSize}>
               {!['vehicle_type', 'vehicle_plate'].includes(f.remarks) ||
@@ -1139,7 +1208,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
                 switch (true) {
                   case f.remarks === 'selfie_image':
-                    return renderUploadWithCamera(f, idx);
+                    return renderUploadWithCamera(f, idx, section);
 
                   case type === 10:
                     return renderCameraField(f, idx);
@@ -1148,7 +1217,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     return renderFileUploadField(f, idx);
 
                   case type === 12:
-                    return renderUploadWithCamera(f, idx);
+                    return renderUploadWithCamera(f, idx, section);
 
                   default:
                     return null;
@@ -1174,16 +1243,18 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   />
                 )}
 
-              {f.remarks === 'vehicle_plate' && formValues['is_driving'] === 'true' && (
-                <CustomTextField
-                  fullWidth
-                  value={displayValue}
-                  onChange={(e) => handleChange(f.remarks, e.target.value)}
-                  placeholder={f.long_display_text || f.remarks}
-                  error={!!errors[f.remarks]}
-                  helperText={errors[f.remarks]}
-                />
-              )}
+              {f.remarks === 'vehicle_plate' &&
+                formValues['is_driving'] === 'true' &&
+                formValues['vehicle_type'] !== 'bicycle' && (
+                  <CustomTextField
+                    fullWidth
+                    value={displayValue}
+                    onChange={(e) => handleChange(f.remarks, e.target.value)}
+                    placeholder={f.long_display_text || f.remarks}
+                    error={!!errors[f.remarks]}
+                    helperText={errors[f.remarks]}
+                  />
+                )}
 
               {f.remarks === 'gender' && (
                 <>
@@ -1249,6 +1320,35 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     )}
                   </FormControl>
                 </>
+              )}
+              {f.remarks === 'visitor_role' && (
+                <Autocomplete
+                  size="small"
+                  fullWidth
+                  options={
+                    invitationData?.visitor_type_data?.visitor_roles?.filter(
+                      (role: any) => role.active === true,
+                    ) ?? []
+                  }
+                  getOptionLabel={(option: any) => option.role || ''}
+                  value={
+                    invitationData?.visitor_type_data?.visitor_roles?.find(
+                      (role: any) => role.role === formValues[f.remarks],
+                    ) || null
+                  }
+                  onChange={(_, newValue) => {
+                    handleChange(f.remarks, newValue?.role || '');
+                  }}
+                  isOptionEqualToValue={(option: any, value: any) => option.role === value.role}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Select Visitor Role"
+                      error={!!errors[f.remarks]}
+                      helperText={errors[f.remarks]}
+                    />
+                  )}
+                />
               )}
 
               {f.remarks === 'employee' && (
@@ -1332,9 +1432,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       { value: 'bus', label: 'Bus' },
                       { value: 'motor', label: 'Motor' },
                       { value: 'bicycle', label: 'Bicycle' },
-                      { value: 'truck', label: 'Truck' },
-                      { value: 'private_car', label: 'Private Car' },
-                      { value: 'other', label: 'Other' },
+                      // { value: 'truck', label: 'Truck' },
+                      // { value: 'private_car', label: 'Private Car' },
+                      // { value: 'other', label: 'Other' },
                     ].map((opt) => (
                       <FormControlLabel
                         key={opt.value}
@@ -1359,6 +1459,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 'gender',
                 'is_driving',
                 'is_employee',
+                'visitor_role',
                 'employee',
                 'vehicle_type',
               ].includes(f.remarks) &&
@@ -1790,7 +1891,29 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           )}
         </Grid>
       </Grid>
-
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 999999 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
       <GlobalBackdropLoading open={submitting} />
     </>
   );

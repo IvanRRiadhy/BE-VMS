@@ -39,6 +39,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconHome,
     href: '/admin/dashboard',
   },
+  {
+    id: uniqueId(),
+    title: 'Monitoring',
+    icon: IconEye,
+    href: '/admin/monitoring',
+  },
 
   {
     id: uniqueId(),
@@ -180,13 +186,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         chipColor: 'secondary',
         href: '/admin/settings',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.notification',
-        icon: IconBell,
-        chipColor: 'secondary',
-        href: '/admin/notification',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.notification',
+      //   icon: IconBell,
+      //   chipColor: 'secondary',
+      //   href: '/admin/notification',
+      // },
     ],
   },
   {
@@ -333,7 +339,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/admin/dashboard',
   },
-
+  {
+    id: uniqueId(),
+    title: 'Monitoring',
+    icon: IconEye,
+    href: '/admin/monitoring',
+  },
   {
     id: uniqueId(),
     title: 'Manages system',
@@ -464,13 +475,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         chipColor: 'secondary',
         href: '/admin/settings',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.notification',
-        icon: IconBell,
-        chipColor: 'secondary',
-        href: '/admin/notification',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.notification',
+      //   icon: IconBell,
+      //   chipColor: 'secondary',
+      //   href: '/admin/notification',
+      // },
     ],
   },
 
@@ -737,13 +748,13 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
         chipColor: 'secondary',
         href: '/operator-admin/settings',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.notification',
-        icon: IconBell,
-        chipColor: 'secondary',
-        href: '/operator-admin/notification',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.notification',
+      //   icon: IconBell,
+      //   chipColor: 'secondary',
+      //   href: '/operator-admin/notification',
+      // },
     ],
   },
   {
@@ -1173,13 +1184,13 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/employee/history',
   },
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/employee/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/employee/notification',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Parking',
@@ -1187,13 +1198,13 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   //   chipColor: 'secondary',
   //   href: '/employee/parking',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconReport,
-  //   chipColor: 'secondary',
-  //   href: '/employee/report',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconReport,
+    chipColor: 'secondary',
+    href: '/employee/report',
+  },
 ];
 
 export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
@@ -1230,13 +1241,13 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/employee/history',
   },
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/employee/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/employee/notification',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Parking',
@@ -1244,13 +1255,13 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   chipColor: 'secondary',
   //   href: '/employee/parking',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconReport,
-  //   chipColor: 'secondary',
-  //   href: '/employee/report',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconReport,
+    chipColor: 'secondary',
+    href: '/employee/report',
+  },
 ];
 
 export const StaffNavListingData: ItemDataCustomNavListing[] = [
@@ -1267,13 +1278,13 @@ export const StaffNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
   },
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/delivery-staff/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/delivery-staff/notification',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1317,13 +1328,13 @@ export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
   },
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/delivery-staff/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/delivery-staff/notification',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1362,13 +1373,13 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
     href: '/manager/approval',
   },
 
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/manager/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/manager/notification',
+  // },
 
   {
     id: uniqueId(),
@@ -1398,13 +1409,13 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     href: '/manager/approval',
   },
 
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/manager/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/manager/notification',
+  // },
   {
     id: uniqueId(),
     title: 'Report',

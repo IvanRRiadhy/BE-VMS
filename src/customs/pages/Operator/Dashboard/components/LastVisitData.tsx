@@ -13,7 +13,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { IconActivity, IconArrowUpRight } from '@tabler/icons-react';
+import { IconActivity, IconArrowUpRight, IconRefresh } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 
 interface Activity {
@@ -60,6 +60,8 @@ interface LastVisitsCardProps {
   loadingMore?: boolean;
   hasNextPage?: boolean;
   onLoadMore?: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 const getStatusStyle = (status: number) => {
@@ -90,6 +92,8 @@ export default function LastVisitsCard({
   loadingMore = false,
   hasNextPage = false,
   onLoadMore,
+  onRefresh,
+  refreshing = false,
 }: LastVisitsCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -138,6 +142,7 @@ export default function LastVisitsCard({
         </Typography>
 
         <Box
+          onClick={!refreshing ? onRefresh : undefined}
           sx={{
             width: 30,
             height: 30,
@@ -147,10 +152,34 @@ export default function LastVisitsCard({
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
-            cursor: 'pointer',
+            cursor: refreshing ? 'default' : 'pointer',
+            opacity: refreshing ? 0.6 : 1,
+            transition: '0.2s',
+
+            '&:hover': {
+              opacity: refreshing ? 0.6 : 0.85,
+            },
+
+            '@keyframes refresh-spin': {
+              from: {
+                transform: 'rotate(0deg)',
+              },
+              to: {
+                transform: 'rotate(360deg)',
+              },
+            },
           }}
         >
-          <IconArrowUpRight size={16} />
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: refreshing ? 'refresh-spin 0.8s linear infinite' : 'none',
+            }}
+          >
+            <IconRefresh size={16} />
+          </Box>
         </Box>
       </Box>
 

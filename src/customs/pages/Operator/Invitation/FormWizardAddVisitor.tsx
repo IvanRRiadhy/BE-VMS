@@ -4317,6 +4317,33 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               e.target.value = '';
                             }}
                           />
+                          {isUploading && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                mt: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <LinearProgress
+                                sx={{
+                                  width: '220px',
+                                  height: 6,
+                                  borderRadius: 3,
+                                }}
+                              />
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.75 }}
+                              >
+                                Uploading file...
+                              </Typography>
+                            </Box>
+                          )}
                           {(previewSrc || shownName) && (
                             <Box
                               mt={2}
@@ -4481,7 +4508,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         />
                         <br />
                       </Box>
+                      {isUploading && (
+                        <Box
+                          sx={{
+                            width: '100%',
+                            mt: 2,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <LinearProgress
+                            sx={{
+                              width: '220px',
+                              height: 6,
+                              borderRadius: 3,
+                            }}
+                          />
 
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                            Uploading file...
+                          </Typography>
+                        </Box>
+                      )}
                       {(previewSrc || shownName) && (
                         <Box
                           mt={1}
@@ -6133,7 +6182,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: 999999 }}
         >
           <Alert
