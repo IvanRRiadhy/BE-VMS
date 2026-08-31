@@ -74,6 +74,14 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
     Approve: '#21c45d',
     Pracheckin: '#21c45d',
   };
+  const statusLabelMap: Record<string, string> = {
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
+    Block: 'Block',
+    Deny: 'Deny',
+    Approve: 'Approve',
+    Pracheckin: 'Precheckin',
+  };
 
   const { t } = useTranslation();
 
@@ -239,7 +247,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
                     fontSize: 12,
                   }}
                 >
-                  {selectedVisitor.visitor_status}
+                  {statusLabelMap[selectedVisitor.visitor_status] ?? selectedVisitor.visitor_status}
                 </Box>
               }
             />

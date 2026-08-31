@@ -66,6 +66,8 @@ import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -87,7 +89,7 @@ const DashboardEmployee = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [pendingPayload, setPendingPayload] = useState<any>(null);
@@ -107,7 +109,7 @@ const DashboardEmployee = () => {
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
   const { t } = useTranslation();
-  const start = page * rowsPerPage;
+  // const start = page * rowsPerPage;
   const navigate = useNavigate();
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
@@ -127,9 +129,9 @@ const DashboardEmployee = () => {
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
   };
-
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
-
+  const { data: profile } = useProfile();
   const handleCloseInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(false);
   };
@@ -161,6 +163,21 @@ const DashboardEmployee = () => {
   const shareLinkList = data?.collection ?? [];
   const debouncedKeyword = useDebounce(searchKeyword, 500);
 
+  const [shareLinkDialogPage, setShareLinkDialogPage] = useState(0);
+  const [shareLinkDialogRowsPerPage, setShareLinkDialogRowsPerPage] = useState(10);
+
+  const { data: shareLinkDialogData, isLoading: isLoadingShareLinkDialog } = useShareLinkPagination(
+    {
+      page: shareLinkDialogPage,
+      rowsPerPage: shareLinkDialogRowsPerPage,
+      search: searchKeyword,
+      sortDir,
+    },
+  );
+
+  const shareLinkDialogList = shareLinkDialogData?.collection ?? [];
+  const totalFilteredRecords = shareLinkDialogData?.RecordsFiltered ?? 0;
+
   const {
     data: approvalRes,
     refetch: refetchApproval,
@@ -169,7 +186,7 @@ const DashboardEmployee = () => {
     queryKey: ['approval', page, rowsPerPage, debouncedKeyword, sortDir],
     queryFn: async () => {
       return await getApprovalTicket({
-        start,
+        start: page * rowsPerPage,
         length: rowsPerPage,
         sort_dir: sortDir,
         keyword: debouncedKeyword,
@@ -185,7 +202,7 @@ const DashboardEmployee = () => {
         agenda,
         host_name,
         approval_actor_status,
-        approval_workflow_type,
+        // approval_workflow_type,
         approval_status,
         visitor_period_start,
         visitor_period_end,
@@ -196,7 +213,7 @@ const DashboardEmployee = () => {
         agenda,
         host_name,
         approval_actor_status,
-        approval_workflow_type,
+        // approval_workflow_type,
         approval_status,
         visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
@@ -441,7 +458,6 @@ const DashboardEmployee = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      setIsGenerating(true);
       const confirm = await Swal.fire({
         title: 'Do you want to delete this link?',
         icon: 'question',
@@ -461,8 +477,6 @@ const DashboardEmployee = () => {
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
       showSwal('error', 'Something went wrong while deleting link.');
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -664,11 +678,19 @@ const DashboardEmployee = () => {
     setTriggerCheckAll(false);
   };
 
+  const [openShareLinkList, setOpenShareLinkList] = useState(false);
+
+  const handleAddShareLink = () => {
+    // setOpenShareLinkList(false);
+    setOpenCreateLink(true);
+  };
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <DashboardEmployeeActionBar
         startDate={startDate}
         endDate={endDate}
+        profile={profile}
         onDateChange={(startDate, endDate) => {
           dispatch(
             setDateRange({
@@ -768,7 +790,7 @@ const DashboardEmployee = () => {
               onCopyLink={(row: any) => handleOpenInviteDialog(row)}
               onDetailLink={(row: any) => handleDetailLink(row)}
               onDelete={(row: any) => handleDeleteLink(row.id)}
-              onAddData={() => setOpenCreateLink(true)}
+              onAddData={() => setOpenShareLinkList(true)}
             />
           </Grid>
         </Grid>
@@ -842,6 +864,58 @@ const DashboardEmployee = () => {
         onSearch={handleQuickSearch}
         totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
+
+      {/* List Share Link */}
+      <Dialog
+        open={openShareLinkList}
+        onClose={() => setOpenShareLinkList(false)}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          Share Link
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenShareLinkList(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <DynamicTable
+            loading={isLoadingShareLinkDialog}
+            data={shareLinkDialogList}
+            overflowX="auto"
+            isHaveChecked={true}
+            titleHeader="Link Share Visitor"
+            isHaveHeaderTitle={true}
+            isCopyLink={true}
+            isNoActionTableHead={true}
+            isHaveAddData={true}
+            isHavePagination
+            currentPage={shareLinkDialogPage}
+            totalCount={totalFilteredRecords}
+            isDetailLink={true}
+            defaultRowsPerPage={shareLinkDialogRowsPerPage}
+            rowsPerPageOptions={[10, 50, 100]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setShareLinkDialogPage(page);
+              setShareLinkDialogRowsPerPage(rowsPerPage);
+            }}
+            onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
+            onAddData={handleAddShareLink}
+          />
+        </DialogContent>
+      </Dialog>
 
       <InvitationShareDialog
         open={openInviteViaLinkEmail}
@@ -959,7 +1033,7 @@ const DashboardEmployee = () => {
           </Alert>
         </Snackbar>
       </Portal>
-      <GlobalBackdropLoading open={isGenerating} />
+      <GlobalBackdropLoading open={isGenerating || deleteMutation.isPending} />
     </PageContainer>
   );
 };

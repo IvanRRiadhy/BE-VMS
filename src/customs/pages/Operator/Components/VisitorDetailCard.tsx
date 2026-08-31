@@ -37,7 +37,8 @@ const VisitorDetailCard = ({
     if (
       (selectedVisitor.is_praregister_done == null ||
         selectedVisitor.is_praregister_done === false) &&
-      !isHost
+      !isHost &&
+      selectedVisitor.visitor_status !== 'Canceled'
     ) {
       return (
         <Button variant="contained" size="large" onClick={() => handleView(selectedVisitor.id)}>

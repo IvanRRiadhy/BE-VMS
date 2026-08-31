@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   useTheme,
   MenuItem,
+  Chip,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
@@ -31,6 +32,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { InputAdornment, IconButton } from '@mui/material';
 import { useProfile } from 'src/hooks/Profile/useProfile';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 const DetailProfile = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -69,7 +71,6 @@ const DetailProfile = () => {
     department_name: '',
   });
 
-
   useEffect(() => {
     if (!profile) return;
 
@@ -90,7 +91,6 @@ const DetailProfile = () => {
       department_name: profile.department_name ?? '',
     });
   }, [profile]);
-
 
   const handleUpdate = async () => {
     try {
@@ -212,8 +212,8 @@ const DetailProfile = () => {
                     }}
                   >
                     <Tab label="Personal Info" />
-                    {/* <Tab label="Organization Info" /> */}
                     <Tab label="Change Password" />
+                    <Tab label="License Info" />
                   </Tabs>
                 </Grid>
 
@@ -221,7 +221,14 @@ const DetailProfile = () => {
                 <Grid size={{ xs: 12, md: 8 }}>
                   <Box>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      {activeTab === 0 ? ' Personal Information' : ' Change Password'}
+                      {/* active tab 0 1 2 */}
+                      {activeTab === 0
+                        ? 'Personal Information'
+                        : activeTab === 1
+                          ? 'Change Password'
+                          : activeTab === 2
+                            ? 'License Info'
+                            : 'License Information'}
                     </Typography>
                     {/* <Typography variant="body2" color="text.secondary" gutterBottom>
                       {activeTab === 0
@@ -299,7 +306,7 @@ const DetailProfile = () => {
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>Organization Name</CustomFormLabel>
-                          <TextField
+                          <CustomTextField
                             fullWidth
                             label=""
                             name="organization_name"
@@ -310,7 +317,7 @@ const DetailProfile = () => {
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>Department Name</CustomFormLabel>
-                          <TextField
+                          <CustomTextField
                             fullWidth
                             label=""
                             name="department_name"
@@ -321,7 +328,7 @@ const DetailProfile = () => {
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                           <CustomFormLabel sx={{ mt: 0 }}>District Name</CustomFormLabel>
-                          <TextField
+                          <CustomTextField
                             fullWidth
                             label=""
                             name="district_name"
@@ -433,6 +440,203 @@ const DetailProfile = () => {
                           </Button>
                         </Grid>
                       </Grid>
+                    )}
+                    {activeTab === 2 && (
+                      <Box>
+                        {/* App Details */}
+                        <Typography variant="h6" fontWeight={600} mb={2}>
+                          App Details
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {[
+                            {
+                              label: 'Status',
+                              value: (
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                  <Typography variant="body2">License is valid</Typography>
+                                  <Chip
+                                    label="Valid"
+                                    size="small"
+                                    color="success"
+                                    sx={{ fontWeight: 500 }}
+                                  />
+                                </Stack>
+                              ),
+                            },
+                            {
+                              label: 'License',
+                              value: 'Perpetual - Enterprise',
+                            },
+                            {
+                              label: 'App Name',
+                              value: 'VMS - Visitor Management System',
+                            },
+                            {
+                              label: 'Custom Name & Domain',
+                              value: 'VMS | Visitor Management System (vms.com)',
+                            },
+                            {
+                              label: 'Customer Name',
+                              value: 'VMS',
+                            },
+                            {
+                              label: 'Expiration Date',
+                              value: '5/20/2126 (36,421 days remaining)',
+                            },
+                          ].map((item, index) => (
+                            <Box
+                              key={item.label}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: 2,
+                                px: 2,
+                                py: 2,
+                                borderBottom: index !== 5 ? '1px solid' : 'none',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              <Typography variant="body2" fontWeight={500}>
+                                {item.label}
+                              </Typography>
+
+                              <Box sx={{ textAlign: 'right' }}>
+                                {typeof item.value === 'string' ? (
+                                  <Typography variant="body2">{item.value}</Typography>
+                                ) : (
+                                  item.value
+                                )}
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {/* Core Features */}
+                        <Typography variant="h6" fontWeight={600} mt={4} mb={2}>
+                          Core Features
+                        </Typography>
+
+                        <Box>
+                          {[
+                            {
+                              name: 'Visitor Management',
+                              description:
+                                'Manage visitor registration, invitations, and visitor information',
+                            },
+                            {
+                              name: 'Real-Time Tracking',
+                              description: 'Real-time visitor tracking and position monitoring',
+                            },
+                            {
+                              name: 'Monitoring Dashboard',
+                              description: 'Live visitor monitoring dashboard and site overview',
+                            },
+                            {
+                              name: 'Reports & Analytics',
+                              description: 'Reports, analytics, and visitor data export',
+                            },
+                          ].map((feature, index) => (
+                            <Box
+                              key={feature.name}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                py: 2,
+                                borderBottom: index !== 3 ? '1px solid' : 'none',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              <Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {feature.name}
+                                </Typography>
+
+                                <Typography variant="body2" color="text.secondary">
+                                  {feature.description}
+                                </Typography>
+                              </Box>
+
+                              <Chip
+                                label="Enabled"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {/* Modules */}
+                        <Typography variant="h6" fontWeight={600} mt={4} mb={2}>
+                          Modules
+                        </Typography>
+
+                        <Box>
+                          {[
+                            {
+                              name: 'Visitor Management',
+                              description:
+                                'Visitor registration, pre-registration, invitation, and check-in/out',
+                            },
+                            {
+                              name: 'Card Management',
+                              description: 'Visitor card issuance, return, and card tracking',
+                            },
+                            {
+                              name: 'Blacklist & Whitelist',
+                              description: 'Manage restricted and trusted visitors',
+                            },
+                            {
+                              name: 'Parking Management',
+                              description: 'Manage visitor parking and vehicle information',
+                            },
+                            {
+                              name: 'Access Control',
+                              description: 'Manage visitor access to registered sites',
+                            },
+                          ].map((module) => (
+                            <Box
+                              key={module.name}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: 2,
+                                py: 2,
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              <Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {module.name}
+                                </Typography>
+
+                                <Typography variant="body2" color="text.secondary">
+                                  {module.description}
+                                </Typography>
+                              </Box>
+
+                              <Chip
+                                label="Enabled"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
                     )}
                   </Box>
                 </Grid>

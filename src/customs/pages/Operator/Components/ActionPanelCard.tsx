@@ -276,9 +276,9 @@ const ActionPanelCard: FC<Props> = ({
                           // background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
 
                           boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
-                          },
+                          // '&:hover': {
+                          //   background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
+                          // },
                           zIndex: 999,
                           width: '100%',
                           height: '50px',

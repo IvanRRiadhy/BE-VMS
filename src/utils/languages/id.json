@@ -30,6 +30,11 @@
     "visitor_role": "Peran Pengunjung",
     "visitor_providers": "Kategori Pengunjung"
   },
+  "pageNotFound": "404 - Halaman Tidak Ditemukan",
+  "pageNotFoundDescription": "Halaman yang kamu cari tidak ditemukan atau sudah tidak tersedia.",
+  "noQrCardAvailable": "QR/Card Tidak Tersedia",
+  "scanVisitorOrTapCard": "Scan visitor atau tap kartu untuk menampilkan QR code",
+  "backToHome": "Kembali ke Halaman Utama",
   "add": "Tambah",
   "addVisitor": "Tambah Pengunjung",
   "back": "Kembali",
@@ -200,9 +205,13 @@
   "selectRole": "Pilih Role",
   "visitorPeriodStartDescription": "Periode mulai kunjungan adalah tanggal saat kunjungan visitor dimulai",
   "visitorPeriodEndDescription": "Periode akhir kunjungan adalah tanggal saat kunjungan visitor berakhir",
-  "dragDropOrTapToSelectFile": "Seret dan lepas atau ketuk untuk memilih file.",
+  "dragDropOrTapToSelectFile": "Tarik dan lepas file di sini, atau klik untuk memilih.",
   "blacklistReason": "Silakan berikan alasan untuk memasukkan pengunjung ini ke blacklist.",
   "successBlacklist": "Berhasil memasukkan pengunjung ke blacklist.",
   "whitelistReason": "Silakan berikan alasan untuk memasukkan pengunjung ini ke whitelist.",
-  "successWhitelist": "Berhasil memasukkan pengunjung ke whitelist."
+  "successWhitelist": "Berhasil memasukkan pengunjung ke whitelist.",
+  "preRegistrationCreatedSuccessfully": "Berhasil membuat pra-registrasi.",
+  "invitationVisitorCreatedSuccessfully": "Berhasil membuat undangan pengunjung.",
+  "groupVisitorCreatedSuccessfully": "Berhasil membuat grup pengunjung.",
+  "visitorAddedSuccessfully": "Visitor berhasil ditambahkan."
 }

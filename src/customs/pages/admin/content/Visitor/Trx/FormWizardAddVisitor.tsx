@@ -103,7 +103,6 @@ import { IconPencil } from '@tabler/icons-react';
 import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
 import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
-import { IconRefresh } from '@tabler/icons-react';
 import CameraDialog from './components/Dialog/CameraDialog';
 import { useTranslation } from 'react-i18next';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
@@ -1859,31 +1858,33 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           );
                                         })}
 
-                                      <TableCell align="right">
-                                        {dataVisitor.length > 1 && (
-                                          <>
-                                            <IconButton
-                                              aria-label="delete-row"
-                                              onClick={() => handleDeleteGroupRow(gIdx)}
-                                              size="small"
-                                              color="error"
-                                            >
-                                              <IconTrash />
-                                            </IconButton>
-                                            <Button
-                                              variant="contained"
-                                              size="small"
-                                              color={hasSelfOnly ? 'success' : 'primary'}
-                                              startIcon={
-                                                hasSelfOnly ? <IconCheck /> : <IconPencil />
-                                              }
-                                              onClick={() => handleOpenSelfOnly(gIdx)}
-                                            >
-                                              {hasSelfOnly ? 'Filled' : 'Self Only'}
-                                            </Button>
-                                          </>
-                                        )}
-                                      </TableCell>
+                                      {!isAddTransaction && (
+                                        <TableCell align="right">
+                                          {dataVisitor.length > 1 && (
+                                            <>
+                                              <IconButton
+                                                aria-label="delete-row"
+                                                onClick={() => handleDeleteGroupRow(gIdx)}
+                                                size="small"
+                                                color="error"
+                                              >
+                                                <IconTrash />
+                                              </IconButton>
+                                              <Button
+                                                variant="contained"
+                                                size="small"
+                                                color={hasSelfOnly ? 'success' : 'primary'}
+                                                startIcon={
+                                                  hasSelfOnly ? <IconCheck /> : <IconPencil />
+                                                }
+                                                onClick={() => handleOpenSelfOnly(gIdx)}
+                                              >
+                                                {hasSelfOnly ? 'Filled' : 'Self Only'}
+                                              </Button>
+                                            </>
+                                          )}
+                                        </TableCell>
+                                      )}
                                     </TableRow>
                                   );
                                 })
@@ -6103,7 +6104,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           await createVisitorAddTransactionMutation.mutateAsync(addTransactionPayload);
 
-          showSwal('success', 'Visitor added successfully.', 3000);
+          showSwal('success', t('visitorAddedSuccessfully'), 3000);
 
           resetMediaState();
           clearAnswerFiles();
@@ -6123,7 +6124,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             await createVisitorsGroupMutation.mutateAsync(parsed);
           }
 
-          showSwal('success', 'Group visitor created successfully.');
+          showSwal('success', t('groupVisitorCreatedSuccessfully'));
 
           resetMediaState();
           clearAnswerFiles();
@@ -6161,10 +6162,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           await createVisitorMutation.mutateAsync(parsed);
         }
 
-        const successMessage =
-          TYPE_REGISTERED === 0
-            ? 'Pre-registration created successfully.'
-            : 'Invitation Visitor created successfully.';
+      const successMessage =
+        TYPE_REGISTERED === 0
+          ? t('preRegistrationCreatedSuccessfully')
+          : t('invitationVisitorCreatedSuccessfully');
 
         showSwal('success', successMessage, 3000);
         resetMediaState();

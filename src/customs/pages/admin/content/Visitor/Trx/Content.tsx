@@ -231,7 +231,7 @@ const Content = () => {
           id: item.id,
           visitor_type: item.visitor_type_name || '-',
           name: item.visitor_name || '-',
-          identity_id: item.visitor_identity_id || '-',
+          citizenship_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
           // organization: item.visitor_organization_name || '-',
           invitation_code: item.invitation_code || '-',
@@ -798,8 +798,9 @@ const Content = () => {
                     { name: 'Checkin' },
                     { name: 'Checkout' },
                     { name: 'Block' },
-                    { name: 'Denied' },
+                    // { name: 'Denied' },
                     { name: 'Waiting' },
+                    { name: 'Canceled' },
                   ],
                 }}
                 onHeaderItemClick={(item) => {
@@ -808,9 +809,10 @@ const Content = () => {
                     item.name === 'Checkin' ||
                     item.name === 'Checkout' ||
                     item.name === 'Preregis' ||
-                    item.name === 'Denied' ||
+                    // item.name === 'Denied' ||
                     item.name === 'Block' ||
-                    item.name === 'Waiting'
+                    item.name === 'Waiting' ||
+                    item.name === 'Canceled'
                   ) {
                     // setSelectedType(item.name);
                     setPage(0);

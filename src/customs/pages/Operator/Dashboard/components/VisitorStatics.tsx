@@ -129,14 +129,14 @@ const VisitorStatistics = () => {
         height: '410px',
       }}
     >
-      <CardContent sx={{ p: 1 }}>
+      <CardContent sx={{ p: 1, pb: '0px !important' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h5" fontWeight={700}>
             Top Visitor Statistic
           </Typography>
         </Box>
 
-        <Chart options={options} series={series} type="bar" height={300} />
+        <Chart options={options} series={series} type="bar" height={380} />
       </CardContent>
     </Card>
   );

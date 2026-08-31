@@ -20,6 +20,10 @@ import {
   Autocomplete,
   Divider,
   LinearProgress,
+  AlertColor,
+  Portal,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -62,7 +66,7 @@ import {
   Item as SiteDocumentItem,
 } from 'src/customs/api/models/Admin/SiteDocument';
 import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
-import { BASE_URL } from 'src/customs/api/interceptor';
+import { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import RenderDragSite from './components/RenderDragSite';
 import { useLocation } from 'react-router';
@@ -163,7 +167,7 @@ const FormSite = ({
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
   const [initialTracking, setInitialTracking] = useState([]);
   const [initialParking, setInitialParking] = useState([]);
-
+  const [isDragging, setIsDragging] = useState(false);
   useEffect(() => {
     setRetentionInput(newDocument.retentionTime.toString());
   }, [newDocument.retentionTime]);
@@ -176,7 +180,16 @@ const FormSite = ({
   const { data: parkingRelations } = useSitesParking();
   const { data: trackingRelations } = useSitesTracking();
   const { data: siteDocuments } = useSiteDocuments(editingId);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
 
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
   useEffect(() => {
     if (!editingId) return;
 
@@ -390,7 +403,10 @@ const FormSite = ({
 
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
-          if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
+
+          if (key !== 'image' && (val === '' || val === null || val === undefined)) {
+            delete (updateData as any)[key];
+          }
         });
 
         // const res = await updateSite(editingId, updateData, token);
@@ -399,6 +415,7 @@ const FormSite = ({
 
           data: updateData,
         });
+
         const deletedTracking = initialTracking.filter(
           (old) => !(localForm.tracking ?? []).some((cur: any) => cur.id === old.id),
         );
@@ -435,7 +452,7 @@ const FormSite = ({
           }),
         );
 
-        await handleFileUpload(editingId);
+        // await handleFileUpload(editingId);
 
         if (!localForm.need_document) {
           try {
@@ -524,38 +541,102 @@ const FormSite = ({
     return compressedFile;
   };
 
+  const dragCounter = useRef(0);
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
+    const file = e.target.files?.[0];
 
-    if (!selectedFile) return;
+    if (!file) return;
 
-    try {
-      setIsUploadingImage(true);
+    await processImageFile(file);
 
-      // Hilangkan preview lama selama proses
-      setPreviewUrl(null);
-      setSiteImageFile(null);
+    // Supaya file yang sama bisa dipilih lagi
+    e.target.value = '';
+  };
 
-      const compressedFile = await compressImage(selectedFile);
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      if (compressedFile.size > 5 * 1024 * 1024) {
-        showSwal('info', 'Image must be under 5 MB');
-        return;
-      }
+    if (isBatchEdit || isUploadingImage) return;
 
-      setSiteImageFile(compressedFile);
-      setPreviewUrl(URL.createObjectURL(compressedFile));
-    } catch (error) {
-      console.error('Failed to process image:', error);
-      showSwal('error', 'Failed to process image');
-    } finally {
-      setIsUploadingImage(false);
+    dragCounter.current += 1;
+
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isBatchEdit || isUploadingImage) return;
+
+    dragCounter.current -= 1;
+
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
     }
   };
 
-  const handleClear = () => {
-    setSiteImageFile(null);
-    setPreviewUrl(null);
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isBatchEdit || isUploadingImage) return;
+
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isBatchEdit || isUploadingImage) return;
+
+    dragCounter.current = 0;
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+
+    if (!file) return;
+
+    await processImageFile(file);
+  };
+
+  const handleClear = async () => {
+    try {
+      setIsUploadingImage(true);
+
+      const currentUrl = localForm.image;
+
+      // Kalau image sudah tersimpan di CDN
+      if (currentUrl) {
+        await axiosInstance2.delete(`/cdn${currentUrl}`);
+      }
+
+      // Clear state frontend
+      setSiteImageFile(null);
+      setPreviewUrl(null);
+
+      // Clear image dari form
+      setLocalForm((prev) => ({
+        ...prev,
+        image: '',
+      }));
+
+      // Reset input file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      // showSwal('success', 'Site image deleted successfully.');
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
+    } catch (error) {
+      console.error('Delete site image failed:', error);
+      showSwal('error', 'Failed to delete site image.');
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleFileUpload = async (siteId: string) => {
@@ -627,19 +708,45 @@ const FormSite = ({
     });
   };
 
-  useEffect(() => {
-    if (!siteImageFile && localForm.image) {
-      if (
-        localForm.image.startsWith('data:image') ||
-        localForm.image.startsWith('http') ||
-        localForm.image.startsWith('https')
-      ) {
-        setPreviewUrl(localForm.image);
-      } else {
-        setPreviewUrl(`${BASE_URL}/cdn${localForm.image}`);
-      }
+  const checkImageExists = async (imageUrl: string) => {
+    try {
+      const response = await axiosInstance2.get(imageUrl, {
+        responseType: 'blob',
+      });
+
+      return response.status === 200;
+    } catch {
+      return false;
     }
-  }, [localForm.image, siteImageFile]);
+  };
+
+useEffect(() => {
+  const loadPreview = async () => {
+    if (siteImageFile) return;
+
+    if (!localForm.image) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const imageUrl =
+      localForm.image.startsWith('http') || localForm.image.startsWith('data:image')
+        ? localForm.image
+        : `${BASE_URL}/cdn${localForm.image}`;
+
+    const exists = await checkImageExists(imageUrl);
+
+    if (exists) {
+      setPreviewUrl(imageUrl);
+    } else {
+      // DB masih punya path,
+      // tetapi file CDN sudah tidak ada
+      setPreviewUrl(null);
+    }
+  };
+
+  loadPreview();
+}, [localForm.image, siteImageFile]);
 
   const handleDetailChange = (section: string, index: number, field: string, value: any) => {
     setLocalForm((prev) => {
@@ -748,6 +855,71 @@ const FormSite = ({
     fetchData();
   }, []);
 
+  const processImageFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showSwal('error', 'Please select an image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast('Image must be under 5 MB', 'info');
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+
+      if (previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      // =========================
+      // EDIT
+      // =========================
+      if (editingId) {
+        const res = await uploadImageSite(editingId, file);
+
+        const fileUrl = res?.collection?.file_url;
+
+        if (!fileUrl) {
+          throw new Error('Upload succeeded but file URL was not returned.');
+        }
+
+        // Simpan hasil upload ke form
+        setLocalForm((prev) => ({
+          ...prev,
+          image: fileUrl,
+        }));
+
+        // File sudah langsung di-upload
+        setSiteImageFile(null);
+
+        // Preview CDN
+        setPreviewUrl(`${BASE_URL}/cdn${fileUrl}`);
+
+        toast('Image uploaded successfully.', 'success');
+
+        return;
+      }
+
+      // =========================
+      // CREATE
+      // =========================
+      // Belum punya site ID,
+      // jadi simpan File dulu.
+      setSiteImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    } catch (error) {
+      console.error('Image upload failed:', error);
+
+      setSiteImageFile(null);
+      setPreviewUrl(null);
+
+      showSwal('error', 'Failed to upload image.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
   return (
     <>
       <form onSubmit={handleOnSubmit}>
@@ -1922,23 +2094,27 @@ const FormSite = ({
                 </Typography>
                 <Box
                   sx={{
-                    border: '2px dashed #90caf9',
+                    border: '2px dashed',
+                    borderColor: isDragging ? '#1976d2' : '#90caf9',
                     borderRadius: 2,
                     padding: 4,
                     textAlign: 'center',
-                    backgroundColor: '#f5faff',
+                    backgroundColor: isDragging ? '#e3f2fd' : '#f5faff',
                     cursor: isBatchEdit || isUploadingImage ? 'not-allowed' : 'pointer',
                     width: '100%',
                     margin: '0 auto',
-                    pointerEvents: isBatchEdit || isUploadingImage ? 'none' : 'auto',
                     opacity: isBatchEdit || isUploadingImage ? 0.5 : 1,
-                    transition: 'opacity 0.2s ease',
+                    transition: 'all 0.2s ease',
                   }}
                   onClick={() => {
                     if (!isBatchEdit && !isUploadingImage) {
                       fileInputRef.current?.click();
                     }
                   }}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                 >
                   <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                   <Typography variant="h6" sx={{ mt: 1 }}>
@@ -2044,7 +2220,29 @@ const FormSite = ({
           </Button>
         </Box>
       </form>
-
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 999999 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
       <GlobalBackdropLoading open={isPending} />
     </>
   );

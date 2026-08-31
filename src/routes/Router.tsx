@@ -181,6 +181,9 @@ const ManageUserGroup = Loadable(
 const ManageReportTransaction = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/TransactionLog/Content')),
 );
+const ManageReportInvitation = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/InvitationLog/Content')),
+);
 
 const ManageReportApproval = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/Approval/Content')),
@@ -281,6 +284,10 @@ const NotificationStaff = Loadable(
 
 // Monitoring
 const Monitoring = Loadable(lazy(() => import('src/customs/pages/Monitoring/Content')));
+//
+const MonitoringAdmin = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Monitoring/Content')),
+);
 
 const Router = [
   {
@@ -408,6 +415,7 @@ const Router = [
         element: <ProtectedRoute allowedRoles={['Admin', 'OperatorAdmin']} />,
         children: [
           { path: '/admin/dashboard', element: <Dashboard /> },
+          { path: '/admin/monitoring', element: <MonitoringAdmin /> },
           // Visitor
           { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
           { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
@@ -448,6 +456,7 @@ const Router = [
           { path: '/admin/users', element: <ManageUser /> },
           { path: '/admin/users-group', element: <ManageUserGroup /> },
           { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
+          { path: '/admin/report/invitation', element: <ManageReportInvitation /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
           {
             path: '/admin/report/operator-activity-log',

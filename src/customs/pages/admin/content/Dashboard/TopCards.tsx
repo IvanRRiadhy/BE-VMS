@@ -56,11 +56,9 @@ const TopCards = ({ items = [], size }: any) => {
   };
 
   useEffect(() => {
- 
-
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart( start, end);
+        const res = await getVisitorChart(start, end);
 
         const collection: ApiDateGroup[] = res.collection ?? [];
 
@@ -107,8 +105,8 @@ const TopCards = ({ items = [], size }: any) => {
       }
     };
 
-     fetchData();
-  }, [ startDate, endDate]);
+    fetchData();
+  }, [startDate, endDate]);
 
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;
@@ -147,41 +145,96 @@ const TopCards = ({ items = [], size }: any) => {
     };
   };
 
-  const getColorByTitle = (title: string) => {
-    switch (title.toLowerCase()) {
-      case 'checkin':
-        return '#21c45d'; // hijau
-      case 'checkout':
-        return '#F44336'; // merah
-      case 'denied':
-        return '#8B0000'; // merah tua
-      case 'block':
-        return '#424242'; // hitam
-      case 'waiting':
-        return '#4abfd4ff';
-      case 'blacklist':
-        return '#000000';
-      default:
-        return '#5c87ff'; // biru default
-    }
-  };
+  // const getColorByTitle = (title: string) => {
+  //   switch (title.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#21c45d'; // hijau
+  //     case 'checkout':
+  //       return '#F44336'; // merah
+  //     case 'denied':
+  //       return '#8B0000'; // merah tua
+  //     case 'block':
+  //       return '#424242'; // hitam
+  //     case 'waiting':
+  //       return '#4abfd4ff';
+  //     case 'blacklist':
+  //       return '#000000';
+  //     default:
+  //       return '#5c87ff'; // biru default
+  //   }
+  // };
+
+  // const getColorByKey = (key: string) => {
+  //   switch (key.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#21c45d';
+  //     case 'checkout':
+  //       return '#F44336';
+  //     case 'denied':
+  //       return '#8B0000';
+  //     case 'block':
+  //       return '#424242';
+  //     case 'waiting':
+  //       return '#4abfd4';
+  //     case 'blacklist':
+  //       return '#000000';
+  //     default:
+  //       return '#5c87ff';
+  //   }
+  // };
 
   const getColorByKey = (key: string) => {
     switch (key.toLowerCase()) {
       case 'checkin':
-        return '#21c45d';
+        return '#16A765';
       case 'checkout':
-        return '#F44336';
+        return '#E53935';
       case 'denied':
         return '#8B0000';
       case 'block':
-        return '#424242';
+        return '#4B5563';
       case 'waiting':
-        return '#4abfd4';
+        return '#055499';
       case 'blacklist':
-        return '#000000';
+        return '#111827';
       default:
-        return '#5c87ff';
+        return '#055499';
+    }
+  };
+
+  const getColorByTitle = (title: string) => {
+    switch (title.toLowerCase()) {
+      case 'checkin':
+        return '#16A765';
+      case 'checkout':
+        return '#E53935';
+      case 'denied':
+        return '#8B0000';
+      case 'block':
+        return '#4B5563';
+      case 'waiting':
+        return '#055499';
+      case 'blacklist':
+        return '#111827';
+      default:
+        return '#055499';
+    }
+  };
+
+  const getBackgroundByKey = (key: string) => {
+    switch (key.toLowerCase()) {
+      case 'checkin':
+        return '#EAF6EF';
+      case 'checkout':
+        return '#FFF0EF';
+      case 'block':
+        return '#F3F4F6';
+      case 'waiting':
+        return '#EAF4FC';
+      case 'blacklist':
+        return '#F3F4F6';
+      default:
+        return '#F3F4F6';
     }
   };
 
@@ -200,7 +253,7 @@ const TopCards = ({ items = [], size }: any) => {
               <CardContent
                 sx={{
                   backgroundColor: `${baseColor}40`,
-                  border: `0.5px solid ${baseColor}40`,
+                  // border: `0.5px solid ${baseColor}40`,
                   color: '#000',
                   boxShadow: 2.5,
                   height: 150,
@@ -211,10 +264,10 @@ const TopCards = ({ items = [], size }: any) => {
                 }}
               >
                 <Box width="100%">
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Box>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
+                    <Box display={'flex'} flexDirection={'column'} gap={0.5}>
                       <Typography
-                        variant="h6"
+                        variant="h5"
                         fontWeight={600}
                         sx={{ textTransform: 'capitalize' }}
                       >

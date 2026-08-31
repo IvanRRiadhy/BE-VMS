@@ -1034,7 +1034,7 @@ const GuestInformationStepper = () => {
             Upload File
           </Typography>
           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-            Drag and drop or tap to select file.
+            {t('dragDropOrTapToSelectFile')}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
             <Typography variant="body1" color="textSecondary">

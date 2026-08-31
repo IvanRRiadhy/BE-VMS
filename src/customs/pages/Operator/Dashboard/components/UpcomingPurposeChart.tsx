@@ -52,14 +52,16 @@ export default function UpcomingPurposeChart({ data }: UpcomingPurposeChartProps
         boxShadow: '0px 2px 10px rgba(0,0,0,0.08)',
       }}
     >
-      <CardContent sx={{ pb: '0 !Important' }}>
+      <CardContent sx={{ p: '5px !Important' }}>
         <Typography
           sx={{
-            fontSize: 16,
-            fontWeight: 600,
+            // fontSize: 16,
+            fontWeight: 'bold',
             color: '#4A4A4A',
-            mb: 5,
+
+            mb: 3,
           }}
+          variant="h6"
         >
           Upcoming Visit Purpose
         </Typography>

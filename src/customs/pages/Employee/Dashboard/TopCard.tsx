@@ -157,25 +157,6 @@ const TopCard = ({ items = [], size }: any) => {
     };
   };
 
-  const getColorByTitle = (title: string) => {
-    switch (title.toLowerCase()) {
-      case 'checkin':
-        return '#21c45d'; // hijau
-      case 'checkout':
-        return '#F44336'; // merah
-      case 'denied':
-        return '#8B0000'; // merah tua
-      case 'block':
-        return '#424242'; // hitam
-      case 'waiting':
-        return '#4abfd4ff';
-      case 'blacklist':
-        return '#000000';
-      default:
-        return '#5c87ff'; // biru default
-    }
-  };
-
   const [rawCollection, setRawCollection] = useState<ApiDateGroup[]>([]);
 
   const getLast7DaysSeries = (key: string) => {
@@ -204,22 +185,79 @@ const TopCard = ({ items = [], size }: any) => {
     return values;
   };
 
+  // const getColorByKey = (key: string) => {
+  //   switch (key.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#21c45d';
+  //     case 'checkout':
+  //       return '#F44336';
+  //     case 'denied':
+  //       return '#8B0000';
+  //     case 'block':
+  //       return '#424242';
+  //     case 'waiting':
+  //       return '#4abfd4';
+  //     case 'blacklist':
+  //       return '#000000';
+  //     default:
+  //       return '#5c87ff';
+  //   }
+  // };
+
+  // const getColorByTitle = (title: string) => {
+  //   switch (title.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#21c45d'; // hijau
+  //     case 'checkout':
+  //       return '#F44336'; // merah
+  //     case 'denied':
+  //       return '#8B0000'; // merah tua
+  //     case 'block':
+  //       return '#424242'; // hitam
+  //     case 'waiting':
+  //       return '#4abfd4ff';
+  //     case 'blacklist':
+  //       return '#000000';
+  //     default:
+  //       return '#5c87ff'; // biru default
+  //   }
+  // };
+
   const getColorByKey = (key: string) => {
     switch (key.toLowerCase()) {
       case 'checkin':
-        return '#21c45d';
+        return '#16A765';
       case 'checkout':
-        return '#F44336';
+        return '#E53935';
       case 'denied':
         return '#8B0000';
       case 'block':
-        return '#424242';
+        return '#4B5563';
       case 'waiting':
-        return '#4abfd4';
+        return '#055499';
       case 'blacklist':
-        return '#000000';
+        return '#111827';
       default:
-        return '#5c87ff';
+        return '#055499';
+    }
+  };
+
+  const getColorByTitle = (title: string) => {
+    switch (title.toLowerCase()) {
+      case 'checkin':
+        return '#16A765';
+      case 'checkout':
+        return '#E53935';
+      case 'denied':
+        return '#8B0000';
+      case 'block':
+        return '#4B5563';
+      case 'waiting':
+        return '#055499';
+      case 'blacklist':
+        return '#111827';
+      default:
+        return '#055499';
     }
   };
 
@@ -236,7 +274,7 @@ const TopCard = ({ items = [], size }: any) => {
                 // backgroundColor: '#fff',
                 // background: `linear-gradient(180deg, ${baseColor}35)`,
                 backgroundColor: `${baseColor}40`,
-                border: `0.5px solid ${baseColor}40`,
+                // border: `0.5px solid ${baseColor}40`,
 
                 color: '#000',
                 boxShadow: 2.5,

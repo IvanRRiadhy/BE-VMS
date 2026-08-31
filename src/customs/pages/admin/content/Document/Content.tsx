@@ -52,6 +52,7 @@ const Content = () => {
 
   const tableData = documentQuery.data?.collection ?? [];
   const totalRecords = documentQuery.data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = documentQuery.data?.RecordsFiltered ?? 0;
   const loading = documentQuery.isPending;
   const { remove: deleteDocument } = useDocumentMutation();
 
@@ -212,6 +213,7 @@ const Content = () => {
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
+                totalCount={totalFilteredRecords}
                 rowsPerPageOptions={[10, 50, 100]}
                 searchPlaceholder="Search document"
                 currentPage={page}

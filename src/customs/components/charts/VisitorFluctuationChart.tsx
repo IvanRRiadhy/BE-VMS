@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { Box, Typography } from '@mui/material';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { t } from 'i18next';
 import { useSelector } from 'react-redux';
@@ -28,7 +27,7 @@ const VisitorFluctuationChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getVisitorChart(start, end);
+        const res = await getVisitorChart(start as string, end as string);
         const rows = res?.collection ?? [];
 
         setDates(rows.map((item: any) => new Date(item.date).getTime()));
@@ -39,28 +38,28 @@ const VisitorFluctuationChart = () => {
         setSeries([
           {
             id: 'checkedIn',
-            label: 'Checked In',
+            label: 'Check In',
             color: '#22c55e',
             area: true,
             data: rows.map((r: any) => getCount(r.status, 'Checkin')),
           },
           {
             id: 'checkedOut',
-            label: 'Checked Out',
+            label: 'Check Out',
             color: '#F44336',
             area: true,
             data: rows.map((r: any) => getCount(r.status, 'Checkout')),
           },
-          {
-            id: 'denied',
-            label: 'Denied',
-            color: '#8B0000',
-            area: true,
-            data: rows.map((r: any) => getCount(r.status, 'Denied')),
-          },
+          // {
+          //   id: 'denied',
+          //   label: 'Denied',
+          //   color: '#8B0000',
+          //   area: true,
+          //   data: rows.map((r: any) => getCount(r.status, 'Denied')),
+          // },
           {
             id: 'blocked',
-            label: 'Blocked',
+            label: 'Block',
             color: '#000000',
             area: true,
             data: rows.map((r: any) => getCount(r.status, 'Block')),

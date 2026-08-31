@@ -72,17 +72,18 @@ function VisitorRow({
             {visitor.visitor_status}
           </Box>
         </TableCell>
-        {isAdmin && (
-          <TableCell>
+
+        <TableCell>
+          {isAdmin && visitor.visitor_status !== 'Canceled' && (
             <Tooltip title="Remove Visitor" arrow>
               <span>
-                <IconButton color="error" disabled={!selectedVisitor} onClick={handleRemoveVisitor}>
+                <IconButton color="error" onClick={handleRemoveVisitor} disabled={!selectedVisitor}>
                   <IconTrash size={26} />
                 </IconButton>
               </span>
             </Tooltip>
-          </TableCell>
-        )}
+          )}
+        </TableCell>
       </TableRow>
     </>
   );

@@ -30,6 +30,11 @@
     "visitor_role": "Visitor Role",
     "visitor_providers": "Visitor Providers"
   },
+  "pageNotFound": "404 - Page Not Found",
+  "pageNotFoundDescription": "The page you're looking for could not be found or is no longer available.",
+  "noQrCardAvailable": "No QR/Card Available",
+  "scanVisitorOrTapCard": "Scan a visitor or tap a card to show the QR code",
+  "backToHome": "Back to Home",
   "add": "Add",
   "addVisitor": "Add Visitor",
   "back": "Back",
@@ -205,5 +210,9 @@
   "blacklistReason": "Please provide a reason for blacklisting this visitor.",
   "successBlacklist": "Successfully blacklisted visitor.",
   "whitelistReason": "Please provide a reason for whitelisting this visitor.",
-  "successWhitelist": "Successfully whitelisted visitor."
+  "successWhitelist": "Successfully whitelisted visitor.",
+  "preRegistrationCreatedSuccessfully": "Successfully created pre-registration.",
+  "invitationVisitorCreatedSuccessfully": "Successfully created visitor invitation.",
+  "groupVisitorCreatedSuccessfully": "Successfully created visitor group.",
+  "visitorAddedSuccessfully": "Successfully added visitor."
 }

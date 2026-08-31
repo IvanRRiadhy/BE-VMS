@@ -34,6 +34,7 @@ import { getTodayPraregister } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import dayjs from 'dayjs';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 const Content = () => {
   const dispatch = useDispatch();
@@ -45,6 +46,8 @@ const Content = () => {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
+
+  const { data: profile } = useProfile();
 
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
@@ -105,7 +108,6 @@ const Content = () => {
     const fetchData = async () => {
       try {
         const response = await getTodayPraregister(
-
           dayjs(startDate).format('YYYY-MM-DD'),
           dayjs(endDate).format('YYYY-MM-DD'),
         );
@@ -124,13 +126,11 @@ const Content = () => {
             visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           }));
         setDataPraregist(rows || []);
-      } catch (error) { }
+      } catch (error) {}
     };
 
     fetchData();
   }, []);
-
-
 
   return (
     <PageContainer
@@ -141,7 +141,25 @@ const Content = () => {
         <Box>
           <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
             <Grid
-              size={{ xs: 12, lg: 12 }}
+              size={{ xs: 12, lg: 6 }}
+              display="flex"
+              justifyContent=""
+              alignItems="center"
+              gap={2}
+              sx={{ mt: 0.5 }}
+            >
+              <Box>
+                <Typography variant="h4" fontWeight="bold">
+                  Welcome Back, {profile?.fullname} 👋
+                </Typography>
+                <Typography color="text.secondary">
+                  {' '}
+                  Here's an overview of today's visitor activity.
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid
+              size={{ xs: 12, lg: 6 }}
               display="flex"
               justifyContent="flex-end"
               alignItems="center"

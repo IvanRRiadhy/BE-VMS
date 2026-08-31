@@ -274,7 +274,7 @@ export const UpdateSiteRequestSchema = z.object({
   type: z.coerce.number().default(0),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
-  image: z.string().nullable().optional().default(''),
+  image: z.string().nullable().optional(),
   can_visited: z.boolean().default(false),
   need_invitation: z.boolean().nullable().optional().default(false),
   need_approval: z.boolean().default(false),

@@ -13,6 +13,8 @@ import { IconBrandWhatsapp, IconPhone } from '@tabler/icons-react';
 import { Email } from '@mui/icons-material';
 import axiosInstance, { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import axios from 'axios';
+import PreviewImageDialog from '../Dialog/PreviewImageDialog';
+import { useState } from 'react';
 
 interface InvitationQrCardProps {
   invitationCode?: any;
@@ -66,6 +68,19 @@ const HostInformation = ({
   const whatsappNumber = data?.hosts[0].phone?.replace(/\D/g, '');
   // const host = invitationCode.find((item: any) => item.is_host === true);
   const host = data?.hosts?.[0];
+  const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [selectedTitle, setSelectedTitle] = useState('');
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handlePreviewImage = (image: string, title: string) => {
+    setSelectedImage(image);
+    setSelectedTitle(title);
+    setOpen(true);
+  };
   return (
     <>
       <Card
@@ -95,8 +110,18 @@ const HostInformation = ({
           <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             <Avatar
               src={
-                host?.faceimage ? `${axiosInstance2.defaults.baseURL}/cdn${host?.faceimage}` : undefined
+                host?.faceimage
+                  ? `${axiosInstance2.defaults.baseURL}/cdn${host?.faceimage}`
+                  : undefined
               }
+              onClick={() => {
+                if (host?.faceimage) {
+                  handlePreviewImage(
+                    `${axiosInstance2.defaults.baseURL}/cdn${host.faceimage}`,
+                    host?.name || 'Host Photo',
+                  );
+                }
+              }}
               sx={{
                 width: 100,
                 height: 100,
@@ -137,7 +162,7 @@ const HostInformation = ({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1,
+                  gap: 0.6,
                   mb: 0.5,
                 }}
               >
@@ -150,6 +175,7 @@ const HostInformation = ({
                 >
                   <IconPhone size={25} />
                 </Box>
+                {/* <Typography variant="body2">Phone</Typography> */}
 
                 <Typography sx={{ width: 5 }}>:</Typography>
 
@@ -174,8 +200,9 @@ const HostInformation = ({
                 >
                   <Email sx={{ fontSize: 25 }} />
                 </Box>
+                {/* <Typography variant="body2">Email</Typography> */}
 
-                <Typography sx={{ width: 5 }}>:</Typography>
+                <Typography sx={{ width: 5 }}> :</Typography>
 
                 <Typography variant="body1" color="text.secondary">
                   {data?.hosts[0].email || '-'}
@@ -255,6 +282,12 @@ const HostInformation = ({
           </Box> */}
         </CardContent>
       </Card>
+      <PreviewImageDialog
+        open={open}
+        image={selectedImage}
+        title={selectedTitle}
+        onClose={handleClose}
+      />
     </>
   );
 };

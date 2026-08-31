@@ -38,12 +38,20 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     title: 'Dashboard',
     icon: IconHome,
     href: '/admin/dashboard',
-  },
-  {
-    id: uniqueId(),
-    title: 'Monitoring',
-    icon: IconEye,
-    href: '/admin/monitoring',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/admin/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Monitoring',
+        icon: IconEye,
+        href: '/admin/monitoring',
+      },
+    ],
   },
 
   {
@@ -274,6 +282,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconReport,
         chipColor: 'secondary',
         href: '/admin/report/transaction-log',
+      },
+      {
+        id: uniqueId(),
+        title: 'Invitation',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/invitation',
       },
       // {
       //   id: uniqueId(),

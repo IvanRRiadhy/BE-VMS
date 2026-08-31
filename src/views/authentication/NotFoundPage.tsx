@@ -1,7 +1,9 @@
 import { Box, Typography, Button } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {
+  const { t } = useTranslation();
   return (
     <Box
       display="flex"
@@ -12,13 +14,13 @@ export default function NotFoundPage() {
       textAlign="center"
     >
       <Typography variant="h3" gutterBottom>
-        404 - Page Not Found
+        {t('pageNotFound')}
       </Typography>
       <Typography variant="body1" mb={3}>
-        Halaman yang kamu cari tidak ditemukan atau sudah tidak tersedia.
+        {t('pageNotFoundDescription')}
       </Typography>
       <Button variant="contained" color="primary" component={Link} to="/">
-        Kembali ke Halaman Utama
+        {t('backToHome')}
       </Button>
     </Box>
   );

@@ -298,7 +298,8 @@ const Content = () => {
       const normalized = {
         ...found,
         type: typeof found.type === 'string' ? (siteTypeMap[found.type] ?? 0) : Number(found.type),
-
+        can_swap: found.can_swap ?? false,
+        max_capacity: found.max_capacity ?? 0,
         approval_workflow_id:
           found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
             ? String(found.approval_workflow_id)
@@ -328,10 +329,7 @@ const Content = () => {
       setPendingEditId(null);
       setIsDirty(false);
     } catch (error) {
-      console.error('Error fetching/parsing data:', error);
-
       setOpenFormCreateSiteSpace(false);
-
       showSwal('error', 'Failed to load site data');
     } finally {
       setLoadingEdit(false);

@@ -71,10 +71,10 @@ const InvitationQrCard = ({
             <Box textAlign="center" color="text.secondary">
               <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
               <Typography variant="h6" fontWeight={500}>
-                No QR/Card Available
+                {t('noQrCardAvailable')}
               </Typography>
               <Typography variant="body1" color="text.disabled">
-                Scan a visitor/tap card to show QR code
+                {t('scanVisitorOrTapCard')}
               </Typography>
             </Box>
           )}

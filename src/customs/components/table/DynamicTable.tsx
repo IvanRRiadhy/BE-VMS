@@ -574,6 +574,8 @@ function DynamicTableBase<
     alarm_record: 'Alarm Record',
     alarm_warning: 'Alarm Warning',
     tracking_transaction: 'Tracking Transaction',
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
   };
 
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string | number, boolean>>({});

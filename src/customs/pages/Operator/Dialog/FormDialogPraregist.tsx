@@ -652,7 +652,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             Upload File
           </Typography>
           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-            Drag and drop or tap to select file.
+            {t('dragDropOrTapToSelectFile')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="body1" color="textSecondary" mt={0}>

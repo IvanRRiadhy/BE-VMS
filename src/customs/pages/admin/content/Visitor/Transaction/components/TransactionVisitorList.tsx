@@ -54,7 +54,7 @@ const TransactionVisitorList = ({
   handleDuplicate,
   handleCancel,
   fetchNextPage,
-  handleAdd
+  handleAdd,
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -140,55 +140,56 @@ const TransactionVisitorList = ({
                 <Typography>Start : {group.visitor_period_start}</Typography>
 
                 <Typography>End : {group.visitor_period_end}</Typography>
-
-                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
-                  {group.remarks === 'PraRegister' && (
-                    <Tooltip title="Add" arrow>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAdd(group);
-                        }}
-                        sx={{
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          '&:hover': {
-                            bgcolor: 'primary.dark',
-                          },
-                        }}
-                      >
-                        <IconPlus size={20} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      backgroundColor: 'gray',
-                      color: 'white',
-                    }}
-                    startIcon={<ContentCopy />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDuplicate(group);
-                    }}
-                  >
-                    Duplicate
-                  </Button>
-
-                  {group.invited_by === profile?.user_id && (
+                {group.transaction_status !== 'Canceled' && (
+                  <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
+                    {group.remarks === 'PraRegister' && (
+                      <Tooltip title="Add" arrow>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdd(group);
+                          }}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                          }}
+                        >
+                          <IconPlus size={20} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Button
-                      variant="contained"
-                      color="error"
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: 'gray',
+                        color: 'white',
+                      }}
+                      startIcon={<ContentCopy />}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCancel(group.id);
+                        handleDuplicate(group);
                       }}
                     >
-                      Cancel
+                      Duplicate
                     </Button>
-                  )}
-                </Box>
+
+                    {group.invited_by === profile?.user_id && (
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancel(group.id);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </Box>
+                )}
               </Box>
             ))}
 

@@ -4263,7 +4263,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             Upload File
                           </Typography>
                           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                            Drag and drop or tap to select file.
+                           {t("dragDropOrTapToSelectFile")}
                           </Typography>
                           <Box
                             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -4783,7 +4783,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                          Drag and drop or tap to select file.
+                         {t("dragDropOrTapToSelectFile")}
                         </Typography>
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -4835,6 +4835,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             e.target.value = '';
                           }}
                         />
+
+                        {isUploading && (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: '220px',
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}

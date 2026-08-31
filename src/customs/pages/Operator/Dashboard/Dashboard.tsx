@@ -30,6 +30,7 @@ import TopVisitingPurposeChart from 'src/customs/components/charts/TopVisitingPu
 import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
 import UpcomingPurposeChart from './components/UpcomingPurposeChart';
 import VisitorFluctuationChart from 'src/customs/components/charts/VisitorFluctuationChart';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 const DashboardOperator = () => {
   const CardItems = [
@@ -45,6 +46,8 @@ const DashboardOperator = () => {
     },
   ];
   const dispatch = useDispatch();
+  const { data: profile } = useProfile();
+
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
@@ -200,10 +203,12 @@ const DashboardOperator = () => {
   return (
     <Container title="Dashboard">
       <Grid container spacing={1} sx={{ mt: 0 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}> */}
+        <Box sx={{ width: '100%' }}>
           <DashboardEmployeeActionBar
             startDate={startDate}
             endDate={endDate}
+            profile={profile}
             onDateChange={(startDate, endDate) => {
               dispatch(
                 setDateRange({
@@ -216,6 +221,7 @@ const DashboardOperator = () => {
             isExporting={isExporting}
           />
         </Box>
+        {/* </Box> */}
         <Grid size={{ xs: 12, lg: 12 }}>
           {/* <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} /> */}
           <TopCardsUI onOpenQuick={setOpenQuickAccess} />

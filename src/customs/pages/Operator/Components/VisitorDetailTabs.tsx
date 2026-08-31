@@ -79,6 +79,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Preregis: '#a5a5a5ff',
     Waiting: '#4abfd4',
     Available: 'gray',
+    Canceled: 'gray',
   };
 
   const statusLabelMap: Record<string, string> = {
@@ -91,8 +92,10 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Preregis: 'Preregis',
     Waiting: 'Waiting',
     Available: 'Available',
+    Canceled: 'Canceled',
   };
 
+  console.log('card', data?.card);
   return (
     <>
       <Box
@@ -465,7 +468,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                             wordBreak: 'break-word',
                           }}
                         >
-                          {card.mac ?? '-'}
+                          {card.card_mac ?? '-'}
                         </Typography>
                       </Box>
                     </Box>

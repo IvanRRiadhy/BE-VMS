@@ -74,7 +74,7 @@ export default function ExpectedVisitorsCard() {
               </TableCell>
             </TableRow>
           ) : upcomingVisitors.length === 0 ? (
-            <TableRow>
+            <TableRow sx={{ height: '100%' }}>
               <TableCell colSpan={3} align="center">
                 <Typography fontSize={13} color="text.secondary" py={3}>
                   No expected visitors

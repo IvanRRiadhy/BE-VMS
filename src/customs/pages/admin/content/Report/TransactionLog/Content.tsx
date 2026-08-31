@@ -38,7 +38,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import {
+  IconChevronLeft,
+  IconChevronRight,
   IconDeviceFloppy,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarRight,
+  IconLayoutSidebarRightCollapse,
   IconPencil,
   IconReport,
   IconSearch,
@@ -556,284 +561,350 @@ const Content = () => {
     { id: 'Unblock', label: 'Unblock' },
   ];
 
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
       <Container title="Report" description="This is Content Report page">
-        <Grid container spacing={1}>
-          <Grid size={{ xs: 12, md: 3, xl: 2 }}>
-            <Box sx={{ backgroundColor: 'white', p: 2, height: '100%' }}>
-              <Typography variant="h5" gutterBottom mb={2}>
-                Transaction Log Report
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Report Name</CustomFormLabel>
-                  <TextField
-                    fullWidth
-                    value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Enter Report Name"
-                    InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Description</CustomFormLabel>
-                  <TextField
-                    fullWidth
-                    value={formData.description}
-                    onChange={(e) => handleChange('description', e.target.value)}
-                    placeholder="Description"
-                    InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            width: '100%',
+            alignItems: 'stretch',
+          }}
+        >
+          {/* SIDEBAR */}
+          <Box
+            sx={{
+              width: {
+                xs: '100%',
+                md: isFilterCollapsed ? '48px' : '25%',
+                xl: isFilterCollapsed ? '48px' : '16.666%',
+              },
+              flexShrink: 0,
+              transition: 'width 300ms ease',
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: 'white',
+                p: isFilterCollapsed ? 1 : 2,
+                height: '100%',
+              }}
+            >
+              {/* HEADER + BUTTON */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isFilterCollapsed ? 'center' : 'space-between',
+                  mb: 1,
+                }}
+              >
+                {!isFilterCollapsed && <Typography variant="h5">Transaction Log Report</Typography>}
 
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Period</CustomFormLabel>
-                  <CustomSelect
-                    fullWidth
-                    value={formData.time_report}
-                    onChange={(e: any) => handleChange('time_report', e.target.value)}
-                    sx={{ mt: 0.5 }}
-                  >
-                    <MenuItem value="all">Select Period</MenuItem>
-                    <MenuItem value="Daily">Daily</MenuItem>
-                    <MenuItem value="Weekly">Weekly</MenuItem>
-                    <MenuItem value="Monthly">Monthly</MenuItem>
-                    <MenuItem value="Yearly">Yearly</MenuItem>
-                    <MenuItem value="CustomDate">Custom Date</MenuItem>
-                  </CustomSelect>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
-                  <TextField
-                    type="date"
-                    fullWidth
-                    value={formData.start_date || ''}
-                    onChange={(e) => handleChange('start_date', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ '& input': { color: 'black' }, mt: 0.5 }}
-                    disabled={formData.time_report !== 'CustomDate'}
-                  />
-                </Grid>
+                <Tooltip title={isFilterCollapsed ? 'Show Sidebar' : 'Hide Sidebar'} arrow>
+                  <IconButton size="small" onClick={() => setIsFilterCollapsed((prev) => !prev)}>
+                    {isFilterCollapsed ? <IconLayoutSidebarRightCollapse /> : <IconLayoutSidebarLeftCollapse />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              {!isFilterCollapsed && (
+                <>
+                  <Divider sx={{ mb: 2 }} />
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Report Name</CustomFormLabel>
+                      <TextField
+                        fullWidth
+                        value={formData.name}
+                        onChange={(e) => handleChange('name', e.target.value)}
+                        placeholder="Enter Report Name"
+                        InputLabelProps={{ shrink: true }}
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Description</CustomFormLabel>
+                      <TextField
+                        fullWidth
+                        value={formData.description}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        placeholder="Description"
+                        InputLabelProps={{ shrink: true }}
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
 
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
-                  <TextField
-                    type="date"
-                    fullWidth
-                    value={formData.end_date || ''}
-                    onChange={(e) => handleChange('end_date', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ '& input': { color: 'black' }, mt: 0.5 }}
-                    disabled={formData.time_report !== 'CustomDate'}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor</CustomFormLabel>
-                  <Autocomplete
-                    size="small"
-                    options={visitorOptions}
-                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    inputValue={searchVisitor}
-                    onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
-                    filterOptions={(opts, state) => {
-                      const term = (state.inputValue || '').toLowerCase();
-                      // if (term.length < 3) return [];
-                      return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
-                    }}
-                    noOptionsText={searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'}
-                    value={visitorOptions.find((x: any) => x.id === formData.visitor_id) || null}
-                    onChange={(_, val) => handleChange('visitor_id', val ? val.id : null)}
-                    renderOption={(props, option) => (
-                      <li {...props} key={option.id}>
-                        {option.name}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Search Visitor" fullWidth />
-                    )}
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor Status</CustomFormLabel>
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    options={visitorStatusOptions}
-                    getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    value={visitorStatusOptions.filter((opt) =>
-                      formData.visitor_statuss?.includes(opt.id),
-                    )}
-                    onChange={(_, values) =>
-                      handleChange(
-                        'visitor_statuss',
-                        values.map((v) => v.id),
-                      )
-                    }
-                    renderTags={(value, getTagProps) =>
-                      value.map((option, index) => (
-                        <Chip
-                          label={option.label}
-                          size="small"
-                          {...getTagProps({ index })}
-                          key={option.id}
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Period</CustomFormLabel>
+                      <CustomSelect
+                        fullWidth
+                        value={formData.time_report}
+                        onChange={(e: any) => handleChange('time_report', e.target.value)}
+                        sx={{ mt: 0.5 }}
+                      >
+                        <MenuItem value="all">Select Period</MenuItem>
+                        <MenuItem value="Daily">Daily</MenuItem>
+                        <MenuItem value="Weekly">Weekly</MenuItem>
+                        <MenuItem value="Monthly">Monthly</MenuItem>
+                        <MenuItem value="Yearly">Yearly</MenuItem>
+                        <MenuItem value="CustomDate">Custom Date</MenuItem>
+                      </CustomSelect>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
+                      <TextField
+                        type="date"
+                        fullWidth
+                        value={formData.start_date || ''}
+                        onChange={(e) => handleChange('start_date', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                        disabled={formData.time_report !== 'CustomDate'}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
+                      <TextField
+                        type="date"
+                        fullWidth
+                        value={formData.end_date || ''}
+                        onChange={(e) => handleChange('end_date', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                        disabled={formData.time_report !== 'CustomDate'}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor</CustomFormLabel>
+                      <Autocomplete
+                        size="small"
+                        options={visitorOptions}
+                        getOptionLabel={(option) =>
+                          typeof option === 'string' ? option : option.name
+                        }
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        inputValue={searchVisitor}
+                        onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
+                        filterOptions={(opts, state) => {
+                          const term = (state.inputValue || '').toLowerCase();
+                          // if (term.length < 3) return [];
+                          return opts.filter((opt) =>
+                            (opt.name || '').toLowerCase().includes(term),
+                          );
+                        }}
+                        noOptionsText={
+                          searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'
+                        }
+                        value={
+                          visitorOptions.find((x: any) => x.id === formData.visitor_id) || null
+                        }
+                        onChange={(_, val) => handleChange('visitor_id', val ? val.id : null)}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Search Visitor" fullWidth />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>
+                        Visitor Status
+                      </CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        size="small"
+                        options={visitorStatusOptions}
+                        getOptionLabel={(option) => option.label}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        value={visitorStatusOptions.filter((opt) =>
+                          formData.visitor_statuss?.includes(opt.id),
+                        )}
+                        onChange={(_, values) =>
+                          handleChange(
+                            'visitor_statuss',
+                            values.map((v) => v.id),
+                          )
+                        }
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              label={option.label}
+                              size="small"
+                              {...getTagProps({ index })}
+                              key={option.id}
+                            />
+                          ))
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Visitor Status" fullWidth />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        options={siteOptions}
+                        value={siteOptions.filter((x) =>
+                          formData.sites
+                            .map((id) => id.toString().toUpperCase())
+                            .includes(x.id.toString().toUpperCase()),
+                        )}
+                        getOptionLabel={(option) => option.name}
+                        onChange={(e, val) =>
+                          handleChange(
+                            'sites',
+                            val.map((v) => v.id),
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Sites" />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        options={allVisitorEmployee}
+                        value={allVisitorEmployee.filter((x) => formData.hosts.includes(x.id))}
+                        getOptionLabel={(option) => option.name}
+                        onChange={(e, val) =>
+                          handleChange(
+                            'hosts',
+                            val.map((v) => v.id),
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Host" />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 8, lg: 6 }}>
+                      <FormGroup>
+                        <FormControlLabel
+                          label="Previous"
+                          control={
+                            <Checkbox
+                              checked={formData.previous}
+                              onChange={(e) => handleChange('previous', e.target.checked)}
+                            />
+                          }
                         />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Select Visitor Status" fullWidth />
-                    )}
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
-                  <Autocomplete
-                    multiple
-                    options={siteOptions}
-                    value={siteOptions.filter((x) =>
-                      formData.sites
-                        .map((id) => id.toString().toUpperCase())
-                        .includes(x.id.toString().toUpperCase()),
-                    )}
-                    getOptionLabel={(option) => option.name}
-                    onChange={(e, val) =>
-                      handleChange(
-                        'sites',
-                        val.map((v) => v.id),
-                      )
-                    }
-                    renderInput={(params) => <TextField {...params} placeholder="Select Sites" />}
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
-                  <Autocomplete
-                    multiple
-                    options={allVisitorEmployee}
-                    value={allVisitorEmployee.filter((x) => formData.hosts.includes(x.id))}
-                    getOptionLabel={(option) => option.name}
-                    onChange={(e, val) =>
-                      handleChange(
-                        'hosts',
-                        val.map((v) => v.id),
-                      )
-                    }
-                    renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
-                    sx={{ mt: 0.5 }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 8, lg: 6 }}>
-                  <FormGroup>
-                    <FormControlLabel
-                      label="Previous"
-                      control={
-                        <Checkbox
-                          checked={formData.previous}
-                          onChange={(e) => handleChange('previous', e.target.checked)}
+                      </FormGroup>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, xl: 6 }}>
+                      <FormGroup>
+                        <FormControlLabel
+                          label="Preregister Done"
+                          control={
+                            <Checkbox
+                              checked={formData.is_preregister_done}
+                              onChange={(e) =>
+                                handleChange('is_preregister_done', e.target.checked)
+                              }
+                            />
+                          }
                         />
-                      }
-                    />
-                  </FormGroup>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6, xl: 6 }}>
-                  <FormGroup>
-                    <FormControlLabel
-                      label="Preregister Done"
-                      control={
-                        <Checkbox
-                          checked={formData.is_preregister_done}
-                          onChange={(e) => handleChange('is_preregister_done', e.target.checked)}
-                        />
-                      }
-                    />
-                  </FormGroup>
-                </Grid>
-              </Grid>
-              <Grid size={{ xs: 12, md: 12 }} mt={2}>
-                <Box
-                  sx={{ display: 'flex', gap: 1, mt: 0.5 }}
-                  flexDirection="column"
-                  justifyContent="space-between"
-                  flexWrap={'wrap'}
-                >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePostReport(null);
-                    }}
-                    startIcon={<IconReport size={20} />}
-                    disabled={loading}
-                    sx={{ fontSize: 12 }}
-                    size="medium"
-                  >
-                    {loading ? <CircularProgress size={18} /> : 'Generate Report'}
-                  </Button>
+                      </FormGroup>
+                    </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 12 }} mt={2}>
+                    <Box
+                      sx={{ display: 'flex', gap: 1, mt: 0.5 }}
+                      flexDirection="column"
+                      justifyContent="space-between"
+                      flexWrap={'wrap'}
+                    >
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePostReport(null);
+                        }}
+                        startIcon={<IconReport size={20} />}
+                        disabled={loading}
+                        sx={{ fontSize: 12 }}
+                        size="medium"
+                      >
+                        {loading ? <CircularProgress size={18} /> : 'Generate Report'}
+                      </Button>
 
-                  <Button
-                    variant="contained"
-                    color="success"
-                    // onClick={handleOpenSaveDialog}
-                    onClick={handleConfirmSaveReport}
-                    startIcon={<IconDeviceFloppy size={20} />}
-                    disabled={loading}
-                    sx={{
-                      fontSize: 12,
-                      minWidth: 150,
-                      backgroundColor: 'success',
-                      '&.Mui-disabled': {
-                        backgroundColor: 'success.main',
-                        color: '#fff',
-                        opacity: 0.7,
-                      },
-                    }}
-                    size="medium"
-                  >
-                    Save Generate
-                  </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        // onClick={handleOpenSaveDialog}
+                        onClick={handleConfirmSaveReport}
+                        startIcon={<IconDeviceFloppy size={20} />}
+                        disabled={loading}
+                        sx={{
+                          fontSize: 12,
+                          minWidth: 150,
+                          backgroundColor: 'success',
+                          '&.Mui-disabled': {
+                            backgroundColor: 'success.main',
+                            color: '#fff',
+                            opacity: 0.7,
+                          },
+                        }}
+                        size="medium"
+                      >
+                        Save Generate
+                      </Button>
 
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={handleResetForm}
-                    startIcon={<IconTrash size={20} />}
-                    size="medium"
-                    loading={loading}
-                    sx={{
-                      fontSize: 12,
-                      minWidth: 150,
-                      borderColor: '#d32f2f',
-                      color: '#d32f2f',
-                      '&.Mui-disabled': {
-                        borderColor: '#d32f2f',
-                        color: '#d32f2f',
-                        opacity: 0.5,
-                      },
-                    }}
-                  >
-                    Reset
-                  </Button>
-                </Box>
-              </Grid>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={handleResetForm}
+                        startIcon={<IconTrash size={20} />}
+                        size="medium"
+                        loading={loading}
+                        sx={{
+                          fontSize: 12,
+                          minWidth: 150,
+                          borderColor: '#d32f2f',
+                          color: '#d32f2f',
+                          '&.Mui-disabled': {
+                            borderColor: '#d32f2f',
+                            color: '#d32f2f',
+                            opacity: 0.5,
+                          },
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </Box>
+                  </Grid>
+                </>
+              )}
             </Box>
-          </Grid>
-          <Grid size={{ xs: 12, md: 9, xl: 10 }}>
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <Box sx={{ backgroundColor: 'white', p: 3 }}>
               <Typography variant="h5" gutterBottom mb={2}>
                 Report Result
@@ -1104,8 +1175,8 @@ const Content = () => {
                 </Grid>
               </Grid>
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         <Dialog
           open={openDialog}

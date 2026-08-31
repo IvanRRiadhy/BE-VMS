@@ -230,6 +230,7 @@ const Content = () => {
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
           remarks: item.remarks,
+          transaction_status: item.transaction_status,
         })),
       ) ?? []
     );
