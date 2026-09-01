@@ -35,6 +35,7 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import dayjs from 'dayjs';
 import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useNavigate } from 'react-router';
 
 const Content = () => {
   const dispatch = useDispatch();
@@ -131,6 +132,8 @@ const Content = () => {
 
     fetchData();
   }, []);
+
+  const navigate = useNavigate();
 
   return (
     <PageContainer
@@ -249,6 +252,8 @@ const Content = () => {
                     isHaveAddData={false}
                     isHaveHeader={false}
                     isHaveFilterMore={false}
+                    isHaveAddEmpty={true}
+                    onAddEmpty={() => navigate('/employee/invitation')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>

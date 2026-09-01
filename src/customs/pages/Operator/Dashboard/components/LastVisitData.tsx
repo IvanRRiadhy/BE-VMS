@@ -251,7 +251,7 @@ export default function LastVisitsCard({
 
                     <TableCell>
                       <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar
+                        {/* <Avatar
                           sx={{
                             width: 40,
                             height: 40,
@@ -260,7 +260,7 @@ export default function LastVisitsCard({
                           }}
                         >
                           <IconActivity size={19} />
-                        </Avatar>
+                        </Avatar> */}
 
                         <Typography fontWeight={600} fontSize={13} whiteSpace="nowrap">
                           {formatAction(item.action)}

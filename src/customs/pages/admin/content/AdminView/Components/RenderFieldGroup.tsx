@@ -560,11 +560,11 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 }
               }}
               format="dddd, DD MMMM YYYY, HH:mm"
-              viewRenderers={{
-                hours: renderTimeViewClock,
-                minutes: renderTimeViewClock,
-                seconds: renderTimeViewClock,
-              }}
+              // viewRenderers={{
+              //   hours: renderTimeViewClock,
+              //   minutes: renderTimeViewClock,
+              //   seconds: renderTimeViewClock,
+              // }}
               slotProps={{
                 textField: {
                   fullWidth: true,

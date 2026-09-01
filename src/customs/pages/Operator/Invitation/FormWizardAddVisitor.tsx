@@ -3797,11 +3797,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={setStartTime}
                         format="dddd, DD  MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -4024,11 +4024,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4108,11 +4108,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4174,11 +4174,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           actionBar: {
                             actions: ['today', 'clear', 'accept'],
@@ -4263,7 +4263,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             Upload File
                           </Typography>
                           <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                           {t("dragDropOrTapToSelectFile")}
+                            {t('dragDropOrTapToSelectFile')}
                           </Typography>
                           <Box
                             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -4783,7 +4783,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
-                         {t("dragDropOrTapToSelectFile")}
+                          {t('dragDropOrTapToSelectFile')}
                         </Typography>
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}

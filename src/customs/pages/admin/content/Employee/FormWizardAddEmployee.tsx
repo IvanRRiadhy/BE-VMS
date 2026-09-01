@@ -488,7 +488,7 @@ const FormWizardAddEmployee = ({
         });
         // console.log('editData', editData);
 
-        showSwal('success', 'Employee successfully updated!');
+        showSwal('success', t('updatedSuccess', { name: 'Employee' }));
       } else {
         // const created = await createEmployee(data, token as string);
         const created = await create.mutateAsync({
@@ -498,7 +498,7 @@ const FormWizardAddEmployee = ({
         if (hasNewImage) {
           await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
         }
-        showSwal('success', 'Employee successfully created!');
+        showSwal('success', t('createSuccess', { name: 'Employee' }));
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
@@ -592,7 +592,6 @@ const FormWizardAddEmployee = ({
       setSiteImageFile(compressedFile);
       setPreviewUrl(URL.createObjectURL(compressedFile));
     } catch (error) {
-      console.error('Failed to process image:', error);
       showSwal('error', 'Failed to process image');
     } finally {
       setIsUploadingImage(false);
@@ -1237,7 +1236,7 @@ const FormWizardAddEmployee = ({
           <Grid2 container spacing={1}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="dob" required>
-                <Typography variant="caption">Date of Birth</Typography>
+                <Typography variant="caption">{t('dateOfBirth')}</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="birth_date"
@@ -1249,11 +1248,16 @@ const FormWizardAddEmployee = ({
                 disabled={isBatchEdit}
                 error={Boolean(errors.birth_date)}
                 helperText={errors.birth_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join" required>
-                <Typography variant="caption">Join Date</Typography>
+                <Typography variant="caption">{t('joinDate')}</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="join_date"
@@ -1265,11 +1269,16 @@ const FormWizardAddEmployee = ({
                 disabled={isBatchEdit}
                 error={Boolean(errors.join_date)}
                 helperText={errors.join_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join">
-                <Typography variant="caption">Exit Date</Typography>
+                <Typography variant="caption">{t('exitDate')}</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="exit_date"
@@ -1281,11 +1290,16 @@ const FormWizardAddEmployee = ({
                 disabled={isBatchEdit}
                 error={Boolean(errors.exit_date)}
                 helperText={errors.exit_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="address">
-                <Typography variant="caption">Employee Address</Typography>
+                <Typography variant="caption">{t('employeeAddress')}</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="address"
@@ -1511,7 +1525,7 @@ const FormWizardAddEmployee = ({
                             sx={{ mr: 0 }}
                             startIcon={<IconTrash />}
                           >
-                            Clear Foto
+                            Clear
                           </Button>
                           <Button
                             disabled={isUploadingImage}

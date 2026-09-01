@@ -589,8 +589,6 @@ const Content = () => {
               mdUp={mdUp}
               secdrawerWidth={secdrawerWidth}
               loading={isLoading}
-              // loadingMore={loadingMore}
-              // hasMore={hasMore}
               profile={profile}
               searchAgenda={searchAgenda}
               setSearchAgenda={setSearchAgenda}

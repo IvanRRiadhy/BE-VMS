@@ -228,9 +228,9 @@ const DashboardEmployee = () => {
         const data = res?.collection ?? [];
 
         const filtered = data
-          .filter(
-            (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
-          )
+          // .filter(
+          //   (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
+          // )
           .slice(0, 5);
 
         const mapped = filtered.map((item: any) => ({
@@ -242,7 +242,7 @@ const DashboardEmployee = () => {
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
           site: item.site_place_name,
-          // visitor_status: item.visitor_status,
+          visitor_status: item.visitor_status,
         }));
 
         setInvitationDetailVisitor(mapped);
@@ -802,12 +802,14 @@ const DashboardEmployee = () => {
             isHavePagination={false}
             overflowX="auto"
             isHaveChecked={false}
-            isHaveView={true}
-            isHaveAction={true}
+            // isHaveView={true}
+            // isHaveAction={true}
             isHaveHeaderTitle
             isHavePeriod={true}
             onView={(row: any) => handleView(row)}
             titleHeader="Invitation Monitoring"
+            isHaveAddEmpty={true}
+            onAddEmpty={() => navigate('/employee/invitation')}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
@@ -849,7 +851,7 @@ const DashboardEmployee = () => {
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
         pendingInvitationCount={pendingInvitationCount}
-      />
+      /> 
 
       <QuickAccessDialog
         open={openQuickAccess}

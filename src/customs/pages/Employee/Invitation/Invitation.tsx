@@ -59,6 +59,9 @@ import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
 import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTransactionVisitorDetail';
 import TransactionVisitorList from './components/TransactionVisitorList';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
+import PreRegistrationDialog from './components/PraRegistrationDialog';
 type Group = {
   id: string;
   name: string;
@@ -68,7 +71,7 @@ type Group = {
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -105,6 +108,7 @@ const Content = () => {
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const { data: profile } = useProfile();
   // const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const { t } = useTranslation();
   const resetRegisteredFlow = () => {
@@ -202,7 +206,10 @@ const Content = () => {
           host_name: item.host_name || '-',
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
+          invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
+          remarks: item.remarks,
+          transaction_status: item.transaction_status,
         })),
       ) ?? []
     );
@@ -282,7 +289,7 @@ const Content = () => {
     {
       title: 'Total ' + t('visitor'),
       icon: IconUserPlus,
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       color: 'none',
     },
     {
@@ -554,13 +561,15 @@ const Content = () => {
     );
   });
 
+  const { cancelMutation, removeMutation } = useTransactionVisitorMutation();
+
   const handleCancel = async (id: string) => {
     try {
-      await cancelVisitor(id);
+      await cancelMutation.mutateAsync(id);
 
       showSwal('success', 'Transaction successfully cancelled');
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || 'Failed to cancel visitor');
+      showSwal('error', error?.msg ?? 'Failed to cancel visitor');
     }
   };
 
@@ -608,17 +617,19 @@ const Content = () => {
               <TransactionVisitorList
                 mdUp={mdUp}
                 secdrawerWidth={secdrawerWidth}
-                loading={loading}
-                loadingMore={loadingMore}
+                loading={isLoading}
+                loadingMore={isFetchingNextPage}
                 searchAgenda={searchAgenda}
                 setSearchAgenda={setSearchAgenda}
                 filteredVisitors={filteredVisitors}
                 selectedGroup={selectedGroup}
                 setSelectedGroup={setSelectedGroup}
                 setSelectedGroupId={setSelectedGroupId}
-                hasNextPage={hasNextPage}
+                hasMore={hasNextPage ?? false}
                 isFetchingNextPage={isFetchingNextPage}
                 fetchNextPage={fetchNextPage}
+                handleCancel={handleCancel}
+                profile={profile}
               />
               <Box
                 p={2}
@@ -666,40 +677,22 @@ const Content = () => {
         </Box>
       </PageContainer>
       {/* Add Pre registration */}
-      <Dialog
-        fullWidth
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
+      <PreRegistrationDialog
         open={openPreRegistration}
         onClose={requestCloseDialog}
-      >
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          {t('add')} Pra Registration
-          <IconButton aria-label="close" onClick={requestCloseDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ paddingTop: '10px' }} dividers>
-          <Praregist
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            visitorType={visitorType}
-            sites={sites}
-            employee={allVisitorEmployee}
-            allVisitorEmployee={allVisitorEmployee}
-            vtLoading={vtLoading}
-            search={setSearchHost}
-            isLoadingEmployee={isLoadingEmployee}
-          />
-        </DialogContent>
-      </Dialog>
+        formData={formDataAddVisitor}
+        setFormData={setFormDataAddVisitor}
+        edittingId={edittingId}
+        wizardKey={wizardKey}
+        onSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        search={setSearchHost}
+        isLoadingEmployee={isLoadingEmployee}
+      />
 
       <QuickAccessDialog
         open={openQuickAccess}

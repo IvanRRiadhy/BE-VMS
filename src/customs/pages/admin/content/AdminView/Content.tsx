@@ -1240,7 +1240,7 @@ const Content = () => {
           ...inv,
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
         };
       }),
     );
@@ -2648,11 +2648,11 @@ const Content = () => {
                   }
                 }}
                 format="dddd, DD MMMM YYYY, HH:mm"
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -3091,7 +3091,7 @@ const Content = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;

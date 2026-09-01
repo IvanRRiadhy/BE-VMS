@@ -172,7 +172,7 @@ const GuestInformationStepper = () => {
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
 
-    const isDriving = formValues.is_driving === true;
+    const isDriving = formValues.is_driving === 'true';
 
     section?.form?.forEach((f: any) => {
       const value = formValues[f.remarks];
@@ -235,7 +235,7 @@ const GuestInformationStepper = () => {
           if (!f) return;
 
           if (f.remarks === 'is_driving') {
-            initial[f.remarks] = f.answer_text ?? false;
+            initial[f.remarks] = f.answer_text ?? 'false';
           } else if (f.field_type === 9) {
             initial[f.remarks] = f.answer_datetime;
           } else if ([10, 11, 12].includes(f.field_type)) {

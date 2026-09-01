@@ -1905,11 +1905,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   }
                 }}
                 format="dddd, DD  MMMM YYYY, HH:mm"
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
                   actionBar: {
                     actions: ['clear', 'accept'],
@@ -3723,11 +3723,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={setStartTime}
                         format="dddd, DD  MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -3952,11 +3952,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4040,11 +4040,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4107,11 +4107,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           actionBar: {
                             actions: ['today', 'clear', 'accept'],

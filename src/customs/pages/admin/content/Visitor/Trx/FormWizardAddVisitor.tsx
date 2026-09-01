@@ -70,7 +70,7 @@ import {
   FormField,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
-
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { createPraRegister, getVisitorTypeById } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -88,7 +88,8 @@ import utc from 'dayjs/plugin/utc';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
-import { DateTimePicker, renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
+import { renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
+
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -2582,11 +2583,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   }
                 }}
                 format="dddd, DD MMMM YYYY, HH:mm"
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
                   actionBar: {
                     actions: ['clear', 'accept'],
@@ -4603,11 +4604,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={setStartTime}
                         format="dddd, DD  MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -4836,11 +4837,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4924,11 +4925,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4994,11 +4995,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           actionBar: {
                             actions: ['today', 'clear', 'accept'],

@@ -3002,11 +3002,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={setStartTime}
                         format="dddd, DD  MMMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -3190,11 +3190,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   textField: {
                                     fullWidth: true,
@@ -3249,11 +3249,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                viewRenderers={{
-                                  hours: renderTimeViewClock,
-                                  minutes: renderTimeViewClock,
-                                  seconds: renderTimeViewClock,
-                                }}
+                                // viewRenderers={{
+                                //   hours: renderTimeViewClock,
+                                //   minutes: renderTimeViewClock,
+                                //   seconds: renderTimeViewClock,
+                                // }}
                                 slotProps={{
                                   textField: {
                                     fullWidth: true,
@@ -3288,11 +3288,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,

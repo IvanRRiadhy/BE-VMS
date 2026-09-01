@@ -327,11 +327,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                     visitor_period_start: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
                   actionBar: {
                     actions: ['clear', 'accept'],
@@ -390,11 +390,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                     visitor_period_end: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
                   actionBar: {
                     actions: ['clear', 'accept'],

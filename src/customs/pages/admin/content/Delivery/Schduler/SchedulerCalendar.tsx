@@ -1203,11 +1203,11 @@ export default function DnDOutsideCourier({
                         ampm={false}
                         onChange={setStartTime}
                         format="dddd, DD MMMM YYYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -1319,11 +1319,11 @@ export default function DnDOutsideCourier({
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,

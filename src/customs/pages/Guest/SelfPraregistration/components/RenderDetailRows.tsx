@@ -903,11 +903,11 @@ const RenderDetailRows = ({
                           ampm={false}
                           onChange={setStartTime}
                           format="dddd, DD MMM YYYY, HH:mm"
-                          viewRenderers={{
-                            hours: renderTimeViewClock,
-                            minutes: renderTimeViewClock,
-                            seconds: renderTimeViewClock,
-                          }}
+                          // viewRenderers={{
+                          //   hours: renderTimeViewClock,
+                          //   minutes: renderTimeViewClock,
+                          //   seconds: renderTimeViewClock,
+                          // }}
                           slotProps={{
                             textField: {
                               fullWidth: true,
@@ -1097,11 +1097,11 @@ const RenderDetailRows = ({
                                     }
                                   }}
                                   format="dddd, DD MMMM YYYY, HH:mm"
-                                  viewRenderers={{
-                                    hours: renderTimeViewClock,
-                                    minutes: renderTimeViewClock,
-                                    seconds: renderTimeViewClock,
-                                  }}
+                                  // viewRenderers={{
+                                  //   hours: renderTimeViewClock,
+                                  //   minutes: renderTimeViewClock,
+                                  //   seconds: renderTimeViewClock,
+                                  // }}
                                   slotProps={{
                                     actionBar: {
                                       actions: ['clear', 'accept'],
@@ -1174,11 +1174,11 @@ const RenderDetailRows = ({
                                     }
                                   }}
                                   format="dddd, DD MMMM YYYY, HH:mm"
-                                  viewRenderers={{
-                                    hours: renderTimeViewClock,
-                                    minutes: renderTimeViewClock,
-                                    seconds: renderTimeViewClock,
-                                  }}
+                                  // viewRenderers={{
+                                  //   hours: renderTimeViewClock,
+                                  //   minutes: renderTimeViewClock,
+                                  //   seconds: renderTimeViewClock,
+                                  // }}
                                   slotProps={{
                                     textField: {
                                       fullWidth: true,
@@ -1226,11 +1226,11 @@ const RenderDetailRows = ({
                             }
                           }}
                           format="dddd, DD MMMM YYYY, HH:mm"
-                          viewRenderers={{
-                            hours: renderTimeViewClock,
-                            minutes: renderTimeViewClock,
-                            seconds: renderTimeViewClock,
-                          }}
+                          // viewRenderers={{
+                          //   hours: renderTimeViewClock,
+                          //   minutes: renderTimeViewClock,
+                          //   seconds: renderTimeViewClock,
+                          // }}
                           slotProps={{
                             actionBar: {
                               actions: ['today', 'clear', 'accept'],

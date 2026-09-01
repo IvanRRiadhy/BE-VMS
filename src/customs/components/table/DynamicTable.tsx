@@ -203,6 +203,7 @@ type DynamicTableProps<
   onBatchEdit?: (row: T[]) => void;
   onDelete?: (row: T) => void;
   onBatchDelete?: (row: T[]) => void;
+  isHaveAddEmpty?: boolean;
   onSearchKeywordChange?: (keyword: string) => void;
   onFilterByColumn?: (column: { column: string }) => void;
   onFilterCalenderChange?: (ranges: any) => void;
@@ -217,7 +218,7 @@ type DynamicTableProps<
   loadingSecrets?: any;
   onRevealSecret?: any;
   onHideSecret?: any;
-
+  onAddEmpty?: any;
   isHaveGenerateApiKey?: boolean;
   onGenerateApiKey?: (row: T) => void;
 };
@@ -266,6 +267,7 @@ function DynamicTableBase<
     height,
     isHaveGender = false,
     isHaveBlacklist = false,
+    isHaveAddEmpty,
     isButtonRegisteredSite = false,
     isButtonGiveAccess = false,
     isCopy = false,
@@ -287,6 +289,7 @@ function DynamicTableBase<
     isHaveVerified = false,
     onQrCode,
     isHaveDataQuickAccess,
+    onAddEmpty,
     onDetailQuickAccess,
     isHaveView = false,
     isHaveAccess = false,
@@ -377,6 +380,7 @@ function DynamicTableBase<
     onAddData,
     onPaginationChange,
     onBooleanSwitchChange,
+    
     isHaveSecret,
     visibleSecrets,
     loadingSecrets,
@@ -1301,7 +1305,7 @@ function DynamicTableBase<
                       colSpan={
                         columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
                       }
-                      sx={{ padding: 0 }}
+                      sx={{ padding: 0, borderBottom: 'none !important' }}
                     >
                       <Box
                         height={150}
@@ -1313,10 +1317,16 @@ function DynamicTableBase<
                         sx={{
                           fontSize: '0.9rem',
                           color: 'text.secondary',
+                          gap: 1,
                         }}
                       >
                         <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
-                        <Typography variant="body1">No Data available</Typography>
+                        <Typography variant="body1">{t('noDataAvailable')}</Typography>
+                        {isHaveAddEmpty && (
+                          <Button variant="contained" sx={{ mt: '5px' }} onClick={onAddEmpty}>
+                            Add Data
+                          </Button>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -1707,6 +1717,7 @@ function DynamicTableBase<
                   isHaveCard={isHaveCard}
                   isHaveBooleanSwitch={isHaveBooleanSwitch}
                   onBooleanSwitchChange={onBooleanSwitchChange}
+                  isHaveAddEmpty={isHaveAddEmpty}
                   isHaveObjectData={isHaveObjectData}
                   objectFields={objectFields}
                   isHaveIntegration={isHaveIntegration}
