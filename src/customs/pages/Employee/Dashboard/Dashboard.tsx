@@ -1,6 +1,9 @@
 import {
   Alert,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -18,6 +21,7 @@ import {
   IconLogin,
   IconLogout,
   IconPlus,
+  IconQrcode,
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -702,13 +706,13 @@ const DashboardEmployee = () => {
         onExport={handleExportPdf}
         isExporting={isExporting}
       />
-      <Grid container spacing={2} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
-        <Grid size={{ xs: 12, lg: 9 }}>
+      <Grid container spacing={1.5} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
+        <Grid size={{ xs: 12, lg: 10 }}>
           <TopCards items={CardItems} size={{ xs: 12, lg: 3 }} />
         </Grid>
 
         <Grid
-          size={{ xs: 12, lg: 3 }}
+          size={{ xs: 12, lg: 2 }}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -729,17 +733,26 @@ const DashboardEmployee = () => {
           </Button>
           <Button
             variant="contained"
-            color="secondary"
-            sx={{ flex: 1 }}
+            sx={{
+              flex: 1,
+              backgroundColor: '#EEF4FF',
+              color: '#1554B8',
+              boxShadow: 'none',
+              fontwWeight: 'bold',
+              '&:hover': {
+                backgroundColor: '#E3EDFF',
+                boxShadow: 'none',
+              },
+            }}
             onClick={() => setOpenQuickAccess(true)}
-            startIcon={<IconBolt />}
+            startIcon={<IconQrcode />}
           >
             {t('quickAccess')}
           </Button>
         </Grid>
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
           <Grid
-            size={{ xs: 12, lg: 6 }}
+            size={{ xs: 12, lg: 4 }}
             sx={{
               display: 'flex',
             }}
@@ -766,7 +779,7 @@ const DashboardEmployee = () => {
           </Grid>
 
           <Grid
-            size={{ xs: 12, lg: 6 }}
+            size={{ xs: 12, lg: 4 }}
             sx={{
               display: 'flex',
             }}
@@ -793,48 +806,67 @@ const DashboardEmployee = () => {
               onAddData={() => setOpenShareLinkList(true)}
             />
           </Grid>
+          <Grid
+            size={{ xs: 12, lg: 4 }}
+            height={'100%'}
+            sx={{
+              display: 'flex',
+            }}
+          >
+            <LastVisitsCard
+              activites={activites}
+              loading={isLoadingActivities}
+              loadingMore={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              onRefresh={() => refetchActivities()}
+              refreshing={isFetchingActivities && !isFetchingNextPage}
+            />
+          </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          <DynamicTable
-            data={invitationDetailVisitor}
-            height={430}
-            isHavePagination={false}
-            overflowX="auto"
-            isHaveChecked={false}
-            // isHaveView={true}
-            // isHaveAction={true}
-            isHaveHeaderTitle
-            isHavePeriod={true}
-            onView={(row: any) => handleView(row)}
-            titleHeader="Invitation Monitoring"
-            isHaveAddEmpty={true}
-            onAddEmpty={() => navigate('/employee/invitation')}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          <Heatmap />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 12 }}>
-          {/* <DynamicTable
-            loading={isLoadingActivities}
-            isHavePagination={false}
-            defaultRowsPerPage={10}
-            data={activites}
-            isHaveHeaderTitle
-            titleHeader="Recent Activity"
-            // height={420}
-            overflowX="auto"
-          /> */}
-          <LastVisitsCard
-            activites={activites}
-            loading={isLoadingActivities}
-            loadingMore={isFetchingNextPage}
-            hasNextPage={hasNextPage}
-            onLoadMore={fetchNextPage}
-            onRefresh={() => refetchActivities()}
-            refreshing={isFetchingActivities && !isFetchingNextPage}
-          />
+        <Grid container spacing={2} alignItems="stretch">
+          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%' }}>
+            <DynamicTable
+              data={invitationDetailVisitor}
+              height={430}
+              isHavePagination={false}
+              overflowX="auto"
+              isHaveChecked={false}
+              // isHaveView={true}
+              // isHaveAction={true}
+              isHaveHeaderTitle
+              isHavePeriod={true}
+              onView={(row: any) => handleView(row)}
+              titleHeader="Invitation Monitoring"
+              isHaveAddEmpty={true}
+              onAddEmpty={() => navigate('/employee/invitation')}
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/invitation');
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%' }}>
+            <Heatmap />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 2.4 }} sx={{ height: '100%' }}>
+            <Card sx={{ height: '100%' }}>
+              <CardHeader title="Announcements" />
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                }}
+              >
+                <Typography fontSize={14} color="text.secondary" textAlign="center" py={3}>
+                  No Announcement
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
       </Grid>
 
@@ -851,7 +883,7 @@ const DashboardEmployee = () => {
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
         pendingInvitationCount={pendingInvitationCount}
-      /> 
+      />
 
       <QuickAccessDialog
         open={openQuickAccess}

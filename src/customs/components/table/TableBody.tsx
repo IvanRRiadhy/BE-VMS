@@ -820,7 +820,7 @@ const TableRowItem = React.memo(
               ) : col === 'type' && isAccessControlType ? (
                 <>{row.type === 0 ? 'Access' : 'Group'}</>
               ) : col === 'card_status' ? (
-                (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
+                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
               ) : col === 'is_employee' ? (
                 row[col] ? (
                   <IconUserCheck size={20} color="green" />
@@ -891,7 +891,7 @@ const TableRowItem = React.memo(
                   {statusLabelMap[row.visitor_status] || row.visitor_status || '-'}
                 </Box>
               ) : col === 'document_type' ? (
-                (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
+                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
               ) : col === 'status' && isHaveApproval ? (
                 row[col] === 'Approve' ? (
                   <Typography
@@ -967,8 +967,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? (tooltipLabels[col]?.true ?? 'Current Used')
-                        : (tooltipLabels[col]?.false ?? 'Not Current Used')
+                        ? tooltipLabels[col]?.true ?? 'Current Used'
+                        : tooltipLabels[col]?.false ?? 'Not Current Used'
                     }
                   >
                     <Box
@@ -1000,9 +1000,9 @@ const TableRowItem = React.memo(
                   )}
                 </>
               ) : isHaveGender && col === 'gender' ? (
-                (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
+                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
               ) : isSiteSpaceType && col === 'type' ? (
-                (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
+                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
               ) : isHaveImage &&
                 imageFields.includes(col) &&
                 typeof row[col] === 'string' &&
@@ -1071,8 +1071,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? (tooltipLabels[col]?.true ?? 'Verified')
-                        : (tooltipLabels[col]?.false ?? 'Not Verified')
+                        ? tooltipLabels[col]?.true ?? 'Verified'
+                        : tooltipLabels[col]?.false ?? 'Not Verified'
                     }
                   >
                     <Box
@@ -1293,7 +1293,7 @@ const TableRowItem = React.memo(
                 Array.isArray(row[col]) ? (
                   row[col].map((item: any) => item.name).join(', ')
                 ) : (
-                  ((row[col] as { name?: string }).name ?? '-')
+                  (row[col] as { name?: string }).name ?? '-'
                 )
               ) : (
                 <>
@@ -1392,8 +1392,8 @@ const TableRowItem = React.memo(
                       }}
                     >
                       {/* ✅ Accept / Denied */}
-                      <Tooltip title="Approve">
-                        <Button
+                      <Tooltip title="Approve" arrow>
+                        {/* <Button
                           variant="contained"
                           color="primary"
                           size="small"
@@ -1405,11 +1405,24 @@ const TableRowItem = React.memo(
                           onClick={() => onAccept?.(row)}
                         >
                           Approve
-                        </Button>
+                        </Button> */}
+                        <IconButton
+                          size="small"
+                          onClick={() => onAccept?.(row)}
+                          sx={{
+                            color: 'white',
+                            backgroundColor: 'primary.main',
+
+                            borderRadius: '5px',
+                            '&:hover': { backgroundColor: 'primary.main', color: 'white' },
+                          }}
+                        >
+                          <IconCheck color="white" size={20} />
+                        </IconButton>
                       </Tooltip>
 
-                      <Tooltip title="Reject">
-                        <Button
+                      <Tooltip title="Reject" arrow>
+                        {/* <Button
                           variant="contained"
                           color="error"
                           size="small"
@@ -1417,7 +1430,18 @@ const TableRowItem = React.memo(
                           onClick={() => onDenied?.(row)}
                         >
                           Reject
-                        </Button>
+                        </Button> */}
+                        <IconButton
+                          size="small"
+                          onClick={() => onDenied?.(row)}
+                          sx={{
+                            color: 'white',
+                            backgroundColor: 'error.main',
+                            borderRadius: '5px',
+                          }}
+                        >
+                          <IconX color="white" size={20} />
+                        </IconButton>
                       </Tooltip>
                     </Box>
                   </>

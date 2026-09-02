@@ -36,14 +36,14 @@ const DashboardEmployeeActionBar = ({
         display="flex"
         justifyContent="flex-start"
         alignItems="center"
-        gap={2}
+        gap={2.5}
         sx={{ mt: 0.5 }}
       >
         <Box>
           <Typography variant="h4" fontWeight="bold">
             Welcome Back, {profile?.fullname} 👋
           </Typography>
-          <Typography color="text.secondary">
+          <Typography color="text.secondary" mt={0.5}>
             {' '}
             Here's an overview of today's visitor activity.
           </Typography>

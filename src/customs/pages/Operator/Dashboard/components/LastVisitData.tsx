@@ -16,6 +16,15 @@ import {
 import { IconActivity, IconArrowUpRight, IconRefresh } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 
+import {
+  IconCalendarEvent,
+  IconCheck,
+  IconClock,
+  IconMail,
+  IconUserCheck,
+  IconX,
+} from '@tabler/icons-react';
+
 interface Activity {
   userId: string;
   actorType: string;
@@ -86,6 +95,45 @@ const formatEntityName = (entityName: string) => {
   return entityName?.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ') || '-';
 };
 
+const formatLabel = (value?: string) => {
+  if (!value) return '-';
+
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .trim();
+};
+
+const getActorName = (item: Activity) => {
+  if (!item.description) return item.actorType || 'Unknown';
+
+  if (item.description.startsWith('You ')) {
+    return 'You';
+  }
+
+  const match = item.description.match(
+    /^(.+?)\s+(assigned|approved|rejected|created|updated|deleted)\b/i,
+  );
+
+  return match?.[1] || item.actorType || 'Unknown';
+};
+
+const getActivityDescription = (item: Activity) => {
+  switch (item.action?.toLowerCase()) {
+    case 'invite':
+      return 'Assigned you as the host';
+
+    case 'approve':
+      return 'Approved the visit request';
+
+    case 'reject':
+      return 'Rejected the visit request';
+
+    default:
+      return item.description || formatLabel(item.action);
+  }
+};
+
 export default function LastVisitsCard({
   activites = [],
   loading = false,
@@ -96,6 +144,7 @@ export default function LastVisitsCard({
   refreshing = false,
 }: LastVisitsCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -126,19 +175,62 @@ export default function LastVisitsCard({
     };
   }, [hasNextPage, loadingMore, onLoadMore, activites.length]);
 
-  const loadMoreRef = useRef<HTMLTableRowElement>(null);
+  const getActivityStyle = (action: string) => {
+    switch (action?.toLowerCase()) {
+      case 'invite':
+        return {
+          bgcolor: '#E8F5E9',
+          color: '#22A06B',
+          icon: <IconUserCheck size={18} />,
+        };
+
+      case 'approve':
+        return {
+          bgcolor: '#E8F5E9',
+          color: '#22A06B',
+          icon: <IconCheck size={18} />,
+        };
+
+      case 'reject':
+        return {
+          bgcolor: '#FFEBEE',
+          color: '#E53935',
+          icon: <IconX size={18} />,
+        };
+
+      default:
+        return {
+          bgcolor: '#EEF4FF',
+          color: '#1554B8',
+          icon: <IconClock size={18} />,
+        };
+    }
+  };
+
   return (
     <Paper
       sx={{
-        borderRadius: '20px',
+        width: '100%',
+        height: '100%',
+        borderRadius: '8px',
         boxShadow: 3,
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" px={3} py={2.5}>
-        <Typography fontWeight={700} fontSize={17}>
-          Recent Activity
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        px={2.5}
+        py={2}
+        flexShrink={0}
+        mt={1.2}
+      >
+        <Typography fontWeight={700} fontSize={16}>
+          Real-time Activity
         </Typography>
 
         <Box
@@ -147,14 +239,13 @@ export default function LastVisitsCard({
             width: 30,
             height: 30,
             borderRadius: '50%',
-            bgcolor: '#4B5CFF',
+            bgcolor: 'primary.main',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             cursor: refreshing ? 'default' : 'pointer',
             opacity: refreshing ? 0.6 : 1,
-            transition: '0.2s',
 
             '&:hover': {
               opacity: refreshing ? 0.6 : 0.85,
@@ -178,158 +269,122 @@ export default function LastVisitsCard({
               animation: refreshing ? 'refresh-spin 0.8s linear infinite' : 'none',
             }}
           >
-            <IconRefresh size={16} />
+            <IconRefresh size={20} />
+            
           </Box>
         </Box>
       </Box>
 
-      {/* Table */}
+      {/* Scrollable Activity List */}
       <Box
         ref={scrollRef}
         sx={{
+          px: 2,
           maxHeight: 420,
           overflowY: 'auto',
-          overflowX: 'auto',
+          overflowX: 'hidden',
         }}
       >
-        <Table sx={{ minWidth: 900 }}>
-          <TableHead>
-            <TableRow
-              sx={{
-                bgcolor: '#FAFAFA',
-                '& th': {
-                  borderBottom: '1px solid #F1F1F1',
-                  fontWeight: 700,
-                  color: '#6B7280',
-                  fontSize: '12px',
-                  whiteSpace: 'nowrap',
-                },
-              }}
-            >
-              <TableCell>No</TableCell>
-              <TableCell>Activity</TableCell>
-              <TableCell>Entity</TableCell>
-              <TableCell>Description</TableCell>
-              {/* <TableCell>Actor</TableCell> */}
-              <TableCell>Action At</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
+        {loading ? (
+          <Typography fontSize={13} color="text.secondary" textAlign="center" py={3}>
+            Loading activities...
+          </Typography>
+        ) : activites.length === 0 ? (
+          <Typography fontSize={13} color="text.secondary" textAlign="center" py={3}>
+            No recent activity
+          </Typography>
+        ) : (
+          <>
+            {activites.map((item) => {
+              const style = getActivityStyle(item.action);
+              const actorName = getActorName(item);
 
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <Typography fontSize={13} color="text.secondary" py={3}>
-                    Loading activities...
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : activites.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <Typography fontSize={13} color="text.secondary" py={3}>
-                    No activities found
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              <>
-                {activites.map((item, index) => (
-                  <TableRow
-                    key={item.id}
+              return (
+                <Box
+                  key={item.id}
+                  display="flex"
+                  alignItems="center"
+                  gap={1.5}
+                  py={1.2}
+                  sx={{
+                    borderBottom: '1px solid #F3F4F6',
+
+                    '&:last-child': {
+                      borderBottom: 'none',
+                    },
+                  }}
+                >
+                  {/* Activity Icon */}
+                  <Box
                     sx={{
-                      '& td': {
-                        borderBottom: '1px solid #F5F5F5',
-                        py: 1.8,
-                        fontSize: '13px',
-                        color: '#374151',
-                      },
+                      width: 38,
+                      height: 38,
+                      minWidth: 38,
+                      borderRadius: '50%',
+                      bgcolor: style.bgcolor,
+                      color: style.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <TableCell>{index + 1}</TableCell>
+                    {style.icon}
+                  </Box>
 
-                    <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        {/* <Avatar
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: '#EEF2FF',
-                            color: '#4B5CFF',
-                          }}
-                        >
-                          <IconActivity size={19} />
-                        </Avatar> */}
+                  {/* Activity Content */}
+                  <Box flex={1} minWidth={0}>
+                    <Typography fontSize={13} fontWeight={600} color="#374151" noWrap>
+                      {actorName}
+                    </Typography>
 
-                        <Typography fontWeight={600} fontSize={13} whiteSpace="nowrap">
-                          {formatAction(item.action)}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
+                    <Typography
+                      fontSize={11.5}
+                      color="text.secondary"
+                      noWrap
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {formatLabel(item.action)} · {getActivityDescription(item)}
+                    </Typography>
+                  </Box>
 
-                    <TableCell>
-                      <Typography fontSize={13} fontWeight={500} whiteSpace="nowrap">
-                        {formatEntityName(item.entityName)}
-                      </Typography>
-                    </TableCell>
+                  {/* Time */}
+                  <Typography fontSize={10.5} color="text.secondary" whiteSpace="nowrap">
+                    {/* {dayjs(item.actionAt).format('DD MMMM YYYY HH:mm')} */}
+                    {item.actionAt}
+                  </Typography>
+                </Box>
+              );
+            })}
 
-                    <TableCell>
-                      <Typography
-                        fontSize={13}
-                        color="text.secondary"
-                        sx={{
-                          maxWidth: 300,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={item.description}
-                      >
-                        {item.description || '-'}
-                      </Typography>
-                    </TableCell>
-
-                    <TableCell>
-                      <Typography fontSize={13} whiteSpace="nowrap">
-                        {dayjs(item.actionAt).format('DD MMMM YYYY HH:mm')}
-                      </Typography>
-                    </TableCell>
-
-                    <TableCell>
-                      <Chip
-                        label={item.status === 1 ? 'Success' : 'Failed'}
-                        size="small"
-                        sx={{
-                          borderRadius: '8px',
-                          fontWeight: 600,
-                          fontSize: '11px',
-                          ...getStatusStyle(item.status),
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {hasNextPage && (
-                  <TableRow ref={loadMoreRef}>
-                    <TableCell colSpan={6} align="center">
-                      {loadingMore ? (
-                        <Typography fontSize={12} color="text.secondary" py={1}>
-                          Loading more activities...
-                        </Typography>
-                      ) : (
-                        <Typography fontSize={12} color="text.secondary" py={1}>
-                          Scroll for more
-                        </Typography>
-                      )}
-                    </TableCell>
-                  </TableRow>
+            {/* Load More Sentinel */}
+            {hasNextPage && (
+              <Box
+                ref={loadMoreRef}
+                sx={{
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {loadingMore && (
+                  <Typography fontSize={11} color="text.secondary">
+                    Loading more...
+                  </Typography>
                 )}
-              </>
+              </Box>
             )}
-          </TableBody>
-        </Table>
+
+            {!hasNextPage && activites.length > 0 && (
+              <Typography fontSize={11} color="text.secondary" textAlign="center" py={1.5}>
+                No more activities
+              </Typography>
+            )}
+          </>
+        )}
       </Box>
     </Paper>
   );

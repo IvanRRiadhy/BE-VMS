@@ -245,7 +245,7 @@ const TopCard = ({ items = [], size }: any) => {
   const getColorByTitle = (title: string) => {
     switch (title.toLowerCase()) {
       case 'checkin':
-        return '#16A765';
+        return '#22A66F';
       case 'checkout':
         return '#E53935';
       case 'denied':
@@ -273,7 +273,8 @@ const TopCard = ({ items = [], size }: any) => {
               sx={{
                 // backgroundColor: '#fff',
                 // background: `linear-gradient(180deg, ${baseColor}35)`,
-                backgroundColor: `${baseColor}40`,
+                // backgroundColor: `${baseColor}40`,
+                backgroundColor: 'white',
                 // border: `0.5px solid ${baseColor}40`,
 
                 color: '#000',
@@ -301,10 +302,24 @@ const TopCard = ({ items = [], size }: any) => {
                   <Box
                     display="flex"
                     alignItems="center"
-                    justifyContent={'space-between'}
+                    justifyContent={'flex-start'}
                     width="100%"
                     position="relative"
+                    gap={2}
                   >
+                    <Box
+                      sx={{
+                        backgroundColor: getColorByTitle(card.title),
+                        color: '#fff',
+                        borderRadius: '50%',
+                        p: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {card.icon}
+                    </Box>
                     <Box>
                       <Typography
                         variant="h6"
@@ -317,20 +332,6 @@ const TopCard = ({ items = [], size }: any) => {
                         {statsToday[card.key] ?? 0}
                       </Typography>
                     </Box>
-
-                    <Box
-                      sx={{
-                        backgroundColor: getColorByTitle(card.title),
-                        color: '#fff',
-                        borderRadius: '30%',
-                        p: 1.5,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {card.icon}
-                    </Box>
                   </Box>
                   <Typography
                     variant="caption"
@@ -338,7 +339,7 @@ const TopCard = ({ items = [], size }: any) => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 0.5,
-                      mt: 1,
+                      mt: 2,
                       fontWeight: 600,
                     }}
                   >

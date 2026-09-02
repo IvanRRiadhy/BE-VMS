@@ -8,7 +8,7 @@ type ActivitiesParams = {
   end_date: string;
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 7;
 
 export const useActivities = ({ start_date, end_date }: ActivitiesParams) => {
   return useInfiniteQuery({
@@ -41,7 +41,7 @@ export const useActivities = ({ start_date, end_date }: ActivitiesParams) => {
           action: item.action,
           entityName: item.entityName,
           description: item.description,
-          date: formatDateTime(item.actionAt),
+          actionAt: formatDateTime(item.actionAt),
           status: item.status,
         })),
       ),

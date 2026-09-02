@@ -149,7 +149,7 @@ const Heatmap = () => {
           backgroundColor: '#fff',
         }}
       >
-        <Typography variant="h5" sx={{ mb: 0, fontWeight: 600, pt: 2, pl: 2 }}>
+        <Typography variant="h6" sx={{ mb: 0, fontWeight: 600, pt: 2, pl: 2 }}>
           {t('heatmap_visitor')}
         </Typography>
         <HighchartsReact highcharts={Highcharts} options={options} />

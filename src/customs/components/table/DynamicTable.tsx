@@ -1213,7 +1213,7 @@ function DynamicTableBase<
                 )} */}
 
                   {isHaveAddData && (
-                    <Tooltip title="Add Data">
+                    <Tooltip title="Add Data" arrow>
                       <Fab
                         size="small"
                         color="primary"
