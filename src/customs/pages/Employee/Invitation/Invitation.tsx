@@ -567,7 +567,7 @@ const Content = () => {
     try {
       await cancelMutation.mutateAsync(id);
 
-      showSwal('success', 'Transaction successfully cancelled');
+      showSwal('success', 'Successfully cancelled visitor');
     } catch (error: any) {
       showSwal('error', error?.msg ?? 'Failed to cancel visitor');
     }
@@ -803,7 +803,8 @@ const Content = () => {
           createQuickAccess.isPending ||
           createMutation.isPending ||
           sendEmailMutation.isPending ||
-          deleteMutation.isPending
+          deleteMutation.isPending ||
+          cancelMutation.isPending
         }
       />
     </>
