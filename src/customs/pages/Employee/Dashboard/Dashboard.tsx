@@ -72,6 +72,7 @@ import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import VisitorTrendChart from './components/VisitorTrendChart';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -754,6 +755,35 @@ const DashboardEmployee = () => {
         </Grid>
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
           <Grid
+            size={{ xs: 12, lg: 5 }}
+            sx={{
+              display: 'flex',
+            }}
+          >
+            {/* <DynamicTable
+              loading={isLoadingShareLink}
+              height={'100%'}
+              overflowX="auto"
+              data={shareLinkList}
+              isHaveChecked={true}
+              titleHeader="Link Share Visitor"
+              isHaveHeaderTitle={true}
+              isCopyLink={true}
+              isNoActionTableHead={true}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveAddData={true}
+              isDetailLink={true}
+              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+              onDetailLink={(row: any) => handleDetailLink(row)}
+              onDelete={(row: any) => handleDeleteLink(row.id)}
+              onAddData={() => setOpenShareLinkList(true)}
+            /> */}
+            <VisitorTrendChart />
+          </Grid>
+          <Grid
             size={{ xs: 12, lg: 4 }}
             sx={{
               display: 'flex',
@@ -781,35 +811,7 @@ const DashboardEmployee = () => {
           </Grid>
 
           <Grid
-            size={{ xs: 12, lg: 4 }}
-            sx={{
-              display: 'flex',
-            }}
-          >
-            <DynamicTable
-              loading={isLoadingShareLink}
-              height={'100%'}
-              overflowX="auto"
-              data={shareLinkList}
-              isHaveChecked={true}
-              titleHeader="Link Share Visitor"
-              isHaveHeaderTitle={true}
-              isCopyLink={true}
-              isNoActionTableHead={true}
-              onPaginationChange={(page, rowsPerPage) => {
-                setPage(page);
-                setRowsPerPage(rowsPerPage);
-              }}
-              isHaveAddData={true}
-              isDetailLink={true}
-              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-              onDetailLink={(row: any) => handleDetailLink(row)}
-              onDelete={(row: any) => handleDeleteLink(row.id)}
-              onAddData={() => setOpenShareLinkList(true)}
-            />
-          </Grid>
-          <Grid
-            size={{ xs: 12, lg: 4 }}
+            size={{ xs: 12, lg: 3 }}
             height={'100%'}
             sx={{
               display: 'flex',
