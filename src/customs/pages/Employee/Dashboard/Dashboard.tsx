@@ -141,8 +141,10 @@ const DashboardEmployee = () => {
   };
 
   const handleOpenCreateLink = () => {
+    // setOpenInviteOrCreateLink(false);
+    // setOpenCreateLink(true);
     setOpenInviteOrCreateLink(false);
-    setOpenCreateLink(true);
+    setOpenShareLinkList(true);
   };
 
   const handleOpenAccess = () => {

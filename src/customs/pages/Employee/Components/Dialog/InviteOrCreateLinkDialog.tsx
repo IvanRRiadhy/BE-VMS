@@ -1,5 +1,16 @@
-import { Box, Button, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import {
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Grid2 as Grid,
+  Typography,
+} from '@mui/material';
+import { IconClipboardText, IconLink, IconX } from '@tabler/icons-react';
 
 type InviteOrCreateLinkDialogProps = {
   open: boolean;
@@ -14,10 +25,22 @@ const InviteOrCreateLinkDialog = ({
   onPreregister,
   onCreateLink,
 }: InviteOrCreateLinkDialogProps) => {
+  const cardSx = {
+    height: '100%',
+    borderRadius: 2,
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      borderColor: 'primary.main',
+      backgroundColor: 'primary.50',
+      transform: 'translateY(-2px)',
+      boxShadow: 2,
+    },
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
-        Invite or Create Link
+        Preregister Visitor
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -25,36 +48,103 @@ const InviteOrCreateLinkDialog = ({
             position: 'absolute',
             right: 8,
             top: 8,
-            color: (theme) => theme.palette.grey[500],
+            color: 'grey.500',
           }}
         >
-          <IconX />
+          <IconX size={20} />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          flexDirection="column"
-          textAlign="center"
-          py={3}
-        >
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mb: 2 }}
-            onClick={onPreregister}
-          >
-            Preregister
-          </Button>
+      <DialogContent dividers sx={{ py: 2 }}>
+        {/* <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Choose how you want to invite your visitor.
+        </Typography> */}
 
-          <Button variant="outlined" color="primary" fullWidth onClick={onCreateLink}>
-            Share Link Invitation
-          </Button>
-        </Box>
+        <Grid container spacing={2}>
+          {/* Preregister */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Card variant="outlined" sx={cardSx}>
+              <CardActionArea onClick={onPreregister} sx={{ height: '100%' }}>
+                <CardContent
+                  sx={{
+                    p: 3,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'primary.50',
+                      color: 'primary.main',
+                      mb: 2,
+                    }}
+                  >
+                    <IconClipboardText size={28} />
+                  </Box>
+
+                  <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+                    Preregister Visitor
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Register visitor information in advance before their arrival.
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+
+          {/* Share Link */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Card variant="outlined" sx={cardSx}>
+              <CardActionArea onClick={onCreateLink} sx={{ height: '100%' }}>
+                <CardContent
+                  sx={{
+                    p: 3,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'primary.50',
+                      color: 'primary.main',
+                      mb: 2,
+                    }}
+                  >
+                    <IconLink size={28} />
+                  </Box>
+
+                  <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+                    Share Link Invitation
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Generate an invitation link and share it directly with your visitor.
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        </Grid>
       </DialogContent>
     </Dialog>
   );

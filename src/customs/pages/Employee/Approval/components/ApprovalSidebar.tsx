@@ -151,8 +151,9 @@ const ApprovalSidebar = ({
                       <Tooltip title="Approve" arrow>
                         <IconButton
                           sx={{
-                            backgroundColor: '#4CAF50',
-                            borderRadius: '50%',
+                            // backgroundColor: '#4CAF50',
+                            backgroundColor: 'primary.main',
+                            borderRadius: '5px',
                             width: 30,
                             height: 30,
                             color: '#fff',
@@ -163,7 +164,7 @@ const ApprovalSidebar = ({
                           }}
                           onClick={(e) => onOpenApprovalDialog(e, group, 'Approve')}
                         >
-                          <IconCheck size={16} />
+                          <IconCheck size={20} />
                         </IconButton>
                       </Tooltip>
 
@@ -172,7 +173,7 @@ const ApprovalSidebar = ({
                           sx={{
                             backgroundColor: '#f44336',
                             color: '#fff',
-                            borderRadius: '50%',
+                            borderRadius: '5px',
                             width: 30,
                             height: 30,
                             '&:hover': {
@@ -182,7 +183,7 @@ const ApprovalSidebar = ({
                           }}
                           onClick={(e) => onOpenApprovalDialog(e, group, 'Reject')}
                         >
-                          <IconX size={16} />
+                          <IconX size={20} />
                         </IconButton>
                       </Tooltip>
                     </Box>
