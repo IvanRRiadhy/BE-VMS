@@ -15,8 +15,12 @@ import {
 } from 'src/customs/api/Public';
 import { IconUsers } from '@tabler/icons-react';
 import Language from 'src/layouts/full/vertical/header/Language';
+import { getConfig } from 'src/config';
 
 export default function InvitationShare() {
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
   const [searchParams] = useSearchParams();
   const [error, setError] = useState(false);
   const navigate = useNavigate();
@@ -182,7 +186,15 @@ export default function InvitationShare() {
                   flexDirection="column"
                   alignItems="center"
                 >
-                  <img src={Logo} width={100} height={100} alt="Logo" />
+                  <img
+                    src={logoUrl}
+                    style={{
+                      width: '100px',
+                      height: '80px',
+                      objectFit: 'contain',
+                    }}
+                    alt="Logo"
+                  />
                   <Box
                     sx={{
                       mt: 2,

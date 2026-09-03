@@ -3753,7 +3753,7 @@ const OperatorView = () => {
           }}
         />
       </Box>
-      <Footer />
+   
     </PageContainer>
   );
 };

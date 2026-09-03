@@ -74,6 +74,7 @@ import { useTranslation } from 'react-i18next';
 import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { getConfig } from 'src/config';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -85,6 +86,10 @@ dayjs.extend(timezone);
 dayjs.locale('id');
 
 const GuestInformationStepper = () => {
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
+
   const [activeStep, setActiveStep] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -1841,16 +1846,12 @@ const GuestInformationStepper = () => {
         showSwal('error', 'Visitor ID not found');
         return;
       }
-
       const res = await SubmitPraForm(payload);
       // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
-
       await new Promise((r) => setTimeout(r, 500));
-
       const authRes = await AuthVisitor({ code });
       // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
       const token = authRes?.collection?.token;
-
       const status = authRes.status;
 
       if (status === 'process') {
@@ -1908,7 +1909,7 @@ const GuestInformationStepper = () => {
                   }}
                 >
                   {/* Logo */}
-                  <img src={Logo} width={100} height={100} alt="Logo" />
+                  <img src={logoUrl} width={100} height={100} alt="Logo" />
 
                   {/* Language */}
                   <Box

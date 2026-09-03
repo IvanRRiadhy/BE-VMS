@@ -25,9 +25,13 @@ const InvitationQrCard = ({
       sx={{
         borderRadius: 1.5,
         width: '100%',
+        minHeight: 0,
+        flex: 1,
         backgroundColor: 'background.paper',
         p: 1,
         mt: 0.5,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <CardHeader
@@ -36,23 +40,25 @@ const InvitationQrCard = ({
       />
       <CardContent
         sx={{
-          flexGrow: 1,
+          flex: 1,
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent: 'stretch',
+          pt: 3,
           pb: '0 !important',
-          pt: '0px !important',
         }}
       >
         {/* QR / Empty State */}
         <Box
           sx={{
+            flex: 1,
+            width: '100%',
             display: 'flex',
-            justifyContent: 'start',
             // alignItems: 'center',
-            minHeight: 120,
-            mb: 0,
+            justifyContent: 'flex-start',
             gap: 5,
+            minHeight: 0,
           }}
         >
           {data?.visitor_number ? (
@@ -68,7 +74,7 @@ const InvitationQrCard = ({
               }}
             />
           ) : (
-            <Box textAlign="center" color="text.secondary">
+            <Box textAlign="center" color="text.secondary" >
               <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
               <Typography variant="h6" fontWeight={500}>
                 {t('noQrCardAvailable')}
@@ -78,7 +84,7 @@ const InvitationQrCard = ({
               </Typography>
             </Box>
           )}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Typography variant="h6" fontWeight={'semibold'}>
               {t('invitationCode')}
             </Typography>

@@ -2,13 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="src/assets/images/logos/BI_Logo.png" />
+    <link id="favicon" rel="icon" type="image/png" href="/assets/images/BI_Logo.png" />
     <!-- <link rel="icon" type="image/png" href="src/assets/images/logos/bio-experience-1x1-logo.png" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="BI VMS" />
     <meta property="og:description" content="Bank Indonesia Visitor Management System" />
-    <meta property="og:image" content="https://vms.app.bio-experience.com/assets/images/BI_Logo.png" />
+    <meta
+      property="og:image"
+      content="https://vms.app.bio-experience.com/assets/images/BI_Logo.png"
+    />
     <meta property="og:url" content="https://vms.app.bio-experience.com" />
     <title>BI VMS</title>
   </head>
@@ -16,7 +19,17 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      const global = globalThis;
+      // const global = globalThis;
+      fetch('/config.json')
+        .then((res) => res.json())
+        .then((config) => {
+          if (config.LOGO_URL?.trim()) {
+            document.getElementById('favicon').href = config.LOGO_URL;
+          }
+        })
+        .catch(() => {
+          // Fallback tetap BI_Logo.png
+        });
     </script>
   </body>
 </html>

@@ -40,6 +40,7 @@ import Footer from '../components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
+import { getConfig } from 'src/config';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const Login = () => {
@@ -74,6 +75,10 @@ const Login = () => {
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
 
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  const config = getConfig();
+
+  const logoUrl = config.LOGIN_LOGO_URL || Logo;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -280,7 +285,6 @@ const Login = () => {
                 sx={{
                   minHeight: 'calc(100vh - 100px)', // sisakan ruang footer
                   py: { xs: 2, md: 3, lg: 4 },
-
                 }}
               >
                 <Grid
@@ -381,7 +385,17 @@ const Login = () => {
                         position: 'relative',
                       }}
                     >
-                      <img src={Logo} width={250} height={80} />
+                      <img
+                        src={logoUrl}
+                        style={{
+                          maxWidth: '250px',
+                          maxHeight: '80px',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
+                        }}
+                        alt="logo"
+                      />
 
                       <Box
                         sx={{

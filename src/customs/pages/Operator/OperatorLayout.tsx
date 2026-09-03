@@ -5,6 +5,7 @@ import {
 import PageContainer from 'src/customs/components/container/PageContainer';
 import { Outlet } from 'react-router';
 import { OperatorToolbarProvider } from 'src/customs/contexts/OperatorToolbarContext';
+import Footer from './Components/Footer';
 
 const OperatorLayout = () => {
   return (
@@ -15,6 +16,7 @@ const OperatorLayout = () => {
       >
         <Outlet />
       </PageContainer>
+      <Footer />
     </OperatorToolbarProvider>
   );
 };

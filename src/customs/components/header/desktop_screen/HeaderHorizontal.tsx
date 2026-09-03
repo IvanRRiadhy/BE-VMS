@@ -13,10 +13,9 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
 import { toggleMobileSidebar, setDarkMode } from 'src/store/customizer/CustomizerSlice';
 import { lazy } from 'react';
+import { getConfig } from 'src/config';
 
-const Notifications = lazy(
-  () => import('src/layouts/full/vertical/header/Notification')
-);
+const Notifications = lazy(() => import('src/layouts/full/vertical/header/Notification'));
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   background: theme.palette.background.paper,
@@ -55,6 +54,10 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
     dispatch(setDarkMode(isDark ? 'light' : 'dark'));
   };
 
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
+
   return (
     <AppBarStyled
       position="sticky"
@@ -87,7 +90,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
             )} */}
             {lgUp && (
               <Box sx={{ width: xl ? '0px' : 'none', overflow: 'hidden' }}>
-                <img src={Logo} width={45} height={45} />
+                <img src={logoUrl} width={45} height={45} />
               </Box>
             )}
           </Box>
@@ -110,7 +113,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
         )}
 
         {/* Kanan: Mode, Notifikasi, Profile */}
-        <Stack spacing={1} direction="row" alignItems="center"> 
+        <Stack spacing={1} direction="row" alignItems="center">
           {/* <IconButton color="inherit" onClick={handleToggleTheme}>
             {isDark ? <IconMoonFilled size={20} /> : <IconMoon size={20} />}
           </IconButton> */}

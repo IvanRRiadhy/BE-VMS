@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { Helmet } from 'react-helmet';
+import Footer from 'src/customs/pages/Operator/Components/Footer';
 
 type Props = {
   description?: string;
@@ -19,6 +20,7 @@ const PageContainer = ({ title, description, children }: Props) => {
       </Helmet>
 
       {children}
+   
     </div>
   );
 };

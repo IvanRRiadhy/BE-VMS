@@ -197,9 +197,9 @@ const VisitorDetailCard = ({
     >
       <Card
         sx={{
-          flex: 1,
+          // flex: 1,
           minWidth: 0,
-          minHeight: 0,
+          // minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           boxShadow: 'none',
@@ -211,9 +211,9 @@ const VisitorDetailCard = ({
         <CardContent
           sx={{
             p: '0px !important',
-            minWidth: 0,
-            minHeight: 0,
-            flex: 1,
+            // minWidth: 0,
+            // minHeight: 0,
+            // flex: 1,
             overflow: 'hidden',
           }}
         >
