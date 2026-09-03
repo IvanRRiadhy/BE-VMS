@@ -123,37 +123,98 @@ const Dashboard = () => {
         backgroundColor: '#fff',
       });
 
-      const imgData = canvas.toDataURL('image/png');
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (!ctx) throw new Error('Failed to get canvas context');
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const data = imageData.data;
+
+      let minX = canvas.width;
+      let minY = canvas.height;
+      let maxX = 0;
+      let maxY = 0;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const index = (y * canvas.width + x) * 4;
+
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const a = data[index + 3];
+
+          // Anggap pixel yang bukan putih sebagai content
+          if (a > 0 && (r < 245 || g < 245 || b < 245)) {
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+
+      const padding = 20;
+
+      minX = Math.max(0, minX - padding);
+      minY = Math.max(0, minY - padding);
+      maxX = Math.min(canvas.width, maxX + padding);
+      maxY = Math.min(canvas.height, maxY + padding);
+
+      const croppedCanvas = document.createElement('canvas');
+
+      croppedCanvas.width = maxX - minX;
+      croppedCanvas.height = maxY - minY;
+
+      const croppedCtx = croppedCanvas.getContext('2d');
+
+      if (!croppedCtx) throw new Error('Failed to create cropped canvas');
+
+      croppedCtx.fillStyle = '#fff';
+      croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
+
+      croppedCtx.drawImage(
+        canvas,
+        minX,
+        minY,
+        croppedCanvas.width,
+        croppedCanvas.height,
+        0,
+        0,
+        croppedCanvas.width,
+        croppedCanvas.height,
+      );
+
+      const imgData = croppedCanvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a6');
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const margin = 10;
-      const imgWidth = pdfWidth - margin * 2;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const margin = 4;
 
-      let heightLeft = imgHeight;
-      let position = margin;
+      const maxWidth = pdfWidth - margin * 2;
+      const maxHeight = pdfHeight - margin * 2;
 
-      // Page pertama
-      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      let imgWidth = maxWidth;
+      let imgHeight = (croppedCanvas.height * imgWidth) / croppedCanvas.width;
 
-      heightLeft -= pdfHeight - margin * 2;
-
-      // Jika lebih dari 1 halaman
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-
-        pdf.addPage();
-
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-
-        heightLeft -= pdfHeight - margin * 2;
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = (croppedCanvas.width * imgHeight) / croppedCanvas.height;
       }
 
-      pdf.save(`Visitor Code-${accessPass?.visitor_number || 'Visitor'}.pdf`);
+      const x = (pdfWidth - imgWidth) / 2;
+      const y = (pdfHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+
+      showSwal('success', 'Successfully generated PDF');
+
+      pdf.save(`Visitor Code-${currentAccessPass?.visitor_number || 'Visitor'}.pdf`);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
     } finally {

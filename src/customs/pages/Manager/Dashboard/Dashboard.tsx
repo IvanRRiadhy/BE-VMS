@@ -52,7 +52,7 @@ const DashboardEmployee = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
-  const [activities, setActivities] = useState<any[]>([]);
+  // const [activities, setActivities] = useState<any[]>([]);
   const queryClient = useQueryClient();
   const start = page * rowsPerPage;
   const {
@@ -282,15 +282,25 @@ const DashboardEmployee = () => {
     setQuickSearch(keyword);
   }, []);
 
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
   const {
-    data: activites = [],
-    isLoading,
-    error,
+    data: activities,
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchActivities,
   } = useActivities({
-    start: 0,
-    length: 5,
-    start_date: startDate.toISOString().split('T')[0],
-    end_date: endDate.toISOString().split('T')[0],
+    start_date: formatLocalDate(startDate),
+    end_date: formatLocalDate(endDate),
   });
 
   return (
@@ -411,7 +421,7 @@ const DashboardEmployee = () => {
             height="100%"
             isHavePagination={false}
             defaultRowsPerPage={10}
-            data={activites}
+            data={activities?.activities ?? []}
             isHaveHeaderTitle
             titleHeader="Activities"
             overflowX="auto"

@@ -612,9 +612,9 @@ const GuestAccessPass = ({
 
           <Field label="Parking Slot" value={accessPass.parking_slot} />
 
-          <Field label="Vehicle Plate" value={accessPass.vehicle_plate_number} />
+          <Field label="Vehicle Plate" value={accessPass.vehicle_plate_number || '-'} />
 
-          <Field label="Vehicle Type" value={accessPass.vehicle_type} />
+          <Field label="Vehicle Type" value={accessPass.vehicle_type || '-'} />
         </Box>
         {/* ================================
             PARKING BUTTON

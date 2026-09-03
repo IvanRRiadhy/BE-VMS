@@ -65,7 +65,7 @@ const AvarageDurationChart = () => {
       <Box
         sx={{
           py: 2,
-          borderRadius: 3,
+          borderRadius: 1,
           bgcolor: 'background.paper',
           boxShadow: 3,
           height: 420,

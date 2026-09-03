@@ -38,7 +38,7 @@ const TopVisitingPurposeChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getTopVisitingPurpose(start, end);
+        const res = await getTopVisitingPurpose(start as string, end as string);
 
         const labels = res.collection.map((item: any) => item.name);
         const values = res.collection.map((item: any) => item.count);
@@ -128,7 +128,7 @@ const TopVisitingPurposeChart = () => {
       <Box
         sx={{
           p: 0,
-          borderRadius: 3,
+          borderRadius: 1,
           // border: '1px solid #d6d3d3ff',
           bgcolor: 'background.paper',
           boxShadow: 3,

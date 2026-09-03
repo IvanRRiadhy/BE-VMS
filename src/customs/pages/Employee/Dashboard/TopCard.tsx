@@ -223,43 +223,81 @@ const TopCard = ({ items = [], size }: any) => {
   //   }
   // };
 
-  const getColorByKey = (key: string) => {
-    switch (key.toLowerCase()) {
-      case 'checkin':
-        return '#16A765';
-      case 'checkout':
-        return '#E53935';
-      case 'denied':
-        return '#8B0000';
-      case 'block':
-        return '#4B5563';
-      case 'waiting':
-        return '#055499';
-      case 'blacklist':
-        return '#111827';
-      default:
-        return '#055499';
-    }
-  };
+  // const getColorByKey = (key: string) => {
+  //   switch (key.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#16A765';
+  //     case 'checkout':
+  //       return '#E53935';
+  //     case 'denied':
+  //       return '#8B0000';
+  //     case 'block':
+  //       return '#4B5563';
+  //     case 'waiting':
+  //       return '#055499';
+  //     case 'blacklist':
+  //       return '#111827';
+  //     default:
+  //       return '#055499';
+  //   }
+  // };
 
-  const getColorByTitle = (title: string) => {
-    switch (title.toLowerCase()) {
-      case 'checkin':
-        return '#22A66F';
-      case 'checkout':
-        return '#E53935';
-      case 'denied':
-        return '#8B0000';
-      case 'block':
-        return '#4B5563';
-      case 'waiting':
-        return '#055499';
-      case 'blacklist':
-        return '#111827';
-      default:
-        return '#055499';
-    }
-  };
+  // const getColorByTitle = (title: string) => {
+  //   switch (title.toLowerCase()) {
+  //     case 'checkin':
+  //       return '#22A66F';
+  //     case 'checkout':
+  //       return '#E53935';
+  //     case 'denied':
+  //       return '#8B0000';
+  //     case 'block':
+  //       return '#4B5563';
+  //     case 'waiting':
+  //       return '#055499';
+  //     case 'blacklist':
+  //       return '#111827';
+  //     default:
+  //       return '#055499';
+  //   }
+  // };
+
+    const getColorByKey = (key: string) => {
+      switch (key.toLowerCase()) {
+        case 'checkin':
+          return '#16A765';
+        case 'checkout':
+          return '#E53935';
+        case 'denied':
+          return '#8B0000';
+        case 'block':
+          return '#4B5563';
+        case 'waiting':
+          return '#055499';
+        case 'blacklist':
+          return '#111827';
+        default:
+          return '#055499';
+      }
+    };
+
+    const getColorByTitle = (title: string) => {
+      switch (title.toLowerCase()) {
+        case 'checkin':
+          return '#16A765';
+        case 'checkout':
+          return '#E53935';
+        case 'denied':
+          return '#8B0000';
+        case 'block':
+          return '#4B5563';
+        case 'waiting':
+          return '#055499';
+        case 'blacklist':
+          return '#111827';
+        default:
+          return '#055499';
+      }
+    };
 
   return (
     <Grid container spacing={2}>
@@ -311,7 +349,7 @@ const TopCard = ({ items = [], size }: any) => {
                       sx={{
                         backgroundColor: getColorByTitle(card.title),
                         color: '#fff',
-                        borderRadius: '50%',
+                        borderRadius: '5px',
                         p: 1.5,
                         display: 'flex',
                         alignItems: 'center',

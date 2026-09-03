@@ -78,7 +78,7 @@ const VisitorFluctuationChart = () => {
       <Box
         sx={{
           p: 3,
-          borderRadius: 3,
+          borderRadius: 1,
           bgcolor: 'background.paper',
           boxShadow: 3,
           // border: '1px solid #d6d3d3ff',

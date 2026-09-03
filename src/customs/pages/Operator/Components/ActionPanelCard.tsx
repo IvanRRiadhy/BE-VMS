@@ -59,7 +59,10 @@ const ActionPanelCard: FC<Props> = ({
     canBlacklist,
     canCardIssuance,
     canVisitorTriggerOpen,
+    canManageVisitor,
+    canWalkIn,
     canParking,
+    canVisitorPreregister,
     canExtend,
     canAccess,
   } = permission;
@@ -71,6 +74,7 @@ const ActionPanelCard: FC<Props> = ({
         justifyContent: isFullscreen ? 'center' : 'flex-start',
         alignItems: isFullscreen ? 'center' : 'stretch',
         // height: '350px',
+        minHeight: isFullscreen ? '100%' : 300,
       }}
       id="tour-action-panel"
     >
@@ -141,57 +145,68 @@ const ActionPanelCard: FC<Props> = ({
                 </Button>
               </Tooltip>
 
-              {loading ? (
-                <ButtonSkeleton />
-              ) : (
-                canManageInvite && (
-                  <Box display={'flex'} mt={0.5} gap={1}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<IconUserPlus size={25} />}
-                      onClick={() => setOpenPreRegistration(true)}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 2.5,
-
-                        zIndex: 999,
-                        width: '100%',
-                        height: '50px',
-                        p: 0,
-                        backgroundColor: '#',
-                      }}
-                    >
-                      <Typography variant="h6" color="white">
-                        Pra Register
-                      </Typography>
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<IconUserPlus size={25} />}
-                      onClick={() => setOpenInvitationVisitor(true)}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 2.5,
-                        zIndex: 999,
-                        width: '100%',
-                        height: '50px',
-                        p: 0,
-                      }}
-                    >
-                      <Typography variant="h6" color="white">
-                        Walk In
-                      </Typography>
-                    </Button>
-                  </Box>
-                )
-              )}
-
               <Grid container spacing={isFullscreen ? 1 : 1}>
+                {loading ? (
+                  <ButtonSkeleton />
+                ) : (
+                  canManageInvite &&
+                  canManageVisitor &&
+                  canVisitorPreregister && (
+                    <Grid size={{ xs: 6, lg: 6 }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<IconUserPlus size={25} />}
+                        onClick={() => setOpenPreRegistration(true)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: 2.5,
+                          zIndex: 999,
+                          width: '100%',
+                          height: '50px',
+                          p: 0,
+                          backgroundColor: '#055499',
+                        }}
+                      >
+                        <Typography variant="h6" color="white">
+                          Pra Register
+                        </Typography>
+                      </Button>
+                    </Grid>
+                  )
+                )}
+
+                {loading ? (
+                  <ButtonSkeleton />
+                ) : (
+                  canManageInvite &&
+                  canManageVisitor &&
+                  canWalkIn && (
+                    <Grid size={{ xs: 6, lg: 6 }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<IconUserPlus size={25} />}
+                        onClick={() => setOpenInvitationVisitor(true)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: 2.5,
+                          zIndex: 999,
+                          width: '100%',
+                          height: '50px',
+                          p: 0,
+                        }}
+                      >
+                        <Typography variant="h6" color="white">
+                          Walk In
+                        </Typography>
+                      </Button>
+                    </Grid>
+                  )
+                )}
+
                 {/* Checkin */}
                 {loading ? (
                   <ButtonSkeleton />
@@ -238,11 +253,12 @@ const ActionPanelCard: FC<Props> = ({
                           textTransform: 'none',
                           fontWeight: 600,
                           px: 2.5,
-                          background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
+                          backgroundColor: '#EF4444',
+                          // background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
                           boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
-                          },
+                          // '&:hover': {
+                          //   background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
+                          // },
                           zIndex: 999,
                           width: '100%',
                           height: '50px',

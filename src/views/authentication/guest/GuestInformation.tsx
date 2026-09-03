@@ -72,6 +72,8 @@ import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
 // import toast from 'src/customs/components/alerts/toast';
 import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -98,6 +100,8 @@ const GuestInformationStepper = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const { t } = useTranslation();
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -1215,9 +1219,11 @@ const GuestInformationStepper = () => {
 
             return (
               <Grid key={fieldKey} size={gridSize}>
-                <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
-                  {f.long_display_text || f.remarks}
-                </CustomFormLabel>
+                {!['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                  <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                    {f.long_display_text || f.remarks}
+                  </CustomFormLabel>
+                )}
                 {(() => {
                   switch (type) {
                     case 10:
@@ -1233,10 +1239,290 @@ const GuestInformationStepper = () => {
                       return null;
                   }
                 })()}
-                {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                {/* {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                   <CustomTextField
                     fullWidth
                     value={formatDateTime(formValues[f.remarks])}
+                    InputProps={{ readOnly: true }}
+                    disabled
+                  />
+                )} */}
+                {/* 
+                {f.remarks === 'visitor_period_start' && (
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                      open={openStartPicker}
+                      onOpen={() => setOpenStartPicker(true)}
+                      onClose={() => setOpenStartPicker(false)}
+                      onChange={(newValue) => {
+                        if (newValue) {
+                          // const utc = newValue.utc().format();
+                          const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+                          handleChange(f.remarks, utcValue);
+
+                          // Jika start > end, kosongkan end
+                          if (
+                            formValues.visitor_period_end &&
+                            dayjs(formValues.visitor_period_end).isBefore(newValue)
+                          ) {
+                            handleChange('visitor_period_end', '');
+                          }
+                        } else {
+                          handleChange(f.remarks, '');
+                        }
+                      }}
+                      ampm={false}
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors[f.remarks],
+                          helperText: errors[f.remarks],
+                          onClick: () => {
+                            setOpenStartPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+
+                {f.remarks === 'visitor_period_end' && (
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      open={openEndPicker}
+                      onOpen={() => setOpenEndPicker(true)}
+                      onClose={() => setOpenEndPicker(false)}
+                      value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                      onChange={(newValue) => {
+                        const utcValue = newValue
+                          ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                          : '';
+                        if (newValue) {
+                          handleChange(f.remarks, utcValue);
+                        } else {
+                          handleChange(f.remarks, '');
+                        }
+                      }}
+                      ampm={false}
+                      minDateTime={
+                        formValues.visitor_period_start
+                          ? dayjs(formValues.visitor_period_start)
+                          : undefined
+                      }
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors[f.remarks],
+                          helperText: errors[f.remarks],
+                          onClick: () => {
+                            setOpenEndPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )} */}
+                {f.remarks === 'visitor_period_start' && (
+                  <Grid container spacing={2}>
+                    {/* LEFT - Visitor Period Start */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                        {f.long_display_text || f.remarks}
+                      </CustomFormLabel>
+
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                        <DateTimePicker
+                          value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                          open={openStartPicker}
+                          onOpen={() => setOpenStartPicker(true)}
+                          onClose={() => setOpenStartPicker(false)}
+                          onChange={(newValue) => {
+                            if (newValue) {
+                              const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+                              handleChange(f.remarks, utcValue);
+
+                              if (
+                                formValues.visitor_period_end &&
+                                dayjs(formValues.visitor_period_end).isBefore(newValue)
+                              ) {
+                                handleChange('visitor_period_end', '');
+                              }
+                            } else {
+                              handleChange(f.remarks, '');
+                            }
+                          }}
+                          ampm={false}
+                          format="dddd, DD MMMM YYYY, HH:mm"
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              error: !!errors[f.remarks],
+                              helperText: errors[f.remarks],
+                              onClick: () => {
+                                setOpenStartPicker(true);
+                              },
+                              FormHelperTextProps: {
+                                sx: {
+                                  ml: 0,
+                                  mr: 0,
+                                },
+                              },
+                            },
+                            actionBar: {
+                              actions: ['today', 'clear', 'accept'],
+                              sx: {
+                                '& .MuiButtonBase-root:nth-of-type(1)': {
+                                  color: 'secondary !important',
+                                },
+                                '& .MuiButtonBase-root:nth-of-type(2)': {
+                                  backgroundColor: '#d32f2f !important',
+                                  color: 'white',
+                                  marginLeft: '3px',
+                                },
+                                '& .MuiButtonBase-root:nth-of-type(3)': {
+                                  backgroundColor: '#055499 !important',
+                                  color: 'white',
+                                  marginLeft: '3px',
+                                },
+                              },
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </Grid>
+
+                    {/* RIGHT - Visitor Period End */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                        Visitor Period End
+                      </CustomFormLabel>
+
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                        <DateTimePicker
+                          open={openEndPicker}
+                          onOpen={() => setOpenEndPicker(true)}
+                          onClose={() => setOpenEndPicker(false)}
+                          value={
+                            formValues.visitor_period_end
+                              ? dayjs(formValues.visitor_period_end)
+                              : null
+                          }
+                          onChange={(newValue) => {
+                            const utcValue = newValue
+                              ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                              : '';
+
+                            handleChange('visitor_period_end', utcValue);
+                          }}
+                          ampm={false}
+                          minDateTime={
+                            formValues.visitor_period_start
+                              ? dayjs(formValues.visitor_period_start)
+                              : undefined
+                          }
+                          format="dddd, DD MMMM YYYY, HH:mm"
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              error: !!errors.visitor_period_end,
+                              helperText: errors.visitor_period_end,
+                              onClick: () => {
+                                setOpenEndPicker(true);
+                              },
+                              FormHelperTextProps: {
+                                sx: {
+                                  ml: 0,
+                                  mr: 0,
+                                },
+                              },
+                            },
+                            actionBar: {
+                              actions: ['today', 'clear', 'accept'],
+                              sx: {
+                                '& .MuiButtonBase-root:nth-of-type(1)': {
+                                  color: 'secondary !important',
+                                },
+                                '& .MuiButtonBase-root:nth-of-type(2)': {
+                                  backgroundColor: '#d32f2f !important',
+                                  color: 'white',
+                                  marginLeft: '3px',
+                                },
+                                '& .MuiButtonBase-root:nth-of-type(3)': {
+                                  backgroundColor: '#055499 !important',
+                                  color: 'white',
+                                  marginLeft: '3px',
+                                },
+                              },
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </Grid>
+                  </Grid>
+                )}
+
+                {/* Jangan render visitor_period_end lagi karena sudah dirender
+    bersama visitor_period_start */}
+                {f.remarks === 'visitor_period_end' && null}
+
+                {f.remarks === 'email' && (
+                  <CustomTextField
+                    fullWidth
+                    value={displayValue}
                     InputProps={{ readOnly: true }}
                     disabled
                   />
@@ -1387,7 +1673,7 @@ const GuestInformationStepper = () => {
                       onChange={(e) => handleChange(f.remarks, e.target.value)}
                       displayEmpty
                     >
-                      <MenuItem value="">Select Role</MenuItem>
+                      {/* <MenuItem value="">Select Role</MenuItem> */}
 
                       {invitationData?.visitor_type_data?.visitor_roles
                         ?.filter((x: any) => x.active)
@@ -1411,6 +1697,7 @@ const GuestInformationStepper = () => {
                   'visitor_period_end',
                   'vehicle_plate',
                   'gender',
+                  'email',
                   'visitor_role',
                   'is_driving',
                   'vehicle_type',

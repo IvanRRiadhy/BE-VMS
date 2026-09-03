@@ -221,7 +221,7 @@ const Content = () => {
               <Grid size={{ xs: 12, lg: 12 }}>
                 <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} />
               </Grid>
-              <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
+              <Grid container mt={0} size={{ xs: 12, lg: 12 }}>
                 <Grid size={{ xs: 12, md: 6, xl: 3 }}>
                   <VisitingTypeChart />
                 </Grid>

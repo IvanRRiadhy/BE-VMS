@@ -829,8 +829,8 @@ const DashboardEmployee = () => {
           </Grid>
         </Grid>
 
-        <Grid container spacing={2} alignItems="stretch">
-          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%' }}>
+        <Grid container spacing={2} alignItems="stretch" width={'100%'}>
+          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%', width: '100%' }}>
             <DynamicTable
               data={invitationDetailVisitor}
               height={430}

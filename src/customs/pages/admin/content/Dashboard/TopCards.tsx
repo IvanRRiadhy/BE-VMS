@@ -252,7 +252,8 @@ const TopCards = ({ items = [], size }: any) => {
             <Grid key={key ?? index} size={size}>
               <CardContent
                 sx={{
-                  backgroundColor: `${baseColor}40`,
+                  // backgroundColor: `${baseColor}40`,
+                  backgroundColor: 'white',
                   // border: `0.5px solid ${baseColor}40`,
                   color: '#000',
                   boxShadow: 2.5,
@@ -264,7 +265,20 @@ const TopCards = ({ items = [], size }: any) => {
                 }}
               >
                 <Box width="100%">
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
+                  <Box display="flex" alignItems="center" justifyContent="flex-start" mb={1.5} gap={2}>
+                    <Box
+                      sx={{
+                        backgroundColor: getColorByTitle(card.title),
+                        color: '#fff',
+                        borderRadius: '50%',
+                        p: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {card.icon}
+                    </Box>
                     <Box display={'flex'} flexDirection={'column'} gap={0.5}>
                       <Typography
                         variant="h5"
@@ -277,20 +291,6 @@ const TopCards = ({ items = [], size }: any) => {
                       <Typography variant="h3" fontWeight={700}>
                         {statsToday?.[key] ?? 0}
                       </Typography>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        backgroundColor: getColorByTitle(card.title),
-                        color: '#fff',
-                        borderRadius: '30%',
-                        p: 1.5,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {card.icon}
                     </Box>
                   </Box>
 

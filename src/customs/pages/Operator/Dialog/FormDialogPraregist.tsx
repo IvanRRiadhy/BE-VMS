@@ -60,11 +60,18 @@ import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
-// import toast from 'src/customs/components/alerts/toast';
+import weekday from 'dayjs/plugin/weekday';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 dayjs.extend(utc);
-dayjs.extend(timezone);
-
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
 dayjs.locale('id');
 
 interface FormDialogPraregistProps {
@@ -102,6 +109,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
   const [isDragging, setIsDragging] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const { t } = useTranslation();
   const formatDateTime = (value: string | null) =>
     !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
@@ -124,7 +133,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         const res = await getDetailInvitationForm(id);
         const data = res.collection;
         setInvitationData(data);
-        console.log('data', data);
 
         const initial: Record<string, any> = {};
         data?.question_page?.forEach((section: any) => {
@@ -1184,10 +1192,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             displayValue = invitationData.site_place_name || displayValue;
           } else if (f.remarks === 'visitor_role') {
             displayValue = invitationData?.visitor_type_data.visitor_roles?.role || '';
-            console.log('displayValue', displayValue);
           }
 
-          const gridSize = { xs: 12 };
+          const isVisitorPeriod = ['visitor_period_start', 'visitor_period_end'].includes(
+            f.remarks,
+          );
+
+          const gridSize = isVisitorPeriod ? { xs: 12, md: 6 } : { xs: 12 };
           const hideVehiclePlate =
             f.remarks === 'vehicle_plate' &&
             (formValues['is_driving'] !== 'true' || formValues['vehicle_type'] === 'bicycle');
@@ -1196,8 +1207,12 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           }
           return (
             <Grid key={idx} size={gridSize}>
-              {!['vehicle_type', 'vehicle_plate'].includes(f.remarks) ||
-              formValues['is_driving'] === 'true' ? (
+              {![
+                'vehicle_type',
+                'vehicle_plate',
+                'visitor_period_start',
+                'visitor_period_end',
+              ].includes(f.remarks) || formValues['is_driving'] === 'true' ? (
                 <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
                   {f.long_display_text || f.remarks}
                 </CustomFormLabel>
@@ -1224,10 +1239,155 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 }
               })()}
 
-              {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+              {/* {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                 <CustomTextField
                   fullWidth
                   value={formatDateTime(formValues[f.remarks])}
+                  InputProps={{ readOnly: true }}
+                  disabled
+                />
+              )} */}
+
+              {f.remarks === 'visitor_period_start' && (
+                <>
+                  <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                    {f.long_display_text || f.remarks}
+                  </CustomFormLabel>
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                      open={openStartPicker}
+                      onOpen={() => setOpenStartPicker(true)}
+                      onClose={() => setOpenStartPicker(false)}
+                      onChange={(newValue) => {
+                        if (newValue) {
+                          const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+                          handleChange(f.remarks, utcValue);
+
+                          if (
+                            formValues.visitor_period_end &&
+                            dayjs(formValues.visitor_period_end).isBefore(newValue)
+                          ) {
+                            handleChange('visitor_period_end', '');
+                          }
+                        } else {
+                          handleChange(f.remarks, '');
+                        }
+                      }}
+                      ampm={false}
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors[f.remarks],
+                          helperText: errors[f.remarks],
+                          onClick: () => {
+                            setOpenStartPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </>
+              )}
+
+              {f.remarks === 'visitor_period_end' && (
+                <>
+                  <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                    {f.long_display_text || f.remarks}
+                  </CustomFormLabel>
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      open={openEndPicker}
+                      onOpen={() => setOpenEndPicker(true)}
+                      onClose={() => setOpenEndPicker(false)}
+                      value={
+                        formValues.visitor_period_end ? dayjs(formValues.visitor_period_end) : null
+                      }
+                      onChange={(newValue) => {
+                        const utcValue = newValue
+                          ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                          : '';
+                        handleChange('visitor_period_end', utcValue);
+                      }}
+                      ampm={false}
+                      minDateTime={
+                        formValues.visitor_period_start
+                          ? dayjs(formValues.visitor_period_start)
+                          : undefined
+                      }
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors.visitor_period_end,
+                          helperText: errors.visitor_period_end,
+                          onClick: () => {
+                            setOpenEndPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </>
+              )}
+
+              {f.remarks === 'visitor_period_end' && null}
+
+              {f.remarks === 'email' && (
+                <CustomTextField
+                  fullWidth
+                  value={displayValue}
                   InputProps={{ readOnly: true }}
                   disabled
                 />
@@ -1457,6 +1617,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 'visitor_period_end',
                 'vehicle_plate',
                 'gender',
+                'email',
                 'is_driving',
                 'is_employee',
                 'visitor_role',

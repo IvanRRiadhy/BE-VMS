@@ -466,6 +466,10 @@ const Content = () => {
       promises.push(deletePermission(edittingId));
     }
 
+    if(originalData.accesses?.length) {
+      promises.push(deletePermissionAccessControl(edittingId));
+    }
+
     if (originalData.manageSite?.length) {
       promises.push(deletePermissionSite(edittingId));
     }

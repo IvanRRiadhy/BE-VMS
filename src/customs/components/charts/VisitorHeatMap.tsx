@@ -148,7 +148,7 @@ const VisitorHeatMap = () => {
     <>
       <Box
         sx={{
-          borderRadius: 3,
+          borderRadius: 1,
           overflow: 'hidden',
           boxShadow: 3,
           // border: '1px solid #d6d3d3ff',
