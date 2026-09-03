@@ -48,6 +48,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
     Visitor: 'Visitor',
     Delivery: 'Delivery',
     Vip: 'Vip',
+    Employee: 'Employee',
   };
 
   const visitorRoleOptions = Object.values(visitorRole);

@@ -709,7 +709,7 @@ const FormWizardAddEmployee = ({
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="identity_id" required>
-                <Typography variant="caption">Identity ID (KTP/SIM/Pasport)</Typography>
+                <Typography variant="caption">Citizenship ID (KTP/SIM/Pasport)</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"

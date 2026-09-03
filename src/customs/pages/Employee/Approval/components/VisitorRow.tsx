@@ -48,10 +48,11 @@ function VisitorRow({
                     <TableCell></TableCell>
                     <TableCell width="10%">Visitor Name</TableCell>
                     <TableCell width="15%">Email</TableCell>
+                    <TableCell width="15%">Citizenship ID</TableCell>
                     <TableCell width="15%">Phone</TableCell>
                     <TableCell width="15%">Organization</TableCell>
                     <TableCell width="15%">Host</TableCell>
-                    <TableCell width="15%">Site</TableCell>
+                    {/* <TableCell width="15%">Site</TableCell> */}
                     <TableCell width="15%">Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -78,13 +79,14 @@ function VisitorRow({
                       {visitor.visitor_name}
                     </TableCell>
                     <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell>
                     <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
 
                     <TableCell sx={{ fontSize: '13px' }}>
                       {visitor.visitor_organization_name}
                     </TableCell>
                     <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
-                    <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>
+                    {/* <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell> */}
                     <TableCell sx={{ fontSize: '13px' }}>
                       <Box
                         sx={{

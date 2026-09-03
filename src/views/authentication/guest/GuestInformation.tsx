@@ -1220,7 +1220,11 @@ const GuestInformationStepper = () => {
               return null;
             }
 
-            const gridSize = { xs: 12 };
+            const isVisitorPeriod = ['visitor_period_start', 'visitor_period_end'].includes(
+              f.remarks,
+            );
+
+            const gridSize = isVisitorPeriod ? { xs: 12, md: 6 } : { xs: 12 };
 
             return (
               <Grid key={fieldKey} size={gridSize}>
@@ -1381,147 +1385,143 @@ const GuestInformationStepper = () => {
                   </LocalizationProvider>
                 )} */}
                 {f.remarks === 'visitor_period_start' && (
-                  <Grid container spacing={2}>
-                    {/* LEFT - Visitor Period Start */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
-                        {f.long_display_text || f.remarks}
-                      </CustomFormLabel>
+                  <>
+                    <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                      {f.long_display_text || f.remarks}
+                    </CustomFormLabel>
 
-                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                        <DateTimePicker
-                          value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
-                          open={openStartPicker}
-                          onOpen={() => setOpenStartPicker(true)}
-                          onClose={() => setOpenStartPicker(false)}
-                          onChange={(newValue) => {
-                            if (newValue) {
-                              const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                        open={openStartPicker}
+                        onOpen={() => setOpenStartPicker(true)}
+                        onClose={() => setOpenStartPicker(false)}
+                        onChange={(newValue) => {
+                          if (newValue) {
+                            const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 
-                              handleChange(f.remarks, utcValue);
+                            handleChange(f.remarks, utcValue);
 
-                              if (
-                                formValues.visitor_period_end &&
-                                dayjs(formValues.visitor_period_end).isBefore(newValue)
-                              ) {
-                                handleChange('visitor_period_end', '');
-                              }
-                            } else {
-                              handleChange(f.remarks, '');
+                            if (
+                              formValues.visitor_period_end &&
+                              dayjs(formValues.visitor_period_end).isBefore(newValue)
+                            ) {
+                              handleChange('visitor_period_end', '');
                             }
-                          }}
-                          ampm={false}
-                          format="dddd, DD MMMM YYYY, HH:mm"
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              error: !!errors[f.remarks],
-                              helperText: errors[f.remarks],
-                              onClick: () => {
-                                setOpenStartPicker(true);
-                              },
-                              FormHelperTextProps: {
-                                sx: {
-                                  ml: 0,
-                                  mr: 0,
-                                },
-                              },
-                            },
-                            actionBar: {
-                              actions: ['today', 'clear', 'accept'],
-                              sx: {
-                                '& .MuiButtonBase-root:nth-of-type(1)': {
-                                  color: 'secondary !important',
-                                },
-                                '& .MuiButtonBase-root:nth-of-type(2)': {
-                                  backgroundColor: '#d32f2f !important',
-                                  color: 'white',
-                                  marginLeft: '3px',
-                                },
-                                '& .MuiButtonBase-root:nth-of-type(3)': {
-                                  backgroundColor: '#055499 !important',
-                                  color: 'white',
-                                  marginLeft: '3px',
-                                },
-                              },
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </Grid>
-
-                    {/* RIGHT - Visitor Period End */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
-                        Visitor Period End
-                      </CustomFormLabel>
-
-                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                        <DateTimePicker
-                          open={openEndPicker}
-                          onOpen={() => setOpenEndPicker(true)}
-                          onClose={() => setOpenEndPicker(false)}
-                          value={
-                            formValues.visitor_period_end
-                              ? dayjs(formValues.visitor_period_end)
-                              : null
+                          } else {
+                            handleChange(f.remarks, '');
                           }
-                          onChange={(newValue) => {
-                            const utcValue = newValue
-                              ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
-                              : '';
-
-                            handleChange('visitor_period_end', utcValue);
-                          }}
-                          ampm={false}
-                          minDateTime={
-                            formValues.visitor_period_start
-                              ? dayjs(formValues.visitor_period_start)
-                              : undefined
-                          }
-                          format="dddd, DD MMMM YYYY, HH:mm"
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              error: !!errors.visitor_period_end,
-                              helperText: errors.visitor_period_end,
-                              onClick: () => {
-                                setOpenEndPicker(true);
-                              },
-                              FormHelperTextProps: {
-                                sx: {
-                                  ml: 0,
-                                  mr: 0,
-                                },
-                              },
+                        }}
+                        ampm={false}
+                        format="dddd, DD MMMM YYYY, HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            error: !!errors[f.remarks],
+                            helperText: errors[f.remarks],
+                            onClick: () => {
+                              setOpenStartPicker(true);
                             },
-                            actionBar: {
-                              actions: ['today', 'clear', 'accept'],
+                            FormHelperTextProps: {
                               sx: {
-                                '& .MuiButtonBase-root:nth-of-type(1)': {
-                                  color: 'secondary !important',
-                                },
-                                '& .MuiButtonBase-root:nth-of-type(2)': {
-                                  backgroundColor: '#d32f2f !important',
-                                  color: 'white',
-                                  marginLeft: '3px',
-                                },
-                                '& .MuiButtonBase-root:nth-of-type(3)': {
-                                  backgroundColor: '#055499 !important',
-                                  color: 'white',
-                                  marginLeft: '3px',
-                                },
+                                ml: 0,
+                                mr: 0,
                               },
                             },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </Grid>
-                  </Grid>
+                          },
+                          actionBar: {
+                            actions: ['today', 'clear', 'accept'],
+                            sx: {
+                              '& .MuiButtonBase-root:nth-of-type(1)': {
+                                color: 'secondary !important',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(2)': {
+                                backgroundColor: '#d32f2f !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(3)': {
+                                backgroundColor: '#055499 !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </>
                 )}
 
-                {/* Jangan render visitor_period_end lagi karena sudah dirender
-    bersama visitor_period_start */}
+                {f.remarks === 'visitor_period_end' && (
+                  <>
+                    <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                      {f.long_display_text || f.remarks}
+                    </CustomFormLabel>
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        open={openEndPicker}
+                        onOpen={() => setOpenEndPicker(true)}
+                        onClose={() => setOpenEndPicker(false)}
+                        value={
+                          formValues.visitor_period_end
+                            ? dayjs(formValues.visitor_period_end)
+                            : null
+                        }
+                        onChange={(newValue) => {
+                          const utcValue = newValue
+                            ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                            : '';
+
+                          handleChange('visitor_period_end', utcValue);
+                        }}
+                        ampm={false}
+                        minDateTime={
+                          formValues.visitor_period_start
+                            ? dayjs(formValues.visitor_period_start)
+                            : undefined
+                        }
+                        format="dddd, DD MMMM YYYY, HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            error: !!errors.visitor_period_end,
+                            helperText: errors.visitor_period_end,
+                            onClick: () => {
+                              setOpenEndPicker(true);
+                            },
+                            FormHelperTextProps: {
+                              sx: {
+                                ml: 0,
+                                mr: 0,
+                              },
+                            },
+                          },
+                          actionBar: {
+                            actions: ['today', 'clear', 'accept'],
+                            sx: {
+                              '& .MuiButtonBase-root:nth-of-type(1)': {
+                                color: 'secondary !important',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(2)': {
+                                backgroundColor: '#d32f2f !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(3)': {
+                                backgroundColor: '#055499 !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </>
+                )}
+
                 {f.remarks === 'visitor_period_end' && null}
 
                 {f.remarks === 'email' && (
@@ -1786,6 +1786,7 @@ const GuestInformationStepper = () => {
 
                 if (
                   formValues.is_driving !== true &&
+                  formValues.is_driving !== 'true' &&
                   ['vehicle_type', 'vehicle_plate'].includes(f.remarks)
                 ) {
                   value = null;

@@ -29,7 +29,6 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { IconClipboard, IconQrcode, IconUser, IconUserPlus, IconUsers } from '@tabler/icons-react';
-
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -428,7 +427,7 @@ const Content = () => {
     try {
       await cancelMutation.mutateAsync(id);
 
-      showSwal('success', 'Transaction successfully cancelled');
+      showSwal('success', 'Successfully canceled visitor');
     } catch (error: any) {
       showSwal('error', error?.msg ?? 'Failed to cancel visitor');
     }
