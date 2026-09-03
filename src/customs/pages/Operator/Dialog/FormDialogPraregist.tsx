@@ -1459,28 +1459,40 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   )}
                 </>
               )}
-
               {f.remarks === 'is_driving' && (
                 <>
+                  {' '}
                   <FormControl component="fieldset">
+                    {' '}
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
                       onChange={(e) => {
-                        handleChange(f.remarks, e.target.value);
+                        const value = e.target.value;
+                        handleChange(f.remarks, value);
+                        if (value === 'false') {
+                          handleChange('vehicle_type', null);
+                          handleChange('vehicle_plate', null);
+                          setErrors((prev) => {
+                            const { vehicle_type, vehicle_plate, ...rest } = prev;
+                            return rest;
+                          });
+                        }
                       }}
                       sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                     >
-                      <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                      <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
+                      {' '}
+                      <FormControlLabel value="true" control={<Radio />} label="Yes" />{' '}
+                      <FormControlLabel value="false" control={<Radio />} label="No" />{' '}
+                    </RadioGroup>{' '}
                     {errors[f.remarks] && (
                       <Typography variant="caption" color="error">
-                        {errors[f.remarks]}
+                        {errors[f.remarks]}{' '}
                       </Typography>
-                    )}
-                  </FormControl>
+                    )}{' '}
+                  </FormControl>{' '}
                 </>
               )}
+
               {f.remarks === 'visitor_role' && (
                 <Autocomplete
                   size="small"

@@ -1646,9 +1646,9 @@ const GuestInformationStepper = () => {
                         { value: 'bus', label: 'Bus' },
                         { value: 'motor', label: 'Motor' },
                         { value: 'bicycle', label: 'Bicycle' },
-                        { value: 'truck', label: 'Truck' },
-                        { value: 'private_car', label: 'Private Car' },
-                        { value: 'other', label: 'Other' },
+                        // { value: 'truck', label: 'Truck' },
+                        // { value: 'private_car', label: 'Private Car' },
+                        // { value: 'other', label: 'Other' },
                       ].map((opt) => (
                         <FormControlLabel
                           key={opt.value}
