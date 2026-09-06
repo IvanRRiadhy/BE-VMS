@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Card,
   CardContent,
@@ -11,17 +12,22 @@ import {
   IconButton,
   Portal,
   Snackbar,
+  Stack,
   Typography,
 } from '@mui/material';
 import moment from 'moment-timezone';
 import {
   IconBolt,
+  IconCalendar,
   IconCircleMinus,
   IconHourglass,
+  IconLink,
   IconLogin,
   IconLogout,
   IconPlus,
   IconQrcode,
+  IconUser,
+  IconUserPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -76,10 +82,12 @@ import VisitorTrendChart from './components/VisitorTrendChart';
 
 const DashboardEmployee = () => {
   const CardItems = [
-    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
-    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'waiting', key: 'Waiting', icon: <IconHourglass size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
+    // { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    // { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'Pending Approval', key: 'Waiting', icon: <IconHourglass size={25} /> },
+    { title: 'Visitor Today', key: 'Waiting', icon: <IconCalendar size={25} /> },
+    // { title: 'Visitor Inside', key: 'Waiting', icon: <IconCalendar size={25} /> },
+    // { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
   ];
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
@@ -710,22 +718,22 @@ const DashboardEmployee = () => {
         isExporting={isExporting}
       />
       <Grid container spacing={1.5} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
-        <Grid size={{ xs: 12, lg: 10 }}>
-          <TopCards items={CardItems} size={{ xs: 12, lg: 3 }} />
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
 
         <Grid
-          size={{ xs: 12, lg: 2 }}
+          size={{ xs: 12, lg: 6 }}
           sx={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             // height: '100%',
             alignSelf: 'stretch',
             gap: 1,
+            flexWrap: 'wrap',
           }}
         >
-          {/* <AccessPassEmployee activeAccessPass={accessPass} onClick={handleOpenAccess} /> */}
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             sx={{ flex: 1 }}
@@ -733,8 +741,68 @@ const DashboardEmployee = () => {
             startIcon={<IconPlus />}
           >
             Register Visitor
-          </Button>
-          <Button
+          </Button> */}
+          <Card
+            sx={{
+              flex: 1,
+              border: '1px solid',
+              borderColor: 'divider',
+              backgroundColor: 'primary.main',
+              boxShadow: 'none',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 0 } }}>
+              <Stack spacing={1.5}>
+                {/* Icon + Title + Description */}
+                <Stack direction="row" spacing={4} alignItems="flex-start">
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white !important',
+                      color: '#1554B8',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <IconUserPlus size={30} />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 1 }}>
+                    <Typography variant="h6" fontWeight={600} color="white">
+                      Register Visitor
+                    </Typography>
+
+                    <Typography variant="body2" color="white">
+                      Employee fill visitor information
+                    </Typography>
+
+                    {/* Button */}
+                    <Button
+                      // fullWidth
+                      // variant="contained"
+                      // color="primary"
+                      onClick={handleOpenInviteOrCreateLink}
+                      startIcon={<IconPlus size={18} />}
+                      sx={{
+                        mb: 0,
+                        // mt: 1,
+                        width: 'max-content',
+                        '&:hover': { backgroundColor: 'white', color: 'primary.main' },
+                      }}
+                    >
+                      Register Visitor
+                    </Button>
+                  </Box>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+          {/* <Button
             variant="contained"
             sx={{
               flex: 1,
@@ -751,40 +819,85 @@ const DashboardEmployee = () => {
             startIcon={<IconQrcode />}
           >
             {t('quickAccess')}
-          </Button>
+          </Button> */}
+          <Card
+            sx={{
+              flex: 1,
+              border: '1px solid',
+              borderColor: 'divider',
+              backgroundColor: '#EEF4FF',
+              boxShadow: 'none',
+              borderRadius: 2,
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 0 } }}>
+              <Stack spacing={1.5}>
+                {/* Icon + Title + Description */}
+                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white !important',
+                      color: '#1554B8',
+
+                      flexShrink: 0,
+                    }}
+                  >
+                    <IconLink size={30} />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 1 }}>
+                    <Typography variant="h6" fontWeight={600} color="text.primary">
+                      Share Link Invitation
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                      Share invitation link with visitor
+                    </Typography>
+                    <Button
+                      // fullWidth
+                      variant="contained"
+                      onClick={() => setOpenShareLinkList(true)}
+                      startIcon={<IconLink size={18} />}
+                      sx={{
+                        backgroundColor: 'white',
+                        color: '#1554B8',
+                        width: 'fit-content',
+                        boxShadow: 'none',
+                        fontWeight: 600,
+                        '&:hover': {
+                          backgroundColor: '#E3EDFF',
+                          boxShadow: 'none',
+                        },
+                      }}
+                    >
+                      Generate Link
+                    </Button>
+                  </Box>
+                </Stack>
+
+                {/* Button */}
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
-          <Grid
+          {/* <Grid
             size={{ xs: 12, lg: 5 }}
             sx={{
               display: 'flex',
             }}
-          >
-            {/* <DynamicTable
-              loading={isLoadingShareLink}
-              height={'100%'}
-              overflowX="auto"
-              data={shareLinkList}
-              isHaveChecked={true}
-              titleHeader="Link Share Visitor"
-              isHaveHeaderTitle={true}
-              isCopyLink={true}
-              isNoActionTableHead={true}
-              onPaginationChange={(page, rowsPerPage) => {
-                setPage(page);
-                setRowsPerPage(rowsPerPage);
-              }}
-              isHaveAddData={true}
-              isDetailLink={true}
-              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-              onDetailLink={(row: any) => handleDetailLink(row)}
-              onDelete={(row: any) => handleDeleteLink(row.id)}
-              onAddData={() => setOpenShareLinkList(true)}
-            /> */}
-            <VisitorTrendChart />
-          </Grid>
+          > */}
+
+          {/* <VisitorTrendChart /> */}
+          {/* </Grid> */}
           <Grid
-            size={{ xs: 12, lg: 4 }}
+            size={{ xs: 12, lg: 6 }}
             sx={{
               display: 'flex',
             }}
@@ -811,7 +924,7 @@ const DashboardEmployee = () => {
           </Grid>
 
           <Grid
-            size={{ xs: 12, lg: 3 }}
+            size={{ xs: 12, lg: 6 }}
             height={'100%'}
             sx={{
               display: 'flex',
@@ -830,10 +943,10 @@ const DashboardEmployee = () => {
         </Grid>
 
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
-          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%', width: '100%' }}>
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
             <DynamicTable
               data={invitationDetailVisitor}
-              height={430}
+              height={'100%'}
               isHavePagination={false}
               overflowX="auto"
               isHaveChecked={false}
@@ -851,10 +964,32 @@ const DashboardEmployee = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, lg: 4.8 }} sx={{ height: '100%' }}>
-            <Heatmap />
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
+            {/* <Heatmap />
+             */}
+            <DynamicTable
+              loading={isLoadingShareLink}
+              height={'100%'}
+              overflowX="auto"
+              data={shareLinkList}
+              isHaveChecked={true}
+              titleHeader="Link Share Visitor"
+              isHaveHeaderTitle={true}
+              isCopyLink={true}
+              isNoActionTableHead={true}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveAddData={true}
+              isDetailLink={true}
+              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+              onDetailLink={(row: any) => handleDetailLink(row)}
+              onDelete={(row: any) => handleDeleteLink(row.id)}
+              onAddData={() => setOpenShareLinkList(true)}
+            />
           </Grid>
-          <Grid size={{ xs: 12, lg: 2.4 }} sx={{ height: '100%' }}>
+          {/* <Grid size={{ xs: 12, lg: 2.4 }} sx={{ height: '100%' }}>
             <Card sx={{ height: '100%' }}>
               <CardHeader title="Announcements" />
               <CardContent
@@ -870,7 +1005,7 @@ const DashboardEmployee = () => {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
       </Grid>
 

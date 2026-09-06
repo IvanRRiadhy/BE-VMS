@@ -41,7 +41,6 @@ dayjs.locale('id');
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import AccessPassDialog from '../components/Dialog/AccessPassDialog';
 import { dispatch } from 'src/store/Store';
 import { useSelector } from 'react-redux';
 import Heatmap from './Heatmap';
@@ -122,7 +121,6 @@ const Dashboard = () => {
         useCORS: true,
         backgroundColor: '#fff',
       });
-
 
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -344,6 +342,7 @@ const Dashboard = () => {
           >
             <GuestAccessPass
               accessPass={currentAccessPass}
+              loading={loadingAccessPass}
               onOpenAccess={handleOpenAccess}
               onDownload={handleDownloadPDF}
               onInsertInvitationCode={() => setOpenInputInvitationCode(true)}

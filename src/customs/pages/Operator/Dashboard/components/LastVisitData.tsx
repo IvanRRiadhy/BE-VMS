@@ -230,7 +230,7 @@ export default function LastVisitsCard({
         mt={1.2}
       >
         <Typography fontWeight={700} fontSize={16}>
-          Real-time Activity
+          Recent Activity
         </Typography>
 
         <Box
@@ -270,7 +270,6 @@ export default function LastVisitsCard({
             }}
           >
             <IconRefresh size={20} />
-            
           </Box>
         </Box>
       </Box>

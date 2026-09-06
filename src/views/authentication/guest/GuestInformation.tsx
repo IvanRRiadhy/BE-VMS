@@ -306,13 +306,10 @@ const GuestInformationStepper = () => {
     return (
       <Box
         sx={{
-          height: '100vh',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          height: '100vh',
           justifyContent: 'center',
-          textAlign: 'center',
-          gap: 2,
+          alignItems: 'center',
         }}
       >
         <CircularProgress color="primary" />
@@ -1392,6 +1389,7 @@ const GuestInformationStepper = () => {
 
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
+                        disabled
                         value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
                         open={openStartPicker}
                         onOpen={() => setOpenStartPicker(true)}
@@ -1422,6 +1420,22 @@ const GuestInformationStepper = () => {
                             onClick: () => {
                               setOpenStartPicker(true);
                             },
+                            sx: {
+                              '& .MuiInputBase-root.Mui-disabled': {
+                                backgroundColor: '#F5F5F5',
+                                color: '#757575',
+                              },
+                              '& .MuiInputBase-input.Mui-disabled': {
+                                WebkitTextFillColor: '#757575',
+                                color: '#757575',
+                              },
+                              '& .MuiInputLabel-root.Mui-disabled': {
+                                color: '#757575',
+                              },
+                              '& .MuiSvgIcon-root': {
+                                color: '#9E9E9E',
+                              },
+                            },
                             FormHelperTextProps: {
                               sx: {
                                 ml: 0,
@@ -1429,6 +1443,7 @@ const GuestInformationStepper = () => {
                               },
                             },
                           },
+
                           actionBar: {
                             actions: ['today', 'clear', 'accept'],
                             sx: {
@@ -1461,6 +1476,7 @@ const GuestInformationStepper = () => {
 
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
+                        disabled
                         open={openEndPicker}
                         onOpen={() => setOpenEndPicker(true)}
                         onClose={() => setOpenEndPicker(false)}
@@ -1490,6 +1506,22 @@ const GuestInformationStepper = () => {
                             helperText: errors.visitor_period_end,
                             onClick: () => {
                               setOpenEndPicker(true);
+                            },
+                            sx: {
+                              '& .MuiInputBase-root.Mui-disabled': {
+                                backgroundColor: '#F5F5F5',
+                                color: '#757575',
+                              },
+                              '& .MuiInputBase-input.Mui-disabled': {
+                                WebkitTextFillColor: '#757575',
+                                color: '#757575',
+                              },
+                              '& .MuiInputLabel-root.Mui-disabled': {
+                                color: '#757575',
+                              },
+                              '& .MuiSvgIcon-root': {
+                                color: '#9E9E9E',
+                              },
                             },
                             FormHelperTextProps: {
                               sx: {
@@ -1836,7 +1868,7 @@ const GuestInformationStepper = () => {
     e.preventDefault();
     const currentSection = formSections[activeStep];
     if (!validateStep(currentSection)) return;
-    if (!validateFillerData()) return;
+    // if (!validateFillerData()) return;
     try {
       setSubmitting(true);
 
@@ -1929,7 +1961,7 @@ const GuestInformationStepper = () => {
                     </Typography>
                   )}
                 </Box>
-
+                {/* 
                 {selfRegisterData === null ? (
                   <Card
                     elevation={0}
@@ -1953,7 +1985,7 @@ const GuestInformationStepper = () => {
                     </Typography>
 
                     <Grid container spacing={3} justifyContent="center">
-                      {/* SELF */}
+        
                       <Grid size={{ xs: 12, md: 5 }}>
                         <Card
                           elevation={0}
@@ -2014,7 +2046,7 @@ const GuestInformationStepper = () => {
                         </Card>
                       </Grid>
 
-                      {/* OTHER */}
+                
                       <Grid size={{ xs: 12, md: 5 }}>
                         <Card
                           elevation={0}
@@ -2041,7 +2073,7 @@ const GuestInformationStepper = () => {
                         >
                           <Box display="flex" flexDirection="column" alignItems="center">
                             <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                              {/* Person 1 */}
+                        
                               <Box
                                 sx={{
                                   width: 70,
@@ -2059,7 +2091,7 @@ const GuestInformationStepper = () => {
 
                               <IconArrowRight size={32} color="#1976d2" />
 
-                              {/* Person 2 */}
+            
                               <Box
                                 sx={{
                                   width: 70,
@@ -2097,284 +2129,284 @@ const GuestInformationStepper = () => {
                       </Grid>
                     </Grid>
                   </Card>
-                ) : (
-                  <>
-                    {!isMobile && (
-                      <>
-                        <Stepper activeStep={activeStep} alternativeLabel>
-                          {steps.map((label: any, idx: number) => (
-                            <Step key={idx}>
-                              <StepLabel
-                                StepIconComponent={CustomStepIcon}
-                                onClick={() => setActiveStep(idx)}
-                                sx={{
-                                  cursor: 'pointer',
-                                  '& .MuiStepLabel-label': {
-                                    typography: 'body1',
-                                    fontWeight: activeStep === idx ? 600 : 400,
-                                  },
-                                }}
-                              >
-                                {label}
-                              </StepLabel>
-                            </Step>
-                          ))}
-                        </Stepper>
-                      </>
-                    )}
+                ) : ( */}
+                <>
+                  {!isMobile && (
+                    <>
+                      <Stepper activeStep={activeStep} alternativeLabel>
+                        {steps.map((label: any, idx: number) => (
+                          <Step key={idx}>
+                            <StepLabel
+                              StepIconComponent={CustomStepIcon}
+                              onClick={() => setActiveStep(idx)}
+                              sx={{
+                                cursor: 'pointer',
+                                '& .MuiStepLabel-label': {
+                                  typography: 'body1',
+                                  fontWeight: activeStep === idx ? 600 : 400,
+                                },
+                              }}
+                            >
+                              {label}
+                            </StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </>
+                  )}
 
-                    {isMobile && (
-                      <Box
-                        sx={{
-                          mt: 1,
-                          mb: 1,
-                          px: 2,
-                          py: 1,
-                          width: 'fit-content',
-                          mx: 'auto',
-                          // bgcolor: 'primary.main',
-                          borderRadius: 2,
-                          color: 'primary',
-                          textAlign: 'center',
-                        }}
-                      >
-                        <Typography variant="h5" fontWeight={600}>
-                          {steps[activeStep]}
-                        </Typography>
-                      </Box>
-                    )}
-                    {selfRegisterData?.is_self_registered === false && (
-                      <Card
-                        elevation={0}
-                        sx={{
-                          mt: 3,
-                          mb: 3,
-                          p: 3,
-                          borderRadius: 3,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          // backgroundColor: '#fafafa',
-                          background:
-                            'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
-                        }}
-                      >
-                        <Typography variant="h6" fontWeight={700} mb={2}>
-                          {t('person_filling_this_form')}
-                        </Typography>
+                  {isMobile && (
+                    <Box
+                      sx={{
+                        mt: 1,
+                        mb: 1,
+                        px: 2,
+                        py: 1,
+                        width: 'fit-content',
+                        mx: 'auto',
+                        // bgcolor: 'primary.main',
+                        borderRadius: 2,
+                        color: 'primary',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="h5" fontWeight={600}>
+                        {steps[activeStep]}
+                      </Typography>
+                    </Box>
+                  )}
+                  {selfRegisterData?.is_self_registered === false && (
+                    <Card
+                      elevation={0}
+                      sx={{
+                        mt: 3,
+                        mb: 3,
+                        p: 3,
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        // backgroundColor: '#fafafa',
+                        background:
+                          'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight={700} mb={2}>
+                        {t('person_filling_this_form')}
+                      </Typography>
 
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <CustomFormLabel required sx={{ mt: 0 }}>
-                              {t('your_name')}
-                            </CustomFormLabel>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_name')}
+                          </CustomFormLabel>
 
-                            <CustomTextField
-                              fullWidth
-                              placeholder="Input your name"
-                              value={fillerData.name}
-                              onChange={(e: any) =>
-                                setFillerData((prev) => ({
-                                  ...prev,
-                                  name: e.target.value,
-                                }))
-                              }
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <CustomFormLabel required sx={{ mt: 0 }}>
-                              {t('your_email')}
-                            </CustomFormLabel>
-
-                            <CustomTextField
-                              fullWidth
-                              type="email"
-                              placeholder="Input your email"
-                              value={fillerData.email}
-                              onChange={(e: any) =>
-                                setFillerData((prev) => ({
-                                  ...prev,
-                                  email: e.target.value,
-                                }))
-                              }
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <CustomFormLabel required sx={{ mt: 0 }}>
-                              {t('your_phone')}
-                            </CustomFormLabel>
-
-                            <CustomTextField
-                              fullWidth
-                              placeholder="Input your phone"
-                              value={fillerData.phone}
-                              onChange={(e: any) =>
-                                setFillerData((prev) => ({
-                                  ...prev,
-                                  phone: e.target.value,
-                                }))
-                              }
-                            />
-                          </Grid>
+                          <CustomTextField
+                            fullWidth
+                            placeholder="Input your name"
+                            value={fillerData.name}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }
+                          />
                         </Grid>
-                      </Card>
-                    )}
-                    <Box mt={2}>
-                      {' '}
-                      <Box
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_email')}
+                          </CustomFormLabel>
+
+                          <CustomTextField
+                            fullWidth
+                            type="email"
+                            placeholder="Input your email"
+                            value={fillerData.email}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                email: e.target.value,
+                              }))
+                            }
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_phone')}
+                          </CustomFormLabel>
+
+                          <CustomTextField
+                            fullWidth
+                            placeholder="Input your phone"
+                            value={fillerData.phone}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                          />
+                        </Grid>
+                      </Grid>
+                    </Card>
+                  )}
+                  <Box mt={2}>
+                    {' '}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.5,
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: '#EFF6FF',
+                        border: '1px solid',
+                        borderColor: '#BFDBFE',
+                        mt: 2,
+                      }}
+                    >
+                      <InfoOutlined
                         sx={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
-                          borderRadius: 2,
-                          bgcolor: '#EFF6FF',
-                          border: '1px solid',
-                          borderColor: '#BFDBFE',
-                          mt: 2,
+                          color: '#2563EB',
+                          fontSize: 20,
+                          mt: 0.15,
+                        }}
+                      />
+
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          lineHeight: 1.5,
+                          color: '#475569',
                         }}
                       >
-                        <InfoOutlined
+                        <Box
+                          component="span"
                           sx={{
-                            color: '#2563EB',
-                            fontSize: 20,
-                            mt: 0.15,
-                          }}
-                        />
-
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            lineHeight: 1.5,
-                            color: '#475569',
+                            fontWeight: 600,
+                            color: '#1E3A8A',
                           }}
                         >
+                          {t('required_fields')}{' '}
                           <Box
                             component="span"
                             sx={{
-                              fontWeight: 600,
-                              color: '#1E3A8A',
+                              color: 'error.main',
+                              fontWeight: 700,
                             }}
                           >
-                            {t('required_fields')}{' '}
-                            <Box
-                              component="span"
-                              sx={{
-                                color: 'error.main',
-                                fontWeight: 700,
-                              }}
-                            >
-                              *
-                            </Box>
-                            <br />
+                            *
                           </Box>
+                          <br />
+                        </Box>
 
-                          {t('required_field_note')}
-                        </Typography>
-                      </Box>
-                      {StepContent(formSections[activeStep])}
+                        {t('required_field_note')}
+                      </Typography>
                     </Box>
+                    {StepContent(formSections[activeStep])}
+                  </Box>
 
-                    {isMobile && (
-                      <Box sx={{ mt: 2 }}>
-                        {/* Mobile Navigation */}
-                        <MobileStepper
-                          variant="dots"
-                          steps={steps.length}
-                          position="static"
-                          activeStep={activeStep}
-                          sx={{
-                            backgroundColor: 'transparent',
-                            p: 0,
-                          }}
-                          nextButton={
-                            activeStep === steps.length - 1 ? (
-                              <Button
-                                size="medium"
-                                variant="contained"
-                                color="primary"
-                                onClick={() => setOpenPreview(true)}
-                              >
-                                Submit
-                              </Button>
-                            ) : (
-                              <Button
-                                size="medium"
-                                variant="contained"
-                                color="primary"
-                                onClick={handleNext}
-                              >
-                                {t('next')}
-                                <KeyboardArrowRight />
-                              </Button>
-                            )
-                          }
-                          backButton={
+                  {isMobile && (
+                    <Box sx={{ mt: 2 }}>
+                      {/* Mobile Navigation */}
+                      <MobileStepper
+                        variant="dots"
+                        steps={steps.length}
+                        position="static"
+                        activeStep={activeStep}
+                        sx={{
+                          backgroundColor: 'transparent',
+                          p: 0,
+                        }}
+                        nextButton={
+                          activeStep === steps.length - 1 ? (
                             <Button
                               size="medium"
-                              onClick={() => {
-                                if (activeStep === 0) {
-                                  setSelfRegisterData(null);
-                                  return;
-                                }
-
-                                handleBack();
-                              }}
-                              disabled={activeStep === 0 && selfRegisterData === null}
+                              variant="contained"
+                              color="primary"
+                              onClick={() => setOpenPreview(true)}
                             >
-                              <KeyboardArrowLeft />
-                              {t('back')}
+                              Submit
                             </Button>
-                          }
-                        />
-                      </Box>
-                    )}
-
-                    <>
-                      {!isMobile && (
-                        <>
-                          <Divider sx={{ my: 2 }} />
-                          <Box display="flex" flexDirection="row" mt={2}>
+                          ) : (
                             <Button
-                              disabled={activeStep === 0 && selfRegisterData === null}
-                              onClick={() => {
-                                if (activeStep === 0) {
-                                  setSelfRegisterData(null);
-                                  return;
-                                }
-
-                                handleBack();
-                              }}
-                              startIcon={<KeyboardArrowLeft />}
+                              size="medium"
+                              variant="contained"
+                              color="primary"
+                              onClick={handleNext}
                             >
-                              {t('back')}
+                              {t('next')}
+                              <KeyboardArrowRight />
                             </Button>
-                            <Box flex="1 1 auto" />
-                            {activeStep !== steps.length - 1 ? (
-                              <Button
-                                onClick={handleNext}
-                                variant="contained"
-                                endIcon={<KeyboardArrowRight />}
-                              >
-                                {t('next')}
-                              </Button>
-                            ) : (
-                              <Button
-                                // onClick={handleSubmit}
-                                onClick={() => setOpenPreview(true)}
-                                variant="contained"
-                                color="primary"
-                              >
-                                Submit
-                              </Button>
-                            )}
-                          </Box>
-                        </>
-                      )}
-                    </>
+                          )
+                        }
+                        backButton={
+                          <Button
+                            size="medium"
+                            onClick={() => {
+                              if (activeStep === 0) {
+                                setSelfRegisterData(null);
+                                return;
+                              }
+
+                              handleBack();
+                            }}
+                            disabled={activeStep === 0 && selfRegisterData === null}
+                          >
+                            <KeyboardArrowLeft />
+                            {t('back')}
+                          </Button>
+                        }
+                      />
+                    </Box>
+                  )}
+
+                  <>
+                    {!isMobile && (
+                      <>
+                        <Divider sx={{ my: 2 }} />
+                        <Box display="flex" flexDirection="row" mt={2}>
+                          <Button
+                            disabled={activeStep === 0 && selfRegisterData === null}
+                            onClick={() => {
+                              if (activeStep === 0) {
+                                setSelfRegisterData(null);
+                                return;
+                              }
+
+                              handleBack();
+                            }}
+                            startIcon={<KeyboardArrowLeft />}
+                          >
+                            {t('back')}
+                          </Button>
+                          <Box flex="1 1 auto" />
+                          {activeStep !== steps.length - 1 ? (
+                            <Button
+                              onClick={handleNext}
+                              variant="contained"
+                              endIcon={<KeyboardArrowRight />}
+                            >
+                              {t('next')}
+                            </Button>
+                          ) : (
+                            <Button
+                              // onClick={handleSubmit}
+                              onClick={() => setOpenPreview(true)}
+                              variant="contained"
+                              color="primary"
+                            >
+                              Submit
+                            </Button>
+                          )}
+                        </Box>
+                      </>
+                    )}
                   </>
-                )}
+                </>
+                {/* )} */}
               </Card>
             </Grid>
           </Grid>

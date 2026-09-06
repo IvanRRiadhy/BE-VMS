@@ -349,7 +349,7 @@ const TopCard = ({ items = [], size }: any) => {
                       sx={{
                         backgroundColor: getColorByTitle(card.title),
                         color: '#fff',
-                        borderRadius: '5px',
+                        borderRadius: '50%',
                         p: 1.5,
                         display: 'flex',
                         alignItems: 'center',

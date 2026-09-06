@@ -100,7 +100,7 @@
 
 // export default GuestAccessPass;
 
-import { Box, Button, Card, Divider, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Card, CircularProgress, Divider, IconButton, Tooltip, Typography } from '@mui/material';
 import {
   IconCar,
   IconCards,
@@ -139,6 +139,7 @@ type GuestAccessPassData = {
 type GuestAccessPassProps = {
   accessPass?: any | null;
   onOpenAccess: () => void;
+  loading?: any;
   onDownload: () => void;
   onInsertInvitationCode: () => void;
   onOpenParking?: () => void;
@@ -154,6 +155,7 @@ const GuestAccessPass = ({
   accessPass,
   onOpenAccess,
   onDownload,
+  loading,
   onInsertInvitationCode,
   onOpenParking,
   isParkingLoading = false,
@@ -264,6 +266,27 @@ const GuestAccessPass = ({
       console.error('Failed to copy invitation code:', error);
     }
   };
+
+  if (loading) {
+    return (
+      <Card
+        sx={{
+          minHeight: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
+        <CircularProgress size={36} />
+
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          Loading access pass...
+        </Typography>
+      </Card>
+    );
+  }
 
   if (!accessPass) {
     return (
