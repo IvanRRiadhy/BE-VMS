@@ -523,7 +523,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       },
       {
         id: uniqueId(),
-        title: 'transction_visitor',
+        title: 'Upcoming Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/transaction-visitor',
@@ -588,7 +588,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'naviagtion.transaction_log',
+        title: 'navigation.transaction_log',
         icon: IconReport,
         chipColor: 'secondary',
         href: '/admin/report/transaction-log',
@@ -802,7 +802,7 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
       },
       {
         id: uniqueId(),
-        title: 'transction_visitor',
+        title: 'Upcoming Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/operator-admin/visitor/transaction-visitor',
