@@ -48,7 +48,11 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/api/Admin/ShareLink';
+import {
+  createShareLink,
+  deleteShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/Admin/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -182,7 +186,7 @@ const DashboardDeliveryStaff = () => {
           // visitor_status: item.visitor_status,
         }));
         setActiveInvitation(rows || []);
-      } catch (error) { }
+      } catch (error) {}
     };
 
     fetchDataActiveInvtiation();
@@ -458,9 +462,9 @@ const DashboardDeliveryStaff = () => {
       await queryClient.invalidateQueries({
         queryKey: ['share-links'],
       });
-      showSwal('success', 'Link deleted successfully.');
-    } catch (error) {
-      showSwal('error', 'Something went wrong while deleting link.');
+      showSwal('success', 'Successfully deleted link.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
     }
   };
 
@@ -498,7 +502,7 @@ const DashboardDeliveryStaff = () => {
       setOpenSendEmail(false);
       setOpenCreateLink(false);
 
-      showSwal('success', t("successSendShareLink"));
+      showSwal('success', t('successSendShareLink'));
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     } finally {

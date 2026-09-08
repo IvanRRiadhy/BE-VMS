@@ -18,6 +18,7 @@ import {
   IconGenderAgender,
   IconGenderBigender,
   IconMan,
+  IconNumber,
   IconPencil,
   IconPhone,
   IconUser,
@@ -303,12 +304,19 @@ const VisitorInformation = ({
                   value={invitationCode[0]?.visitor_phone}
                 />
 
+                {/* <InfoRow
+                  icon={<IconNumber size={18} />}
+                  label="Invitation Code"
+                  value={invitationCode[0]?.invitation_code}
+                /> */}
+                
+                {/* 
                 <InfoRow
                   icon={<IconCreditCard size={18} />}
                   label="Citizenship ID"
                   value={invitationCode[0]?.visitor_identity_id}
-                />
-                <InfoRow
+                /> */}
+                {/* <InfoRow
                   icon={
                     <Box
                       sx={{
@@ -323,13 +331,13 @@ const VisitorInformation = ({
                   }
                   label="Gender"
                   value={invitationCode[0]?.visitor_gender}
-                />
+                /> */}
 
-                <InfoRow
+                {/* <InfoRow
                   icon={<IconUser size={18} />}
                   label="Visitor Type"
                   value={invitationCode[0]?.visitor_role}
-                />
+                /> */}
               </Box>
             </Stack>
           </CardContent>

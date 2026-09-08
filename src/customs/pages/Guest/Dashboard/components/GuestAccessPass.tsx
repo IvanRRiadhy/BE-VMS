@@ -100,7 +100,16 @@
 
 // export default GuestAccessPass;
 
-import { Box, Button, Card, CircularProgress, Divider, IconButton, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import {
   IconCar,
   IconCards,
@@ -396,14 +405,14 @@ const GuestAccessPass = ({
               sx={{
                 position: 'absolute',
                 right: 0,
-                minWidth: 40,
-                width: 40,
-                height: 40,
+                minWidth: 50,
+                width: 50,
+                height: 50,
                 p: 0,
                 borderRadius: 1.5,
               }}
             >
-              <IconDownload size={19} />
+              <IconDownload size={25} />
             </Button>
           </Tooltip>
         </Box>
@@ -415,13 +424,18 @@ const GuestAccessPass = ({
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: '1fr 180px 1fr',
+              sm: '1fr 1fr',
             },
-            gap: {
-              xs: 2.5,
-              sm: 3,
+            columnGap: {
+              xs: 2,
+              sm: 5,
+              md: 8,
             },
-            alignItems: 'center',
+            rowGap: {
+              xs: 1.5,
+              sm: 2,
+            },
+            alignItems: 'start',
           }}
         >
           {/* LEFT */}
@@ -448,118 +462,21 @@ const GuestAccessPass = ({
             <Field label="Visit End">{formatDateTime(accessPass.visitor_period_end)}</Field>
           </Box>
 
-          {/* QR CODE */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              order: {
-                xs: 0,
-                sm: 1,
-              },
-            }}
-          >
-            <Box
-              sx={{
-                p: 1,
-                backgroundColor: '#fff',
-                borderRadius: 1.5,
-                boxShadow: '0px 2px 8px rgba(0,0,0,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <QRCode value={String(accessPass.visitor_number ?? '')} size={150} />
-            </Box>
-
-            <Typography
-              variant="body2"
-              color="primary"
-              fontWeight={500}
-              textAlign="center"
-              sx={{
-                mt: 1,
-                fontSize: '0.8rem',
-              }}
-            >
-              Invitation Code
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 0.5,
-              }}
-            >
-              <Typography
-                variant="body1"
-                fontWeight={700}
-                sx={{
-                  fontSize: '0.9rem',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {accessPass.invitation_code ?? '-'}
-              </Typography>
-
-              {accessPass.invitation_code && (
-                <Tooltip title={copied ? 'Copied!' : 'Copy invitation code'} arrow>
-                  <Box
-                    component="button"
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleCopyInvitationCode();
-                    }}
-                    sx={{
-                      border: 0,
-                      background: 'transparent',
-                      p: 0.3,
-                      m: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: 'primary.main',
-                      borderRadius: 1,
-
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      },
-                    }}
-                  >
-                    <IconCopy size={15} />
-                  </Box>
-                </Tooltip>
-              )}
-            </Box>
-            <Typography variant="caption" color="text.secondary" textAlign="center">
-              ID: {accessPass.visitor_number ?? '-'}
-            </Typography>
-          </Box>
-
           {/* RIGHT */}
           <Box
             sx={{
               display: 'flex',
               flexDirection: 'column',
-
               gap: {
                 xs: 1.5,
                 sm: 2,
               },
               order: {
                 xs: 2,
-                sm: 2,
+                sm: 1,
               },
             }}
           >
-            <Field label="Visitor Number" value={accessPass.visitor_number} />
             <Field label="Group Name" value={accessPass.group_name} />
 
             <Field label="Status">
@@ -587,6 +504,97 @@ const GuestAccessPass = ({
 
             <Field label="Site" value={accessPass.site_place_name ?? '-'} />
           </Box>
+        </Box>
+        {/* QR CODE */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '10px',
+          }}
+        >
+          <Box
+            sx={{
+              p: 1,
+              backgroundColor: '#fff',
+              borderRadius: 1.5,
+              boxShadow: '0px 2px 8px rgba(0,0,0,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <QRCode value={String(accessPass.visitor_number ?? '')} size={150} />
+          </Box>
+
+          <Typography
+            variant="body2"
+            color="primary"
+            fontWeight={500}
+            textAlign="center"
+            sx={{
+              mt: 1,
+              fontSize: '0.8rem',
+            }}
+          >
+            Invitation Code
+          </Typography>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5,
+            }}
+          >
+            <Typography
+              variant="body1"
+              fontWeight={700}
+              sx={{
+                fontSize: '0.9rem',
+                wordBreak: 'break-word',
+              }}
+            >
+              {accessPass.invitation_code ?? '-'}
+            </Typography>
+
+            {accessPass.invitation_code && (
+              <Tooltip title={copied ? 'Copied!' : 'Copy invitation code'} arrow>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleCopyInvitationCode();
+                  }}
+                  sx={{
+                    border: 0,
+                    background: 'transparent',
+                    p: 0.3,
+                    m: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'primary.main',
+                    borderRadius: 1,
+
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                >
+                  <IconCopy size={15} />
+                </Box>
+              </Tooltip>
+            )}
+          </Box>
+          <Typography variant="caption" color="text.secondary" textAlign="center">
+            ID: {accessPass.visitor_number ?? '-'}
+          </Typography>
         </Box>
         {/* ================================
             DIVIDER

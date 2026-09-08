@@ -213,7 +213,7 @@ const DetailProfile = () => {
                   >
                     <Tab label="Personal Info" />
                     <Tab label="Change Password" />
-                    <Tab label="License Info" />
+                    {/* <Tab label="License Info" /> */}
                   </Tabs>
                 </Grid>
 
@@ -226,9 +226,7 @@ const DetailProfile = () => {
                         ? 'Personal Information'
                         : activeTab === 1
                           ? 'Change Password'
-                          : activeTab === 2
-                            ? 'License Info'
-                            : 'License Information'}
+                          : ''}
                     </Typography>
                     {/* <Typography variant="body2" color="text.secondary" gutterBottom>
                       {activeTab === 0

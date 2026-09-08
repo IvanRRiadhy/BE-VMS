@@ -234,7 +234,7 @@ const Content = () => {
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <AvarageDurationChart />
                 </Grid>
-                <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                {/* <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <DynamicTable
                     height={420}
                     isHavePagination={false}
@@ -255,14 +255,14 @@ const Content = () => {
                     isHaveAddEmpty={true}
                     onAddEmpty={() => navigate('/employee/invitation')}
                   />
-                </Grid>
+                </Grid> */}
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <VisitorFluctuationChart />
                 </Grid>
 
-                <Grid size={{ xs: 12, xl: 6 }}>
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <VisitorHeatMap />
-                </Grid>
+                </Grid> */}
               </Grid>
             </Grid>
           </div>

@@ -45,7 +45,7 @@ export const useTransactionVisitorPagination = ({
                 filters.is_block === ''
                     ? undefined
                     : filters.is_block === 'true',
-                filters.host_id || undefined,
+                filters.host || undefined,
             ),
 
         getNextPageParam: (lastPage, pages) => {

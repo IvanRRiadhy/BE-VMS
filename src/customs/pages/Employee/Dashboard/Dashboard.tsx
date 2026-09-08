@@ -28,6 +28,7 @@ import {
   IconQrcode,
   IconUser,
   IconUserPlus,
+  IconUsers,
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -79,16 +80,17 @@ import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import VisitorTrendChart from './components/VisitorTrendChart';
+import { IconUserCheck } from '@tabler/icons-react';
 
 const DashboardEmployee = () => {
-  const CardItems = [
-    // { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
-    // { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'Pending Approval', key: 'Waiting', icon: <IconHourglass size={25} /> },
-    { title: 'Visitor Today', key: 'Waiting', icon: <IconCalendar size={25} /> },
-    // { title: 'Visitor Inside', key: 'Waiting', icon: <IconCalendar size={25} /> },
-    // { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-  ];
+  // const CardItems = [
+  //   // { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+  //   // { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+  //   // { title: 'Pending Approval', key: 'Waiting', icon: <IconHourglass size={25} /> },
+  //   // { title: 'Visitor Today', key: 'Waiting', icon: <IconCalendar size={25} /> },
+  //   // { title: 'Visitor Inside', key: 'Waiting', icon: <IconCalendar size={25} /> },
+  //   // { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
+  // ];
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -489,7 +491,7 @@ const DashboardEmployee = () => {
 
       if (!confirm.isConfirmed) return;
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Link deleted successfully.');
+      showSwal('success', 'Successfully deleted link.');
     } catch (error) {
       showSwal('error', 'Something went wrong while deleting link.');
     }
@@ -700,6 +702,20 @@ const DashboardEmployee = () => {
     setOpenCreateLink(true);
   };
 
+  const CardItems = [
+    {
+      title: 'Pending Approval',
+      key: 'pending',
+      description: 'requests waiting for your approval',
+      icon: <IconHourglass size={30} />,
+    },
+    {
+      title: 'Active Visitors',
+      key: 'active',
+      description: 'visitors currently active',
+      icon: <IconUsers size={30} />,
+    },
+  ];
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <DashboardEmployeeActionBar
@@ -718,8 +734,15 @@ const DashboardEmployee = () => {
         isExporting={isExporting}
       />
       <Grid container spacing={1.5} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
+        <Grid
+          size={{ xs: 12, lg: 6 }}
+          sx={{
+            display: 'flex',
+            alignSelf: 'stretch',
+            minHeight: 0,
+          }}
+        >
+          <TopCards items={CardItems} />
         </Grid>
 
         <Grid
@@ -971,22 +994,22 @@ const DashboardEmployee = () => {
               loading={isLoadingShareLink}
               height={'100%'}
               overflowX="auto"
-              data={shareLinkList}
+              data={[]}
               isHaveChecked={true}
-              titleHeader="Link Share Visitor"
+              titleHeader="Today Schedule"
               isHaveHeaderTitle={true}
-              isCopyLink={true}
-              isNoActionTableHead={true}
-              onPaginationChange={(page, rowsPerPage) => {
-                setPage(page);
-                setRowsPerPage(rowsPerPage);
-              }}
-              isHaveAddData={true}
-              isDetailLink={true}
-              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-              onDetailLink={(row: any) => handleDetailLink(row)}
-              onDelete={(row: any) => handleDeleteLink(row.id)}
-              onAddData={() => setOpenShareLinkList(true)}
+              // isCopyLink={true}
+              // isNoActionTableHead={true}
+              // onPaginationChange={(page, rowsPerPage) => {
+              //   setPage(page);
+              //   setRowsPerPage(rowsPerPage);
+              // }}
+              // isHaveAddData={true}
+              // isDetailLink={true}
+              // onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+              // onDetailLink={(row: any) => handleDetailLink(row)}
+              // onDelete={(row: any) => handleDeleteLink(row.id)}
+              // onAddData={() => setOpenShareLinkList(true)}
             />
           </Grid>
           {/* <Grid size={{ xs: 12, lg: 2.4 }} sx={{ height: '100%' }}>

@@ -16,6 +16,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSites } from 'src/hooks/Sites/useSites';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 
 
 type FilterMoreContentProps = {
@@ -54,7 +55,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
   const visitorRoleOptions = Object.values(visitorRole);
   const statusOptions = Object.values(statusMap);
   const { data: sites = [] } = useSites();
-  const { employee } = useEmployees();
+  const { allVisitorEmployee } = useVisitorEmployees();
 
   return (
     <Drawer
@@ -75,7 +76,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
         <Divider />
 
         <Grid container spacing={1} sx={{ p: 1 }}>
-          <Grid size={{ xs: 12, lg: 12 }}>
+          {/* <Grid size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Status</CustomFormLabel>
 
             <Autocomplete
@@ -99,7 +100,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
                 />
               )}
             />
-          </Grid>
+          </Grid> */}
 
           {/* <Grid size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Role</CustomFormLabel>
@@ -155,12 +156,12 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
             />
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 6 }}>
+          {/* <Grid size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Host</CustomFormLabel>
             <Autocomplete
-              options={employee}
+              options={allVisitorEmployee}
               getOptionLabel={(option) => option.name}
-              value={employee.find((o) => o.id === filters.host) || null}
+              value={allVisitorEmployee.find((o) => o.id === filters.host) || null}
               onChange={(_, val) =>
                 setFilters((prev: any) => ({
                   ...prev,
@@ -180,9 +181,9 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
                 />
               )}
             />
-          </Grid>
+          </Grid> */}
 
-          <Grid size={{ xs: 12, lg: 6 }}>
+          <Grid size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Site</CustomFormLabel>
             <Autocomplete
               options={sites}
@@ -209,8 +210,8 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
             />
           </Grid>
 
-          {/* Block */}
-          <Grid size={{ xs: 12, lg: 4 }}>
+          {/* Blacklist */}
+          {/* <Grid size={{ xs: 12, lg: 4 }}>
             <CustomFormLabel sx={{ mt: 0 }}>Block</CustomFormLabel>
             <FormGroup row>
               <FormControlLabel
@@ -280,8 +281,8 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
               />
             </FormGroup>
-          </Grid>
-
+          </Grid> */}
+{/* 
           <Grid size={{ xs: 12, lg: 4 }}>
             <CustomFormLabel sx={{ mt: 0 }}>Emergency Situation</CustomFormLabel>
             <FormGroup row>
@@ -316,7 +317,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
               />
             </FormGroup>
-          </Grid>
+          </Grid> */}
 
           {/* Apply Button */}
           <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

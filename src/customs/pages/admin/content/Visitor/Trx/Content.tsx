@@ -72,6 +72,7 @@ dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
 import 'dayjs/locale/id';
+import { size } from 'lodash';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -332,20 +333,20 @@ const Content = () => {
             subTitleSetting: 'image',
             color: 'none',
           },
-          {
-            title: t('add') + ' Pre Registration',
-            icon: IconUserPlus,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('shareLink'),
-            icon: IconLink,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
+          // {
+          //   title: t('add') + ' Pre Registration',
+          //   icon: IconUserPlus,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
+          // {
+          //   title: t('shareLink'),
+          //   icon: IconLink,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
           {
             title: t('quickAccess'),
             icon: IconBolt,
@@ -510,9 +511,9 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Link deleted successfully.');
-    } catch (error) {
-      showSwal('error', 'Failed to delete link.');
+      showSwal('success', 'Successfully deleted link.');
+    } catch (error:any) {
+      showSwal('error', error?.response?.data?.message ??  'Failed to delete link.');
     }
   };
 
@@ -729,18 +730,18 @@ const Content = () => {
                   if (index === 2) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
+                    // } else if (index === 3) {
+                    //   setFlowTarget('preReg');
+                    //   setOpenPreRegistration(true);
+                    // } else if (index === 3) {
+                    //   setOpenDetailShareLink(true);
                   } else if (index === 3) {
-                    setFlowTarget('preReg');
-                    setOpenPreRegistration(true);
-                  } else if (index === 4) {
-                    setOpenDetailShareLink(true);
-                  } else if (index === 5) {
                     setOpenQuickAccess(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 2 }}
+                size={{ xs: 12, lg: 3 }}
               />
             </Grid>
 

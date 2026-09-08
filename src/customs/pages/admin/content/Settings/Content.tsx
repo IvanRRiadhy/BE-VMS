@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Grid2 as Grid, Paper, Tab, Tabs, useTheme, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Grid2 as Grid,
+  Paper,
+  Tab,
+  Tabs,
+  useTheme,
+  useMediaQuery,
+  Typography,
+  Chip,
+  Stack,
+  Card,
+  CircularProgress,
+  IconButton,
+} from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
-import { IconInfoCircle, IconSettingsFilled } from '@tabler/icons-react';
+import { IconInfoCircle, IconSettingsFilled, IconX } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { Item } from 'src/customs/api/models/Admin/Setting';
@@ -16,11 +30,14 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import FormSetting from './FormSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import NotificationSetting from './NotificationSetting';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import VMSConfigurationTab from './VmsConfugrationTab';
 import useApprovalWorkflowPagination from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowPagination';
 import ThirdPartyIntegration from './ThirdPartyIntegration';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
-
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { uploadLicense } from 'src/customs/api/Admin/Setting';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -134,6 +151,31 @@ const Content = () => {
     [settingData.length, totalRecords],
   );
 
+  const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [licenseFileName, setLicenseFileName] = useState<string>('');
+
+  const handleLicenseUpload = async (file: File) => {
+    try {
+      setUploadingLicense(true);
+
+      // API upload license di sini
+      const response = await uploadLicense(file);
+
+      setLicenseFileName(file.name);
+
+      showSwal('success', 'License uploaded successfully!');
+    } catch (error) {
+      console.error('Failed to upload license:', error);
+      showSwal('error', 'Failed to upload license');
+    } finally {
+      setUploadingLicense(false);
+    }
+  };
+
+  const handleRemoveLicense = () => {
+    setLicenseFileName('');
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -171,8 +213,9 @@ const Content = () => {
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
               <Tab label="Apikey Setting" />
+              <Tab label="License" />
               {/* <Tab label="Visitor Card Setting" /> */}
-              <Tab label="Notification Setting" />
+              {/* <Tab label="Notification Setting" /> */}
             </Tabs>
 
             <Box
@@ -238,15 +281,353 @@ const Content = () => {
                   {!showForm ? <VisitorCardSetting /> : null}
                 </Box>
               ) : null} */}
-              {tabIndex === 3 ? <ThirdPartyIntegration /> : null};
-              {tabIndex === 4 ? (
+              {tabIndex === 3 ? <ThirdPartyIntegration /> : null}
+              {/* {tabIndex === 4 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? <NotificationSetting /> : null}
+                </Box>
+              ) : null} */}
+
+              {tabIndex === 4 ? (
+                <Box>
+                  <Card sx={{ p: 2, mt: 2 }}>
+                    {/* License Upload */}
+                    <Typography variant="h6" fontWeight={600} mb={1}>
+                      License
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      Upload a valid license file to activate or update your application license.
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        border: '1px dashed',
+                        borderColor: 'primary.main',
+                        borderRadius: 2,
+                        p: 2,
+                        backgroundColor: 'action.hover',
+                      }}
+                    >
+                      <Box
+                        display="flex"
+                        flexDirection={{ xs: 'column', sm: 'row' }}
+                        alignItems={{ xs: 'stretch', sm: 'center' }}
+                        justifyContent="space-between"
+                        gap={2}
+                      >
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            License File
+                          </Typography>
+
+                          <Typography variant="caption" color="text.secondary">
+                            Supported formats: .lic, .license, .json
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <label htmlFor="license-upload">
+                            <Box
+                              sx={{
+                                minWidth: 150,
+                                border: '1px solid',
+                                borderColor: 'primary.main',
+                                borderRadius: 1.5,
+                                px: 2,
+                                py: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1,
+                                cursor: uploadingLicense ? 'not-allowed' : 'pointer',
+                                color: 'primary.main',
+                                backgroundColor: 'background.paper',
+                                opacity: uploadingLicense ? 0.6 : 1,
+                                transition: '0.2s',
+
+                                '&:hover': {
+                                  backgroundColor: uploadingLicense
+                                    ? 'background.paper'
+                                    : 'action.hover',
+                                },
+                              }}
+                            >
+                              {uploadingLicense ? (
+                                <>
+                                  <CircularProgress size={18} />
+                                  <Typography variant="body2" fontWeight={500}>
+                                    Uploading...
+                                  </Typography>
+                                </>
+                              ) : (
+                                <>
+                                  <CloudUploadIcon fontSize="small" />
+                                  <Typography variant="body2" fontWeight={500}>
+                                    Upload License
+                                  </Typography>
+                                </>
+                              )}
+                            </Box>
+                          </label>
+
+                          <input
+                            id="license-upload"
+                            type="file"
+                            accept=".lic,.license,.json"
+                            hidden
+                            disabled={uploadingLicense}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+
+                              if (file) {
+                                handleLicenseUpload(file);
+                              }
+
+                              e.target.value = '';
+                            }}
+                          />
+                        </Box>
+                      </Box>
+
+                      {/* Uploaded File */}
+                      {licenseFileName && !uploadingLicense && (
+                        <Box
+                          mt={2}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                            p: 1.25,
+                            borderRadius: 1.5,
+                            backgroundColor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                            <DescriptionOutlinedIcon fontSize="small" color="primary" />
+
+                            <Box minWidth={0}>
+                              <Typography variant="body2" fontWeight={500} noWrap>
+                                {licenseFileName}
+                              </Typography>
+
+                              <Typography variant="caption" color="text.secondary">
+                                License file uploaded
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <IconButton size="small" color="error" onClick={handleRemoveLicense}>
+                            <IconX size={17} />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* App Details */}
+                    <Typography variant="h6" fontWeight={600} mt={4} mb={2}>
+                      App Details
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {[
+                        {
+                          label: 'Status',
+                          value: (
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">License is valid</Typography>
+
+                              <Chip
+                                label="Valid"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            </Stack>
+                          ),
+                        },
+                        {
+                          label: 'License',
+                          value: 'Perpetual - Enterprise',
+                        },
+                        {
+                          label: 'App Name',
+                          value: 'VMS - Visitor Management System',
+                        },
+                        {
+                          label: 'Custom Name & Domain',
+                          value: 'VMS | Visitor Management System (vms.com)',
+                        },
+                        {
+                          label: 'Customer Name',
+                          value: 'VMS',
+                        },
+                        {
+                          label: 'Expiration Date',
+                          value: '5/20/2126 (36,421 days remaining)',
+                        },
+                      ].map((item, index) => (
+                        <Box
+                          key={item.label}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 2,
+                            px: 2,
+                            py: 2,
+                            borderBottom: index !== 5 ? '1px solid' : 'none',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={500}>
+                            {item.label}
+                          </Typography>
+
+                          <Box sx={{ textAlign: 'right' }}>
+                            {typeof item.value === 'string' ? (
+                              <Typography variant="body2">{item.value}</Typography>
+                            ) : (
+                              item.value
+                            )}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+
+                    {/* Core Features */}
+                    <Typography variant="h6" fontWeight={600} mt={4} mb={2}>
+                      Core Features
+                    </Typography>
+
+                    <Box>
+                      {[
+                        {
+                          name: 'Visitor Management',
+                          description:
+                            'Manage visitor registration, invitations, and visitor information',
+                        },
+                        {
+                          name: 'Real-Time Tracking',
+                          description: 'Real-time visitor tracking and position monitoring',
+                        },
+                        {
+                          name: 'Monitoring Dashboard',
+                          description: 'Live visitor monitoring dashboard and site overview',
+                        },
+                        {
+                          name: 'Reports & Analytics',
+                          description: 'Reports, analytics, and visitor data export',
+                        },
+                      ].map((feature, index) => (
+                        <Box
+                          key={feature.name}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            py: 2,
+                            borderBottom: index !== 3 ? '1px solid' : 'none',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {feature.name}
+                            </Typography>
+
+                            <Typography variant="body2" color="text.secondary">
+                              {feature.description}
+                            </Typography>
+                          </Box>
+
+                          <Chip
+                            label="Enabled"
+                            size="small"
+                            color="success"
+                            sx={{ fontWeight: 500 }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+
+                    {/* Modules */}
+                    <Typography variant="h6" fontWeight={600} mt={4} mb={2}>
+                      Modules
+                    </Typography>
+
+                    <Box>
+                      {[
+                        {
+                          name: 'Visitor Management',
+                          description:
+                            'Visitor registration, pre-registration, invitation, and check-in/out',
+                        },
+                        {
+                          name: 'Card Management',
+                          description: 'Visitor card issuance, return, and card tracking',
+                        },
+                        {
+                          name: 'Blacklist & Whitelist',
+                          description: 'Manage restricted and trusted visitors',
+                        },
+                        {
+                          name: 'Parking Management',
+                          description: 'Manage visitor parking and vehicle information',
+                        },
+                        {
+                          name: 'Access Control',
+                          description: 'Manage visitor access to registered sites',
+                        },
+                      ].map((module) => (
+                        <Box
+                          key={module.name}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 2,
+                            py: 2,
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {module.name}
+                            </Typography>
+
+                            <Typography variant="body2" color="text.secondary">
+                              {module.description}
+                            </Typography>
+                          </Box>
+
+                          <Chip
+                            label="Enabled"
+                            size="small"
+                            color="success"
+                            sx={{ fontWeight: 500 }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Card>
                 </Box>
               ) : null}
             </Box>
           </Paper>
         </Box>
+        <GlobalBackdropLoading open={uploadingLicense} />
       </Container>
     </PageContainer>
   );

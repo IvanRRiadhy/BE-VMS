@@ -161,29 +161,6 @@ const VisitorDetailCard = ({
   const hasData = invitationCode && invitationCode.length > 0;
 
   return (
-    // <Grid
-    //   size={{ xs: 12 }}
-    //   sx={{
-    //     display: 'flex',
-    //     flexDirection: 'column',
-    //     gap: 1,
-    //     height: '100%',
-
-    //   }}
-    //   id="tour-visitor-detail"
-    // >
-    //   <Card
-    //     sx={{
-    //       flex: 1,
-    //       display: 'flex',
-    //       flexDirection: 'column',
-    //       boxShadow: 'none',
-    //       p: 1,
-
-    //       // minHeight: 450,
-    //       borderRadius: 2,
-    //     }}
-    //   >
     <Grid
       size={{ xs: 12 }}
       sx={{

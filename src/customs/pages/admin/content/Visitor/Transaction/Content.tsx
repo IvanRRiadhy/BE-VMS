@@ -262,13 +262,13 @@ const Content = () => {
             subTitleSetting: 'image',
             color: 'none',
           },
-          {
-            title: t('add') + ' Pre Registration',
-            icon: IconUserPlus,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
+          // {
+          //   title: t('add') + ' Pre Registration',
+          //   icon: IconUserPlus,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
         ]
       : []),
   ];
@@ -560,14 +560,14 @@ const Content = () => {
                   if (index === 2) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
-                  } else if (index === 3) {
-                    setFlowTarget('preReg');
-                    setOpenPreRegistration(true);
+                  // } else if (index === 3) {
+                  //   setFlowTarget('preReg');
+                  //   setOpenPreRegistration(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 3 }}
+                size={{ xs: 12, lg: 4 }}
               />
             </Grid>
           </Grid>

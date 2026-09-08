@@ -1,22 +1,24 @@
 import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
-import { getVisitorChart } from 'src/customs/api/admin';
+import { IconUserCheck, IconHourglass } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-interface VisitorStatusItem {
-  visitor_status: string;
-  Count: number;
+import { getSummaryCount } from 'src/customs/api/Admin/Dashboard';
+
+interface TopCardProps {
+  items?: any[];
+  size?: any;
 }
 
-interface ApiDateGroup {
-  date: string;
-  status: VisitorStatusItem[];
-}
-
-const TopCard = ({ items = [], size }: any) => {
+const TopCard = ({ items = [], size }: TopCardProps) => {
   const { t } = useTranslation();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+
+  const [summary, setSummary] = useState({
+    active: 0,
+    pending: 0,
+  });
+
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -24,422 +26,171 @@ const TopCard = ({ items = [], size }: any) => {
 
     return `${year}-${month}-${day}`;
   };
-  const start = formatLocalDate(startDate);
-  const end = formatLocalDate(endDate);
-
-  const [statsToday, setStatsToday] = useState<Record<string, number>>({});
-  const [statsYesterday, setStatsYesterday] = useState<Record<string, number>>({});
-  const [normalizedData, setNormalizedData] = useState<
-    { Date: string; StatusMap: Record<string, number> }[]
-  >([]);
-
-  const normalizeCollection = (collection: any[]) => {
-    return collection.map((day) => {
-      const grouped: Record<string, number> = {};
-
-      (day.Status || []).forEach((item: any) => {
-        const key = item.visitor_status.trim();
-        grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
-      });
-
-      return {
-        Date: day.date ? day.date.split('T')[0] : '',
-        StatusMap: grouped,
-      };
-    });
-  };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSummary = async () => {
       try {
-        const res = await getVisitorChart(start, end);
-        const collection: ApiDateGroup[] = res.collection ?? [];
+        const start = formatLocalDate(new Date(startDate));
+        const end = formatLocalDate(new Date(endDate));
 
-        // const today = new Date();
+        const res = await getSummaryCount(start, end);
 
-        // const currentStart = new Date();
-        // currentStart.setDate(today.getDate() - 6);
+        const collection = res?.collection ?? {};
 
-        // const previousStart = new Date();
-        // previousStart.setDate(today.getDate() - 13);
-
-        // const previousEnd = new Date();
-        // previousEnd.setDate(today.getDate() - 7);
-
-        // const currentTotals: Record<string, number> = {};
-        // const previousTotals: Record<string, number> = {};
-
-        const currentStart = new Date(startDate);
-        const currentEnd = new Date(endDate);
-
-        const diffDays =
-          Math.ceil((currentEnd.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        const previousStart = new Date(currentStart);
-        previousStart.setDate(previousStart.getDate() - diffDays);
-
-        const previousEnd = new Date(currentEnd);
-        previousEnd.setDate(previousEnd.getDate() - diffDays);
-
-        const currentTotals: Record<string, number> = {};
-        const previousTotals: Record<string, number> = {};
-
-        collection.forEach((day) => {
-          const dayDate = new Date(day.date);
-
-          // day.Status.forEach((item) => {
-          (day.status || []).forEach((item) => {
-            const key = item.visitor_status.trim();
-
-            if (dayDate >= currentStart && dayDate <= currentEnd) {
-              currentTotals[key] = (currentTotals[key] || 0) + item.Count;
-            }
-
-            if (dayDate >= previousStart && dayDate <= previousEnd) {
-              previousTotals[key] = (previousTotals[key] || 0) + item.Count;
-            }
-          });
+        setSummary({
+          active: Number(collection.active ?? 0),
+          pending: Number(collection.pending ?? 0),
         });
+      } catch (error) {
+        console.error('Failed to fetch summary count:', error);
 
-        // setRawCollection(collection);
-        const normalized = normalizeCollection(collection);
-        setNormalizedData(normalized);
-
-        setStatsToday(currentTotals);
-        setStatsYesterday(previousTotals);
-      } catch (err) {
-        console.error('Failed to fetch visitor count:', err);
+        setSummary({
+          active: 0,
+          pending: 0,
+        });
       }
     };
 
-    fetchData();
+    fetchSummary();
   }, [startDate, endDate]);
 
-  const getPercentageChange = (key: string) => {
-    const current = statsToday[key] ?? 0;
-    const previous = statsYesterday[key] ?? 0;
+  const getColorByKey = (key: string) => {
+    switch (key.toLowerCase()) {
+      case 'active':
+        return '#16A765';
 
-    const diffDays =
-      Math.ceil(
-        (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1;
+      case 'pending':
+        return '#055499';
 
-    if (previous === 0 && current === 0) {
-      return {
-        text: 'No change',
-        color: '#5a5a5aff',
-        trend: 'flat',
-      };
+      default:
+        return '#055499';
     }
-
-    if (previous === 0) {
-      return {
-        text: '+100% from last 7 days',
-        color: '#21c45d',
-        trend: 'up',
-      };
-    }
-
-    const diff = ((current - previous) / previous) * 100;
-
-    if (diff === 0) {
-      return {
-        text: 'No change',
-        color: '#9e9e9e',
-        trend: 'flat',
-      };
-    }
-
-    return {
-      text: `${diff > 0 ? '+' : ''}${diff.toFixed(0)}% from last 7 days`,
-      color: diff > 0 ? '#21c45d' : '#F44336',
-      trend: diff > 0 ? 'up' : 'down',
-    };
   };
-
-  const [rawCollection, setRawCollection] = useState<ApiDateGroup[]>([]);
-
-  const getLast7DaysSeries = (key: string) => {
-    const today = new Date();
-    const days: string[] = [];
-    const values: number[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-
-      const dateStr = d.toISOString().split('T')[0];
-      days.push(dateStr);
-
-      // cari data di collection (harus simpan raw collection dulu)
-      const found = rawCollection.find((x) => x.date.startsWith(dateStr));
-
-      if (found) {
-        const status = found.status.find((s) => s.visitor_status.trim() === key);
-        values.push(status?.Count ?? 0);
-      } else {
-        values.push(0);
-      }
-    }
-
-    return values;
-  };
-
-  // const getColorByKey = (key: string) => {
-  //   switch (key.toLowerCase()) {
-  //     case 'checkin':
-  //       return '#21c45d';
-  //     case 'checkout':
-  //       return '#F44336';
-  //     case 'denied':
-  //       return '#8B0000';
-  //     case 'block':
-  //       return '#424242';
-  //     case 'waiting':
-  //       return '#4abfd4';
-  //     case 'blacklist':
-  //       return '#000000';
-  //     default:
-  //       return '#5c87ff';
-  //   }
-  // };
-
-  // const getColorByTitle = (title: string) => {
-  //   switch (title.toLowerCase()) {
-  //     case 'checkin':
-  //       return '#21c45d'; // hijau
-  //     case 'checkout':
-  //       return '#F44336'; // merah
-  //     case 'denied':
-  //       return '#8B0000'; // merah tua
-  //     case 'block':
-  //       return '#424242'; // hitam
-  //     case 'waiting':
-  //       return '#4abfd4ff';
-  //     case 'blacklist':
-  //       return '#000000';
-  //     default:
-  //       return '#5c87ff'; // biru default
-  //   }
-  // };
-
-  // const getColorByKey = (key: string) => {
-  //   switch (key.toLowerCase()) {
-  //     case 'checkin':
-  //       return '#16A765';
-  //     case 'checkout':
-  //       return '#E53935';
-  //     case 'denied':
-  //       return '#8B0000';
-  //     case 'block':
-  //       return '#4B5563';
-  //     case 'waiting':
-  //       return '#055499';
-  //     case 'blacklist':
-  //       return '#111827';
-  //     default:
-  //       return '#055499';
-  //   }
-  // };
-
-  // const getColorByTitle = (title: string) => {
-  //   switch (title.toLowerCase()) {
-  //     case 'checkin':
-  //       return '#22A66F';
-  //     case 'checkout':
-  //       return '#E53935';
-  //     case 'denied':
-  //       return '#8B0000';
-  //     case 'block':
-  //       return '#4B5563';
-  //     case 'waiting':
-  //       return '#055499';
-  //     case 'blacklist':
-  //       return '#111827';
-  //     default:
-  //       return '#055499';
-  //   }
-  // };
-
-    const getColorByKey = (key: string) => {
-      switch (key.toLowerCase()) {
-        case 'checkin':
-          return '#16A765';
-        case 'checkout':
-          return '#E53935';
-        case 'denied':
-          return '#8B0000';
-        case 'block':
-          return '#4B5563';
-        case 'waiting':
-          return '#055499';
-        case 'blacklist':
-          return '#111827';
-        default:
-          return '#055499';
-      }
-    };
-
-    const getColorByTitle = (title: string) => {
-      switch (title.toLowerCase()) {
-        case 'checkin':
-          return '#16A765';
-        case 'checkout':
-          return '#E53935';
-        case 'denied':
-          return '#8B0000';
-        case 'block':
-          return '#4B5563';
-        case 'waiting':
-          return '#055499';
-        case 'blacklist':
-          return '#111827';
-        default:
-          return '#055499';
-      }
-    };
 
   return (
-    <Grid container spacing={2}>
-      {items.map((card: any, index: any) => {
-        const change = getPercentageChange(card.key.toString());
-        const baseColor = getColorByKey(card.key.toString());
+    <Grid
+      container
+      spacing={2}
+      sx={{
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      {items.map((card: any, index: number) => {
+        const value = summary[card.key as keyof typeof summary] ?? 0;
+        const baseColor = getColorByKey(card.key);
+
         return (
-          <Grid key={index} size={size}>
-            {/* <BlankCard> */}
+          <Grid key={index} size={{ xs: 12, sm: 6 }}>
             <CardContent
               sx={{
-                // backgroundColor: '#fff',
-                // background: `linear-gradient(180deg, ${baseColor}35)`,
-                // backgroundColor: `${baseColor}40`,
-                backgroundColor: 'white',
-                // border: `0.5px solid ${baseColor}40`,
-
-                color: '#000',
-                boxShadow: 2.5,
-                height: 150,
-                p: 3.5,
-                // border: '1px solid #e0e0e0',
-                borderRadius: 3,
+                backgroundColor: '#fff',
+                border: '1px solid',
+                borderColor: '#edf0f4',
+                borderRadius: 2,
+                // height: 90,
+                height: '100%',
+                px: 2,
+                py: 1.5,
+                display: 'flex',
+                alignItems: 'center',
                 position: 'relative',
-                overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  width: '120px',
-                  height: '120px',
-                  // background: 'linear-gradient(135deg, transparent 40%, rgba(25,118,210,0.2) 100%)',
-                  pointerEvents: 'none',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
-              <Box alignItems="center" justifyContent="space-between" width="100%">
-                <Box>
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent={'flex-start'}
-                    width="100%"
-                    position="relative"
-                    gap={2}
-                  >
-                    <Box
-                      sx={{
-                        backgroundColor: getColorByTitle(card.title),
-                        color: '#fff',
-                        borderRadius: '50%',
-                        p: 1.5,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {card.icon}
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="h6"
-                        fontWeight={600}
-                        sx={{ textTransform: 'capitalize' }}
-                      >
-                        {t(card.title)}
-                      </Typography>
-                      <Typography variant="h3" fontWeight={700}>
-                        {statsToday[card.key] ?? 0}
-                      </Typography>
-                    </Box>
-                  </Box>
+              {/* Icon */}
+              <Box
+                sx={{
+                  width: 60,
+                  height: 60,
+                  minWidth: 60,
+                  borderRadius: '50%',
+                  backgroundColor: `${baseColor}12`,
+                  color: baseColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 1.5,
+                }}
+              >
+                {card.icon}
+              </Box>
+
+              {/* Content */}
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                {/* Number + Title */}
+                <Box display="flex" alignItems="baseline" gap={1} flexDirection={'column'}>
                   <Typography
-                    variant="caption"
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      mt: 2,
-                      fontWeight: 600,
+                      fontSize: 24,
+                      lineHeight: 1,
+                      fontWeight: 700,
+                      color: baseColor,
                     }}
                   >
-                    {change.trend === 'up' && <IconTrendingUp size={14} color={change.color} />}
-                    {change.trend === 'down' && <IconTrendingDown size={14} color={change.color} />}
-                    {change.trend === 'flat' && <IconMinus size={14} color="#5a5a5a" />}
-
-                    {/* Persentase pakai base color */}
-                    <Box component="span" sx={{ color: change.color }}>
-                      {change.text.split(' from')[0]}
-                    </Box>
-
-                    {/* "from last 7 days" selalu hitam */}
-                    {change.trend != 'flat' && (
-                      <Box component="span" sx={{ color: '#050505ff' }}>
-                        from last 7 days
-                      </Box>
-                    )}
+                    {value}
                   </Typography>
-                  {/* <Box
+
+                  <Typography
                     sx={{
-                      position: 'absolute',
-                      bottom: -20,
-                      left: 0,
-                      right: 0,
-                      height: 80,
-                      opacity: 0.5,
-                      pointerEvents: 'none',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: '#30343b',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
-                    <Chart
-                      options={{
-                        chart: {
-                          type: 'area',
-                          sparkline: { enabled: true },
-                        },
-                        stroke: {
-                          curve: 'smooth',
-                          width: 2,
-                        },
-                        fill: {
-                          opacity: 0.3,
-                        },
-                        colors: [change.color],
-                        tooltip: {
-                          enabled: false,
-                        },
-                      }}
-                      series={[
-                        {
-                          name: card.title,
-                          data: getLast7DaysSeries(card.key.toString()),
-                        },
-                      ]}
-                      type="area"
-                      height={50}
-                    />
-                  </Box> */}
+                    {t(card.title)}
+                  </Typography>
                 </Box>
+
+                {/* Description */}
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    fontSize: 10.5,
+                    lineHeight: 1.2,
+                    color: '#8a919d',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {card.description}
+                </Typography>
+              </Box>
+
+              {/* Arrow */}
+              <Box
+                sx={{
+                  ml: 1,
+                  color: '#9aa1ab',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 30,
+                    fontWeight: 300,
+                    lineHeight: 1,
+                  }}
+                >
+                  ›
+                </Typography>
               </Box>
             </CardContent>
-            {/* </BlankCard> */}
           </Grid>
         );
       })}

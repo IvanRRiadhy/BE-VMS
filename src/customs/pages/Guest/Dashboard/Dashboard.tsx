@@ -51,6 +51,7 @@ import VisitorActionBar from './components/VisitorActionBar';
 import GuestAccessPass from './components/GuestAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import VisitStatusCard from './components/VisitorStatusCard';
+import AccessPassPdf from './components/AccessPassPdf';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
@@ -88,142 +89,206 @@ const Dashboard = () => {
     setOpenAccess(false);
   };
 
-  const handleDownloadPDF = async () => {
-    if (!exportRef.current || isGenerating) return;
+  // const handleDownloadPDF = async () => {
+  //   if (!exportRef.current || isGenerating) return;
 
-    let clone: HTMLElement | null = null;
+  //   let clone: HTMLElement | null = null;
+
+  //   setIsGenerating(true);
+
+  //   try {
+  //     clone = exportRef.current.cloneNode(true) as HTMLElement;
+
+  //     // Hilangkan tombol download dan elemen lain
+  //     // yang memiliki class no-print
+  //     clone.querySelectorAll('.no-print').forEach((el) => {
+  //       (el as HTMLElement).style.display = 'none';
+  //     });
+
+  //     // Posisikan clone di luar layar
+  //     clone.style.position = 'fixed';
+  //     clone.style.left = '-9999px';
+  //     clone.style.top = '0';
+  //     clone.style.width = `${exportRef.current.offsetWidth}px`;
+  //     clone.style.backgroundColor = '#fff';
+
+  //     document.body.appendChild(clone);
+
+  //     // Tunggu render selesai
+  //     await new Promise((resolve) => setTimeout(resolve, 100));
+
+  //     const canvas = await html2canvas(clone, {
+  //       scale: 3,
+  //       useCORS: true,
+  //       backgroundColor: '#fff',
+  //     });
+
+  //     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+  //     if (!ctx) throw new Error('Failed to get canvas context');
+
+  //     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  //     const data = imageData.data;
+
+  //     let minX = canvas.width;
+  //     let minY = canvas.height;
+  //     let maxX = 0;
+  //     let maxY = 0;
+
+  //     for (let y = 0; y < canvas.height; y++) {
+  //       for (let x = 0; x < canvas.width; x++) {
+  //         const index = (y * canvas.width + x) * 4;
+
+  //         const r = data[index];
+  //         const g = data[index + 1];
+  //         const b = data[index + 2];
+  //         const a = data[index + 3];
+
+  //         // Anggap pixel yang bukan putih sebagai content
+  //         if (a > 0 && (r < 245 || g < 245 || b < 245)) {
+  //           minX = Math.min(minX, x);
+  //           minY = Math.min(minY, y);
+  //           maxX = Math.max(maxX, x);
+  //           maxY = Math.max(maxY, y);
+  //         }
+  //       }
+  //     }
+
+  //     const padding = 20;
+
+  //     minX = Math.max(0, minX - padding);
+  //     minY = Math.max(0, minY - padding);
+  //     maxX = Math.min(canvas.width, maxX + padding);
+  //     maxY = Math.min(canvas.height, maxY + padding);
+
+  //     const croppedCanvas = document.createElement('canvas');
+
+  //     croppedCanvas.width = maxX - minX;
+  //     croppedCanvas.height = maxY - minY;
+
+  //     const croppedCtx = croppedCanvas.getContext('2d');
+
+  //     if (!croppedCtx) throw new Error('Failed to create cropped canvas');
+
+  //     croppedCtx.fillStyle = '#fff';
+  //     croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
+
+  //     croppedCtx.drawImage(
+  //       canvas,
+  //       minX,
+  //       minY,
+  //       croppedCanvas.width,
+  //       croppedCanvas.height,
+  //       0,
+  //       0,
+  //       croppedCanvas.width,
+  //       croppedCanvas.height,
+  //     );
+
+  //     const imgData = croppedCanvas.toDataURL('image/png');
+
+  //     const pdf = new jsPDF('p', 'mm', 'a6');
+
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  //     const margin = 4;
+
+  //     const maxWidth = pdfWidth - margin * 2;
+  //     const maxHeight = pdfHeight - margin * 2;
+
+  //     let imgWidth = maxWidth;
+  //     let imgHeight = (croppedCanvas.height * imgWidth) / croppedCanvas.width;
+
+  //     if (imgHeight > maxHeight) {
+  //       imgHeight = maxHeight;
+  //       imgWidth = (croppedCanvas.width * imgHeight) / croppedCanvas.height;
+  //     }
+
+  //     const x = (pdfWidth - imgWidth) / 2;
+  //     const y = (pdfHeight - imgHeight) / 2;
+
+  //     pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+
+  //     showSwal('success', 'Successfully generated PDF');
+
+  //     pdf.save(`Visitor Code-${currentAccessPass?.visitor_number || 'Visitor'}.pdf`);
+  //   } catch (error) {
+  //     console.error('Failed to generate PDF:', error);
+  //   } finally {
+  //     if (clone) {
+  //       clone.remove();
+  //     }
+
+  //     setIsGenerating(false);
+  //   }
+  // };
+
+  const handleDownloadPDF = async () => {
+    if (!accessPassPdfRef.current || isGenerating) return;
 
     setIsGenerating(true);
 
     try {
-      clone = exportRef.current.cloneNode(true) as HTMLElement;
-
-      // Hilangkan tombol download dan elemen lain
-      // yang memiliki class no-print
-      clone.querySelectorAll('.no-print').forEach((el) => {
-        (el as HTMLElement).style.display = 'none';
-      });
-
-      // Posisikan clone di luar layar
-      clone.style.position = 'fixed';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = `${exportRef.current.offsetWidth}px`;
-      clone.style.backgroundColor = '#fff';
-
-      document.body.appendChild(clone);
-
-      // Tunggu render selesai
+      // Tunggu supaya image / QR selesai render
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(accessPassPdfRef.current, {
         scale: 3,
         useCORS: true,
         backgroundColor: '#fff',
       });
 
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const imgData = canvas.toDataURL('image/png');
 
-      if (!ctx) throw new Error('Failed to get canvas context');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a6',
+      });
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // const pdfWidth = pdf.internal.pageSize.getWidth();
+      // const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const data = imageData.data;
+      // const margin = 5;
 
-      let minX = canvas.width;
-      let minY = canvas.height;
-      let maxX = 0;
-      let maxY = 0;
+      // const maxWidth = pdfWidth - margin * 2;
+      // const maxHeight = pdfHeight - margin * 2;
 
-      for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-          const index = (y * canvas.width + x) * 4;
+      // let imgWidth = maxWidth;
+      // let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-          const r = data[index];
-          const g = data[index + 1];
-          const b = data[index + 2];
-          const a = data[index + 3];
+      // Kalau terlalu tinggi, scale berdasarkan height
+      // if (imgHeight > maxHeight) {
+      //   imgHeight = maxHeight;
+      //   imgWidth = (canvas.width * imgHeight) / canvas.height;
+      // }
 
-          // Anggap pixel yang bukan putih sebagai content
-          if (a > 0 && (r < 245 || g < 245 || b < 245)) {
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-          }
-        }
-      }
+      // const x = (pdfWidth - imgWidth) / 2;
+      // const y = (pdfHeight - imgHeight) / 2;
 
-      const padding = 20;
-
-      minX = Math.max(0, minX - padding);
-      minY = Math.max(0, minY - padding);
-      maxX = Math.min(canvas.width, maxX + padding);
-      maxY = Math.min(canvas.height, maxY + padding);
-
-      const croppedCanvas = document.createElement('canvas');
-
-      croppedCanvas.width = maxX - minX;
-      croppedCanvas.height = maxY - minY;
-
-      const croppedCtx = croppedCanvas.getContext('2d');
-
-      if (!croppedCtx) throw new Error('Failed to create cropped canvas');
-
-      croppedCtx.fillStyle = '#fff';
-      croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
-
-      croppedCtx.drawImage(
-        canvas,
-        minX,
-        minY,
-        croppedCanvas.width,
-        croppedCanvas.height,
-        0,
-        0,
-        croppedCanvas.width,
-        croppedCanvas.height,
-      );
-
-      const imgData = croppedCanvas.toDataURL('image/png');
-
-      const pdf = new jsPDF('p', 'mm', 'a6');
-
+      // pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const margin = 4;
+      // Full page — tanpa margin
+      const imgWidth = pdfWidth;
+      const imgHeight = pdfHeight;
 
-      const maxWidth = pdfWidth - margin * 2;
-      const maxHeight = pdfHeight - margin * 2;
-
-      let imgWidth = maxWidth;
-      let imgHeight = (croppedCanvas.height * imgWidth) / croppedCanvas.width;
-
-      if (imgHeight > maxHeight) {
-        imgHeight = maxHeight;
-        imgWidth = (croppedCanvas.width * imgHeight) / croppedCanvas.height;
-      }
-
-      const x = (pdfWidth - imgWidth) / 2;
-      const y = (pdfHeight - imgHeight) / 2;
-
-      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-
-      showSwal('success', 'Successfully generated PDF');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
       pdf.save(`Visitor Code-${currentAccessPass?.visitor_number || 'Visitor'}.pdf`);
+
+      showSwal('success', 'Successfully generated PDF');
     } catch (error) {
       console.error('Failed to generate PDF:', error);
-    } finally {
-      if (clone) {
-        clone.remove();
-      }
 
+      showSwal('error', 'Failed to generate PDF');
+    } finally {
       setIsGenerating(false);
     }
   };
-
   const [isParkingLoading, setIsParkingLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -299,6 +364,8 @@ const Dashboard = () => {
       setIsExporting(false);
     }
   };
+
+  const accessPassPdfRef = useRef<HTMLDivElement>(null);
 
   return (
     <PageContainer title="Dashboard">
@@ -384,6 +451,19 @@ const Dashboard = () => {
           </Alert>
         </Snackbar>
       </Portal>
+      <Box
+        ref={accessPassPdfRef}
+        sx={{
+          position: 'fixed',
+          left: '-99999px',
+          top: 0,
+        }}
+      >
+        <AccessPassPdf
+          accessPass={currentAccessPass}
+          logoSrc="/src/assets/images/logos/BI_Logo.png"
+        />
+      </Box>
       <GlobalBackdropLoading open={isGenerating} />
     </PageContainer>
   );

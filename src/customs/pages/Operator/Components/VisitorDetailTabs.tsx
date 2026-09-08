@@ -34,6 +34,7 @@ import {
   IconBarcode,
   IconCheck,
   IconRefresh,
+  IconEye,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
@@ -95,7 +96,6 @@ const VisitorDetailTabs: React.FC<Props> = ({
     Canceled: 'Canceled',
   };
 
-  console.log('card', data?.card);
   return (
     <>
       <Box
@@ -200,7 +200,10 @@ const VisitorDetailTabs: React.FC<Props> = ({
               <Box display="flex" gap={2}>
                 <IconUser />
                 <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Name</CustomFormLabel>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Group Name</CustomFormLabel>
+                    {data && <IconEye style={{ cursor: 'pointer' }} />}
+                  </Box>
                   <Typography>{data?.group_name || '-'}</Typography>
                 </Box>
               </Box>
@@ -274,6 +277,24 @@ const VisitorDetailTabs: React.FC<Props> = ({
                         License Plate Number
                       </CustomFormLabel>
                       <Typography>{data?.vehicle_plate_number || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, md: 6 }}>
+                  <Box display="flex" gap={2}>
+                    <IconCar />
+                    <Box>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Parking Slot</CustomFormLabel>
+                      <Typography>{data?.parking_slot || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, md: 6 }}>
+                  <Box display="flex" gap={2}>
+                    <IconCar />
+                    <Box>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Parking Area</CustomFormLabel>
+                      <Typography>{data?.parking_are || '-'}</Typography>
                     </Box>
                   </Box>
                 </Grid>

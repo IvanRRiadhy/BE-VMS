@@ -96,3 +96,35 @@ export const getRevealById = async (id: string): Promise<any> => {
     throw error;
   }
 };
+
+// Upload License
+// setting / license / upload;
+export const getLicense = async (): Promise<Blob> => {
+  try {
+    const response = await axiosInstance.get('/setting/license', {
+      responseType: 'blob',
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadLicense = async (file: File): Promise<any> => {
+  try {
+    const formData = new FormData();
+
+    formData.append('file', file, file.name);
+
+    const response = await axiosInstance.post('/setting/license/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

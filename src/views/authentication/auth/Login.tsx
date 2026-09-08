@@ -648,7 +648,7 @@ const Login = () => {
                             <ReCAPTCHA
                               ref={recaptchaRef}
                               sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={onCaptchaChange}
+                              onChange={() => {}}
                             />
                           </Box>
                         )}

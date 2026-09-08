@@ -62,6 +62,9 @@ import TransactionVisitorList from './components/TransactionVisitorList';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import PreRegistrationDialog from './components/PraRegistrationDialog';
+import FilterTransaction from './components/FilterMoreContent';
+import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/InvitationVisitorDialog';
+
 type Group = {
   id: string;
   name: string;
@@ -120,12 +123,12 @@ const Content = () => {
     setOpenPreRegistration(false);
     resetRegisteredFlow();
   };
-
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
   const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const secdrawerWidth = 350;
+  const secdrawerWidth = 430;
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleEmployeeClick = (employeeId: string) => {
@@ -293,7 +296,7 @@ const Content = () => {
       color: 'none',
     },
     {
-      title: t('add') + ' Pre Registration',
+      title: t('add') + ' Invitation',
       icon: IconUserPlus,
       subTitle: iconAdd,
       subTitleSetting: 'image',
@@ -328,7 +331,7 @@ const Content = () => {
     setSelectedSite(null);
     setPendingEditId(null);
     setIsDirty(false);
-    setOpenPreRegistration(true);
+    setOpenInvitationVisitor(true);
   };
 
   const handleSuccess = () => {
@@ -581,6 +584,59 @@ const Content = () => {
     }
   };
 
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [page, setPage] = useState(0);
+
+  const handleApplyFilter = () => {
+    setAppliedFilters({
+      // status: selectedType === 'All' ? undefined : statusMap[selectedType],
+      ...filters,
+    });
+
+    setPage(0);
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+    // setShowDrawerFilterMore(false);
+  };
+
+  const handleResetFilter = () => {
+    const empty = {
+      visitor_status: '',
+      visitor_type: '',
+      visitor_role: '',
+      host_id: '',
+      site_id: '',
+      is_block: '',
+      transaction_status: '',
+      emergency_situation: '',
+      start_date: '',
+      end_date: '',
+    };
+
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    //  setSearch('');
+    //  setSelectedType('All');
+    setPage(0);
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -621,6 +677,7 @@ const Content = () => {
                 loadingMore={isFetchingNextPage}
                 searchAgenda={searchAgenda}
                 setSearchAgenda={setSearchAgenda}
+                setShowDrawerFilterMore={setShowDrawerFilterMore}
                 filteredVisitors={filteredVisitors}
                 selectedGroup={selectedGroup}
                 setSelectedGroup={setSelectedGroup}
@@ -676,6 +733,28 @@ const Content = () => {
           </Grid>
         </Box>
       </PageContainer>
+
+      <InvitationVisitorDialog
+        open={openInvitationVisitor}
+        onClose={handleDialogClose}
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        search={setSearchHost}
+        isLoadingEmployee={isLoadingEmployee}
+      />
+
       {/* Add Pre registration */}
       <PreRegistrationDialog
         open={openPreRegistration}
@@ -798,6 +877,14 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
+      <FilterTransaction
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+        filters={filters}
+        setFilters={setFilters}
+        onApply={handleApplyFilter}
+        onResetFilter={handleResetFilter}
+      />
       <GlobalBackdropLoading
         open={
           createQuickAccess.isPending ||

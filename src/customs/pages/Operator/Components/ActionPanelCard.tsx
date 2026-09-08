@@ -440,7 +440,7 @@ const ActionPanelCard: FC<Props> = ({
                   )
                 )}
 
-                <Grid size={{ xs: 6, lg: 6 }}>
+                {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconMapPinCheck size={25} />}
@@ -462,7 +462,7 @@ const ActionPanelCard: FC<Props> = ({
                       Arrival
                     </Typography>
                   </Button>
-                </Grid>
+                </Grid> */}
                 {loading ? (
                   <ButtonSkeleton />
                 ) : (

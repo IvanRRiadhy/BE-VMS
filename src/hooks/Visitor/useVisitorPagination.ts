@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 interface Filters {
     status?: string | number;
     visitor_role: string;
-    host_id: string;
+    host: string;
     site_id: string;
     is_block: string;
     transaction_status: string;
@@ -62,7 +62,7 @@ export const useVisitorPagination = ({
                     filters.is_block === ''
                         ? undefined
                         : filters.is_block === 'true',
-                    filters.host_id || undefined,
+                    filters.host || undefined,
                 );
                 return res;
             } catch (err) {

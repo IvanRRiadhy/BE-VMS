@@ -65,7 +65,7 @@ const HostInformation = ({
   statusLabel = 'Match',
 }: InvitationQrCardProps) => {
   const data = invitationCode[0];
-  const whatsappNumber = data?.hosts[0].phone?.replace(/\D/g, '');
+  // const whatsappNumber = data?.hosts[0].phone?.replace(/\D/g, '');
   // const host = invitationCode.find((item: any) => item.is_host === true);
   const host = data?.hosts?.[0];
   const [open, setOpen] = useState(false);
@@ -140,7 +140,7 @@ const HostInformation = ({
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" mb={0}>
-                  {data?.hosts[0].name || '-'}
+                  {data?.host_name|| '-'}
                 </Typography>
                 {/* {data && (
                   <Typography
@@ -180,7 +180,7 @@ const HostInformation = ({
                 <Typography sx={{ width: 5 }}>:</Typography>
 
                 <Typography variant="body1" color="text.secondary">
-                  {data?.hosts[0].phone || '-'}
+                  {data?.hosts[0]?.phone || '-'}
                 </Typography>
               </Box>
 
@@ -205,7 +205,7 @@ const HostInformation = ({
                 <Typography sx={{ width: 5 }}> :</Typography>
 
                 <Typography variant="body1" color="text.secondary">
-                  {data?.hosts[0].email || '-'}
+                  {data?.hosts[0]?.email || '-'}
                 </Typography>
               </Box>
             </Box>

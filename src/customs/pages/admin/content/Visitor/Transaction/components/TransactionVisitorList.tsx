@@ -142,7 +142,7 @@ const TransactionVisitorList = ({
                 <Typography>End : {group.visitor_period_end}</Typography>
                 {group.transaction_status !== 'Canceled' && (
                   <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
-                    {group.remarks === 'PraRegister' && (
+                    {/* {group.remarks === 'PraRegister' && ( */}
                       <Tooltip title="Add" arrow>
                         <IconButton
                           onClick={(e) => {
@@ -160,7 +160,7 @@ const TransactionVisitorList = ({
                           <IconPlus size={20} />
                         </IconButton>
                       </Tooltip>
-                    )}
+                    {/* )} */}
                     <Button
                       variant="outlined"
                       sx={{
