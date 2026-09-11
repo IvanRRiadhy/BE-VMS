@@ -9,7 +9,7 @@ const ThemeColors = [
         dark: '#006DAF',
       },
       secondary: {
-        main: '#47D7BC',
+        main: '#21c45d',
         light: '#EDFBF7',
         dark: '#39C7AD',
       },

@@ -232,7 +232,7 @@ const Content = () => {
           id: item.id,
           visitor_type: item.visitor_type_name || '-',
           name: item.visitor_name || '-',
-          citizenship_id: item.visitor_identity_id || '-',
+          // citizenship_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
           // organization: item.visitor_organization_name || '-',
           invitation_code: item.invitation_code || '-',
@@ -494,26 +494,14 @@ const Content = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      const confirm = await Swal.fire({
-        title: 'Do you want to delete this link?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        confirmButtonColor: '#4caf50',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
-      });
+      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
 
       if (!confirm.isConfirmed) return;
 
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Successfully deleted link.');
-    } catch (error:any) {
-      showSwal('error', error?.response?.data?.message ??  'Failed to delete link.');
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
     }
   };
 
@@ -687,7 +675,7 @@ const Content = () => {
         index + 1,
         item.visitor_type_name,
         item.visitor_name,
-        item.visitor_identity_id,
+        // item.visitor_identity_id,
         item.visitor_email,
         item.visitor_organization_name,
         item.visitor_phone,

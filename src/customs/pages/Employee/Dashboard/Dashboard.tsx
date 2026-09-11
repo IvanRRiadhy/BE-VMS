@@ -129,7 +129,7 @@ const DashboardEmployee = () => {
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
   const { createMutation: createQuickAccess } = useQuickAccessMutation();
-  const { accessPass, loading: loadingAccessPass } = useAccessPass();
+  // const { accessPass, loading: loadingAccessPass } = useAccessPass();
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
@@ -216,9 +216,9 @@ const DashboardEmployee = () => {
       ({
         entity_id,
         visitor_type_name,
-        agenda,
+        // agenda,
         host_name,
-        approval_actor_status,
+        // approval_actor_status,
         // approval_workflow_type,
         approval_status,
         visitor_period_start,
@@ -227,9 +227,9 @@ const DashboardEmployee = () => {
       }: any) => ({
         id: entity_id,
         visitor_type_name,
-        agenda,
+        // agenda,
         host_name,
-        approval_actor_status,
+        // approval_actor_status,
         // approval_workflow_type,
         approval_status,
         visitor_period_start,
@@ -254,7 +254,7 @@ const DashboardEmployee = () => {
           id: item.id,
           name: item.visitor_name,
           email: item.visitor_email,
-          organization: item.visitor_organization_name,
+          // organization: item.visitor_organization_name,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
@@ -331,61 +331,61 @@ const DashboardEmployee = () => {
     return `${startLocal} - ${endLocal}`;
   }
 
-  const handleDownloadPDF = async () => {
-    if (!printRef.current) return;
-    setIsGenerating(true);
+  // const handleDownloadPDF = async () => {
+  //   if (!printRef.current) return;
+  //   setIsGenerating(true);
 
-    try {
-      const clone = printRef.current.cloneNode(true) as HTMLElement;
+  //   try {
+  //     const clone = printRef.current.cloneNode(true) as HTMLElement;
 
-      const logoEl = document.createElement('img');
-      logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
-      logoEl.style.width = '100px';
-      logoEl.style.height = '100px';
-      logoEl.style.display = 'block';
-      logoEl.style.margin = '0 auto';
-      clone.prepend(logoEl);
+  //     const logoEl = document.createElement('img');
+  //     logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
+  //     logoEl.style.width = '100px';
+  //     logoEl.style.height = '100px';
+  //     logoEl.style.display = 'block';
+  //     logoEl.style.margin = '0 auto';
+  //     clone.prepend(logoEl);
 
-      clone.querySelectorAll('.no-print').forEach((el) => {
-        (el as HTMLElement).style.display = 'none';
-      });
+  //     clone.querySelectorAll('.no-print').forEach((el) => {
+  //       (el as HTMLElement).style.display = 'none';
+  //     });
 
-      clone.style.position = 'fixed';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
+  //     clone.style.position = 'fixed';
+  //     clone.style.left = '-9999px';
+  //     document.body.appendChild(clone);
 
-      const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
+  //     const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+  //     const imgData = canvas.toDataURL('image/png');
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
+  //     const pdf = new jsPDF('p', 'mm', 'a4');
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  //     pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
 
-      clone.remove();
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  //     clone.remove();
+  //   } finally {
+  //     setIsGenerating(false);
+  //   }
+  // };
 
-  const handleOpenParkingBlocker = async () => {
-    if (!accessPass?.id) return;
-    setIsParkingLoading(true);
-    try {
-      const res = await openParkingBlocker({ id: accessPass.id });
+  // const handleOpenParkingBlocker = async () => {
+  //   if (!accessPass?.id) return;
+  //   setIsParkingLoading(true);
+  //   try {
+  //     const res = await openParkingBlocker({ id: accessPass.id });
 
-      setSnackbar({
-        open: true,
-        message: 'Parking blocker opened successfully.',
-        severity: 'success',
-      });
-    } catch (error: any) {
-      showSwal('error', error?.message || 'Failed to open parking blocker.');
-    } finally {
-      setTimeout(() => setIsParkingLoading(false), 600);
-    }
-  };
+  //     setSnackbar({
+  //       open: true,
+  //       message: 'Parking blocker opened successfully.',
+  //       severity: 'success',
+  //     });
+  //   } catch (error: any) {
+  //     showSwal('error', error?.message || 'Failed to open parking blocker.');
+  //   } finally {
+  //     setTimeout(() => setIsParkingLoading(false), 600);
+  //   }
+  // };
 
   const handleApproveMeetingHost = async (id: string) => {
     try {
@@ -475,25 +475,27 @@ const DashboardEmployee = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      const confirm = await Swal.fire({
-        title: 'Do you want to delete this link?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        confirmButtonColor: '#4caf50',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
-      });
+      // const confirm = await Swal.fire({
+      //   title: 'Do you want to delete this link?',
+      //   icon: 'question',
+      //   showCancelButton: true,
+      //   confirmButtonText: 'Yes',
+      //   cancelButtonText: 'Cancel',
+      //   reverseButtons: true,
+      //   confirmButtonColor: '#4caf50',
+      //   customClass: {
+      //     title: 'swal2-title-custom',
+      //     htmlContainer: 'swal2-text-custom',
+      //   },
+      // });
+
+      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
 
       if (!confirm.isConfirmed) return;
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Successfully deleted link.');
-    } catch (error) {
-      showSwal('error', 'Something went wrong while deleting link.');
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to delete share link');
     }
   };
 
@@ -1185,7 +1187,7 @@ const DashboardEmployee = () => {
       </Dialog>
 
       {/* Active Pass */}
-      {accessPass && (
+      {/* {accessPass && (
         <AccessPassDialog
           open={openAccess}
           onClose={handleCloseAccess}
@@ -1197,7 +1199,7 @@ const DashboardEmployee = () => {
           formatVisitorPeriodLocal={formatVisitorPeriodLocal}
           ref={printRef}
         />
-      )}
+      )} */}
 
       <ApprovalVisitorGroupDialog
         open={openDialog}

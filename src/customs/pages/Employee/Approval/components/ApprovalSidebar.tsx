@@ -127,7 +127,7 @@ const ApprovalSidebar = ({
                   cursor: 'pointer',
                   mb: 1,
                   '&:hover': {
-                    backgroundColor: '#eee',
+                    backgroundColor: selectedId === group.approval_ticket_id ? '#e3f2fd' : '#eee',
                   },
                 }}
                 onClick={() => onSelectGroup(group)}

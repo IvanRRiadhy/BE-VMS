@@ -289,9 +289,18 @@ export default function LastVisitsCard({
             Loading activities...
           </Typography>
         ) : activites.length === 0 ? (
-          <Typography fontSize={13} color="text.secondary" textAlign="center" py={3}>
-            No recent activity
-          </Typography>
+          <Box
+            sx={{
+              minHeight: 300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography fontSize={14} color="text.secondary" textAlign="center">
+              No recent activity
+            </Typography>
+          </Box>
         ) : (
           <>
             {activites.map((item) => {

@@ -381,7 +381,7 @@ const ChooseCardDialog = ({
           // startIcon={<IconCards />}
           onClick={handleConfirmChooseCards}
         >
-          Oke
+          Give
         </Button>
         {/* 
         <Button

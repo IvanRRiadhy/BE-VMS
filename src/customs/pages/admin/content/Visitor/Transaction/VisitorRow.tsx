@@ -18,7 +18,6 @@ function VisitorRow({
   setSelectedVisitor?: any;
   handleRemoveVisitor?: () => void;
 }) {
-  const [open, setOpen] = useState(true);
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
     Checkout: '#F44336', // merah
@@ -35,7 +34,7 @@ function VisitorRow({
         <TableCell>
           <Checkbox
             checked={selectedVisitor?.id === visitor.id}
-            onChange={() => setSelectedVisitor(visitor)}
+            onChange={() => setSelectedVisitor(selectedVisitor?.id === visitor.id ? null : visitor)}
           />
         </TableCell>
 
@@ -45,6 +44,8 @@ function VisitorRow({
             alignItems: 'center',
             gap: 1,
             fontSize: '13px',
+            width: '100%',
+            mt: 0.7,
           }}
         >
           <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
@@ -53,7 +54,6 @@ function VisitorRow({
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
-
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>

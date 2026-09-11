@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   IconButton,
   Paper,
@@ -115,7 +116,9 @@ const TransactionVisitorDetail = ({
               </TableRow>
 
               <TableRow>
-                <TableCell />
+                <TableCell>
+                  <Checkbox />
+                </TableCell>
                 <TableCell>Visitor Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Phone</TableCell>

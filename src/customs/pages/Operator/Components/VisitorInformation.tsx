@@ -21,6 +21,7 @@ import {
   IconNumber,
   IconPencil,
   IconPhone,
+  IconQrcode,
   IconUser,
   IconWoman,
   IconWorld,
@@ -76,6 +77,7 @@ const VisitorInformation = ({
   faceImage,
   lgUp,
   handleOpenEnableEdit,
+  handleOpenQrCode,
 }: any) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -250,24 +252,46 @@ const VisitorInformation = ({
                   </Typography>
 
                   {invitationCode?.[0] && (
-                    <Tooltip title="Edit Visitor Information" arrow placement="top">
-                      <IconButton
-                        size="small"
-                        onClick={handleOpenEnableEdit}
-                        sx={{
-                          color: 'white',
-                          bgcolor: 'primary.main',
-                          borderRadius: 3,
-                          p: '7px',
-                          '&:hover': {
-                            bgcolor: 'primary.main',
+                    <Box display="flex" gap={1}>
+                      <Tooltip title="QR Code" arrow placement="top">
+                        <IconButton
+                          size="small"
+                          onClick={handleOpenQrCode}
+                          sx={{
                             color: 'white',
-                          },
-                        }}
-                      >
-                        <IconPencil size={20} />
-                      </IconButton>
-                    </Tooltip>
+                            bgcolor: '#000',
+
+                            borderRadius: 3,
+                            p: '7px',
+                            '&:hover': {
+                              // bgcolor: 'primary.main',
+                              bgcolor: '#000',
+                              color: 'white',
+                            },
+                          }}
+                        >
+                          <IconQrcode size={20} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Visitor Information" arrow placement="top">
+                        <IconButton
+                          size="small"
+                          onClick={handleOpenEnableEdit}
+                          sx={{
+                            color: 'white',
+                            bgcolor: 'primary.main',
+                            borderRadius: 3,
+                            p: '7px',
+                            '&:hover': {
+                              bgcolor: 'primary.main',
+                              color: 'white',
+                            },
+                          }}
+                        >
+                          <IconPencil size={20} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   )}
                 </Box>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1} mt={1}>
@@ -309,7 +333,7 @@ const VisitorInformation = ({
                   label="Invitation Code"
                   value={invitationCode[0]?.invitation_code}
                 /> */}
-                
+
                 {/* 
                 <InfoRow
                   icon={<IconCreditCard size={18} />}

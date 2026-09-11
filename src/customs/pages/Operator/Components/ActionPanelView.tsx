@@ -843,22 +843,22 @@ const ActionPanelView: FC<Props> = ({
                     relatedVisitors.find(
                       (v) => v.visitor_number === invitationCode[0]?.visitor_number,
                     ) || relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
-                  if (
-                    selectedVisitor &&
-                    (selectedVisitor.is_praregister_done == null ||
-                      selectedVisitor.is_praregister_done === false)
-                  ) {
-                    return (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        onClick={() => handleView(selectedVisitor.id)}
-                      >
-                        Fill Form
-                      </Button>
-                    );
-                  }
+                  // if (
+                  //   selectedVisitor &&
+                  //   (selectedVisitor.is_praregister_done == null ||
+                  //     selectedVisitor.is_praregister_done === false)
+                  // ) {
+                  //   return (
+                  //     <Button
+                  //       variant="contained"
+                  //       color="primary"
+                  //       size="large"
+                  //       onClick={() => handleView(selectedVisitor.id)}
+                  //     >
+                  //       Fill Form
+                  //     </Button>
+                  //   );
+                  // }
 
                   const data = invitationCode[0];
                   const status = data?.visitor_status;

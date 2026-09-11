@@ -145,7 +145,7 @@ export default function InvitationShare() {
     );
 
   return (
-    <PageContainer title="Self Praregistration" description="this is self praregistration">
+    <PageContainer title="Self Registration" description="this is self registration">
       <Box>
         <Grid
           container

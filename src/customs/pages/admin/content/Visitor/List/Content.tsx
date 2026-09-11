@@ -75,14 +75,13 @@ const Content = () => {
     filters,
   });
 
-  const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } =
-    useListVisitorMutation();
+  const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } = useListVisitorMutation();
 
   const tableCustomVisitor =
     data?.collection.map((item: any) => ({
       id: item.id,
       name: item.name || '-',
-      identity_id: item.identity_id || '-',
+      // citizenship_id: item.identity_id || '-',
       email: item.email || '-',
       is_email_verified: item.is_email_verified || false,
       phone: item.phone || '-',
@@ -103,12 +102,6 @@ const Content = () => {
         subTitle: `${totalRecords}`,
         color: 'none',
       },
-      // {
-      //   title: 'VIP',
-      //   icon: IconUsers,
-      //   subTitle: `${vipCount}`,
-      //   color: 'none',
-      // },
     ],
     [totalRecords, t],
   );

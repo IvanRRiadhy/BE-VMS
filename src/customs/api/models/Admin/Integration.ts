@@ -123,8 +123,8 @@ export const CreateIntegrationRequestSchema = z.object({
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
   ipsotek_url_dashboard_incident: z.string().optional(),
+  is_active: z.boolean().optional(),
 });
-
 export type CreateIntegrationRequest = z.infer<typeof CreateIntegrationRequestSchema>;
 
 export interface CreateIntegrationResponse {
@@ -158,7 +158,7 @@ export const UpdateIntegrationRequestSchema = z.object({
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
   ipsotek_url_dashboard_incident: z.string().optional(),
-  
+  is_active: z.boolean().optional(),
 });
 
 export type UpdateIntegrationRequest = z.infer<typeof UpdateIntegrationRequestSchema>;

@@ -26,7 +26,7 @@ import {
 } from 'src/customs/api/models/Admin/CustomField';
 import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import GlobalBackdropLoading from '../AdminView/Components/GlobalBackdrop';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
 
 interface FormCustomFieldProps {

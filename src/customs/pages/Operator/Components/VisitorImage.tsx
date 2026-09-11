@@ -34,17 +34,22 @@ const ImageCard = ({
   return (
     <Card
       sx={{
-        // flex: 1,
-        // display: 'flex',
-        // flexDirection: 'column',
-        display: 'block',
+        width: '100%',
+        height: '100%',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
         border: '1px solid #e0e0e0',
         boxShadow: 1,
+        overflow: 'hidden',
       }}
     >
       <CardHeader
         title={title}
-        sx={{ p: 0 }}
+        sx={{
+          p: 0,
+          flexShrink: 0,
+        }}
         slotProps={{
           title: {
             sx: {
@@ -59,6 +64,9 @@ const ImageCard = ({
       <CardContent
         sx={{
           p: 0,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
           overflow: 'hidden',
           '&:last-child': {
             pb: 0,
@@ -70,41 +78,36 @@ const ImageCard = ({
             component="img"
             src={imageSrc}
             alt={title}
+            onClick={onClick}
             sx={{
               width: '100%',
-              maxHeight: '300px',
-
-              // height: isFullscreen ? { xs: '250px', md: '100%', xl: '270px' } : '250px',
-              height: {
-                xs: 250,
-                md: 190,
-                xl: 200,
-              },
-              borderRadius: '8px',
+              height: '100%',
+              minHeight: 0,
+              borderRadius: 2,
               objectFit: 'cover',
               objectPosition: 'center center',
               display: 'block',
+              cursor: onClick ? 'pointer' : 'default',
             }}
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-            onClick={onClick}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <Box
             sx={{
               width: '100%',
-              minHeight: {
-                xs: 120,
-                md: 150,
-                xl: 190,
-              },
+              height: '100%',
+              minHeight: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               bgcolor: 'grey.50',
               borderRadius: 2,
-              color: '#888',
+              color: 'text.secondary',
               fontStyle: 'italic',
               fontSize: '0.9rem',
+              opacity: 0.5,
             }}
           >
             {emptyText}
@@ -186,17 +189,17 @@ const VisitorImage = ({
     },
     {
       id: 'all-access-vip',
-      name: 'All Access (VIP)',
+      name: 'All Access',
       background: '#FFF4D6',
       text: '#B77900',
     },
 
-    {
-      id: 'staff',
-      name: 'Staff',
-      background: '#EAF8F1',
-      text: '#249B62',
-    },
+    // {
+    //   id: 'staff',
+    //   name: 'Staff',
+    //   background: '#EAF8F1',
+    //   text: '#249B62',
+    // },
     {
       id: 'remise',
       name: 'Remise',
@@ -208,18 +211,6 @@ const VisitorImage = ({
       name: 'Utility Maintenance',
       background: '#F1EDFF',
       text: '#7257C7',
-    },
-    {
-      id: 'perkasan',
-      name: 'Perkasan',
-      background: '#EAF7F7',
-      text: '#168B8B',
-    },
-    {
-      id: 'office-dku',
-      name: 'Office DKU',
-      background: '#E8F1FB',
-      text: '#3B6EA5',
     },
   ];
 
@@ -235,7 +226,7 @@ const VisitorImage = ({
         originalData: item,
       };
     })
-    .slice(0, 4);
+    .slice(0, 6);
 
   const allVisitorTypes = visitorTypeDefaults.map((type) => {
     const item = todayVisitingPurpose?.find(
@@ -254,19 +245,21 @@ const VisitorImage = ({
       container
       direction="column"
       spacing={1}
-      sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap' }}
+      // sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap' }}
+      sx={{
+        height: '100%',
+        flexWrap: 'nowrap',
+      }}
     >
-      {/* <Grid sx={{ flex: 1, display: 'flex' }}>
-          <ImageCard
-            title="Face Image"
-            imageSrc={faceImage}
-            emptyText="No Face Image"
-            isFullscreen={isFullscreen}
-            onClick={() => faceImage && handleOpen(faceImage, 'Face Image')}
-          />
-        </Grid> */}{' '}
       <Card
-        sx={{ backgroundColor: 'background.paper', p: 2, borderRadius: 1.5 }}
+        sx={{
+          p: 2,
+          borderRadius: 1.5,
+          flex: 1,
+          minHeight: 0,
+          backgroundColor: 'background.paper',
+          overflow: 'auto',
+        }}
         id="tour-occupancy"
       >
         <Box
@@ -363,16 +356,14 @@ const VisitorImage = ({
           )}
         </Grid>
       </Card>
-      <Grid id="tour-identity-image">
-        <ImageCard
-          title="Identity Image"
-          imageSrc={identityImage}
-          emptyText="No Identity Image"
-          isFullscreen={isFullscreen}
-          onClick={() => identityImage && handleOpen(identityImage, 'Identity Image')}
-        />
-      </Grid>
-      <Grid sx={{ flex: 1, display: 'flex', height: '100%' }}>
+      <Grid
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          width: '100%',
+        }}
+      >
         <ImageCard
           title="Capture Vehicle"
           imageSrc={captureVehicle}
@@ -380,14 +371,23 @@ const VisitorImage = ({
           isFullscreen={isFullscreen}
           onClick={() => captureVehicle && handleOpen(captureVehicle, 'Capture Vehicle')}
         />
-        {/* <AlertCard
+      </Grid>
+      {/* <AlertCard
           isFullscreen={isFullscreen}
           title="Alerts"
           data={alertData || []}
           onViewAll={() => setOpenAlertDialog(true)}
           onItemClick={(item) => console.log(item)}
         /> */}
-      </Grid>
+      {/* <Grid id="tour-identity-image">
+        <ImageCard
+          title="Identity Image"
+          imageSrc={identityImage}
+          emptyText="No Identity Image"
+          isFullscreen={isFullscreen}
+          onClick={() => identityImage && handleOpen(identityImage, 'Identity Image')}
+        />
+      </Grid> */}
       <PreviewImageDialog
         open={open}
         image={selectedImage}

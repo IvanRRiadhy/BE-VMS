@@ -73,9 +73,7 @@ export default function PreRegistrationDialog({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Divider />
-
       <DialogContent sx={{ paddingTop: '0px' }}>
         <FormWizardAddInvitation
           key={wizardKey}

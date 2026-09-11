@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Praregist from '../Praregist';
+import FormWizardAddInvitation from 'src/customs/pages/admin/content/Visitor/Trx/FormWizardAddInvitation';
 
 type PreRegistrationDialogProps = {
   open: boolean;
@@ -17,6 +18,8 @@ type PreRegistrationDialogProps = {
   vtLoading: boolean;
   search: (value: string) => void;
   isLoadingEmployee: boolean;
+  duplicateData?: any;
+  isAddTransaction?: boolean;
 };
 
 const PreRegistrationDialog = ({
@@ -34,6 +37,8 @@ const PreRegistrationDialog = ({
   vtLoading,
   search,
   isLoadingEmployee,
+  duplicateData,
+  isAddTransaction,
 }: PreRegistrationDialogProps) => {
   return (
     <Dialog
@@ -68,7 +73,26 @@ const PreRegistrationDialog = ({
           vtLoading={vtLoading}
           search={search}
           isLoadingEmployee={isLoadingEmployee}
+          duplicateData={duplicateData}
+          isAddTransaction={isAddTransaction}
         />
+        {/* <FormWizardAddInvitation
+          key={wizardKey}
+          formData={formData}
+          setFormData={setFormData}
+          edittingId={edittingId}
+          onSuccess={onSuccess}
+          visitorType={visitorType}
+          sites={sites}
+          employee={employee}
+          allVisitorEmployee={allVisitorEmployee}
+          search={search}
+          vtLoading={vtLoading}
+          enableInvitationTypeStep={false}
+          isLoadingEmployee={isLoadingEmployee}
+          duplicateData={duplicateData}
+          isAddTransaction={isAddTransaction}
+        /> */}
       </DialogContent>
     </Dialog>
   );

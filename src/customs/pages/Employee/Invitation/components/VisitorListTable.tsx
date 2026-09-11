@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   IconButton,
   Paper,
@@ -78,7 +79,6 @@ export default function VisitorListTable({
         sx={{
           border: '1px solid #d6d6d6ff',
           minWidth: lg ? 900 : '100%',
-
         }}
       >
         <Table>
@@ -131,7 +131,9 @@ export default function VisitorListTable({
             </TableRow>
 
             <TableRow>
-              <TableCell />
+              <TableCell>
+                <Checkbox />
+              </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Visitor Name
               </TableCell>
@@ -162,7 +164,7 @@ export default function VisitorListTable({
           <TableBody>
             {groupDetailLoading ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={7} align="center">
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>

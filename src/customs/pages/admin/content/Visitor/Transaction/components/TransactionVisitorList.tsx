@@ -122,7 +122,7 @@ const TransactionVisitorList = ({
                   cursor: 'pointer',
                   mb: 1,
                   '&:hover': {
-                    backgroundColor: '#eee',
+                    backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#eee',
                   },
                 }}
                 onClick={() => {
@@ -143,23 +143,23 @@ const TransactionVisitorList = ({
                 {group.transaction_status !== 'Canceled' && (
                   <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
                     {/* {group.remarks === 'PraRegister' && ( */}
-                      <Tooltip title="Add" arrow>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAdd(group);
-                          }}
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: 'primary.dark',
-                            },
-                          }}
-                        >
-                          <IconPlus size={20} />
-                        </IconButton>
-                      </Tooltip>
+                    <Tooltip title="Add" arrow>
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAdd(group);
+                        }}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'primary.dark',
+                          },
+                        }}
+                      >
+                        <IconPlus size={20} />
+                      </IconButton>
+                    </Tooltip>
                     {/* )} */}
                     <Button
                       variant="outlined"

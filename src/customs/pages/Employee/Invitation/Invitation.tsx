@@ -16,11 +16,11 @@ import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
-import CloseIcon from '@mui/icons-material/Close';
 import { CreateVisitorRequestSchema } from 'src/customs/api/models/Admin/Visitor';
 import {
   getAllVisitorPagination,
   getEmployeeById,
+  getVisitorFormTransaction,
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -325,12 +325,13 @@ const Content = () => {
     handleDialogClose();
   };
 
-  const handleAdd = () => {
+  const handleAddInvitation = () => {
     setEdittingId('');
     setFormDataAddVisitor(defaultFormData);
     setSelectedSite(null);
     setPendingEditId(null);
     setIsDirty(false);
+    setIsAddTransaction(false);
     setOpenInvitationVisitor(true);
   };
 
@@ -637,6 +638,60 @@ const Content = () => {
     setPage(0);
   };
 
+  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
+  const [isAddTransaction, setIsAddTransaction] = useState(false);
+  const handleAdd = async (group: any) => {
+    try {
+      setLoadingAddTransaction(true);
+
+      const response = await getVisitorFormTransaction(group.id);
+      const data = response?.collection;
+
+      if (!data) return;
+
+      setDuplicateData({
+        group: {
+          ...group,
+          group_name: data.group_name ?? group.group_name,
+        },
+        visitors: [
+          {
+            ...data,
+            visitor_name: '',
+            visitor_email: '',
+            visitor_phone: '',
+            visitor_identity_id: '',
+            visitor_organization_name: '',
+            visitor_role: '',
+          },
+        ],
+      });
+
+      setFormDataAddVisitor({
+        ...data,
+        transaction_visitor_id: data.transaction_visitor_id ?? group.id,
+        visitor_name: '',
+        visitor_email: '',
+        visitor_phone: '',
+        visitor_identity_id: '',
+        visitor_organization_name: '',
+        visitor_role: '',
+      });
+
+      // tandai bahwa dialog dibuka dari Add Transaction
+      setIsAddTransaction(true);
+
+      setWizardKey((prev) => prev + 1);
+      setOpenInvitationVisitor(true);
+    } catch (error: any) {
+      // console.error(error);
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to get visitor form');
+    } finally {
+      setLoadingAddTransaction(false);
+    }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -648,8 +703,8 @@ const Content = () => {
                 items={cards}
                 onImageClick={(_, index) => {
                   if (index === 1) {
-                    setFlowTarget('preReg');
-                    handleAdd();
+                    // setFlowTarget('preReg');
+                    handleAddInvitation();
                   } else if (index === 2) {
                     setOpenDetailShareLink(true);
                   } else if (index === 3) {
@@ -687,20 +742,10 @@ const Content = () => {
                 fetchNextPage={fetchNextPage}
                 handleCancel={handleCancel}
                 profile={profile}
+                handleAdd={handleAdd}
               />
               <Box
                 p={2}
-                // sx={{
-                //   height: { xs: 'auto', xl: '78vh' },
-                //   overflow: 'auto',
-                //   display: 'flex',
-                //   width: '100%',
-                //   flexDirection: {
-                //     xs: 'column',
-                //     md: 'row',
-                //   },
-                //   gap: 2,
-                // }}
                 sx={{
                   height: { xs: 'auto', xl: '78vh' },
                   overflow: 'hidden',
@@ -753,6 +798,8 @@ const Content = () => {
         vtLoading={vtLoading}
         search={setSearchHost}
         isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
+        isAddTransaction={isAddTransaction}
       />
 
       {/* Add Pre registration */}
@@ -771,6 +818,8 @@ const Content = () => {
         vtLoading={vtLoading}
         search={setSearchHost}
         isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
+        // isAddTransaction={isAddTransaction}
       />
 
       <QuickAccessDialog

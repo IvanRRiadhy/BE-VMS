@@ -95,13 +95,14 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   });
 
   const [enabled, setEnabled] = useState(initialEnabledState);
-
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const resetState = () => {
     setEnabled(initialEnabledState);
     setForm(initialFormState);
-    setSelectedSiteParentIds([]);
-    setSelectedSiteIds([]);
-    setSiteTree([]);
+    // setSelectedSiteParentIds([]);
+    // setSelectedSiteIds([]);
+    // setSiteTree([]);
   };
 
   const handleToggle = (key: FieldKey, checked: boolean) => {
@@ -143,9 +144,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
     }
   };
 
-  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
-  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  const [siteTree, setSiteTree] = useState<any[]>([]);
+  // const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
+  // const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  // const [siteTree, setSiteTree] = useState<any[]>([]);
 
   const buildSiteTree = (
     sites: any[],
@@ -221,7 +222,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               size="small"
               disabled={!enabled.site}
               // options={sites.filter((s) => !s.parent)} // hanya parent
-              options={sites}
+              options={sites || []}
               getOptionLabel={(option: any) => option.name ?? ''}
               // value={sites.filter((s) => selectedSiteParentIds.includes(s.id))}
               // value={form.site_id}
@@ -317,6 +318,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
             </Stack>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
               <DateTimePicker
+                open={openStartPicker}
+                onOpen={() => setOpenStartPicker(true)}
+                onClose={() => setOpenStartPicker(false)}
                 disabled={!enabled.visitStart}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
@@ -334,14 +338,34 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 // }}
                 slotProps={{
                   actionBar: {
-                    actions: ['clear', 'accept'],
+                    actions: ['today', 'clear', 'accept'],
+                    sx: {
+                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                        color: 'secondary !important',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                        backgroundColor: '#d32f2f !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                        backgroundColor: '#055499 !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                    },
                   },
                   textField: {
                     fullWidth: true,
-                    sx: {
-                      mt: 1,
-                      '& .MuiInputBase-root.Mui-disabled': {
-                        backgroundColor: '#f0f0f0',
+
+                    onClick: () => {
+                      setOpenStartPicker(true);
+                    },
+
+                    FormHelperTextProps: {
+                      sx: {
+                        ml: 0,
+                        mr: 0,
                       },
                     },
                   },
@@ -397,35 +421,40 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 // }}
                 slotProps={{
                   actionBar: {
-                    actions: ['clear', 'accept'],
+                    actions: ['today', 'clear', 'accept'],
+                    sx: {
+                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                        color: 'secondary !important',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                        backgroundColor: '#d32f2f !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                        backgroundColor: '#055499 !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                    },
                   },
+
                   textField: {
                     fullWidth: true,
-                    sx: {
-                      mt: 1,
-                      '& .MuiInputBase-root.Mui-disabled': {
-                        backgroundColor: '#f0f0f0',
+                    onClick: () => {
+                      setOpenEndPicker(true);
+                    },
+
+                    FormHelperTextProps: {
+                      sx: {
+                        ml: 0,
+                        mr: 0,
                       },
                     },
                   },
                 }}
               />
             </LocalizationProvider>
-
-            {/* <CustomTextField
-              type="datetime-local"
-              fullWidth
-              disabled={!enabled.visitEnd}
-              sx={{ mt: 1 }}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  visitor_period_end: e.target.value
-                    ? new Date(e.target.value).toISOString()
-                    : null,
-                }))
-              }
-            /> */}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

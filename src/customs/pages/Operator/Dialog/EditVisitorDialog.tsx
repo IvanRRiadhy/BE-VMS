@@ -174,7 +174,7 @@ const EditVisitorDialog = ({ open, onClose, visitor, onSubmit }: EditVisitorDial
 
           {/* Organization */}
           <Grid size={{ xs: 12 }}>
-            {renderLabel('Organization', 'visitor_organization_name')}
+            {renderLabel('Department/Organization/Company', 'visitor_organization_name')}
 
             <TextField
               fullWidth

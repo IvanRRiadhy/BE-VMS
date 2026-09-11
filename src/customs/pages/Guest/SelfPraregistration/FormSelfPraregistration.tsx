@@ -48,7 +48,7 @@ import {
 } from '@tabler/icons-react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
+// import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
 import { Box, useMediaQuery } from '@mui/system';
 import {
   CreateGroupVisitorRequestSchema,
@@ -84,6 +84,7 @@ import Swal from 'sweetalert2';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
+import VisitorTypeList from './VisitorTypeList';
 type VisitorItem = {
   question_page: SectionPageVisitor[];
   single_page: FormField[];
@@ -359,7 +360,7 @@ const FormSelfPraregistration = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!validateOtherForm()) return;
+    // if (!validateOtherForm()) return;
     try {
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
@@ -3814,87 +3815,7 @@ const FormSelfPraregistration = ({
                 />
               </>
             )}
-            <Card
-              elevation={0}
-              sx={{
-                // mb: 2,
-                mt: 3,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                background:
-                  'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
-              }}
-            >
-              <Box p={3} pb={3}>
-                <Box mb={3}>
-                  <Typography variant="h5" fontWeight={700}>
-                    {t('person_filling_this_form')}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary" mt={0.5}>
-                    {t('subtitlePersonFiling')}
-                  </Typography>
-                </Box>
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomFormLabel required sx={{ mt: 0 }}>
-                      Name
-                    </CustomFormLabel>
-
-                    <CustomTextField
-                      fullWidth
-                      placeholder="Enter your name"
-                      value={otherForm.name}
-                      onChange={(e: any) =>
-                        setOtherForm((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomFormLabel required sx={{ mt: 0 }}>
-                      Email
-                    </CustomFormLabel>
-
-                    <CustomTextField
-                      fullWidth
-                      type="email"
-                      placeholder="Enter your email"
-                      value={otherForm.email}
-                      onChange={(e: any) =>
-                        setOtherForm((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <CustomFormLabel required sx={{ mt: 0 }}>
-                      Phone Number
-                    </CustomFormLabel>
-
-                    <CustomTextField
-                      fullWidth
-                      placeholder="Enter your phone number"
-                      value={otherForm.phone}
-                      onChange={(e: any) =>
-                        setOtherForm((prev) => ({
-                          ...prev,
-                          phone: e.target.value,
-                        }))
-                      }
-                    />
-                  </Grid>
-                </Grid>
-              </Box>
-            </Card>
+  
             <Box mt={0}>{handleSteps(activeStep)}</Box>
 
             <Box

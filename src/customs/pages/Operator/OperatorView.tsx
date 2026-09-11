@@ -103,6 +103,8 @@ import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
 import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import EditVisitorDialog from './Dialog/EditVisitorDialog';
+import InvitationQrCard from './Components/InvitationQrCard';
+import InvitationQrDialog from './Dialog/InvitationQrDialog';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -1337,11 +1339,26 @@ const OperatorView = () => {
   const handleClearAll = () => {
     setInvitationCode([]);
     setRelatedVisitors([]);
+    setSelectedVisitors([]); // clear selected Live/Related Visitor
+
     setOpen(false);
     setOpenDialogIndex(null);
     setTorchOn(false);
     setActionButton('');
+
     setTotalCountVisitor(0);
+
+    // Reset Live Visitor filter
+    setVisitorStatusFilter('all');
+    setVisitorStartDate('');
+    setVisitorEndDate('');
+
+    // Reset Live Visitor pagination
+    setLivePage(0);
+    setRelatedPage(0);
+
+    // Kalau search juga ingin ikut clear
+    setSearchKeyword('');
   };
 
   const handleBlacklistStatus = async (id: string) => {
@@ -2749,7 +2766,7 @@ const OperatorView = () => {
 
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
-  const activeCaptureVehicle= getCdnUrl(activeVisitor?.vehicle_captured);
+  const activeCaptureVehicle = getCdnUrl(activeVisitor?.vehicle_captured);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
 
   const handlePrint = () => {
@@ -3135,6 +3152,10 @@ const OperatorView = () => {
 
   const handleOpenEnableEdit = () => setOpenEnableEdit(true);
 
+  const [openDetailQrCode, setOpenDetailQrCode] = useState(false);
+
+  const handleOpenDetailQrCode = () => setOpenDetailQrCode(true);
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3228,6 +3249,7 @@ const OperatorView = () => {
                   backgroundnodata={backgroundnodata}
                   t={t}
                   handleOpenEnableEdit={handleOpenEnableEdit}
+                  handleOpenQrCode={handleOpenDetailQrCode}
                 />
 
                 <VisitorDetailCard
@@ -3295,7 +3317,9 @@ const OperatorView = () => {
                   formatDateTime={formatDateTime}
                   setAnchorEl={setAnchorEl}
                   setTypeVisitor={
-                    setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live' | 'today-activity'>>
+                    setTypeVisitor as React.Dispatch<
+                      React.SetStateAction<'related' | 'live' | 'today-activity'>
+                    >
                   }
                   setSearchKeyword={setSearchKeyword}
                   setSelectMultiple={setSelectMultiple}
@@ -3362,6 +3386,13 @@ const OperatorView = () => {
             </Grid>
           </Grid>
         </Box>
+
+        {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}
+        <InvitationQrDialog
+          open={openDetailQrCode}
+          onClose={() => setOpenDetailQrCode(false)}
+          activeVisitor={activeVisitor}
+        />
 
         {/* Dialog Edit */}
         <EditVisitorDialog
@@ -3753,7 +3784,6 @@ const OperatorView = () => {
           }}
         />
       </Box>
-   
     </PageContainer>
   );
 };

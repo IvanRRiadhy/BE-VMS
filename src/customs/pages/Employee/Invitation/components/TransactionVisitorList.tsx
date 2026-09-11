@@ -1,4 +1,14 @@
-import { Box, Button, CircularProgress, IconButton, InputAdornment, Skeleton, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { IconPlus } from '@tabler/icons-react';
 import { IconFilterFilled } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -20,6 +30,7 @@ type TransactionVisitorListProps = {
   handleCancel: (id: string) => void;
   setShowDrawerFilterMore?: any;
   profile?: any;
+  handleAdd?: any;
 };
 
 const TransactionVisitorList = ({
@@ -39,6 +50,7 @@ const TransactionVisitorList = ({
   isFetchingNextPage,
   fetchNextPage,
   profile,
+  handleAdd,
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -105,7 +117,7 @@ const TransactionVisitorList = ({
                 cursor: 'pointer',
                 mb: 1,
                 '&:hover': {
-                  backgroundColor: '#eee',
+                  backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#eee',
                 },
               }}
               onClick={() => {
@@ -123,22 +135,37 @@ const TransactionVisitorList = ({
               <Typography>Start : {group.visitor_period_start}</Typography>
 
               <Typography>End : {group.visitor_period_end}</Typography>
-              {group.invited_by === profile?.user_id &&
-                group.remarks === 'PraRegister' &&
-                group.transaction_status !== 'Canceled' && (
-                  <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
-                    <Button
-                      variant="contained"
-                      color="error"
+              {group.invited_by === profile?.user_id && group.transaction_status !== 'Canceled' && (
+                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
+                  <Tooltip title="Add" arrow>
+                    <IconButton
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCancel(group.id);
+                        handleAdd(group);
+                      }}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'primary.dark',
+                        },
                       }}
                     >
-                      Cancel
-                    </Button>
-                  </Box>
-                )}
+                      <IconPlus size={20} />
+                    </IconButton>
+                  </Tooltip>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancel(group.id);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              )}
             </Box>
           ))}
 

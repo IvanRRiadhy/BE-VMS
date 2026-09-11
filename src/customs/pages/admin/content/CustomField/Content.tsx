@@ -24,7 +24,7 @@ import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import CustomFieldDialog from './components/CustomFIeldDialog';
 import useCustomFieldPagination from 'src/hooks/CustomField/useCustomFieldPagination';
 import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
-import GlobalBackdropLoading from '../AdminView/Components/GlobalBackdrop';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 
 type CustomFieldTableRow = {

@@ -40,7 +40,6 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [edittingId, setEdittingId] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);

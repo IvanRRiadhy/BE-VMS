@@ -9,36 +9,24 @@ import { Box, Grid2 as Grid } from '@mui/material';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
-import CreateLinkDialog from '../Trx/components/Dialog/CreateLinkDialog';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import SendEmailDialog from '../Trx/components/Dialog/SendEmailDialog';
-import DetailLinkDialog from '../Trx/components/Dialog/DetailLinkDialog';
-import InvitationShareDialog from '../Trx/components/Dialog/InvitationShareDialog';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { IconLink, IconUsers } from '@tabler/icons-react';
+import SendEmailDialog from '../../admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
+import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
+import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
+import CreateLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
 const Content = () => {
   // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortDir, setSortDir] = useState('desc');
-  const [selectedShareLink, setSelectedShareLink] = useState(null);
-  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const [generatedLink, setGeneratedLink] = useState('');
-  const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
-  const [openCreateLink, setOpenCreateLink] = useState(false);
-  const [openDetailLink, setOpenDetailLink] = useState(false);
-  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
-  const [pendingPayload, setPendingPayload] = useState<any>(null);
-  const isGenerating =
-    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
-  const [openSendEmail, setOpenSendEmail] = useState(false);
-  const { t } = useTranslation();
+
   const { data, isLoading } = useShareLinkPagination({
     page,
     rowsPerPage,
@@ -67,6 +55,14 @@ const Content = () => {
     },
   ];
 
+  const [selectedShareLink, setSelectedShareLink] = useState(null);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+
   const handleOpenInviteDialog = async (row: any) => {
     const res = await getShareLinkById(row.id);
     setSelectedShareLink(res.collection);
@@ -80,12 +76,18 @@ const Content = () => {
     setOpenCreateLink(true);
   };
 
+  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const isGenerating =
+    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const { t } = useTranslation();
+
   const handleCreateLink = async (payload: any) => {
     try {
       await createMutation.mutateAsync(payload);
       setOpenCreateLink(false);
-      // showSwal('success', 'Successfully created share link');
-      showSwal('success', t('createSuccess', { name: 'Share Link' }));
+      showSwal('success', 'Share link created successfully');
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to create share link');
     }
@@ -117,26 +119,24 @@ const Content = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      // const confirm = await Swal.fire({
-      //   title: 'Do you want to delete this link?',
-      //   icon: 'question',
-      //   showCancelButton: true,
-      //   confirmButtonText: 'Yes',
-      //   cancelButtonText: 'Cancel',
-      //   reverseButtons: true,
-      //   confirmButtonColor: '#4caf50',
-      //   customClass: {
-      //     title: 'swal2-title-custom',
-      //     htmlContainer: 'swal2-text-custom',
-      //   },
-      // });
-
-      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
+      const confirm = await Swal.fire({
+        title: 'Do you want to delete this link?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: '#4caf50',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
 
       if (!confirm.isConfirmed) return;
 
       await deleteMutation.mutateAsync(id);
-      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+      showSwal('success', 'Successfully deleted link.');
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
     }
@@ -189,80 +189,75 @@ const Content = () => {
   };
 
   return (
-    <PageContainer
-      itemDataCustomNavListing={AdminNavListingData}
-      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    >
-      <Container title="Share Link" description="Manage Share Link">
-        <Box>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                data={shareLinkList}
-                loading={isLoading}
-                isHaveHeaderTitle={false}
-                isHaveSearch={true}
-                onSearch={handleSearch}
-                isHaveChecked={true}
-                isNoActionTableHead={true}
-                currentPage={page}
-                // titleHeader="Share Link"
-                isCopyLink={true}
-                isHavePagination={true}
-                defaultRowsPerPage={rowsPerPage}
-                totalCount={totalFilterRecords}
-                rowsPerPageOptions={[10, 50, 100]}
-                onPaginationChange={(newPage: any, newRowsPerPage: any) => {
-                  setPage(newPage);
-                  setRowsPerPage(newRowsPerPage);
-                }}
-                onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-                onDetailLink={(row: any) => handleDetailLink(row.shorten_url || row.url)}
-                onDelete={(row: any) => handleDeleteLink(row.id)}
-                isHaveAddData={true}
-                onAddData={handleAddShareLink}
-              />
-            </Grid>
+    <Container title="Share Link" description="Manage Share Link">
+      <Box>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
-        </Box>
-        <CreateLinkDialog
-          open={openCreateLink}
-          onClose={() => setOpenCreateLink(false)}
-          onCreateLink={handleCreateLink}
-          onSendEmail={(payload) => {
-            setPendingPayload(payload);
-            setOpenSendEmail(true);
-          }}
-          loading={isGenerating}
-        />
-        <SendEmailDialog
-          open={openSendEmail}
-          onClose={() => setOpenSendEmail(false)}
-          onSend={handleSendEmail}
-          loading={isGenerating}
-        />
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <DynamicTable
+              data={shareLinkList}
+              loading={isLoading}
+              isHaveHeaderTitle={false}
+              isHaveSearch={true}
+              onSearch={handleSearch}
+              isHaveChecked={true}
+              isNoActionTableHead={true}
+              currentPage={page}
+              // titleHeader="Share Link"
+              isCopyLink={true}
+              isHavePagination={true}
+              defaultRowsPerPage={rowsPerPage}
+              totalCount={totalFilterRecords}
+              rowsPerPageOptions={[10, 50, 100]}
+              onPaginationChange={(newPage: any, newRowsPerPage: any) => {
+                setPage(newPage);
+                setRowsPerPage(newRowsPerPage);
+              }}
+              onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+              onDetailLink={(row: any) => handleDetailLink(row.shorten_url || row.url)}
+              onDelete={(row: any) => handleDeleteLink(row.id)}
+              isHaveAddData={true}
+              onAddData={handleAddShareLink}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={handleCreateLink}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+        loading={isGenerating}
+      />
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={handleSendEmail}
+        loading={isGenerating}
+      />
 
-        <DetailLinkDialog
-          open={openDetailLink}
-          onClose={() => setOpenDetailLink(false)}
-          dataVisitor={[]}
-        />
-        <InvitationShareDialog
-          open={openInviteViaLinkEmail}
-          onClose={() => setOpenInviteViaLinkEmail(false)}
-          generatedLink={generatedLink}
-          getExpireText={getExpireText}
-          expiredAt={expiredAt}
-          handleCopyLink={handleCopyLink}
-          handleSendInvitation={handleSendInvitation}
-          shareLinkData={selectedShareLink}
-          loading={isGenerating}
-        />
-      </Container>
-    </PageContainer>
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={[]}
+      />
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        expiredAt={expiredAt}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
+        loading={isGenerating}
+      />
+    </Container>
   );
 };
 

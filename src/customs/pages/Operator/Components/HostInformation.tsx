@@ -91,6 +91,10 @@ const HostInformation = ({
           backgroundColor: 'background.paper',
           p: 1,
           // mt: 0.5,
+          // height: '100%',
+          height: '30%',
+          // display: 'flex',
+          // flexDirection: 'column',
         }}
         id="tour-host-info"
       >
@@ -107,7 +111,7 @@ const HostInformation = ({
             px: '15px !important',
           }}
         >
-          <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
             <Avatar
               src={
                 host?.faceimage
@@ -140,7 +144,7 @@ const HostInformation = ({
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" mb={0}>
-                  {data?.host_name|| '-'}
+                  {data?.host_name || '-'}
                 </Typography>
                 {/* {data && (
                   <Typography
@@ -210,76 +214,6 @@ const HostInformation = ({
               </Box>
             </Box>
           </Box>
-          {/* <Divider sx={{ my: 1 }} /> */}
-          {/* <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-            <Box
-              component="a"
-              href={data?.hosts[0].phone ? `tel:${data?.hosts[0].phone}` : undefined}
-              sx={{
-                flex: 1,
-                bgcolor: 'primary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                p: 1,
-                borderRadius: 2,
-                textDecoration: 'none',
-                cursor: data?.hosts[0].phone ? 'pointer' : 'not-allowed',
-                opacity: data?.hosts[0].phone ? 1 : 0.5,
-              }}
-            >
-              <IconPhone size={20} />
-              Call
-            </Box>
-
-            <Box
-              component="a"
-              href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                flex: 1,
-                bgcolor: 'success.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                p: 1,
-                borderRadius: 2,
-                textDecoration: 'none',
-                cursor: whatsappNumber ? 'pointer' : 'not-allowed',
-                opacity: whatsappNumber ? 1 : 0.5,
-              }}
-            >
-              <IconBrandWhatsapp size={20} />
-              Chat
-            </Box>
-
-            <Box
-              component="a"
-              href={data?.hosts[0].email ? `mailto:${data?.hosts[0].email}` : undefined}
-              sx={{
-                flex: 1,
-                bgcolor: 'secondary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                p: 1,
-                borderRadius: 2,
-                textDecoration: 'none',
-                cursor: data?.hosts[0].email ? 'pointer' : 'not-allowed',
-                opacity: data?.hosts[0].email ? 1 : 0.5,
-              }}
-            >
-              <Email />
-              Email
-            </Box>
-          </Box> */}
         </CardContent>
       </Card>
       <PreviewImageDialog

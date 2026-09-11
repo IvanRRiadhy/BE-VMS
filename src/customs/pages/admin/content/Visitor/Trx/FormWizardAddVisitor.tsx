@@ -109,6 +109,7 @@ import { useTranslation } from 'react-i18next';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -1859,18 +1860,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           );
                                         })}
 
-                                      {!isAddTransaction && (
-                                        <TableCell align="right">
-                                          {dataVisitor.length > 1 && (
-                                            <>
-                                              <IconButton
-                                                aria-label="delete-row"
-                                                onClick={() => handleDeleteGroupRow(gIdx)}
-                                                size="small"
-                                                color="error"
-                                              >
-                                                <IconTrash />
-                                              </IconButton>
+                                      <TableCell align="right">
+                                        {dataVisitor.length > 1 && (
+                                          <>
+                                            <IconButton
+                                              aria-label="delete-row"
+                                              onClick={() => handleDeleteGroupRow(gIdx)}
+                                              size="small"
+                                              color="error"
+                                            >
+                                              <IconTrash />
+                                            </IconButton>
+                                            {!isAddTransaction && (
                                               <Button
                                                 variant="contained"
                                                 size="small"
@@ -1882,10 +1883,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               >
                                                 {hasSelfOnly ? 'Filled' : 'Self Only'}
                                               </Button>
-                                            </>
-                                          )}
-                                        </TableCell>
-                                      )}
+                                            )}
+                                          </>
+                                        )}
+                                      </TableCell>
                                     </TableRow>
                                   );
                                 })
@@ -1962,33 +1963,41 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 return (
                   <Table>
                     <TableBody>
-                      {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
-                        setGroupedPages((prev) => {
-                          const next = { ...prev, single_page: [...prev.single_page] };
-                          const base = formsOf(section)[idx];
-                          const found = next.single_page.findIndex((sf) => sameField(sf, base));
+                      {renderDetailRows(
+                        mergedVisitForm,
+                        (idx, fieldKey, value) => {
+                          setGroupedPages((prev) => {
+                            const next = { ...prev, single_page: [...prev.single_page] };
+                            const base = formsOf(section)[idx];
+                            const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
-                          const resolvedForeign =
-                            base?.foreign_id ??
-                            section?.foreign_id ??
-                            base?.custom_field_id ??
-                            null;
+                            const resolvedForeign =
+                              base?.foreign_id ??
+                              section?.foreign_id ??
+                              base?.custom_field_id ??
+                              null;
 
-                          const payload = {
-                            ...(found >= 0 ? next.single_page[found] : base),
-                            foreign_id:
-                              found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
-                                : resolvedForeign,
-                            [fieldKey]: value,
-                          };
+                            const payload = {
+                              ...(found >= 0 ? next.single_page[found] : base),
+                              foreign_id:
+                                found >= 0
+                                  ? (next.single_page[found].foreign_id ?? resolvedForeign)
+                                  : resolvedForeign,
+                              [fieldKey]: value,
+                            };
 
-                          if (found >= 0) next.single_page[found] = payload;
-                          else next.single_page.push(payload);
+                            if (found >= 0) next.single_page[found] = payload;
+                            else next.single_page.push(payload);
 
-                          return next;
-                        });
-                      })}
+                            return next;
+                          });
+                        },
+                        undefined,
+                        false,
+                        {
+                          disabled: isAddTransaction,
+                        },
+                      )}
                     </TableBody>
                   </Table>
                 );
@@ -2159,7 +2168,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               disabled={
                 shouldDisable ||
                 ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
-                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&    (!isDriving || isBicycle))
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&
+                  (!isDriving || isBicycle))
               }
             />
           );
@@ -3406,6 +3416,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     index: number,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
     isSelfOnly = false,
+    disabled = false,
   ) => {
     const originalSite = sites.find(
       (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
@@ -3413,7 +3424,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
-    const isDisabled = !canVisited;
+    const isDisabled = !canVisited || disabled;
 
     const isChecked = isSelfOnly
       ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
@@ -3850,7 +3861,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
     groupIdx?: string | undefined,
     isSelfOnly: boolean = false,
-    options?: {
+    option?: {
       disabled?: boolean;
     },
   ) => {
@@ -3992,11 +4003,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     return (
                       <Box>
                         <FormControl fullWidth error={!!errorMessage}>
-                          <Select
+                          <CustomSelect
                             value={
                               showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''
                             }
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               let value = e.target.value;
 
                               if (value === 'Others') {
@@ -4018,6 +4029,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             }}
                             fullWidth
                             displayEmpty
+                            disabled={option?.disabled}
+                            sx={{
+                              '&.Mui-disabled': {
+                                backgroundColor: '#eeeaeaff',
+                              },
+                            }}
                           >
                             <MenuItem value="" disabled>
                               Select agenda
@@ -4029,7 +4046,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <MenuItem value="Training">Training</MenuItem>
                             <MenuItem value="Report">Report</MenuItem>
                             <MenuItem value="Others">Others</MenuItem>
-                          </Select>
+                          </CustomSelect>
                         </FormControl>
                         <FormHelperText sx={{ color: 'red' }}>{errorMessage}</FormHelperText>
 
@@ -4148,6 +4165,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     return (
                       <>
                         <Autocomplete
+                          disabled={option?.disabled}
                           multiple
                           size="small"
                           options={options}
@@ -4291,7 +4309,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
                               : siteTree
                             ).map((node) =>
-                              renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
+                              renderTree(
+                                node,
+                                originalIndex,
+                                handleSitePlaceChange,
+                                isSelfOnly,
+                                isAddTransaction,
+                              ),
                             )}
                           </SimpleTreeView>
                         )}
@@ -4355,6 +4379,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                     return (
                       <Autocomplete
+                        disabled={option?.disabled}
                         loading={isLoadingEmployee}
                         loadingText="Searching Host..."
                         size="small"
@@ -4809,6 +4834,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                disabled={option?.disabled}
                                 open={openStartPicker}
                                 onOpen={() => setOpenStartPicker(true)}
                                 onClose={() => setOpenStartPicker(false)}
@@ -4846,6 +4872,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
                                     sx: {
+                                      '&.Mui-disabled': {
+                                        backgroundColor: '#eeeaeaff',
+                                      },
                                       '& .MuiButtonBase-root:nth-of-type(1)': {
                                         color: 'secondary !important',
                                       },
@@ -4872,6 +4901,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       sx: {
                                         ml: 0,
                                         mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
                                       },
                                     },
                                   },
@@ -4901,6 +4935,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                disabled={option?.disabled}
                                 open={openEndPicker}
                                 onOpen={() => setOpenEndPicker(true)}
                                 onClose={() => setOpenEndPicker(false)}
@@ -4961,6 +4996,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       sx: {
                                         ml: 0,
                                         mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
                                       },
                                     },
                                   },
@@ -6163,10 +6203,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           await createVisitorMutation.mutateAsync(parsed);
         }
 
-      const successMessage =
-        TYPE_REGISTERED === 0
-          ? t('preRegistrationCreatedSuccessfully')
-          : t('invitationVisitorCreatedSuccessfully');
+        const successMessage =
+          TYPE_REGISTERED === 0
+            ? t('preRegistrationCreatedSuccessfully')
+            : t('invitationVisitorCreatedSuccessfully');
 
         showSwal('success', successMessage, 3000);
         resetMediaState();
@@ -6652,7 +6692,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const getSectionIndex = (step: number) => (isAddTransaction ? step : step - 1);
 
   return (
-    <PageContainer title="Live Visitor" description="this is Add Visitor page">
+    <Box>
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
           {!isMobile ? (
@@ -6970,7 +7010,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Alert>
         </Snackbar>
       </Portal>
-    </PageContainer>
+    </Box>
   );
 };
 

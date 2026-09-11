@@ -202,9 +202,7 @@ const ManagePrintBadge = Loadable(
 const ManageEvacuate = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
 );
-const ManageAdminView = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/AdminView/Content')),
-);
+
 
 const ManageAdminNotification = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Notification/Content')),
@@ -220,6 +218,9 @@ const ApprovalEmployee = Loadable(
 const InvitationEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Invitation/Invitation')),
 );
+const ShareLinkEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/ShareLink/Content')),
+)
 const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking/Parking')));
 const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report/Report')));
 const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History/History')));
@@ -422,8 +423,8 @@ const Router = [
           { path: '/admin/monitoring', element: <MonitoringAdmin /> },
           // Visitor
           { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
-          { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
+          { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/admin/visitor/blacklist-visitor', element: <ManageBlacklistVisitor /> },
           { path: '/admin/visitor/share-link', element: <ManageShareLinkVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
@@ -470,7 +471,6 @@ const Router = [
           { path: '/profile', element: <DetailProfile /> },
           { path: '/admin/print-badge', element: <ManagePrintBadge /> },
           { path: '/admin/evacuate', element: <ManageEvacuate /> },
-          { path: '/admin/view', element: <ManageAdminView /> },
           { path: '/admin/notification', element: <ManageAdminNotification /> },
         ],
       },
@@ -487,6 +487,7 @@ const Router = [
               { path: 'dashboard', element: <DashboardEmployee /> },
               { path: 'approval', element: <ApprovalEmployee /> },
               { path: 'my-invitation', element: <InvitationEmployee /> },
+              { path: 'share-link', element: <ShareLinkEmployee /> },
               { path: 'parking', element: <ParkingEmployee /> },
               { path: 'report', element: <ReportEmployee /> },
               { path: 'history', element: <HistoryEmployee /> },

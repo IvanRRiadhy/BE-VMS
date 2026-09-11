@@ -202,9 +202,28 @@ const Content = () => {
     selectedGroupId as string,
   );
 
+  // const getVisitorStatus = (visitor: any) => {
+  //   const now = dayjs();
+  //   const periodEnd = dayjs(visitor.visitor_period_end);
+
+  //   if (
+  //     visitor.visitor_status === 'Preregis' ||
+  //     (visitor.visitor_status === 'Checkin' && periodEnd.isValid() && now.isAfter(periodEnd))
+  //   ) {
+  //     return 'Expired';
+  //   }
+
+  //   return visitor.visitor_status;
+  // };
+
   useEffect(() => {
     if (detailData?.collection) {
-      setGroupVisitors(detailData.collection);
+      const visitors = detailData.collection.map((visitor: any) => ({
+        ...visitor,
+        // visitor_status: getVisitorStatus(visitor),
+      }));
+
+      setGroupVisitors(visitors);
     } else {
       setGroupVisitors([]);
     }
@@ -299,7 +318,7 @@ const Content = () => {
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     setDuplicateData(null);
-
+    setIsAddTransaction(false);
     // reset edit mode
     setEdittingId('');
 
@@ -414,7 +433,7 @@ const Content = () => {
     }));
 
     setOpenDialogIndex(null);
-
+    setIsAddTransaction(false);
     if (flowTarget === 'invitation') {
       setOpenInvitationVisitor(true);
     } else if (flowTarget === 'preReg') {
@@ -429,7 +448,7 @@ const Content = () => {
 
       showSwal('success', 'Successfully canceled visitor');
     } catch (error: any) {
-      showSwal('error', error?.msg ?? 'Failed to cancel visitor');
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to cancel visitor');
     }
   };
 
@@ -536,9 +555,10 @@ const Content = () => {
       setIsAddTransaction(true);
 
       setWizardKey((prev) => prev + 1);
-      setOpenPreRegistration(true);
-    } catch (error) {
-      console.error(error);
+      setOpenInvitationVisitor(true);
+    } catch (error: any) {
+      // console.error(error);
+      showSwal('error', error?.response?.data?.msg || 'Failed to get visitor form transaction');
     } finally {
       setLoadingAddTransaction(false);
     }
@@ -560,9 +580,10 @@ const Content = () => {
                   if (index === 2) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
-                  // } else if (index === 3) {
-                  //   setFlowTarget('preReg');
-                  //   setOpenPreRegistration(true);
+                    setIsAddTransaction(false);
+                    // } else if (index === 3) {
+                    //   setFlowTarget('preReg');
+                    //   setOpenPreRegistration(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
@@ -646,6 +667,8 @@ const Content = () => {
         vtLoading={vtLoading}
         search={setHostSearch}
         isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
+        isAddTransaction={isAddTransaction}
       />
 
       <PreRegistrationDialog
@@ -667,7 +690,7 @@ const Content = () => {
         search={setHostSearch}
         isLoadingEmployee={isLoadingEmployee}
         duplicateData={duplicateData}
-        isAddTransaction={isAddTransaction}
+        // isAddTransaction={isAddTransaction}
       />
 
       {/* Select Registered Site */}

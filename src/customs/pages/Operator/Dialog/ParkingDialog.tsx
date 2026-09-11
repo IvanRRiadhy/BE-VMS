@@ -14,6 +14,7 @@ import { Box } from '@mui/material';
 import InfoCard from '../Components/InfoCard';
 import { TextField, Button, MenuItem, Stack } from '@mui/material';
 import { useState, useEffect } from 'react';
+import ParkingTemplateDialog from './Parking/ParkingTemplateDialog';
 
 interface ParkingDialogProps {
   open: boolean;
@@ -55,18 +56,76 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
     if (saved) setTemplates(JSON.parse(saved));
   }, []);
 
-  const handleSaveTemplate = () => {
-    if (!templateName) return;
+  // const handleSaveTemplate = () => {
+  //   if (!templateName) return;
 
-    const newTemplates = [...templates, { name: templateName, filter }];
-    setTemplates(newTemplates);
+  //   const newTemplates = [...templates, { name: templateName, filter }];
+  //   setTemplates(newTemplates);
 
-    sessionStorage.setItem('parkingFilterTemplates', JSON.stringify(newTemplates));
-    setTemplateName('');
-  };
+  //   sessionStorage.setItem('parkingFilterTemplates', JSON.stringify(newTemplates));
+  //   setTemplateName('');
+  // };
 
   const handleLoadTemplate = (template: any) => {
     setFilter(template.filter);
+  };
+
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState('');
+
+  const dummyParkingData = [
+    {
+      NO: 1,
+      Group: 'AD',
+      'VS Code': 'AD-123',
+      Truk: '',
+      Car: '',
+      'Truk 16': '',
+      'Truk 20': 1,
+      'Truk 40': '',
+      Destinasi: '',
+    },
+    {
+      NO: 2,
+      Group: 'AD',
+      'VS Code': 'AD-124',
+      Truk: '',
+      Car: '',
+      'Truk 16': '',
+      'Truk 20': '',
+      'Truk 40': 1,
+      Destinasi: '',
+    },
+  ];
+
+  const [openTemplateDialog, setOpenTemplateDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+
+  const handleSaveTemplate = () => {
+    if (!templateName.trim()) return;
+
+    const newTemplate = {
+      name: templateName.trim(),
+      filter,
+    };
+
+    const newTemplates = [...templates, newTemplate];
+
+    setTemplates(newTemplates);
+
+    sessionStorage.setItem('parkingFilterTemplates', JSON.stringify(newTemplates));
+
+    // nama template yang baru dibuat
+    setSelectedTemplate(templateName.trim());
+
+    // reset input
+    setTemplateName('');
+
+    // tutup dialog Parking
+    // onClose();
+
+    // buka dialog baru
+    setOpenTemplateDialog(true);
   };
 
   return (
@@ -234,6 +293,11 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
           </Box>
         </Box>
       </DialogContent>
+      {/* <ParkingTemplateDialog
+        open={openTemplateDialog}
+        onClose={() => setOpenTemplateDialog(false)}
+        templateName={selectedTemplate}
+      /> */}
     </Dialog>
   );
 };

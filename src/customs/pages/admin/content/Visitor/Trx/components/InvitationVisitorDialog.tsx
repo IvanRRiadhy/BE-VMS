@@ -24,6 +24,8 @@ interface Props {
   allVisitorEmployee: any;
   vtLoading: boolean;
   isLoadingEmployee?: any;
+  duplicateData?: any;
+  isAddTransaction?: any;
 }
 
 export default function InvitationVisitorDialog({
@@ -45,6 +47,8 @@ export default function InvitationVisitorDialog({
   allVisitorEmployee,
   vtLoading,
   isLoadingEmployee,
+  duplicateData,
+  isAddTransaction,
 }: Props) {
   const handleClose = (_event?: object, reason?: 'backdropClick' | 'escapeKeyDown') => {
     if (isFormChanged) {
@@ -88,6 +92,8 @@ export default function InvitationVisitorDialog({
           vtLoading={vtLoading}
           enableInvitationTypeStep={true}
           isLoadingEmployee={isLoadingEmployee}
+          duplicateData={duplicateData}
+          isAddTransaction={isAddTransaction}
         />
       </DialogContent>
     </Dialog>

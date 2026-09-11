@@ -217,7 +217,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               icon={<IconCalendarEvent size={18} />}
             />
             <DetailItem
-              label="Location"
+              label="Site"
               value={selectedVisitor.site_place_name}
               icon={<IconMapPin size={18} />}
             />

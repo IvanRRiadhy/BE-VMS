@@ -16,6 +16,8 @@ type Props = {
   vtLoading?: boolean;
   search?: any;
   isLoadingEmployee: any;
+  duplicateData?: any;
+  isAddTransaction?: boolean;
 };
 
 const Praregist: React.FC<Props> = (props) => {

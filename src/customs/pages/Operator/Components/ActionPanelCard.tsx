@@ -104,48 +104,265 @@ const ActionPanelCard: FC<Props> = ({
         >
           <Grid container spacing={1}>
             <Grid
-              size={{ xs: 12, xl: 7 }}
+              size={{ xs: 12, xl: 12 }}
               sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
             >
-              <Tooltip
-                title="Scan QR to search data visitor"
-                placement="top"
-                arrow
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: '0.7rem',
-                      padding: '8px 14px',
-                    },
-                  },
-                }}
-              >
-                <Button
-                  variant="contained"
-                  startIcon={<IconQrcode size={25} />}
-                  onClick={handleOpenScanQR}
-                  size="large"
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.5,
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                    zIndex: 999,
-                    width: '100%',
-                    height: '50px',
-                    p: 0,
-                  }}
-                >
-                  <Typography variant="h5" color="white">
-                    Scan QR
-                  </Typography>
-                </Button>
-              </Tooltip>
-
               <Grid container spacing={isFullscreen ? 1 : 1}>
+                <Grid size={{ xs: 6, lg: 4 }}>
+                  <Typography variant="h6" sx={{ opacity: 0.7, mb: '10px' }}>
+                    Visit Flow
+                  </Typography>
+                  <Grid size={{ xs: 12, lg: 12 }}>
+                    <Tooltip
+                      title="Scan QR to search data visitor"
+                      placement="top"
+                      arrow
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            fontSize: '0.7rem',
+                            padding: '8px 14px',
+                          },
+                        },
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        startIcon={<IconQrcode size={25} />}
+                        onClick={handleOpenScanQR}
+                        size="large"
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: 2.5,
+                          boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                          },
+                          zIndex: 999,
+                          width: '100%',
+                          height: '50px',
+                          p: 0,
+                        }}
+                      >
+                        <Typography variant="h5" color="white">
+                          Scan QR
+                        </Typography>
+                      </Button>
+                    </Tooltip>
+                  </Grid>
+                </Grid>
+                <Grid size={{ xs: 6, lg: 4 }}>
+                  <Typography variant="h6" sx={{ opacity: 0.7, mb: '10px' }}>
+                    In Access
+                  </Typography>
+                  <Grid container spacing={1}>
+                    {/* Checkin */}
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canCheckin && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconLogin size={25} />}
+                            onClick={() => handleActionClick('Checkin')}
+                            // color="success"
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+
+                              boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                              backgroundColor: '#22C55E',
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Check In
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canCheckout && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconLogout size={25} />}
+                            onClick={() => handleActionClick('Checkout')}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+                              backgroundColor: '#EF4444',
+                              // background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
+                              boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
+                              // '&:hover': {
+                              //   background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
+                              // },
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Check Out
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canExtend && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconClock size={25} />}
+                            onClick={() => handleOpenAction('extend')}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+                              boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                              // background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                              backgroundColor: 'primary.main',
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Extend
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+                  </Grid>
+                </Grid>
+                <Grid size={{ xs: 6, lg: 4 }}>
+                  <Typography variant="h6" sx={{ opacity: 0.7, mb: '10px' }}>
+                    Control
+                  </Typography>
+                  <Grid container spacing={1}>
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canCardIssuance && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconCards size={28} />}
+                            onClick={() => handleOpenAction('card')}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+
+                              px: '10px !important',
+                              // background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+
+                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+                              // '&:hover': {
+                              //   background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
+                              // },
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Card Issue
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canCardIssuance && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconCards size={28} />}
+                            onClick={() => setOpenReturnCard(true)}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: '10px !important',
+
+                              // background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
+                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Card Return
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canParking && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconParking size={25} />}
+                            onClick={() => handleOpenAction('parking')}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+                              background: 'primary.main',
+                              boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Vehicle Count
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
+                  </Grid>
+                </Grid>
+
+                {/* Card */}
+
+                {/* Parking */}
+
                 {loading ? (
                   <ButtonSkeleton />
                 ) : (
@@ -206,175 +423,11 @@ const ActionPanelCard: FC<Props> = ({
                     </Grid>
                   )
                 )}
-
-                {/* Checkin */}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canCheckin && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconLogin size={25} />}
-                        onClick={() => handleActionClick('Checkin')}
-                        // color="success"
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 2.5,
-
-                          boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                          backgroundColor: '#22C55E',
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Check In
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canCheckout && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconLogout size={25} />}
-                        onClick={() => handleActionClick('Checkout')}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 2.5,
-                          backgroundColor: '#EF4444',
-                          // background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
-                          boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
-                          // '&:hover': {
-                          //   background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
-                          // },
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Check Out
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
-
-                {/* Card */}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canCardIssuance && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconCards size={28} />}
-                        onClick={() => handleOpenAction('card')}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-
-                          px: '10px !important',
-                          // background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
-
-                          boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-                          // '&:hover': {
-                          //   background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
-                          // },
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Card Issue
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canCardIssuance && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconCards size={28} />}
-                        onClick={() => setOpenReturnCard(true)}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: '10px !important',
-
-                          // background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
-                          boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Card Return
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
               </Grid>
               {/* Access */}
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.2}>
-                {/* Parking */}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canParking && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconParking size={25} />}
-                        onClick={() => handleOpenAction('parking')}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 2.5,
-                          background: '#00ACC1',
-                          boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Parking
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
-
                 {/* Open */}
                 {loading ? (
                   <ButtonSkeleton />
@@ -404,36 +457,6 @@ const ActionPanelCard: FC<Props> = ({
                       >
                         <Typography variant="h6" color="white">
                           Open
-                        </Typography>
-                      </Button>
-                    </Grid>
-                  )
-                )}
-                {loading ? (
-                  <ButtonSkeleton />
-                ) : (
-                  canExtend && (
-                    <Grid size={{ xs: 6, lg: 6 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconClock size={25} />}
-                        onClick={() => handleOpenAction('extend')}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 2.5,
-                          boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                          // background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-                          backgroundColor: '#FFCA28',
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Extend
                         </Typography>
                       </Button>
                     </Grid>

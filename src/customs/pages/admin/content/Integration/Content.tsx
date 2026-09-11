@@ -73,6 +73,7 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const { deleteMutation, updateMutation } = useIntegrationMutation();
   const { t } = useTranslation();
   function normalizeBrandType(value: unknown): number {
     if (typeof value === 'number') return value;
@@ -100,7 +101,7 @@ const Content = () => {
         integration_type: item.integration_type,
         api_type_auth: item.api_type_auth,
         api_url: item.api_url || '',
-        active: item.active || false,
+        // active: item.is_active ?? false,
       })),
     [integrationResponse],
   );
@@ -130,6 +131,7 @@ const Content = () => {
         item.integration_type,
         item.api_type_auth,
         item.api_url,
+        // item.active,
       ]
         .join(' ')
         .toLowerCase()
@@ -218,8 +220,6 @@ const Content = () => {
     openForm(integration);
   };
 
-  const { deleteMutation } = useIntegrationMutation();
-
   const handleEdit = async (id: string) => {
     const integration = await getIntegrationById(id);
     const res = integration?.collection ?? integration;
@@ -294,6 +294,30 @@ const Content = () => {
     }
   };
 
+  // const handleActiveChange = async (id: string, checked: boolean) => {
+  //   try {
+  //     const integration = integrationResponse.find((item: any) => item.id === id);
+
+  //     if (!integration) return;
+
+  //     await updateMutation.mutateAsync({
+  //       id,
+  //       data: {
+  //         ...integration,
+  //         is_active: checked,
+  //       },
+  //     });
+
+  //     showSwal(
+  //       'success',
+  //       checked ? 'Integration activated successfully' : 'Integration deactivated successfully',
+  //     );
+  //   } catch (error: any) {
+  //     console.log('error', error);
+  //     showSwal('error', error?.response?.data?.msg || 'Failed to update integration status');
+  //   }
+  // };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -328,7 +352,7 @@ const Content = () => {
                 onCopy={(row) => {
                   handleCopy(row.id);
                 }}
-                isHaveActive
+                // isHaveActive
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
                 isHaveFilterMore={false}
@@ -348,6 +372,15 @@ const Content = () => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
+                // isHaveBooleanSwitch={true}
+                // onBooleanSwitchChange={(id, col, checked) => {
+                //   console.log('SWITCH CHANGE:', {
+                //     id,
+                //     col,
+                //     checked,
+                //   });
+                //   handleActiveChange(id, checked);
+                // }}
                 onBatchDelete={handleBatchDelete}
                 onDelete={(row) => {
                   handleDelete(row.id);

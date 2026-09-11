@@ -260,7 +260,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             >
               <Tab value="live" label={`Live Visitors (${liveCount})`} />
               <Tab value="related" label={`Related Visitors (${relatedCount})`} />
-              <Tab value="today-activity" label={`Today Activity`} />
+              {/* <Tab value="today-activity" label={`Today Activity`} /> */}
             </Tabs>
           </Box>
           <Box display="flex" alignItems="center" gap={0.5}>

@@ -1,8 +1,39 @@
-import { Grid2 as Grid, Card, CardContent, CardActions, Button, Box, Tooltip } from '@mui/material';
-import { IconLogin, IconLogout, IconForbid2, IconBan } from '@tabler/icons-react';
+import {
+  Grid2 as Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  Box,
+  Tooltip,
+  Divider,
+} from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Avatar,
+  Chip,
+  IconButton,
+  Stack,
+} from '@mui/material';
+import {
+  IconLogin,
+  IconLogout,
+  IconForbid2,
+  IconBan,
+  IconX,
+  IconUser,
+  IconChevronRight,
+} from '@tabler/icons-react';
 import VisitorDetailTabs from './VisitorDetailTabs';
 import InvitationQrCard from './InvitationQrCard';
 import { useState } from 'react';
+import { IconUsersGroup } from '@tabler/icons-react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import RelatedVisitorsDialog from './RelatedVisitorDialog';
 
 const VisitorDetailCard = ({
   invitationCode,
@@ -160,6 +191,18 @@ const VisitorDetailCard = ({
   const [activeTab, setActiveTab] = useState(0);
   const hasData = invitationCode && invitationCode.length > 0;
 
+  const [openRelatedDialog, setOpenRelatedDialog] = useState(false);
+
+  const onOpenRelatedVisitors = () => {
+    setOpenRelatedDialog(true);
+  };
+
+  const handleCloseRelatedVisitors = () => {
+    setOpenRelatedDialog(false);
+  };
+
+  const [selectedRelatedVisitor, setSelectedRelatedVisitor] = useState<any>(null);
+
   return (
     <Grid
       size={{ xs: 12 }}
@@ -172,7 +215,7 @@ const VisitorDetailCard = ({
         minHeight: 0,
       }}
     >
-      <Card
+      {/* <Card
         sx={{
           // flex: 1,
           minWidth: 0,
@@ -184,14 +227,38 @@ const VisitorDetailCard = ({
           borderRadius: 2,
           overflow: 'hidden',
         }}
+      > */}
+      <Card
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: 'none',
+          p: 1,
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
       >
-        <CardContent
+        {/* <CardContent
           sx={{
             p: '0px !important',
             // minWidth: 0,
             // minHeight: 0,
             // flex: 1,
             overflow: 'hidden',
+          }}
+        > */}
+        <CardContent
+          sx={{
+            p: '0px !important',
+            flex: 1,
+            minHeight: 0,
+            minWidth: 0,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <VisitorDetailTabs
@@ -200,13 +267,21 @@ const VisitorDetailCard = ({
             handleChooseCard={handleChooseCard}
             tabValue={activeTab}
             onTabChange={setActiveTab}
+            onOpenRelatedVisitors={onOpenRelatedVisitors}
           />
         </CardContent>
         {hasData && activeTab === 0 && (
           <CardActions sx={{ justifyContent: 'center', mt: 1 }}>{renderActions()}</CardActions>
         )}
       </Card>
-      <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} />
+      {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}
+      <RelatedVisitorsDialog
+        open={openRelatedDialog}
+        onClose={handleCloseRelatedVisitors}
+        selectedVisitor={selectedVisitor}
+        relatedVisitors={relatedVisitors}
+        formatDateTime={formatDateTime}
+      />
     </Grid>
   );
 };
