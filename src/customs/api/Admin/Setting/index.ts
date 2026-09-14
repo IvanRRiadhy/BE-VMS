@@ -128,3 +128,61 @@ export const uploadLicense = async (file: File): Promise<any> => {
     throw error;
   }
 };
+
+// Get Vehicle
+
+export const getVehicle = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/setting/vehicle');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getVehicleById = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/setting/vehicle/${id}`);
+  return response.data;
+};
+
+export const getVehicleByDT = async (
+  start: number,
+  length: number,
+  sort_column: string,
+  sortDir: string,
+  keyword: string = '',
+): Promise<any> => {
+  const params: any = {
+    start,
+    length,
+    sort_dir: sortDir,
+  };
+
+  if (sort_column) params.sort_column = sort_column;
+  if (keyword) params['search[value]'] = keyword;
+
+  const response = await axiosInstance.get('/setting/vehicle/dt', {
+    params,
+  });
+
+  return response.data;
+};
+
+export const createVehicle = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/setting/vehicle', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateVehicle = async (id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/setting/vehicle/${id}`, data);
+  return response.data;
+};
+
+export const deleteVehicle = async (id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/setting/vehicle/${id}`);
+  return response.data;
+};

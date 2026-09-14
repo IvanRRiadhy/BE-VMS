@@ -14,7 +14,7 @@ import {
   TableBody,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
@@ -28,6 +28,7 @@ import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
+import { useVehicle } from 'src/hooks/Setting/useVehicle';
 
 interface FormCustomFieldProps {
   formData: any;
@@ -39,10 +40,7 @@ interface FormCustomFieldProps {
 const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCustomFieldProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const {
-    createMutation,
-    updateMutation,
-  } = useCustomFieldMutation();
+  const { createMutation, updateMutation } = useCustomFieldMutation();
   const [multiOptionList, setMultiOptionList] = useState<multiOptField[]>(
     formData.multiple_option_fields,
   );
@@ -76,7 +74,6 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         multiple_option_fields: multiOptionList,
       };
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
-
       if (editingId) {
         await updateMutation.mutateAsync({
           id: editingId,
@@ -95,6 +92,24 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       setLoading(false);
     }
   };
+
+  const { data: vehicle = [], isLoading: isVehicleLoading } = useVehicle();
+  useEffect(() => {
+    if (formData.remarks !== 'vehicle_type') return;
+
+    if (!vehicle.length) {
+      setMultiOptionList([]);
+      return;
+    }
+
+    const vehicleOptions: any[] = vehicle?.map((item: any) => ({
+      id: item.id ?? '',
+      name: item.name,
+      value: item.value,
+    }));
+
+    setMultiOptionList(vehicleOptions);
+  }, [formData.remarks, vehicle]);
 
   return (
     <>
@@ -188,35 +203,63 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                         Multi Option Field
                       </Divider>
                       <CustomFormLabel htmlFor="field-name">Field Name</CustomFormLabel>
-                      <CustomTextField
-                        id="name"
-                        value={newMultiOption.name}
-                        onChange={(e: any) => {
-                          setNewMultiOption({
-                            ...newMultiOption,
-                            name: e.target.value,
-                          });
-                          handleChange(e);
-                        }}
-                        error={!!errors.long_display_text}
-                        helperText={errors.long_display_text || ''}
-                        fullWidth
-                      />
-                      <CustomFormLabel htmlFor="field-value">Field Value</CustomFormLabel>
-                      <CustomTextField
-                        id="value"
-                        value={newMultiOption.value}
-                        onChange={(e: any) => {
-                          setNewMultiOption({
-                            ...newMultiOption,
-                            value: e.target.value,
-                          });
-                          handleChange(e);
-                        }}
-                        error={!!errors.long_display_text}
-                        helperText={errors.long_display_text || ''}
-                        fullWidth
-                      />
+                      {formData.remarks === 'vehicle_type' ? (
+                        <CustomSelect
+                          id="vehicle-type"
+                          value={newMultiOption.name}
+                          onChange={(e: any) => {
+                            const selected = vehicle.find(
+                              (item: any) => item.name === e.target.value,
+                            );
+
+                            setNewMultiOption({
+                              id: selected?.id ?? '',
+                              name: selected?.name ?? '',
+                              value: selected?.value ?? '',
+                            });
+                          }}
+                          fullWidth
+                          disabled={isVehicleLoading}
+                        >
+                          {vehicle.map((item: any) => (
+                            <MenuItem key={item.id} value={item.name}>
+                              {item.name}
+                            </MenuItem>
+                          ))}
+                        </CustomSelect>
+                      ) : (
+                        <>
+                          <CustomTextField
+                            id="name"
+                            value={newMultiOption.name}
+                            onChange={(e: any) => {
+                              setNewMultiOption({
+                                ...newMultiOption,
+                                name: e.target.value,
+                              });
+                            }}
+                            error={!!errors.long_display_text}
+                            helperText={errors.long_display_text || ''}
+                            fullWidth
+                          />
+                          <CustomFormLabel htmlFor="field-value">Field Value</CustomFormLabel>
+                          <CustomTextField
+                            id="value"
+                            value={newMultiOption.value}
+                            onChange={(e: any) => {
+                              setNewMultiOption({
+                                ...newMultiOption,
+                                value: e.target.value,
+                              });
+                              handleChange(e);
+                            }}
+                            error={!!errors.long_display_text}
+                            helperText={errors.long_display_text || ''}
+                            fullWidth
+                          />
+                        </>
+                      )}
+
                       <Button
                         variant="contained"
                         color="primary"
@@ -224,7 +267,8 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                         sx={{ my: 3 }}
                         disabled={!newMultiOption.name}
                         onClick={() => {
-                          setMultiOptionList((prev) => [...prev, { ...newMultiOption, id: '' }]);
+                          // setMultiOptionList((prev) => [...prev, { ...newMultiOption, id: '' }]);
+                          setMultiOptionList((prev) => [...prev, newMultiOption]);
                           setNewMultiOption({ name: '', value: '', id: '' });
                         }}
                       >

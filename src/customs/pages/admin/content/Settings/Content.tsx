@@ -38,6 +38,7 @@ import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { uploadLicense } from 'src/customs/api/Admin/Setting';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import Vehicle from './Vehicle';
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -626,11 +627,7 @@ const Content = () => {
                 </Box>
               ) : null}
 
-              {tabIndex === 5 ? (
-                <Box>
-                  <DynamicTable data={[]} />
-                </Box>
-              ) : null}
+              {tabIndex === 5 ? <Vehicle /> : null}
             </Box>
           </Paper>
         </Box>
