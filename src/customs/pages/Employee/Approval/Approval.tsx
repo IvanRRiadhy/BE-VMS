@@ -6,10 +6,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import {
-  getVisitorByTickedId,
-  rejectTicket,
-} from 'src/customs/api/Admin/ApprovalWorkflow';
+import { getVisitorByTickedId, rejectTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import VisitorApprovalDialog from './components/VisitorApprovalDialog';
@@ -51,11 +48,7 @@ const Approval = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { t } = useTranslation();
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-  } = useApprovalPagination({
+  const { data, isLoading, isFetching } = useApprovalPagination({
     page,
     rowsPerPage,
     search: debouncedKeyword,
@@ -90,7 +83,6 @@ const Approval = () => {
     return counts;
   };
 
-
   const { total, approve, reject, pending } = getApprovalCounts();
   const cards = useMemo(
     () => [
@@ -101,35 +93,30 @@ const Approval = () => {
         color: 'none',
       },
       {
-        title: t("totalApprove"),
+        title: t('totalApprove'),
         subTitle: `${approve}`,
         icon: IconCheck,
         color: 'none',
       },
       {
-        title: t("totalReject"),
+        title: t('totalReject'),
         subTitle: `${reject}`,
         icon: IconBan,
         color: 'none',
       },
       {
-        title: t("totalPending"),
+        title: t('totalPending'),
         subTitle: `${pending}`,
         icon: IconClock,
         color: 'none',
       },
     ],
-    [totalFilteredRecords, approve, reject, pending, t]
+    [totalFilteredRecords, approve, reject, pending, t],
   );
 
-  const {
-    approveMutation,
-    rejectMutation,
-    approveMeetingHostMutation,
-  } = useApprovalMutation();
+  const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-
     try {
       if (action === 'Reject') {
         const confirm = await Swal.fire({
@@ -163,7 +150,6 @@ const Approval = () => {
       showSwal('error', error.response.data.msg || 'Failed action approval.');
     }
   };
-
 
   const handleApproveMeetingHost = async (id: string) => {
     try {
@@ -219,6 +205,8 @@ const Approval = () => {
     site_place: item.site_place_name,
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
+    // vehicle_type: item.vehicle_type,
+    // vehicle_plate_number: item.vehicle_plate_number,
   }));
 
   const [triggerCheckAll, setTriggerCheckAll] = useState(false);
@@ -366,7 +354,13 @@ const Approval = () => {
           setOpenDialog(false);
         }}
       />
-      <GlobalBackdropLoading open={approveMutation.isPending || rejectMutation.isPending || approveMeetingHostMutation.isPending} />
+      <GlobalBackdropLoading
+        open={
+          approveMutation.isPending ||
+          rejectMutation.isPending ||
+          approveMeetingHostMutation.isPending
+        }
+      />
     </>
   );
 };

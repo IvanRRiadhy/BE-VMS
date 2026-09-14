@@ -41,6 +41,7 @@
   "next": "Next",
   "action": "Action",
   "delete": "Delete",
+  "select": "Select",
   "selectAll": "Select All",
   "removeAll": "Remove All",
   "noDataAvailable": "No data available",

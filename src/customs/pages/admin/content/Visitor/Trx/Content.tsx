@@ -72,7 +72,6 @@ dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
 import 'dayjs/locale/id';
-import { size } from 'lodash';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -235,7 +234,7 @@ const Content = () => {
           // citizenship_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
           // organization: item.visitor_organization_name || '-',
-          invitation_code: item.invitation_code || '-',
+          // invitation_code: item.invitation_code || '-',
           phone: item.visitor_phone || '-',
           visitor_period_start: item.visitor_period_start || '-',
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
@@ -456,8 +455,8 @@ const Content = () => {
         showSwal('error', 'Your code does not exist.', 3000);
         return;
       }
-    } catch (error) {
-      showSwal('error', 'Failed to fetch visitor data.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to fetch visitor data.');
     } finally {
       setLoading(false);
     }

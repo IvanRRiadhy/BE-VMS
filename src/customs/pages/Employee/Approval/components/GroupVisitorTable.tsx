@@ -169,6 +169,19 @@ const GroupVisitorTable = ({
                 <TableCell />
               </TableRow>
 
+              <TableRow>
+                <TableCell sx={{ textAlign: 'center' }}>No </TableCell>
+                <TableCell width="10%">Visitor Name</TableCell>
+                <TableCell width="15%">Email</TableCell>
+                {/* <TableCell width="15%">Citizenship ID</TableCell> */}
+                <TableCell width="15%">Phone</TableCell>
+                <TableCell width="15%">Organization</TableCell>
+                <TableCell width="15%">Invitation Code</TableCell>
+                <TableCell width="15%">Vehicle Type</TableCell>
+                <TableCell width="15%">License Plate Number</TableCell>
+                <TableCell width="15%">Status</TableCell>
+              </TableRow>
+
               {groupDetailLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">

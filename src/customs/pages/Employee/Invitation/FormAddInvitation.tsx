@@ -3144,7 +3144,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             displayEmpty
                           >
                             <MenuItem value="" disabled>
-                              Select agenda
+                              {t("select")} Agenda
                             </MenuItem>
 
                             <MenuItem value="Meeting">Meeting</MenuItem>

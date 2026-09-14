@@ -33,27 +33,27 @@ import { ItemDataCustomSidebarItems } from './CustomSidebarItems';
 
 export const AdminNavListingData: ItemDataCustomNavListing[] = [
   // DASHBOARD.
+  // {
+  //   id: uniqueId(),
+  //   title: 'Dashboard',
+  //   icon: IconHome,
+  //   href: '/admin/dashboard',
+  //   children: [
+
+  //     // {
+  //     //   id: uniqueId(),
+  //     //   title: 'Monitoring',
+  //     //   icon: IconEye,
+  //     //   href: '/admin/monitoring',
+  //     // },
+  //   ],
+  // },
   {
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconHome,
     href: '/admin/dashboard',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Dashboard',
-        icon: IconHome,
-        href: '/admin/dashboard',
-      },
-      {
-        id: uniqueId(),
-        title: 'Monitoring',
-        icon: IconEye,
-        href: '/admin/monitoring',
-      },
-    ],
   },
-
   {
     id: uniqueId(),
     title: 'navigation.manage_system',
@@ -361,12 +361,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/admin/dashboard',
   },
-  {
-    id: uniqueId(),
-    title: 'Monitoring',
-    icon: IconEye,
-    href: '/admin/monitoring',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Monitoring',
+  //   icon: IconEye,
+  //   href: '/admin/monitoring',
+  // },
   {
     id: uniqueId(),
     title: 'Manages system',

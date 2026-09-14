@@ -278,7 +278,7 @@ const NavCollapse = ({
     borderRadius: `${customizer.borderRadius}px`,
     position: 'relative',
     whiteSpace: 'nowrap',
-   
+
     color: open || isActive ? theme.palette.common.white : theme.palette.text.secondary,
     backgroundColor: open || isActive ? theme.palette.primary.main : 'transparent',
     transition: 'all 0.2s ease',
@@ -321,7 +321,8 @@ const NavCollapse = ({
     },
   }));
 
-  const submenus = menu.children?.map((item: any) => {
+  const submenus = menu.children?.map((item: any, index: number) => {
+    const isLast = index === menu.children.length - 1;
     if (item.children) {
       return (
         <NavCollapse
@@ -343,6 +344,7 @@ const NavCollapse = ({
           pathDirect={pathDirect}
           hideMenu={hideMenu}
           onClick={function (): void {}}
+          isLast={isLast}
         />
       );
     }

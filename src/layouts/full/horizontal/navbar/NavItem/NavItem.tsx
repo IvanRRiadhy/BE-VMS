@@ -31,9 +31,10 @@ interface ItemType {
   hideMenu: any;
   level?: number | any;
   pathDirect: string;
+  isLast?: boolean;
 }
 
-const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
+const NavItem = ({ item, level, pathDirect, onClick, isLast }: ItemType) => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const Icon = item.icon;
   const theme = useTheme();
@@ -50,8 +51,10 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
       level > 1 && pathDirect === item.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
-    borderBottom: level > 1 ? '1px solid rgba(0,0,0,0.10) !important' : 'none',
-
+    borderBottom: level > 1 && !isLast ? '1px solid rgba(0,0,0,0.10) !important' : 'none',
+    // '&:last-child': {
+    //   borderBottom: 'none !important',
+    // },
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
     },

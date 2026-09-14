@@ -631,7 +631,7 @@ const TableRowItem = React.memo(
           >
             <Box display="flex" alignItems="center" gap={0.3} justifyContent={'center'}>
               {/* Detail Visitor */}
-              <Tooltip title="Detail Data">
+              <Tooltip title="Detail Data" arrow>
                 <IconButton
                   onClick={() => onView?.(row)}
                   disableRipple
@@ -653,7 +653,7 @@ const TableRowItem = React.memo(
                 </IconButton>
               </Tooltip>
               {isHaveQrCode && (
-                <Tooltip title="QR Code">
+                <Tooltip title="QR Code" arrow>
                   <IconButton
                     onClick={() => onQrCode?.(row)}
                     disableRipple
@@ -679,7 +679,7 @@ const TableRowItem = React.memo(
               {isActionEmployee == false && (
                 <>
                   {/* Tombol Checkin */}
-                  <Tooltip title="Check In">
+                  <Tooltip title="Check In" arrow>
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple
@@ -700,7 +700,7 @@ const TableRowItem = React.memo(
                     </IconButton>
                   </Tooltip>
 
-                  <Tooltip title="Check Out">
+                  <Tooltip title="Check Out" arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple
@@ -1589,7 +1589,7 @@ const TableRowItem = React.memo(
                   </Tooltip>
 
                   {/* 🗑 Delete */}
-                  <Tooltip title="Delete" arrow>
+                  <Tooltip title={t('delete')} arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple
@@ -1612,7 +1612,7 @@ const TableRowItem = React.memo(
                 </Box>
               ) : isHaveView ? (
                 <>
-                  <Tooltip title="View Invitation">
+                  <Tooltip title="View Invitation" arrow>
                     <IconButton
                       onClick={() => onView?.(row)}
                       disableRipple
@@ -1635,7 +1635,7 @@ const TableRowItem = React.memo(
                 </>
               ) : isHavePermission ? (
                 <>
-                  <Tooltip title="Edit">
+                  <Tooltip title="Edit" arrow>
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple
@@ -1654,7 +1654,7 @@ const TableRowItem = React.memo(
                   </Tooltip>
 
                   {/* 🗑 Delete */}
-                  <Tooltip title="Delete">
+                  <Tooltip title={t('delete')} arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple
@@ -1674,7 +1674,7 @@ const TableRowItem = React.memo(
                       <IconTrash width={14} height={14} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Permission">
+                  <Tooltip title="Permission" arrow>
                     <Button
                       onClick={() => onPermission?.(row)}
                       disableRipple
@@ -1684,14 +1684,13 @@ const TableRowItem = React.memo(
                       variant="contained"
                       color="primary"
                     >
-                      {/* <IconRefresh width={18} height={18} /> */}
                       Permission
                     </Button>
                   </Tooltip>
                 </>
               ) : isHaveViewAndAction ? (
                 <>
-                  <Tooltip title="View Detail Schedule">
+                  <Tooltip title="View Detail Schedule" arrow>
                     <IconButton
                       onClick={() => onView?.(row)}
                       disableRipple
@@ -1711,7 +1710,7 @@ const TableRowItem = React.memo(
                       <RemoveRedEyeIcon width={18} height={18} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Edit">
+                  <Tooltip title="Edit" arrow>
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple
@@ -1730,7 +1729,7 @@ const TableRowItem = React.memo(
                   </Tooltip>
 
                   {/* 🗑 Delete */}
-                  <Tooltip title="Delete">
+                  <Tooltip title={t('delete')} arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple

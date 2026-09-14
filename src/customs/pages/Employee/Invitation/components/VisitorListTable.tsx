@@ -102,7 +102,7 @@ export default function VisitorListTable({
                   </Typography>
 
                   <Box display="flex" gap={1}>
-                    <Tooltip title="Export PDF">
+                    <Tooltip title="Export PDF" arrow>
                       <Button
                         variant="contained"
                         color="error"
@@ -114,7 +114,7 @@ export default function VisitorListTable({
                       </Button>
                     </Tooltip>
 
-                    <Tooltip title="Export Excel">
+                    <Tooltip title="Export Excel" arrow>
                       <Button
                         variant="contained"
                         color="success"

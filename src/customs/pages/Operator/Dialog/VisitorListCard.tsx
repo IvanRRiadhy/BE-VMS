@@ -22,6 +22,7 @@ import {
   Tab,
   IconButton,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import {
   IconSearch,
@@ -95,6 +96,7 @@ interface VisitorListCardProps {
   visitorEndDate: string;
   setVisitorStartDate: React.Dispatch<React.SetStateAction<string>>;
   setVisitorEndDate: React.Dispatch<React.SetStateAction<string>>;
+  isSwitchingVisitor?: boolean;
 }
 
 const VisitorListCard: React.FC<VisitorListCardProps> = ({
@@ -139,6 +141,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
   visitorEndDate,
   setVisitorStartDate,
   setVisitorEndDate,
+  isSwitchingVisitor,
 }) => {
   // const totalPages = Math.ceil((totalCount ?? 0) / (rowsPerPage ?? 10));
   const pagination = typeVisitor === 'live' ? livePagination : relatedPagination;
@@ -214,6 +217,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          position: 'relative',
         }}
         id="tour-visitor-list"
       >
@@ -389,59 +393,59 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             </Tooltip>
           </Box>
         </Box>
-{typeVisitor !== 'today-activity' && (
-        <Box display={'flex'} gap={2} mt={1} justifyContent={'space-between'}>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            <CustomTextField
-              fullWidth
-              size="medium"
-              value={searchKeyword}
-              onChange={(e: any) => setSearchKeyword(e.target.value)}
-              placeholder="Search Visitor Name or Organization"
-              sx={{ width: lgUp ? '350px' : '100%' }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={18} />
-                  </InputAdornment>
-                ),
+        {typeVisitor !== 'today-activity' && (
+          <Box display={'flex'} gap={2} mt={1} justifyContent={'space-between'}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{
+                flex: 1,
+                minWidth: 0,
               }}
-            />
-
-            <Tooltip title="Filter">
-              <IconButton
-                color={visitorStatusFilter !== 'all' ? 'primary' : 'default'}
-                onClick={handleOpenFilter}
-                sx={{
-                  border: 1,
-                  borderColor: visitorStatusFilter !== 'all' ? 'primary.main' : 'divider',
-                  borderRadius: 2,
-                  width: 48,
-                  height: 48,
-                  flexShrink: 0,
+            >
+              <CustomTextField
+                fullWidth
+                size="medium"
+                value={searchKeyword}
+                onChange={(e: any) => setSearchKeyword(e.target.value)}
+                placeholder="Search Visitor Name or Organization"
+                sx={{ width: lgUp ? '350px' : '100%' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
                 }}
-              >
-                <IconFilter size={20} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
+              />
 
-          <Box
-            display="flex"
-            gap={1}
-            alignItems="center"
-            justifyContent={'flex-end'}
-            id="tour-select-multiple"
-          >
-            {/* <Tooltip
+              <Tooltip title="Filter">
+                <IconButton
+                  color={visitorStatusFilter !== 'all' ? 'primary' : 'default'}
+                  onClick={handleOpenFilter}
+                  sx={{
+                    border: 1,
+                    borderColor: visitorStatusFilter !== 'all' ? 'primary.main' : 'divider',
+                    borderRadius: 2,
+                    width: 48,
+                    height: 48,
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconFilter size={20} />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
+            <Box
+              display="flex"
+              gap={1}
+              alignItems="center"
+              justifyContent={'flex-end'}
+              id="tour-select-multiple"
+            >
+              {/* <Tooltip
               title="Click and Select more than 1 visitor"
               slotProps={{
                 tooltip: {
@@ -473,7 +477,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                 }}
               />
             </Tooltip> */}
-            {/* <IconButton
+              {/* <IconButton
               size="small"
               disabled={page === 0}
               onClick={() => setPage((p: any) => p - 1)}
@@ -495,32 +499,32 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             >
               <ChevronRight />
             </IconButton> */}
-            <IconButton
-              size="small"
-              disabled={pagination.page === 0}
-              onClick={() => pagination.setPage((p: number) => p - 1)}
-            >
-              <ChevronLeft />
-            </IconButton>
+              <IconButton
+                size="small"
+                disabled={pagination.page === 0}
+                onClick={() => pagination.setPage((p: number) => p - 1)}
+              >
+                <ChevronLeft />
+              </IconButton>
 
-            <Typography display="flex">
-              {`${totalPages === 0 ? 0 : pagination.page + 1} / ${totalPages}`}
-            </Typography>
+              <Typography display="flex">
+                {`${totalPages === 0 ? 0 : pagination.page + 1} / ${totalPages}`}
+              </Typography>
 
-            <IconButton
-              size="small"
-              disabled={totalPages === 0 || pagination.page >= totalPages - 1}
-              onClick={() => {
-                if (pagination.page < totalPages - 1) {
-                  pagination.setPage((p: number) => p + 1);
-                }
-              }}
-            >
-              <ChevronRight />
-            </IconButton>
+              <IconButton
+                size="small"
+                disabled={totalPages === 0 || pagination.page >= totalPages - 1}
+                onClick={() => {
+                  if (pagination.page < totalPages - 1) {
+                    pagination.setPage((p: number) => p + 1);
+                  }
+                }}
+              >
+                <ChevronRight />
+              </IconButton>
+            </Box>
           </Box>
-        </Box>
-      )}
+        )}
 
         <Divider sx={{ mt: 1 }} />
 
@@ -860,6 +864,21 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             )}
           </Box>
         </CardActions> */}
+        {isSwitchingVisitor && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.65)',
+            }}
+          >
+            <CircularProgress size={28} />
+          </Box>
+        )}
       </Card>
       <VisitorFilterDialog
         open={openFilter}

@@ -57,7 +57,6 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import imageCompression from 'browser-image-compression';
-import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -89,7 +88,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
 import { renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
-
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -712,82 +710,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!section.is_document && !section.can_multiple_used) return 'visitor_information';
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
-
-  // const handleSelectVisitor = (gIdx: number, v: any) => {
-  //   if (!v) {
-  //     const resetKeys = [
-  //       'name',
-  //       'email',
-  //       'phone',
-  //       'organization',
-  //       'indentity_id',
-  //       'gender',
-  //       'employee',
-  //     ];
-
-  //     setDataVisitor((prev) => {
-  //       const next = [...prev];
-  //       const page = next[gIdx]?.question_page?.[activeStep - 1];
-
-  //       if (!page?.form) return prev;
-
-  //       page.form = page.form.map((item: any) => {
-  //         if (resetKeys.includes(item.remarks)) {
-  //           clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
-
-  //           return {
-  //             ...item,
-  //             answer_text: '',
-  //           };
-  //         }
-
-  //         return item;
-  //       });
-
-  //       return next;
-  //     });
-
-  //     return;
-  //   }
-
-  //   let genderValue: string | undefined;
-
-  //   if (v.gender === 'Male') genderValue = '1';
-  //   else if (v.gender === 'Female') genderValue = '0';
-  //   else if (v.gender === 'Prefer not to say') genderValue = '2';
-
-  //   const mapping: Record<string, string | undefined> = {
-  //     name: v.name,
-  //     email: v.email,
-  //     phone: v.phone,
-  //     // organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
-  //     organization: v.Organization?.name ?? v.organization.name ?? v.organization ?? '',
-  //     indentity_id: v.identity_id,
-  //     gender: genderValue,
-  //     employee: v.id,
-  //   };
-  //   setDataVisitor((prev) => {
-  //     const next = [...prev];
-  //     const page = next[gIdx]?.question_page?.[activeStep - 1];
-
-  //     if (!page?.form) return prev;
-
-  //     page.form = page.form.map((item: any) => {
-  //       if (mapping[item.remarks] !== undefined) {
-  //         clearFieldError(`${activeStep - 1}:${gIdx}:${item.custom_field_id}`);
-
-  //         return {
-  //           ...item,
-  //           answer_text: mapping[item.remarks]!,
-  //         };
-  //       }
-
-  //       return item;
-  //     });
-
-  //     return next;
-  //   });
-  // };
 
   const handleSelectVisitor = (gIdx: number, v: any) => {
     const sectionIndex = getSectionIndex(activeStep);
@@ -3357,17 +3279,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           updated.push(node.parentId);
         }
       } else {
-        // remove current
         updated = updated.filter((id) => id !== node.id);
 
-        // parent dihapus -> semua child ikut hilang
         if (isParentNode) {
           const childIds = collectAllChildIds(node);
 
           updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
         }
-
-        // child dihapus -> cek sibling
         if (!isParentNode && node.parentId) {
           const parentTree = buildSiteTreeWithParent(sites, node.parentId);
 
@@ -3378,14 +3296,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           const stillHasCheckedSibling = siblingIds.some((id: string) => updated.includes(id));
 
-          // kalau tidak ada child aktif -> remove parent
           if (!stillHasCheckedSibling) {
             updated = updated.filter((id) => id !== node.parentId);
           }
         }
       }
 
-      // VALIDASI BERDASARKAN PARENT AKTIF
       const activeParentIds = isSelfOnly
         ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
         : selectedSiteParentIds;
@@ -3421,11 +3337,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const originalSite = sites.find(
       (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
     );
-
     const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
-
     const isDisabled = !canVisited || disabled;
-
     const isChecked = isSelfOnly
       ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
       : selectedSiteIds.includes(node.id);
@@ -3517,15 +3430,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     switch (item.field_type) {
       case 2: // Email
-        // Required validation
         if (isEmptyText) {
           errors[key] = `${label} is required`;
           break;
         }
 
-        // Email format validation
         const email = String(item.answer_text).trim();
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailRegex.test(email)) {
@@ -3549,96 +3459,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         break;
     }
   };
-
-  // const validateCurrentStep = () => {
-  //   if (activeStep === 0) return true;
-
-  //   const errors: Record<string, string> = {};
-  //   const section = sectionsData[activeStep - 1];
-  //   if (isGroup) {
-  //     // Purpose Visit (shared page)
-  //     if (section.name === 'Purpose Visit') {
-  //       const sameField = (a: any, b: any) =>
-  //         (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
-  //         (a?.remarks && b?.remarks && a.remarks === b.remarks);
-
-  //       const mergedFields = formsOf(section).map((f: any) => {
-  //         const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
-
-  //         return shared
-  //           ? {
-  //               ...f,
-  //               answer_text: shared.answer_text,
-  //               answer_datetime: shared.answer_datetime,
-  //               answer_file: shared.answer_file,
-  //             }
-  //           : f;
-  //       });
-
-  //       const visibilityMap: any = getVisibilityMap(mergedFields);
-
-  //       mergedFields.forEach((item: any) => {
-  //         if (!item?.mandatory) return;
-
-  //         const remark = (item.remarks || '').toLowerCase();
-  //         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //         if (!isVisible) return;
-
-  //         const fieldId = item.custom_field_id || item.id;
-
-  //         validateField(item, `${activeStep - 1}:${fieldId}`, errors);
-  //       });
-  //     }
-
-  //     // Semua page visitor (Visitor Information, Vehicle, dll)
-  //     else {
-  //       dataVisitor.forEach((visitor, gIdx) => {
-  //         const page = visitor.question_page?.[activeStep - 1];
-  //         if (!page?.form) return;
-
-  //         const details = page.form;
-  //         const visibilityMap: any = getVisibilityMap(details);
-
-  //         details.forEach((item: any) => {
-  //           if (!item?.mandatory) return;
-
-  //           const remark = (item.remarks || '').toLowerCase();
-  //           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //           if (!isVisible) return;
-
-  //           const fieldId = item.custom_field_id || item.id;
-
-  //           validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
-  //         });
-  //       });
-  //     }
-  //   } else {
-  //     const section = sectionsData[activeStep - 1];
-
-  //     const details = formsOf(section);
-
-  //     const visibilityMap: any = getVisibilityMap(details);
-
-  //     details.forEach((item: any, index: number) => {
-  //       if (!item?.mandatory) return;
-
-  //       const remark = (item.remarks || '').toLowerCase();
-  //       const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //       if (!isVisible) return;
-
-  //       const fieldId = item.custom_field_id || item.id;
-  //       const key = `${activeStep - 1}:${fieldId}`;
-
-  //       validateField(item, key, errors);
-  //     });
-  //   }
-
-  //   setFieldErrors(errors);
-  //   return Object.keys(errors).length === 0;
-  // };
 
   const validateCurrentStep = () => {
     if (activeStep === 0) return true;
@@ -3801,10 +3621,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ? visibilityMap[remark]
           : true;
 
-        // Field tidak terlihat -> tidak perlu divalidasi
         if (!isVisible) return;
 
-        // Mandatory normal + conditional mandatory
         if (!isFieldMandatory(item, visibilityMap)) return;
 
         const fieldId = item.custom_field_id || item.id;
@@ -4037,7 +3855,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             }}
                           >
                             <MenuItem value="" disabled>
-                              Select agenda
+                              {t('select')} agenda
                             </MenuItem>
 
                             <MenuItem value="Meeting">Meeting</MenuItem>

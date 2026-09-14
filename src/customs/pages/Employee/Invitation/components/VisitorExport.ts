@@ -11,8 +11,8 @@ export const exportVisitorExcel = (groupName: string, visitors: any[]) => {
     Phone: v.visitor_phone,
     Organization: v.visitor_organization_name,
     Host: v.host_name,
-    Site: v.site_name,
-    Status: v.visitor_status,
+    'Vehicle Type': v.vehicle_type,
+    'License Plate Number': v.vehicle_plate_number,
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -30,7 +30,7 @@ export const exportVisitorExcel = (groupName: string, visitors: any[]) => {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 
-//   XLSX.utils.book_append_sheet(workbook, worksheet, 'Visitors');
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, 'Visitors');
 
   XLSX.writeFile(workbook, `${groupName.replace(/\s+/g, '_')}_Visitors.xlsx`);
 };
@@ -43,7 +43,19 @@ export const exportVisitorPdf = (groupName: string, visitors: any[]) => {
 
   autoTable(doc, {
     startY: 25,
-    head: [['No', 'Visitor', 'Email', 'Phone', 'Organization', 'Host', 'Site', 'Status']],
+    head: [
+      [
+        'No',
+        'Visitor',
+        'Email',
+        'Phone',
+        'Organization',
+        'Host',
+        'Vehicle Type',
+        'License Plate Number',
+        'Status',
+      ],
+    ],
     body: visitors.map((v, index) => [
       index + 1,
       v.visitor_name,
@@ -51,7 +63,8 @@ export const exportVisitorPdf = (groupName: string, visitors: any[]) => {
       v.visitor_phone,
       v.visitor_organization_name,
       v.host_name,
-      v.site_name,
+      v.vehicle_type,
+      v.vehicle_plate_number,
       v.visitor_status,
     ]),
     styles: {

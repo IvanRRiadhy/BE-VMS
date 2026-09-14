@@ -39,74 +39,40 @@ function VisitorRow({
   return (
     <>
       <TableRow>
-        <TableCell colSpan={12} sx={{ p: 0 }}>
-          <Collapse in={open}>
-            <Box p={2}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell width="10%">Visitor Name</TableCell>
-                    <TableCell width="15%">Email</TableCell>
-                    <TableCell width="15%">Citizenship ID</TableCell>
-                    <TableCell width="15%">Phone</TableCell>
-                    <TableCell width="15%">Organization</TableCell>
-                    <TableCell width="15%">Host</TableCell>
-                    {/* <TableCell width="15%">Site</TableCell> */}
-                    <TableCell width="15%">Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    {/* <TableCell>
-                      <Checkbox
-                        checked={selectedVisitor?.id === visitor.id}
-                        onChange={() => setSelectedVisitor(visitor)}
-                      />
-                    </TableCell> */}
-                    <TableCell> </TableCell>
-                    <TableCell
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        fontSize: '13px',
-                      }}
-                    >
-                      <Avatar
-                        src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
-                      />
-                      {visitor.visitor_name}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
-                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell>
-                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
+        <TableCell sx={{ fontSize: '13px', width: 50, textAlign: 'center' }}>{index + 1}</TableCell>
+        <TableCell
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            fontSize: '13px',
+          }}
+        >
+          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
+          {visitor.visitor_name}
+        </TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
+        {/* <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell> */}
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
 
-                    <TableCell sx={{ fontSize: '13px' }}>
-                      {visitor.visitor_organization_name}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
-                    {/* <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell> */}
-                    <TableCell sx={{ fontSize: '13px' }}>
-                      <Box
-                        sx={{
-                          display: 'inline-block',
-                          px: 1.5,
-                          py: 0.8,
-                          borderRadius: 2,
-                          color: '#fff',
-                          fontWeight: 600,
-                          backgroundColor: statusBgMap[visitor.visitor_status] ?? '#757575',
-                        }}
-                      >
-                        {visitor.visitor_status}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
-          </Collapse>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_type ?? '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_plate_number ?? '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>
+          <Box
+            sx={{
+              display: 'inline-block',
+              px: 1.5,
+              py: 0.8,
+              borderRadius: 2,
+              color: '#fff',
+              fontWeight: 600,
+              backgroundColor: statusBgMap[visitor.visitor_status] ?? '#757575',
+            }}
+          >
+            {visitor.visitor_status}
+          </Box>
         </TableCell>
       </TableRow>
     </>

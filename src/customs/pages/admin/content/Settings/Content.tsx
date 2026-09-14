@@ -214,6 +214,7 @@ const Content = () => {
               <Tab label="Approval Workflow" />
               <Tab label="Apikey Setting" />
               <Tab label="License" />
+              <Tab label="Vehicle" />
               {/* <Tab label="Visitor Card Setting" /> */}
               {/* <Tab label="Notification Setting" /> */}
             </Tabs>
@@ -622,6 +623,12 @@ const Content = () => {
                       ))}
                     </Box>
                   </Card>
+                </Box>
+              ) : null}
+
+              {tabIndex === 5 ? (
+                <Box>
+                  <DynamicTable data={[]} />
                 </Box>
               ) : null}
             </Box>

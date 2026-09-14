@@ -758,15 +758,6 @@ const DashboardEmployee = () => {
             flexWrap: 'wrap',
           }}
         >
-          {/* <Button
-            variant="contained"
-            color="primary"
-            sx={{ flex: 1 }}
-            onClick={handleOpenInviteOrCreateLink}
-            startIcon={<IconPlus />}
-          >
-            Register Visitor
-          </Button> */}
           <Card
             sx={{
               flex: 1,
@@ -827,24 +818,6 @@ const DashboardEmployee = () => {
               </Stack>
             </CardContent>
           </Card>
-          {/* <Button
-            variant="contained"
-            sx={{
-              flex: 1,
-              backgroundColor: '#EEF4FF',
-              color: '#1554B8',
-              boxShadow: 'none',
-              fontwWeight: 'bold',
-              '&:hover': {
-                backgroundColor: '#E3EDFF',
-                boxShadow: 'none',
-              },
-            }}
-            onClick={() => setOpenQuickAccess(true)}
-            startIcon={<IconQrcode />}
-          >
-            {t('quickAccess')}
-          </Button> */}
           <Card
             sx={{
               flex: 1,
@@ -912,15 +885,6 @@ const DashboardEmployee = () => {
           </Card>
         </Grid>
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
-          {/* <Grid
-            size={{ xs: 12, lg: 5 }}
-            sx={{
-              display: 'flex',
-            }}
-          > */}
-
-          {/* <VisitorTrendChart /> */}
-          {/* </Grid> */}
           <Grid
             size={{ xs: 12, lg: 6 }}
             sx={{
@@ -932,6 +896,7 @@ const DashboardEmployee = () => {
               height={'100%'}
               overflowX="auto"
               data={approvalData}
+              isNoActionTableHead
               isHaveChecked={true}
               isHaveAction={true}
               isHaveViewAll={true}
@@ -945,6 +910,7 @@ const DashboardEmployee = () => {
               onAccept={(row: any) => handleOpenApprovalDialog(row)}
               onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
               isHavePeriod={true}
+              defaultRowsPerPage={5}
             />
           </Grid>
 
@@ -978,6 +944,7 @@ const DashboardEmployee = () => {
               // isHaveView={true}
               // isHaveAction={true}
               isHaveHeaderTitle
+              isNoActionTableHead
               isHavePeriod={true}
               onView={(row: any) => handleView(row)}
               titleHeader="Invitation Monitoring"
@@ -998,39 +965,13 @@ const DashboardEmployee = () => {
               overflowX="auto"
               data={[]}
               isHaveChecked={true}
+              isNoActionTableHead
               titleHeader="Today Schedule"
               isHaveHeaderTitle={true}
-              // isCopyLink={true}
-              // isNoActionTableHead={true}
-              // onPaginationChange={(page, rowsPerPage) => {
-              //   setPage(page);
-              //   setRowsPerPage(rowsPerPage);
-              // }}
-              // isHaveAddData={true}
-              // isDetailLink={true}
-              // onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-              // onDetailLink={(row: any) => handleDetailLink(row)}
-              // onDelete={(row: any) => handleDeleteLink(row.id)}
-              // onAddData={() => setOpenShareLinkList(true)}
+              isHaveViewAll={true}
+              defaultRowsPerPage={5}
             />
           </Grid>
-          {/* <Grid size={{ xs: 12, lg: 2.4 }} sx={{ height: '100%' }}>
-            <Card sx={{ height: '100%' }}>
-              <CardHeader title="Announcements" />
-              <CardContent
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  height: '100%',
-                }}
-              >
-                <Typography fontSize={14} color="text.secondary" textAlign="center" py={3}>
-                  No Announcement
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid> */}
         </Grid>
       </Grid>
 
@@ -1148,7 +1089,7 @@ const DashboardEmployee = () => {
         onSend={handleSendEmail}
       />
       {/* Praregister */}
-      <Dialog
+      {/* <Dialog
         open={openDialogInvitation}
         onClose={() => setOpenDialogInvitation(false)}
         fullWidth
@@ -1184,22 +1125,7 @@ const DashboardEmployee = () => {
             </Typography>
           )}
         </DialogContent>
-      </Dialog>
-
-      {/* Active Pass */}
-      {/* {accessPass && (
-        <AccessPassDialog
-          open={openAccess}
-          onClose={handleCloseAccess}
-          data={accessPass}
-          isGenerating={isGenerating}
-          isParkingLoading={isParkingLoading}
-          onDownload={handleDownloadPDF}
-          onOpenParking={handleOpenParkingBlocker}
-          formatVisitorPeriodLocal={formatVisitorPeriodLocal}
-          ref={printRef}
-        />
-      )} */}
+      </Dialog> */}
 
       <ApprovalVisitorGroupDialog
         open={openDialog}

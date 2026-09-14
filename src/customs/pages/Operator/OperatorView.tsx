@@ -196,6 +196,7 @@ const OperatorView = () => {
   const handleOpenVehicle = () => setOpenVehicle(true);
   const handleCloseListVisitor = () => setOpenListVisitor(false);
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
+  const [isSwitchingVisitor, setIsSwitchingVisitor] = useState(false);
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
@@ -219,8 +220,6 @@ const OperatorView = () => {
   ];
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [typeVisitor, setTypeVisitor] = useState('live');
-  // const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
-  // const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
   const { sitesOperator } = useInvitationSite();
   const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
     useRegisteredSiteOperator();
@@ -3034,15 +3033,20 @@ const OperatorView = () => {
   };
 
   const handleSelectLiveVisitor = async (visitor: any) => {
-    setRelatedPage(0);
+    if (selectedVisitorId === visitor.id) return;
 
-    // Reset action/dialog dari visitor sebelumnya
-    setActionButton('');
-    setAccessIssuance(false);
+    setIsSwitchingVisitor(true);
 
-    setSelectedVisitors([visitor.id]);
+    try {
+      setRelatedPage(0);
+      setActionButton('');
+      setAccessIssuance(false);
+      setSelectedVisitors([visitor.id]);
 
-    await handleSubmitQRCode(visitor.invitation_code);
+      await handleSubmitQRCode(visitor.invitation_code);
+    } finally {
+      setIsSwitchingVisitor(false);
+    }
   };
 
   const [runTour, setRunTour] = useState(false);
@@ -3359,6 +3363,7 @@ const OperatorView = () => {
                   visitorEndDate={visitorEndDate}
                   setVisitorStartDate={setVisitorStartDate}
                   setVisitorEndDate={setVisitorEndDate}
+                  isSwitchingVisitor={isSwitchingVisitor}
                 />
               </Grid>
 

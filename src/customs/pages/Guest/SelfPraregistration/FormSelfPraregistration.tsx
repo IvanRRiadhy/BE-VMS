@@ -879,100 +879,6 @@ const FormSelfPraregistration = ({
     return Object.keys(errors).length === 0;
   };
 
-  // const validateCurrentStep = () => {
-  //   if (activeStep === 0) return true;
-
-  //   const errors: Record<string, string> = {};
-
-  //   if (isGroup) {
-  //     dataVisitor.forEach((visitor, gIdx) => {
-  //       const page = visitor.question_page?.[activeStep - 1];
-  //       if (!page?.form) return;
-
-  //       const details = page.form;
-  //       const visibilityMap: any = getVisibilityMap(details);
-
-  //       details.forEach((item: any, fIdx: number) => {
-  //         if (!item?.mandatory) return;
-
-  //         const remark = (item.remarks || '').toLowerCase();
-  //         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-  //         if (!isVisible) return;
-
-  //         const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
-
-  //         validateField(item, key, errors);
-  //       });
-  //       // details.forEach((item: any, fIdx: number) => {
-  //       //   const remark = (item.remarks || '').toLowerCase();
-
-  //       //   const forceRequired =
-  //       //     (remark === 'host' && !invitation?.host) ||
-  //       //     (remark === 'site_place' && !invitation?.site_id) ||
-  //       //     (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-  //       //     (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
-
-  //       //   if (!item?.mandatory && !forceRequired) return;
-
-  //       //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //       //   if (!isVisible) return;
-
-  //       //   const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
-
-  //       //   validateField(item, key, errors);
-  //       // });
-  //     });
-  //   } else {
-  //     const section = sectionsData[activeStep - 1];
-  //     const details = formsOf(section);
-
-  //     const visibilityMap: any = getVisibilityMap(details);
-
-  //     // details.forEach((item: any, index: number) => {
-  //     //   if (!item?.mandatory) return;
-
-  //     //   const remark = (item.remarks || '').toLowerCase();
-  //     //     const forceRequired =
-  //     //       (remark === 'host' && !invitation?.host) ||
-  //     //       (remark === 'site_place' && !invitation?.site_id) ||
-  //     //       (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-  //     //       (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
-
-  //     //     if (!item?.mandatory && !forceRequired) return;
-  //     //   const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //     //   if (!isVisible) return;
-
-  //     //   // const key = `${activeStep - 1}:${index}`;
-  //     //   const key = `${activeStep - 1}:${item.id}`;
-
-  //     //   validateField(item, key, errors);
-  //     // });
-  //     details.forEach((item: any, index: number) => {
-  //       const remark = (item.remarks || '').toLowerCase();
-
-  //       const forceRequired =
-  //         (remark === 'host' && !invitation?.host) ||
-  //         (remark === 'site_place' && !invitation?.site_id) ||
-  //         (remark === 'visitor_period_start' && !invitation?.visitor_period_start) ||
-  //         (remark === 'visitor_period_end' && !invitation?.visitor_period_end);
-
-  //       if (!item?.mandatory && !forceRequired) return;
-
-  //       const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-  //       if (!isVisible) return;
-
-  //       const key = `${activeStep - 1}:${item.id}`;
-
-  //       validateField(item, key, errors);
-  //     });
-  //   }
-  //   setFieldErrors(errors);
-  //   return Object.keys(errors).length === 0;
-  // };
-
   const handleSaveGroup = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!validateCurrentStep()) return;
@@ -3815,7 +3721,7 @@ const FormSelfPraregistration = ({
                 />
               </>
             )}
-  
+
             <Box mt={0}>{handleSteps(activeStep)}</Box>
 
             <Box
