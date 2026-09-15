@@ -36,7 +36,6 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { useNavigate } from 'react-router';
 import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
 import QrScannerDialog from './components/Dialog/QrScannerDialog';
-import Swal from 'sweetalert2';
 import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';

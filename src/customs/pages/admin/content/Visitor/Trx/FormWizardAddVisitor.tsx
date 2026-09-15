@@ -1246,16 +1246,109 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     Group List
                   </CustomFormLabel>
 
-                  <TableContainer component={Paper}>
-                    <Table size="small">
+
+                          <TableContainer
+                    component={Paper}
+                    sx={{
+                      '@media (max-width:600px)': {
+                        background: 'transparent',
+                        boxShadow: 'none',
+                      },
+                    }}
+                  >
+                    <Table
+                      size="small"
+                      sx={{
+                        '@media (max-width:600px)': {
+                          display: 'block',
+
+                          '& thead': {
+                            display: 'none',
+                          },
+
+                          '& tbody': {
+                            display: 'block',
+                          },
+
+                          '& tr': {
+                            display: 'block',
+                            mb: 2,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            backgroundColor: 'background.paper',
+                          },
+
+                          '& td': {
+                            display: 'block',
+                            minWidth: 'unset !important',
+                            width: '100%',
+                            border: 0,
+                            padding: '6px 0',
+                          },
+
+                          '& td:nth-of-type(1)::before': {
+                            content: '"Group Name"',
+                            display: 'block',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            mb: 0.5,
+                          },
+
+                          '& td:nth-of-type(2)::before': {
+                            content: '"Code"',
+                            display: 'block',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            mb: 0.5,
+                          },
+                          '& td:nth-of-type(3)': {
+                            display: 'inline-flex',
+                            width: 'calc(100% - 45px)',
+                            verticalAlign: 'middle',
+                            paddingRight: 0,
+                            position: 'relative',
+                          },
+
+                          '& td:nth-of-type(3)::before': {
+                            display: 'none',
+                          },
+
+                          '& td:nth-of-type(3) .MuiButton-root': {
+                            width: '100%',
+                            justifyContent: 'space-between',
+                          },
+
+                          '& td:nth-of-type(4)': {
+                            display: 'inline-flex',
+                            width: '45px',
+                            verticalAlign: 'middle',
+                            paddingLeft: '8px',
+                            paddingTop: '6px',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                          },
+                        },
+                      }}
+                    >
                       <TableHead>
                         <TableRow>
                           <TableCell>Group Name</TableCell>
                           <TableCell>Code</TableCell>
-                          <TableCell>Visitor Form</TableCell>
+                          <TableCell
+                            sx={{
+                              '@media (max-width:600px)': {
+                                display: 'none !important',
+                              },
+                            }}
+                          >
+                            Visitor Form
+                          </TableCell>
                           <TableCell align="center">Action</TableCell>
                         </TableRow>
                       </TableHead>
+
                       <TableBody>
                         {groupVisitors.map((g, index) => (
                           <TableRow key={g.id}>
@@ -1266,7 +1359,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 name="group_name"
                                 value={g.group_name}
                                 placeholder="Enter group name"
-                                sx={{ minWidth: '100px' }}
                                 onChange={(e) =>
                                   setGroupVisitors((prev) =>
                                     prev.map((item) =>
@@ -1278,17 +1370,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 }
                               />
                             </TableCell>
+
                             <TableCell>
-                              <TextField
+                              <CustomTextField
                                 size="small"
                                 fullWidth
                                 name="group_code"
                                 value={g.group_code}
                                 InputProps={{ readOnly: true }}
-                                sx={{ minWidth: '100px' }}
-                                disabled
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    backgroundColor: '#f5f5f5',
+                                  },
+                                }}
                               />
                             </TableCell>
+
                             <TableCell>
                               <Button
                                 variant="outlined"
@@ -1297,6 +1394,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 endIcon={<IconArrowRight size={20} />}
                                 onClick={() => {
                                   setActiveGroupIdx(index);
+
                                   const deepClone = (obj: any) => {
                                     try {
                                       return structuredClone(obj);
@@ -1306,22 +1404,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   };
 
                                   if (g.data_visitor && g.data_visitor.length > 0) {
-                                    const cloned = deepClone(g.data_visitor);
-                                    setDataVisitor(cloned);
+                                    setDataVisitor(deepClone(g.data_visitor));
                                   } else {
-                                    const fresh = deepClone(
-                                      seedDataVisitorFromSections(sectionsData),
+                                    setDataVisitor(
+                                      deepClone(seedDataVisitorFromSections(sectionsData)),
                                     );
-
-                                    setDataVisitor(fresh);
                                   }
+
                                   setActiveStep(1);
                                 }}
                               >
                                 Visitor Form
                               </Button>
                             </TableCell>
-                            <TableCell align="center">
+
+                            <TableCell
+                              align="center"
+                              sx={{
+                                paddingTop: '0 !important',
+                                '@media (max-width: 600px)': {
+                                  paddingLeft: 0,
+                                },
+                              }}
+                            >
                               <IconButton
                                 color="error"
                                 onClick={() => handleDeleteGroup(g.id || '')}
@@ -2558,7 +2663,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   sx={{ width: { xs: '100%', md: '200px' } }}
                 >
                   <MenuItem value="file">Choose File</MenuItem>
-                  <MenuItem value="camera">Take Photo</MenuItem>
+                  <MenuItem value="camera">{t("takePhoto")}</MenuItem>
                 </TextField>
 
                 {(uploadMethods[key] || 'file') === 'camera' ? (

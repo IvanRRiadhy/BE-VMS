@@ -125,7 +125,7 @@ export default function FormQuickAccess({
             />
           </Grid>
 
-          <Grid size={{ xs: 12 }}>
+          {/* <Grid size={{ xs: 12 }}>
             <Box display="flex" alignItems="center" gap={0.5}>
               <CustomFormLabel sx={{ mt: 0 }}>Recipient</CustomFormLabel>
 
@@ -162,8 +162,8 @@ export default function FormQuickAccess({
                 }
               />
             </Box>
-          </Grid>
-
+          </Grid> */}
+{/* 
           {form.recipientType === 'others' && (
             <Grid size={12}>
               <CustomFormLabel sx={{ mt: 0 }}>Receiver Name</CustomFormLabel>
@@ -187,7 +187,7 @@ export default function FormQuickAccess({
                 onChange={(e) => handleChange('receiverPhone', e.target.value)}
               />
             </Grid>
-          )}
+          )} */}
 
           <Grid size={{ xs: 12 }}>
             <Box display="flex" alignItems="center" gap={0.5}>

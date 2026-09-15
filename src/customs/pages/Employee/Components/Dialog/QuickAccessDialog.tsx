@@ -43,7 +43,6 @@ export interface QuickAccessFormData {
   siteId: string;
   hostId: string;
   duration: number | null;
-
 }
 
 export const QuickAccessDialog = ({
@@ -58,7 +57,7 @@ export const QuickAccessDialog = ({
   searchKeyword,
   onSearch,
   totalCount,
-  loading
+  loading,
 }: QuickAccessDialogProps) => {
   const handleChange = (field: keyof QuickAccessFormData, value: string | number | null) => {
     setForm((prev) => ({
@@ -97,7 +96,9 @@ export const QuickAccessDialog = ({
 
   const handleSubmit = async () => {
     try {
-      const selectedProvider = visitorProviders?.find((item: any) => item.id === form.visitorProviderId);
+      const selectedProvider = visitorProviders?.find(
+        (item: any) => item.id === form.visitorProviderId,
+      );
 
       const needPlateNumber =
         selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
@@ -110,11 +111,11 @@ export const QuickAccessDialog = ({
         visitor_provider_id: form.visitorProviderId,
         tz: tz,
         is_receiver_self: form.recipientType === 'self',
-        ...(form.recipientType === 'others' && {
-          receiver_name: form.receiverName,
-          receiver_phone: form.receiverPhone,
-          receiver_email: form.receiverEmail,
-        }),
+        // ...(form.recipientType === 'others' && {
+        //   receiver_name: form.receiverName,
+        //   receiver_phone: form.receiverPhone,
+        //   receiver_email: form.receiverEmail,
+        // }),
         duration: Number(form.duration),
         // host_id: form.hostId,
         site_id: form.siteId,
@@ -127,11 +128,16 @@ export const QuickAccessDialog = ({
       };
       // console.log('payload', payload);
       await onSubmit?.(payload);
-      // setOpenQuickAccess(false);
-    } catch (error) { }
+      setOpenQuickAccess(false);
+      setForm(initialFormState);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to create quick access');
+    }
   };
 
-  const selectedProvider = visitorProviders?.find((item: any) => item.id === form.visitorProviderId);
+  const selectedProvider = visitorProviders?.find(
+    (item: any) => item.id === form.visitorProviderId,
+  );
   const showVehiclePlate = selectedProvider?.support_vehicle && selectedProvider?.need_plate_number;
 
   const qrRef = useRef<HTMLDivElement>(null);

@@ -2676,7 +2676,7 @@ const FormSelfPraregistration = ({
                     Group List
                   </CustomFormLabel>
 
-                  <TableContainer component={Paper}>
+                  {/* <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
@@ -2689,7 +2689,7 @@ const FormSelfPraregistration = ({
                       <TableBody>
                         {groupVisitors.map((g, index) => (
                           <TableRow key={g.id}>
-                            <TableCell>
+                            <TableCell style={{ minWidth: 150 }}>
                               <TextField
                                 size="small"
                                 fullWidth
@@ -2707,7 +2707,7 @@ const FormSelfPraregistration = ({
                                 }
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell style={{ minWidth: 120 }}>
                               <TextField
                                 size="small"
                                 fullWidth
@@ -2748,6 +2748,207 @@ const FormSelfPraregistration = ({
                               </Button>
                             </TableCell>
                             <TableCell align="center">
+                              <IconButton
+                                color="error"
+                                onClick={() => handleDeleteGroup(g.id || '')}
+                                size="small"
+                              >
+                                <IconX />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+
+                        {groupVisitors.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center">
+                              No group added yet.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer> */}
+                  <TableContainer
+                    component={Paper}
+                    sx={{
+                      '@media (max-width:600px)': {
+                        background: 'transparent',
+                        boxShadow: 'none',
+                      },
+                    }}
+                  >
+                    <Table
+                      size="small"
+                      sx={{
+                        '@media (max-width:600px)': {
+                          display: 'block',
+
+                          '& thead': {
+                            display: 'none',
+                          },
+
+                          '& tbody': {
+                            display: 'block',
+                          },
+
+                          '& tr': {
+                            display: 'block',
+                            mb: 2,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            backgroundColor: 'background.paper',
+                          },
+
+                          '& td': {
+                            display: 'block',
+                            minWidth: 'unset !important',
+                            width: '100%',
+                            border: 0,
+                            padding: '6px 0',
+                          },
+
+                          '& td:nth-of-type(1)::before': {
+                            content: '"Group Name"',
+                            display: 'block',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            mb: 0.5,
+                          },
+
+                          '& td:nth-of-type(2)::before': {
+                            content: '"Code"',
+                            display: 'block',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            mb: 0.5,
+                          },
+                          '& td:nth-of-type(3)': {
+                            display: 'inline-flex',
+                            width: 'calc(100% - 45px)',
+                            verticalAlign: 'middle',
+                            paddingRight: 0,
+                            position: 'relative',
+                          },
+
+                          '& td:nth-of-type(3)::before': {
+                            display: 'none',
+                          },
+
+                          '& td:nth-of-type(3) .MuiButton-root': {
+                            width: '100%',
+                            justifyContent: 'space-between',
+                          },
+
+                          '& td:nth-of-type(4)': {
+                            display: 'inline-flex',
+                            width: '45px',
+                            verticalAlign: 'middle',
+                            paddingLeft: '8px',
+                            paddingTop: '6px',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                          },
+                        },
+                      }}
+                    >
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Group Name</TableCell>
+                          <TableCell>Code</TableCell>
+                          <TableCell
+                            sx={{
+                              '@media (max-width:600px)': {
+                                display: 'none !important',
+                              },
+                            }}
+                          >
+                            Visitor Form
+                          </TableCell>
+                          <TableCell align="center">Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+
+                      <TableBody>
+                        {groupVisitors.map((g, index) => (
+                          <TableRow key={g.id}>
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                name="group_name"
+                                value={g.group_name}
+                                placeholder="Enter group name"
+                                onChange={(e) =>
+                                  setGroupVisitors((prev) =>
+                                    prev.map((item) =>
+                                      item.id === g.id
+                                        ? { ...item, group_name: e.target.value }
+                                        : item,
+                                    ),
+                                  )
+                                }
+                              />
+                            </TableCell>
+
+                            <TableCell>
+                              <CustomTextField
+                                size="small"
+                                fullWidth
+                                name="group_code"
+                                value={g.group_code}
+                                InputProps={{ readOnly: true }}
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    backgroundColor: '#f5f5f5',
+                                  },
+                                }}
+                              />
+                            </TableCell>
+
+                            <TableCell>
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                endIcon={<IconArrowRight size={20} />}
+                                onClick={() => {
+                                  setActiveGroupIdx(index);
+
+                                  const deepClone = (obj: any) => {
+                                    try {
+                                      return structuredClone(obj);
+                                    } catch {
+                                      return JSON.parse(JSON.stringify(obj));
+                                    }
+                                  };
+
+                                  if (g.data_visitor && g.data_visitor.length > 0) {
+                                    setDataVisitor(deepClone(g.data_visitor));
+                                  } else {
+                                    setDataVisitor(
+                                      deepClone(seedDataVisitorFromSections(sectionsData)),
+                                    );
+                                  }
+
+                                  setActiveStep(1);
+                                }}
+                              >
+                                Visitor Form
+                              </Button>
+                            </TableCell>
+
+                            <TableCell
+                              align="center"
+                              sx={{
+                                paddingTop: '0 !important',
+                                '@media (max-width: 600px)': {
+                                  paddingLeft: 0,
+                                },
+                              }}
+                            >
                               <IconButton
                                 color="error"
                                 onClick={() => handleDeleteGroup(g.id || '')}
@@ -3725,7 +3926,7 @@ const FormSelfPraregistration = ({
             <Box mt={0}>{handleSteps(activeStep)}</Box>
 
             <Box
-              mt={3}
+              mt={isMobile ? 1.5 : 3}
               display="flex"
               justifyContent="space-between"
               sx={{

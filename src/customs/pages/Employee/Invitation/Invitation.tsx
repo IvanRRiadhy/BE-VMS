@@ -12,6 +12,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
@@ -25,7 +31,6 @@ import {
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { IconBolt, IconClipboard, IconLink, IconUserPlus } from '@tabler/icons-react';
-import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
@@ -197,6 +202,19 @@ const Content = () => {
     filters: appliedFilters,
   });
 
+  const getTransactionStatus = (item: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const now = dayjs().tz(systemTz);
+    const periodEnd = dayjs.utc(item.visitor_period_end).tz(systemTz);
+
+    if (item.transaction_status !== 'Canceled' && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+
+    return item.transaction_status;
+  };
+
   const tableRowVisitors = useMemo(() => {
     return (
       tableTransaction?.pages.flatMap((page) =>
@@ -207,12 +225,19 @@ const Content = () => {
           visitor_type: item.visitor_type_name || '-',
           site_id: item.site_id,
           host_name: item.host_name || '-',
+
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
+
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
           remarks: item.remarks,
-          transaction_status: item.transaction_status,
+
+          // status yang digunakan UI
+          transaction_status: getTransactionStatus(item),
+
+          // optional: simpan status asli kalau nanti dibutuhkan
+          original_transaction_status: item.transaction_status,
         })),
       ) ?? []
     );
@@ -225,9 +250,30 @@ const Content = () => {
     selectedGroupId as string,
   );
 
+  const getVisitorStatus = (visitor: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const now = dayjs().tz(systemTz);
+
+    const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
+
+    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin';
+
+    if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+
+    return visitor.visitor_status;
+  };
+
   useEffect(() => {
     if (detailData?.collection) {
-      setGroupVisitors(detailData.collection);
+      const visitors = detailData.collection.map((visitor: any) => ({
+        ...visitor,
+        visitor_status: getVisitorStatus(visitor),
+      }));
+
+      setGroupVisitors(visitors);
     } else {
       setGroupVisitors([]);
     }
