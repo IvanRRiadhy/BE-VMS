@@ -426,7 +426,7 @@ const Content = () => {
     try {
       const res = await getVisitorById(id);
 
-      const detail = res?.collection ?? res ?? null;
+      const detail:any = res?.collection ?? res ?? null;
 
       const isExpired =
         detail?.visitor_period_end && dayjs(detail.visitor_period_end).isBefore(dayjs(), 'day');

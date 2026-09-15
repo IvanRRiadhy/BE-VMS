@@ -30,8 +30,17 @@ export const useListVisitorPagination = ({
 }: Props) => {
   return useQuery({
     queryKey: ['list-visitor', page, rowsPerPage, sortDir, sort_column, search, filters],
+
     queryFn: () =>
-      getListVisitorPagination(page * rowsPerPage, rowsPerPage, sortDir, sort_column, search),
+      getListVisitorPagination(
+        page * rowsPerPage,
+        rowsPerPage,
+        sortDir,
+        sort_column,
+        search,
+        filters,
+      ),
+
     placeholderData: (previousData) => previousData,
   });
 };

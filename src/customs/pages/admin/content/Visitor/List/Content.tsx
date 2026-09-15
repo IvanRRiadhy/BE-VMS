@@ -56,7 +56,7 @@ const Content = () => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [visitorEdit, setVisitorEdit] = useState<any>(null);
   const { page, search, setPage, setSearch } = useTableQueryParams();
-  const [filters, setFilters] = useState<VisitorFilters>({
+  const emptyFilters: VisitorFilters = {
     organization_id: '',
     department_id: '',
     district_id: '',
@@ -64,18 +64,22 @@ const Content = () => {
     gender: '',
     is_email_verified: '',
     is_blacklist: null,
-  });
+  };
 
+  const [filters, setFilters] = useState<VisitorFilters>(emptyFilters);
+
+  const [appliedFilters, setAppliedFilters] = useState<VisitorFilters>(emptyFilters);
   const { data, isLoading } = useListVisitorPagination({
     page,
     rowsPerPage,
     sortDir,
     sort_column: 'created_at',
     search,
-    filters,
+    filters: appliedFilters,
   });
 
-  const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } = useListVisitorMutation();
+  const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } =
+    useListVisitorMutation();
 
   const tableCustomVisitor =
     data?.collection.map((item: any) => ({
@@ -134,6 +138,7 @@ const Content = () => {
   const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
 
   const handleApplyFilter = () => {
+    setAppliedFilters(filters);
     setPage(0);
   };
 
@@ -188,7 +193,7 @@ const Content = () => {
   };
 
   const handleResetFilter = () => {
-    const empty = {
+    const empty: VisitorFilters = {
       organization_id: '',
       department_id: '',
       district_id: '',
@@ -199,6 +204,7 @@ const Content = () => {
     };
 
     setFilters(empty);
+    setAppliedFilters(empty);
     setPage(0);
   };
 

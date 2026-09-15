@@ -161,7 +161,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
           </FormGroup>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
+        {/* <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 1 }}>Email Verified</CustomFormLabel>
           <FormGroup row>
             <FormControlLabel
@@ -231,7 +231,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
               sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
             />
           </FormGroup>
-        </Grid>
+        </Grid> */}
 
         {/* Apply Button */}
         <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

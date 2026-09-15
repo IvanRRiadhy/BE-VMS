@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HC_heatmap from 'highcharts/modules/heatmap';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getHeatmaps } from 'src/customs/api/admin';
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
@@ -18,18 +17,6 @@ const VisitorHeatMap = () => {
 
   const start = startDate?.toISOString().split('T')[0];
   const end = endDate?.toISOString().split('T')[0];
-
-  const shiftHourRange = (range: string, offset: number) => {
-    const [start, end] = range.split('-');
-
-    const shift = (time: string) => {
-      const hour = parseInt(time.split(':')[0], 10);
-      const shifted = (hour + offset + 24) % 24;
-      return `${shifted.toString().padStart(2, '0')}:00`;
-    };
-
-    return `${shift(start)}-${shift(end)}`;
-  };
 
   const convertUtcHoursToLocal = (hours: any[], offset: number) => {
     const localHours = Array.from({ length: 24 }, (_, i) => ({

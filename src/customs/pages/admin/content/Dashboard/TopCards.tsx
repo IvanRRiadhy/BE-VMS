@@ -5,8 +5,8 @@ import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
-import Chart from 'react-apexcharts';
-import { ApexOptions } from 'apexcharts';
+// import Chart from 'react-apexcharts';
+// import { ApexOptions } from 'apexcharts';
 
 interface VisitorStatusItem {
   visitor_status: string;
@@ -348,51 +348,51 @@ const TopCards = ({ items = [], size }: any) => {
   );
 };
 
-const MiniChart = ({ normalizedData, card, change }: any) => {
-  const key = String(card.key);
+// const MiniChart = ({ normalizedData, card, change }: any) => {
+//   const key = String(card.key);
 
-  const series = useMemo(() => {
-    const today = new Date();
-    const values: number[] = [];
+//   const series = useMemo(() => {
+//     const today = new Date();
+//     const values: number[] = [];
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
+//     for (let i = 6; i >= 0; i--) {
+//       const d = new Date();
+//       d.setDate(today.getDate() - i);
 
-      const dateStr = d.toISOString().split('T')[0];
+//       const dateStr = d.toISOString().split('T')[0];
 
-      const found = normalizedData?.find((x: any) => x.Date === dateStr);
+//       const found = normalizedData?.find((x: any) => x.Date === dateStr);
 
-      values.push(found?.StatusMap?.[key] ?? 0);
-    }
+//       values.push(found?.StatusMap?.[key] ?? 0);
+//     }
 
-    return [
-      {
-        name: card.title,
-        data: values,
-      },
-    ];
-  }, [normalizedData, key, card.title]);
+//     return [
+//       {
+//         name: card.title,
+//         data: values,
+//       },
+//     ];
+//   }, [normalizedData, key, card.title]);
 
-  const options: ApexOptions = {
-    chart: {
-      type: 'area',
-      sparkline: { enabled: true },
-    },
-    stroke: {
-      curve: 'smooth',
-      width: 2,
-    },
-    fill: {
-      opacity: 0.3,
-    },
-    colors: [change?.color || '#999'],
-    tooltip: {
-      enabled: false,
-    },
-  };
+//   const options: ApexOptions = {
+//     chart: {
+//       type: 'area',
+//       sparkline: { enabled: true },
+//     },
+//     stroke: {
+//       curve: 'smooth',
+//       width: 2,
+//     },
+//     fill: {
+//       opacity: 0.3,
+//     },
+//     colors: [change?.color || '#999'],
+//     tooltip: {
+//       enabled: false,
+//     },
+//   };
 
-  return <Chart options={options} series={series} type="area" height={50} />;
-};
+//   return <Chart options={options} series={series} type="area" height={50} />;
+// };
 
 export default TopCards;

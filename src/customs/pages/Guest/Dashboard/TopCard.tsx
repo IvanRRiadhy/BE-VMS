@@ -6,9 +6,6 @@ import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react
 import { useEffect, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import Chart from 'react-apexcharts';
-
 interface VisitorStatusItem {
   visitor_status: string;
   Count: number;

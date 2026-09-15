@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import ReactApexChart from 'react-apexcharts';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTopVisitingPurpose } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+const ReactApexChart = lazy(() => import('react-apexcharts'));
 
 const COLORS = [
   '#05367a',
@@ -141,7 +140,9 @@ const TopVisitingPurposeChart = () => {
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 0, pt: 2, pl: 2 }}>
           {t('top_visitor_purpose')}
         </Typography>
-        <ReactApexChart options={options} series={series} type="bar" height={370} />
+        <Suspense fallback={<Box sx={{ height: 370 }} />}>
+          <ReactApexChart options={options} series={series} type="bar" height={370} />
+        </Suspense>
       </Box>
     </>
   );

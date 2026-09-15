@@ -25,9 +25,7 @@ import {
   Search,
 } from '@mui/icons-material';
 
-import { LineChart, PieChart } from '@mui/x-charts';
 import Chart from 'react-apexcharts';
-import type { ApexOptions } from 'apexcharts';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -454,8 +452,8 @@ const Content = () => {
                         fontSize: '13px',
 
                         markers: {
-                          size: 7,
-                          shape: 'square',
+                          width: 10,
+                          // shape: 'square',
                         },
 
                         itemMargin: {
@@ -794,7 +792,7 @@ const SummaryCard = ({ icon, title, value, iconType }: SummaryCardProps) => {
             flexShrink: 0,
           }}
         >
-          {React.cloneElement(icon as React.ReactElement, {
+          {React.cloneElement(icon as any, {
             sx: {
               fontSize: 22,
             },
