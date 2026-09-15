@@ -942,7 +942,7 @@ export const getListVisitorPagination = async (
   }
 
   if (filters?.is_employee) {
-    params.is_employee = filters.is_employee;
+    params['is-employee'] = filters.is_employee;
   }
 
   if (filters?.gender) {

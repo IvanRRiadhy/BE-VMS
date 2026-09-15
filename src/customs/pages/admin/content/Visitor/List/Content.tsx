@@ -103,11 +103,11 @@ const Content = () => {
       {
         title: t('totalVisitor'),
         icon: IconUsers,
-        subTitle: `${totalRecords}`,
+        subTitle: `${totalFilteredRecords}`,
         color: 'none',
       },
     ],
-    [totalRecords, t],
+    [totalFilteredRecords, t],
   );
 
   const handleView = async (id: string) => {

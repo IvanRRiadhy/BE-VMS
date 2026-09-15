@@ -124,6 +124,43 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
           />
         </Grid>
 
+        {/* is employee */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <CustomFormLabel sx={{ mt: 1 }}>Employee</CustomFormLabel>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_employee === 'true'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_employee: 'true',
+                    }))
+                  }
+                />
+              }
+              label="Yes"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_employee === 'false'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_employee: 'false',
+                    }))
+                  }
+                />
+              }
+              label="No"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+          </FormGroup>
+        </Grid>
+
         {/* Blacklist */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 1 }}>Blacklist</CustomFormLabel>
