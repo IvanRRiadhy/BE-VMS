@@ -9,7 +9,9 @@ import {
   RadioGroup,
   FormGroup,
   Checkbox,
+  IconButton,
 } from '@mui/material';
+import { IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useDepartment } from 'src/hooks/Department/useDepartment';
@@ -21,6 +23,7 @@ type FilterMoreContentProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
   onResetFilter: () => void;
+  onClose: () => void;
 };
 
 const FilterVisitor: React.FC<FilterMoreContentProps> = ({
@@ -28,6 +31,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
   setFilters,
   onApplyFilter,
   onResetFilter,
+  onClose,
 }) => {
   const { organizations } = useOrganization();
   const { department } = useDepartment();
@@ -39,6 +43,9 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
         <Typography variant="h5" gutterBottom>
           Filter Visitor
         </Typography>
+        <IconButton onClick={onClose}>
+          <IconX />
+        </IconButton>
       </Box>
       <Divider />
 

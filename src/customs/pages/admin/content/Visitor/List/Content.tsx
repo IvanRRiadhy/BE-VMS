@@ -236,6 +236,7 @@ const Content = () => {
         setFilters={setFilters}
         onApplyFilter={handleApplyFilter}
         onResetFilter={handleResetFilter}
+        onClose={()=>{}}
       />
     ),
     [filters],
