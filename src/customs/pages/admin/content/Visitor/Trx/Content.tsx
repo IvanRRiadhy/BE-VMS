@@ -425,7 +425,17 @@ const Content = () => {
   const handleQrCode = async (id: string) => {
     try {
       const res = await getVisitorById(id);
-      setVisitorDetail(res?.collection ?? res ?? null);
+
+      const detail = res?.collection ?? res ?? null;
+
+      const isExpired =
+        detail?.visitor_period_end && dayjs(detail.visitor_period_end).isBefore(dayjs(), 'day');
+
+      setVisitorDetail({
+        ...detail,
+        visitor_status: isExpired ? 'Expired' : detail?.visitor_status || '-',
+      });
+
       setOpenQrDialog(true);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
