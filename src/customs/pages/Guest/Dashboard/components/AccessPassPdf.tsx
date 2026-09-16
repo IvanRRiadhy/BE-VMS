@@ -17,7 +17,7 @@ const AccessPassPdf = ({ accessPass, logoSrc }: AccessPassPdfProps) => {
       sx={{
         position: 'relative',
         width: 380,
-        height: 536,
+        height: 600,
         boxSizing: 'border-box',
         overflow: 'hidden',
 

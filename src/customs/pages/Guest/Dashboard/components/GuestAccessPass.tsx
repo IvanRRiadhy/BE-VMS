@@ -123,6 +123,7 @@ import QRCode from 'react-qr-code';
 import dayjs from 'dayjs';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { useState } from 'react';
+import { getConfig } from 'src/config';
 
 type GuestAccessPassData = {
   id?: string;
@@ -175,6 +176,10 @@ const GuestAccessPass = ({
   onSelectPass,
 }: GuestAccessPassProps) => {
   const { t } = useTranslation();
+
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL;
 
   const Field = ({
     label,
@@ -358,7 +363,7 @@ const GuestAccessPass = ({
         >
           <Box
             component="img"
-            src="/src/assets/images/logos/BI_Logo.png"
+            src={logoUrl}
             alt="Bank Indonesia"
             sx={{
               width: 70,

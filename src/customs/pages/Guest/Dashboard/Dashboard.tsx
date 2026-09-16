@@ -52,6 +52,7 @@ import GuestAccessPass from './components/GuestAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import VisitStatusCard from './components/VisitorStatusCard';
 import AccessPassPdf from './components/AccessPassPdf';
+import { getConfig } from 'src/config';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
@@ -74,6 +75,10 @@ const Dashboard = () => {
   const open = Boolean(anchorEl);
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL;
 
   const handleOpenAccess = () => {
     setOpenAccess(true);
@@ -459,10 +464,7 @@ const Dashboard = () => {
           top: 0,
         }}
       >
-        <AccessPassPdf
-          accessPass={currentAccessPass}
-          logoSrc="/src/assets/images/logos/BI_Logo.png"
-        />
+        <AccessPassPdf accessPass={currentAccessPass} logoSrc={logoUrl || ''} />
       </Box>
       <GlobalBackdropLoading open={isGenerating} />
     </PageContainer>
