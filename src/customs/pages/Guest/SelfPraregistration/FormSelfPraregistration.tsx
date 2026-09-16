@@ -379,8 +379,8 @@ const FormSelfPraregistration = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
-        const safeTrim = (val: any): string => {
-          if (val === undefined || val === null) return '';
+        const safeTrim = (val: any): any => {
+          if (val === undefined || val === null) return null;
           if (typeof val === 'string') return val.trim();
           if (Array.isArray(val)) return val.map(String).join(',');
           return String(val).trim();
@@ -3707,6 +3707,8 @@ const FormSelfPraregistration = ({
 
   const handleConfirmSubmit = async () => {
     if (!previewPayload) return;
+
+    // console.log('previewPayload', previewPayload);
 
     try {
       setLoading(true);
