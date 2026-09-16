@@ -939,7 +939,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid>
-
+{/* 
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
@@ -969,7 +969,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 }
               />
             </Box>
-          </Grid>
+          </Grid> */}
           {/* 
           <Grid size={12} mt={1}>
             <Box>
@@ -1001,7 +1001,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid> */}
-          <Grid size={12} mt={1}>
+          {/* <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
                 control={
@@ -1030,8 +1030,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 }
               />
             </Box>
-          </Grid>
-
+          </Grid> */}
+{/* 
           {formData.simple_visitor && (
             <Grid size={12} mt={1}>
               <Box>
@@ -1063,7 +1063,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 />
               </Box>
             </Grid>
-          )}
+          )} */}
 
           <Divider sx={{ mt: 1 }} />
           <Grid size={12} mt={1}>

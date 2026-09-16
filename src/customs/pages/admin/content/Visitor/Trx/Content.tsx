@@ -36,7 +36,6 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { useNavigate } from 'react-router';
 import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
 import QrScannerDialog from './components/Dialog/QrScannerDialog';
-import Swal from 'sweetalert2';
 import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
@@ -426,7 +425,17 @@ const Content = () => {
   const handleQrCode = async (id: string) => {
     try {
       const res = await getVisitorById(id);
-      setVisitorDetail(res?.collection ?? res ?? null);
+
+      const detail: any = res?.collection ?? res ?? null;
+
+      const isExpired =
+        detail?.visitor_period_end && dayjs(detail.visitor_period_end).isBefore(dayjs(), 'day');
+
+      setVisitorDetail({
+        ...detail,
+        visitor_status: isExpired ? 'Expired' : detail?.visitor_status || '-',
+      });
+
       setOpenQrDialog(true);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -835,6 +844,7 @@ const Content = () => {
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
                     onResetFilter={handleResetFilter}
+                    onClose={() => {}}
                   />
                 }
               />

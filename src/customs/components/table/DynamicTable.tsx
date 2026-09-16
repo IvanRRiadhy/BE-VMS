@@ -380,7 +380,7 @@ function DynamicTableBase<
     onAddData,
     onPaginationChange,
     onBooleanSwitchChange,
-    
+
     isHaveSecret,
     visibleSecrets,
     loadingSecrets,
@@ -1794,7 +1794,7 @@ function DynamicTableBase<
         <Calendar onChange={onApplyFilterCalender} />
       </Drawer>
 
-      <Drawer
+      {/* <Drawer
         anchor="right"
         PaperProps={{
           sx: {
@@ -1805,6 +1805,27 @@ function DynamicTableBase<
         onClose={() => setShowDrawerFilterMore(false)}
       >
         {filterMoreContent}
+      </Drawer> */}
+      <Drawer
+        anchor="right"
+        PaperProps={{
+          sx: {
+            width: { xs: '60vw', sm: '40vw' },
+          },
+        }}
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+      >
+        {React.isValidElement(filterMoreContent)
+          ? React.cloneElement(
+              filterMoreContent as React.ReactElement<{
+                onClose?: () => void;
+              }>,
+              {
+                onClose: () => setShowDrawerFilterMore(false),
+              },
+            )
+          : filterMoreContent}
       </Drawer>
     </>
   );

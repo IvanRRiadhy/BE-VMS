@@ -202,25 +202,27 @@ const Content = () => {
     selectedGroupId as string,
   );
 
-  // const getVisitorStatus = (visitor: any) => {
-  //   const now = dayjs();
-  //   const periodEnd = dayjs(visitor.visitor_period_end);
+  const getVisitorStatus = (visitor: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  //   if (
-  //     visitor.visitor_status === 'Preregis' ||
-  //     (visitor.visitor_status === 'Checkin' && periodEnd.isValid() && now.isAfter(periodEnd))
-  //   ) {
-  //     return 'Expired';
-  //   }
+    const now = dayjs().tz(systemTz);
 
-  //   return visitor.visitor_status;
-  // };
+    const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
+
+    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available';
+
+    if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+
+    return visitor.visitor_status;
+  };
 
   useEffect(() => {
     if (detailData?.collection) {
       const visitors = detailData.collection.map((visitor: any) => ({
         ...visitor,
-        // visitor_status: getVisitorStatus(visitor),
+        visitor_status: getVisitorStatus(visitor),
       }));
 
       setGroupVisitors(visitors);
@@ -233,6 +235,22 @@ const Content = () => {
 
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
+  const getTransactionStatus = (item: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const now = dayjs().tz(systemTz);
+
+    // Backend datetime dianggap UTC karena formatDateTime()
+    // juga menggunakan moment.utc()
+    const periodEnd = dayjs.utc(item.visitor_period_end).tz(systemTz);
+
+    if (item.transaction_status !== 'Canceled' && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+
+    return item.transaction_status;
+  };
+
   const tableRowVisitors = useMemo(() => {
     return (
       tableTransaction?.pages.flatMap((page) =>
@@ -243,12 +261,19 @@ const Content = () => {
           visitor_type: item.visitor_type_name || '-',
           site_id: item.site_id,
           host_name: item.host_name || '-',
+
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
+
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
           remarks: item.remarks,
-          transaction_status: item.transaction_status,
+
+          // status yang digunakan UI
+          transaction_status: getTransactionStatus(item),
+
+          // optional: simpan status asli kalau nanti dibutuhkan
+          original_transaction_status: item.transaction_status,
         })),
       ) ?? []
     );

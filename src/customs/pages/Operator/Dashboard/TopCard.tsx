@@ -1,17 +1,7 @@
 import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
-import BlankCard from 'src/components/shared/BlankCard';
 import {
-  IconX,
-  IconForbid2,
-  IconLogout,
-  IconLogin,
-  IconUsersGroup,
-  IconUser,
-  IconUserPlus,
-  IconCircleX,
-  IconHourglass,
   IconTrendingUp,
   IconTrendingDown,
   IconMinus,
@@ -19,7 +9,6 @@ import {
 import { useEffect, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Chart from 'react-apexcharts';
 
 interface VisitorStatusItem {

@@ -9,7 +9,9 @@ import {
   RadioGroup,
   FormGroup,
   Checkbox,
+  IconButton,
 } from '@mui/material';
+import { IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useDepartment } from 'src/hooks/Department/useDepartment';
@@ -21,6 +23,7 @@ type FilterMoreContentProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
   onResetFilter: () => void;
+  onClose: () => void;
 };
 
 const FilterVisitor: React.FC<FilterMoreContentProps> = ({
@@ -28,6 +31,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
   setFilters,
   onApplyFilter,
   onResetFilter,
+  onClose,
 }) => {
   const { organizations } = useOrganization();
   const { department } = useDepartment();
@@ -39,6 +43,9 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
         <Typography variant="h5" gutterBottom>
           Filter Visitor
         </Typography>
+        <IconButton onClick={onClose}>
+          <IconX />
+        </IconButton>
       </Box>
       <Divider />
 
@@ -124,6 +131,43 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
           />
         </Grid>
 
+        {/* is employee */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <CustomFormLabel sx={{ mt: 1 }}>Employee</CustomFormLabel>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_employee === 'true'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_employee: 'true',
+                    }))
+                  }
+                />
+              }
+              label="Yes"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_employee === 'false'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_employee: 'false',
+                    }))
+                  }
+                />
+              }
+              label="No"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+          </FormGroup>
+        </Grid>
+
         {/* Blacklist */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 1 }}>Blacklist</CustomFormLabel>
@@ -161,7 +205,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
           </FormGroup>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
+        {/* <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 1 }}>Email Verified</CustomFormLabel>
           <FormGroup row>
             <FormControlLabel
@@ -231,7 +275,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
               sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
             />
           </FormGroup>
-        </Grid>
+        </Grid> */}
 
         {/* Apply Button */}
         <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

@@ -459,24 +459,81 @@ const RenderDetailRows = ({
     }
   };
 
+  // const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
+  //   if (!webcamRef.current) return;
+
+  //   const imageSrc = webcamRef.current.getScreenshot();
+  //   if (!imageSrc) return;
+
+  //   const blob = await fetch(imageSrc).then((res) => res.blob());
+  //   const compressedBlob = await compressImage(
+  //     new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+  //   );
+  //   const path = await uploadFileToCDN(compressedBlob);
+  //   if (!path) return;
+  //   if (trackKey) {
+  //     setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+  //     setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+  //   }
+  //   setAnswerFile(path);
+  // };
+
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
 
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const compressedBlob = await compressImage(
-      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-    );
-    const path = await uploadFileToCDN(compressedBlob);
-    if (!path) return;
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const compressedBlob = await compressImage(
+        new File([blob], 'camera.jpg', {
+          type: 'image/jpeg',
+        }),
+      );
+
+      const path = await uploadFileToCDN(compressedBlob);
+
+      if (!path) {
+        toast('Failed to upload file', 'error');
+        return;
+      }
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Camera upload failed:', error);
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
+
+
 
   const fileNameFromAnswer = (answerFile?: string) => {
     if (!answerFile) return '';
@@ -1476,7 +1533,7 @@ const RenderDetailRows = ({
                             open={openCamera}
                             onClose={() => setOpenCamera(false)}
                             webcamRef={webcamRef as any}
-                            screenshot={screenshot}
+                            screenshot={previews[key] || null}
                             facingMode={facingMode}
                             isUploading={isUploading}
                             onSwitchCamera={() =>
@@ -1630,7 +1687,7 @@ const RenderDetailRows = ({
                           open={openCamera}
                           onClose={() => setOpenCamera(false)}
                           webcamRef={webcamRef as any}
-                          screenshot={screenshot}
+                          screenshot={previews[key] || null}
                           facingMode={facingMode}
                           isUploading={isUploading}
                           onSwitchCamera={() =>
@@ -1978,7 +2035,7 @@ const RenderDetailRows = ({
                           open={openCamera}
                           onClose={() => setOpenCamera(false)}
                           webcamRef={webcamRef as any}
-                          screenshot={screenshot}
+                          screenshot={previews[key] || null}
                           facingMode={facingMode}
                           isUploading={isUploading}
                           onSwitchCamera={() =>

@@ -140,57 +140,63 @@ const TransactionVisitorList = ({
                 <Typography>Start : {group.visitor_period_start}</Typography>
 
                 <Typography>End : {group.visitor_period_end}</Typography>
-                {group.transaction_status !== 'Canceled' && (
-                  <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
-                    {/* {group.remarks === 'PraRegister' && ( */}
-                    <Tooltip title="Add" arrow>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAdd(group);
-                        }}
-                        sx={{
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          '&:hover': {
-                            bgcolor: 'primary.dark',
-                          },
-                        }}
-                      >
-                        <IconPlus size={20} />
-                      </IconButton>
-                    </Tooltip>
-                    {/* )} */}
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        backgroundColor: 'gray',
-                        border: 'none',
-                        color: 'white',
-                      }}
-                      startIcon={<ContentCopy />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDuplicate(group);
-                      }}
+                {group.transaction_status !== 'Canceled' &&
+                  group.transaction_status !== 'Expired' && (
+                    <Box
+                      display="flex"
+                      justifyContent="flex-end"
+                      alignItems="center"
+                      gap={1}
+                      mt={1}
                     >
-                      Duplicate
-                    </Button>
-
-                    {group.invited_by === profile?.user_id && (
+                      {/* {group.remarks === 'PraRegister' && ( */}
+                      <Tooltip title="Add" arrow>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdd(group);
+                          }}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                          }}
+                        >
+                          <IconPlus size={20} />
+                        </IconButton>
+                      </Tooltip>
+                      {/* )} */}
                       <Button
-                        variant="contained"
-                        color="error"
+                        variant="outlined"
+                        sx={{
+                          backgroundColor: 'gray',
+                          color: 'white',
+                        }}
+                        startIcon={<ContentCopy />}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleCancel(group.id);
+                          handleDuplicate(group);
                         }}
                       >
-                        Cancel
+                        Duplicate
                       </Button>
-                    )}
-                  </Box>
-                )}
+
+                      {group.invited_by === profile?.user_id && (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancel(group.id);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </Box>
+                  )}
               </Box>
             ))}
 

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import Chart from 'react-apexcharts';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTopVisitors } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+
+
+const Chart = lazy(() => import('react-apexcharts'));
 
 const TopVisitor = () => {
   const { t } = useTranslation();
@@ -134,7 +135,9 @@ const TopVisitor = () => {
         <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
           {t('top_visitor')}
         </Typography>
-        <Chart options={options} series={series} type="bar" height={350} />
+        <Suspense fallback={<Box sx={{ height: 350 }} />}>
+          <Chart options={options} series={series} type="bar" height={350} />
+        </Suspense>
       </Box>
     </>
   );

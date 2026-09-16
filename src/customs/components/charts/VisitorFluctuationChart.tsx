@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { lazy, useEffect, useState, Suspense } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { Box, Typography } from '@mui/material';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { t } from 'i18next';
 import { useSelector } from 'react-redux';
-import Chart from 'react-apexcharts';
+
 import dayjs from 'dayjs';
 
 type VisitorSeries = {
@@ -14,6 +14,8 @@ type VisitorSeries = {
   data: number[];
   area: any;
 };
+
+const Chart = lazy(() => import('react-apexcharts'));
 
 const VisitorFluctuationChart = () => {
   const [dates, setDates] = useState<number[]>([]);
@@ -92,71 +94,71 @@ const VisitorFluctuationChart = () => {
         <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
           {t('fluctuation_visitor')}
         </Typography>
-
-        <Chart
-          type="area"
-          height={340}
-          series={series.map((s) => ({
-            name: s.label,
-            data: s.data,
-          }))}
-          options={{
-            chart: {
-              type: 'area',
-              toolbar: { show: false },
-              zoom: { enabled: false },
-            },
-            colors: series.map((s) => s.color),
-            stroke: {
-              curve: 'smooth',
-              width: 3,
-            },
-            fill: {
-              type: 'gradient',
-              gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.4,
-                opacityTo: 0.05,
-                stops: [0, 90, 100],
+        <Suspense fallback={<Box sx={{ height: 340 }} />}>
+          <Chart
+            type="area"
+            height={340}
+            series={series.map((s) => ({
+              name: s.label,
+              data: s.data,
+            }))}
+            options={{
+              chart: {
+                type: 'area',
+                toolbar: { show: false },
+                zoom: { enabled: false },
               },
-            },
-            dataLabels: {
-              enabled: false,
-            },
-            xaxis: {
-              categories: dates.map((d) =>
-                new Intl.DateTimeFormat('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                }).format(new Date(d)),
-              ),
-              // axisBorder: {
-              //   show: false,
-              // },
-              // axisTicks: {
-              //   show: false,
-              // },
-            },
-            yaxis: {
-              labels: {
-                formatter: (val: number) => Math.round(val).toString(),
+              colors: series.map((s) => s.color),
+              stroke: {
+                curve: 'smooth',
+                width: 3,
               },
-            },
-            grid: {
-              borderColor: '#e5e7eb',
-              strokeDashArray: 4,
-            },
-            legend: {
-              show: false,
-            },
-            tooltip: {
-              y: {
-                formatter: (val: number) => `${val}`,
+              fill: {
+                type: 'gradient',
+                gradient: {
+                  shadeIntensity: 1,
+                  opacityFrom: 0.4,
+                  opacityTo: 0.05,
+                  stops: [0, 90, 100],
+                },
               },
-            },
-          }}
-        />
-
+              dataLabels: {
+                enabled: false,
+              },
+              xaxis: {
+                categories: dates.map((d) =>
+                  new Intl.DateTimeFormat('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  }).format(new Date(d)),
+                ),
+                // axisBorder: {
+                //   show: false,
+                // },
+                // axisTicks: {
+                //   show: false,
+                // },
+              },
+              yaxis: {
+                labels: {
+                  formatter: (val: number) => Math.round(val).toString(),
+                },
+              },
+              grid: {
+                borderColor: '#e5e7eb',
+                strokeDashArray: 4,
+              },
+              legend: {
+                show: false,
+              },
+              tooltip: {
+                y: {
+                  formatter: (val: number) => `${val}`,
+                },
+              },
+            }}
+          />
+        </Suspense>
         {/* ✅ manual legend bawah */}
         <Box
           sx={{

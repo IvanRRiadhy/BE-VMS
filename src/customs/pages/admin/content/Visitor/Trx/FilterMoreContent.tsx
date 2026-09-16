@@ -9,6 +9,7 @@ import {
   FormGroup,
   Checkbox,
 } from '@mui/material';
+import { IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
@@ -19,6 +20,7 @@ type FilterMoreContentProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
   onResetFilter: () => void;
+  onClose?: any;
 };
 
 const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
@@ -26,6 +28,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
   setFilters,
   onApplyFilter,
   onResetFilter,
+  onClose,
 }) => {
   const statusMap: Record<string, string> = {
     All: 'All',
@@ -55,7 +58,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
         <Typography variant="h5" gutterBottom>
           Filter Visitor
         </Typography>
-        {/* <IconX onClick={() => setShowDrawerFilterMore(false)} style={{ cursor: 'pointer' }} /> */}
+        <IconX onClick={onClose} style={{ cursor: 'pointer' }} />
       </Box>
       <Divider />
 
@@ -86,7 +89,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 12 }}>
+        {/* <Grid size={{ xs: 12, lg: 12 }}>
           <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Role</CustomFormLabel>
           <Autocomplete
             options={visitorRoleOptions}
@@ -106,7 +109,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
               />
             )}
           />
-        </Grid>
+        </Grid> */}
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period Start</CustomFormLabel>
@@ -195,7 +198,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
         </Grid>
 
         {/* Blacklist */}
-        <Grid size={{ xs: 12, lg: 4 }}>
+        {/* <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Block</CustomFormLabel>
           <FormGroup row>
             <FormControlLabel
@@ -229,7 +232,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
               sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
             />
           </FormGroup>
-        </Grid>
+        </Grid> */}
 
         {/* <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Transaction Status</CustomFormLabel>
@@ -266,7 +269,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
             />
           </FormGroup>
         </Grid> */}
-
+        {/* 
         <Grid size={{ xs: 12, lg: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Emergency Situation</CustomFormLabel>
           <FormGroup row>
@@ -301,7 +304,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
               sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
             />
           </FormGroup>
-        </Grid>
+        </Grid> */}
 
         {/* Apply Button */}
         <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

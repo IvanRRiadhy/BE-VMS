@@ -135,7 +135,7 @@ const TransactionVisitorList = ({
               <Typography>Start : {group.visitor_period_start}</Typography>
 
               <Typography>End : {group.visitor_period_end}</Typography>
-              {group.invited_by === profile?.user_id && group.transaction_status !== 'Canceled' && (
+              {group.invited_by === profile?.user_id && group.transaction_status !== 'Canceled' && group.transaction_status !== 'Expired' && (
                 <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1}>
                   <Tooltip title="Add" arrow>
                     <IconButton

@@ -29,7 +29,7 @@ interface QuickAccessDialogProps {
 
 export interface QuickAccessFormData {
   visitorProviderId: string;
-  recipientType: 'self' | 'others' | '';
+  recipientType: 'self';
   // receiver
   receiverName: string;
   receiverEmail: string;
@@ -109,11 +109,11 @@ export const QuickAccessDialog = ({
         visitor_provider_id: form.visitorProviderId,
         tz: tz,
         is_receiver_self: form.recipientType === 'self',
-        ...(form.recipientType === 'others' && {
-          receiver_name: form.receiverName,
-          receiver_phone: form.receiverPhone,
-          receiver_email: form.receiverEmail,
-        }),
+        // ...(form.recipientType === 'others' && {
+        //   receiver_name: form.receiverName,
+        //   receiver_phone: form.receiverPhone,
+        //   receiver_email: form.receiverEmail,
+        // }),
         duration: Number(form.duration),
         host_id: form.hostId,
         site_id: form.siteId,

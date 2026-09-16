@@ -191,25 +191,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       sort: index,
     }));
 
-  // const buildUpdateAnalyticsPayload = (visitorTypeId: string) =>
-  //   selectedAnalytics
-  //     ? [
-  //         {
-  //           id: selectedAnalytics.id,
-  //           integration_id: selectedAnalytics.integration_id,
-  //           visitor_type_id: visitorTypeId,
-  //           sort: 0,
-  //         },
-  //       ]
-  //     : [];
-
-  const buildUpdateAnalyticsPayload = (visitorTypeId: string) => ({
-    data: selectedAnalytics.map((item, index) => ({
-      integration_id: item.id,
-      visitor_type_id: visitorTypeId,
-      sort: index,
-    })),
-  });
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,8 +202,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         sort: section.sort,
         name: section.name,
         status: 1,
-        is_document: section.is_document,
-        can_multiple_used: section.can_multiple_used,
+        is_document: section.is_document || false,
+        can_multiple_used: section.can_multiple_used || false,
         foreign_id: section.foreign_id || '',
         visit_form: section.visit_form.map((field) => {
           const matchedField = customField.find((f: any) => f.id === field.custom_field_id);

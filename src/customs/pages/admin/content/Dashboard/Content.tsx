@@ -10,7 +10,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Welcome from 'src/layouts/full/shared/welcome/Welcome';
 import TopCards from './TopCards';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import TopVisitingPurposeChart from 'src/customs/components/charts/TopVisitingPurposeChart';
 import TopVisitor from 'src/customs/components/charts/TopVisitor';
 import VisitingTypeChart from 'src/customs/components/charts/VisitingTypeChart';

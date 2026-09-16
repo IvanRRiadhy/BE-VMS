@@ -913,6 +913,7 @@ export const getListVisitorPagination = async (
   sortDir = '',
   sort_column?: string,
   keyword: string = '',
+  filters?: any,
 ): Promise<any> => {
   const params: Record<string, any> = {
     start,
@@ -926,6 +927,34 @@ export const getListVisitorPagination = async (
 
   if (keyword.trim() !== '') {
     params['search[value]'] = keyword;
+  }
+
+  if (filters?.organization_id) {
+    params['organization-id'] = filters.organization_id;
+  }
+
+  if (filters?.department_id) {
+    params['department-id'] = filters.department_id;
+  }
+
+  if (filters?.district_id) {
+    params['district-id'] = filters.district_id;
+  }
+
+  if (filters?.is_employee) {
+    params['is-employee'] = filters.is_employee;
+  }
+
+  if (filters?.gender) {
+    params.gender = filters.gender;
+  }
+
+  if (filters?.is_email_verified) {
+    params.is_email_verified = filters.is_email_verified;
+  }
+
+  if (filters?.is_blacklist !== null && filters?.is_blacklist !== undefined) {
+    params['is-blacklist'] = filters.is_blacklist;
   }
 
   const response = await axiosInstance.get('/visitor/invitation/dt', {
