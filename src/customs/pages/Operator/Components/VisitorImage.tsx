@@ -251,7 +251,7 @@ const VisitorImage = ({
         flexWrap: 'nowrap',
       }}
     >
-      <Card
+      {/* <Card
         sx={{
           p: 2,
           borderRadius: 1.5,
@@ -263,6 +263,16 @@ const VisitorImage = ({
           flexDirection: 'column',
         }}
         id="tour-occupancy"
+      > */}
+      <Card
+        sx={{
+          p: 2,
+          borderRadius: 1.5,
+          backgroundColor: 'background.paper',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <Box
           sx={{
