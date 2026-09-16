@@ -333,9 +333,9 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
           name: item.name ?? '',
           description: item.description ?? '',
           badge_type_id: item.badge_type_id ?? '',
-          visitor_type_id: item.visitor_type_id ?? '',
+          // visitor_type_id: item.visitor_type_id ?? '',
           visitor_type: item.visitor_type?.name ?? '',
-          honeywell_id: item.honeywell_id ?? '',
+          // honeywell_id: item.honeywell_id ?? '',
           // visitor_type: item.visitor_type.name,
           active: item.active ?? false,
         }));
@@ -344,23 +344,25 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         const res = await getClearcodes(id as string);
         const rows = res?.collection?.map((item: any) => ({
           id: String(item.id),
+
           clearcode_id: item.clearcode_id ?? '',
           description: item.description ?? '',
-          honeywell_id: item.honeywell_id ?? '',
+          // honeywell_id: item.honeywell_id ?? '',
           access_control: item.access_control?.name ?? '',
           active: item.active ?? false,
         }));
         setListData(rows ?? []);
       } else if (type === 'badge_status') {
         const res = await getBadgeStatus(id as string);
-        setListData(res.collection ?? []);
+
+        setListData((res.collection ?? []).map(({ honeywell_id, ...item }: any) => item));
       } else if (type === 'logdevs') {
         const res = await getLogdevs(id as string);
         const rows = res?.collection?.map((item: any) => ({
           id: String(item.id),
           log_dev_id: item.log_dev_id ?? '',
           description: item.description ?? '',
-          honeywell_id: item.honeywell_id ?? '',
+          // honeywell_id: item.honeywell_id ?? '',
           access_control: item.access_control?.name ?? '',
           active: item.active ?? false,
         }));
@@ -1068,11 +1070,27 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
     navigate('/admin/manage/integration');
   };
 
-  const handleCopy = async (id: string) => {
-    try {
-      await navigator.clipboard.writeText(id);
+  const idFieldMap: Record<string, string> = {
+    companies: 'company_id',
+    badge_type: 'badge_type_id',
+    clear_codes: 'clearcode_id',
+    badge_status: 'badge_status_id',
+    logdevs: 'log_dev_id',
+  };
 
-      showSwal('success', 'ID copied successfully');
+  const handleCopy = async (row: any) => {
+    try {
+      const field = idFieldMap[selectedType];
+      const value = row[field];
+
+      if (!value) {
+        showSwal('error', 'ID not found');
+        return;
+      }
+
+      await navigator.clipboard.writeText(String(value));
+
+      showSwal('success', 'Successfully copied ID');
     } catch (error) {
       showSwal('error', 'Failed to copy ID');
     }
@@ -1101,6 +1119,7 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
                   isHaveChecked={true}
                   isHaveAction={false}
                   isHaveActionOnlyEdit={true}
+                  // isSelectedType={selectedType !== 'badge_status'}
                   isSelectedType={selectedType !== 'badge_status'}
                   isHaveSearch={true}
                   isHaveFilter={false}
@@ -1135,11 +1154,8 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
                   onSearch={handleSearch}
                   isCopy={true}
                   onCopy={(row) => {
-                    handleCopy(row.id);
+                    handleCopy(row);
                   }}
-                  // onFilterByColumn={(column) => {
-                  //   setSortColumn(column.column);
-                  // }}
                 />
               </Grid>
             </Grid>

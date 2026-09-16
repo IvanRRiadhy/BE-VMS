@@ -241,8 +241,9 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     try {
       if (type === 'visitor_type') {
         const res = await getVisitorTypeParking(id as string);
+
         setListData(
-          (res.collection ?? []).map((item: any) => ({
+          (res.collection ?? []).map(({ integration_id, uid, ...item }: any) => ({
             ...item,
             visitor_types: item.visitor_types?.length
               ? item.visitor_types.map((v: any) => v.visitor_type_name).join(', ')
@@ -252,17 +253,28 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         );
       } else if (type === 'area') {
         const res = await getAreaParking(id as string);
-        setListData(res.collection ?? []);
+
+        const data = (res.collection ?? []).map(({ integration_id, uid, ...item }) => item);
+
+        setListData(data);
       } else if (type === 'block') {
         const res = await getBlockParking(id as string);
-        setListData(res.collection ?? []);
+        setListData(
+          (res.collection ?? []).map(({ integration_id, uid, area_id, ...item }: any) => item),
+        );
       } else if (type === 'slot') {
         const res = await getSlotParking(id as string);
-        setListData(res.collection ?? []);
+
+        const data = (res.collection ?? []).map(
+          ({ integration_id, uid, host_id, ...item }) => item,
+        );
+
+        setListData(data);
       } else if (type === 'vehicle') {
         const res = await getVehicleParking(id as string);
+
         setListData(
-          (res.collection ?? []).map((item: any) => ({
+          (res.collection ?? []).map(({ integration_id, uid, ...item }: any) => ({
             ...item,
             vehicle_type: item.vehicle_type ?? '-',
           })),

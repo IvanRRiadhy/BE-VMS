@@ -84,7 +84,13 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
     try {
       setLoadingData(true);
       const res = await getIntegrationIpsotekCategoryById(id);
-      setCategoryAll(res.collection ?? []);
+
+      const data = (res.collection ?? []).map((item: any) => {
+        const { integration_id, ...rest } = item;
+        return rest;
+      });
+
+      setCategoryAll(data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

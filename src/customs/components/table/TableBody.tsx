@@ -278,6 +278,63 @@ export const TableBodyContent = ({
                   </Box>
                 </TableCell>
               )}
+              {isHaveAction && !isActionVisitor && (
+                <TableCell
+                  align="center"
+                  sx={{
+                    position: 'sticky',
+                    right: 0,
+                    background: 'white',
+                    zIndex: 2,
+                  }}
+                >
+                  <Box display="flex" justifyContent="center" gap={0.5}>
+                    {[...Array(3)].map((__, j) => (
+                      <Skeleton
+                        key={j}
+                        variant="rectangular"
+                        width={28}
+                        height={28}
+                        animation="wave"
+                        sx={{ borderRadius: 1 }}
+                      />
+                    ))}
+                  </Box>
+                </TableCell>
+              )}
+
+              {/* action only edit */}
+              {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+                <TableCell
+                  align="center"
+                  sx={{
+                    position: 'sticky',
+                    right: 0,
+                    background: 'white',
+                    zIndex: 2,
+                  }}
+                >
+                  <Box display="flex" justifyContent="center" gap={0.5}>
+                    {isCopy && (
+                      <Skeleton
+                        variant="rectangular"
+                        width={28}
+                        height={28}
+                        animation="wave"
+                        sx={{ borderRadius: 1 }}
+                      />
+                    )}
+
+                    <Skeleton
+                      variant="rectangular"
+                      width={28}
+                      height={28}
+                      animation="wave"
+                      sx={{ borderRadius: 1 }}
+                    />
+                  </Box>
+                </TableCell>
+              )}
             </TableRow>
           ))
         ) : paginatedData.length === 0 && !loading ? (
@@ -820,7 +877,7 @@ const TableRowItem = React.memo(
               ) : col === 'type' && isAccessControlType ? (
                 <>{row.type === 0 ? 'Access' : 'Group'}</>
               ) : col === 'card_status' ? (
-                (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
+                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
               ) : col === 'is_employee' ? (
                 row[col] ? (
                   <IconUserCheck size={20} color="green" />
@@ -891,7 +948,7 @@ const TableRowItem = React.memo(
                   {statusLabelMap[row.visitor_status] || row.visitor_status || '-'}
                 </Box>
               ) : col === 'document_type' ? (
-                (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
+                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
               ) : col === 'status' && isHaveApproval ? (
                 row[col] === 'Approve' ? (
                   <Typography
@@ -967,8 +1024,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? (tooltipLabels[col]?.true ?? 'Current Used')
-                        : (tooltipLabels[col]?.false ?? 'Not Current Used')
+                        ? tooltipLabels[col]?.true ?? 'Current Used'
+                        : tooltipLabels[col]?.false ?? 'Not Current Used'
                     }
                   >
                     <Box
@@ -1000,9 +1057,9 @@ const TableRowItem = React.memo(
                   )}
                 </>
               ) : isHaveGender && col === 'gender' ? (
-                (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
+                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
               ) : isSiteSpaceType && col === 'type' ? (
-                (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
+                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
               ) : isHaveImage &&
                 imageFields.includes(col) &&
                 typeof row[col] === 'string' &&
@@ -1071,8 +1128,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? (tooltipLabels[col]?.true ?? 'Verified')
-                        : (tooltipLabels[col]?.false ?? 'Not Verified')
+                        ? tooltipLabels[col]?.true ?? 'Verified'
+                        : tooltipLabels[col]?.false ?? 'Not Verified'
                     }
                   >
                     <Box
@@ -1293,7 +1350,7 @@ const TableRowItem = React.memo(
                 Array.isArray(row[col]) ? (
                   row[col].map((item: any) => item.name).join(', ')
                 ) : (
-                  ((row[col] as { name?: string }).name ?? '-')
+                  (row[col] as { name?: string }).name ?? '-'
                 )
               ) : (
                 <>
@@ -2164,7 +2221,7 @@ const TableRowItem = React.memo(
             </TableCell>
           </>
         )}
-        {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+        {isHaveActionOnlyEdit && !isActionVisitor && (
           <>
             <TableCell
               sx={{
@@ -2199,25 +2256,28 @@ const TableRowItem = React.memo(
                   </Tooltip>
                 )}
                 {/* Tombol Edit (Primary, Kecil) */}
-                <Tooltip title="Edit">
-                  <IconButton
-                    onClick={() => onEdit?.(row)}
-                    disableRipple
-                    sx={{
-                      color: 'white',
-                      backgroundColor: '#FA896B',
-
-                      width: 28,
-                      height: 28,
-                      padding: 0.5,
-                      borderRadius: '50%',
-
-                      '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                    }}
-                  >
-                    <IconPencil width={14} height={14} />
-                  </IconButton>
-                </Tooltip>
+                {isSelectedType && (
+                  <Tooltip title="Edit">
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: '#e06f52',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
             </TableCell>
           </>
