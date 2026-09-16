@@ -36,6 +36,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import dayjs from 'dayjs';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 const Content = () => {
   const dispatch = useDispatch();
@@ -133,7 +134,7 @@ const Content = () => {
     fetchData();
   }, []);
 
-  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <PageContainer
@@ -153,12 +154,9 @@ const Content = () => {
             >
               <Box>
                 <Typography variant="h4" fontWeight="bold">
-                  Welcome Back, {profile?.fullname} 👋
+                  {t('welcomeBack')}, {profile?.fullname} 👋
                 </Typography>
-                <Typography color="text.secondary">
-                  {' '}
-                  Here's an overview of today's visitor activity.
-                </Typography>
+                <Typography color="text.secondary"> {t('visitorActivityOverview')}</Typography>
               </Box>
             </Grid>
             <Grid
@@ -197,7 +195,7 @@ const Content = () => {
               <Drawer open={open} anchor="right" onClose={handleClose}>
                 <Box sx={{ p: 2 }}>
                   <Typography variant="h6" mb={1}>
-                    Select Date Range
+                    {t('selectDateRange')}
                   </Typography>
                   <Calendar
                     value={{ startDate, endDate }}

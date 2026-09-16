@@ -1090,7 +1090,7 @@ const OperatorView = () => {
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
 
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
 
           visitor: {
             ...inv.visitor,
@@ -1669,7 +1669,11 @@ const OperatorView = () => {
           icon: 'info',
           target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-          html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions.map((option) => `<option value="${option}">${option}</option>`).join('')} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
+          html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions
+            .map((option) => `<option value="${option}">${option}</option>`)
+            .join(
+              '',
+            )} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
           showCloseButton: true,
           showCancelButton: true,
           confirmButtonText: action === 'Block' ? 'Yes' : 'Yes',
@@ -2494,7 +2498,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
                   }
 
                   return fieldPayload;
@@ -3370,7 +3374,12 @@ const OperatorView = () => {
               {/* Side Right QR Code */}
               <Grid
                 size={{ xs: 12, lg: 3 }}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  minWidth: 0,
+                }}
               >
                 <HostInformation invitationCode={invitationCode} isFullscreen={isFullscreen} />
                 <VisitorImage

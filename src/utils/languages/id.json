@@ -220,5 +220,13 @@
   "preRegistrationCreatedSuccessfully": "Berhasil membuat pra-registrasi.",
   "invitationVisitorCreatedSuccessfully": "Berhasil membuat undangan pengunjung.",
   "groupVisitorCreatedSuccessfully": "Berhasil membuat grup pengunjung.",
-  "visitorAddedSuccessfully": "Visitor berhasil ditambahkan."
+  "visitorAddedSuccessfully": "Visitor berhasil ditambahkan.",
+  "invitationSubmittedSuccessfully": "Undangan Berhasil Dikirim",
+  "invitationSubmittedDescription": "Undangan Anda telah berhasil dikirim.",
+  "invitationEmailConfirmation": "Email konfirmasi berisi detail undangan akan segera dikirim ke alamat email Anda.",
+  "checkInboxOrSpam": "Silakan periksa kotak masuk atau folder spam jika Anda belum menerima email dalam beberapa menit.",
+  "backToLogin": "Kembali ke Login",
+  "welcomeBack": "Selamat Datang Kembali",
+  "visitorActivityOverview": "Ringkasan Aktivitas Pengunjung",
+  "selectDateRange": "Pilih Rentang Tanggal"
 }

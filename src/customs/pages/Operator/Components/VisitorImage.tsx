@@ -259,6 +259,8 @@ const VisitorImage = ({
           minHeight: 0,
           backgroundColor: 'background.paper',
           overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
         }}
         id="tour-occupancy"
       >
@@ -267,7 +269,7 @@ const VisitorImage = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 2,
+            mb: 0,
           }}
         >
           <Typography variant="h5" fontWeight="bold">
@@ -290,7 +292,16 @@ const VisitorImage = ({
           </FormControl>
         </Box>
 
-        <Grid container spacing={2} mt={2}>
+        <Grid
+          container
+          spacing={2}
+          mt={2}
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            alignItems: 'stretch',
+          }}
+        >
           {visiblePurposes.length > 0 ? (
             <>
               {visiblePurposess.map((item: any) => {
@@ -341,11 +352,23 @@ const VisitorImage = ({
               )}
             </>
           ) : (
-            <Grid size={12}>
+            <Grid
+              size={12}
+              sx={{
+                display: 'flex',
+                minHeight: 0,
+                height: '100%',
+              }}
+            >
               <Card
                 variant="outlined"
                 sx={{
-                  py: 5,
+                  width: '100%',
+                  minHeight: 250,
+                  height: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   textAlign: 'center',
                   borderStyle: 'dashed',
                 }}

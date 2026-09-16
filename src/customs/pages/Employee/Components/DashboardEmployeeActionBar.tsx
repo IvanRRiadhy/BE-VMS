@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box, Button, Drawer, Grid2 as Grid, Typography } from '@mui/material';
 import { IconCalendar, IconDownload } from '@tabler/icons-react';
 import Calendar from 'src/customs/components/calendar/Calendar';
+import { useTranslation } from 'react-i18next';
 
 type DashboardActionBarProps = {
   startDate: any;
@@ -21,7 +22,7 @@ const DashboardEmployeeActionBar = ({
   profile,
 }: DashboardActionBarProps) => {
   const [open, setOpen] = useState(false);
-
+  const { t } = useTranslation();
   return (
     <Grid
       container
@@ -41,11 +42,11 @@ const DashboardEmployeeActionBar = ({
       >
         <Box>
           <Typography variant="h4" fontWeight="bold">
-            Welcome Back, {profile?.fullname} 👋
+            {t('welcomeBack')}, {profile?.fullname} 👋
           </Typography>
           <Typography color="text.secondary" mt={0.5}>
             {' '}
-            Here's an overview of today's visitor activity.
+            {t('visitorActivityOverview')}
           </Typography>
         </Box>
       </Grid>
@@ -89,7 +90,7 @@ const DashboardEmployeeActionBar = ({
       <Drawer open={open} anchor="right" onClose={() => setOpen(false)}>
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" mb={1}>
-            Select Date Range
+            {t('selectDateRange')}
           </Typography>
 
           <Calendar

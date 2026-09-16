@@ -221,10 +221,27 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
         }}
         id="tour-visitor-list"
       >
-        <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
+        <Box
+          sx={{
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: {
+              xs: 'wrap',
+              md: 'nowrap',
+            },
+          }}
+        >
           <Box
             sx={{
-              display: 'inline-flex',
+              display: 'flex',
+              width: {
+                xs: '100%',
+                md: 'auto',
+              },
+              minWidth: 0,
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 1.5,
@@ -235,15 +252,26 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             <Tabs
               value={typeVisitor}
               onChange={(_, value) => setTypeVisitor(value)}
+              variant="fullWidth"
               sx={{
+                width: '100%',
                 minHeight: 50,
 
                 '& .MuiTab-root': {
                   minHeight: 50,
-                  px: 2,
+                  minWidth: 0,
+                  px: {
+                    xs: 1,
+                    sm: 2,
+                  },
+                  flex: 1,
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: 13,
+                  fontSize: {
+                    xs: 11,
+                    sm: 13,
+                  },
+                  whiteSpace: 'nowrap',
                   borderRight: '1px solid',
                   borderColor: 'divider',
 
@@ -264,7 +292,6 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
             >
               <Tab value="live" label={`Live Visitors (${liveCount})`} />
               <Tab value="related" label={`Related Visitors (${relatedCount})`} />
-              {/* <Tab value="today-activity" label={`Today Activity`} /> */}
             </Tabs>
           </Box>
           <Box display="flex" alignItems="center" gap={0.5}>

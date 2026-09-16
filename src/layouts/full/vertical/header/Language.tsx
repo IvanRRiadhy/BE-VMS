@@ -50,23 +50,33 @@ const Language = () => {
     if (i18n.language !== customizer.isLanguage) {
       i18n.changeLanguage(customizer.isLanguage);
     }
-  }, [customizer.isLanguage]);
+  }, [customizer.isLanguage, i18n]);
+  // useEffect(() => {
+  //   const savedLang = localStorage.getItem('lang');
+
+  //   if (savedLang) {
+  //     dispatch(setLanguage(savedLang));
+  //   } else {
+  //     const browserLang = navigator.language.split('-')[0];
+
+  //     const supportedLang = Languages.find((l) => l.value === browserLang);
+
+  //     if (supportedLang) {
+  //       dispatch(setLanguage(browserLang));
+  //     }
+  //   }
+  // }, []);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('lang');
 
-    if (savedLang) {
+    if (savedLang && Languages.some((lang) => lang.value === savedLang)) {
       dispatch(setLanguage(savedLang));
     } else {
-      const browserLang = navigator.language.split('-')[0];
-
-      const supportedLang = Languages.find((l) => l.value === browserLang);
-
-      if (supportedLang) {
-        dispatch(setLanguage(browserLang));
-      }
+      localStorage.setItem('lang', 'en');
+      dispatch(setLanguage('en'));
     }
-  }, []);
+  }, [dispatch]);
 
   return (
     <>

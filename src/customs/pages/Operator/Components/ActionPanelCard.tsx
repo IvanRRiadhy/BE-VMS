@@ -108,7 +108,7 @@ const ActionPanelCard: FC<Props> = ({
               sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
             >
               <Grid container spacing={isFullscreen ? 1 : 1}>
-                <Grid size={{ xs: 6, lg: 4 }}>
+                <Grid size={{ xs: 12, lg: 4 }}>
                   <Typography variant="h6" sx={{ opacity: 0.7, mb: '10px' }}>
                     Visit Flow
                   </Typography>

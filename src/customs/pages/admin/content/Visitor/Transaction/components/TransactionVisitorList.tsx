@@ -165,6 +165,7 @@ const TransactionVisitorList = ({
                       variant="outlined"
                       sx={{
                         backgroundColor: 'gray',
+                        border: 'none',
                         color: 'white',
                       }}
                       startIcon={<ContentCopy />}

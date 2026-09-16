@@ -221,5 +221,13 @@
   "preRegistrationCreatedSuccessfully": "Successfully created pre-registration.",
   "invitationVisitorCreatedSuccessfully": "Successfully created visitor invitation.",
   "groupVisitorCreatedSuccessfully": "Successfully created visitor group.",
-  "visitorAddedSuccessfully": "Successfully added visitor."
+  "visitorAddedSuccessfully": "Successfully added visitor.",
+  "invitationSubmittedSuccessfully": "Invitation Submitted Successfully",
+  "invitationSubmittedDescription": "Your invitation has been successfully submitted.",
+  "invitationEmailConfirmation": "A confirmation email with the invitation details will be sent to your email address shortly.",
+  "checkInboxOrSpam": "Please check your inbox or spam folder if you do not receive the email within a few minutes.",
+  "backToLogin": "Back To Login",
+  "welcomeBack": "Welcome Back",
+  "visitorActivityOverview": "Overview of Visitor Activities",
+  "selectDateRange": "Select Date Range"
 }

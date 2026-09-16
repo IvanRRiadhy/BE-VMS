@@ -7,20 +7,23 @@ import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 
 import { IconArrowLeft, IconArrowRight, IconCircleCheck } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 export default function SuccessPage() {
   const navigate = useNavigate();
   const [showBackToTop, setShowBackToTop] = useState(false);
   // useEffect(() => {
-  //   const token = localStorage.getItem('token'); 
+  //   const token = localStorage.getItem('token');
   //   const timer = setTimeout(() => {
   //     if (token) {
   //       navigate('/guest/dashboard');
   //     }
-  //   }, 3000); 
+  //   }, 3000);
 
   //   return () => clearTimeout(timer);
   // }, []);
+
+  const { t } = useTranslation();
   return (
     <PageContainer title="Invitation" description="this is self praregistration">
       <Box>
@@ -77,17 +80,15 @@ export default function SuccessPage() {
                   <IconCircleCheck size={60} color="white" />
                 </Box>
                 <Typography variant="h4" mt={2} fontWeight={600}>
-                  Invitation Submitted Successfully
+                  {t('invitationSubmittedSuccessfully')}
                 </Typography>
 
                 <Typography variant="body1" sx={{ my: 2, maxWidth: 420, color: 'text.secondary' }}>
-                  Your invitation has been successfully submitted. <br />A confirmation email with
-                  the invitation details will be sent to your email address shortly.
+                  {t('invitationSubmittedDescription')} <br /> {t('invitationEmailConfirmation')}
                 </Typography>
 
                 <Typography variant="body2" sx={{ mt: 1, color: 'gray' }}>
-                  Please check your inbox or spam folder if you do not receive the email within a
-                  few minutes.
+                  {t('checkInboxOrSpam')}
                 </Typography>
 
                 <Typography
@@ -101,7 +102,7 @@ export default function SuccessPage() {
                     style={{ display: 'flex', alignItems: 'center', color: 'gray' }}
                   >
                     <IconArrowLeft />
-                    Back To Login
+                    {t('backToLogin')}
                   </Link>
                 </Typography>
               </Box>

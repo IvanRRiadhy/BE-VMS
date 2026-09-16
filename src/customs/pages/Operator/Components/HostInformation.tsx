@@ -90,11 +90,12 @@ const HostInformation = ({
           border: '1px solid #e0e0e0',
           backgroundColor: 'background.paper',
           p: 1,
-          // mt: 0.5,
-          // height: '100%',
-          height: '30%',
-          // display: 'flex',
-          // flexDirection: 'column',
+
+          height: 'auto',
+          minHeight: 190,
+          flexShrink: 0,
+          overflow: 'visible',
+          boxSizing: 'border-box',
         }}
         id="tour-host-info"
       >
@@ -111,7 +112,7 @@ const HostInformation = ({
             px: '15px !important',
           }}
         >
-          <Box sx={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+          <Box sx={{ display: 'flex', gap: 4 }}>
             <Avatar
               src={
                 host?.faceimage
