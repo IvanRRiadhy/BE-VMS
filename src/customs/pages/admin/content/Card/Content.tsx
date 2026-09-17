@@ -231,74 +231,74 @@ const Content = () => {
     'Not Returned': 4,
   };
 
-  const handleEdit = async (id: string) => {
-    const existingData = tableVisitorCard.find((item) => item.id === id);
-    // const existingData = await getVisitorCardById(String(id));
-
-    if (!existingData) return;
-
-    const parsedData = {
-      ...existingData,
-      registered_site: existingData.registered_site ?? '',
-
-      // GET API -> form number
-      type:
-        typeof existingData.type === 'number'
-          ? existingData.type
-          : (typeMap[existingData.type] ?? 0),
-
-      card_status:
-        typeof existingData.card_status === 'number'
-          ? existingData.card_status
-          : (cardStatusMap[existingData.card_status] ?? 0),
-    } as CreateVisitorCardRequest;
-
-    setEdittingId(id);
-    setFormAddVisitorCard(parsedData);
-    setInitialFormData(parsedData);
-    handleOpenDialog();
-  };
-
   // const handleEdit = async (id: string) => {
-  //   try {
-  //     const response = await getVisitorCardById(String(id));
+  //   const existingData = tableVisitorCard.find((item) => item.id === id);
+  //   // const existingData = await getVisitorCardById(String(id));
 
-  //     const existingData = response?.collection;
-  //     console.log('existingData', existingData);
+  //   if (!existingData) return;
 
-  //     if (!existingData) return;
+  //   const parsedData = {
+  //     ...existingData,
+  //     registered_site: existingData.registered_site ?? '',
 
-  //     const parsedData = {
-  //       ...existingData,
-  //       registered_site: existingData.registered_site ?? '',
+  //     // GET API -> form number
+  //     type:
+  //       typeof existingData.type === 'number'
+  //         ? existingData.type
+  //         : (typeMap[existingData.type] ?? 0),
 
-  //       type:
-  //         typeof existingData.type === 'number'
-  //           ? existingData.type
-  //           : (typeMap[existingData.type] ?? 0),
+  //     card_status:
+  //       typeof existingData.card_status === 'number'
+  //         ? existingData.card_status
+  //         : (cardStatusMap[existingData.card_status] ?? 0),
+  //   } as CreateVisitorCardRequest;
 
-  //       card_status:
-  //         typeof existingData.card_status === 'number'
-  //           ? existingData.card_status
-  //           : (cardStatusMap[existingData.card_status] ?? 0),
-  //     } as CreateVisitorCardRequest;
-
-  //     setEdittingId(id);
-  //     setFormAddVisitorCard(parsedData);
-  //     setInitialFormData(parsedData);
-
-  //     setEnabledFields({
-  //       employee_id: existingData.is_employee_used === true,
-  //       is_employee_used: existingData.is_employee_used === true,
-  //       registered_site: !existingData.is_multi_site,
-  //       is_multi_site: true,
-  //     });
-
-  //     handleOpenDialog();
-  //   } catch (error) {
-  //     console.error('Failed to get visitor card:', error);
-  //   }
+  //   setEdittingId(id);
+  //   setFormAddVisitorCard(parsedData);
+  //   setInitialFormData(parsedData);
+  //   handleOpenDialog();
   // };
+
+  const handleEdit = async (id: string) => {
+    try {
+      const response = await getVisitorCardById(String(id));
+
+      const existingData = response?.collection;
+      console.log('existingData', existingData);
+
+      if (!existingData) return;
+
+      const parsedData = {
+        ...existingData,
+        registered_site: existingData.registered_site ?? '',
+
+        type:
+          typeof existingData.type === 'number'
+            ? existingData.type
+            : (typeMap[existingData.type] ?? 0),
+
+        card_status:
+          typeof existingData.card_status === 'number'
+            ? existingData.card_status
+            : (cardStatusMap[existingData.card_status] ?? 0),
+      } as CreateVisitorCardRequest;
+
+      setEdittingId(id);
+      setFormAddVisitorCard(parsedData);
+      setInitialFormData(parsedData);
+
+      setEnabledFields({
+        employee_id: existingData.is_employee_used === true,
+        is_employee_used: existingData.is_employee_used === true,
+        registered_site: !existingData.is_multi_site,
+        is_multi_site: true,
+      });
+
+      handleOpenDialog();
+    } catch (error) {
+      console.error('Failed to get visitor card:', error);
+    }
+  };
 
   const handleDeleteVisitorCard = async (id: string) => {
     const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Card' }));
