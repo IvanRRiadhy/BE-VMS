@@ -47,6 +47,7 @@ import { useVisitorCardPagination } from 'src/hooks/Card/useVisitorCard';
 import { useVisitorCardSummary } from 'src/hooks/Card/useVisitorCardSummary';
 import { useVisitorCardMutation } from 'src/hooks/Card/useVisitorCardMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { getVisitorCardById } from 'src/customs/api/admin';
 
 type EnableField = {
   employee_id: boolean;
@@ -232,6 +233,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     const existingData = tableVisitorCard.find((item) => item.id === id);
+    // const existingData = await getVisitorCardById(String(id));
 
     if (!existingData) return;
 
@@ -256,6 +258,47 @@ const Content = () => {
     setInitialFormData(parsedData);
     handleOpenDialog();
   };
+
+  // const handleEdit = async (id: string) => {
+  //   try {
+  //     const response = await getVisitorCardById(String(id));
+
+  //     const existingData = response?.collection;
+  //     console.log('existingData', existingData);
+
+  //     if (!existingData) return;
+
+  //     const parsedData = {
+  //       ...existingData,
+  //       registered_site: existingData.registered_site ?? '',
+
+  //       type:
+  //         typeof existingData.type === 'number'
+  //           ? existingData.type
+  //           : (typeMap[existingData.type] ?? 0),
+
+  //       card_status:
+  //         typeof existingData.card_status === 'number'
+  //           ? existingData.card_status
+  //           : (cardStatusMap[existingData.card_status] ?? 0),
+  //     } as CreateVisitorCardRequest;
+
+  //     setEdittingId(id);
+  //     setFormAddVisitorCard(parsedData);
+  //     setInitialFormData(parsedData);
+
+  //     setEnabledFields({
+  //       employee_id: existingData.is_employee_used === true,
+  //       is_employee_used: existingData.is_employee_used === true,
+  //       registered_site: !existingData.is_multi_site,
+  //       is_multi_site: true,
+  //     });
+
+  //     handleOpenDialog();
+  //   } catch (error) {
+  //     console.error('Failed to get visitor card:', error);
+  //   }
+  // };
 
   const handleDeleteVisitorCard = async (id: string) => {
     const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Card' }));

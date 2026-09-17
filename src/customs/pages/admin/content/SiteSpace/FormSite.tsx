@@ -130,8 +130,6 @@ const FormSite = ({
   const parentRouteId = segments[segments.length - 1] || null;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  // const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [siteTypes] = useState<{ label: string; value: number }[]>([
     { label: 'Site', value: 0 },
     { label: 'Building', value: 1 },
@@ -921,8 +919,13 @@ useEffect(() => {
     }
   };
   return (
-    <>
-      <form onSubmit={handleOnSubmit}>
+    <form onSubmit={handleOnSubmit}>
+      <Box
+        sx={{
+          px: { xs: 2, md: 3 },
+          pt: 2,
+        }}
+      >
         <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
           <Grid size={{ xs: 12, md: 5 }} display={'flex'}>
             <Paper sx={{ p: 3, height: '100%', width: '100%' }}>
@@ -2207,19 +2210,41 @@ useEffect(() => {
             </Paper>
           </Grid>
         </Grid>
+      </Box>
+      <Box
+        sx={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 1100,
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={isPending}
-            size="medium"
-          >
-            Submit
-          </Button>
-        </Box>
-      </form>
+          display: 'flex',
+          justifyContent: 'flex-end',
+
+          width: '100%',
+          px: { xs: 2, md: 3 },
+          py: 1.5,
+
+          backgroundColor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        <Button
+          color="primary"
+          variant="contained"
+          type="submit"
+          disabled={isPending}
+          size="medium"
+          sx={{
+            minWidth: 120,
+            fontWeight: 600,
+          }}
+        >
+          Submit
+        </Button>
+      </Box>
+
       <Portal>
         <Snackbar
           open={snackbar.open}
@@ -2244,7 +2269,7 @@ useEffect(() => {
         </Snackbar>
       </Portal>
       <GlobalBackdropLoading open={isPending} />
-    </>
+    </form>
   );
 };
 
