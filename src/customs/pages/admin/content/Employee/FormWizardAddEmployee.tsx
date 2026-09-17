@@ -23,6 +23,10 @@ import {
   StepButton,
   LinearProgress,
   IconButton,
+  AlertColor,
+  Snackbar,
+  Portal,
+  Alert,
 } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -112,6 +116,15 @@ const FormWizardAddEmployee = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
   const { create, update, uploadImage, isPending } = useEmployeeMutation();
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+  }>({ open: false, message: '', severity: 'info' });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
   const loading = isPending;
   const clearLocal = () => {
     setSiteImageFile(null);
@@ -138,6 +151,8 @@ const FormWizardAddEmployee = ({
         const rel = serverPath.startsWith('/') ? serverPath : `/${serverPath}`;
         const deletePath = rel.startsWith('/cdn/') ? rel : `/cdn${rel}`;
         await axiosInstance2.delete(deletePath);
+        // showSwal('success', 'Deleted successfully');
+        toast('Succesfully deleted file', 'success');
       }
     } catch (err) {
       console.error('Delete failed:', err);
@@ -159,17 +174,56 @@ const FormWizardAddEmployee = ({
     setSiteImageFile(null);
   };
 
-  const handleCapture = () => {
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      if (imageSrc) {
-        setScreenshot(imageSrc);
-        setPreviewUrl(imageSrc);
-        setFormData((prev) => ({
-          ...prev,
-          faceimage: imageSrc,
-        }));
-      }
+  // const handleCapture = () => {
+  //   if (webcamRef.current) {
+  //     const imageSrc = webcamRef.current.getScreenshot();
+  //     if (imageSrc) {
+  //       setScreenshot(imageSrc);
+  //       setPreviewUrl(imageSrc);
+  //       setFormData((prev) => ({
+  //         ...prev,
+  //         faceimage: imageSrc,
+  //       }));
+  //     }
+  //   }
+  // };
+
+  const handleCapture = async () => {
+    if (!webcamRef.current) return;
+
+    const imageSrc = webcamRef.current.getScreenshot();
+
+    if (!imageSrc) {
+      console.log('Failed to capture photo');
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+
+      // Base64 -> Blob
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+
+      // Compress
+      const compressedBlob = await compressImage(blob);
+
+      // Blob -> File
+      const file = new File([compressedBlob], 'webcam.jpg', {
+        type: compressedBlob.type || 'image/jpeg',
+        lastModified: Date.now(),
+      });
+
+      // Simpan sebagai file yang akan diupload
+      setSiteImageFile(file);
+
+      // Preview
+      setScreenshot(imageSrc);
+      setPreviewUrl(URL.createObjectURL(file));
+    } catch (error) {
+      showSwal('error', 'Failed to process camera image');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -383,7 +437,7 @@ const FormWizardAddEmployee = ({
     type: String(v.type ?? 'Permanent'),
   });
 
-  const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
+  // const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -467,14 +521,10 @@ const FormWizardAddEmployee = ({
       const rawFaceImage = localForm.faceimage;
       const rawFileImage = siteImageFile;
 
-      const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage as string);
-      console.log('EDIT EMPLOYEE');
-      console.log('hasNewImage:', hasNewImage);
+      const hasNewImage = Boolean(rawFileImage);
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
         if (hasNewImage) {
-          console.log('CALLING HANDLE FILE UPLOADS');
-
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
         const editData: any = {
@@ -520,42 +570,88 @@ const FormWizardAddEmployee = ({
     }
   };
 
+  // const handleFileUploads = async (
+  //   employeeId: string,
+  //   fileFromInput?: File | null,
+  //   faceImage?: string | null,
+  // ) => {
+  //   const tasks: Promise<any>[] = [];
+
+  //   try {
+  //     setIsUploadingImage(true);
+
+  //     if (fileFromInput instanceof File) {
+  //       tasks.push(
+  //         uploadImage.mutateAsync({
+  //           employeeId,
+  //           file: fileFromInput,
+  //         }),
+  //       );
+  //     }
+
+  //     if (faceImage) {
+  //       const blob = await fetch(faceImage).then((res) => res.blob());
+  //       const file = new File([blob], 'webcam.jpg', {
+  //         type: 'image/jpeg',
+  //       });
+
+  //       tasks.push(
+  //         uploadImage.mutateAsync({
+  //           employeeId,
+  //           file,
+  //         }),
+  //       );
+  //     }
+
+  //     if (tasks.length === 0) return;
+
+  //     await Promise.all(tasks);
+  //   } finally {
+  //     setIsUploadingImage(false);
+  //   }
+  // };
+
   const handleFileUploads = async (
     employeeId: string,
     fileFromInput?: File | null,
     faceImage?: string | null,
   ) => {
-    const tasks: Promise<any>[] = [];
-
     try {
       setIsUploadingImage(true);
 
+      let file: File | null = null;
+
+      // 1. File dari upload input
       if (fileFromInput instanceof File) {
-        tasks.push(
-          uploadImage.mutateAsync({
-            employeeId,
-            file: fileFromInput,
-          }),
-        );
+        file = fileFromInput;
       }
 
-      if (faceImage && isDataUrl(faceImage)) {
+      // 2. File dari camera
+      else if (faceImage && typeof faceImage === 'string' && /^data:image\//i.test(faceImage)) {
         const blob = await fetch(faceImage).then((res) => res.blob());
-        const file = new File([blob], 'webcam.jpg', {
+
+        file = new File([blob], 'webcam.jpg', {
           type: 'image/jpeg',
         });
-
-        tasks.push(
-          uploadImage.mutateAsync({
-            employeeId,
-            file,
-          }),
-        );
       }
 
-      if (tasks.length === 0) return;
+      if (!file) {
+        return;
+      }
 
-      await Promise.all(tasks);
+      const response = await uploadImage.mutateAsync({
+        employeeId,
+        file,
+      });
+
+      // toast('Photo uploaded successfully', 'success');
+
+      return response;
+    } catch (error) {
+      console.error('========== UPLOAD ERROR ==========');
+      console.error(error);
+
+      throw error;
     } finally {
       setIsUploadingImage(false);
     }
@@ -563,7 +659,7 @@ const FormWizardAddEmployee = ({
 
   const compressImage = async (file: File | Blob) => {
     const compressedFile = await imageCompression(file as File, {
-      maxSizeMB: 1,
+      maxSizeMB: 5,
       maxWidthOrHeight: 1920,
       useWebWorker: true,
     });
@@ -579,22 +675,25 @@ const FormWizardAddEmployee = ({
     try {
       setIsUploadingImage(true);
 
-      // Hilangkan preview lama dulu
       setPreviewUrl(null);
       setSiteImageFile(null);
 
-      // Kalau memang ada proses compress, lakukan di sini
-      const compressedFile = await compressImage(selectedFile);
+      const compressedBlob = await compressImage(selectedFile);
 
-      if (compressedFile.size > 5 * 1024 * 1024) {
+      if (compressedBlob.size > 5 * 1024 * 1024) {
         showSwal('info', 'Image must be under 5 MB');
         return;
       }
 
-      // Setelah selesai baru tampilkan gambar
+      const compressedFile = new File([compressedBlob], selectedFile.name, {
+        type: compressedBlob.type || selectedFile.type,
+        lastModified: Date.now(),
+      });
+
       setSiteImageFile(compressedFile);
       setPreviewUrl(URL.createObjectURL(compressedFile));
     } catch (error) {
+      console.error('Failed to process image:', error);
       showSwal('error', 'Failed to process image');
     } finally {
       setIsUploadingImage(false);
@@ -1558,7 +1657,7 @@ const FormWizardAddEmployee = ({
 
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/jpg"
                       hidden
                       ref={fileInputRef}
                       onChange={handleFileChange}
@@ -1695,6 +1794,24 @@ const FormWizardAddEmployee = ({
           </Box>
         </>
       </Box>
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{ zIndex: 2000 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
       <GlobalBackdropLoading open={loading} />
     </form>
   );

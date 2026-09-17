@@ -452,7 +452,7 @@ const FormWizardAddVisitorCard = ({
                 htmlFor="card-type"
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="caption">Registered Site</Typography>
+                  <Typography variant="caption">Allow card on all site</Typography>
 
                   <Tooltip
                     title="Select a site when disabled. Enable for multiple sites"

@@ -429,7 +429,7 @@ const ActionPanelCard: FC<Props> = ({
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.2}>
                 {/* Open */}
-                {loading ? (
+                {/* {loading ? (
                   <ButtonSkeleton />
                 ) : (
                   canVisitorTriggerOpen && (
@@ -461,7 +461,7 @@ const ActionPanelCard: FC<Props> = ({
                       </Button>
                     </Grid>
                   )
-                )}
+                )} */}
 
                 {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
@@ -486,7 +486,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid> */}
-                {loading ? (
+                {/* {loading ? (
                   <ButtonSkeleton />
                 ) : (
                   canAccess && (
@@ -519,7 +519,7 @@ const ActionPanelCard: FC<Props> = ({
                       </Button>
                     </Grid>
                   )
-                )}
+                )} */}
                 {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"

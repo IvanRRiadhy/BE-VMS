@@ -2183,7 +2183,7 @@ useEffect(() => {
                   )}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,/image/jpg"
                     hidden
                     ref={fileInputRef}
                     onChange={handleFileSelect}
