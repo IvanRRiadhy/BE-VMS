@@ -297,7 +297,6 @@ const ThirdPartyIntegration = () => {
         onEdit={(row) => {
           handleEdit(row.id);
         }}
-        // API KEY
         isHaveSecret
         visibleSecrets={visibleApiKeys}
         loadingSecrets={loadingApiKeys}
@@ -306,6 +305,9 @@ const ThirdPartyIntegration = () => {
         isHaveGenerateApiKey={true}
         onGenerateApiKey={(row: any) => handleGenerateApiKey(row.id)}
         onBatchDelete={handleBatchDelete}
+        isHaveAddEmpty={true}
+        addDataText="Add Api Key"
+        onAddEmpty={handleAdd}
       />
 
       <ApiKeyFormDialog

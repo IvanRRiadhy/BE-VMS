@@ -33,6 +33,7 @@ interface TransactionVisitorDetailProps {
   selectedVisitor?: any;
   setSelectedVisitor?: any;
   handleRemoveVisitor: () => void;
+  handleAddInvitation: () => void;
 }
 
 const TransactionVisitorDetail = ({
@@ -48,6 +49,7 @@ const TransactionVisitorDetail = ({
   selectedVisitor,
   setSelectedVisitor,
   handleRemoveVisitor,
+  handleAddInvitation,
 }: TransactionVisitorDetailProps) => {
   return (
     <Box
@@ -175,7 +177,8 @@ const TransactionVisitorDetail = ({
           <Typography color="text.secondary" mt={2} variant="h5">
             {t('selectGroupFromTheList')}
           </Typography>
-          <Button variant="contained" color="primary" startIcon={<IconPlus />}>
+          
+          <Button variant="contained" color="primary" startIcon={<IconPlus />} onClick={handleAddInvitation}>
             Add Invitation
           </Button>
         </Box>

@@ -480,7 +480,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setGroupVisitors([
       {
-        id: crypto.randomUUID(),
+        id: generateUUIDv4(),
         group_name: duplicateData.visitors[0]?.group_name ?? '',
         group_code: randomCode,
         data_visitor: mappedVisitors,
@@ -1246,8 +1246,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     Group List
                   </CustomFormLabel>
 
-
-                          <TableContainer
+                  <TableContainer
                     component={Paper}
                     sx={{
                       '@media (max-width:600px)': {
@@ -2663,7 +2662,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   sx={{ width: { xs: '100%', md: '200px' } }}
                 >
                   <MenuItem value="file">Choose File</MenuItem>
-                  <MenuItem value="camera">{t("takePhoto")}</MenuItem>
+                  <MenuItem value="camera">{t('takePhoto')}</MenuItem>
                 </TextField>
 
                 {(uploadMethods[key] || 'file') === 'camera' ? (
@@ -4853,7 +4852,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </Box>
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-
                               <DateTimePicker
                                 disabled={option?.disabled}
                                 open={openEndPicker}

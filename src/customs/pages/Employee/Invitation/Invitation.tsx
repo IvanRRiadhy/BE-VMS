@@ -738,6 +738,7 @@ const Content = () => {
     }
   };
 
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -814,6 +815,7 @@ const Content = () => {
                   setSelectedVisitor={setSelectedVisitor}
                   openGroup={openGroup}
                   setOpenGroup={setOpenGroup}
+                  handleAddInvitation={handleAddInvitation}
                 />
                 {/* Detail From List */}
                 {selectedVisitor && (

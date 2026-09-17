@@ -486,6 +486,9 @@ const Content = () => {
                   onSearch={handleSearch}
                   onSearchKeywordChange={handleSearchKeywordChange}
                   onAddData={() => handleAdd(mapSelectedToEntity)}
+                  isHaveAddEmpty={true}
+                  addDataText={`Add New ${entityLabel(mapSelectedToEntity)}`}
+                  onAddEmpty={() => handleAdd(mapSelectedToEntity)}
                 />
               </Grid>
             </Grid>

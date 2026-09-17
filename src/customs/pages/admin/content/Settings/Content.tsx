@@ -214,7 +214,7 @@ const Content = () => {
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
               <Tab label="Apikey Setting" />
-              <Tab label="License" />
+              {/* <Tab label="License" /> */}
               <Tab label="Vehicle" />
               {/* <Tab label="Visitor Card Setting" /> */}
               {/* <Tab label="Notification Setting" /> */}
@@ -290,7 +290,7 @@ const Content = () => {
                 </Box>
               ) : null} */}
 
-              {tabIndex === 4 ? (
+              {tabIndex === 10 ? (
                 <Box>
                   <Card sx={{ p: 2, mt: 2 }}>
                     {/* License Upload */}
@@ -627,7 +627,7 @@ const Content = () => {
                 </Box>
               ) : null}
 
-              {tabIndex === 5 ? <Vehicle /> : null}
+              {tabIndex === 4 ? <Vehicle /> : null}
             </Box>
           </Paper>
         </Box>

@@ -232,6 +232,9 @@ const Content = () => {
                 onSearch={handleSearch}
                 onAddData={handleAdd}
                 isHaveObjectData={true}
+                isHaveAddEmpty={true}
+                addDataText="Add Custom Field"
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>

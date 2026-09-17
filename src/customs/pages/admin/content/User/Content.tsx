@@ -390,6 +390,11 @@ const Content = () => {
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
                 onAddData={handleAdd}
+                isHaveAddEmpty={true}
+                addDataText="Add User"
+                onAddEmpty={() => {
+                  handleAdd();
+                }}
               />
             </Grid>
           </Grid>

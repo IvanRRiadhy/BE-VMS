@@ -191,7 +191,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       sort: index,
     }));
 
-
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -686,291 +685,321 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   });
 
   return (
-    <>
+    <Box>
       <form onSubmit={handleOnSubmit}>
-        <Box width="100%" sx={{ overflow: 'visible' }}>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable
-              droppableId="stepper"
-              direction="horizontal"
-              isDropDisabled={false}
-              isCombineEnabled={false}
-              ignoreContainerClipping={true}
-            >
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '16px 0',
-                    overflowX: 'auto',
-                  }}
-                >
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel
-                    sx={{
-                      width: '100%',
-                      '& .MuiStepLabel-label': {
-                        fontSize: '0.875rem',
-                      },
-                      '& .MuiStepIcon-root.Mui-active': {
-                        color: 'primary.main',
-                      },
-                      '& .MuiStepIcon-root.Mui-completed': {
-                        color: 'primary.main',
-                      },
+        <Box
+          sx={{
+            px: { xs: 2, md: 3 },
+            py: 2,
+          }}
+        >
+          <Box width="100%" sx={{ overflow: 'visible' }}>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable
+                droppableId="stepper"
+                direction="horizontal"
+                isDropDisabled={false}
+                isCombineEnabled={false}
+                ignoreContainerClipping={true}
+              >
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      padding: '16px 0',
+                      overflowX: 'auto',
                     }}
                   >
-                    <Step
-                      key="Visitor Type Info"
-                      completed={false}
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mx: 1,
+                        width: '100%',
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.875rem',
+                        },
+                        '& .MuiStepIcon-root.Mui-active': {
+                          color: 'primary.main',
+                        },
+                        '& .MuiStepIcon-root.Mui-completed': {
+                          color: 'primary.main',
+                        },
                       }}
                     >
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <StepLabel
-                          onClick={() => setActiveStep(0)}
-                          sx={{
-                            position: 'relative',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            fontWeight: activeStep === 0 ? 'bold' : 'normal',
-                            color: activeStep === 0 ? 'primary.main' : 'text.secondary',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Visitor Type Info
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenModal(true);
-                            }}
+                      <Step
+                        key="Visitor Type Info"
+                        completed={false}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 1,
+                        }}
+                      >
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <StepLabel
+                            onClick={() => setActiveStep(0)}
                             sx={{
-                              position: 'absolute',
-                              left: 0,
-                              top: { xs: '14%', sm: '22%' },
-                              transform: 'translateY(-50%)',
-                              minWidth: 0,
-                              width: 26,
-                              height: 26,
-                              borderRadius: '50%',
-                              p: 0,
-                              backgroundColor: 'primary.main',
-                              color: '#fff',
-                              '&:hover': {
-                                backgroundColor: 'primary.dark',
-                              },
+                              position: 'relative',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontWeight: activeStep === 0 ? 'bold' : 'normal',
+                              color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                              cursor: 'pointer',
                             }}
                           >
-                            <AddCircleOutlineIcon sx={{ fontSize: 20 }} />
-                          </Button>
-                        </StepLabel>
-                      </Box>
-                    </Step>
-
-                    {draggableSteps.map((label, index) => (
-                      <Draggable key={label} draggableId={label} index={index}>
-                        {(provided, snapshot) => {
-                          const handleRename = (idx: number, newName: string) => {
-                            setDraggableSteps((prev) =>
-                              prev.map((l, i) => (i === idx ? newName : l)),
-                            );
-                            setSectionsData((prev) =>
-                              prev.map((s, i) => (i === idx ? { ...s, name: newName } : s)),
-                            );
-                          };
-
-                          const handleDelete = (idx: number) => {
-                            setDraggableSteps((prev) => prev.filter((_, i) => i !== idx));
-                            setSectionsData((prev) => prev.filter((_, i) => i !== idx));
-
-                            setActiveStep((prev) => (prev > idx ? prev - 1 : 0));
-                          };
-
-                          return (
-                            <Step
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                mx: 1,
-                                cursor: 'pointer',
+                            Visitor Type Info
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenModal(true);
                               }}
-                              onClick={() => setActiveStep(index + 1)}
+                              sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: { xs: '14%', sm: '22%' },
+                                transform: 'translateY(-50%)',
+                                minWidth: 0,
+                                width: 26,
+                                height: 26,
+                                borderRadius: '50%',
+                                p: 0,
+                                backgroundColor: 'primary.main',
+                                color: '#fff',
+                                '&:hover': {
+                                  backgroundColor: 'primary.dark',
+                                },
+                              }}
                             >
-                              <Box
-                                sx={{
-                                  backgroundColor: snapshot.isDragging
-                                    ? '#1976d2'
-                                    : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
-                                  color: '#fff',
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: '50%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  mb: 0.5,
-                                  fontWeight: 'bold',
-                                  transition: 'all 0.2s ease',
-                                }}
-                              >
-                                {index + 2}
-                              </Box>
+                              <AddCircleOutlineIcon sx={{ fontSize: 20 }} />
+                            </Button>
+                          </StepLabel>
+                        </Box>
+                      </Step>
 
-                              {editingIndex === index ? (
-                                <Box display="flex" alignItems="center" gap={0.5}>
-                                  <TextField
-                                    size="small"
-                                    value={editingName}
-                                    onChange={(e) => setEditingName(e.target.value)}
-                                    onBlur={() => {
-                                      handleRename(index, editingName);
-                                      setEditingIndex(null);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        handleRename(index, editingName);
-                                        setEditingIndex(null);
-                                      }
-                                    }}
-                                    autoFocus
-                                    sx={{ width: 120 }}
-                                  />
-                                </Box>
-                              ) : (
-                                <StepLabel
+                      {draggableSteps.map((label, index) => (
+                        <Draggable key={label} draggableId={label} index={index}>
+                          {(provided, snapshot) => {
+                            const handleRename = (idx: number, newName: string) => {
+                              setDraggableSteps((prev) =>
+                                prev.map((l, i) => (i === idx ? newName : l)),
+                              );
+                              setSectionsData((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, name: newName } : s)),
+                              );
+                            };
+
+                            const handleDelete = (idx: number) => {
+                              setDraggableSteps((prev) => prev.filter((_, i) => i !== idx));
+                              setSectionsData((prev) => prev.filter((_, i) => i !== idx));
+
+                              setActiveStep((prev) => (prev > idx ? prev - 1 : 0));
+                            };
+
+                            return (
+                              <Step
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  mx: 1,
+                                  cursor: 'pointer',
+                                }}
+                                onClick={() => setActiveStep(index + 1)}
+                              >
+                                <Box
                                   sx={{
-                                    fontSize: '0.875rem',
-                                    fontWeight: activeStep === index + 1 ? 'bold' : 'normal',
-                                    color:
-                                      activeStep === index + 1 ? 'primary.main' : 'text.secondary',
-                                    textAlign: 'center',
-                                    px: 1,
-                                    cursor: 'pointer',
-                                    marginLeft: 1.25,
-                                    marginTop: -1.25,
+                                    backgroundColor: snapshot.isDragging
+                                      ? '#1976d2'
+                                      : activeStep === index + 1
+                                        ? 'primary.main'
+                                        : '#9e9e9e',
+                                    color: '#fff',
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 0.5,
+                                    justifyContent: 'center',
+                                    mb: 0.5,
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.2s ease',
                                   }}
                                 >
-                                  {label}
-                                  <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    gap={0.25}
-                                    justifyContent={'center'}
-                                    sx={{ marginRihgt: { xs: 0, sm: 1 } }}
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      sx={{ p: 0, color: 'primary.main' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingIndex(index);
-                                        setEditingName(label);
-                                      }}
-                                    >
-                                      <IconPencil size={18} />
-                                    </IconButton>
+                                  {index + 2}
+                                </Box>
 
-                                    {/* 🗑️ Delete button */}
-                                    <IconButton
+                                {editingIndex === index ? (
+                                  <Box display="flex" alignItems="center" gap={0.5}>
+                                    <TextField
                                       size="small"
-                                      sx={{ p: 0, color: 'error.main' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(index);
+                                      value={editingName}
+                                      onChange={(e) => setEditingName(e.target.value)}
+                                      onBlur={() => {
+                                        handleRename(index, editingName);
+                                        setEditingIndex(null);
                                       }}
-                                    >
-                                      <IconTrash size={18} />
-                                    </IconButton>
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleRename(index, editingName);
+                                          setEditingIndex(null);
+                                        }
+                                      }}
+                                      autoFocus
+                                      sx={{ width: 120 }}
+                                    />
                                   </Box>
-                                </StepLabel>
-                              )}
-                            </Step>
-                          );
-                        }}
-                      </Draggable>
-                    ))}
-                  </Stepper>
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                                ) : (
+                                  <StepLabel
+                                    sx={{
+                                      fontSize: '0.875rem',
+                                      fontWeight: activeStep === index + 1 ? 'bold' : 'normal',
+                                      color:
+                                        activeStep === index + 1
+                                          ? 'primary.main'
+                                          : 'text.secondary',
+                                      textAlign: 'center',
+                                      px: 1,
+                                      cursor: 'pointer',
+                                      marginLeft: 1.25,
+                                      marginTop: -1.25,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    {label}
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={0.25}
+                                      justifyContent={'center'}
+                                      sx={{ marginRihgt: { xs: 0, sm: 1 } }}
+                                    >
+                                      <IconButton
+                                        size="small"
+                                        sx={{ p: 0, color: 'primary.main' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingIndex(index);
+                                          setEditingName(label);
+                                        }}
+                                      >
+                                        <IconPencil size={18} />
+                                      </IconButton>
 
-          <Box mt={1}>
-            <StepComponent
-              activeStep={activeStep}
-              formData={localForm}
-              setFormData={setLocalForm}
-              errors={errors}
-              sectionsData={sectionsData}
-              setSectionsData={setSectionsData}
-              customField={customField}
-              selectedAccess={selectedAccess}
-              visitorRole={visitorRole}
-              selectedAnalytics={selectedAnalytics}
-              accessData={accessControl}
-              documents={documents}
-              documentIdentities={documentIdentities}
-              analyticCctv={analyticCctv}
-              handleChange={handleChange}
-              handleAddDetail={handleAddDetail}
-              handleDetailChange={handleDetailChange}
-              handleDeleteDetail={handleDeleteDetail}
-              handleReorder={handleReorder}
-              handleChangeDocument={handleChangeDocument}
-              handleRemoveDocument={handleRemoveDocument}
-              handleAddDocument={handleAddDocument}
-              handleAddAccess={handleAddAccess}
-              setSelectedAccess={setSelectedAccess}
-              setSelectedAnalytics={setSelectedAnalytics}
-              setDeletedAccessIds={setDeletedAccessIds}
-            />
+                                      {/* 🗑️ Delete button */}
+                                      <IconButton
+                                        size="small"
+                                        sx={{ p: 0, color: 'error.main' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDelete(index);
+                                        }}
+                                      >
+                                        <IconTrash size={18} />
+                                      </IconButton>
+                                    </Box>
+                                  </StepLabel>
+                                )}
+                              </Step>
+                            );
+                          }}
+                        </Draggable>
+                      ))}
+                    </Stepper>
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+
+            <Box mt={1}>
+              <StepComponent
+                activeStep={activeStep}
+                formData={localForm}
+                setFormData={setLocalForm}
+                errors={errors}
+                sectionsData={sectionsData}
+                setSectionsData={setSectionsData}
+                customField={customField}
+                selectedAccess={selectedAccess}
+                visitorRole={visitorRole}
+                selectedAnalytics={selectedAnalytics}
+                accessData={accessControl}
+                documents={documents}
+                documentIdentities={documentIdentities}
+                analyticCctv={analyticCctv}
+                handleChange={handleChange}
+                handleAddDetail={handleAddDetail}
+                handleDetailChange={handleDetailChange}
+                handleDeleteDetail={handleDeleteDetail}
+                handleReorder={handleReorder}
+                handleChangeDocument={handleChangeDocument}
+                handleRemoveDocument={handleRemoveDocument}
+                handleAddDocument={handleAddDocument}
+                handleAddAccess={handleAddAccess}
+                setSelectedAccess={setSelectedAccess}
+                setSelectedAnalytics={setSelectedAnalytics}
+                setDeletedAccessIds={setDeletedAccessIds}
+              />
+            </Box>
           </Box>
-          <Box mt={3} display="flex" justifyContent="space-between">
-            <Button
-              disabled={activeStep === 0}
-              onClick={() => setActiveStep((prev) => prev - 1)}
-              startIcon={<IconArrowLeft size={18} />}
-            >
-              {t('back')}
+        </Box>
+        <Box
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+
+            width: '100%',
+
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+
+            px: 2,
+            py: 1.5,
+
+            mt: 3,
+
+            backgroundColor: 'background.paper',
+
+            borderTop: '1px solid',
+            borderColor: 'divider',
+
+            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <Button
+            type="button"
+            disabled={activeStep === 0}
+            onClick={() => setActiveStep((prev) => prev - 1)}
+            startIcon={<IconArrowLeft size={18} />}
+          >
+            {t('back')}
+          </Button>
+
+          {isLastStep ? (
+            <Button color="primary" variant="contained" onClick={handleOnSubmit} disabled={loading}>
+              Submit
             </Button>
-
-            {isLastStep ? (
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleOnSubmit}
-                disabled={loading}
-              >
-                Submit
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={() => setActiveStep((prev) => prev + 1)}
-                endIcon={<IconArrowRight size={18} />}
-              >
-                {t('next')}
-              </Button>
-            )}
-          </Box>
+          ) : (
+            <Button
+              type="button"
+              variant="contained"
+              onClick={() => setActiveStep((prev) => prev + 1)}
+              endIcon={<IconArrowRight size={18} />}
+            >
+              {t('next')}
+            </Button>
+          )}
         </Box>
       </form>
       <NewSectionDialog
@@ -981,7 +1010,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         onSubmit={handleAddSection}
       />
       <GlobalBackdropLoading open={loading} />
-    </>
+    </Box>
   );
 };
 

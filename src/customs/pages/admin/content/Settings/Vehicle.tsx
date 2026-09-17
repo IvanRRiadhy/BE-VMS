@@ -115,6 +115,9 @@ const Vehicle = () => {
         onAddData={handleAdd}
         searchKeyword={search}
         onSearch={handleSearch}
+        isHaveAddEmpty={true}
+        addDataText="Add Vehicle"
+        onAddEmpty={handleAdd}
       />
       <VehicleFormDialog
         open={openDialog}

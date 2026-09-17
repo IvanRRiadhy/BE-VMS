@@ -209,7 +209,7 @@ const Content = () => {
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
-                data={tableData}
+                data={[]}
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
@@ -240,6 +240,9 @@ const Content = () => {
                 htmlFields={['document_text']}
                 htmlClampLines={4}
                 htmlMaxWidth={500}
+                isHaveAddEmpty={true}
+                addDataText="Add Document"
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>

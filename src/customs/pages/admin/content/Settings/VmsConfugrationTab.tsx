@@ -393,7 +393,7 @@ export default function VMSConfigurationTab() {
         </Grid>
 
         {/* Visitor Card */}
-        <Grid size={12}>
+        {/* <Grid size={12}>
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight={600} mb={2}>
               Visitor Card Setting
@@ -441,7 +441,7 @@ export default function VMSConfigurationTab() {
               </Select>
             )}
           </Paper>
-        </Grid>
+        </Grid> */}
 
         <Grid size={12} display="flex" justifyContent="flex-end">
           <Button

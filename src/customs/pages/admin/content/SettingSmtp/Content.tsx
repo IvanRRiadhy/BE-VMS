@@ -332,6 +332,9 @@ const Content = () => {
                       isDataVerified={true}
                       onBooleanSwitchChange={handleBooleanSwitchChange}
                       isHavePassword={true}
+                      isHaveAddEmpty={true}
+                      addDataText="Add SMTP"
+                      onAddEmpty={handleAdd}
                     />
                   ) : (
                     <FormSettingSmtp

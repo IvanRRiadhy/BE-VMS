@@ -17,7 +17,7 @@ import {
 
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 
-import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
+import { IconFileSpreadsheet, IconPdf, IconPlus } from '@tabler/icons-react';
 
 import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/VisitorRow';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
@@ -32,6 +32,7 @@ type Props = {
   setSelectedVisitor: any;
   openGroup: boolean;
   setOpenGroup: React.Dispatch<React.SetStateAction<boolean>>;
+  handleAddInvitation: () => void;
 };
 
 export default function VisitorListTable({
@@ -43,6 +44,7 @@ export default function VisitorListTable({
   setSelectedVisitor,
   openGroup,
   setOpenGroup,
+  handleAddInvitation,
 }: Props) {
   const { t } = useTranslation();
   const lg = window.innerWidth > 1200;
@@ -54,12 +56,16 @@ export default function VisitorListTable({
         justifyContent="center"
         alignItems="center"
         flexDirection="column"
+        gap={1}
       >
         <img src={bg_nodata} width={150} />
 
         <Typography color="text.secondary" mt={2} variant="h5">
           {t('selectGroupFromTheList')}
         </Typography>
+        <Button variant="contained" color="primary" startIcon={<IconPlus />} onClick={handleAddInvitation}>
+          Add Invitation
+        </Button>
       </Box>
     );
   }

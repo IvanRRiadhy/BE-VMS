@@ -22,14 +22,7 @@ import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
 import { useTranslation } from 'react-i18next';
 
-const Content = ({
-  tableData,
-  loading,
-  searchKeyword,
-  setSearchKeyword,
-  page,
-  setPage,
-}: any) => {
+const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, setPage }: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -41,9 +34,7 @@ const Content = ({
     type: '',
     conditions: [],
   };
-  const {
-    deleteMutation,
-  } = useApprovalWorkflowMutation();
+  const { deleteMutation } = useApprovalWorkflowMutation();
   const [isDirty, setIsDirty] = useState(false);
   const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
     useState<CreateApprovalWorkflowRequest>(defaultApprovalWorkflow);
@@ -113,33 +104,31 @@ const Content = ({
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete(
-      t("confirmDelete", { name: "Approval Workflow" }),
-    );
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Approval Workflow' }));
 
     if (!confirm) return;
     try {
       // await deleteApprovalWorkflow(id);
       await deleteMutation.mutateAsync(id);
-      showSwal('success', t('deleteSuccess', { name: "Approval Workflow" }));
+      showSwal('success', t('deleteSuccess', { name: 'Approval Workflow' }));
     } catch (error: any) {
-      showSwal('error', error?.response.data.msg ?? t('deleteFailed', { name: "Approval Workflow" }));
+      showSwal(
+        'error',
+        error?.response.data.msg ?? t('deleteFailed', { name: 'Approval Workflow' }),
+      );
     }
-
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
-      t("confirmDeleteMultiple", { count: rows.length, name: "Approval Workflow" }));
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Approval Workflow' }),
+    );
 
     if (confirmed) {
-
       try {
-        await Promise.all(
-          rows.map(row => deleteMutation.mutateAsync(row.id))
-        );
+        await Promise.all(rows.map((row) => deleteMutation.mutateAsync(row.id)));
 
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
@@ -149,7 +138,6 @@ const Content = ({
     }
   };
 
-
   const handleSuccessApprovalWorkflow = async () => {
     setIsDirty(false);
     setOpenFormAddDocument(false);
@@ -158,8 +146,8 @@ const Content = ({
     await showSwal(
       'success',
       edittingId
-        ? t('updatedSuccess', { name: "Approval Workflow" })
-        : t('createSuccess', { name: "Approval Workflow" }),
+        ? t('updatedSuccess', { name: 'Approval Workflow' })
+        : t('createSuccess', { name: 'Approval Workflow' }),
     );
   };
 
@@ -209,6 +197,9 @@ const Content = ({
               // onSearchKeywordChange={handleSearchKeywordChange}
               onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
               onAddData={handleAdd}
+              isHaveAddEmpty={true}
+              addDataText="Add Approval Workflow"
+              onAddEmpty={handleAdd}
             />
           </Grid>
         </Grid>

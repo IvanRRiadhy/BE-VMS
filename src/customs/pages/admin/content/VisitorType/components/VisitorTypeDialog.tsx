@@ -52,7 +52,17 @@ export default function VisitorTypeDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xl"
+      fullWidth
+      PaperProps={{
+        sx: {
+          maxHeight: '90vh',
+        },
+      }}
+    >
       <DialogTitle
         sx={{
           display: 'flex',
@@ -72,7 +82,12 @@ export default function VisitorTypeDialog({
 
       <Divider />
 
-      <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
+      <DialogContent
+        sx={{
+          p: 0,
+          overflow: 'auto',
+        }}
+      >
         {loading ? (
           <Box
             sx={{

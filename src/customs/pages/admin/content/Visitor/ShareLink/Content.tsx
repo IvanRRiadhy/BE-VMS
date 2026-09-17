@@ -224,6 +224,11 @@ const Content = () => {
                 onDelete={(row: any) => handleDeleteLink(row.id)}
                 isHaveAddData={true}
                 onAddData={handleAddShareLink}
+                isHaveAddEmpty={true}
+                addDataText="Add Share Link"
+                onAddEmpty={() => {
+                  setOpenCreateLink(true);
+                }}
               />
             </Grid>
           </Grid>

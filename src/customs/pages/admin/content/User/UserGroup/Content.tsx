@@ -466,7 +466,7 @@ const Content = () => {
       promises.push(deletePermission(edittingId));
     }
 
-    if(originalData.accesses?.length) {
+    if (originalData.accesses?.length) {
       promises.push(deletePermissionAccessControl(edittingId));
     }
 
@@ -743,6 +743,11 @@ const Content = () => {
                 isHavePermission={true}
                 onPermission={(row) => handlePermission(row)}
                 onBatchDelete={handleBatchDelete}
+                isHaveAddEmpty={true}
+                addDataText="Add User Group"
+                onAddEmpty={() => {
+                  setOpenFormAddDocument(true);
+                }}
               />
             </Grid>
           </Grid>

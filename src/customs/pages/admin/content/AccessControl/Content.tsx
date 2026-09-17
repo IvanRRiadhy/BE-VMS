@@ -271,6 +271,9 @@ const Content = () => {
                 searchKeyword={search}
                 onSearch={handleSearch}
                 onAddData={handleAdd}
+                isHaveAddEmpty={true}
+                addDataText="Add Access Control"
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>

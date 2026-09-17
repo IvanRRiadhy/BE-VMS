@@ -847,6 +847,12 @@ const Content = () => {
                     onClose={() => {}}
                   />
                 }
+                isHaveAddEmpty={true}
+                addDataText="Add Invitation"
+                onAddEmpty={() => {
+                  setFlowTarget('invitation');
+                  setOpenDialogIndex(2);
+                }}
               />
             </Grid>
           </Grid>

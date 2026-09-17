@@ -27,6 +27,7 @@ import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
 import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useSites } from 'src/hooks/Sites/useSites';
+import { table } from 'console';
 
 type SiteTableRow = {
   id: string;
@@ -510,6 +511,7 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
+                data={tableRowSite}
                 loading={isLoading || isFetching}
                 isHavePagination={true}
                 totalCount={totalFilteredRecords}
@@ -534,7 +536,6 @@ const Content = () => {
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
                 overflowX={'auto'}
-                data={tableRowSite}
                 breadcrumbItems={breadcrumbItems}
                 selectedRows={selectedRows}
                 isHaveChecked={true}
@@ -567,6 +568,11 @@ const Content = () => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onAddData={handleOpenType}
+                isHaveAddEmpty={true}
+                addDataText="Add Site"
+                onAddEmpty={() => {
+                  handleOpenType();
+                }}
               />
             </Grid>
           </Grid>

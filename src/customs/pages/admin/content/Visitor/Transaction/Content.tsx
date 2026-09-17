@@ -209,7 +209,11 @@ const Content = () => {
 
     const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
 
-    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available' || visitor.visitor_status === 'Waiting';
+    const canExpire =
+      visitor.visitor_status === 'Preregis' ||
+      visitor.visitor_status === 'Checkin' ||
+      visitor.visitor_status === 'Available' ||
+      visitor.visitor_status === 'Waiting';
 
     if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
       return 'Expired';
@@ -589,6 +593,12 @@ const Content = () => {
     }
   };
 
+  const handleAddInvitation = () => {
+    setFlowTarget('invitation');
+    setOpenDialogIndex(2);
+    setIsAddTransaction(false);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -603,9 +613,7 @@ const Content = () => {
                 items={cards}
                 onImageClick={(_, index) => {
                   if (index === 1) {
-                    setFlowTarget('invitation');
-                    setOpenDialogIndex(2);
-                    setIsAddTransaction(false);
+                    handleAddInvitation();
                   } else {
                     setOpenDialogIndex(index);
                   }
@@ -660,6 +668,7 @@ const Content = () => {
               selectedVisitor={selectedVisitor}
               setSelectedVisitor={setSelectedVisitor}
               handleRemoveVisitor={handleRemoveVisitor}
+              handleAddInvitation={handleAddInvitation}
             />
             <Box sx={{ mt: 2 }}>
               {selectedVisitor && (

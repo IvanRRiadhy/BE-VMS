@@ -121,7 +121,7 @@ const GroupVisitorTable = ({
                   </IconButton>
                 </TableCell>
 
-                <TableCell>
+                <TableCell colSpan={1}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
                       Agenda
@@ -130,7 +130,7 @@ const GroupVisitorTable = ({
                   </Box>
                 </TableCell>
 
-                <TableCell>
+                <TableCell colSpan={1}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
                       Visitor Type
@@ -139,7 +139,7 @@ const GroupVisitorTable = ({
                   </Box>
                 </TableCell>
 
-                <TableCell>
+                <TableCell colSpan={2}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
                       Visit Start
@@ -157,7 +157,7 @@ const GroupVisitorTable = ({
                   </Box>
                 </TableCell>
 
-                <TableCell colSpan={2}>
+                <TableCell colSpan={1}>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
                       Host

@@ -22,9 +22,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconCategory, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import {
-  getVisitorProvidersById,
-} from 'src/customs/api/Admin/VisitorProviders';
+import { getVisitorProvidersById } from 'src/customs/api/Admin/VisitorProviders';
 import FormVisitorProvider from './FormVisitorProvider';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTranslation } from 'react-i18next';
@@ -63,10 +61,7 @@ const Content = () => {
     search,
   });
 
-  const {
-    deleteMutation,
-    updateMutation,
-  } = useVisitorProviderMutation();
+  const { deleteMutation, updateMutation } = useVisitorProviderMutation();
 
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
@@ -105,7 +100,6 @@ const Content = () => {
     [setPage, setSearch],
   );
 
-
   const defaultForm = {
     name: '',
     code: '',
@@ -121,9 +115,7 @@ const Content = () => {
   };
   const [localForm, setLocalForm] = useState<VisitorProviderForm>(defaultForm);
   const [initialForm, setInitialForm] = useState<VisitorProviderForm>(defaultForm);
-  const actionLoading =
-    updateMutation.isPending ||
-    deleteMutation.isPending;
+  const actionLoading = updateMutation.isPending || deleteMutation.isPending;
 
   const handleActiveToggle = async (row: any, checked: boolean) => {
     try {
@@ -138,7 +130,6 @@ const Content = () => {
       });
 
       showSwal('success', t('updatedSuccess', { name: 'Visitor Provider' }));
-
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to update status active');
     }
@@ -165,18 +156,17 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-
-    const confirmed = await showConfirmDelete(
-      t("confirmDelete", { name: 'Visitor Provider' }),
-    );
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Visitor Provider' }));
 
     if (confirmed) {
-
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', t("deleteSuccess", { name: 'Visitor Provider' }));
+        showSwal('success', t('deleteSuccess', { name: 'Visitor Provider' }));
       } catch (error: any) {
-        showSwal('error', error?.response?.data?.message ?? t("deleteFailed", { name: 'Visitor Provider' }));
+        showSwal(
+          'error',
+          error?.response?.data?.message ?? t('deleteFailed', { name: 'Visitor Provider' }),
+        );
       }
     }
   };
@@ -248,7 +238,7 @@ const Content = () => {
                 }}
                 isHavePagination={true}
                 isHaveFilterDuration={false}
-                searchPlaceholder='Search visitor provider'
+                searchPlaceholder="Search visitor provider"
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 searchKeyword={search}
@@ -263,6 +253,9 @@ const Content = () => {
                   handleEdit(row.id);
                   setEditingId(row.id);
                 }}
+                isHaveAddEmpty={true}
+                addDataText="Add Visitor Provider"
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>

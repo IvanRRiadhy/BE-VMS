@@ -441,6 +441,9 @@ const Content = () => {
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
                 onQuickAccessToggle={handleQuickAccessToggle}
+                isHaveAddEmpty={true}
+                addDataText="Add Visitor Type"
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>

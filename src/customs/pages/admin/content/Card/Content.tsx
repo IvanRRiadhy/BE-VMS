@@ -537,6 +537,11 @@ const Content = () => {
                     onReset={handleResetFilter}
                   />
                 }
+                isHaveAddEmpty={true}
+                addDataText="Add Card"
+                onAddEmpty={() => {
+                  handleAddVisitorCard();
+                }}
               />
             </Grid>
           </Grid>

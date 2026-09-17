@@ -205,7 +205,6 @@ const Content = () => {
               isHaveChecked={true}
               isNoActionTableHead={true}
               currentPage={page}
-              // titleHeader="Share Link"
               isCopyLink={true}
               isHavePagination={true}
               defaultRowsPerPage={rowsPerPage}
@@ -220,6 +219,9 @@ const Content = () => {
               onDelete={(row: any) => handleDeleteLink(row.id)}
               isHaveAddData={true}
               onAddData={handleAddShareLink}
+              isHaveAddEmpty={true}
+              addDataText="Add Share Link"
+              onAddEmpty={handleAddShareLink}
             />
           </Grid>
         </Grid>
