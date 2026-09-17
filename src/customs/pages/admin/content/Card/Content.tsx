@@ -264,8 +264,6 @@ const Content = () => {
       const response = await getVisitorCardById(String(id));
 
       const existingData = response?.collection;
-      console.log('existingData', existingData);
-
       if (!existingData) return;
 
       const parsedData = {
