@@ -468,10 +468,13 @@ const FormWizardAddEmployee = ({
       const rawFileImage = siteImageFile;
 
       const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage as string);
-
+      console.log('EDIT EMPLOYEE');
+      console.log('hasNewImage:', hasNewImage);
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
         if (hasNewImage) {
+          console.log('CALLING HANDLE FILE UPLOADS');
+
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
         const editData: any = {

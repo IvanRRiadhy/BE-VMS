@@ -4000,6 +4000,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                // disabled={option?.disabled}
                                 open={openStartPicker}
                                 onOpen={() => setOpenStartPicker(true)}
                                 onClose={() => setOpenStartPicker(false)}
@@ -4009,9 +4010,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     : null
                                 }
                                 ampm={false}
+                                minDate={dayjs()}
                                 onChange={(newValue) => {
                                   if (newValue) {
                                     const utc = newValue.utc().format();
+
                                     onChange(startIndex, 'answer_datetime', utc);
                                     clearFieldError(startKey);
 
@@ -4021,18 +4024,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     ) {
                                       onChange(endIndex, 'answer_datetime', '');
                                     }
+                                  } else {
+                                    onChange(startIndex, 'answer_datetime', '');
+                                    clearFieldError(startKey);
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                // viewRenderers={{
-                                //   hours: renderTimeViewClock,
-                                //   minutes: renderTimeViewClock,
-                                //   seconds: renderTimeViewClock,
-                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
                                     sx: {
+                                      '&.Mui-disabled': {
+                                        backgroundColor: '#eeeaeaff',
+                                      },
                                       '& .MuiButtonBase-root:nth-of-type(1)': {
                                         color: 'secondary !important',
                                       },
@@ -4051,14 +4055,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
+                                    helperText: startError,
                                     onClick: () => {
                                       setOpenStartPicker(true);
                                     },
-                                    helperText: startError,
                                     FormHelperTextProps: {
                                       sx: {
                                         ml: 0,
                                         mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
                                       },
                                     },
                                   },
@@ -4088,6 +4097,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                               <DateTimePicker
+                                // disabled={option?.disabled}
                                 open={openEndPicker}
                                 onOpen={() => setOpenEndPicker(true)}
                                 onClose={() => setOpenEndPicker(false)}
@@ -4098,21 +4108,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 minDateTime={
                                   startItem.answer_datetime
                                     ? dayjs(startItem.answer_datetime)
-                                    : undefined
+                                    : dayjs()
                                 }
                                 onChange={(newValue) => {
                                   if (newValue) {
+                                    const startDateTime = startItem.answer_datetime
+                                      ? dayjs(startItem.answer_datetime)
+                                      : dayjs();
+
+                                    // Jangan izinkan End sebelum Start
+                                    if (newValue.isBefore(startDateTime)) {
+                                      return;
+                                    }
+
                                     const utc = newValue.utc().format();
+
                                     onChange(endIndex, 'answer_datetime', utc);
+                                    clearFieldError(endKey);
+                                  } else {
+                                    onChange(endIndex, 'answer_datetime', '');
                                     clearFieldError(endKey);
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                // viewRenderers={{
-                                //   hours: renderTimeViewClock,
-                                //   minutes: renderTimeViewClock,
-                                //   seconds: renderTimeViewClock,
-                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4134,15 +4152,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   },
                                   textField: {
                                     fullWidth: true,
-                                    error: !!endError,
                                     onClick: () => {
                                       setOpenEndPicker(true);
                                     },
+                                    error: !!endError,
                                     helperText: endError,
                                     FormHelperTextProps: {
                                       sx: {
                                         ml: 0,
                                         mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
                                       },
                                     },
                                   },

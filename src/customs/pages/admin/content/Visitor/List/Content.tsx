@@ -84,6 +84,7 @@ const Content = () => {
   const tableCustomVisitor =
     data?.collection.map((item: any) => ({
       id: item.id,
+      photo: item.face_image,
       name: item.name || '-',
       // citizenship_id: item.identity_id || '-',
       email: item.email || '-',
@@ -236,7 +237,7 @@ const Content = () => {
         setFilters={setFilters}
         onApplyFilter={handleApplyFilter}
         onResetFilter={handleResetFilter}
-        onClose={()=>{}}
+        onClose={() => {}}
       />
     ),
     [filters],

@@ -331,11 +331,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                     visitor_period_start: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                // viewRenderers={{
-                //   hours: renderTimeViewClock,
-                //   minutes: renderTimeViewClock,
-                //   seconds: renderTimeViewClock,
-                // }}
                 slotProps={{
                   actionBar: {
                     actions: ['today', 'clear', 'accept'],
@@ -366,6 +361,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                       sx: {
                         ml: 0,
                         mr: 0,
+                      },
+                    },
+                    sx: {
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#eeeeee',
                       },
                     },
                   },
@@ -449,6 +449,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                       sx: {
                         ml: 0,
                         mr: 0,
+                      },
+                    },
+                    sx: {
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#eeeeee',
                       },
                     },
                   },

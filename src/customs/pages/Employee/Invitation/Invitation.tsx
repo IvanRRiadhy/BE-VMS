@@ -257,7 +257,7 @@ const Content = () => {
 
     const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
 
-    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available'; 
+    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available' || visitor.visitor_status === 'Waiting'; 
 
     if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
       return 'Expired';

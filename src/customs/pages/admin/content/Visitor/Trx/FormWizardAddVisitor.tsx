@@ -4767,6 +4767,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     : null
                                 }
                                 ampm={false}
+                                minDate={dayjs()}
                                 onChange={(newValue) => {
                                   if (newValue) {
                                     const utc = newValue.utc().format();
@@ -4786,11 +4787,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                // viewRenderers={{
-                                //   hours: renderTimeViewClock,
-                                //   minutes: renderTimeViewClock,
-                                //   seconds: renderTimeViewClock,
-                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4816,10 +4812,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
+                                    helperText: startError,
                                     onClick: () => {
                                       setOpenStartPicker(true);
                                     },
-                                    helperText: startError,
                                     FormHelperTextProps: {
                                       sx: {
                                         ml: 0,
@@ -4857,6 +4853,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </Box>
 
                             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+
                               <DateTimePicker
                                 disabled={option?.disabled}
                                 open={openEndPicker}
@@ -4869,10 +4866,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 minDateTime={
                                   startItem.answer_datetime
                                     ? dayjs(startItem.answer_datetime)
-                                    : undefined
+                                    : dayjs()
                                 }
                                 onChange={(newValue) => {
                                   if (newValue) {
+                                    const startDateTime = startItem.answer_datetime
+                                      ? dayjs(startItem.answer_datetime)
+                                      : dayjs();
+
+                                    // Jangan izinkan End sebelum Start
+                                    if (newValue.isBefore(startDateTime)) {
+                                      return;
+                                    }
+
                                     const utc = newValue.utc().format();
 
                                     onChange(endIndex, 'answer_datetime', utc);
@@ -4883,11 +4889,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   }
                                 }}
                                 format="dddd, DD MMMM YYYY, HH:mm"
-                                // viewRenderers={{
-                                //   hours: renderTimeViewClock,
-                                //   minutes: renderTimeViewClock,
-                                //   seconds: renderTimeViewClock,
-                                // }}
                                 slotProps={{
                                   actionBar: {
                                     actions: ['today', 'clear', 'accept'],
@@ -4907,7 +4908,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       },
                                     },
                                   },
-
                                   textField: {
                                     fullWidth: true,
                                     onClick: () => {

@@ -81,6 +81,7 @@ import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import VisitorTrendChart from './components/VisitorTrendChart';
 import { IconUserCheck } from '@tabler/icons-react';
+import VisitorInvitationActions from './components/VisitorInvitationActions';
 
 const DashboardEmployee = () => {
   // const CardItems = [
@@ -747,143 +748,10 @@ const DashboardEmployee = () => {
           <TopCards items={CardItems} />
         </Grid>
 
-        <Grid
-          size={{ xs: 12, lg: 6 }}
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            // height: '100%',
-            alignSelf: 'stretch',
-            gap: 1,
-            flexWrap: 'wrap',
-          }}
-        >
-          <Card
-            sx={{
-              flex: 1,
-              border: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: 'primary.main',
-              boxShadow: 'none',
-              borderRadius: 2,
-            }}
-          >
-            <CardContent sx={{ p: 2, '&:last-child': { pb: 0 } }}>
-              <Stack spacing={1.5}>
-                {/* Icon + Title + Description */}
-                <Stack direction="row" spacing={4} alignItems="flex-start">
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'white !important',
-                      color: '#1554B8',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <IconUserPlus size={30} />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 1 }}>
-                    <Typography variant="h6" fontWeight={600} color="white">
-                      Register Visitor
-                    </Typography>
-
-                    <Typography variant="body2" color="white">
-                      Employee fill visitor information
-                    </Typography>
-
-                    {/* Button */}
-                    <Button
-                      // fullWidth
-                      // variant="contained"
-                      // color="primary"
-                      onClick={handleOpenInviteOrCreateLink}
-                      startIcon={<IconPlus size={18} />}
-                      sx={{
-                        mb: 0,
-                        // mt: 1,
-                        width: 'max-content',
-                        '&:hover': { backgroundColor: 'white', color: 'primary.main' },
-                      }}
-                    >
-                      Register Visitor
-                    </Button>
-                  </Box>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-          <Card
-            sx={{
-              flex: 1,
-              border: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: '#EEF4FF',
-              boxShadow: 'none',
-              borderRadius: 2,
-            }}
-          >
-            <CardContent sx={{ p: 2, '&:last-child': { pb: 0 } }}>
-              <Stack spacing={1.5}>
-                {/* Icon + Title + Description */}
-                <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: 'white !important',
-                      color: '#1554B8',
-
-                      flexShrink: 0,
-                    }}
-                  >
-                    <IconLink size={30} />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 1 }}>
-                    <Typography variant="h6" fontWeight={600} color="text.primary">
-                      Share Link Invitation
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                      Share invitation link with visitor
-                    </Typography>
-                    <Button
-                      // fullWidth
-                      variant="contained"
-                      onClick={() => setOpenShareLinkList(true)}
-                      startIcon={<IconLink size={18} />}
-                      sx={{
-                        backgroundColor: 'white',
-                        color: '#1554B8',
-                        width: 'fit-content',
-                        boxShadow: 'none',
-                        fontWeight: 600,
-                        '&:hover': {
-                          backgroundColor: '#E3EDFF',
-                          boxShadow: 'none',
-                        },
-                      }}
-                    >
-                      Generate Link
-                    </Button>
-                  </Box>
-                </Stack>
-
-                {/* Button */}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+        <VisitorInvitationActions
+          onRegisterVisitor={handleOpenInviteOrCreateLink}
+          onGenerateLink={() => setOpenShareLinkList(true)}
+        />
         <Grid container spacing={2} alignItems="stretch" width={'100%'}>
           <Grid
             size={{ xs: 12, lg: 6 }}
@@ -949,16 +817,15 @@ const DashboardEmployee = () => {
               onView={(row: any) => handleView(row)}
               titleHeader="Invitation Monitoring"
               isHaveAddEmpty={true}
-              onAddEmpty={() => navigate('/employee/invitation')}
+              addDataText="Create Invitation"
+              onAddEmpty={() => navigate('/employee/my-invitation')}
               isHaveViewAll={true}
               onHaveViewAll={() => {
-                navigate('/employee/invitation');
+                navigate('/employee/my-invitation');
               }}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
-            {/* <Heatmap />
-             */}
             <DynamicTable
               loading={isLoadingShareLink}
               height={'100%'}

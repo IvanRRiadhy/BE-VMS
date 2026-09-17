@@ -3746,9 +3746,9 @@ const FormSelfPraregistration = ({
     );
   };
 
-  const hasAnyFilled = groupVisitors.some((g) =>
-    g.data_visitor?.some((v: any) => !isVisitorEmpty(v)),
-  );
+const hasAnyFilled =
+  dataVisitor.some((visitor: any) => !isVisitorEmpty(visitor)) ||
+  groupVisitors.some((g) => g.data_visitor?.some((v: any) => !isVisitorEmpty(v)));
 
   return (
     <>

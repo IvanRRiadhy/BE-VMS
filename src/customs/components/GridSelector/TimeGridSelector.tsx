@@ -554,6 +554,10 @@ export const TimeGridSelector = ({
                               : theme.palette.grey[300],
                             cursor: 'pointer',
                           },
+
+                          '&:active': {
+                            transform: 'scale(0.97)',
+                          },
                           transition: 'all 0.2s ease',
                           position: 'relative',
                           zIndex: 1,

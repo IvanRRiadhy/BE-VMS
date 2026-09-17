@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getProfile } from 'src/customs/api/users';
 
-export const useProfile = () => {
+export const useProfile = (enabled = true) => {
   return useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
@@ -9,5 +9,6 @@ export const useProfile = () => {
       return response;
     },
     select: (response) => response.collection,
+    enabled,
   });
 };

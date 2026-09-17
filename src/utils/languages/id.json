@@ -229,5 +229,9 @@
   "backToLogin": "Kembali ke Login",
   "welcomeBack": "Selamat Datang Kembali",
   "visitorActivityOverview": "Ringkasan Aktivitas Pengunjung",
-  "selectDateRange": "Pilih Rentang Tanggal"
+  "selectDateRange": "Pilih Rentang Tanggal",
+  "generateLink": "Generate Link",
+  "generateLinkDescription": "Bagikan tautan undangan kepada pengunjung",
+  "registerVisitor": "Daftarkan Pengunjung",
+  "registerVisitorDescription": "Karyawan mengisi informasi pengunjung"
 }

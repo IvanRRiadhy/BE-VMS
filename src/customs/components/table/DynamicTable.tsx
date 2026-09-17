@@ -75,6 +75,7 @@ type DynamicTableProps<
   // isHaveExportPdf?: boolean;
   currentPage?: number;
   isHaveBack?: boolean;
+  addDataText?: any;
   onBack?: any;
   isTitleIntegration?: any;
   isHaveExportCsv?: boolean;
@@ -258,6 +259,7 @@ function DynamicTableBase<
     isHavePrint = false,
     currentPage = 0,
     isHaveExportPdf = false,
+    addDataText,
     isHaveExportXlf = false,
     isHaveImportExcel = false,
     isHaveQrCode,
@@ -417,7 +419,6 @@ function DynamicTableBase<
     'employee_linked',
     'is_blacklist',
     'selfie image',
-    'selfie_image',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -1323,8 +1324,13 @@ function DynamicTableBase<
                         <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
                         <Typography variant="body1">{t('noDataAvailable')}</Typography>
                         {isHaveAddEmpty && (
-                          <Button variant="contained" sx={{ mt: '5px' }} onClick={onAddEmpty}>
-                            Add Data
+                          <Button
+                            variant="contained"
+                            sx={{ mt: '5px' }}
+                            onClick={onAddEmpty}
+                            startIcon={<IconPlus />}
+                          >
+                            {addDataText}
                           </Button>
                         )}
                       </Box>

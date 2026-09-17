@@ -209,7 +209,7 @@ const Content = () => {
 
     const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
 
-    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available';
+    const canExpire = visitor.visitor_status === 'Preregis' || visitor.visitor_status === 'Checkin' || visitor.visitor_status === 'Available' || visitor.visitor_status === 'Waiting';
 
     if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
       return 'Expired';
@@ -290,13 +290,13 @@ const Content = () => {
       subTitleSetting: 10,
       color: 'none',
     },
-    {
-      title: 'Scan QR ' + t('navigation.visitor'),
-      icon: IconQrcode,
-      subTitle: iconScanQR,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    // {
+    //   title: 'Scan QR ' + t('navigation.visitor'),
+    //   icon: IconQrcode,
+    //   subTitle: iconScanQR,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
     ...(!isOperatorAdmin
       ? [
           {
@@ -602,13 +602,10 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 2) {
+                  if (index === 1) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
                     setIsAddTransaction(false);
-                    // } else if (index === 3) {
-                    //   setFlowTarget('preReg');
-                    //   setOpenPreRegistration(true);
                   } else {
                     setOpenDialogIndex(index);
                   }

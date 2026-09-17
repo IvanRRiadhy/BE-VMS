@@ -9,7 +9,7 @@ import { useProfile } from 'src/hooks/Profile/useProfile';
 export default function AuthRedirector() {
   const { clearToken } = useSession();
   const { loading: authLoading, isAuthenticated } = useAuth();
-  const { data: profile, isLoading } = useProfile();
+  const { data: profile, isLoading } = useProfile(isAuthenticated);
   const roleAccess = profile?.group_name;
   const location = useLocation();
   const navigate = useNavigate();
@@ -87,23 +87,11 @@ export default function AuthRedirector() {
         navigate(redirectPath, { replace: true });
       }
     } else {
-      if (
-        location.pathname === '/' ||
-        location.pathname === '/auth/login'
-      ) {
+      if (location.pathname === '/' || location.pathname === '/auth/login') {
         navigate('/auth/login', { replace: true });
       }
     }
-  }, [
-    authLoading,
-    isAuthenticated,
-    isLoading,
-    profile,
-    roleAccess,
-    location.pathname,
-    navigate,
-  ]);
-
+  }, [authLoading, isAuthenticated, isLoading, profile, roleAccess, location.pathname, navigate]);
 
   if (authLoading) {
     return (
@@ -115,7 +103,7 @@ export default function AuthRedirector() {
           alignItems: 'center',
         }}
       >
-        <CircularProgress  />
+        <CircularProgress />
       </div>
     );
   }

@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
-import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
+import { IconFileSpreadsheet, IconPdf, IconPlus } from '@tabler/icons-react';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 
 import VisitorRow from '../VisitorRow';
@@ -168,12 +168,16 @@ const TransactionVisitorDetail = ({
           alignItems="center"
           justifyContent="center"
           flexDirection="column"
+          gap={1}
         >
           <img src={bg_nodata} width={150} />
 
           <Typography color="text.secondary" mt={2} variant="h5">
             {t('selectGroupFromTheList')}
           </Typography>
+          <Button variant="contained" color="primary" startIcon={<IconPlus />}>
+            Add Invitation
+          </Button>
         </Box>
       )}
     </Box>

@@ -315,13 +315,13 @@ const Content = () => {
       subTitle: `${totalFilteredRecords}`,
       color: 'none',
     },
-    {
-      title: 'Scan QR ' + t('navigation.visitor'),
-      icon: IconQrcode,
-      subTitle: iconScanQR,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    // {
+    //   title: 'Scan QR ' + t('navigation.visitor'),
+    //   icon: IconQrcode,
+    //   subTitle: iconScanQR,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
     ...(!isOperatorAdmin
       ? [
           {
@@ -723,7 +723,7 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 2) {
+                  if (index === 1) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
                     // } else if (index === 3) {
@@ -731,7 +731,7 @@ const Content = () => {
                     //   setOpenPreRegistration(true);
                     // } else if (index === 3) {
                     //   setOpenDetailShareLink(true);
-                  } else if (index === 3) {
+                  } else if (index === 2) {
                     setOpenQuickAccess(true);
                   } else {
                     setOpenDialogIndex(index);

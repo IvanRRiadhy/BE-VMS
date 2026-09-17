@@ -16,7 +16,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <RTL direction={customizer.activeDir}>
         <CssBaseline />
-        <NotificationProvider />
+        {/* <NotificationProvider /> */}
         <RouterProvider router={router} />
       </RTL>
     </ThemeProvider>

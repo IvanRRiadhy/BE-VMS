@@ -230,5 +230,9 @@
   "backToLogin": "Back To Login",
   "welcomeBack": "Welcome Back",
   "visitorActivityOverview": "Overview of Visitor Activities",
-  "selectDateRange": "Select Date Range"
+  "selectDateRange": "Select Date Range",
+  "generateLink": "Generate Link",
+  "generateLinkDescription": "Share invitation link with visitor",
+  "registerVisitor": "Register Visitor",
+  "registerVisitorDescription": "Employee fills visitor information"
 }

@@ -580,6 +580,7 @@ const TableRowItem = React.memo(
       is_vip: 30,
       // email: 260,
       type: 20,
+      is_employee: 1,
     };
 
     const getLeftBase = () =>
@@ -877,7 +878,7 @@ const TableRowItem = React.memo(
               ) : col === 'type' && isAccessControlType ? (
                 <>{row.type === 0 ? 'Access' : 'Group'}</>
               ) : col === 'card_status' ? (
-                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
+                (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
               ) : col === 'is_employee' ? (
                 row[col] ? (
                   <IconUserCheck size={20} color="green" />
@@ -948,7 +949,7 @@ const TableRowItem = React.memo(
                   {statusLabelMap[row.visitor_status] || row.visitor_status || '-'}
                 </Box>
               ) : col === 'document_type' ? (
-                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
+                (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
               ) : col === 'status' && isHaveApproval ? (
                 row[col] === 'Approve' ? (
                   <Typography
@@ -1024,8 +1025,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? tooltipLabels[col]?.true ?? 'Current Used'
-                        : tooltipLabels[col]?.false ?? 'Not Current Used'
+                        ? (tooltipLabels[col]?.true ?? 'Current Used')
+                        : (tooltipLabels[col]?.false ?? 'Not Current Used')
                     }
                   >
                     <Box
@@ -1057,9 +1058,9 @@ const TableRowItem = React.memo(
                   )}
                 </>
               ) : isHaveGender && col === 'gender' ? (
-                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
+                (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
               ) : isSiteSpaceType && col === 'type' ? (
-                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
+                (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
               ) : isHaveImage &&
                 imageFields.includes(col) &&
                 typeof row[col] === 'string' &&
@@ -1128,8 +1129,8 @@ const TableRowItem = React.memo(
                   <Tooltip
                     title={
                       row[col]
-                        ? tooltipLabels[col]?.true ?? 'Verified'
-                        : tooltipLabels[col]?.false ?? 'Not Verified'
+                        ? (tooltipLabels[col]?.true ?? 'Verified')
+                        : (tooltipLabels[col]?.false ?? 'Not Verified')
                     }
                   >
                     <Box
@@ -1350,7 +1351,7 @@ const TableRowItem = React.memo(
                 Array.isArray(row[col]) ? (
                   row[col].map((item: any) => item.name).join(', ')
                 ) : (
-                  (row[col] as { name?: string }).name ?? '-'
+                  ((row[col] as { name?: string }).name ?? '-')
                 )
               ) : (
                 <>

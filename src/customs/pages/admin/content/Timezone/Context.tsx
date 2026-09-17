@@ -42,8 +42,6 @@ const dayKeyMap: Record<string, string> = {
   Sat: 'saturday',
 };
 
-
-
 const Content = () => {
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -53,13 +51,7 @@ const Content = () => {
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const { t } = useTranslation();
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useTimezone({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useTimezone({
     search: debounceSearch,
   });
 
@@ -67,19 +59,17 @@ const Content = () => {
   //   v.name.toLowerCase().includes(debounceSearch.toLowerCase()),
   // );
 
-  const timezoneData =
-    data?.pages.flatMap((page) => page.collection) ?? [];
+  const timezoneData = data?.pages.flatMap((page) => page.collection) ?? [];
 
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
   const { deleteMutation } = useTimezoneMutation();
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(t("confirmDelete", { entity: "Time Access" }));
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Time Access' }));
     if (confirmed) {
-
       try {
         await deleteMutation.mutateAsync(id);
-        showSwal('success', t('deleteSuccess', { entity: "Time Access" }));
+        showSwal('success', t('deleteSuccess', { name: 'Time Access' }));
         setSelectedTimezone(null);
       } catch (error) {
         console.error(error);
@@ -264,7 +254,7 @@ const Content = () => {
                 <Box display="flex" flexDirection="column" alignItems="center" mt={1}>
                   <img src={bg_nodata} alt="No Data" style={{ width: '80px', height: '80px' }} />
                   <Typography variant="body2" color="text.secondary" textAlign="center" mt={4}>
-                    {t("noDataFound")}
+                    {t('noDataFound')}
                   </Typography>
                 </Box>
               )}
@@ -279,10 +269,9 @@ const Content = () => {
                     {isFetchingNextPage ? (
                       <>
                         <CircularProgress size={16} sx={{ mr: 1 }} />
-
                       </>
                     ) : (
-                      t("loadMore")
+                      t('loadMore')
                     )}
                   </Button>
                 </Box>
@@ -296,15 +285,27 @@ const Content = () => {
                 key={mode === 'edit' ? selectedTimezone?.id : 'create'}
                 mode={mode}
                 initialData={mode === 'edit' ? selectedTimezone : null}
-                onSuccess={() => {
-
-                }}
+                onSuccess={() => {}}
               />
             ) : (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="100%"
+                flexDirection="column"
+                gap={1}
+              >
                 <Typography color="text.secondary">
                   Select a Time Access or click <b>Add</b> to create a new one.
                 </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => setShowForm(true)}
+                  startIcon={<IconPlus />}
+                >
+                  Add
+                </Button>
               </Box>
             )}
           </Box>
