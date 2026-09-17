@@ -12,7 +12,10 @@ import { IconBrandMedium, IconUser, IconUserFilled } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useTranslation } from 'react-i18next';
-import { useVisitorRolePagination } from 'src/hooks/VisitorRole/useVisitorRolePagination';
+import {
+  useVisitorRole,
+  useVisitorRolePagination,
+} from 'src/hooks/VisitorRole/useVisitorRolePagination';
 import { useVisitorRoleMutation } from 'src/hooks/VisitorRole/useVisitorRoleMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 const Content = () => {
@@ -21,16 +24,29 @@ const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const sortDir = 'desc';
   const { t } = useTranslation();
-  const { data: visitorRole, isLoading } = useVisitorRolePagination({
-    page,
-    rowsPerPage,
-    sortDir,
-    search,
-  });
+  // const { data: visitorRole, isLoading } = useVisitorRolePagination({
+  //   page,
+  //   rowsPerPage,
+  //   sortDir,
+  //   search,
+  // });
+
+  const { data: visitorRole, isLoading } = useVisitorRole();
 
   const { updateMutation } = useVisitorRoleMutation();
   const tableData = visitorRole?.collection ?? [];
-  const totalRecords = visitorRole?.RecordsTotal ?? 0;
+  const filteredTableData = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+
+    if (!keyword) return tableData;
+
+    return tableData.filter((item: any) => {
+      return (
+        item.name?.toLowerCase().includes(keyword) || item.role?.toLowerCase().includes(keyword)
+      );
+    });
+  }, [tableData, search]);
+  const totalRecords = tableData.length;
   const totalFilteredRecords = visitorRole?.RecordsFiltered ?? 0;
 
   const cards = useMemo(
@@ -66,7 +82,10 @@ const Content = () => {
 
       showSwal('success', t('updatedSuccess', { name: 'Visitor Role' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || t("failedToUpdate", { name: 'Visitor Role' }));
+      showSwal(
+        'error',
+        error?.response?.data?.message || t('failedToUpdate', { name: 'Visitor Role' }),
+      );
     }
   };
 
@@ -85,23 +104,24 @@ const Content = () => {
               <DynamicTable
                 loading={isLoading}
                 overflowX={'auto'}
-                data={tableData}
+                data={filteredTableData}
                 selectedRows={selectedRows}
                 isHaveChecked={true}
                 isHaveSearch={true}
+                isNoActionTableHead
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
                 defaultRowsPerPage={rowsPerPage}
-                searchPlaceholder='Search visitor role'
-                rowsPerPageOptions={[10, 50, 100]}
-                totalCount={totalRecords}
-                currentPage={page}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHavePagination={true}
+                searchPlaceholder="Search visitor role"
+                // rowsPerPageOptions={[10, 50, 100]}
+                // totalCount={totalRecords}
+                // currentPage={page}
+                // onPaginationChange={(page, rowsPerPage) => {
+                //   setPage(page);
+                //   setRowsPerPage(rowsPerPage);
+                // }}
+                // isHavePagination={true}
                 isHaveFilterDuration={false}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}

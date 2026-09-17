@@ -6,11 +6,15 @@ export const getAllVisitorRole = async () => {
 };
 
 export const getVisitorRole = async () => {
-  const response = await axiosInstance.get(`/visitor-roles`);
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`/visitor-roles`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export const getVisitorRoleById = async ( id: string) => {
+export const getVisitorRoleById = async (id: string) => {
   const response = await axiosInstance.get(`/visitor-roles/${id}`);
   return response.data;
 };
@@ -35,7 +39,7 @@ export const getVisitorRoleByDt = async (
   return response.data;
 };
 
-export const updateVisitorRole = async ( id: string, data: any) => {
+export const updateVisitorRole = async (id: string, data: any) => {
   const response = await axiosInstance.put(`/visitor-roles/${id}`, data);
   return response.data;
 };

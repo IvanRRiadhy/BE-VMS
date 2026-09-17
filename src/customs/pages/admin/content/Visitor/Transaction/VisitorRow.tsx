@@ -48,8 +48,29 @@ function VisitorRow({
             mt: 0.7,
           }}
         >
-          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
-          {visitor.visitor_name}
+          {' '}
+          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />{' '}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            {' '}
+            <span>{visitor.visitor_name}</span>{' '}
+            {visitor.is_host === true && (
+              <Box
+                component="span"
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backgroundColor: '#E3F2FD',
+                  color: '#1565C0',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Host
+              </Box>
+            )}{' '}
+          </Box>{' '}
         </TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
