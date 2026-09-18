@@ -107,6 +107,24 @@ const Content = () => {
         subTitle: `${totalFilteredRecords}`,
         color: 'none',
       },
+      // {
+      //   title: 'Total Visitor Employee',
+      //   icon: IconUsers,
+      //   subTitle: `${0}`,
+      //   color: 'none',
+      // },
+      {
+        title: 'Total New Visitor',
+        icon: IconUsers,
+        subTitle: `${0}`,
+        color: 'none',
+      },
+      {
+        title: 'Total Repeat Visitor',
+        icon: IconUsers,
+        subTitle: `${0}`,
+        color: 'none',
+      },
     ],
     [totalFilteredRecords, t],
   );
@@ -369,6 +387,50 @@ const Content = () => {
                     // setEdittingId(row.id);
                   }}
                   onDelete={(row) => handleDelete(row.id)}
+                  isHaveHeader
+                  headerContent={{
+                    title: '',
+                    subTitle: 'Monitoring Data Visitor',
+                    items: [{ name: 'All' }, { name: 'Visitor' }, { name: 'Employee' }],
+                  }}
+                  // onHeaderItemClick={(item) => {
+                  //   let isEmployee = '';
+
+                  //   if (item.name === 'Visitor') {
+                  //     isEmployee = 'false';
+                  //   } else if (item.name === 'Employee') {
+                  //     isEmployee = 'true';
+                  //   }
+
+                  //   setPage(0);
+
+                  //   setAppliedFilters((prev) => ({
+                  //     ...prev,
+                  //     is_employee: isEmployee,
+                  //   }));
+
+                  //   setFilters((prev) => ({
+                  //     ...prev,
+                  //     is_employee: isEmployee,
+                  //   }));
+                  // }}
+                  onHeaderItemClick={(item) => {
+                    let isEmployee = '';
+
+                    if (item.name === 'Visitor') {
+                      isEmployee = 'false';
+                    } else if (item.name === 'Employee') {
+                      isEmployee = 'true';
+                    }
+
+                    setPage(0);
+
+                    setAppliedFilters((prev) => ({
+                      ...prev,
+                      is_employee: isEmployee,
+                    }));
+                  }}
+                  defaultSelectedHeaderItem="All"
                 />
               </Grid>
             </Grid>

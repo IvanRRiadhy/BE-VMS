@@ -62,6 +62,34 @@ const Login = () => {
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState(false);
+  const altchaRef = useRef<HTMLElement | null>(null);
+  const [altchaVerified, setAltchaVerified] = useState(false);
+  const handleAltchaState = (ev: Event) => {
+    const detail = (ev as CustomEvent<{ state: string }>).detail;
+    setAltchaVerified(detail?.state === 'verified');
+  };
+
+  const altchaCallbackRef = (node: HTMLElement | null) => {
+    if (altchaRef.current) {
+      altchaRef.current.removeEventListener('statechange', handleAltchaState);
+    }
+
+    altchaRef.current = node;
+
+    if (node) {
+      node.addEventListener('statechange', handleAltchaState);
+
+      try {
+        const config = getConfig();
+
+        (node as any).configure?.({
+          challenge: `${config.API_BASE_URL}/api/Auth/altcha-challenge`,
+        });
+      } catch {
+        // config belum tersedia
+      }
+    }
+  };
 
   const [searchParams] = useSearchParams();
   const codeFromUrl = searchParams.get('code') || '';
@@ -402,7 +430,7 @@ const Login = () => {
                         sx={{
                           position: 'absolute',
                           right: -10,
-                          top: '20%',
+                          top: '10%',
                           transform: 'translateY(-50%)',
                         }}
                       >
@@ -508,6 +536,34 @@ const Login = () => {
                                 }}
                               />
                             </Box>
+                            {/* <Box
+                              sx={{
+                                width: '100%',
+
+                                '& altcha-widget': {
+                                  display: 'block',
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                },
+
+                                '& altcha-widget .altcha-main': {
+                                  width: '100% !important',
+                                  maxWidth: '100% !important',
+                                  boxSizing: 'border-box',
+                                },
+                              }}
+                            >
+                              <altcha-widget
+                                ref={altchaCallbackRef}
+                                challenge={`${config.API_BASE_URL}/api/Auth/altcha-challenge`}
+                                challengeurl={`${config.API_BASE_URL}/api/Auth/altcha-challenge`}
+                                hidefooter
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                }}
+                              />
+                            </Box> */}
 
                             {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
                             {/* {showCaptcha && (
