@@ -89,6 +89,7 @@ type DynamicTableProps<
   onActiveToggle?: any;
   onQuickAccessToggle?: any;
   onCheckConnection?: any;
+  isStickyColumns?: any;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
   onActionAccess?: (row: T, action: 'grant' | 'revoke' | 'block') => void;
@@ -254,6 +255,7 @@ function DynamicTableBase<
     onActiveToggle,
     isHaveExportExcel = false,
     isHaveViewAll = false,
+    isStickyColumns = [],
     isTitleIntegration,
     onHaveViewAll,
     isHavePrint = false,
@@ -421,6 +423,8 @@ function DynamicTableBase<
     'selfie image',
   ];
 
+  const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);
+
   const fallbackColumns = React.useMemo(() => {
     if (data.length > 0) {
       return Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k));
@@ -539,9 +543,15 @@ function DynamicTableBase<
     setOpenRow((prev) => (prev === id ? null : id));
   };
 
+  // const CHECKBOX_COL_WIDTH = 40;
+  // const ACTION_COL_WIDTH = 105;
+  // const INDEX_COL_WIDTH = 10;
+  // const DATA_COL_WIDTH = 180;
+  // const STICKY_DATA_COUNT = 2;
+
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105;
-  const INDEX_COL_WIDTH = 10;
+  const INDEX_COL_WIDTH = 56;
   const DATA_COL_WIDTH = 180;
   const STICKY_DATA_COUNT = 2;
 
@@ -550,9 +560,32 @@ function DynamicTableBase<
     (isActionVisitor ? ACTION_COL_WIDTH : 0) +
     INDEX_COL_WIDTH;
 
-  const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
-
   const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
+
+  const isStickyColumnAtIndex = (i: number) => {
+    return isStickyVisitorCol(i) || isStickyColumns.includes(columns[i]);
+  };
+
+  const getStickyLeft = (i: number) => {
+    let left = getLeftBase();
+
+    for (let index = 0; index < i; index++) {
+      if (isStickyColumnAtIndex(index)) {
+        left += DATA_COL_WIDTH;
+      }
+    }
+
+    return left;
+  };
+
+  // const getLeftBase = () =>
+  //   (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+  //   (isActionVisitor ? ACTION_COL_WIDTH : 0) +
+  //   INDEX_COL_WIDTH;
+
+  // const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
+
+  // const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
   const headerMap: Record<string, string> = {
     companies: 'Companies',
     badge_type: 'Badge Type',
@@ -1461,7 +1494,7 @@ function DynamicTableBase<
                     </TableCell>
                     {/* )} */}
                     {columns.map((colName, idx) => {
-                      const makeSticky = isStickyVisitorCol(idx);
+                      const makeSticky = isStickyVisitorCol(idx) || isStickyColumn(colName);
                       const isEarlyAccess = colName === 'early_access';
                       let label: string = colName;
                       if (label.startsWith('is_')) {
@@ -1716,6 +1749,7 @@ function DynamicTableBase<
                   visiblePasswords={visiblePasswords}
                   onQrCode={onQrCode}
                   togglePassword={togglePassword}
+                  isStickyColumns={isStickyColumns}
                   isHavePassword={isHavePassword}
                   isHaveAssign={isHaveAssign}
                   isHaveUnAssign={isHaveUnAssign}

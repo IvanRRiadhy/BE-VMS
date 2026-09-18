@@ -64,8 +64,8 @@ export const useUpcomingVisitors = ({
         collection: res.collection.map((items: any) => ({
           id: items.id,
           name: items.visitor_name,
-          host: items.host_name,
           invitation_code: items.invitation_code,
+          host: items.host_name,
           visitor_type: items.visitor_type_name,
           organization: items.visitor_organization_name,
           site_place_name: items.site_place_name,

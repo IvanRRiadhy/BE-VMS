@@ -3121,6 +3121,7 @@ const OperatorView = () => {
     try {
       if (typeVisitor === 'live') {
         await liveVisitorQuery.refetch();
+        await upcomingPurposeQuery.refetch();
         return;
       }
 

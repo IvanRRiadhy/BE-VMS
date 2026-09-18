@@ -141,6 +141,7 @@ export const TableBodyContent = ({
   onDetailLink,
   isButtonEnabled,
   isButtonDisabled,
+  isStickyColumns,
   onIsButtonDisabled,
   isHaveVisitor,
   // CHECKBOX_COL_WIDTH,
@@ -407,6 +408,7 @@ export const TableBodyContent = ({
                 onNameClick,
                 isHaveApproval,
                 onAccept,
+                isStickyColumns,
                 onDenied,
                 isHaveAccess,
                 getAccessActions,
@@ -534,6 +536,7 @@ const TableRowItem = React.memo(
       onSettingOperator,
       isHaveActionRevoke,
       onActionAccess,
+      isStickyColumns,
       isHaveActionOnlyEdit,
       isHaveAssignTracking,
       isHaveAddEmpty,
@@ -571,26 +574,60 @@ const TableRowItem = React.memo(
       onGenerateApiKey,
     } = props;
     const { t } = useTranslation();
+    // const CHECKBOX_COL_WIDTH = 40;
+    // const ACTION_COL_WIDTH = 105;
+    // const INDEX_COL_WIDTH = 10;
+    // const DATA_COL_WIDTH = 180;
+
+    // const STICKY_DATA_COUNT = 2;
+
     const CHECKBOX_COL_WIDTH = 40;
     const ACTION_COL_WIDTH = 105;
-    const INDEX_COL_WIDTH = 10;
+    const INDEX_COL_WIDTH = 56;
     const DATA_COL_WIDTH = 180;
 
     const STICKY_DATA_COUNT = 2;
+
     const COLUMN_WIDTHS: Record<string, number> = {
       is_vip: 30,
-      // email: 260,
-      type: 20,
+      type: 90,
       is_employee: 1,
+    };
+
+    const getColumnWidth = (column: string) => {
+      return COLUMN_WIDTHS[column] ?? DATA_COL_WIDTH;
     };
 
     const getLeftBase = () =>
       (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
       (isActionVisitor ? ACTION_COL_WIDTH : 0) +
       INDEX_COL_WIDTH;
-    const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
 
     const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
+
+    const isStickyColumnAtIndex = (i: number) => {
+      return isStickyVisitorCol(i) || isStickyColumns?.includes(columns[i]) === true;
+    };
+
+    const getStickyLeft = (i: number) => {
+      let left = getLeftBase();
+
+      for (let index = 0; index < i; index++) {
+        if (isStickyColumnAtIndex(index)) {
+          left += getColumnWidth(columns[index]);
+        }
+      }
+
+      return left;
+    };
+
+    // const getLeftBase = () =>
+    //   (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+    //   (isActionVisitor ? ACTION_COL_WIDTH : 0) +
+    //   INDEX_COL_WIDTH;
+    // const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
+
+    // const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
     const statusBgMap: Record<string, string> = {
       Checkin: '#21c45d', // hijau
       Checkout: '#F44336', // merah
@@ -800,7 +837,8 @@ const TableRowItem = React.memo(
           {index + 1 + page * rowsPerPage}
         </TableCell>
         {columns.map((col: any, idx: any) => {
-          const makeSticky = isStickyVisitorCol(idx);
+          // const makeSticky = isStickyVisitorCol(idx);
+          const makeSticky = isStickyColumnAtIndex(idx);
           // const columnWidth = COLUMN_WIDTHS[col] ?? DATA_COL_WIDTH;
           const columnWidth = COLUMN_WIDTHS[col];
           return (

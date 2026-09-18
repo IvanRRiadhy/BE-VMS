@@ -50,6 +50,9 @@ const DetailVisitingPurpose = ({
             isHaveChecked={false}
             isNoActionTableHead
             isHaveSearch
+            isHaveVisitor
+            // columns={['name', 'host', 'invitation']}
+            isStickyColumns={['name', 'host', 'invitation_code']}
             isHaveDataImage
             isHavePagination={true}
             defaultRowsPerPage={rowsPerPage}
