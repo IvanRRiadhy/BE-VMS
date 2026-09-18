@@ -41,6 +41,7 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
 import { getConfig } from 'src/config';
+import 'altcha';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const Login = () => {

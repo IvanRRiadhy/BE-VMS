@@ -20,6 +20,8 @@ import DetailLinkDialog from '../Trx/components/Dialog/DetailLinkDialog';
 import InvitationShareDialog from '../Trx/components/Dialog/InvitationShareDialog';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { IconLink, IconUsers } from '@tabler/icons-react';
+import iconAdd from 'src/assets/images/svgs/add-circle.svg';
+
 const Content = () => {
   // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -63,6 +65,13 @@ const Content = () => {
       title: 'Total Share Link',
       icon: IconLink,
       subTitle: `${totalFilterRecords}`,
+      color: 'none',
+    },
+    {
+      title: t('shareLink'),
+      icon: IconLink,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
       color: 'none',
     },
   ];
@@ -224,7 +233,15 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+              <TopCard
+                items={cards}
+                size={{ xs: 12, lg: 4 }}
+                onImageClick={(_, index) => {
+                  if (index === 1) {
+                    handleAddShareLink();
+                  }
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable

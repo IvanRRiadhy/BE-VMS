@@ -14,12 +14,20 @@ import SendEmailDialog from '../../admin/content/Visitor/Trx/components/Dialog/S
 import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import CreateLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
+import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
+
 const Content = () => {
   // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortDir, setSortDir] = useState('desc');
+  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const isGenerating =
+    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const { t } = useTranslation();
 
   const { data, isLoading } = useShareLinkPagination({
     page,
@@ -47,6 +55,13 @@ const Content = () => {
       subTitle: `${totalFilterRecords}`,
       color: 'none',
     },
+    {
+      title: t('shareLink'),
+      icon: IconLink,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
   ];
 
   const [selectedShareLink, setSelectedShareLink] = useState(null);
@@ -69,13 +84,6 @@ const Content = () => {
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
   };
-
-  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
-  const [pendingPayload, setPendingPayload] = useState<any>(null);
-  const isGenerating =
-    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
-  const [openSendEmail, setOpenSendEmail] = useState(false);
-  const { t } = useTranslation();
 
   const handleCreateLink = async (payload: any) => {
     try {
@@ -215,7 +223,15 @@ const Content = () => {
       <Box>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 12 }}>
-            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            <TopCard
+              items={cards}
+              size={{ xs: 12, lg: 4 }}
+              onImageClick={(_, index) => {
+                if (index === 1) {
+                  handleAddShareLink();
+                }
+              }}
+            />
           </Grid>
           <Grid size={{ xs: 12, lg: 12 }}>
             <DynamicTable
