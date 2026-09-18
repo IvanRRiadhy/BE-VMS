@@ -608,7 +608,7 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', t('createSuccess', { name: 'Share Link' }));
     } catch (err: any) {
-      showSwal('error', err.response.data.message ?? t('createFailed', { name: 'Share Link' }));
+      showSwal('error', err.response.data.message ?? t('createdFailed', { name: 'Share Link' }));
     }
   };
 
@@ -622,7 +622,7 @@ const Content = () => {
     } catch (error: any) {
       showSwal(
         'error',
-        error?.response?.data?.message || t('createFailed', { name: 'Quick Access' }),
+        error?.response?.data?.message || t('createdFailed', { name: 'Quick Access' }),
       );
       throw error;
     }

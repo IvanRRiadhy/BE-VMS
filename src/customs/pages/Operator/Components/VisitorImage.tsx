@@ -206,6 +206,13 @@ const VisitorImage = ({
       background: '#FFF6E5',
       text: '#D99000',
     },
+    //CIT
+    {
+      id: 'cit',
+      name: 'CIT',
+      background: '#a8f5caff',
+      text: '#2F80ED',
+    },
     {
       id: 'utility-maintenance',
       name: 'Utility Maintenance',
@@ -353,7 +360,7 @@ const VisitorImage = ({
                   </Button>
                 </Grid>
               )} */}
-              {visitorTypeDefaults.length > 4 && (
+              {visitorTypeDefaults.length > 6 && (
                 <Grid size={12}>
                   <Button fullWidth variant="outlined" onClick={handleOpenAllVisitingPurpose}>
                     View All

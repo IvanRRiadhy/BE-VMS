@@ -520,7 +520,7 @@ const Content = () => {
         ]);
       }
 
-      setOpenPreRegistration(true);
+      setOpenInvitationVisitor(true);
     } catch (err) {
       console.error(err);
     }

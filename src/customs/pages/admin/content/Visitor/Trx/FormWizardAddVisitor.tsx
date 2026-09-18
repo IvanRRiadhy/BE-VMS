@@ -108,6 +108,8 @@ import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { format } from 'path';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -416,11 +418,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               break;
 
             case 'visitor_period_start':
-              field.answer_datetime = visitor.visitor_period_start ?? '';
+              field.answer_datetime = formatDateTime(visitor.visitor_period_start) ?? '';
               break;
 
             case 'visitor_period_end':
-              field.answer_datetime = visitor.visitor_period_end ?? '';
+              field.answer_datetime = formatDateTime(visitor.visitor_period_end) ?? '';
               break;
 
             case 'site_place':
@@ -434,31 +436,32 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     });
 
     const firstVisitor = duplicateData.visitors[0];
-
     grouped.single_page = grouped.single_page.map((field: any) => {
-      switch (field.remarks?.toLowerCase()) {
+      const remarks = field.remarks?.trim().toLowerCase();
+      switch (remarks) {
         case 'host':
           return {
             ...field,
-            answer_text: firstVisitor.host,
+            answer_text: firstVisitor.host ?? '',
           };
 
         case 'agenda':
+        case 'Agenda':
           return {
             ...field,
-            answer_text: firstVisitor.agenda,
+            answer_text: firstVisitor.agenda ?? '',
           };
 
         case 'visitor_period_start':
           return {
             ...field,
-            answer_datetime: firstVisitor.visitor_period_start,
+            answer_datetime: formatDateTime(firstVisitor.visitor_period_start),
           };
 
         case 'visitor_period_end':
           return {
             ...field,
-            answer_datetime: firstVisitor.visitor_period_end,
+            answer_datetime: formatDateTime(firstVisitor.visitor_period_end),
           };
 
         case 'site_place':
@@ -471,7 +474,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           return field;
       }
     });
-
     setGroupedPages(grouped);
 
     const randomCode = Array.from({ length: 6 }, () =>
@@ -3871,6 +3873,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         remark === 'visitor_period_start' &&
         filteredDetails[originalIndex + 1] &&
         (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
+
+      const agendaOptions = ['Meeting', 'Presentation', 'Visit', 'Training', 'Report'];
+
+      const isOtherAgenda =
+        showOtherAgenda[originalIndex] ||
+        (!!item.answer_text && !agendaOptions.includes(item.answer_text));
       return (
         <TableRow key={key}>
           <TableCell
@@ -3925,7 +3933,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     return (
                       <Box>
                         <FormControl fullWidth error={!!errorMessage}>
-                          <CustomSelect
+                          {/* <CustomSelect
                             value={
                               showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''
                             }
@@ -3968,15 +3976,70 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <MenuItem value="Training">Training</MenuItem>
                             <MenuItem value="Report">Report</MenuItem>
                             <MenuItem value="Others">Others</MenuItem>
+                          </CustomSelect> */}
+
+                          <CustomSelect
+                            value={isOtherAgenda ? 'Others' : item.answer_text || ''}
+                            onChange={(e: any) => {
+                              const value = e.target.value;
+
+                              if (value === 'Others') {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: true,
+                                }));
+
+                                // kosongkan dulu, nanti diisi oleh text field
+                                onChange(originalIndex, 'answer_text', '');
+                              } else {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: false,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', value);
+                              }
+
+                              clearFieldError(key);
+                            }}
+                            fullWidth
+                            displayEmpty
+                            disabled={option?.disabled}
+                            sx={{
+                              '&.Mui-disabled': {
+                                backgroundColor: '#eeeaeaff',
+                              },
+                            }}
+                          >
+                            <MenuItem value="" disabled>
+                              {t('select')} agenda
+                            </MenuItem>
+
+                            <MenuItem value="Meeting">Meeting</MenuItem>
+                            <MenuItem value="Presentation">Presentation</MenuItem>
+                            <MenuItem value="Visit">Visit</MenuItem>
+                            <MenuItem value="Training">Training</MenuItem>
+                            <MenuItem value="Report">Report</MenuItem>
+                            <MenuItem value="Others">Others</MenuItem>
                           </CustomSelect>
                         </FormControl>
                         <FormHelperText sx={{ color: 'red' }}>{errorMessage}</FormHelperText>
 
-                        {showOtherAgenda[originalIndex] && (
+                        {/* {showOtherAgenda[originalIndex] && (
                           <CustomTextField
                             sx={{ mt: 2 }}
                             fullWidth
                             placeholder="Please specify agenda"
+                            value={item.answer_text || ''}
+                            onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
+                          /> */}
+                        {/* )} */}
+                        {isOtherAgenda && (
+                          <CustomTextField
+                            sx={{ mt: 2 }}
+                            fullWidth
+                            placeholder="Please specify agenda"
+                            disabled={option?.disabled}
                             value={item.answer_text || ''}
                             onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
                           />
