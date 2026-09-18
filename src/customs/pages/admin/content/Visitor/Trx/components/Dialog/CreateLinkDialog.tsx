@@ -372,21 +372,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }}
               />
             </LocalizationProvider>
-
-            {/* <CustomTextField
-              type="datetime-local"
-              fullWidth
-              disabled={!enabled.visitStart}
-              sx={{ mt: 1 }}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  visitor_period_start: e.target.value
-                    ? new Date(e.target.value).toISOString()
-                    : null,
-                }))
-              }
-            /> */}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -401,6 +386,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
 
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
               <DateTimePicker
+                open={openEndPicker}
+                onOpen={() => setOpenEndPicker(true)}
+                onClose={() => setOpenEndPicker(false)}
                 disabled={!enabled.visitEnd}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
@@ -414,11 +402,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                     visitor_period_end: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                // viewRenderers={{
-                //   hours: renderTimeViewClock,
-                //   minutes: renderTimeViewClock,
-                //   seconds: renderTimeViewClock,
-                // }}
+  
                 slotProps={{
                   actionBar: {
                     actions: ['today', 'clear', 'accept'],

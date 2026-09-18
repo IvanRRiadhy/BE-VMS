@@ -67,8 +67,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import axiosInstance from 'src/customs/api/interceptor';
 
 const Content = () => {
-
-
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -232,8 +230,6 @@ const Content = () => {
 
   const handlePostReport = async (rep: any) => {
     try {
-
-
       if (isFormDataEmpty(formData)) {
         showSwal('error', 'Please select at least one filter.');
         return;
@@ -299,8 +295,6 @@ const Content = () => {
 
   const exportToExcel = async () => {
     try {
-
-
       // Validasi CustomDate
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
         showSwal('error', 'Please select start and end date for CustomDate report');
@@ -316,7 +310,6 @@ const Content = () => {
       };
 
       const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-
         responseType: 'blob',
       });
 
@@ -470,7 +463,6 @@ const Content = () => {
   const [openSaveDialog, setOpenSaveDialog] = useState(false);
 
   const handleEditReport = async (rep: any) => {
-
     const res = await getReportVisitorTransactionById(rep.id);
     const d = res.collection;
 
@@ -496,8 +488,6 @@ const Content = () => {
   const [loadingView, setLoadingView] = useState(false);
 
   const handleViewReport = async (rep: any) => {
-
-
     setLoadingView(true);
 
     try {
@@ -612,26 +602,48 @@ const Content = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
-                  <TextField
+                  <CustomTextField
                     type="date"
                     fullWidth
                     value={formData.start_date || ''}
                     onChange={(e) => handleChange('start_date', e.target.value)}
                     InputLabelProps={{ shrink: true }}
-                    sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                    sx={{
+                      mt: 0.5,
+                      '& input': {
+                        color: 'black',
+                      },
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#f5f5f5',
+                      },
+                      '& .MuiInputBase-input.Mui-disabled': {
+                        WebkitTextFillColor: '#9e9e9e',
+                      },
+                    }}
                     disabled={formData.time_report !== 'CustomDate'}
                   />
                 </Grid>
 
                 <Grid size={{ xs: 12 }}>
                   <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
-                  <TextField
+                  <CustomTextField
                     type="date"
                     fullWidth
                     value={formData.end_date || ''}
                     onChange={(e) => handleChange('end_date', e.target.value)}
                     InputLabelProps={{ shrink: true }}
-                    sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                    sx={{
+                      mt: 0.5,
+                      '& input': {
+                        color: 'black',
+                      },
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#f5f5f5 !important ',
+                      },
+                      '& .MuiInputBase-input.Mui-disabled': {
+                        WebkitTextFillColor: '#9e9e9e !important',
+                      },
+                    }}
                     disabled={formData.time_report !== 'CustomDate'}
                   />
                 </Grid>

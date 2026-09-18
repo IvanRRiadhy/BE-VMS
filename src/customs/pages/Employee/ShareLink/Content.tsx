@@ -102,9 +102,36 @@ const Content = () => {
       showSwal('error', err?.response.data.message || 'Failed to send share link');
     }
   };
-  const handleCopyLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    showSwal('success', 'Link copied to clipboard.');
+  const handleCopyLink = async (link: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textArea = document.createElement('textarea');
+
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        const copied = document.execCommand('copy');
+
+        document.body.removeChild(textArea);
+
+        if (!copied) {
+          throw new Error('Failed to copy');
+        }
+      }
+
+      showSwal('success', 'Link copied to clipboard.');
+    } catch (error) {
+      console.error('Copy link failed:', error);
+      showSwal('error', 'Failed to copy link.');
+    }
   };
 
   const handleDetailLink = (link: string) => {

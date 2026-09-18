@@ -140,6 +140,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
     onClose();
   };
 
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
@@ -261,6 +264,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             </Stack>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
               <DateTimePicker
+                open={openStartPicker}
+                onOpen={() => setOpenStartPicker(true)}
+                onClose={() => setOpenStartPicker(false)}
                 disabled={!enabled.visitStart}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
@@ -271,42 +277,47 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                     visitor_period_start: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                // viewRenderers={{
-                //   hours: renderTimeViewClock,
-                //   minutes: renderTimeViewClock,
-                //   seconds: renderTimeViewClock,
-                // }}
                 slotProps={{
                   actionBar: {
-                    actions: ['clear', 'accept'],
+                    actions: ['today', 'clear', 'accept'],
+                    sx: {
+                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                        color: 'secondary !important',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                        backgroundColor: '#d32f2f !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                        backgroundColor: '#055499 !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                    },
                   },
                   textField: {
                     fullWidth: true,
+
+                    onClick: () => {
+                      setOpenStartPicker(true);
+                    },
+
+                    FormHelperTextProps: {
+                      sx: {
+                        ml: 0,
+                        mr: 0,
+                      },
+                    },
                     sx: {
-                      mt: 1,
                       '& .MuiInputBase-root.Mui-disabled': {
-                        backgroundColor: '#f0f0f0',
+                        backgroundColor: '#eeeeee',
                       },
                     },
                   },
                 }}
               />
             </LocalizationProvider>
-
-            {/* <CustomTextField
-              type="datetime-local"
-              fullWidth
-              disabled={!enabled.visitStart}
-              sx={{ mt: 1 }}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  visitor_period_start: e.target.value
-                    ? new Date(e.target.value).toISOString()
-                    : null,
-                }))
-              }
-            /> */}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -321,6 +332,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
 
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
               <DateTimePicker
+                open={openEndPicker}
+                onOpen={() => setOpenEndPicker(true)}
+                onClose={() => setOpenEndPicker(false)}
                 disabled={!enabled.visitEnd}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
@@ -334,21 +348,41 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                     visitor_period_end: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-                // viewRenderers={{
-                //   hours: renderTimeViewClock,
-                //   minutes: renderTimeViewClock,
-                //   seconds: renderTimeViewClock,
-                // }}
                 slotProps={{
                   actionBar: {
-                    actions: ['clear', 'accept'],
+                    actions: ['today', 'clear', 'accept'],
+                    sx: {
+                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                        color: 'secondary !important',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                        backgroundColor: '#d32f2f !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                        backgroundColor: '#055499 !important',
+                        color: 'white',
+                        marginLeft: '3px',
+                      },
+                    },
                   },
+
                   textField: {
                     fullWidth: true,
+                    onClick: () => {
+                      setOpenEndPicker(true);
+                    },
+
+                    FormHelperTextProps: {
+                      sx: {
+                        ml: 0,
+                        mr: 0,
+                      },
+                    },
                     sx: {
-                      mt: 1,
                       '& .MuiInputBase-root.Mui-disabled': {
-                        backgroundColor: '#f0f0f0',
+                        backgroundColor: '#eeeeee',
                       },
                     },
                   },

@@ -79,6 +79,7 @@ const VisitorInvitationActions = ({
                   color: 'primary.main',
                   '&:hover': {
                     backgroundColor: 'white',
+                    color: 'primary.main',
                   },
                 }}
               >

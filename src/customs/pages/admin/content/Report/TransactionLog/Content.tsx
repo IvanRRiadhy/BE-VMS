@@ -41,6 +41,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconDeviceFloppy,
+  IconInfoCircle,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRight,
   IconLayoutSidebarRightCollapse,
@@ -610,7 +611,11 @@ const Content = () => {
 
                 <Tooltip title={isFilterCollapsed ? 'Show Sidebar' : 'Hide Sidebar'} arrow>
                   <IconButton size="small" onClick={() => setIsFilterCollapsed((prev) => !prev)}>
-                    {isFilterCollapsed ? <IconLayoutSidebarRightCollapse /> : <IconLayoutSidebarLeftCollapse />}
+                    {isFilterCollapsed ? (
+                      <IconLayoutSidebarRightCollapse />
+                    ) : (
+                      <IconLayoutSidebarLeftCollapse />
+                    )}
                   </IconButton>
                 </Tooltip>
               </Box>
@@ -662,27 +667,75 @@ const Content = () => {
                       </CustomSelect>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>
+                          Start Date
+                        </CustomFormLabel>
+
+                        <Tooltip title='Select "Custom Date" to enable this field.' arrow>
+                          <IconInfoCircle
+                            style={{ color: '#9e9e9e', fontSize: 16, cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
                       <TextField
                         type="date"
                         fullWidth
                         value={formData.start_date || ''}
                         onChange={(e) => handleChange('start_date', e.target.value)}
                         InputLabelProps={{ shrink: true }}
-                        sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                        sx={{
+                          mt: 0.5,
+
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#fff !important',
+                          },
+
+                          '& .MuiOutlinedInput-root.Mui-disabled': {
+                            backgroundColor: '#f5f5f5 !important',
+                          },
+
+                          '& .MuiOutlinedInput-input.Mui-disabled': {
+                            WebkitTextFillColor: '#9e9e9e !important',
+                            color: '#9e9e9e !important',
+                          },
+                        }}
                         disabled={formData.time_report !== 'CustomDate'}
                       />
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
+
+                        <Tooltip title='Select "Custom Date" to enable this field.' arrow>
+                          <IconInfoCircle
+                            style={{ color: '#9e9e9e', fontSize: 16, cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
                       <TextField
                         type="date"
                         fullWidth
                         value={formData.end_date || ''}
                         onChange={(e) => handleChange('end_date', e.target.value)}
                         InputLabelProps={{ shrink: true }}
-                        sx={{ '& input': { color: 'black' }, mt: 0.5 }}
+                        sx={{
+                          mt: 0.5,
+
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#fff !important',
+                          },
+
+                          '& .MuiOutlinedInput-root.Mui-disabled': {
+                            backgroundColor: '#f5f5f5 !important',
+                          },
+
+                          '& .MuiOutlinedInput-input.Mui-disabled': {
+                            WebkitTextFillColor: '#9e9e9e !important',
+                            color: '#9e9e9e !important',
+                          },
+                        }}
                         disabled={formData.time_report !== 'CustomDate'}
                       />
                     </Grid>

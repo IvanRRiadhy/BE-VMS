@@ -251,7 +251,8 @@ export const TableBodyContent = ({
                     ) : (
                       <Skeleton
                         variant="text"
-                        width={`${40 + Math.random() * 40}%`}
+                        // width={`${40 + Math.random() * 40}%`}
+                        width="65%"
                         height={18}
                         animation="wave"
                       />
@@ -278,7 +279,7 @@ export const TableBodyContent = ({
                   </Box>
                 </TableCell>
               )}
-              {isHaveAction && !isActionVisitor && (
+              {/* {isHaveAction && !isActionVisitor && (
                 <TableCell
                   align="center"
                   sx={{
@@ -301,7 +302,7 @@ export const TableBodyContent = ({
                     ))}
                   </Box>
                 </TableCell>
-              )}
+              )} */}
 
               {/* action only edit */}
               {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (

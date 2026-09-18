@@ -1343,6 +1343,7 @@ function DynamicTableBase<
                 aria-label="simple table"
                 sx={{
                   width: '100%',
+                  // tableLayout: 'fixed',
                   minWidth: `${columns.length * DATA_COL_WIDTH + CHECKBOX_COL_WIDTH + INDEX_COL_WIDTH + ACTION_COL_WIDTH}px`,
                 }}
                 stickyHeader={stickyHeader}
