@@ -38,10 +38,10 @@ const useUserGroups = ({
             }));
 
             return {
-                collection,
-                tableCollection: collection,
-                totalRecords: response.recordsTotal,
-                totalFiltered: response.recordsFiltered,
+              collection,
+              tableCollection: collection,
+              totalRecords: response.RecordsTotal,
+              totalFiltered: response.RecordsFiltered,
             };
         },
         placeholderData: (prev) => prev,

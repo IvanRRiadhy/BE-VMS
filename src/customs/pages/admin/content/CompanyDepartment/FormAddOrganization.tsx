@@ -209,7 +209,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel required sx={{ mt: 2 }}>
+            <CustomFormLabel  sx={{ mt: 2 }}>
               Head of Organization
             </CustomFormLabel>
             <Controller

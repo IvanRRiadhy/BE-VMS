@@ -1,9 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
 import { Box, Grid2 as Grid } from '@mui/material';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -12,7 +7,6 @@ import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTranslation } from 'react-i18next';
-import Swal from 'sweetalert2';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { IconLink, IconUsers } from '@tabler/icons-react';
@@ -119,24 +113,26 @@ const Content = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      const confirm = await Swal.fire({
-        title: 'Do you want to delete this link?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        confirmButtonColor: '#4caf50',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
-      });
+      // const confirm = await Swal.fire({
+      //   title: 'Do you want to delete this link?',
+      //   icon: 'question',
+      //   showCancelButton: true,
+      //   confirmButtonText: 'Yes',
+      //   cancelButtonText: 'Cancel',
+      //   reverseButtons: true,
+      //   confirmButtonColor: '#4caf50',
+      //   customClass: {
+      //     title: 'swal2-title-custom',
+      //     htmlContainer: 'swal2-text-custom',
+      //   },
+      // });
+
+      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
 
       if (!confirm.isConfirmed) return;
 
       await deleteMutation.mutateAsync(id);
-      showSwal('success', 'Successfully deleted link.');
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
     }
@@ -182,7 +178,6 @@ const Content = () => {
         },
       });
       showSwal('success', t('successSendInvitation'));
-      // setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to send invitation');
     }

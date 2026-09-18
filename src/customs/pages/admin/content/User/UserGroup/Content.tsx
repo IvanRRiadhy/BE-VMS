@@ -90,7 +90,7 @@ const Content = () => {
   const { deleteMutation: deleteUserGroup } = useUserGroupMutation();
 
   const collection = data?.collection || [];
-  const totalRecords = data?.collection.length || 0;
+  const totalRecords = data?.totalFiltered || 0;
 
   const cards = useMemo(
     () => [
@@ -405,11 +405,19 @@ const Content = () => {
         await handleOrganizationnPermission();
       }
 
-      if (formData.permissions.includes('SiteAssignment')) {
+      // if (formData.permissions.includes('SiteAssignment')) {
+      //   await handleSiteAssignment();
+      // }
+
+      // if (formData.permissions.includes('ManageSiteScope') || formData.manageSite.length > 0) {
+      //   await handleManageSitePermission();
+      // }
+
+      if (formData.siteAssignment.length > 0) {
         await handleSiteAssignment();
       }
 
-      if (formData.permissions.includes('ManageSiteScope') || formData.manageSite.length > 0) {
+      if (formData.manageSite.length > 0) {
         await handleManageSitePermission();
       }
 
@@ -470,9 +478,11 @@ const Content = () => {
       promises.push(deletePermissionAccessControl(edittingId));
     }
 
-    if (originalData.manageSite?.length) {
-      promises.push(deletePermissionSite(edittingId));
-    }
+    // if (originalData.manageSite?.length) {
+    //   promises.push(deletePermissionSite(edittingId));
+    // }
+
+    promises.push(deletePermissionSite(edittingId));
 
     // ORGANIZATION
     if (originalData.organization?.length) {
@@ -735,6 +745,7 @@ const Content = () => {
                 isHaveSettingOperator={true}
                 searchKeyword={search}
                 onSearch={handleSearch}
+                totalCount={totalRecords}
                 // onSearchKeywordChange={handleSearchKeywordChange}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}

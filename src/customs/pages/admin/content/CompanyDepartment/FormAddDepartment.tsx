@@ -215,7 +215,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel required sx={{ mt: 2 }}>
+            <CustomFormLabel  sx={{ mt: 2 }}>
               Head of Department
             </CustomFormLabel>
             <Controller

@@ -194,7 +194,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel required sx={{ mt: 2 }}>
+            <CustomFormLabel  sx={{ mt: 2 }}>
               Head of District
             </CustomFormLabel>
             <Controller
