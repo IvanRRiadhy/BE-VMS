@@ -34,7 +34,6 @@ type VisitorTypeTableRow = {
 };
 
 const Content = () => {
-  const [visitorData, setVisitorData] = useState<Item[]>([]);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loadingData, setLoadingData] = useState(false);
@@ -168,59 +167,32 @@ const Content = () => {
       setFormDataAddVisitorType(hydrated);
       initialFormRef.current = hydrated;
       setPendingEditId(null);
-    } catch (err) {
-      console.error('Error fetching visitor type detail:', err);
-
+    } catch (err: any) {
       setOpenFormCreateVisitorType(false);
-
-      showSwal('error', 'Failed to load visitor type.');
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to load visitor type.');
     } finally {
       setLoadingEdit(false);
     }
   };
 
-  const handleConfirmEdit = () => {
+  const handleConfirmEdit = async () => {
     setConfirmDialogOpen(false);
 
     if (pendingEditId) {
-      const nextItem = visitorData.find((item) => item.id === pendingEditId);
-      if (!nextItem) return;
+      const id = pendingEditId;
 
-      const parsed = CreateVisitorTypeRequestSchema.parse({
-        name: nextItem.name,
-        description: nextItem.description,
-        show_in_form: nextItem.show_in_form,
-        duration_visit: nextItem.duration_visit,
-        max_time_visit: nextItem.max_time_visit,
-        can_parking: nextItem.can_parking,
-        can_access: nextItem.can_access,
-        add_to_menu: nextItem.add_to_menu,
-        need_document: nextItem.need_document,
-        grace_time: nextItem.grace_time,
-        direct_visit: nextItem.direct_visit,
-        period: nextItem.period,
-        can_notification_arrival: nextItem.can_notification_arrival,
-        // is_primary: nextItem.is_primary,
-        is_enable: nextItem.is_enable,
-        prefix: nextItem.prefix,
-        vip: nextItem.vip,
-        simple_visitor: nextItem.simple_visitor,
-        simple_period: nextItem.simple_period,
-        visitor_type_documents: nextItem.visitor_type_documents ?? null,
-        section_page_visitor_types: nextItem.section_page_visitor_types ?? [],
-      });
-
-      setEdittingId(pendingEditId);
-      setFormDataAddVisitorType(parsed);
-      initialFormRef.current = parsed;
       setPendingEditId(null);
-      handleOpenDialog();
-    } else {
-      setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
-      setEdittingId('');
+      setOpenFormCreateVisitorType(false);
+
+      await handleEdit(id);
+
+      return;
     }
+
+    setEdittingId('');
+    setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
     setPendingEditId(null);
-    handleCloseDialog();
+    setOpenFormCreateVisitorType(false);
   };
 
   const handleCancelEdit = () => {
@@ -260,15 +232,15 @@ const Content = () => {
   }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Visitor Type' }));
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'visitor type' }));
     if (!confirmed) return;
     try {
       setLoadingData(true);
       await deleteMutation.mutateAsync(id);
 
-      showSwal('success', t('deleteSuccess', { name: 'Visitor Type' }));
+      showSwal('success', t('deleteSuccess', { name: 'visitor type' }));
     } catch (error: any) {
-      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'Visitor Type' }));
+      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'visitor type' }));
     } finally {
       setTimeout(() => {
         setLoadingData(false);
@@ -280,7 +252,7 @@ const Content = () => {
     if (rows.length === 0) return;
 
     const result = await showConfirmDelete(
-      t('confirmDeleteMultiple', { count: rows.length, name: 'Visitor Type' }),
+      t('confirmDeleteMultiple', { count: rows.length, name: 'visitor type' }),
     );
     if (result) {
       try {
@@ -288,11 +260,11 @@ const Content = () => {
         setSelectedRows([]);
         showSwal(
           'success',
-          t('deleteSuccessMultiple', { count: rows.length, name: 'Visitor Type' }),
+          t('deleteSuccessMultiple', { count: rows.length, name: 'visitor type' }),
         );
         return true;
       } catch (error) {
-        showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'Visitor Type' }));
+        showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'visitor type' }));
         return false;
       }
     }
@@ -369,7 +341,7 @@ const Content = () => {
         id: row.id,
         active: checked,
       });
-      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
+      showSwal('success', t('updatedSuccess', { name: 'visitor type' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
     } finally {
@@ -384,9 +356,9 @@ const Content = () => {
         id: row.id,
         quickAccess: checked,
       });
-      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
+      showSwal('success', t('updatedSuccess', { name: 'visitor type' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || t('updatedFailed', { name: 'Visitor Type' }));
+      showSwal('error', error?.response?.data?.msg || t('updatedFailed', { name: 'visitor type' }));
     } finally {
       setLoadingData(false);
     }

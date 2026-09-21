@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Backdrop, Box, CircularProgress, Grid2 as Grid } from '@mui/material';
+import { Backdrop, Box, Grid2 as Grid } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -16,7 +16,6 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { getVisitorById } from 'src/customs/api/admin';
-
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
@@ -84,7 +83,7 @@ const Content = () => {
   const tableCustomVisitor =
     data?.collection.map((item: any) => ({
       id: item.id,
-      photo: item.face_image,
+      photo: item.is_employee ? item.employee?.faceimage || '' : item.face_image || '',
       name: item.name || '-',
       // citizenship_id: item.identity_id || '-',
       email: item.email || '-',
@@ -97,7 +96,6 @@ const Content = () => {
 
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
-  const vipCount = data?.collection.filter((visitor: any) => visitor.is_vip).length ?? 0;
 
   const cards = useMemo(
     () => [
@@ -146,15 +144,6 @@ const Content = () => {
       setVisitorLoading(false);
     }
   };
-
-  type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
-
-  const [confirm, setConfirm] = useState<{
-    type: VisitorAction;
-    loading: boolean;
-  } | null>(null);
-
-  const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
 
   const handleApplyFilter = () => {
     setAppliedFilters(filters);
@@ -302,7 +291,7 @@ const Content = () => {
         data: payload,
       });
 
-      showSwal('success', 'Visitor updated successfully');
+      showSwal('success', t('updatedSuccess', { name: 'visitor' }));
 
       setOpenEditDialog(false);
       setVisitorEdit(null);
@@ -348,6 +337,7 @@ const Content = () => {
                   // onSearchKeywordChange={handleSearchKeywordChange}
                   isHaveChecked={true}
                   isHaveVip={true}
+                  isHaveImage
                   isHaveSearch={true}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
@@ -366,7 +356,7 @@ const Content = () => {
                   //   handleView(row.id);
                   // }}
                   isHaveEmployee={true}
-                  isHaveVerified={true}
+                  // isHaveVerified={true}
                   onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                   // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   onFilterCalenderChange={(ranges) => {
@@ -442,7 +432,6 @@ const Content = () => {
           error={visitorError}
           detail={visitorDetail}
           onClose={() => setOpenVisitorDialog(false)}
-          onConfirm={(action: any) => openConfirm(action)}
         />
 
         <VisitorEditDialog

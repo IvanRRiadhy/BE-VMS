@@ -13,7 +13,6 @@ import CreateLinkDialog from '../Trx/components/Dialog/CreateLinkDialog';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useTranslation } from 'react-i18next';
-import Swal from 'sweetalert2';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import SendEmailDialog from '../Trx/components/Dialog/SendEmailDialog';
 import DetailLinkDialog from '../Trx/components/Dialog/DetailLinkDialog';
@@ -23,7 +22,6 @@ import { IconLink, IconUsers } from '@tabler/icons-react';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 
 const Content = () => {
-  // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -94,7 +92,7 @@ const Content = () => {
       await createMutation.mutateAsync(payload);
       setOpenCreateLink(false);
       // showSwal('success', 'Successfully created share link');
-      showSwal('success', t('createSuccess', { name: 'Share Link' }));
+      showSwal('success', t('createSuccess', { name: 'share link' }));
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to create share link');
     }
@@ -172,7 +170,7 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteMutation.mutateAsync(id);
-      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+      showSwal('success', t('deleteSuccess', { name: 'share link' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
     }

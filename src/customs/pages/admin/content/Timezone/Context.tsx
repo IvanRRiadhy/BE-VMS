@@ -304,7 +304,7 @@ const Content = () => {
                   onClick={() => setShowForm(true)}
                   startIcon={<IconPlus />}
                 >
-                  Add
+                  {t("add")} Time Access
                 </Button>
               </Box>
             )}

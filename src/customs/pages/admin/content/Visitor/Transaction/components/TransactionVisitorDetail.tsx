@@ -121,15 +121,33 @@ const TransactionVisitorDetail = ({
                 <TableCell>
                   <Checkbox />
                 </TableCell>
-                <TableCell>Visitor Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Invitation Code</TableCell>
-                <TableCell>Organization</TableCell>
-                <TableCell>Host</TableCell>
-                <TableCell>Site</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>{t('action')}</TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Visitor Name
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Email
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Phone
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Invitation Code
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Organization
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Host
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Site
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  Status
+                </TableCell>
+                <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  {t('action')}
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -177,8 +195,13 @@ const TransactionVisitorDetail = ({
           <Typography color="text.secondary" mt={2} variant="h5">
             {t('selectGroupFromTheList')}
           </Typography>
-          
-          <Button variant="contained" color="primary" startIcon={<IconPlus />} onClick={handleAddInvitation}>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<IconPlus />}
+            onClick={handleAddInvitation}
+          >
             Add Invitation
           </Button>
         </Box>

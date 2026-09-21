@@ -50,7 +50,6 @@ interface VisitorDetailDialogProps {
   error?: string | null;
   detail?: any;
   onClose: () => void;
-  onConfirm?: (action: 'checkin' | 'checkout' | 'deny' | 'block') => void;
 }
 
 const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
@@ -59,7 +58,6 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
   error,
   detail,
   onClose,
-  onConfirm,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const CDN_BASE = `${axiosInstance2}/cdn`;

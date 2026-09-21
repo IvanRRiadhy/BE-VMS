@@ -10,23 +10,13 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { CreateVisitorRequestSchema } from 'src/customs/api/models/Admin/Visitor';
 import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
-import {
-  IconClipboard,
-  IconQrcode,
-  IconShare,
-  IconUser,
-  IconUsers,
-  IconBolt,
-  IconLink,
-  IconUserPlus,
-} from '@tabler/icons-react';
+import { IconUsers, IconBolt, IconLink, IconUserPlus } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -130,7 +120,6 @@ const Content = () => {
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite();
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
@@ -156,6 +145,10 @@ const Content = () => {
   });
 
   const employeeData = data?.collection ?? [];
+
+  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
+  const isGenerating =
+    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -495,11 +488,6 @@ const Content = () => {
     setPage(0);
   };
 
-  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
-
-  const isGenerating =
-    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
-
   const handleDeleteLink = async (id: string) => {
     try {
       const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
@@ -602,7 +590,6 @@ const Content = () => {
         },
       });
       showSwal('success', t('successSendInvitation'));
-      setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.msg || 'Failed to send invitation');
     }

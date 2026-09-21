@@ -3585,18 +3585,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const isFieldMandatory = (item: any, visibilityMap: any) => {
       const remark = (item.remarks || '').toLowerCase();
-
-      // is_driving wajib, tetapi false adalah value yang valid
       if (remark === 'is_driving' || remark === 'is_employee') {
         return false;
       }
-
-      // vehicle wajib hanya jika is_driving = true
       if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
 
-      // mandatory normal
       return !!item.mandatory;
     };
 
@@ -3630,11 +3625,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
 
     if (isGroup) {
-      // ============================================================
-      // GROUP VISITOR
-      // ============================================================
-
-      // Purpose Visit (shared page)
       const section = sectionsData[activeStep - 1];
 
       if (section.name === 'Purpose Visit') {
@@ -3675,32 +3665,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           validateField(item, `${activeStep - 1}:${fieldId}`, errors);
         });
       }
-
-      // ============================================================
-      // SEMUA PAGE VISITOR
-      // Visitor Information, Vehicle, dll
-      // ============================================================
       else {
         dataVisitor.forEach((visitor, gIdx) => {
           const page = visitor.question_page?.[activeStep - 1];
-
           if (!page?.form) return;
-
           const details = page.form;
-
           const visibilityMap: any = getVisibilityMapForValidation(details);
-
           details.forEach((item: any) => {
             const remark = (item.remarks || '').toLowerCase();
 
             const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
               ? visibilityMap[remark]
               : true;
-
-            // Field tidak terlihat -> tidak perlu divalidasi
             if (!isVisible) return;
-
-            // Mandatory normal + conditional mandatory
             if (!isFieldMandatory(item, visibilityMap)) return;
 
             const fieldId = item.custom_field_id || item.id;
@@ -3710,31 +3687,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
       }
     } else {
-      // ============================================================
-      // SINGLE VISITOR
-      // ============================================================
-
       const section = sectionsData[activeStep - 1];
-
       const details = formsOf(section);
-
       const visibilityMap: any = getVisibilityMapForValidation(details);
-
       details.forEach((item: any) => {
         const remark = (item.remarks || '').toLowerCase();
-
         const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
           ? visibilityMap[remark]
           : true;
-
         if (!isVisible) return;
-
         if (!isFieldMandatory(item, visibilityMap)) return;
-
         const fieldId = item.custom_field_id || item.id;
-
         const key = `${activeStep - 1}:${fieldId}`;
-
         validateField(item, key, errors);
       });
     }
