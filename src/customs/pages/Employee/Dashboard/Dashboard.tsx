@@ -53,7 +53,6 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery } from '@tanstack/react-query';
 import { getApprovalTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { useDispatch } from 'react-redux';
@@ -66,7 +65,6 @@ import PendingInvitationDialog from '../Components/Dialog/PendingInvitationDialo
 import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
-import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
@@ -79,8 +77,7 @@ import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import VisitorTrendChart from './components/VisitorTrendChart';
-import { IconUserCheck } from '@tabler/icons-react';
+
 import VisitorInvitationActions from './components/VisitorInvitationActions';
 
 const DashboardEmployee = () => {

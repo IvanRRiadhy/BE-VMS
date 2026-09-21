@@ -324,6 +324,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 disabled={!enabled.visitStart}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
+                minDate={dayjs().startOf('day')}
                 value={form.visitor_period_start ? dayjs(form.visitor_period_start) : null}
                 onChange={(newValue) => {
                   setForm((prev) => ({
@@ -402,7 +403,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                     visitor_period_end: newValue ? newValue.utc().format() : null,
                   }));
                 }}
-  
                 slotProps={{
                   actionBar: {
                     actions: ['today', 'clear', 'accept'],

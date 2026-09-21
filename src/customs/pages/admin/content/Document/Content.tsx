@@ -209,7 +209,7 @@ const Content = () => {
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
-                data={[]}
+                data={tableData}
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}

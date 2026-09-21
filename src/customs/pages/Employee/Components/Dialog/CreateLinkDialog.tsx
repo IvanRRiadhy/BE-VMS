@@ -269,6 +269,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                 onClose={() => setOpenStartPicker(false)}
                 disabled={!enabled.visitStart}
                 ampm={false}
+                minDate={dayjs().startOf('day')}
                 format="dddd, DD MMMM YYYY, HH:mm"
                 value={form.visitor_period_start ? dayjs(form.visitor_period_start) : null}
                 onChange={(newValue) => {

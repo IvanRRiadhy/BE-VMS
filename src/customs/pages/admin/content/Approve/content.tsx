@@ -194,8 +194,6 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
               onBatchDelete={handleBatchDelete}
               searchKeyword={searchKeyword}
               onSearch={handleSearch}
-              // onSearchKeywordChange={handleSearchKeywordChange}
-              onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
               onAddData={handleAdd}
               isHaveAddEmpty={true}
               addDataText="Add Approval Workflow"

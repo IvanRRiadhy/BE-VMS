@@ -20,10 +20,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
-
 import { useDispatch } from 'react-redux';
 import { setUser, clearUser } from '../../../store/apps/user/userSlice';
-
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -37,12 +35,11 @@ import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
 import Footer from '../components/Footer';
-import { KeyboardArrowUp } from '@mui/icons-material';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
 import { getConfig } from 'src/config';
 import 'altcha';
-// import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
+import BackToTopButton from '../components/BackToTopButton';
 
 const Login = () => {
   const theme = useTheme();
@@ -51,49 +48,18 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState(false);
   const altchaRef = useRef<HTMLElement | null>(null);
   const [altchaVerified, setAltchaVerified] = useState(false);
-  const handleAltchaState = (ev: Event) => {
-    const detail = (ev as CustomEvent<{ state: string }>).detail;
-    setAltchaVerified(detail?.state === 'verified');
-  };
-
-  const altchaCallbackRef = (node: HTMLElement | null) => {
-    if (altchaRef.current) {
-      altchaRef.current.removeEventListener('statechange', handleAltchaState);
-    }
-
-    altchaRef.current = node;
-
-    if (node) {
-      node.addEventListener('statechange', handleAltchaState);
-
-      try {
-        const config = getConfig();
-
-        (node as any).configure?.({
-          challenge: `${config.API_BASE_URL}/api/Auth/altcha-challenge`,
-        });
-      } catch {
-        // config belum tersedia
-      }
-    }
-  };
-
   const [searchParams] = useSearchParams();
   const codeFromUrl = searchParams.get('code') || '';
-
   const [guestCode, setGuestCode] = useState(codeFromUrl);
   // const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
   const [guestError, setGuestError] = useState(false);
@@ -102,23 +68,8 @@ const Login = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
   const config = getConfig();
-
   const logoUrl = config.LOGIN_LOGO_URL || Logo;
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Tabs state
   const [tab, setTab] = useState(0);
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -136,7 +87,6 @@ const Login = () => {
 
     try {
       const response = await login(body);
-      // const { token, group_id } = response.collection;
       const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
         response.collection;
       saveToken(token);
@@ -247,10 +197,6 @@ const Login = () => {
 
         dispatch(
           setUser({
-            //  fullname,
-            //  email,
-            //  employee_id,
-            //  phone,
             visitor_id,
             id,
           }),
@@ -287,6 +233,33 @@ const Login = () => {
     setSnackbarOpen(true);
   };
 
+    const handleAltchaState = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ state: string }>).detail;
+      setAltchaVerified(detail?.state === 'verified');
+    };
+
+    const altchaCallbackRef = (node: HTMLElement | null) => {
+      if (altchaRef.current) {
+        altchaRef.current.removeEventListener('statechange', handleAltchaState);
+      }
+
+      altchaRef.current = node;
+
+      if (node) {
+        node.addEventListener('statechange', handleAltchaState);
+
+        try {
+          const config = getConfig();
+
+          (node as any).configure?.({
+            challenge: `${config.API_BASE_URL}/api/Auth/altcha-challenge`,
+          });
+        } catch {
+          // config belum tersedia
+        }
+      }
+    };
+
   return (
     <>
       {!isAuthenticated && (
@@ -312,7 +285,7 @@ const Login = () => {
                 // height={'100%'}
                 // sx={{ height: { xs: '100vh', lg: '95vh' } }}
                 sx={{
-                  minHeight: 'calc(100vh - 100px)', // sisakan ruang footer
+                  minHeight: 'calc(100vh - 100px)', 
                   py: { xs: 2, md: 3, lg: 4 },
                 }}
               >
@@ -962,35 +935,7 @@ const Login = () => {
               {snackbarMsg}
             </Alert>
           </Snackbar>
-          {showBackToTop && (
-            <Tooltip title="Back to Top" placement="left" arrow>
-              <Box
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                sx={{
-                  position: 'fixed',
-                  bottom: 24,
-                  right: 24,
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  backgroundColor: 'primary.main',
-                  border: '2px solid #fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 9999,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                    transform: 'scale(1.05)',
-                  },
-                }}
-              >
-                <KeyboardArrowUp sx={{ color: '#fff', fontSize: 30 }} />
-              </Box>
-            </Tooltip>
-          )}
+          <BackToTopButton />
         </PageContainer>
       )}
     </>
