@@ -196,7 +196,7 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
               onSearch={handleSearch}
               onAddData={handleAdd}
               isHaveAddEmpty={true}
-              addDataText="Add Approval Workflow"
+              addDataText={t('add') + ' Approval Workflow'}
               onAddEmpty={handleAdd}
             />
           </Grid>

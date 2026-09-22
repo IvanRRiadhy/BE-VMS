@@ -250,22 +250,42 @@ const NavCollapse = ({
   const Icon = menu.icon;
   const theme = useTheme();
   const { pathname } = useLocation();
-  const [open, setOpen] = React.useState(false);
+  // const [open, setOpen] = React.useState(false);
   const customizer = useSelector((state: AppState) => state.customizer);
   const { t } = useTranslation();
 
   const menuIcon =
     level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
 
-  React.useEffect(() => {
-    let isActive = false;
-    menu.children?.forEach((item: any) => {
-      if (item.href === pathname) isActive = true;
-    });
-    setOpen(isActive);
-  }, [pathname, menu.children]);
+  // React.useEffect(() => {
+  //   let isActive = false;
+  //   menu.children?.forEach((item: any) => {
+  //     if (item.href === pathname) isActive = true;
+  //   });
+  //   setOpen(isActive);
+  // }, [pathname, menu.children]);
 
-  const isActive = pathname === menu.href || pathname.startsWith(menu.href + '/');
+  const isPathActive = (pathname: string, href?: string) => {
+    if (!href) return false;
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const hasActiveChild = (items: any[] = []): boolean => {
+    return items.some((item) => {
+      if (isPathActive(pathname, item.href)) {
+        return true;
+      }
+
+      if (item.children?.length) {
+        return hasActiveChild(item.children);
+      }
+
+      return false;
+    });
+  };
+
+  const isActive = isPathActive(pathname, menu.href) || hasActiveChild(menu.children);
 
   // ✅ Styled main list item
   const ListItemStyled = styled(ListItemButton)(() => ({
@@ -279,8 +299,9 @@ const NavCollapse = ({
     position: 'relative',
     whiteSpace: 'nowrap',
 
-    color: open || isActive ? theme.palette.common.white : theme.palette.text.secondary,
-    backgroundColor: open || isActive ? theme.palette.primary.main : 'transparent',
+    color: isActive ? theme.palette.common.white : theme.palette.text.secondary,
+
+    backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
     transition: 'all 0.2s ease',
     '&:hover': {
       backgroundColor: theme.palette.primary.main,
@@ -368,7 +389,8 @@ const NavCollapse = ({
       <ListItemStyled
         // component="li"
         as="li"
-        selected={pathWithoutLastPart === menu.href}
+        // selected={pathWithoutLastPart === menu.href}
+        selected={isActive}
         className="ListItemStyled"
       >
         <ListItemIcon

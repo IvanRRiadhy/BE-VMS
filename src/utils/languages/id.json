@@ -233,5 +233,6 @@
   "generateLink": "Generate Link",
   "generateLinkDescription": "Bagikan tautan undangan kepada pengunjung",
   "registerVisitor": "Daftarkan Pengunjung",
-  "registerVisitorDescription": "Karyawan mengisi informasi pengunjung"
+  "registerVisitorDescription": "Karyawan mengisi informasi pengunjung",
+  "unassignEmployeeConfirm": "Apakah Anda yakin ingin membatalkan penugasan karyawan ini?"
 }

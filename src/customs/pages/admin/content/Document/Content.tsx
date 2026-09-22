@@ -49,7 +49,6 @@ const Content = () => {
     sort_column: 'created_at',
     search,
   });
-
   const tableData = documentQuery.data?.collection ?? [];
   const totalRecords = documentQuery.data?.RecordsTotal ?? 0;
   const totalFilteredRecords = documentQuery.data?.RecordsFiltered ?? 0;
@@ -125,16 +124,16 @@ const Content = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'document' }));
+    const confirm = await showConfirmDelete(t('confirmDelete', { name: 'Document' }));
 
     if (!confirm) return;
     try {
       await deleteDocument.mutateAsync({
         id,
       });
-      showSwal('success', t('deleteSuccess', { name: 'document' }));
+      showSwal('success', t('deleteSuccess', { name: 'Document' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'document' }));
+      showSwal('error', error?.response?.data?.msg || t('deleteFailed', { name: 'Document' }));
     }
   };
 
@@ -241,7 +240,7 @@ const Content = () => {
                 htmlClampLines={4}
                 htmlMaxWidth={500}
                 isHaveAddEmpty={true}
-                addDataText="Add Document"
+                addDataText={t('add') + ' Document'}
                 onAddEmpty={handleAdd}
               />
             </Grid>

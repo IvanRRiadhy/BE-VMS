@@ -234,5 +234,6 @@
   "generateLink": "Generate Link",
   "generateLinkDescription": "Share invitation link with visitor",
   "registerVisitor": "Register Visitor",
-  "registerVisitorDescription": "Employee fills visitor information"
+  "registerVisitorDescription": "Employee fills visitor information",
+  "unassignEmployeeConfirm": "Are you sure you want to unassign this employee?"
 }

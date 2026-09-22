@@ -254,7 +254,7 @@ const Content = () => {
                   setEditingId(row.id);
                 }}
                 isHaveAddEmpty={true}
-                addDataText="Add Visitor Provider"
+                addDataText={t('add') + ' Visitor Provider'}
                 onAddEmpty={handleAdd}
               />
             </Grid>

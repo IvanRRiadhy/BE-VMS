@@ -207,7 +207,7 @@ const Content = () => {
   });
   const [isAttemptingClose, setIsAttemptingClose] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
+  const [tableKey, setTableKey] = useState(0);
   const mapSelectedToEntity = useMemo<DialogEntity>(() => {
     if (selectedType === 'organization') return 'Organizations';
     if (selectedType === 'department') return 'Departments';
@@ -408,8 +408,6 @@ const Content = () => {
     },
     [setSearchParams],
   );
-
-  const [tableKey, setTableKey] = useState(0);
 
   return (
     <PageContainer

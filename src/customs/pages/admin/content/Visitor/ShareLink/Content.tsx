@@ -47,7 +47,6 @@ const Content = () => {
   });
 
   const shareLinkList = data?.collection ?? [];
-
   const totalFilterRecords = data?.RecordsFiltered ?? 0;
 
   const handleSearch = useCallback(
@@ -267,7 +266,7 @@ const Content = () => {
                 isHaveAddData={true}
                 onAddData={handleAddShareLink}
                 isHaveAddEmpty={true}
-                addDataText="Add Share Link"
+                addDataText={t('add') + ' Share Link'}
                 onAddEmpty={() => {
                   setOpenCreateLink(true);
                 }}

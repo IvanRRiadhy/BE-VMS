@@ -1187,6 +1187,7 @@ const FormSelfPraregistration = ({
     if (!imageSrc) return;
 
     const blob = await fetch(imageSrc).then((res) => res.blob());
+
     const path = await uploadFileToCDN(blob);
     if (!path) return;
 
@@ -3746,9 +3747,9 @@ const FormSelfPraregistration = ({
     );
   };
 
-const hasAnyFilled =
-  dataVisitor.some((visitor: any) => !isVisitorEmpty(visitor)) ||
-  groupVisitors.some((g) => g.data_visitor?.some((v: any) => !isVisitorEmpty(v)));
+  const hasAnyFilled =
+    dataVisitor.some((visitor: any) => !isVisitorEmpty(visitor)) ||
+    groupVisitors.some((g) => g.data_visitor?.some((v: any) => !isVisitorEmpty(v)));
 
   return (
     <>

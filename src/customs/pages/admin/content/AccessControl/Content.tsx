@@ -50,7 +50,7 @@ const Content = () => {
   const { data, isLoading } = useAccessControlPagination({
     page,
     rowsPerPage,
-    sort_dir: 'desc ',
+    sort_dir: 'desc',
     sort_column: 'created_at',
     search,
   });
@@ -272,7 +272,7 @@ const Content = () => {
                 onSearch={handleSearch}
                 onAddData={handleAdd}
                 isHaveAddEmpty={true}
-                addDataText="Add Access Control"
+                addDataText={t('add') + ' Access Control'}
                 onAddEmpty={handleAdd}
               />
             </Grid>

@@ -94,6 +94,7 @@ const RenderDetailRows = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const md = useMediaQuery(theme.breakpoints.up('md'));
   const [openStartPicker, setOpenStartPicker] = useState(false);
   const [openEndPicker, setOpenEndPicker] = useState(false);
   const { t } = useTranslation();
@@ -494,13 +495,19 @@ const RenderDetailRows = ({
     try {
       const blob = await fetch(imageSrc).then((res) => res.blob());
 
-      const compressedBlob = await compressImage(
-        new File([blob], 'camera.jpg', {
-          type: 'image/jpeg',
-        }),
-      );
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-      const path = await uploadFileToCDN(compressedBlob);
+      // const compressedBlob = await compressImage(
+      //   new File([blob], 'camera.jpg', {
+      //     type: 'image/jpeg',
+      //   }),
+      // );
+      if (blob.size > MAX_FILE_SIZE) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
+      // const path = await uploadFileToCDN(compressedBlob);
+      const path = await uploadFileToCDN(blob);
 
       if (!path) {
         toast('Failed to upload file', 'error');
@@ -520,9 +527,8 @@ const RenderDetailRows = ({
       }
 
       setAnswerFile(path);
-    } catch (error) {
-      console.error('Camera upload failed:', error);
-      toast('Failed to upload file', 'error');
+    } catch (error: any) {
+      toast('Failed to upload file', error?.response?.data?.message || 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({
@@ -532,8 +538,6 @@ const RenderDetailRows = ({
       }
     }
   };
-
-
 
   const fileNameFromAnswer = (answerFile?: string) => {
     if (!answerFile) return '';
@@ -1485,7 +1489,7 @@ const RenderDetailRows = ({
                                       src={previewSrc}
                                       alt="preview"
                                       style={{
-                                        width: lg ? 350 : 220,
+                                        width: md ? 350 : 220,
                                         height: 200,
                                         borderRadius: 12,
                                         objectFit: 'cover',
@@ -1648,7 +1652,7 @@ const RenderDetailRows = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: lg ? 300 : 220,
+                                    width: md ? 300 : 220,
                                     height: 200,
                                     objectFit: 'cover',
                                     borderRadius: 8,

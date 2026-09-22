@@ -782,14 +782,12 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveVip={true}
                 isHavePeriod={true}
-                // isVip={(row) => row.is_vip === true}
-                isHaveAddData={false}
                 isHaveHeader={true}
                 isHaveGender={true}
                 isHaveVisitor={true}
                 isActionVisitor={true}
                 isActionEmployee={true}
-                searchPlaceholder="Search Visitor..."
+                searchPlaceholder="Search Visitor"
                 stickyVisitorCount={2}
                 isBlacklistPage={true}
                 onNavigatePage={() => {
@@ -862,7 +860,7 @@ const Content = () => {
                   />
                 }
                 isHaveAddEmpty={true}
-                addDataText="Add Invitation"
+                addDataText={t('add') + ' Invitation'}
                 onAddEmpty={() => {
                   setFlowTarget('invitation');
                   setOpenDialogIndex(2);
@@ -911,7 +909,6 @@ const Content = () => {
         isLoadingEmployee={isLoadingEmployee}
       />
 
-      {/* Detail Employee */}
       <EmployeeDetailDialog
         open={openEmployeeDialog}
         onClose={handleCloseEmployeeDialog}
@@ -920,7 +917,6 @@ const Content = () => {
         employeeError={employeeError}
       />
 
-      {/* Registered Site */}
       <RegisteredSiteDialog
         open={openDialogIndex === 2}
         siteData={siteData}
@@ -938,7 +934,7 @@ const Content = () => {
         toast={toast as any}
         onSubmit={handleSelectSite}
       />
-      {/* QR Code */}
+
       <QrScannerDialog
         open={openDialogIndex === 1}
         onClose={closeVisitorDialog}
@@ -1045,7 +1041,7 @@ const Content = () => {
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: 99999 }}
         >
           <Alert

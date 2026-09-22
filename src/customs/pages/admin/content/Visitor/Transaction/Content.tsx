@@ -634,7 +634,6 @@ const Content = () => {
               marginTop: '5px',
             }}
           >
-            {/* Left */}
             <TransactionVisitorList
               mdUp={mdUp}
               secdrawerWidth={secdrawerWidth}
@@ -654,7 +653,6 @@ const Content = () => {
               fetchNextPage={fetchNextPage}
               handleAdd={handleAdd}
             />
-            {/* Right */}
             <TransactionVisitorDetail
               selectedGroupId={selectedGroupId}
               openGroup={openGroup}
@@ -777,7 +775,7 @@ const Content = () => {
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: 99999 }}
         >
           <Alert

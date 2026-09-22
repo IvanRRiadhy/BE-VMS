@@ -233,7 +233,7 @@ const Content = () => {
                 onAddData={handleAdd}
                 isHaveObjectData={true}
                 isHaveAddEmpty={true}
-                addDataText="Add Custom Field"
+                addDataText={t('add') + ' Custom Field'}
                 onAddEmpty={handleAdd}
               />
             </Grid>

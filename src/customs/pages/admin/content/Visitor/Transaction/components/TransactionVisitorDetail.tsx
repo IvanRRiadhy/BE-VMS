@@ -202,7 +202,7 @@ const TransactionVisitorDetail = ({
             startIcon={<IconPlus />}
             onClick={handleAddInvitation}
           >
-            Add Invitation
+            {t('add')} Invitation
           </Button>
         </Box>
       )}

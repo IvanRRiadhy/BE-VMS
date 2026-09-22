@@ -536,7 +536,7 @@ const Content = () => {
                   />
                 }
                 isHaveAddEmpty={true}
-                addDataText="Add Card"
+                addDataText={t('add') + ' Card'}
                 onAddEmpty={() => {
                   handleAddVisitorCard();
                 }}

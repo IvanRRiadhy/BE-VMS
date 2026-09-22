@@ -232,15 +232,15 @@ const Content = () => {
   }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'visitor type' }));
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Visitor Type' }));
     if (!confirmed) return;
     try {
       setLoadingData(true);
       await deleteMutation.mutateAsync(id);
 
-      showSwal('success', t('deleteSuccess', { name: 'visitor type' }));
+      showSwal('success', t('deleteSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
-      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'visitor type' }));
+      showSwal('error', error.response.data.msg || t('deleteFailed', { name: 'Visitor Type' }));
     } finally {
       setTimeout(() => {
         setLoadingData(false);
@@ -252,7 +252,7 @@ const Content = () => {
     if (rows.length === 0) return;
 
     const result = await showConfirmDelete(
-      t('confirmDeleteMultiple', { count: rows.length, name: 'visitor type' }),
+      t('confirmDeleteMultiple', { count: rows.length, name: 'Visitor Type' }),
     );
     if (result) {
       try {
@@ -260,11 +260,11 @@ const Content = () => {
         setSelectedRows([]);
         showSwal(
           'success',
-          t('deleteSuccessMultiple', { count: rows.length, name: 'visitor type' }),
+          t('deleteSuccessMultiple', { count: rows.length, name: 'Visitor Type' }),
         );
         return true;
       } catch (error) {
-        showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'visitor type' }));
+        showSwal('error', t('deleteFailedMultiple', { count: rows.length, name: 'Visitor Type' }));
         return false;
       }
     }
@@ -414,7 +414,7 @@ const Content = () => {
                 onActiveToggle={handleActiveToggle}
                 onQuickAccessToggle={handleQuickAccessToggle}
                 isHaveAddEmpty={true}
-                addDataText="Add Visitor Type"
+                addDataText={t('add') + ' Visitor Type'}
                 onAddEmpty={handleAdd}
               />
             </Grid>

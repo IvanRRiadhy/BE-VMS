@@ -34,7 +34,6 @@ import { useTranslation } from 'react-i18next';
 import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination';
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { importEmployeeBatch } from 'src/customs/api/employee';
 
 type EmployeesTableRow = {
@@ -469,12 +468,6 @@ const Content = () => {
       });
 
       if (!inputReason) return;
-
-      const payload = {
-        employee_id: id,
-        action: isBlacklistAction ? 'blacklist' : 'whitelist',
-        reason: inputReason.trim(),
-      };
       await blacklist.mutateAsync({
         data: {
           employee_id: id,

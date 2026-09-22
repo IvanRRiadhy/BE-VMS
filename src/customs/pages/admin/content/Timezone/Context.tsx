@@ -55,12 +55,7 @@ const Content = () => {
     search: debounceSearch,
   });
 
-  // const filtered = data?.filter((v) =>
-  //   v.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-  // );
-
   const timezoneData = data?.pages.flatMap((page) => page.collection) ?? [];
-
   const [selectedTimezone, setSelectedTimezone] = useState<any | null>(null);
   const { deleteMutation } = useTimezoneMutation();
 

@@ -569,7 +569,7 @@ const Content = () => {
                 onSearch={handleSearch}
                 onAddData={handleOpenType}
                 isHaveAddEmpty={true}
-                addDataText="Add Site"
+                addDataText={t('add') + ' Site Space'}
                 onAddEmpty={() => {
                   handleOpenType();
                 }}

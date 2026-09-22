@@ -5,7 +5,7 @@ import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconUsers, IconX } from '@tabler/icons-react';
-import { deleteUser, getAllUser, getUserById } from 'src/customs/api/admin';
+import { getUserById } from 'src/customs/api/admin';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -171,14 +171,14 @@ const Content = () => {
   };
 
   const handleUnassign = async (row: any) => {
-    const confirmed = await showConfirmDelete('Are you sure want to unassign this employee?');
+    const confirmed = await showConfirmDelete(t('unassignEmployeeConfirm'));
 
     if (!confirmed) return;
 
     try {
       await unassignAccount(row.id);
 
-      showSwal('success', 'Employee unassigned successfully');
+      showSwal('success', 'Successfully unassigned employee');
 
       queryClient.invalidateQueries({
         queryKey: ['users'],
