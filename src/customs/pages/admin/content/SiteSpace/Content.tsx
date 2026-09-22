@@ -27,7 +27,6 @@ import { useSitePagination } from 'src/hooks/Sites/useSitesPagination';
 import { useSiteMutation } from 'src/hooks/Sites/useSiteMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useSites } from 'src/hooks/Sites/useSites';
-import { table } from 'console';
 
 type SiteTableRow = {
   id: string;

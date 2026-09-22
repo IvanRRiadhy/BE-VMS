@@ -2420,7 +2420,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         }),
       );
 
-      const path = await uploadFileToCDN(compressedBlob);
+      const path = await uploadFileToCDN(blob);
 
       if (!path) return;
 
@@ -2438,7 +2438,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
       setAnswerFile(path);
     } catch (error) {
-      console.error('Capture/upload failed:', error);
       toast('Failed to upload photo', 'error');
     } finally {
       if (trackKey) {

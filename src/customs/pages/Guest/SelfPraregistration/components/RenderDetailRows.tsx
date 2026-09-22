@@ -493,8 +493,9 @@ const RenderDetailRows = ({
     }
 
     try {
-      const blob = await fetch(imageSrc).then((res) => res.blob());
+      const video = webcamRef.current.video;
 
+      const blob = await fetch(imageSrc).then((res) => res.blob());
       const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
       // const compressedBlob = await compressImage(

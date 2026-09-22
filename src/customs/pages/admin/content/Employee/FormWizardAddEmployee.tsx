@@ -1553,7 +1553,11 @@ const FormWizardAddEmployee = ({
                               audio={false}
                               ref={webcamRef}
                               screenshotFormat="image/jpeg"
-                              videoConstraints={{ facingMode: 'environment' }}
+                              videoConstraints={{
+                                width: { ideal: 1920 },
+                                height: { ideal: 1080 },
+                                facingMode: 'environment',
+                              }}
                               style={{
                                 width: '100%',
                                 borderRadius: 8,

@@ -2,8 +2,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
-import { Card, CircularProgress, Grid2 as Grid, Tooltip } from '@mui/material';
+import { Card, Grid2 as Grid, Tooltip } from '@mui/material';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
+import CircularProgress from '@mui/material/CircularProgress';
+
 import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import FormSelfPraregistration from './FormSelfPraregistration';
@@ -140,7 +142,7 @@ export default function InvitationShare() {
       <Box
         sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress color="primary" size={40} thickness={4} />
       </Box>
     );
 
