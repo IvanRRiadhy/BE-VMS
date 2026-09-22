@@ -151,7 +151,6 @@ const FormWizardAddEmployee = ({
         const rel = serverPath.startsWith('/') ? serverPath : `/${serverPath}`;
         const deletePath = rel.startsWith('/cdn/') ? rel : `/cdn${rel}`;
         await axiosInstance2.delete(deletePath);
-        // showSwal('success', 'Deleted successfully');
         toast('Succesfully deleted file', 'success');
       }
     } catch (err) {
@@ -672,6 +671,7 @@ const FormWizardAddEmployee = ({
 
     if (!selectedFile) return;
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     try {
       setIsUploadingImage(true);
 
@@ -680,8 +680,14 @@ const FormWizardAddEmployee = ({
 
       const compressedBlob = await compressImage(selectedFile);
 
-      if (compressedBlob.size > 5 * 1024 * 1024) {
-        showSwal('info', 'Image must be under 5 MB');
+      // if (compressedBlob.size > 5 * 1024 * 1024) {
+      //   // showSwal('info', t('maxFileSize'));
+      //   toast(t('maxFileSize'), 'info');
+      //   return;
+      // }
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        toast(t('maxFileSize'), 'info');
         return;
       }
 
@@ -690,11 +696,10 @@ const FormWizardAddEmployee = ({
         lastModified: Date.now(),
       });
 
-      setSiteImageFile(compressedFile);
-      setPreviewUrl(URL.createObjectURL(compressedFile));
-    } catch (error) {
-      console.error('Failed to process image:', error);
-      showSwal('error', 'Failed to process image');
+      setSiteImageFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to process image');
     } finally {
       setIsUploadingImage(false);
     }

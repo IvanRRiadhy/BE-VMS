@@ -200,6 +200,15 @@ const VisitorDetailTabs: React.FC<Props> = ({
                 <Box display="flex" gap={2}>
                   <IconIdBadge2 />
                   <Box>
+                    <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invitation Code</CustomFormLabel>
+                    <Typography>{data?.invitation_code || '-'}</Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, md: 6 }}>
+                <Box display="flex" gap={2}>
+                  <IconIdBadge2 />
+                  <Box>
                     <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invited By</CustomFormLabel>
                     <Typography>{data?.invited_by_name || '-'}</Typography>
                   </Box>

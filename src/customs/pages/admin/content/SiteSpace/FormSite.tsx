@@ -718,33 +718,33 @@ const FormSite = ({
     }
   };
 
-useEffect(() => {
-  const loadPreview = async () => {
-    if (siteImageFile) return;
+  useEffect(() => {
+    const loadPreview = async () => {
+      if (siteImageFile) return;
 
-    if (!localForm.image) {
-      setPreviewUrl(null);
-      return;
-    }
+      if (!localForm.image) {
+        setPreviewUrl(null);
+        return;
+      }
 
-    const imageUrl =
-      localForm.image.startsWith('http') || localForm.image.startsWith('data:image')
-        ? localForm.image
-        : `${BASE_URL}/cdn${localForm.image}`;
+      const imageUrl =
+        localForm.image.startsWith('http') || localForm.image.startsWith('data:image')
+          ? localForm.image
+          : `${BASE_URL}/cdn${localForm.image}`;
 
-    const exists = await checkImageExists(imageUrl);
+      const exists = await checkImageExists(imageUrl);
 
-    if (exists) {
-      setPreviewUrl(imageUrl);
-    } else {
-      // DB masih punya path,
-      // tetapi file CDN sudah tidak ada
-      setPreviewUrl(null);
-    }
-  };
+      if (exists) {
+        setPreviewUrl(imageUrl);
+      } else {
+        // DB masih punya path,
+        // tetapi file CDN sudah tidak ada
+        setPreviewUrl(null);
+      }
+    };
 
-  loadPreview();
-}, [localForm.image, siteImageFile]);
+    loadPreview();
+  }, [localForm.image, siteImageFile]);
 
   const handleDetailChange = (section: string, index: number, field: string, value: any) => {
     setLocalForm((prev) => {
@@ -860,7 +860,7 @@ useEffect(() => {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast('Image must be under 5 MB', 'info');
+      toast(t('maxFileSize'), 'info');
       return;
     }
 
@@ -895,24 +895,16 @@ useEffect(() => {
         // Preview CDN
         setPreviewUrl(`${BASE_URL}/cdn${fileUrl}`);
 
-        toast('Image uploaded successfully.', 'success');
+        toast('Successfully uploaded image', 'success');
 
         return;
       }
 
-      // =========================
-      // CREATE
-      // =========================
-      // Belum punya site ID,
-      // jadi simpan File dulu.
       setSiteImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     } catch (error) {
-      console.error('Image upload failed:', error);
-
       setSiteImageFile(null);
       setPreviewUrl(null);
-
       showSwal('error', 'Failed to upload image.');
     } finally {
       setIsUploadingImage(false);

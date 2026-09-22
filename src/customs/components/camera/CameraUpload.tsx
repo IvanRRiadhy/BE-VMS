@@ -33,7 +33,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
   const [isUploading, setIsUploading] = useState(false);
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -79,6 +79,12 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
       setIsUploading(true);
 
       const blob = await fetch(imageSrc).then((r) => r.blob());
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+      if (blob.size > MAX_FILE_SIZE) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
       const cdnUrl = await uploadFileToCDN(blob);
 
       if (!cdnUrl) return;
@@ -86,8 +92,8 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
       setScreenshot(imageSrc);
       setPreviewUrl(imageSrc);
       onChange(cdnUrl);
-    } catch (error) {
-      console.error('Camera upload failed:', error);
+    } catch (error: any) {
+      toast(error?.response?.data?.message || 'Failed to upload file', 'error');
     } finally {
       setIsUploading(false);
     }

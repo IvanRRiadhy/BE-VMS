@@ -528,7 +528,7 @@ const RenderDetailRows = ({
 
       setAnswerFile(path);
     } catch (error: any) {
-      toast('Failed to upload file', error?.response?.data?.message || 'error');
+      toast(error?.response?.data?.message || 'Failed to upload file', 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({

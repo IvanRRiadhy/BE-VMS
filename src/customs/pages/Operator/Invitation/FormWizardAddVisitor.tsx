@@ -2500,7 +2500,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         }),
       );
 
-      const path = await uploadFileToCDN(compressedBlob);
+      const path = await uploadFileToCDN(blob);
 
       if (!path) return;
 

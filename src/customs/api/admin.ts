@@ -1809,7 +1809,6 @@ export const uploadImageEmployee = async (
         'Content-Type': 'multipart/form-data',
       },
     });
-    console.log('Upload Image Site Response:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {

@@ -56,7 +56,6 @@ export const uploadLogoVisitorProvider = async (id: string, data: any): Promise<
         'Content-Type': 'multipart/form-data',
       },
     });
-    console.log('Upload Image Site Response:', response.data);
     return response.data;
   } catch (error: any) {
     throw error;

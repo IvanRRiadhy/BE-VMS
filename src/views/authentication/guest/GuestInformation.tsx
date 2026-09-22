@@ -524,12 +524,12 @@ const GuestInformationStepper = () => {
         }),
       );
 
-      if (compressedBlob.size > 1024 * 1024) {
-        showSwal('info', 'Maximum file size is 5 MBB');
+      if (blob.size > 5 * 1024 * 1024) {
+        toast(t('maxFileSize'), 'info');
         return;
       }
 
-      const path = await uploadFileToCDN(compressedBlob);
+      const path = await uploadFileToCDN(blob);
 
       if (!path) return;
 

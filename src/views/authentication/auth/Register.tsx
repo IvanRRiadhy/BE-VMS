@@ -39,7 +39,6 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 const Register = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -69,118 +68,7 @@ const Register = () => {
   }, []);
 
 
-  // On Submit (login normal)
-  //   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
-  //     e.preventDefault();
-  //     setLoading(true);
-
-  //     // if (!captchaToken) {
-  //     //   setCaptchaError(true);
-  //     //   setLoading(false);
-  //     //   return;
-  //     // }
-
-  //     // const body = { username, password, captchaToken };
-
-  //     const body = { username, password };
-
-  //     try {
-  //       const response = await login(body);
-  //       // recaptchaRef.current?.reset();
-
-  //       // const { token, group_id } = response.collection;
-  //       const { token, group_id, employee_id, type } = response.collection;
-  //       saveToken(token, group_id);
-
-  //       dispatch(
-  //         setUser({
-  //           employee_id,
-  //         }),
-  //       );
-
-  //       if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
-  //       else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
-  //       else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
-  //       else if (group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
-  //         navigate('/delivery-staff/dashboard');
-  //       else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-  //       // else if (group_id.toUpperCase() === GroupRoleId.OperatorAdmin) navigate('/operator-admin/dashboard');
-  //       else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
-  //     } catch (err) {
-  //       setTimeout(() => {
-  //         if (err instanceof AxiosError && err.response) {
-  //           setError(true);
-  //         }
-  //       }, 500);
-  //     } finally {
-  //       setTimeout(() => {
-  //         setLoading(false);
-  //       }, 500);
-  //     }
-  //   }
-
-  //   const guestSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  //     e.preventDefault();
-  //     setLoading(true);
-
-  //     if (!guestCode.trim()) {
-  //       setGuestError(true);
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     try {
-  //       const res = await AuthVisitor({ code: guestCode });
-
-  //       const status = res.status;
-  //       console.log('Status:', status);
-
-  //       localStorage.setItem('visitor_ref_code', guestCode);
-  //       // setLoading(false);
-  //       if (status === 'process') {
-  //         // navigate(`/portal/waiting?code=${guestCode}`);
-  //         navigate('/portal/waiting', {
-  //           replace: true,
-  //         });
-  //         return;
-  //       }
-
-  //       if (status === 'fiil_form') {
-  //         navigate(`/portal/information?code=${guestCode}`, {
-  //           replace: true,
-  //           state: {
-  //             snackbar: {
-  //               open: true,
-  //               severity: 'success',
-  //               message: 'Please complete your information form',
-  //             },
-  //           },
-  //         });
-  //         return;
-  //       } else if (res.collection.token) {
-  //         saveToken(res.collection.token, GroupRoleId.Visitor.toLowerCase());
-  //         navigate('/guest/dashboard');
-  //         localStorage.removeItem('visitor_ref_code');
-  //         return;
-  //       }
-  //     } catch (err) {
-  //       // console.error('Guest login gagal:', err);
-  //       setGuestError(true);
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   useEffect(() => {
-  //     const msg = sessionStorage.getItem('logoutMsg');
-  //     if (msg) {
-  //       setSnackbarMsg(msg);
-  //       setSnackbarType('success');
-  //       setSnackbarOpen(true);
-
-  //       sessionStorage.removeItem('logoutMsg');
-  //     }
-  //   }, []);
-
+ 
   return (
     <>
       {!isAuthenticated && (

@@ -229,29 +229,20 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       setLoadingEdit(true);
-
       setEdittingId(id);
       setOpenFormAddEmployee(true);
-
       const existingData = await getEmployeeById(String(id));
-
       if (!existingData) {
         setOpenFormAddEmployee(false);
         return;
       }
-
-      // existing normalization kamu
       const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
-
       setFormDataAddEmployee(parsedData);
       setInitialFormData(parsedData);
       setIsDirty(false);
-    } catch (error) {
-      console.error('Failed to load employee:', error);
-
+    } catch (error: any) {
       setOpenFormAddEmployee(false);
-
-      showSwal('error', 'Failed to load employee data');
+      showSwal('error', error?.response?.data?.msg || 'Failed to load employee data');
     } finally {
       setLoadingEdit(false);
     }
@@ -412,7 +403,8 @@ const Content = () => {
   // };
 
   const handleSuccess = async () => {
-    await employeeQuery.refetch();
+    const result = await employeeQuery.refetch();
+
     setOpenFormAddEmployee(false);
   };
 
@@ -504,6 +496,7 @@ const Content = () => {
       e.target.value = '';
     }
   };
+
 
   return (
     <PageContainer

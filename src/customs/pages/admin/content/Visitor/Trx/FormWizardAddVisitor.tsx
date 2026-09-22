@@ -233,7 +233,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     batch_page: {},
   });
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
-
+  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
+  const [siteTree, setSiteTree] = useState<any[]>([]);
+  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const toCsv = (ids: string[]) => ids.join(',');
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const { t } = useTranslation();
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
@@ -3198,15 +3202,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     try {
-      // Compression sementara disabled
       const path = await uploadFileToCDN(file);
 
       if (path) {
         setAnswerFile(path);
       }
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast('Failed to upload file', 'error');
+    } catch (error: any) {
+      toast(error?.response?.data?.msg ?? 'Failed to upload file', 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({
@@ -3270,17 +3272,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     try {
       setScreenshot(imageSrc);
-
       const blob = await fetch(imageSrc).then((res) => res.blob());
-
-      const compressedBlob = await compressImage(
-        new File([blob], 'camera.jpg', {
-          type: 'image/jpeg',
-        }),
-      );
-
-      const path = await uploadFileToCDN(compressedBlob);
-
+      if (blob.size > 5 * 1024 * 1024) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
+      const path = await uploadFileToCDN(blob);
       if (!path) return;
 
       if (trackKey) {
@@ -3296,8 +3293,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
 
       setAnswerFile(path);
-    } catch (error) {
-      toast('Failed to upload photo', 'error');
+    } catch (error: any) {
+      toast(error?.response?.data?.msg ?? 'Failed to upload photo', 'error');
     } finally {
       if (trackKey) {
         setUploadingFiles((prev) => ({
@@ -3307,12 +3304,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     }
   };
-
-  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
-  const [siteTree, setSiteTree] = useState<any[]>([]);
-  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
-  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  const toCsv = (ids: string[]) => ids.join(',');
 
   const buildSiteTree = (
     sites: any[],
@@ -3664,8 +3655,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           validateField(item, `${activeStep - 1}:${fieldId}`, errors);
         });
-      }
-      else {
+      } else {
         dataVisitor.forEach((visitor, gIdx) => {
           const page = visitor.question_page?.[activeStep - 1];
           if (!page?.form) return;
@@ -6098,11 +6088,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           resetMediaState();
           clearAnswerFiles();
         } else {
-          /*
-           * ==========================================
-           * NORMAL GROUP
-           * ==========================================
-           */
           payload = { list_group };
 
           const parsed = CreateGroupVisitorRequestSchema.parse(payload);
