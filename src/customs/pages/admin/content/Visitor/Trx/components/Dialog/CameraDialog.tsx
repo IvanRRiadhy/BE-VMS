@@ -111,7 +111,11 @@ const CameraDialog = ({
                 audio={false}
                 ref={webcamRef}
                 screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode }}
+                videoConstraints={{
+                  width: { min: 720, ideal: 1280 },
+                  height: { min: 540, ideal: 960 },
+                  facingMode,
+                }}
                 style={{
                   width: '100%',
                   height: '250px',

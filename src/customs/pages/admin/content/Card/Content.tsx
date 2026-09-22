@@ -26,8 +26,6 @@ import {
 } from 'src/customs/api/models/Admin/VisitorCard';
 import {
   showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 import {
@@ -408,7 +406,6 @@ const Content = () => {
       // showSuccessAlert('Success', 'Visitor Card imported successfully');
       showSwal('success', 'Visitor Card imported successfully');
     } catch (err: any) {
-      // showErrorAlert('Error', err?.message ?? 'Failed to import');
       showSwal('error', err?.response?.data?.msg ?? 'Failed to import card');
     } finally {
       e.target.value = '';
