@@ -187,7 +187,7 @@ const GuestInformationStepper = () => {
       const value = formValues[f.remarks];
 
       // Kalau tidak driving, vehicle tidak perlu divalidasi
-      if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+      if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
         return;
       }
 
@@ -198,12 +198,12 @@ const GuestInformationStepper = () => {
 
     // Vehicle hanya divalidasi jika field vehicle memang
     // ada di section yang sedang dibuka
-    const hasVehicleType = section?.form?.some((f: any) => f.remarks === 'vehicle_type');
+    const hasVehicleType = section?.form?.some((f: any) => f.remarks === 'vehicle_id');
 
     const hasVehiclePlate = section?.form?.some((f: any) => f.remarks === 'vehicle_plate');
 
-    if (isDriving && hasVehicleType && isEmpty(formValues.vehicle_type)) {
-      newErrors.vehicle_type = 'Vehicle Type is required';
+    if (isDriving && hasVehicleType && isEmpty(formValues.vehicle_id)) {
+      newErrors.vehicle_id = 'Vehicle Type is required';
     }
 
     if (isDriving && hasVehiclePlate && isEmpty(formValues.vehicle_plate)) {
@@ -1189,7 +1189,7 @@ const GuestInformationStepper = () => {
       <Box mt={1}>
         <Grid container spacing={2}>
           {section.form?.map((f: any, idx: number) => {
-            if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+            if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
             const fieldKey = `${section.name}_${f.remarks}`;
@@ -1213,7 +1213,7 @@ const GuestInformationStepper = () => {
                 selectedRole ||
                 '';
             }
-            if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+            if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
 
@@ -1642,12 +1642,12 @@ const GuestInformationStepper = () => {
                           setFormValues((prev) => ({
                             ...prev,
                             is_driving: 'false',
-                            vehicle_type: '',
+                            vehicle_id: '',
                             vehicle_plate: '',
                           }));
 
                           setErrors((prev) => {
-                            const { vehicle_type, vehicle_plate, ...rest } = prev;
+                            const { vehicle_id, vehicle_plate, ...rest } = prev;
                             return rest;
                           });
                         }
@@ -1671,7 +1671,7 @@ const GuestInformationStepper = () => {
                   </FormControl>
                 )}
 
-                {f.remarks === 'vehicle_type' && (
+                {f.remarks === 'vehicle_id' && (
                   <FormControl component="fieldset">
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
@@ -1737,7 +1737,7 @@ const GuestInformationStepper = () => {
                   'email',
                   'visitor_role',
                   'is_driving',
-                  'vehicle_type',
+                  'vehicle_id',
                 ].includes(f.remarks) &&
                   !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
                   section.name !== 'Purpose Visit' && (
@@ -1819,7 +1819,7 @@ const GuestInformationStepper = () => {
                 if (
                   formValues.is_driving !== true &&
                   formValues.is_driving !== 'true' &&
-                  ['vehicle_type', 'vehicle_plate'].includes(f.remarks)
+                  ['vehicle_id', 'vehicle_plate'].includes(f.remarks)
                 ) {
                   value = null;
                 }

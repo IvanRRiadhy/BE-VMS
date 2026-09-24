@@ -366,7 +366,7 @@ function FillPraregistrationGroup({
               </CustomTextField>
             );
           }
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             const options = [
               { value: 'car', label: 'Car' },
               { value: 'bus', label: 'Bus' },
@@ -965,12 +965,6 @@ function FillPraregistrationGroup({
                                 (f: any) =>
                                   fillFormDataVisitor[0]?.question_page?.[fillFormActiveStep],
                               )
-
-                              //       ?.form?.find(
-                              //         (x: any) =>
-                              //           x.remarks === 'is_driving' && x.answer_text === 'true',
-                              //       ) || !['vehicle_type', 'vehicle_plate'].includes(f.remarks),
-                              //   )
                               .map((f: any, i: any) => (
                                 <TableCell key={i}>
                                   <CustomFormLabel required={f.mandatory == true}>

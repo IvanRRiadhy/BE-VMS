@@ -125,16 +125,20 @@ const PreviewDialog = ({
                   );
                 }
                 if (f.remarks === 'is_driving') {
+                  const option = f.multiple_option_fields?.find(
+                    (o: any) => String(o.value) === String(f.answer_text),
+                  );
+
                   return (
                     <Grid item xs={12} sm={6} key={idx}>
                       <Typography variant="caption" color="text.secondary">
                         {f.long_display_text}
                       </Typography>
-                      <Typography>{formValues[f.remarks] == 'true' ? 'Yes' : 'No'}</Typography>
+
+                      <Typography sx={{textTransform: 'capitalize'}}>{f.answer_text ?? '-'}</Typography>
                     </Grid>
                   );
                 }
-
                 return (
                   <Grid item xs={12} sm={6} key={idx}>
                     <Typography variant="caption" color="text.secondary">

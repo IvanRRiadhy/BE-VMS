@@ -47,7 +47,7 @@ import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
-import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLinkDialog';
+import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/ShareLinkDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
@@ -68,7 +68,7 @@ import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import PreRegistrationDialog from './components/PraRegistrationDialog';
 import FilterTransaction from './components/FilterMoreContent';
-import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/InvitationVisitorDialog';
+import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationVisitorDialog';
 
 type Group = {
   id: string;

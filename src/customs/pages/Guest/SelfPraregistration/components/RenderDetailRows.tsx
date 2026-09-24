@@ -145,7 +145,7 @@ const RenderDetailRows = ({
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_type: isDriving,
+      vehicle_id: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
     };

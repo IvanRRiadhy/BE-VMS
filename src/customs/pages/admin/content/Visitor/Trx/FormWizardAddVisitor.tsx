@@ -110,6 +110,9 @@ import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { format } from 'path';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { uploadFileToCDN } from 'src/customs/api/cdn';
+import InvitationAndVisitorTypeStep from './components/ui/InvitationAndVisitorTypeStep';
+import VisitorFormStep from './components/ui/VisitorFormStep';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -214,14 +217,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(0);
   }, [open, isAddTransaction]);
-
+  const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const theme = useTheme();
-  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const md = useMediaQuery(theme.breakpoints.up('md'));
 
   const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -678,7 +682,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const getSectionType = (section: any) => {
     const f = formsOf(section);
     if (
-      f.some((x: any) => x.remarks === 'vehicle_plate' || x.remarks === 'vehicle_type') &&
+      f.some((x: any) => x.remarks === 'vehicle_plate' || x.remarks === 'vehicle_id') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -913,1133 +917,72 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const handleSteps = (step: number) => {
-    const showVTListSkeleton = vtLoading;
-    if (step === -1 && enableInvitationTypeStep) {
+    if ((step === -1 && enableInvitationTypeStep) || (step === 0 && !isAddTransaction)) {
       return (
-        <Box
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            background: (theme) =>
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-                : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Box mb={3}>
-            <Typography variant="h5" fontWeight={700}>
-              {t('questionInvitation')}
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary" mt={1}>
-              {t('subtitleQuestionInvitation')}
-            </Typography>
-          </Box>
-          <RadioGroup
-            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
-          >
-            <Grid container spacing={2}>
-              {/* SELF */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    transition: 'all 0.25s ease',
-                    borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
-                    backgroundColor:
-                      isSelfInvitation === true ? 'primary.light' : 'background.paper',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                  onClick={() => setIsSelfInvitation(true)}
-                >
-                  <FormControlLabel
-                    value="self"
-                    control={<Radio checked={isSelfInvitation === true} />}
-                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                    label={
-                      <Box ml={1}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography fontWeight={700} fontSize={18}>
-                            {t('self')}
-                          </Typography>
-
-                          <Tooltip title={t('selfTooltip')} arrow>
-                            <InfoOutlined
-                              fontSize="small"
-                              color="action"
-                              sx={{ cursor: 'pointer' }}
-                            />
-                          </Tooltip>
-                        </Box>
-
-                        <Typography variant="body2" color="text.secondary" mt={0.5}>
-                          {t('selfOption')}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Paper>
-              </Grid>
-
-              {/* OTHER */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    border: '2px solid',
-                    transition: 'all 0.25s ease',
-                    borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
-                    backgroundColor:
-                      isSelfInvitation === false ? 'primary.light' : 'background.paper',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                  onClick={() => setIsSelfInvitation(false)}
-                >
-                  <FormControlLabel
-                    value="other"
-                    control={<Radio checked={isSelfInvitation === false} />}
-                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                    label={
-                      <Box ml={1}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography fontWeight={700} fontSize={18}>
-                            {t('others')}
-                          </Typography>
-
-                          <Tooltip title={t('otherTooltip')} arrow>
-                            <InfoOutlined
-                              fontSize="small"
-                              color="action"
-                              sx={{ cursor: 'pointer' }}
-                            />
-                          </Tooltip>
-                        </Box>
-
-                        <Typography variant="body2" color="text.secondary" mt={0.5}>
-                          {t('othersOption')}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Paper>
-              </Grid>
-            </Grid>
-          </RadioGroup>
-        </Box>
-      );
-    } else if (step == 0 && !isAddTransaction) {
-      return (
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-              >
-                Visitor Type
-              </CustomFormLabel>
-              <FormControl component="fieldset">
-                <VisitorTypeList
-                  visitorType={visitorType || []}
-                  formData={formData}
-                  showVTListSkeleton={showVTListSkeleton}
-                  onChange={(e: any) => handleVisitorTypeChange(e)}
-                />
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-              >
-                {t('selectStatusVisitor')}
-                {/* <br /> */}
-              </CustomFormLabel>
-              <Typography sx={{ color: 'secondary', opacity: '0.7' }}>
-                {t('subtitleStatusVisitor')}
-              </Typography>
-
-              {/* <Box display="flex" alignItems="center" gap={2}>
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === false}
-                      value={formData.is_group}
-                      onChange={() => {
-                        setIsSingle(true);
-                        setIsGroup(false);
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: false,
-                        }));
-                      }}
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <IconUser size={18} />
-                      Single
-                      <Tooltip arrow title="Only one visitor can be added">
-                        <IconButton size="small" sx={{ ml: 0 }}>
-                          <IconInfoCircle size={22} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === true}
-                      value={formData.is_group}
-                      onChange={() => {
-                        const value = true;
-
-                        setIsSingle(false);
-                        setIsGroup(value);
-
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: value,
-                        }));
-                      }}
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <IconUsers size={18} />
-                      Group
-                      <Tooltip arrow title="Multiple visitors can be added">
-                        <IconButton size="small" sx={{ ml: 0 }}>
-                          <IconInfoCircle size={22} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box> */}
-              <Box display="flex" gap={2} flexWrap={'wrap'} mt={0.6}>
-                {/* Single */}
-                <Paper
-                  variant="outlined"
-                  onClick={() => {
-                    setIsSingle(true);
-                    setIsGroup(false);
-
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      is_group: false,
-                    }));
-                  }}
-                  sx={{
-                    flex: 1,
-                    p: 2,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    borderColor: formData.is_group === false ? 'primary.main' : 'divider',
-                    bgcolor: formData.is_group === false ? 'primary.50' : 'background.paper',
-                    transition: 'all .2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                >
-                  <Box display="flex" alignItems="center">
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: formData.is_group === false ? 'primary.main' : 'grey.200',
-                        color: formData.is_group === false ? '#fff' : 'text.secondary',
-                      }}
-                    >
-                      <IconUser size={20} />
-                    </Avatar>
-
-                    <Box ml={2} flex={1}>
-                      <Typography fontWeight={600}>Single</Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {t('onlyOneVisitor')}
-                      </Typography>
-                    </Box>
-
-                    <Tooltip arrow title="Only one visitor can be added">
-                      <IconButton size="small">
-                        <IconInfoCircle size={18} />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Radio checked={formData.is_group === false} />
-                  </Box>
-                </Paper>
-
-                {/* Group */}
-                <Paper
-                  variant="outlined"
-                  onClick={() => {
-                    setIsSingle(false);
-                    setIsGroup(true);
-
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      is_group: true,
-                    }));
-                  }}
-                  sx={{
-                    flex: 1,
-                    p: 2,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    borderColor: formData.is_group ? 'primary.main' : 'divider',
-                    bgcolor: formData.is_group ? 'primary.50' : 'background.paper',
-                    transition: 'all .2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                >
-                  <Box display="flex" alignItems="center">
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: formData.is_group ? 'primary.main' : 'grey.200',
-                        color: formData.is_group ? '#fff' : 'text.secondary',
-                      }}
-                    >
-                      <IconUsers size={20} />
-                    </Avatar>
-
-                    <Box ml={2} flex={1}>
-                      <Typography fontWeight={600}>Group</Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {t('moreThanOneVisitor')}
-                      </Typography>
-                    </Box>
-
-                    <Tooltip arrow title="Multiple visitors can be added">
-                      <IconButton size="small">
-                        <IconInfoCircle size={18} />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Radio checked={formData.is_group === true} />
-                  </Box>
-                </Paper>
-              </Box>
-              {isGroup && (
-                <Box>
-                  <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                    Group List
-                  </CustomFormLabel>
-
-                  <TableContainer
-                    component={Paper}
-                    sx={{
-                      '@media (max-width:600px)': {
-                        background: 'transparent',
-                        boxShadow: 'none',
-                      },
-                    }}
-                  >
-                    <Table
-                      size="small"
-                      sx={{
-                        '@media (max-width:600px)': {
-                          display: 'block',
-
-                          '& thead': {
-                            display: 'none',
-                          },
-
-                          '& tbody': {
-                            display: 'block',
-                          },
-
-                          '& tr': {
-                            display: 'block',
-                            mb: 2,
-                            p: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            backgroundColor: 'background.paper',
-                          },
-
-                          '& td': {
-                            display: 'block',
-                            minWidth: 'unset !important',
-                            width: '100%',
-                            border: 0,
-                            padding: '6px 0',
-                          },
-
-                          '& td:nth-of-type(1)::before': {
-                            content: '"Group Name"',
-                            display: 'block',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            mb: 0.5,
-                          },
-
-                          '& td:nth-of-type(2)::before': {
-                            content: '"Code"',
-                            display: 'block',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            mb: 0.5,
-                          },
-                          '& td:nth-of-type(3)': {
-                            display: 'inline-flex',
-                            width: 'calc(100% - 45px)',
-                            verticalAlign: 'middle',
-                            paddingRight: 0,
-                            position: 'relative',
-                          },
-
-                          '& td:nth-of-type(3)::before': {
-                            display: 'none',
-                          },
-
-                          '& td:nth-of-type(3) .MuiButton-root': {
-                            width: '100%',
-                            justifyContent: 'space-between',
-                          },
-
-                          '& td:nth-of-type(4)': {
-                            display: 'inline-flex',
-                            width: '45px',
-                            verticalAlign: 'middle',
-                            paddingLeft: '8px',
-                            paddingTop: '6px',
-                            justifyContent: 'flex-end',
-                            alignItems: 'center',
-                          },
-                        },
-                      }}
-                    >
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Group Name</TableCell>
-                          <TableCell>Code</TableCell>
-                          <TableCell
-                            sx={{
-                              '@media (max-width:600px)': {
-                                display: 'none !important',
-                              },
-                            }}
-                          >
-                            Visitor Form
-                          </TableCell>
-                          <TableCell align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {groupVisitors.map((g, index) => (
-                          <TableRow key={g.id}>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_name"
-                                value={g.group_name}
-                                placeholder="Enter group name"
-                                onChange={(e) =>
-                                  setGroupVisitors((prev) =>
-                                    prev.map((item) =>
-                                      item.id === g.id
-                                        ? { ...item, group_name: e.target.value }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <CustomTextField
-                                size="small"
-                                fullWidth
-                                name="group_code"
-                                value={g.group_code}
-                                InputProps={{ readOnly: true }}
-                                sx={{
-                                  '& .MuiInputBase-input': {
-                                    backgroundColor: '#f5f5f5',
-                                  },
-                                }}
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  setActiveGroupIdx(index);
-
-                                  const deepClone = (obj: any) => {
-                                    try {
-                                      return structuredClone(obj);
-                                    } catch {
-                                      return JSON.parse(JSON.stringify(obj));
-                                    }
-                                  };
-
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    setDataVisitor(deepClone(g.data_visitor));
-                                  } else {
-                                    setDataVisitor(
-                                      deepClone(seedDataVisitorFromSections(sectionsData)),
-                                    );
-                                  }
-
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell>
-
-                            <TableCell
-                              align="center"
-                              sx={{
-                                paddingTop: '0 !important',
-                                '@media (max-width: 600px)': {
-                                  paddingLeft: 0,
-                                },
-                              }}
-                            >
-                              <IconButton
-                                color="error"
-                                onClick={() => handleDeleteGroup(g.id || '')}
-                                size="small"
-                              >
-                                <IconX />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {groupVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              No group added yet.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  {groupVisitors.length === 0 && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={handleAddGroup}
-                      sx={{ mb: 1, mt: 1 }}
-                    >
-                      + {t('add')} Group
-                    </Button>
-                  )}
-                </Box>
-              )}
-            </Grid>
-          </Grid>
-        </Box>
+        <InvitationAndVisitorTypeStep
+          step={step}
+          enableInvitationTypeStep={enableInvitationTypeStep}
+          isAddTransaction={isAddTransaction}
+          isSelfInvitation={isSelfInvitation}
+          setIsSelfInvitation={setIsSelfInvitation as any}
+          vtLoading={vtLoading}
+          visitorType={visitorType}
+          formData={formData}
+          handleVisitorTypeChange={handleVisitorTypeChange}
+          isSingle={isSingle}
+          setIsSingle={setIsSingle}
+          isGroup={isGroup}
+          setIsGroup={setIsGroup}
+          setFormData={setFormData}
+          groupVisitors={groupVisitors}
+          setGroupVisitors={setGroupVisitors}
+          setActiveGroupIdx={setActiveGroupIdx}
+          sectionsData={sectionsData}
+          setDataVisitor={setDataVisitor}
+          setActiveStep={setActiveStep}
+          seedDataVisitorFromSections={seedDataVisitorFromSections}
+          handleDeleteGroup={handleDeleteGroup}
+          handleAddGroup={handleAddGroup}
+          t={t}
+        />
       );
     }
 
-    const currentSection = isAddTransaction ? sectionsData[step] : sectionsData[step - 1];
-
-    if (!currentSection) return null;
     return (
-      <>
-        {isSingle && (
-          <Grid>
-            <RequiredFieldNotice />
-            {(() => {
-              // const section = currentSection;
-              const sectionIndex = getSectionIndex(activeStep);
-              const section = sectionsData[sectionIndex];
-              const sectionType = getSectionType(section);
-              const isEmployee = isEmployeeSection(section);
-              if (sectionType === 'visitor_information') {
-                return (
-                  <>
-                    <VisitorSelect
-                      key={String(isEmployee)}
-                      isEmployee={isEmployee}
-                      onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
-                    />
-
-                    <Accordion key={activeStep} expanded sx={{ mt: 0 }}>
-                      <AccordionDetails sx={{ paddingTop: 0 }}>
-                        <Table>
-                          <TableBody>
-                            {renderDetailRows(formsOf(section), (index, field, value) => {
-                              setSectionsData((prev) =>
-                                prev.map((s, sIdx) =>
-                                  sIdx !== sectionIndex
-                                    ? s
-                                    : updateSectionForm(s, (arr) =>
-                                        arr.map((item, i) =>
-                                          i === index ? { ...item, [field]: value } : item,
-                                        ),
-                                      ),
-                                ),
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </AccordionDetails>
-                    </Accordion>
-                  </>
-                );
-              } else if (sectionType === 'parking') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== sectionIndex
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'purpose_visit') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        // Add Transaction tidak boleh mengubah Purpose Visit
-                        if (isAddTransaction) return;
-
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== (isAddTransaction ? activeStep : sectionIndex)
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'nda') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== sectionIndex
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'identity_image') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== sectionIndex
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'selfie_image') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== sectionIndex
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              }
-
-              return null;
-            })()}
-          </Grid>
-        )}
-        {isGroup && (
-          <Grid>
-            <RequiredFieldNotice />
-            {(() => {
-              const sectionIndex = getSectionIndex(activeStep);
-              const section = sectionsData[sectionIndex];
-
-              const sectionType = getSectionType(section);
-
-              if (sectionType === 'visitor_information_group') {
-                return (
-                  <Grid>
-                    <Box>
-                      <TableContainer component={Paper} sx={{ mb: 1 }}>
-                        {isMobile ? (
-                          <>
-                            {dataVisitor.length > 0 ? (
-                              dataVisitor.map((group, gIdx) => {
-                                const page = group.question_page[sectionIndex];
-                                if (!page) return null;
-                                const isEmployee =
-                                  dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
-                                    (f) => f.remarks === 'is_employee',
-                                  )?.answer_text === 'true';
-
-                                return (
-                                  <Accordion key={gIdx} sx={{ mb: 1 }}>
-                                    <Box sx={{ position: 'relative' }}>
-                                      <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        sx={{
-                                          padding: '10px !important',
-                                        }}
-                                      >
-                                        <Typography fontWeight="bold" mb={0} mx={1}>
-                                          Visitor {gIdx + 1}
-                                        </Typography>
-                                      </AccordionSummary>
-                                      {dataVisitor.length > 1 && (
-                                        <IconButton
-                                          size="small"
-                                          color="error"
-                                          sx={{
-                                            position: 'absolute',
-                                            right: 50,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            backgroundColor: 'red',
-                                          }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteGroupRow(gIdx);
-                                          }}
-                                        >
-                                          <IconTrash color="white" />
-                                        </IconButton>
-                                      )}
-                                    </Box>
-
-                                    <AccordionDetails>
-                                      <Box sx={{ width: '100%', mb: 2 }}>
-                                        <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
-                                        <VisitorSelect
-                                          key={String(isEmployee)}
-                                          isEmployee={isEmployee}
-                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
-                                        />
-                                      </Box>
-
-                                      {page.form
-                                        ?.filter(
-                                          (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee' &&
-                                            field.is_enable === true,
-                                        )
-                                        .map((field: any, fIdx: any) => {
-                                          const matchedKey = Object.keys(
-                                            groupedPages.batch_page || {},
-                                          ).find((k) =>
-                                            sameField(groupedPages.batch_page[k], field),
-                                          );
-                                          const shared = matchedKey
-                                            ? groupedPages.batch_page[matchedKey]
-                                            : undefined;
-                                          const proxyField = hasAns(field)
-                                            ? field
-                                            : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
-                                          const originalIndex = page?.form?.findIndex(
-                                            (f: any) => f.custom_field_id === field.custom_field_id,
-                                          );
-
-                                          return (
-                                            <Box key={field.custom_field_id} sx={{ mb: 2 }}>
-                                              {renderFieldInput(
-                                                proxyField,
-                                                originalIndex || fIdx,
-                                                (idx, fieldKey, value) => {
-                                                  setDataVisitor((prev) => {
-                                                    const next = [...prev];
-                                                    const s = sectionIndex;
-                                                    if (
-                                                      !next[gIdx]?.question_page?.[s]?.form?.[
-                                                        originalIndex || fIdx
-                                                      ]
-                                                    )
-                                                      return prev;
-                                                    next[gIdx].question_page[s].form[
-                                                      originalIndex || fIdx
-                                                    ] = {
-                                                      ...next[gIdx].question_page[s].form[
-                                                        originalIndex || fIdx
-                                                      ],
-                                                      [fieldKey]: value,
-                                                    };
-                                                    return next;
-                                                  });
-                                                },
-                                                // undefined,
-                                                {
-                                                  showLabel: true,
-                                                  // uniqueKey: `${sectionIndex}:${gIdx}:${fIdx}`,
-                                                  uniqueKey: `${sectionIndex}:${gIdx}:${field.custom_field_id}`,
-                                                },
-                                              )}
-                                            </Box>
-                                          );
-                                        })}
-                                    </AccordionDetails>
-                                  </Accordion>
-                                );
-                              })
-                            ) : (
-                              <Typography align="center" sx={{ py: 2 }}>
-                                No visitor data. Click "Add New" to start.
-                              </Typography>
-                            )}
-
-                            <MuiButton
-                              size="small"
-                              onClick={handleAddDetails}
-                              sx={{ my: 2 }}
-                              variant="contained"
-                              fullWidth
-                              startIcon={<IconPlus />}
-                            >
-                              {t('addVisitor')}
-                            </MuiButton>
-                          </>
-                        ) : (
-                          <Table
-                            size="small"
-                            sx={{
-                              minWidth: 1000,
-                              tableLayout: 'auto',
-                              '& th, & td': { whiteSpace: 'nowrap' },
-                            }}
-                          >
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>
-                                  <CustomFormLabel>Search</CustomFormLabel>
-                                </TableCell>
-                                {(dataVisitor[0]?.question_page[sectionIndex]?.form || [])
-                                  .filter(
-                                    (f: any) =>
-                                      (f.remarks || '').toLowerCase() !== 'employee' &&
-                                      f.is_enable === true,
-                                  )
-                                  .map((f: any, i: any) => (
-                                    <TableCell key={f.custom_field_id || i}>
-                                      <CustomFormLabel required={f.mandatory === true}>
-                                        {f.long_display_text}
-                                      </CustomFormLabel>
-                                    </TableCell>
-                                  ))}
-                                <TableCell align="center">
-                                  <Typography variant="subtitle2" fontWeight={600}>
-                                    Action
-                                  </Typography>
-                                </TableCell>
-                              </TableRow>
-                            </TableHead>
-
-                            <TableBody>
-                              {dataVisitor.length > 0 ? (
-                                dataVisitor.map((group, gIdx) => {
-                                  const page = group.question_page[sectionIndex];
-                                  if (!page?.form) return null;
-
-                                  const fields = page.form;
-                                  const hasSelfOnly = dataVisitor[gIdx]?.single_page?.some(
-                                    (f: any) => f.answer_text || f.answer_datetime || f.answer_file,
-                                  );
-
-                                  const isEmployee =
-                                    dataVisitor[activeGroupIdx]?.question_page?.[1]?.form?.find(
-                                      (f) => f.remarks === 'is_employee',
-                                    )?.answer_text === 'true';
-                                  return (
-                                    <TableRow key={gIdx}>
-                                      <TableCell sx={{ minWidth: 250 }}>
-                                        <VisitorSelect
-                                          key={String(isEmployee)}
-                                          isEmployee={isEmployee}
-                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
-                                        />
-                                      </TableCell>
-                                      {fields
-                                        .filter(
-                                          (field: any) =>
-                                            (field.remarks || '').toLowerCase() !== 'employee' &&
-                                            field.is_enable === true,
-                                        )
-                                        .map((field: any) => {
-                                          const matchedKey = Object.keys(
-                                            groupedPages.batch_page || {},
-                                          ).find((k) =>
-                                            sameField(groupedPages.batch_page[k], field),
-                                          );
-
-                                          const shared = matchedKey
-                                            ? groupedPages.batch_page[matchedKey]
-                                            : undefined;
-
-                                          const proxyField = hasAns(field)
-                                            ? field
-                                            : shared
-                                              ? { ...field, ...pickAns(shared) }
-                                              : field;
-
-                                          return (
-                                            <TableCell key={field.custom_field_id}>
-                                              {renderFieldInput(
-                                                proxyField,
-                                                field.custom_field_id,
-                                                (idx, fieldKey, value) => {
-                                                  setDataVisitor((prev) => {
-                                                    const next = [...prev];
-                                                    const s = sectionIndex;
-
-                                                    if (!next[gIdx]?.question_page?.[s]?.form)
-                                                      return prev;
-
-                                                    next[gIdx].question_page[s].form = next[
-                                                      gIdx
-                                                    ].question_page[s].form.map((f: any) =>
-                                                      f.custom_field_id === field.custom_field_id
-                                                        ? { ...f, [fieldKey]: value }
-                                                        : f,
-                                                    );
-
-                                                    return next;
-                                                  });
-                                                },
-                                                {
-                                                  showLabel: false,
-                                                  uniqueKey: `${sectionIndex}:${gIdx}:${field.custom_field_id}`,
-                                                  details: page.form || [],
-                                                },
-                                              )}
-                                            </TableCell>
-                                          );
-                                        })}
-
-                                      <TableCell align="right">
-                                        {dataVisitor.length > 1 && (
-                                          <>
-                                            <IconButton
-                                              aria-label="delete-row"
-                                              onClick={() => handleDeleteGroupRow(gIdx)}
-                                              size="small"
-                                              color="error"
-                                            >
-                                              <IconTrash />
-                                            </IconButton>
-                                            {!isAddTransaction && (
-                                              <Button
-                                                variant="contained"
-                                                size="small"
-                                                color={hasSelfOnly ? 'success' : 'primary'}
-                                                startIcon={
-                                                  hasSelfOnly ? <IconCheck /> : <IconPencil />
-                                                }
-                                                onClick={() => handleOpenSelfOnly(gIdx)}
-                                              >
-                                                {hasSelfOnly ? 'Filled' : 'Self Only'}
-                                              </Button>
-                                            )}
-                                          </>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })
-                              ) : (
-                                <TableRow>
-                                  <TableCell colSpan={12} align="center">
-                                    No visitor data. Click "Add New" to start.
-                                  </TableCell>
-                                </TableRow>
-                              )}
-
-                              <TableRow>
-                                <TableCell colSpan={99} align="left">
-                                  <MuiButton
-                                    size="small"
-                                    onClick={handleAddDetails}
-                                    sx={{ mx: 1, my: 1 }}
-                                    variant="contained"
-                                    startIcon={<IconPlus />}
-                                  >
-                                    {t('addVisitor')}
-                                  </MuiButton>
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        )}
-                      </TableContainer>
-                    </Box>
-                  </Grid>
-                );
-              } else if (sectionType === 'purpose_visit') {
-                const visitor = dataVisitor[0];
-                if (!visitor) return null;
-                const pIdx = visitor?.question_page?.findIndex((p) =>
-                  p.name.toLowerCase().includes('purpose visit'),
-                );
-                if (pIdx < 0) return null;
-                const pickAns = (f: any) => {
-                  const out: any = {};
-                  if (f?.answer_text != null) out.answer_text = f.answer_text;
-                  if (f?.answer_datetime != null) out.answer_datetime = f.answer_datetime;
-                  if (f?.answer_file != null) out.answer_file = f.answer_file;
-                  return out;
-                };
-
-                const sameField = (a: any, b: any) =>
-                  (a?.custom_field_id &&
-                    b?.custom_field_id &&
-                    a.custom_field_id === b.custom_field_id) ||
-                  (a?.remarks && b?.remarks && a.remarks === b.remarks);
-                const mergedVisitForm = formsOf(section).map((f: any) => {
-                  const shared = groupedPages.single_page.find((sf) => sameField(sf, f));
-                  return shared ? { ...f, ...pickAns(shared) } : f;
-                });
-
-                const visibilityMap: any = getVisibilityMap(mergedVisitForm);
-
-                mergedVisitForm.forEach((item: any) => {
-                  if (!item?.mandatory) return;
-
-                  const remark = (item.remarks || '').toLowerCase();
-                  const isVisible = visibilityMap.hasOwnProperty(remark)
-                    ? visibilityMap[remark]
-                    : true;
-
-                  if (!isVisible) return;
-                  const fieldId = item.custom_field_id || item.id;
-                  const key = `${sectionIndex}:${fieldId}`;
-
-                  validateField(item, key, errors);
-                });
-
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(
-                        mergedVisitForm,
-                        (idx, fieldKey, value) => {
-                          setGroupedPages((prev) => {
-                            const next = { ...prev, single_page: [...prev.single_page] };
-                            const base = formsOf(section)[idx];
-                            const found = next.single_page.findIndex((sf) => sameField(sf, base));
-
-                            const resolvedForeign =
-                              base?.foreign_id ??
-                              section?.foreign_id ??
-                              base?.custom_field_id ??
-                              null;
-
-                            const payload = {
-                              ...(found >= 0 ? next.single_page[found] : base),
-                              foreign_id:
-                                found >= 0
-                                  ? (next.single_page[found].foreign_id ?? resolvedForeign)
-                                  : resolvedForeign,
-                              [fieldKey]: value,
-                            };
-
-                            if (found >= 0) next.single_page[found] = payload;
-                            else next.single_page.push(payload);
-
-                            return next;
-                          });
-                        },
-                        undefined,
-                        false,
-                        {
-                          disabled: isAddTransaction,
-                        },
-                      )}
-                    </TableBody>
-                  </Table>
-                );
-              }
-
-              return null;
-            })()}
-          </Grid>
-        )}
-      </>
+      <VisitorFormStep
+        step={step}
+        activeStep={activeStep}
+        isAddTransaction={isAddTransaction}
+        isSingle={isSingle}
+        isGroup={isGroup}
+        sectionsData={sectionsData}
+        setSectionsData={setSectionsData}
+        dataVisitor={dataVisitor}
+        setDataVisitor={setDataVisitor}
+        activeGroupIdx={activeGroupIdx}
+        isMobile={isMobile}
+        groupedPages={groupedPages}
+        setGroupedPages={setGroupedPages}
+        errors={errors}
+        getSectionIndex={getSectionIndex}
+        getSectionType={getSectionType}
+        isEmployeeSection={isEmployeeSection}
+        handleSelectDataVisitor={handleSelectDataVisitor}
+        handleSelectVisitor={handleSelectVisitor}
+        renderDetailRows={renderDetailRows}
+        updateSectionForm={updateSectionForm}
+        renderFieldInput={renderFieldInput}
+        formsOf={formsOf}
+        getVisibilityMap={getVisibilityMap}
+        validateField={validateField}
+        handleDeleteGroupRow={handleDeleteGroupRow}
+        handleAddDetails={handleAddDetails}
+        handleOpenSelfOnly={handleOpenSelfOnly}
+        sameField={sameField}
+        hasAns={hasAns}
+        pickAns={pickAns}
+        t={t}
+      />
     );
   };
 
@@ -2077,9 +1020,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }),
     );
   };
-
-  const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
-  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
 
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
@@ -2154,7 +1094,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
       const vehicleTypeField = opts?.details?.find(
-        (f: any) => (f.remarks || '').toLowerCase() === 'vehicle_type',
+        (f: any) => (f.remarks || '').toLowerCase() === 'vehicle_id',
       );
 
       const vehicleType = String(vehicleTypeField?.answer_text ?? '')
@@ -2469,7 +1409,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             );
           }
 
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             return (
               <CustomTextField
                 select
@@ -3088,33 +2028,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       })),
     );
   };
-
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-
-    try {
-      const response = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const fileUrl = response.data?.collection?.file_url;
-
-      if (!fileUrl) return null;
-
-      return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      return null;
-    }
-  };
-
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3508,7 +2421,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_type: isDriving,
+      vehicle_id: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
     };
@@ -3579,7 +2492,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       if (remark === 'is_driving' || remark === 'is_employee') {
         return false;
       }
-      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
 
@@ -3601,12 +2514,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
 
-      const vehicleType = getFieldValue('vehicle_type');
+      const vehicleType = getFieldValue('vehicle_id');
 
       const isBicycle = vehicleType === 'bicycle';
 
       return {
-        vehicle_type: isDriving,
+        vehicle_id: isDriving,
 
         // Vehicle plate tidak berlaku untuk Bicycle
         vehicle_plate: isDriving && !isBicycle,
@@ -3763,7 +2676,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'vehicle_plate') {
-        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_type');
+        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_id');
         const vehicleTypeValue = String(vehicleType?.answer_text || '').toLowerCase();
         if (vehicleTypeValue === 'bicycle') {
           if (item.answer_text) {
@@ -3887,51 +2800,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     return (
                       <Box>
                         <FormControl fullWidth error={!!errorMessage}>
-                          {/* <CustomSelect
-                            value={
-                              showOtherAgenda[originalIndex] ? 'Others' : item.answer_text || ''
-                            }
-                            onChange={(e: any) => {
-                              let value = e.target.value;
-
-                              if (value === 'Others') {
-                                setShowOtherAgenda((prev) => ({
-                                  ...prev,
-                                  [originalIndex]: true,
-                                }));
-
-                                onChange(originalIndex, 'answer_text', '');
-                              } else {
-                                setShowOtherAgenda((prev) => ({
-                                  ...prev,
-                                  [originalIndex]: false,
-                                }));
-
-                                onChange(originalIndex, 'answer_text', value);
-                              }
-                              clearFieldError(key);
-                            }}
-                            fullWidth
-                            displayEmpty
-                            disabled={option?.disabled}
-                            sx={{
-                              '&.Mui-disabled': {
-                                backgroundColor: '#eeeaeaff',
-                              },
-                            }}
-                          >
-                            <MenuItem value="" disabled>
-                              {t('select')} agenda
-                            </MenuItem>
-
-                            <MenuItem value="Meeting">Meeting</MenuItem>
-                            <MenuItem value="Presentation">Presentation</MenuItem>
-                            <MenuItem value="Visit">Visit</MenuItem>
-                            <MenuItem value="Training">Training</MenuItem>
-                            <MenuItem value="Report">Report</MenuItem>
-                            <MenuItem value="Others">Others</MenuItem>
-                          </CustomSelect> */}
-
                           <CustomSelect
                             value={isOtherAgenda ? 'Others' : item.answer_text || ''}
                             onChange={(e: any) => {
@@ -4608,7 +3476,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 details.forEach((field: any, fieldIndex: number) => {
                                   const remark = (field.remarks || '').toLowerCase();
 
-                                  if (remark === 'vehicle_type' || remark === 'vehicle_plate') {
+                                  if (remark === 'vehicle_id' || remark === 'vehicle_plate') {
                                     onChange(fieldIndex, 'answer_text', null);
                                   }
                                 });
@@ -5161,7 +4029,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     src={previewSrc}
                                     alt="preview"
                                     style={{
-                                      width: lg ? 350 : 220,
+                                      width: md ? 350 : 220,
                                       height: 200,
                                       borderRadius: 12,
                                       objectFit: 'cover',
@@ -5326,7 +4194,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 src={previewSrc}
                                 alt="preview"
                                 style={{
-                                  width: lg ? 350 : 220,
+                                  width: md ? 350 : 220,
                                   height: 200,
                                   borderRadius: 12,
                                   objectFit: 'cover',
@@ -5650,9 +4518,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    // width: 350,
-                                    // height: 200,
-                                    width: lg ? 350 : 220,
+                                    width: md ? 350 : 220,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -6149,10 +5015,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setActiveStep(0);
       onSuccess?.();
     } catch (err: any) {
-      setTimeout(() => {
-        setNextDialogOpen(false);
-      }, 700);
-
+      setNextDialogOpen(false);
       const errorData = err.response?.data;
       const errorMessage = Array.isArray(errorData?.collection)
         ? errorData.collection
@@ -6593,7 +5456,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!validateCurrentStep()) return;
 
     handleSaveGroupVisitor();
-    toast('Group form saved successfully.', 'success');
+    toast('Successfully saved group form', 'success');
     setActiveStep(0);
   };
 

@@ -328,6 +328,11 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               icon={<IconParking size={18} stroke={1.9} />}
             /> */}
             <DetailItem
+              label="Vehicle Type"
+              value={selectedVisitor.vehicle_type || '-'}
+              icon={<IconCar size={18} stroke={1.9} />}
+            />
+            <DetailItem
               label="Vehicle Plate"
               value={selectedVisitor.vehicle_plate_number || '-'}
               icon={<IconCar size={18} stroke={1.9} />}

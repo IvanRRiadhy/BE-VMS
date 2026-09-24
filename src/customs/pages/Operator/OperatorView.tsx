@@ -1004,9 +1004,8 @@ const OperatorView = () => {
         setSelectedVisitorNumber(matched.visitor_number);
         setSelectedVisitors([matched.id]);
       }
-      // showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
-      showSwal('error', 'Your code does not exist.', 3000);
+      showSwal('error', t('codeNotExist'), 3000);
     }
   };
 
@@ -1597,141 +1596,141 @@ const OperatorView = () => {
       // =========================================================
       // CONFIRM BLOCK / UNBLOCK
       // =========================================================
-      // if (action === 'Block' || action === 'Unblock') {
-      //   const { value: inputReason } = await Swal.fire({
-      //     icon: 'info',
-      //     imageWidth: 80,
-      //     imageHeight: 80,
-      //     imageAlt: 'Logo',
-      //     target: containerRef.current,
-      //     title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-      //     text:
-      //       action === 'Block'
-      //         ? 'Please provide a reason for blocking this visitor:'
-      //         : 'Please provide a reason for unblocking this visitor:',
-
-      //     input: 'text',
-      //     inputPlaceholder: 'Enter reason...',
-      //     inputAttributes: {
-      //       maxlength: '200',
-      //     },
-
-      //     showCloseButton: true,
-      //     showCancelButton: true,
-
-      //     confirmButtonText: 'Yes',
-      //     confirmButtonColor: '#16a34a',
-
-      //     cancelButtonText: 'Cancel',
-      //     reverseButtons: true,
-
-      //     customClass: {
-      //       title: 'swal2-title-custom',
-      //       popup: 'swal-popup-custom',
-      //       closeButton: 'swal-close-red',
-      //     },
-
-      //     inputValidator: (value) => {
-      //       if (!value || value.trim().length < 3) {
-      //         return 'Reason must be at least 3 characters long.';
-      //       }
-
-      //       return null;
-      //     },
-      //   });
-
-      //   if (!inputReason) {
-      //     return;
-      //   }
-
-      //   reason = inputReason.trim();
-      // }
-
       if (action === 'Block' || action === 'Unblock') {
-        const reasonOptions =
-          action === 'Block'
-            ? [
-                'Security Violation',
-                'Unauthorized Access',
-                'Policy Violation',
-                'Suspicious Activity',
-                'Visitor Requested',
-                'Others',
-              ]
-            : [
-                'Issue Resolved',
-                'Access Restored',
-                'Approved by Management',
-                'Visitor Request',
-                'Others',
-              ];
-        const { value: formValue } = await Swal.fire({
+        const { value: inputReason } = await Swal.fire({
           icon: 'info',
+          imageWidth: 80,
+          imageHeight: 80,
+          imageAlt: 'Logo',
           target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-          html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions
-            .map((option) => `<option value="${option}">${option}</option>`)
-            .join(
-              '',
-            )} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
+          text:
+            action === 'Block'
+              ? 'Please provide a reason for blocking this visitor:'
+              : 'Please provide a reason for unblocking this visitor:',
+
+          input: 'text',
+          inputPlaceholder: 'Enter reason...',
+          inputAttributes: {
+            maxlength: '200',
+          },
+
           showCloseButton: true,
           showCancelButton: true,
-          confirmButtonText: action === 'Block' ? 'Yes' : 'Yes',
+
+          confirmButtonText: 'Yes',
           confirmButtonColor: '#16a34a',
+
           cancelButtonText: 'Cancel',
           reverseButtons: true,
+
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
             closeButton: 'swal-close-red',
           },
-          didOpen: () => {
-            const select = document.getElementById(
-              'swal-reason-select',
-            ) as HTMLSelectElement | null;
-            const textarea = document.getElementById(
-              'swal-reason-other',
-            ) as HTMLTextAreaElement | null;
-            select?.addEventListener('change', () => {
-              if (!textarea) return;
-              textarea.style.display = select.value === 'Others' ? 'block' : 'none';
-              if (select.value !== 'Others') {
-                textarea.value = '';
-              }
-            });
-          },
-          preConfirm: () => {
-            const select = document.getElementById(
-              'swal-reason-select',
-            ) as HTMLSelectElement | null;
-            const textarea = document.getElementById(
-              'swal-reason-other',
-            ) as HTMLTextAreaElement | null;
-            const selectedReason = select?.value ?? '';
-            if (!selectedReason) {
-              Swal.showValidationMessage('Please select a reason.');
-              return false;
+
+          inputValidator: (value) => {
+            if (!value || value.trim().length < 3) {
+              return 'Reason must be at least 3 characters long.';
             }
-            if (selectedReason === 'Others') {
-              const customReason = textarea?.value.trim() ?? '';
-              if (!customReason) {
-                Swal.showValidationMessage('Please enter a reason.');
-                return false;
-              }
-              if (customReason.length < 3) {
-                Swal.showValidationMessage('Reason must be at least 3 characters long.');
-                return false;
-              }
-              return customReason;
-            }
-            return selectedReason;
+
+            return null;
           },
         });
-        if (!formValue) {
+
+        if (!inputReason) {
           return;
         }
-        reason = formValue;
+
+        reason = inputReason.trim();
       }
+
+      // if (action === 'Block' || action === 'Unblock') {
+      //   const reasonOptions =
+      //     action === 'Block'
+      //       ? [
+      //           'Security Violation',
+      //           'Unauthorized Access',
+      //           'Policy Violation',
+      //           'Suspicious Activity',
+      //           'Visitor Requested',
+      //           'Others',
+      //         ]
+      //       : [
+      //           'Issue Resolved',
+      //           'Access Restored',
+      //           'Approved by Management',
+      //           'Visitor Request',
+      //           'Others',
+      //         ];
+      //   const { value: formValue } = await Swal.fire({
+      //     icon: 'info',
+      //     target: containerRef.current,
+      //     title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+      //     html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions
+      //       .map((option) => `<option value="${option}">${option}</option>`)
+      //       .join(
+      //         '',
+      //       )} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
+      //     showCloseButton: true,
+      //     showCancelButton: true,
+      //     confirmButtonText: action === 'Block' ? 'Yes' : 'Yes',
+      //     confirmButtonColor: '#16a34a',
+      //     cancelButtonText: 'Cancel',
+      //     reverseButtons: true,
+      //     customClass: {
+      //       title: 'swal2-title-custom',
+      //       popup: 'swal-popup-custom',
+      //       closeButton: 'swal-close-red',
+      //     },
+      //     didOpen: () => {
+      //       const select = document.getElementById(
+      //         'swal-reason-select',
+      //       ) as HTMLSelectElement | null;
+      //       const textarea = document.getElementById(
+      //         'swal-reason-other',
+      //       ) as HTMLTextAreaElement | null;
+      //       select?.addEventListener('change', () => {
+      //         if (!textarea) return;
+      //         textarea.style.display = select.value === 'Others' ? 'block' : 'none';
+      //         if (select.value !== 'Others') {
+      //           textarea.value = '';
+      //         }
+      //       });
+      //     },
+      //     preConfirm: () => {
+      //       const select = document.getElementById(
+      //         'swal-reason-select',
+      //       ) as HTMLSelectElement | null;
+      //       const textarea = document.getElementById(
+      //         'swal-reason-other',
+      //       ) as HTMLTextAreaElement | null;
+      //       const selectedReason = select?.value ?? '';
+      //       if (!selectedReason) {
+      //         Swal.showValidationMessage('Please select a reason.');
+      //         return false;
+      //       }
+      //       if (selectedReason === 'Others') {
+      //         const customReason = textarea?.value.trim() ?? '';
+      //         if (!customReason) {
+      //           Swal.showValidationMessage('Please enter a reason.');
+      //           return false;
+      //         }
+      //         if (customReason.length < 3) {
+      //           Swal.showValidationMessage('Reason must be at least 3 characters long.');
+      //           return false;
+      //         }
+      //         return customReason;
+      //       }
+      //       return selectedReason;
+      //     },
+      //   });
+      //   if (!formValue) {
+      //     return;
+      //   }
+      //   reason = formValue;
+      // }
 
       // =========================================================
       // CONFIRM CHECKIN / CHECKOUT

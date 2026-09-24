@@ -1759,7 +1759,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             );
           }
 
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             return (
               <CustomTextField
                 select
@@ -2718,7 +2718,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_type: isDriving,
+      vehicle_id: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
     };
@@ -2797,7 +2797,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }
 
       // vehicle wajib hanya jika is_driving = true
-      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
 
@@ -2831,7 +2831,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const isEmployee = getFlag('is_employee');
 
       return {
-        vehicle_type: isDriving,
+        vehicle_id: isDriving,
         vehicle_plate: isDriving,
         employee: isEmployee,
       };
@@ -3762,7 +3762,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 details.forEach((field: any, fieldIndex: number) => {
                                   const remark = (field.remarks || '').toLowerCase();
 
-                                  if (remark === 'vehicle_type' || remark === 'vehicle_plate') {
+                                  if (remark === 'vehicle_id' || remark === 'vehicle_plate') {
                                     onChange(fieldIndex, 'answer_text', null);
                                   }
                                 });

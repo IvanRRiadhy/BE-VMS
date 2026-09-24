@@ -176,11 +176,11 @@ import PurposeVisitDialog from '../../admin/content/Visitor/Trx/components/Dialo
 import { IconInfoCircle } from '@tabler/icons-react';
 import { InfoOutlined } from '@mui/icons-material';
 import { IconPlus } from '@tabler/icons-react';
-import { IconRefresh } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import ScanningDialog from '../Dialog/ScanningDialog';
 import CameraDialog from '../../admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
+import { uploadFileToCDN } from 'src/customs/api/cdn';
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -256,6 +256,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   >({});
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
 
   const handleOpenSelfOnly = (visitorIdx: number) => {
     setDataVisitor((prev) => {
@@ -1818,7 +1819,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                           const vehicleTypeField = page.form?.find(
                                             (f: any) =>
-                                              (f.remarks || '').toLowerCase() === 'vehicle_type',
+                                              (f.remarks || '').toLowerCase() === 'vehicle_id',
                                           );
 
                                           const vehicleType = String(
@@ -2013,7 +2014,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                             const vehicleTypeField = page.form?.find(
                                               (f: any) =>
-                                                (f.remarks || '').toLowerCase() === 'vehicle_type',
+                                                (f.remarks || '').toLowerCase() === 'vehicle_id',
                                             );
 
                                             const vehicleType = String(
@@ -2297,34 +2298,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return prevIdx;
       });
     } catch (e) {}
-  };
-
-  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
-
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-
-    try {
-      const response = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const fileUrl = response.data?.collection?.file_url;
-
-      if (!fileUrl) return null;
-
-      return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      return null;
-    }
   };
 
   const handlePDFUploadFor =
@@ -2759,7 +2732,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_type: isDriving,
+      vehicle_id: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
     };
@@ -2840,7 +2813,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
 
       // vehicle wajib hanya jika is_driving = true
-      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
 
@@ -2863,12 +2836,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
 
-      const vehicleType = getFieldValue('vehicle_type');
+      const vehicleType = getFieldValue('vehicle_id');
 
       const isBicycle = vehicleType === 'bicycle';
 
       return {
-        vehicle_type: isDriving,
+        vehicle_id: isDriving,
 
         // Vehicle plate tidak berlaku untuk Bicycle
         vehicle_plate: isDriving && !isBicycle,
@@ -3058,7 +3031,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'vehicle_plate') {
-        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_type');
+        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_id');
         const vehicleTypeValue = String(vehicleType?.answer_text || '').toLowerCase();
         if (vehicleTypeValue === 'bicycle') {
           if (item.answer_text) {
@@ -3837,7 +3810,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 details.forEach((field: any, fieldIndex: number) => {
                                   const remark = (field.remarks || '').toLowerCase();
 
-                                  if (remark === 'vehicle_type' || remark === 'vehicle_plate') {
+                                  if (remark === 'vehicle_id' || remark === 'vehicle_plate') {
                                     onChange(fieldIndex, 'answer_text', null);
                                   }
                                 });
@@ -5269,23 +5242,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               registered_site_id: registeredSite ?? '',
             },
           );
-
-          // const syncedVisitors = syncPurposeVisitToAllVisitors(built.data_visitor ?? []);
-          // const cleanDataVisitor = (syncedVisitors ?? []).map((dv: any) => ({
-          //   ...dv,
-          //   question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-          //     id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
-          //     sort: qp.sort ?? sIdx,
-          //     name: qp.name ?? `Section ${sIdx + 1}`,
-          //     status: qp.status ?? 0,
-          //     is_document: qp.is_document ?? false,
-          //     can_multiple_used: qp.can_multiple_used ?? false,
-          //     foreign_id: qp.foreign_id ?? '',
-          //     self_only: qp.self_only ?? false,
-          //     form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-          //   })),
-          //   //  special_visitor: '',
-          // }));
 
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
             const original = dataVisitor[idx];

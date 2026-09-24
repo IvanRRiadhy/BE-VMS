@@ -1,12 +1,11 @@
 import { Dialog, DialogTitle, DialogContent, Divider, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-import FormWizardAddVisitor from '../FormWizardAddVisitor';
+import FormWizardAddInvitation from '../../FormWizardAddInvitation';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
-  onClose?: () => void;
   handleDialogClose?: () => void;
   handleCloseDialog: () => void;
   openDiscardForCloseAdd: () => void;
@@ -18,6 +17,7 @@ interface Props {
   edittingId: string;
   handleSuccess: () => void;
   search?: any;
+
   visitorType: any;
   sites: any;
   employee: any;
@@ -28,18 +28,17 @@ interface Props {
   isAddTransaction?: any;
 }
 
-export default function InvitationVisitorDialog({
+export default function PreRegistrationDialog({
   open,
-  onClose,
   handleDialogClose,
   handleCloseDialog,
   openDiscardForCloseAdd,
   isFormChanged,
   wizardKey,
   formDataAddVisitor,
-  search,
   setFormDataAddVisitor,
   edittingId,
+  search,
   handleSuccess,
   visitorType,
   sites,
@@ -50,35 +49,33 @@ export default function InvitationVisitorDialog({
   duplicateData,
   isAddTransaction,
 }: Props) {
-  const handleClose = (_event?: object, reason?: 'backdropClick' | 'escapeKeyDown') => {
+  const handleClose = () => {
     if (isFormChanged) {
       openDiscardForCloseAdd();
-      return;
+    } else {
+      handleCloseDialog();
     }
-
-    handleCloseDialog();
   };
   const { t } = useTranslation();
+
   return (
     <Dialog
       fullWidth
       open={open}
       onClose={handleClose}
-      keepMounted
       maxWidth={false}
       PaperProps={{ sx: { width: '100vw' } }}
+      keepMounted
     >
       <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
-        {t('add')} Invitation Visitor
+        {t('add')} Pre Registration
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Divider />
-
-      <DialogContent>
-        <FormWizardAddVisitor
+      <DialogContent sx={{ paddingTop: '0px' }}>
+        <FormWizardAddInvitation
           key={wizardKey}
           formData={formDataAddVisitor}
           setFormData={setFormDataAddVisitor}
@@ -87,10 +84,10 @@ export default function InvitationVisitorDialog({
           visitorType={visitorType}
           sites={sites}
           employee={employee}
-          search={search}
           allVisitorEmployee={allVisitorEmployee}
+          search={search}
           vtLoading={vtLoading}
-          enableInvitationTypeStep={true}
+          enableInvitationTypeStep={false}
           isLoadingEmployee={isLoadingEmployee}
           duplicateData={duplicateData}
           isAddTransaction={isAddTransaction}

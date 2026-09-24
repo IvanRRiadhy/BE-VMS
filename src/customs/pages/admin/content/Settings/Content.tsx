@@ -1,19 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  Paper,
-  Tab,
-  Tabs,
-  useTheme,
-  useMediaQuery,
-  Typography,
-  Chip,
-  Stack,
-  Card,
-  CircularProgress,
-  IconButton,
-} from '@mui/material';
+import { Box, Grid2 as Grid, Paper, Tab, Tabs, useTheme, useMediaQuery } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
@@ -35,7 +21,6 @@ import VMSConfigurationTab from './VmsConfugrationTab';
 import useApprovalWorkflowPagination from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowPagination';
 import ThirdPartyIntegration from './ThirdPartyIntegration';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { uploadLicense } from 'src/customs/api/Admin/Setting';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import Vehicle from './Vehicle';
@@ -62,13 +47,13 @@ const Content = () => {
       // const validated = CreateSettingSmtpSchema.parse(data);
       if (edittingId) {
         await updateSetting(edittingId, formData);
-        showSwal('success', 'Setting updated successfully!');
+        showSwal('success', 'Successfully updated setting');
       }
 
       setShowForm(false);
       setEdittingId('');
     } catch (error: any) {
-      showSwal('error', error.message || 'Failed to update setting');
+      showSwal('error', error.response?.data?.message || 'Failed to update setting');
     }
   };
 
@@ -165,10 +150,9 @@ const Content = () => {
 
       setLicenseFileName(file.name);
 
-      showSwal('success', 'License uploaded successfully!');
-    } catch (error) {
-      console.error('Failed to upload license:', error);
-      showSwal('error', 'Failed to upload license');
+      showSwal('success', 'Successfully uploaded license');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to upload license');
     } finally {
       setUploadingLicense(false);
     }

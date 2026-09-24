@@ -28,7 +28,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import { IconClipboard, IconQrcode, IconUser, IconUserPlus, IconUsers } from '@tabler/icons-react';
+import { IconUserPlus, IconUsers } from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -41,8 +41,8 @@ import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog'
 import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import { useSites } from 'src/hooks/Sites/useSites';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
-import InvitationVisitorDialog from '../Trx/components/InvitationVisitorDialog';
-import PreRegistrationDialog from '../Trx/components/PreRegistrationDialog';
+import InvitationVisitorDialog from '../Trx/components/Dialog/InvitationVisitorDialog';
+import PreRegistrationDialog from '../Trx/components/Dialog/PreRegistrationDialog';
 import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useProfile } from 'src/hooks/Profile/useProfile';
@@ -58,7 +58,6 @@ import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/u
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -72,7 +71,6 @@ type Group = {
 const Content = () => {
   const { data: profile } = useProfile();
   const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
-  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
@@ -81,7 +79,6 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  // const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const defaultFormData = CreateVisitorRequestSchema.parse({});
@@ -99,7 +96,6 @@ const Content = () => {
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
-
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -107,7 +103,6 @@ const Content = () => {
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  // Qr Scanner
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
   const [hasDecoded, setHasDecoded] = useState(false);
@@ -126,19 +121,20 @@ const Content = () => {
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
   const [isAddTransaction, setIsAddTransaction] = useState(false);
+  const [searchAgenda, setSearchAgenda] = useState('');
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
   const [tab, setTab] = useState<any>(0);
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
+  const { data: siteData } = useRegisteredSite();
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
     sortDir: 'desc',
   });
-
   const employeeData = data?.collection ?? [];
   const { allVisitorEmployee } = useVisitorEmployees();
   const [vtLoading, setVtLoading] = useState(false);
   const [duplicateData, setDuplicateData] = useState<any>(null);
-
   const [selectedType, setSelectedType] = useState<
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
   >('All');
@@ -151,9 +147,6 @@ const Content = () => {
     Denied: 'Denied',
     Block: 'Block',
   };
-
-  const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
 
   const [filters, setFilters] = useState<any>({
     status: undefined,
@@ -183,8 +176,6 @@ const Content = () => {
     end_date: '',
   });
 
-  const { data: siteData } = useRegisteredSite();
-
   const {
     data: tableTransaction,
     isLoading,
@@ -204,11 +195,8 @@ const Content = () => {
 
   const getVisitorStatus = (visitor: any) => {
     const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
     const now = dayjs().tz(systemTz);
-
     const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
-
     const canExpire =
       visitor.visitor_status === 'Preregis' ||
       visitor.visitor_status === 'Checkin' ||
@@ -236,22 +224,15 @@ const Content = () => {
   }, [detailData]);
 
   const groupHeader = detailData?.collection?.[0] ?? null;
-
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const getTransactionStatus = (item: any) => {
     const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
     const now = dayjs().tz(systemTz);
-
-    // Backend datetime dianggap UTC karena formatDateTime()
-    // juga menggunakan moment.utc()
     const periodEnd = dayjs.utc(item.visitor_period_end).tz(systemTz);
-
     if (item.transaction_status !== 'Canceled' && periodEnd.isValid() && now.isAfter(periodEnd)) {
       return 'Expired';
     }
-
     return item.transaction_status;
   };
 
@@ -272,11 +253,7 @@ const Content = () => {
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
           remarks: item.remarks,
-
-          // status yang digunakan UI
           transaction_status: getTransactionStatus(item),
-
-          // optional: simpan status asli kalau nanti dibutuhkan
           original_transaction_status: item.transaction_status,
         })),
       ) ?? []
@@ -440,7 +417,6 @@ const Content = () => {
 
     setSearch('');
     setSelectedType('All');
-    setPage(0);
   };
 
   const handleApplyFilter = () => {
@@ -449,7 +425,6 @@ const Content = () => {
       ...filters,
     });
 
-    setPage(0);
     setSelectedGroupId(null);
     setGroupVisitors([]);
     // setShowDrawerFilterMore(false);
@@ -531,7 +506,7 @@ const Content = () => {
 
     try {
       await removeMutation.mutateAsync({
-        trx_id_visitor: selectedVisitor.id, // atau selectedVisitor.trx_id_visitor
+        trx_id_visitor: selectedVisitor.id, 
       });
 
       showSwal('success', 'Visitor removed successfully');
@@ -580,13 +555,11 @@ const Content = () => {
         visitor_role: '',
       });
 
-      // tandai bahwa dialog dibuka dari Add Transaction
       setIsAddTransaction(true);
 
       setWizardKey((prev) => prev + 1);
       setOpenInvitationVisitor(true);
     } catch (error: any) {
-      // console.error(error);
       showSwal('error', error?.response?.data?.msg || 'Failed to get visitor form transaction');
     } finally {
       setLoadingAddTransaction(false);

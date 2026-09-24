@@ -447,7 +447,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
           );
         }
 
-        if (field.remarks === 'vehicle_type') {
+        if (field.remarks === 'vehicle_id') {
           return (
             <CustomTextField
               select

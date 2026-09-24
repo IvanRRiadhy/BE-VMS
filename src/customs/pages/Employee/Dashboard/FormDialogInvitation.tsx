@@ -755,7 +755,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           } else if (f.remarks === 'site_place') {
             displayValue = invitationData.site_place_name || displayValue;
           }
-          if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+          if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
             return null;
           }
 
@@ -942,8 +942,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                 </>
               )}
 
-              {/* 🔹 CASE G: vehicle_type */}
-              {f.remarks === 'vehicle_type' && (
+              {/* 🔹 CASE G: vehicle_id */}
+              {f.remarks === 'vehicle_id' && (
                 <FormControl component="fieldset">
                   <RadioGroup
                     value={formValues[f.remarks] || ''}
@@ -984,7 +984,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                 'is_driving',
                 'is_employee',
                 'employee',
-                'vehicle_type',
+                'vehicle_id',
               ].includes(f.remarks) &&
                 !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
                 section.name !== 'Purpose Visit' && (

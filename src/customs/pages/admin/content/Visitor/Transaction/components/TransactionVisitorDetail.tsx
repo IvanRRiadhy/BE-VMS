@@ -15,7 +15,13 @@ import {
   Typography,
 } from '@mui/material';
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
-import { IconFileSpreadsheet, IconPdf, IconPlus } from '@tabler/icons-react';
+import {
+  IconFileExport,
+  IconFileSpreadsheet,
+  IconFileTypePdf,
+  IconPdf,
+  IconPlus,
+} from '@tabler/icons-react';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 
 import VisitorRow from '../VisitorRow';
@@ -89,27 +95,37 @@ const TransactionVisitorDetail = ({
                     </Typography>
 
                     <Box display="flex" gap={0.5}>
-                      <Tooltip title="Export PDF">
+                      <Tooltip title="Export PDF" arrow>
                         <Button
                           variant="contained"
+                          size="medium"
                           color="error"
+                          startIcon={<IconFileTypePdf size={16} />}
+                          sx={{ height: 36 }}
                           onClick={() =>
                             exportVisitorPdf(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                           }
                         >
-                          <IconPdf />
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Export PDF
+                          </Typography>
                         </Button>
                       </Tooltip>
 
-                      <Tooltip title="Export Excel">
+                      <Tooltip title="Export Excel" arrow>
                         <Button
                           variant="contained"
+                          size="medium"
                           color="success"
+                          startIcon={<IconFileExport size={16} />}
+                          sx={{ height: 36 }}
                           onClick={() =>
                             exportVisitorExcel(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                           }
                         >
-                          <IconFileSpreadsheet />
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Export Excel
+                          </Typography>
                         </Button>
                       </Tooltip>
                     </Box>

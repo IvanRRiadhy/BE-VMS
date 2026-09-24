@@ -17,7 +17,7 @@ import {
 
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 
-import { IconFileSpreadsheet, IconPdf, IconPlus } from '@tabler/icons-react';
+import { IconFileExport, IconFileSpreadsheet, IconFileTypePdf, IconPdf, IconPlus } from '@tabler/icons-react';
 
 import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/VisitorRow';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
@@ -63,7 +63,12 @@ export default function VisitorListTable({
         <Typography color="text.secondary" mt={2} variant="h5">
           {t('selectGroupFromTheList')}
         </Typography>
-        <Button variant="contained" color="primary" startIcon={<IconPlus />} onClick={handleAddInvitation}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<IconPlus />}
+          onClick={handleAddInvitation}
+        >
           Add Invitation
         </Button>
       </Box>
@@ -111,24 +116,34 @@ export default function VisitorListTable({
                     <Tooltip title="Export PDF" arrow>
                       <Button
                         variant="contained"
+                        size="medium"
                         color="error"
+                        startIcon={<IconFileTypePdf size={16} />}
+                        sx={{ height: 36 }}
                         onClick={() =>
                           exportVisitorPdf(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                         }
                       >
-                        <IconPdf />
+                        <Typography variant="caption" fontSize={'0.7rem'}>
+                          Export PDF
+                        </Typography>
                       </Button>
                     </Tooltip>
 
                     <Tooltip title="Export Excel" arrow>
                       <Button
                         variant="contained"
+                        size="medium"
                         color="success"
+                        startIcon={<IconFileExport size={16} />}
+                        sx={{ height: 36 }}
                         onClick={() =>
                           exportVisitorExcel(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                         }
                       >
-                        <IconFileSpreadsheet />
+                        <Typography variant="caption" fontSize={'0.7rem'}>
+                          Export Excel
+                        </Typography>
                       </Button>
                     </Tooltip>
                   </Box>

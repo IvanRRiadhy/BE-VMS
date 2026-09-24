@@ -722,7 +722,7 @@ const FormSelfPraregistration = ({
       }
 
       // vehicle wajib hanya jika is_driving = true
-      if (['vehicle_type', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
 
@@ -756,7 +756,7 @@ const FormSelfPraregistration = ({
       const isEmployee = getFlag('is_employee');
 
       return {
-        vehicle_type: isDriving,
+        vehicle_id: isDriving,
         vehicle_plate: isDriving,
         employee: isEmployee,
       };
@@ -999,7 +999,7 @@ const FormSelfPraregistration = ({
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_type: isDriving,
+      vehicle_id: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
     };
@@ -1737,7 +1737,7 @@ const FormSelfPraregistration = ({
             );
           }
 
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             return (
               <CustomTextField
                 select

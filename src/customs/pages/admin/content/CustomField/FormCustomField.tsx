@@ -95,7 +95,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
 
   const { data: vehicle = [], isLoading: isVehicleLoading } = useVehicle();
   useEffect(() => {
-    if (formData.remarks !== 'vehicle_type') return;
+    if (formData.remarks !== 'vehicle_id') return;
 
     if (!vehicle.length) {
       setMultiOptionList([]);
@@ -105,7 +105,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
     const vehicleOptions: any[] = vehicle?.map((item: any) => ({
       id: item.id ?? '',
       name: item.name,
-      value: item.value,
+      value: item.id,
     }));
 
     setMultiOptionList(vehicleOptions);
@@ -203,13 +203,13 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                         Multi Option Field
                       </Divider>
                       <CustomFormLabel htmlFor="field-name">Field Name</CustomFormLabel>
-                      {formData.remarks === 'vehicle_type' ? (
+                      {formData.remarks === 'vehicle_id' ? (
                         <CustomSelect
-                          id="vehicle-type"
-                          value={newMultiOption.name}
+                          id="vehicle-id"
+                          value={newMultiOption.id}
                           onChange={(e: any) => {
                             const selected = vehicle.find(
-                              (item: any) => item.name === e.target.value,
+                              (item: any) => item.id === e.target.value,
                             );
 
                             setNewMultiOption({
@@ -222,7 +222,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                           disabled={isVehicleLoading}
                         >
                           {vehicle.map((item: any) => (
-                            <MenuItem key={item.id} value={item.name}>
+                            <MenuItem key={item.id} value={item.id}>
                               {item.name}
                             </MenuItem>
                           ))}
@@ -309,7 +309,10 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                               return (
                                 <TableRow key={index}>
                                   <TableCell> {mult.name}</TableCell>
-                                  <TableCell> {mult.value}</TableCell>
+                                  <TableCell>
+                                    {' '}
+                                    {formData.remarks === 'vehicle_id' ? mult.id : mult.value}
+                                  </TableCell>
                                   <TableCell align="right">
                                     <Button
                                       color="error"

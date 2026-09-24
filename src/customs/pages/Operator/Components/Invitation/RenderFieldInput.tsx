@@ -279,7 +279,7 @@ export const renderFieldInput = ({
             </CustomTextField>
           );
         }
-        if (field.remarks === 'vehicle_type') {
+        if (field.remarks === 'vehicle_id') {
           const options = [
             { value: 'car', label: 'Car' },
             { value: 'bus', label: 'Bus' },

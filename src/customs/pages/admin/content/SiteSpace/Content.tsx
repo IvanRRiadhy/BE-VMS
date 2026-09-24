@@ -560,7 +560,7 @@ const Content = () => {
                     onApplyFilter={handleApplyFilter}
                   />
                 }
-                onBatchEdit={handleBatchEdit}
+                // onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={handleSearchKeywordChange}

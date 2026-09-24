@@ -1168,9 +1168,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     setFormValues((prev) => ({
       ...prev,
       [remarks]: prev[remarks] === value ? '' : value,
-      ...(remarks === 'vehicle_type' && value === 'bicycle' ? { vehicle_plate: '' } : {}),
+      ...(remarks === 'vehicle_id' && value === 'bicycle' ? { vehicle_plate: '' } : {}),
     }));
-    if (remarks === 'vehicle_type' && value === 'bicycle') {
+    if (remarks === 'vehicle_id' && value === 'bicycle') {
       setErrors((prev) => {
         const { vehicle_plate, ...rest } = prev;
         return rest;
@@ -1201,14 +1201,14 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           const gridSize = isVisitorPeriod ? { xs: 12, md: 6 } : { xs: 12 };
           const hideVehiclePlate =
             f.remarks === 'vehicle_plate' &&
-            (formValues['is_driving'] !== 'true' || formValues['vehicle_type'] === 'bicycle');
+            (formValues['is_driving'] !== 'true' || formValues['vehicle_id'] === 'bicycle');
           if (hideVehiclePlate) {
             return null;
           }
           return (
             <Grid key={idx} size={gridSize}>
               {![
-                'vehicle_type',
+                'vehicle_id',
                 'vehicle_plate',
                 'visitor_period_start',
                 'visitor_period_end',
@@ -1405,7 +1405,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
               {f.remarks === 'vehicle_plate' &&
                 formValues['is_driving'] === 'true' &&
-                formValues['vehicle_type'] !== 'bicycle' && (
+                formValues['vehicle_id'] !== 'bicycle' && (
                   <CustomTextField
                     fullWidth
                     value={displayValue}
@@ -1470,10 +1470,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                         const value = e.target.value;
                         handleChange(f.remarks, value);
                         if (value === 'false') {
-                          handleChange('vehicle_type', null);
+                          handleChange('vehicle_id', null);
                           handleChange('vehicle_plate', null);
                           setErrors((prev) => {
-                            const { vehicle_type, vehicle_plate, ...rest } = prev;
+                            const { vehicle_id, vehicle_plate, ...rest } = prev;
                             return rest;
                           });
                         }
@@ -1593,7 +1593,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 </>
               )}
 
-              {f.remarks === 'vehicle_type' && formValues['is_driving'] === 'true' && (
+              {f.remarks === 'vehicle_id' && formValues['is_driving'] === 'true' && (
                 <FormControl component="fieldset">
                   <RadioGroup
                     value={formValues[f.remarks] || ''}
@@ -1634,7 +1634,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 'is_employee',
                 'visitor_role',
                 'employee',
-                'vehicle_type',
+                'vehicle_id',
               ].includes(f.remarks) &&
                 !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
                 section.name !== 'Purpose Visit' && (

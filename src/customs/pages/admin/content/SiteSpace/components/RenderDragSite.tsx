@@ -37,7 +37,7 @@ interface Props {
 
 const RenderDragSite: React.FC<Props> = ({
   sectionKey,
-  items,
+  items = [],
   onChange,
   onDelete,
   accessControlList,
@@ -45,8 +45,6 @@ const RenderDragSite: React.FC<Props> = ({
   trackingList,
   onReorder,
 }) => {
-
-
   const getSelectList = () => {
     if (sectionKey === 'access') return accessControlList ?? [];
     if (sectionKey === 'parking') return parkingList ?? [];
@@ -62,22 +60,17 @@ const RenderDragSite: React.FC<Props> = ({
   };
 
   const selectList = React.useMemo(() => {
-    if (sectionKey === "access") return accessControlList ?? [];
-    if (sectionKey === "parking") return parkingList ?? [];
-    if (sectionKey === "tracking") return trackingList ?? [];
+    if (sectionKey === 'access') return accessControlList ?? [];
+    if (sectionKey === 'parking') return parkingList ?? [];
+    if (sectionKey === 'tracking') return trackingList ?? [];
     return [];
-}, [
-    sectionKey,
-    accessControlList,
-    parkingList,
-    trackingList,
-]);
+  }, [sectionKey, accessControlList, parkingList, trackingList]);
 
   return (
     // <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
     <SortableContext
       // items={items.map((_, i) => `${sectionKey}-${i}`)}
-      items={items.map((item) => item.id)}
+      items={(items ?? []).map((item) => item.id)}
       strategy={verticalListSortingStrategy}
     >
       <TableBody>
@@ -107,128 +100,120 @@ const RenderDragSite: React.FC<Props> = ({
   );
 };
 
-const SortableRow = React.memo(({
-  id,
-  item,
-  items,
-  index,
-  sectionKey,
-  onChange,
-  onDelete,
-  selectList,
-  fieldName,
-}:any) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
+const SortableRow = React.memo(
+  ({ id, item, items, index, sectionKey, onChange, onDelete, selectList, fieldName }: any) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id,
+    });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    background: isDragging ? '#f0f0f0' : undefined,
-  };
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      background: isDragging ? '#f0f0f0' : undefined,
+    };
 
-  const isDropdown = selectList.length > 0;
+    const isDropdown = selectList.length > 0;
 
-  return (
-    <TableRow ref={setNodeRef} style={style} {...attributes}>
-      {/* Drag handle */}
-      <TableCell {...listeners} sx={{ cursor: 'grab', width: 40 }}>
-        ⇅
-      </TableCell>
-
-      {/* Name / Dropdown */}
-      <TableCell>
-        {isDropdown ? (
-          <Autocomplete
-            fullWidth
-            size="small"
-            options={selectList}
-            getOptionLabel={(option: any) =>
-              option.area_name || option.masked_area_name || option.name || ''
-            }
-            getOptionDisabled={(option: any) =>
-              items.some(
-                (selected: any, selectedIndex: number) =>
-                  // abaikan row yang sedang diedit
-                  selectedIndex !== index &&
-                  String(
-                    selected[fieldName] ||
-                      selected.trk_ble_card_access_id ||
-                      selected.prk_area_parking_id ||
-                      selected.access_control_id,
-                  ).toLowerCase() === String(option.id).toLowerCase(),
-              )
-            }
-            value={
-              selectList.find(
-                (x: any) =>
-                  String(x.id) === String(item[fieldName]) ||
-                  String(x.id) === String(item.trk_ble_card_access_id) ||
-                  String(x.id) === String(item.prk_area_parking_id),
-              ) ||
-              (item[fieldName]
-                ? {
-                    id: item[fieldName],
-                    masked_area_name: item.name,
-                    area_name: item.name,
-                  }
-                : null)
-            }
-            onChange={(_, newValue) => {
-              const selectedId =
-                newValue?.trk_ble_card_access_id ||
-                newValue?.prk_area_parking_id ||
-                newValue?.id ||
-                '';
-
-              onChange(sectionKey, index, fieldName, selectedId);
-
-              if (newValue) {
-                const label =
-                  newValue.area_name || newValue.masked_area_name || newValue.name || '';
-
-                onChange(sectionKey, index, 'name', label);
-              }
-            }}
-            renderInput={(params) => (
-              <CustomTextField {...params} placeholder={`Select ${sectionKey}`} />
-            )}
-            ListboxProps={{
-              style: {
-                maxHeight: 250,
-                overflow: 'auto',
-              },
-            }}
-          />
-        ) : (
-          <TextField
-            fullWidth
-            size="small"
-            value={item.name || ''}
-            onChange={(e) => onChange(sectionKey, index, 'name', e.target.value)}
-          />
-        )}
-      </TableCell>
-
-      {/* Early Access */}
-      <TableCell>
-        <Switch
-          checked={!!item.early_access}
-          onChange={(_, checked) => onChange(sectionKey, index, 'early_access', checked)}
-        />
-      </TableCell>
-
-      {/* Delete */}
-      {onDelete && (
-        <TableCell>
-          <IconButton onClick={() => onDelete(sectionKey, index)} color="error">
-            <IconTrash size={22} />
-          </IconButton>
+    return (
+      <TableRow ref={setNodeRef} style={style} {...attributes}>
+        {/* Drag handle */}
+        <TableCell {...listeners} sx={{ cursor: 'grab', width: 40 }}>
+          ⇅
         </TableCell>
-      )}
-    </TableRow>
-  );
-});
+
+        {/* Name / Dropdown */}
+        <TableCell>
+          {isDropdown ? (
+            <Autocomplete
+              fullWidth
+              size="small"
+              options={selectList}
+              getOptionLabel={(option: any) =>
+                option.area_name || option.masked_area_name || option.name || ''
+              }
+              getOptionDisabled={(option: any) =>
+                items.some(
+                  (selected: any, selectedIndex: number) =>
+                    // abaikan row yang sedang diedit
+                    selectedIndex !== index &&
+                    String(
+                      selected[fieldName] ||
+                        selected.trk_ble_card_access_id ||
+                        selected.prk_area_parking_id ||
+                        selected.access_control_id,
+                    ).toLowerCase() === String(option.id).toLowerCase(),
+                )
+              }
+              value={
+                selectList.find(
+                  (x: any) =>
+                    String(x.id) === String(item[fieldName]) ||
+                    String(x.id) === String(item.trk_ble_card_access_id) ||
+                    String(x.id) === String(item.prk_area_parking_id),
+                ) ||
+                (item[fieldName]
+                  ? {
+                      id: item[fieldName],
+                      masked_area_name: item.name,
+                      area_name: item.name,
+                    }
+                  : null)
+              }
+              onChange={(_, newValue) => {
+                const selectedId =
+                  newValue?.trk_ble_card_access_id ||
+                  newValue?.prk_area_parking_id ||
+                  newValue?.id ||
+                  '';
+
+                onChange(sectionKey, index, fieldName, selectedId);
+
+                if (newValue) {
+                  const label =
+                    newValue.area_name || newValue.masked_area_name || newValue.name || '';
+
+                  onChange(sectionKey, index, 'name', label);
+                }
+              }}
+              renderInput={(params) => (
+                <CustomTextField {...params} placeholder={`Select ${sectionKey}`} />
+              )}
+              ListboxProps={{
+                style: {
+                  maxHeight: 250,
+                  overflow: 'auto',
+                },
+              }}
+            />
+          ) : (
+            <TextField
+              fullWidth
+              size="small"
+              value={item.name || ''}
+              onChange={(e) => onChange(sectionKey, index, 'name', e.target.value)}
+            />
+          )}
+        </TableCell>
+
+        {/* Early Access */}
+        <TableCell>
+          <Switch
+            checked={!!item.early_access}
+            onChange={(_, checked) => onChange(sectionKey, index, 'early_access', checked)}
+          />
+        </TableCell>
+
+        {/* Delete */}
+        {onDelete && (
+          <TableCell>
+            <IconButton onClick={() => onDelete(sectionKey, index)} color="error">
+              <IconTrash size={22} />
+            </IconButton>
+          </TableCell>
+        )}
+      </TableRow>
+    );
+  },
+);
 
 export default RenderDragSite;

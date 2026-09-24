@@ -555,7 +555,7 @@ const Invitation = () => {
               </CustomTextField>
             );
           }
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             let options = field.multiple_option_fields || [];
 
             if (options.length === 0 && field.answer_text) {
@@ -916,7 +916,7 @@ const Invitation = () => {
             const isDrivingField = page.form.find((x: any) => x.remarks === 'is_driving');
             const isDriving = isDrivingField?.answer_text === 'true';
 
-            if (!isDriving && ['vehicle_plate_number', 'vehicle_type'].includes(f.remarks)) {
+            if (!isDriving && ['vehicle_plate_number', 'vehicle_id'].includes(f.remarks)) {
               answerPayload = {
                 answer_text: null,
               };

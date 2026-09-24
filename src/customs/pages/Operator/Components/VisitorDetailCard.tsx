@@ -159,6 +159,23 @@ const VisitorDetailCard = ({
       );
     }
 
+    if (status === 'Waiting') {
+      if (!permissionHook.canBlock) {
+        return null;
+      }
+
+      return (
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: '#000' }}
+          onClick={() => handleConfirmStatus('Block')}
+          startIcon={<IconForbid2 />}
+        >
+          Block
+        </Button>
+      );
+    }
+
     // =========================
     // INITIAL / WAITING / OTHER
     // =========================

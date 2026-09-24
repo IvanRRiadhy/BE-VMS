@@ -30,6 +30,7 @@
     "visitor_role": "Peran Pengunjung",
     "visitor_providers": "Kategori Pengunjung"
   },
+  "codeNotExist": "Kode Anda tidak tersedia.",
   "pageNotFound": "404 - Halaman Tidak Ditemukan",
   "pageNotFoundDescription": "Halaman yang kamu cari tidak ditemukan atau sudah tidak tersedia.",
   "noQrCardAvailable": "QR/Card Tidak Tersedia",

@@ -30,15 +30,15 @@ import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/compon
 import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
-import ShareLinkDialog from './components/ShareLinkDialog';
+import ShareLinkDialog from './components/Dialog/ShareLinkDialog';
 import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import { useSites } from 'src/hooks/Sites/useSites';
-import InvitationVisitorDialog from './components/InvitationVisitorDialog';
-import PreRegistrationDialog from './components/PreRegistrationDialog';
+import InvitationVisitorDialog from './components/Dialog/InvitationVisitorDialog';
+import PreRegistrationDialog from './components/Dialog/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import { QuickAccessDialog } from './components/QuickAccessDialog';
+import { QuickAccessDialog } from './components/Dialog/QuickAccessDialog';
 import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
@@ -50,17 +50,19 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
-import VisitorQrCodeDialog from './components/VisitorQrCodeDialog';
+import VisitorQrCodeDialog from './components/Dialog/VisitorQrCodeDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
 import 'dayjs/locale/id';
+import { getConfig } from 'src/config';
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -126,6 +128,8 @@ const Content = () => {
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const config = getConfig();
+  const logoUrl = config.LOGO_URL || Logo;
   const { t } = useTranslation();
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
@@ -138,14 +142,12 @@ const Content = () => {
       length: 10,
     });
   const [openQrDialog, setOpenQrDialog] = useState(false);
-
   const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
     'search[value]': debouncedSearch,
     sortDir: 'desc',
   });
 
   const employeeData = data?.collection ?? [];
-
   const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
   const isGenerating =
     createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
@@ -669,59 +671,135 @@ const Content = () => {
       format: 'a4',
     });
 
-    doc.setFontSize(18);
-    doc.text('Visitor Report', 14, 15);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-    doc.setFontSize(10);
-    doc.text(`Generated : ${dayjs().format('DD MMM YYYY HH:mm:ss')}`, 14, 22);
+    const generatedAt = dayjs().format('DD MMMM YYYY HH:mm:ss');
+
+    doc.addImage(logoUrl, 'PNG', 14, 10, 18, 18);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+
+    doc.text('BANK INDONESIA', 36, 17);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    doc.text('Visitor Management System', 36, 22);
+
+    doc.setFontSize(8);
+
+    doc.text(`Generated : ${generatedAt}`, pageWidth - 14, 17, { align: 'right' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+
+    doc.text('VISITOR REPORT', 14, 37);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+
+    doc.text('Visitor Transaction Report', 14, 43);
+
+    doc.setDrawColor(220, 220, 220);
+    doc.line(14, 48, pageWidth - 14, 48);
 
     autoTable(doc, {
-      startY: 28,
-      theme: 'grid',
+      startY: 52,
+      margin: {
+        left: 14,
+        right: 14,
+      },
+
+      tableWidth: 269,
+
       head: [
         [
           'No',
           'Visitor Type',
           'Name',
-          'Identity ID',
           'Email',
           'Organization',
           'Phone',
           'Host',
-          'Period Start',
-          'Period End',
+          'Start Period',
+          'End Period',
           'Status',
         ],
       ],
+
       body: (allVisitorData?.collection ?? []).map((item: any, index: number) => [
         index + 1,
-        item.visitor_type_name,
-        item.visitor_name,
-        // item.visitor_identity_id,
-        item.visitor_email,
-        item.visitor_organization_name,
-        item.visitor_phone,
-        item.host_name,
+        item.visitor_type_name ?? '-',
+        item.visitor_name ?? '-',
+        item.visitor_email ?? '-',
+        item.visitor_organization_name ?? '-',
+        item.visitor_phone ?? '-',
+        item.host_name ?? '-',
         formatDateTime(item.visitor_period_start),
         formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-        item.visitor_status,
+        item.visitor_status ?? '-',
       ]),
+
+      theme: 'grid',
+
       styles: {
-        fontSize: 8,
+        fontSize: 7,
         cellPadding: 2,
         valign: 'middle',
+        textColor: [45, 45, 45],
+        lineColor: [220, 220, 220],
+        lineWidth: 0.2,
+        overflow: 'linebreak',
       },
+
       headStyles: {
-        fillColor: [25, 118, 210],
+        fillColor: [33, 119, 181],
         textColor: 255,
         fontStyle: 'bold',
+        fontSize: 7.5,
       },
+
       alternateRowStyles: {
-        fillColor: [245, 245, 245],
+        fillColor: [248, 249, 250],
+      },
+
+      columnStyles: {
+        0: { cellWidth: 10 }, // No
+        1: { cellWidth: 25 }, // Visitor Type
+        2: { cellWidth: 30 }, // Name
+        3: { cellWidth: 32 }, // Email
+        4: { cellWidth: 35 }, // Organization
+        5: { cellWidth: 25 }, // Phone
+        6: { cellWidth: 30 }, // Host
+        7: { cellWidth: 27 }, // Period Start
+        8: { cellWidth: 27 }, // Period End
+        9: { cellWidth: 28 }, // Status
+      },
+
+      didDrawPage: (data) => {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+
+        doc.text('Bank Indonesia • Visitor Management System', 14, pageHeight - 8);
+
+        doc.text(`Page ${data.pageNumber}`, pageWidth - 14, pageHeight - 8, {
+          align: 'right',
+        });
       },
     });
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
 
-    doc.save(`Visitor_Report_${dayjs().format('YYYYMMDD_HHmmss')}.pdf`);
+    const dateStr = `${day}-${month}-${year}`;
+
+    doc.save(`Visitor-Report-${dateStr}.pdf`);
   };
 
   return (
@@ -740,11 +818,6 @@ const Content = () => {
                   if (index === 1) {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
-                    // } else if (index === 3) {
-                    //   setFlowTarget('preReg');
-                    //   setOpenPreRegistration(true);
-                    // } else if (index === 3) {
-                    //   setOpenDetailShareLink(true);
                   } else if (index === 2) {
                     setOpenQuickAccess(true);
                   } else {

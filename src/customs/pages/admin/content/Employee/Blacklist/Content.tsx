@@ -8,14 +8,7 @@ import {
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import {
-  CreateEmployeeRequest,
-  CreateEmployeeRequestSchema,
-  Item,
-} from 'src/customs/api/models/Admin/Employee';
-import { getAllEmployeeBlacklistPagination } from 'src/customs/api/admin';
-
+import { Item } from 'src/customs/api/models/Admin/Employee';
 import { IconUsers } from '@tabler/icons-react';
 
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
@@ -31,16 +24,6 @@ type EmployeesTableRow = {
   department_id?: string;
   district_id?: string;
 };
-
-interface Filters {
-  gender: number;
-  organization: string;
-  department: string;
-  district: string;
-  joinStart: string;
-  exitEnd: string;
-  statusEmployee: number;
-}
 
 const Content = () => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);

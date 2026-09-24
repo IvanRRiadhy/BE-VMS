@@ -77,6 +77,9 @@ import { useSites } from 'src/hooks/Sites/useSites';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useListVisitor } from 'src/hooks/Visitor/useListVisitor';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
+import { getConfig } from 'src/config';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -94,12 +97,16 @@ const Content = () => {
     previous: false,
   });
 
+  const visitorStatusOptions = [
+    { id: 'Preregis', label: 'Preregis' },
+    { id: 'Checkin', label: 'Checkin' },
+    { id: 'Checkout', label: 'Checkout' },
+    { id: 'Block', label: 'Block' },
+    { id: 'Unblock', label: 'Unblock' },
+  ];
+
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  // const [siteOptions, setSiteOptions] = useState<Array<{ id: string; name: string }>>([]);
-  // const [employeeOptions, setEmployeeOptions] = useState<Array<{ id: string; name: string }>>([]);
-  // const [visitorOptions, setVisitorOptions] = useState<Array<{ id: string; visitor_name: string }>>(
-  //   [],
-  // );
   const [activeTab, setActiveTab] = useState(0);
   const [summary, setSummary] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -115,13 +122,16 @@ const Content = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-
+  const { t } = useTranslation();
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
   const [loading, setLoading] = useState(false);
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
 
   const showSnackbar = (
     message: string,
@@ -133,19 +143,6 @@ const Content = () => {
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const resSite = await getAllSite();
-  //     setSiteOptions(resSite.collection);
-  //     const resEmployeee = await getVisitorEmployee();
-  //     setEmployeeOptions(resEmployeee.collection);
-  //     const resVisitor = await getAllVisitor();
-  //     setVisitorOptions(resVisitor.collection);
-  //   };
-
-  //   fetchData();
-  // }, []);
 
   const { data: siteOptions = [] } = useSites();
   const { allVisitorEmployee } = useVisitorEmployees();
@@ -288,12 +285,15 @@ const Content = () => {
           organization: item.visitor_organization_name,
           // gender: item.visitor.gender,
           phone: item.visitor_phone,
+          visitor_status: item.visitor_status,
           // is_vip: item.visitor.is_vip,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
           vehicle_type: item.vehicle_type ?? '-',
           vehicle_plate_number: item.vehicle_plate_number ?? '-',
+          checkin_at: formatDateTime(item.checkin_at),
+          checkout_at: formatDateTime(item.checkout_at),
         })) ?? [];
 
       setReportData(rows);
@@ -302,50 +302,133 @@ const Content = () => {
         showSwal('error', 'Failed to generate report.');
       }, 400);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
+      setLoading(false);
     }
   };
 
-  const exportToExcel = async () => {
-    try {
-      // Validasi CustomDate
-      if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
-        showSwal('error', 'Please select start and end date for CustomDate report');
-        return;
-      }
+  const exportColumns = [
+    { key: 'visitor_type', label: 'Visitor Type' },
+    { key: 'name', label: 'Visitor Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'organization', label: 'Organization' },
+    { key: 'phone', label: 'Phone Number' },
+    {
+      key: 'visitor_period_start',
+      label: 'Start Period',
+      format: (value: any) => formatDateTime(value),
+    },
+    {
+      key: 'visitor_period_end',
+      label: 'End Period',
+      // format: (value: any) => formatDateTime(value),
+    },
+    { key: 'host', label: 'Host' },
+    { key: 'vehicle_type', label: 'Vehicle Type' },
+    { key: 'vehicle_plate_number', label: 'Vehicle Plate Number' },
+    {
+      key: 'checkin_at',
+      label: 'Check In',
+      format: (value: any) => formatDateTime(value),
+    },
+    {
+      key: 'checkout_at',
+      label: 'Check Out',
+      format: (value: any) => formatDateTime(value),
+    },
+  ];
 
+  const getExportData = (data: any[]) => {
+    return data.map((row) =>
+      Object.fromEntries(
+        exportColumns.map(({ key, label, format }) => [
+          label,
+          format ? format(row[key]) : (row[key] ?? '-'),
+        ]),
+      ),
+    );
+  };
+
+  const getExportDataExcel = (
+    data: any[],
+    columns: {
+      key: string;
+      label: string;
+      format?: (value: any) => any;
+    }[],
+  ) => {
+    return data.map((row) =>
+      Object.fromEntries(
+        columns.map(({ key, label, format }) => [
+          label,
+          format ? format(row[key]) : (row[key] ?? '-'),
+        ]),
+      ),
+    );
+  };
+
+  const summaryExportColumns = [
+    { key: 'date', label: 'Date' },
+    { key: 'month', label: 'Month' },
+    { key: 'invited', label: 'Invited' },
+    { key: 'checkin', label: 'Check In' },
+    { key: 'checkout', label: 'Check Out' },
+    { key: 'block', label: 'Block' },
+    { key: 'active', label: 'Active On Site' },
+    { key: 'average_duration', label: 'Average Duration' },
+  ];
+
+  const exportToExcel = () => {
+    if (!summary?.length && !reportData?.length) {
+      showSwal('error', 'No report data available.');
+      return;
+    }
+
+    try {
       setLoading(true);
 
-      const exportData = {
-        ...formData,
-        is_export: true,
-        export_report: 'Excell',
-      };
+      const workbook = XLSX.utils.book_new();
 
-      const res = await axiosInstance.post('/report/visitor-transaction/generate', exportData, {
-        responseType: 'blob',
-      });
+      // =========================
+      // SUMMARY SHEET
+      // =========================
+
+      if (summary?.length) {
+        const summaryData = getExportDataExcel(summary, summaryExportColumns);
+
+        const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
+
+        XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
+      }
+
+      // =========================
+      // DATA SHEET
+      // =========================
+
+      if (reportData?.length) {
+        const data = getExportDataExcel(reportData, exportColumns);
+
+        const dataWorksheet = XLSX.utils.json_to_sheet(data);
+
+        XLSX.utils.book_append_sheet(workbook, dataWorksheet, 'Data');
+      }
+
+      // =========================
+      // DOWNLOAD
+      // =========================
 
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const year = now.getFullYear();
+
       const dateStr = `${day}-${month}-${year}`;
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `report-${dateStr}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      XLSX.writeFile(workbook, `visitor-report-${dateStr}.xlsx`);
 
-      showSwal('success', 'Report has been exported successfully.');
+      showSwal('success', 'Successfully exported report.');
     } catch (err) {
       console.error('Error exporting report:', err);
+
       showSwal('error', 'Failed to export report.');
     } finally {
       setLoading(false);
@@ -353,43 +436,135 @@ const Content = () => {
   };
 
   const exportToCSV = () => {
-    const worksheet = XLSX.utils.json_to_sheet(reportData);
-    const csv = XLSX.utils.sheet_to_csv(worksheet);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const exportData = getExportData(reportData);
 
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+
     link.href = url;
-    link.setAttribute('download', `report-${Date.now()}.csv`);
+    link.download = `report-${Date.now()}.csv`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
+
   const exportToPDF = () => {
-    if (!reportData || reportData.length === 0) return;
+    if (!reportData?.length) return;
+    setLoading(true);
+    try {
+      const doc = new jsPDF('l', 'mm', 'a4');
 
-    const doc = new jsPDF('l', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-    doc.text('Visitor Report', 14, 15);
+      doc.addImage(logoUrl, 'PNG', 14, 10, 18, 18);
 
-    const tableColumn = Object.keys(reportData[0] || {});
-    const tableRows = reportData.map((row) => Object.values(row));
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('BANK INDONESIA', 36, 15);
 
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows as any[],
-      startY: 20,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [22, 160, 133] },
-    });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('Visitor Management System', 36, 20);
 
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    const dateStr = `${day}-${month}-${year}`;
+      const now = new Date();
+      const generatedAt = formatDateTime(now.toISOString());
 
-    doc.save(`report-${dateStr}.pdf`);
+      doc.setFontSize(8);
+      doc.text(`Generated: ${generatedAt}`, pageWidth - 14, 15, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('VISITOR REPORT', 14, 36);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Visitor Transaction Report', 14, 42);
+
+      doc.setFontSize(8);
+
+      doc.text(`Total Visitors: ${reportData.length}`, pageWidth - 14, 36, { align: 'right' });
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 47, pageWidth - 14, 47);
+
+      const tableColumn = exportColumns.map((column) => column.label);
+
+      const tableRows = reportData.map((row) =>
+        exportColumns.map(({ key, format }) => (format ? format(row[key]) : (row[key] ?? '-'))),
+      );
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+
+        startY: 51,
+
+        margin: {
+          left: 14,
+          right: 14,
+        },
+
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2.5,
+          valign: 'middle',
+          textColor: [45, 45, 45],
+        },
+
+        headStyles: {
+          fillColor: [33, 119, 181],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 7.5,
+          halign: 'left',
+        },
+
+        alternateRowStyles: {
+          fillColor: [248, 249, 250],
+        },
+
+        theme: 'grid',
+
+        didDrawPage: () => {
+          // =========================
+          // FOOTER
+          // =========================
+
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'normal');
+
+          doc.setTextColor(120, 120, 120);
+
+          doc.text('Bank Indonesia • Visitor Management System', 14, pageHeight - 8);
+
+          doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - 14, pageHeight - 8, {
+            align: 'right',
+          });
+        },
+      });
+
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      const dateStr = `${day}-${month}-${year}`;
+
+      doc.save(`report-${dateStr}.pdf`);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
   };
 
   const printReport = () => {
@@ -427,7 +602,7 @@ const Content = () => {
       await refreshReportList();
       await new Promise((res) => setTimeout(res, 600));
 
-      showSnackbar('Report saved successfully!', 'success');
+      showSnackbar('Successfully saved report', 'success');
       handleResetForm();
     } catch (err) {
       showSwal('error', 'Failed to save report.');
@@ -523,7 +698,7 @@ const Content = () => {
       await fetchReports(true);
       setEditingId(null);
       setTimeout(() => {
-        showSwal('success', 'Report updated successfully!');
+        showSwal('success', 'Successfully updated report.');
       }, 600);
     } catch (err) {
       showSwal('error', 'Failed to update report.');
@@ -535,7 +710,7 @@ const Content = () => {
   const isHavePreview = !!selectedReport?.id || summary.length > 0 || reportData.length > 0;
 
   const handleDelete = async (id: string) => {
-    const isConfirmed = await showConfirmDelete('Are you sure to delete this report?');
+    const isConfirmed = await showConfirmDelete(t('confirmDelete', { name: 'Report' }));
 
     if (!isConfirmed) return;
 
@@ -545,7 +720,7 @@ const Content = () => {
         await deleteReportVisitorTransaction(id);
         await fetchReports(true);
 
-        showSwal('success', 'Report deleted successfully!');
+        showSwal('success', 'Successfully deleted report.');
       } catch (err) {
         showSwal('error', 'Failed to delete report.');
       } finally {
@@ -553,16 +728,6 @@ const Content = () => {
       }
     }
   };
-
-  const visitorStatusOptions = [
-    { id: 'Preregis', label: 'Preregis' },
-    { id: 'Checkin', label: 'Checkin' },
-    { id: 'Checkout', label: 'Checkout' },
-    { id: 'Block', label: 'Block' },
-    { id: 'Unblock', label: 'Unblock' },
-  ];
-
-  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
   return (
     <PageContainer

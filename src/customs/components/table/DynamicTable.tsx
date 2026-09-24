@@ -421,6 +421,7 @@ function DynamicTableBase<
     'employee_linked',
     'is_blacklist',
     'selfie image',
+    'selfie_image'
   ];
 
   const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);
@@ -1100,7 +1101,7 @@ function DynamicTableBase<
                       size="medium"
                       variant="contained"
                       startIcon={<IconFileExport size={16} />}
-                      color="secondary"
+                      color="success"
                       sx={{ height: 36 }}
                       onClick={onExportExcel}
                     >
@@ -1281,13 +1282,16 @@ function DynamicTableBase<
 
                 {!isNoActionTableHead ? (
                   <Box display="flex" alignItems="center" gap={3} pr={2.5}>
-                    <EditIconOutline
-                      sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                      onClick={() => {
-                        if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
-                        onBatchEdit?.(selectedRows);
-                      }}
-                    />
+                    {onBatchEdit && (
+                      <EditIconOutline
+                        sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+
+                          onBatchEdit(selectedRows);
+                        }}
+                      />
+                    )}
 
                     <DeleteOutlineOutlinedIcon
                       sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
