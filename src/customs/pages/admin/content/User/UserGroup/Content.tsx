@@ -727,7 +727,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 isNoActionTableHead={true}
                 defaultRowsPerPage={rowsPerPage}
-                searchPlaceholder="Search user group"
+                searchPlaceholder="Search User Group"
                 rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(newPage, newRowsPerPage) => {
                   setPage(newPage);

@@ -113,7 +113,7 @@ const Content = () => {
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
                 defaultRowsPerPage={rowsPerPage}
-                searchPlaceholder="Search visitor role"
+                searchPlaceholder="Search Visitor Role"
                 // rowsPerPageOptions={[10, 50, 100]}
                 // totalCount={totalRecords}
                 // currentPage={page}

@@ -44,9 +44,7 @@ const Content = () => {
   }, [employeeBlacklistQuery.data]);
 
   const totalRecords = employeeBlacklistQuery.data?.RecordsTotal ?? 0;
-
   const totalFilteredRecords = employeeBlacklistQuery.data?.RecordsFiltered ?? 0;
-
   const loading = employeeBlacklistQuery.isPending;
   const tableRowEmployee = useMemo(() => {
     const collection = employeeBlacklistQuery.data?.collection ?? [];
@@ -105,7 +103,7 @@ const Content = () => {
                 isHaveAction={false}
                 isHaveSearch={true}
                 isHaveImage={true}
-                searchPlaceholder="Search blacklist employee"
+                searchPlaceholder="Search Blacklist Employee"
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHavePagination={true}

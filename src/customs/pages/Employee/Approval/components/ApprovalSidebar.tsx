@@ -17,13 +17,10 @@ type ApprovalSidebarProps = {
   loading: boolean;
   approvalData: any[];
   selectedId: string | null;
-
   searchKeyword: string;
   setSearchKeyword: (value: string) => void;
-
   hasMore: boolean;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-
   onSelectGroup: (group: any) => void;
   setShowDrawerFilterMore?: any;
   onOpenApprovalDialog: (
@@ -190,7 +187,6 @@ const ApprovalSidebar = ({
                 </Box>
 
                 <Typography>Start : {group.visitor_period_start}</Typography>
-
                 <Typography>End : {group.visitor_period_end}</Typography>
 
                 <Typography

@@ -510,7 +510,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isDataVerified={true}
-                searchPlaceholder="Search card"
+                searchPlaceholder="Search Card"
                 sortColumns={['name']}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => {

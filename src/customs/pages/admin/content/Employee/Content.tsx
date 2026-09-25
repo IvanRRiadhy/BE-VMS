@@ -497,7 +497,6 @@ const Content = () => {
     }
   };
 
-
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -526,7 +525,7 @@ const Content = () => {
                 onImportExcel={handleImportExcel}
                 // isListBlacklist={true}
                 isBlacklistPage={true}
-                searchPlaceholder="Search Employee"
+                searchPlaceholder="Search  Employee"
                 onNavigatePage={() => {
                   navigate('/admin/manage/blacklist-employees');
                 }}

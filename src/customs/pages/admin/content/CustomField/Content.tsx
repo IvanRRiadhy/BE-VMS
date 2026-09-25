@@ -212,7 +212,7 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveSearch={true}
                 isHaveFilter={false}
-                searchPlaceholder="Search custom field"
+                searchPlaceholder="Search Custom Field"
                 isHaveExportPdf={false}
                 isNoActionTableHead={false}
                 isHaveExportXlf={false}

@@ -389,7 +389,7 @@ const Content = () => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
-                searchPlaceholder="Search visitor type"
+                searchPlaceholder="Search Visitor Type"
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

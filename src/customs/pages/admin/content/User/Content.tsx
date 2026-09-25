@@ -56,6 +56,7 @@ const Content = () => {
   const queryClient = useQueryClient();
   const { data, isLoading } = useUsers();
   const { deleteMutation: deleteUser } = useUsersMutation();
+  const [selectedGroup, setSelectedGroup] = useState('All');
 
   const filteredData = useMemo(() => {
     if (!data?.collection) return [];
@@ -70,8 +71,15 @@ const Content = () => {
         description: item.description || '',
         employee_linked: item.employee_linked,
       }))
-      .filter((item: any) => item.fullname.toLowerCase().includes(search.toLowerCase()));
-  }, [data, search]);
+      .filter((item: any) => {
+        const matchSearch = item.fullname?.toLowerCase().includes(search.toLowerCase());
+
+        const matchGroup =
+          selectedGroup === 'All' || item.group_name?.toLowerCase() === selectedGroup.toLowerCase();
+
+        return matchSearch && matchGroup;
+      });
+  }, [data, search, selectedGroup]);
 
   const totalRecords = data?.collection.length ?? 0;
 
@@ -376,7 +384,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
-                searchPlaceholder="Search user"
+                searchPlaceholder="Search User"
                 searchKeyword={search}
                 isHaveAssign={false}
                 isHaveUnAssign={true}
@@ -393,6 +401,7 @@ const Content = () => {
                 isHaveAddEmpty={true}
                 addDataText="Add User"
                 isHaveHeader
+                defaultSelectedHeaderItem="All"
                 headerContent={{
                   title: '',
                   subTitle: 'Role',
@@ -401,8 +410,12 @@ const Content = () => {
                     { name: 'Guest/Visitor' },
                     { name: 'Employee' },
                     { name: 'Admin' },
-                    { name: 'Operator' },
+                    { name: 'Operator VMS' },
                   ],
+                }}
+                onHeaderItemClick={(item) => {
+                  setSelectedGroup(item.name);
+                  setPage(0);
                 }}
                 onAddEmpty={() => {
                   handleAdd();

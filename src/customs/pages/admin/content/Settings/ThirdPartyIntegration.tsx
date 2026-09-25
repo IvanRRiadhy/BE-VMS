@@ -284,6 +284,7 @@ const ThirdPartyIntegration = () => {
         defaultRowsPerPage={rowsPerPage}
         onActiveToggle={handleActiveToggle}
         selectedRows={selectedRows}
+        searchPlaceholder="Search Api Key"
         onCheckedChange={(selected) => setSelectedRows(selected)}
         rowsPerPageOptions={[10, 50, 100]}
         onPaginationChange={(page, rowsPerPage) => {

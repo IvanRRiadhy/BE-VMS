@@ -18,36 +18,6 @@ export default function AuthRedirector() {
     setClearTokenCallback(clearToken);
   }, [clearToken]);
 
-  // useEffect(() => {
-  //   if (authLoading) return;
-
-  //   if (isAuthenticated ) {
-  //     // const upperGroup = groupId.toUpperCase();
-  //     let redirectPath = '/';
-
-  //     if (roleAccess === 'Admin') redirectPath = '/admin/dashboard';
-  //     else if (roleAccess === 'Manager') redirectPath = '/manager/dashboard';
-  //     else if (roleAccess === 'Employee') redirectPath = '/employee/dashboard';
-  //     else if (roleAccess === 'OperatorVMS') redirectPath = '/operator/view';
-  //     else if (roleAccess === 'OperatorAdmin') redirectPath = '/operator-admin/dashboard';
-  //     else if (roleAccess === 'Visitor') redirectPath = '/guest/dashboard';
-
-  //     if (
-  //       location.pathname === '/auth/login' ||
-  //       location.pathname === '/auth/register' ||
-  //       location.pathname === '/auth/forgot-password'
-  //     ) {
-  //       navigate(redirectPath, { replace: true });
-  //     } else if (location.pathname === '/') {
-  //       navigate(redirectPath, { replace: true });
-  //     }
-  //   } else if (!authLoading && !isAuthenticated) {
-  //     if (location.pathname === '/auth/login' || location.pathname === '/') {
-  //       navigate('/auth/login', { replace: true });
-  //     }
-  //   }
-  // }, [authLoading, isAuthenticated, location.pathname, navigate, roleAccess]);
-
   useEffect(() => {
     if (authLoading) return;
 

@@ -326,7 +326,7 @@ const Content = () => {
                   stickyHeader={true}
                   data={tableCustomVisitor}
                   totalCount={totalFilteredRecords}
-                  searchPlaceholder="Search Visitor..."
+                  searchPlaceholder="Search Visitor"
                   selectedRows={selectedRows}
                   rowsPerPageOptions={[10, 50, 100]}
                   onPaginationChange={handlePaginationChange}

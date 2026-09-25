@@ -14,7 +14,6 @@ import TopVisitingPurposeChart from 'src/customs/components/charts/TopVisitingPu
 import TopVisitor from 'src/customs/components/charts/TopVisitor';
 import VisitingTypeChart from 'src/customs/components/charts/VisitingTypeChart';
 import VisitorFluctuationChart from 'src/customs/components/charts/VisitorFluctuationChart';
-import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import AvarageDurationChart from 'src/customs/components/charts/AverageDurationChart';
 import {
   IconCalendar,

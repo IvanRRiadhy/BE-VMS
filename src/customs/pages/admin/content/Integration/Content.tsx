@@ -347,7 +347,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                searchPlaceholder="Search integration"
+                searchPlaceholder="Search Integration"
                 isCopy={true}
                 onCopy={(row) => {
                   handleCopy(row.id);

@@ -1,17 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import Container from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useApiKeyDT } from 'src/hooks/Setting/useApiKey';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-import ApiKeyFormDialog from './components/ApiKeyFormDialog';
 import { ApiKeyFormData } from 'src/customs/api/Admin/Setting/schemas/apikey.schema';
-import { getApiKeyById, getRevealById, updateApiKeyActive } from 'src/customs/api/Admin/Setting';
-import { useApiKeyMutation } from 'src/hooks/Setting/useApiKeyMutation';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
-import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -99,6 +93,7 @@ const Vehicle = () => {
         isHavePagination
         isHaveChecked
         isHaveAddData
+        searchPlaceholder="Search Vehicle"
         isHaveAction={false}
         currentPage={page}
         totalCount={vehicle?.RecordsFiltered ?? 0}

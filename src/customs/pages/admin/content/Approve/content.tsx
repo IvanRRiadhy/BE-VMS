@@ -176,6 +176,7 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
                 setPage(page);
                 setRowsPerPage(rowsPerPage);
               }}
+              searchPlaceholder="Search Approval Workflow"
               isHaveChecked={true}
               isHaveAction={true}
               isHaveSearch={true}

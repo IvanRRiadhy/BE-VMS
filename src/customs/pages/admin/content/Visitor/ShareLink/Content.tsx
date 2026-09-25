@@ -251,6 +251,7 @@ const Content = () => {
                 isNoActionTableHead={true}
                 currentPage={page}
                 // titleHeader="Share Link"
+                searchPlaceholder="Search Share Link"
                 isCopyLink={true}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}

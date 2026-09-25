@@ -243,7 +243,7 @@ const Content = () => {
                 overflowX={'auto'}
                 data={tableData}
                 isHaveChecked={true}
-                searchPlaceholder="Search access control"
+                searchPlaceholder="Search Access Control"
                 isHaveAction={true}
                 isHaveSearch={true}
                 currentPage={page}
