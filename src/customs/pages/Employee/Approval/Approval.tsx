@@ -20,6 +20,7 @@ import GroupVisitorTable from './components/GroupVisitorTable';
 import { useApprovalPagination } from 'src/hooks/Approval/useApprovalPagination';
 import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import FilterApproval from './components/FilterApproval';
 
 type Group = {
   id: string;
@@ -33,7 +34,7 @@ const Approval = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const secdrawerWidth = 300;
+  const secdrawerWidth = 350;
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
@@ -47,12 +48,21 @@ const Approval = () => {
   const debouncedKeyword = useDebounce(searchKeyword, 500);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { t } = useTranslation();
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
+  const [filters, setFilters] = useState<any>({
+    'approval-status': undefined,
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    'approval-status': undefined,
+  });
   const { data, isLoading, isFetching } = useApprovalPagination({
     page,
     rowsPerPage,
     search: debouncedKeyword,
     sortDir,
+    filters: appliedFilters,
   });
 
   const approvalData = data?.collection ?? [];
@@ -202,7 +212,7 @@ const Approval = () => {
     identity_id: item.visitor_identity_id,
     visitor_phone: item.visitor_phone,
     email: item.visitor_email,
-    site_place: item.site_place_name, 
+    site_place: item.site_place_name,
     selfie_image: item.selfie_image,
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
@@ -275,6 +285,32 @@ const Approval = () => {
     }
   };
 
+  const handleApplyFilter = () => {
+    setAppliedFilters({
+      ...filters,
+    });
+
+    setPage(0);
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+  };
+
+  const handleResetFilter = () => {
+    const empty = {
+      'approval-status': undefined,
+    };
+
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    //  setSearch('');
+    //  setSelectedType('All');
+    setPage(0);
+  };
+
   return (
     <>
       <PageContainer title="Approval" description="Approval page">
@@ -304,6 +340,7 @@ const Approval = () => {
                   selectedId={selectedId}
                   searchKeyword={searchKeyword}
                   setSearchKeyword={setSearchKeyword}
+                  setShowDrawerFilterMore={setShowDrawerFilterMore}
                   hasMore={hasMore}
                   setPage={setPage}
                   onSelectGroup={(group) => {
@@ -333,6 +370,15 @@ const Approval = () => {
           </Grid>
         </Box>
       </PageContainer>
+
+      <FilterApproval
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+        filters={filters}
+        setFilters={setFilters}
+        onApply={handleApplyFilter}
+        onResetFilter={handleResetFilter}
+      />
 
       <VisitorApprovalDialog
         open={openDialog}

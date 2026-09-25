@@ -18,7 +18,6 @@ import { useSites } from 'src/hooks/Sites/useSites';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 
-
 type FilterMoreContentProps = {
   open: any;
   onClose: any;
@@ -52,11 +51,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
     Employee: 'Employee',
   };
 
-  const visitorRoleOptions = Object.values(visitorRole);
-  const statusOptions = Object.values(statusMap);
   const { data: sites = [] } = useSites();
-  const { allVisitorEmployee } = useVisitorEmployees();
-
   return (
     <Drawer
       anchor="right"
@@ -282,7 +277,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
               />
             </FormGroup>
           </Grid> */}
-{/* 
+          {/* 
           <Grid size={{ xs: 12, lg: 4 }}>
             <CustomFormLabel sx={{ mt: 0 }}>Emergency Situation</CustomFormLabel>
             <FormGroup row>

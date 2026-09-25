@@ -7,7 +7,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { IconFilter } from '@tabler/icons-react';
+import { IconFilter, IconFilterFilled } from '@tabler/icons-react';
 import { IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
@@ -25,7 +25,7 @@ type ApprovalSidebarProps = {
   setPage: React.Dispatch<React.SetStateAction<number>>;
 
   onSelectGroup: (group: any) => void;
-
+  setShowDrawerFilterMore?: any;
   onOpenApprovalDialog: (
     e: React.MouseEvent<HTMLButtonElement>,
     group: any,
@@ -42,6 +42,7 @@ const ApprovalSidebar = ({
   searchKeyword,
   setSearchKeyword,
   hasMore,
+  setShowDrawerFilterMore,
   setPage,
   onSelectGroup,
   onOpenApprovalDialog,
@@ -81,15 +82,8 @@ const ApprovalSidebar = ({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                size="small"
-                onClick={() => {}}
-                sx={{
-                  mr: -0.5,
-                  cursor: 'pointer',
-                }}
-              >
-                <IconFilter size={18} />
+              <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+                <IconFilterFilled size={18} />
               </IconButton>
             </InputAdornment>
           ),

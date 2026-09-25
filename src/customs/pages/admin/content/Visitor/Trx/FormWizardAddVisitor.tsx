@@ -4971,7 +4971,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         }
       } else {
         if (!sectionsData.length) {
-          toast('Minimal isi 1 data visitor.', 'warning');
+          toast(t('visitorMinimum'), 'warning');
           return;
         }
 

@@ -4,14 +4,18 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Grid,
+  Grid2 as Grid,
   Switch,
   FormControlLabel,
   IconButton,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useEmployees } from 'src/hooks/Employee/useEmployees';
 
 interface Props {
   open: boolean;
@@ -22,10 +26,19 @@ interface Props {
 
 export default function VisitorEditDialog({ open, detail, onClose, onSave }: Props) {
   const [form, setForm] = useState<any>({});
+  const [errorEmployee, setErrorEmployee] = useState(false);
+
+  const { employee: employees, loading: employeeLoading } = useEmployees();
 
   useEffect(() => {
     if (detail) {
-      setForm(detail);
+      setForm({
+        ...detail,
+        is_employee: Boolean(detail.is_employee),
+        employee_id: detail.employee_id ?? null,
+      });
+
+      setErrorEmployee(false);
     }
   }, [detail]);
 
@@ -36,98 +49,130 @@ export default function VisitorEditDialog({ open, detail, onClose, onSave }: Pro
     }));
   };
 
+  const handleEmployeeSwitch = (checked: boolean) => {
+    setForm((prev: any) => ({
+      ...prev,
+      is_employee: checked,
+      employee_id: checked ? (prev.employee_id ?? null) : '',
+    }));
+
+    setErrorEmployee(false);
+  };
+
+  const handleEmployeeChange = (value: any) => {
+    setForm((prev: any) => ({
+      ...prev,
+      employee_id: value?.id ?? null,
+    }));
+
+    setErrorEmployee(false);
+  };
+
+  const handleSubmit = () => {
+    if (form.is_employee && !form.employee_id) {
+      setErrorEmployee(true);
+      return;
+    }
+
+    onSave(form);
+  };
+
+  const selectedEmployee = employees.find((item: any) => item.id === form.employee_id) ?? null;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         Edit Visitor
-        <IconButton size="small" sx={{ position: 'absolute', right: 8, top: 8 }} onClick={onClose}>
+        <IconButton
+          size="small"
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+          }}
+          onClick={onClose}
+        >
           <IconX />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ pt: '0 !important' }}>
         <Grid container spacing={2} mt={1}>
-          <Grid item xs={12} md={6}>
-            <CustomTextField
-              fullWidth
-              label="Identity ID"
-              value={form.identity_id ?? ''}
-              onChange={(e) => handleChange('identity_id', e.target.value)}
-            />
-          </Grid>
+          {/* Name */}
+          <Grid size={12}>
+            <CustomFormLabel sx={{ pt: '0px !important' }}>Name</CustomFormLabel>
 
-          <Grid item xs={12} md={6}>
             <CustomTextField
               fullWidth
-              label="Name"
               value={form.name ?? ''}
               onChange={(e) => handleChange('name', e.target.value)}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          {/* Email */}
+          <Grid size={12}>
+            <CustomFormLabel sx={{ pt: '0px !important' }}>Email</CustomFormLabel>
+
             <CustomTextField
               fullWidth
-              label="Email"
               value={form.email ?? ''}
               onChange={(e) => handleChange('email', e.target.value)}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          {/* Phone */}
+          <Grid size={12}>
+            <CustomFormLabel sx={{ pt: '0px !important' }}>Phone</CustomFormLabel>
+
             <CustomTextField
               fullWidth
-              label="Phone"
               value={form.phone ?? ''}
               onChange={(e) => handleChange('phone', e.target.value)}
             />
           </Grid>
 
-          <Grid item xs={12}>
-            <CustomTextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Address"
-              value={form.address ?? ''}
-              onChange={(e) => handleChange('address', e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <CustomTextField
-              select
-              fullWidth
-              label="Gender"
-              value={form.gender ?? ''}
-              onChange={(e) => handleChange('gender', e.target.value)}
-              SelectProps={{ native: true }}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </CustomTextField>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
+          {/* Is Employee */}
+          <Grid size={12}>
             <FormControlLabel
               control={
                 <Switch
-                  checked={form.is_vip ?? false}
-                  onChange={(e) => handleChange('is_vip', e.target.checked)}
+                  checked={Boolean(form.is_employee)}
+                  onChange={(e) => handleEmployeeSwitch(e.target.checked)}
                 />
               }
-              label="VIP Visitor"
+              label="Is Employee?"
             />
           </Grid>
+
+          {/* Employee */}
+          {form.is_employee && (
+            <Grid size={12}>
+              <CustomFormLabel sx={{ pt: '0px !important' }}>Employee</CustomFormLabel>
+
+              <Autocomplete
+                fullWidth
+                loading={employeeLoading}
+                options={employees}
+                value={selectedEmployee}
+                onChange={(_, value) => handleEmployeeChange(value)}
+                getOptionLabel={(option: any) => option?.name ?? ''}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Select Employee"
+                    error={errorEmployee}
+                    helperText={errorEmployee ? 'Employee is required' : ''}
+                  />
+                )}
+              />
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
 
       <DialogActions>
-        <Button color="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-
-        <Button variant="contained" onClick={() => onSave(form)}>
+        <Button variant="contained" onClick={handleSubmit}>
           Submit
         </Button>
       </DialogActions>

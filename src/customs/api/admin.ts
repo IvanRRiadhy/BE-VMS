@@ -907,6 +907,13 @@ export const getListVisitor = async (): Promise<any> => {
   return response.data;
 };
 
+export const getListVisitorById = async (id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor/invitation/${id}`, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const getListVisitorPagination = async (
   start: number,
   length: number | undefined,

@@ -15,7 +15,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { getVisitorById } from 'src/customs/api/admin';
+import { getListVisitorById, getVisitorById } from 'src/customs/api/admin';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
@@ -271,9 +271,11 @@ const Content = () => {
     try {
       setLoadingData(true);
 
-      const res = await getVisitorById(id);
+      const res = await getListVisitorById(id);
 
-      setVisitorDetail(res.collection);
+      const visitor = res?.collection ?? res;
+
+      setVisitorEdit(visitor);
       setOpenEditDialog(true);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || t('fetchFailed', { name: 'visitor' }));
@@ -358,7 +360,6 @@ const Content = () => {
                   isHaveEmployee={true}
                   // isHaveVerified={true}
                   onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                  // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   onFilterCalenderChange={(ranges) => {
                     if (ranges.startDate && ranges.endDate) {
                       setStartDate(ranges.startDate.toISOString());
@@ -383,27 +384,6 @@ const Content = () => {
                     subTitle: 'Monitoring Data Visitor',
                     items: [{ name: 'All' }, { name: 'Visitor' }, { name: 'Employee' }],
                   }}
-                  // onHeaderItemClick={(item) => {
-                  //   let isEmployee = '';
-
-                  //   if (item.name === 'Visitor') {
-                  //     isEmployee = 'false';
-                  //   } else if (item.name === 'Employee') {
-                  //     isEmployee = 'true';
-                  //   }
-
-                  //   setPage(0);
-
-                  //   setAppliedFilters((prev) => ({
-                  //     ...prev,
-                  //     is_employee: isEmployee,
-                  //   }));
-
-                  //   setFilters((prev) => ({
-                  //     ...prev,
-                  //     is_employee: isEmployee,
-                  //   }));
-                  // }}
                   onHeaderItemClick={(item) => {
                     let isEmployee = '';
 

@@ -355,7 +355,7 @@ const Content = () => {
     >
       <Container title="User" description="User page">
         <Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
@@ -392,6 +392,18 @@ const Content = () => {
                 onAddData={handleAdd}
                 isHaveAddEmpty={true}
                 addDataText="Add User"
+                isHaveHeader
+                headerContent={{
+                  title: '',
+                  subTitle: 'Role',
+                  items: [
+                    { name: 'All' },
+                    { name: 'Guest/Visitor' },
+                    { name: 'Employee' },
+                    { name: 'Admin' },
+                    { name: 'Operator' },
+                  ],
+                }}
                 onAddEmpty={() => {
                   handleAdd();
                 }}

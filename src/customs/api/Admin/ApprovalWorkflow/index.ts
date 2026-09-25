@@ -66,39 +66,43 @@ export const getApprovalTicket = async (options?: {
   approval_status?: string;
   entity_id?: string;
 }): Promise<any> => {
-  const params: any = {
-    'entity-type': options?.entity_type ?? 'Invitation',
-  };
+  try {
+    const params: any = {
+      'entity-type': options?.entity_type ?? 'Invitation',
+    };
 
-  if (options?.start !== undefined) {
-    params.start = options.start;
+    if (options?.start !== undefined) {
+      params.start = options.start;
+    }
+
+    if (options?.length !== undefined) {
+      params.length = options.length;
+    }
+
+    if (options?.sort_dir) {
+      params.sort_dir = options.sort_dir;
+    }
+
+    if (options?.keyword) {
+      params['search[value]'] = options.keyword;
+    }
+
+    if (options?.approval_status) {
+      params['approval-status'] = options.approval_status;
+    }
+
+    if (options?.entity_id) {
+      params['entity-id'] = options.entity_id;
+    }
+
+    const response = await axiosInstance.get(`/approval-ticket/with-actors/dt`, {
+      params,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-
-  if (options?.length !== undefined) {
-    params.length = options.length;
-  }
-
-  if (options?.sort_dir) {
-    params.sort_dir = options.sort_dir;
-  }
-
-  if (options?.keyword) {
-    params['search[value]'] = options.keyword;
-  }
-
-  if (options?.approval_status) {
-    params['approval-status'] = options.approval_status;
-  }
-
-  if (options?.entity_id) {
-    params['entity-id'] = options.entity_id;
-  }
-
-  const response = await axiosInstance.get(`/approval-ticket/with-actors/dt`, {
-    params,
-  });
-
-  return response.data;
 };
 
 // Approve
@@ -119,18 +123,12 @@ export const rejectTicket = async (id: string): Promise<any> => {
 };
 
 // Approve meeting host
-export const approveMeetingHost = async (
-  id: string,
-  payload: any,
-): Promise<any> => {
-  const response = await axiosInstance.post(
-    `/approval-ticket/${id}/approve-meetinghost`,
-    payload,
-  );
+export const approveMeetingHost = async (id: string, payload: any): Promise<any> => {
+  const response = await axiosInstance.post(`/approval-ticket/${id}/approve-meetinghost`, payload);
   return response.data;
 };
 
-export const getVisitorByTickedId = async ( id: string): Promise<any> => {
+export const getVisitorByTickedId = async (id: string): Promise<any> => {
   const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
     headers: { Accept: 'application/json' },
   });

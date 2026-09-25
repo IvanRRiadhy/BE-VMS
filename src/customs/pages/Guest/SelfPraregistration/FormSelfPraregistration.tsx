@@ -518,7 +518,7 @@ const FormSelfPraregistration = ({
         navigate('/invitation-share/success', { replace: true });
       } else {
         if (!sectionsData.length) {
-          toast('Minimal isi 1 data visitor.', 'warning');
+          toast(t('visitorMinimum'), 'warning');
           return;
         }
 

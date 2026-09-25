@@ -236,5 +236,6 @@
   "generateLinkDescription": "Share invitation link with visitor",
   "registerVisitor": "Register Visitor",
   "registerVisitorDescription": "Employee fills visitor information",
-  "unassignEmployeeConfirm": "Are you sure you want to unassign this employee?"
+  "unassignEmployeeConfirm": "Are you sure you want to unassign this employee?",
+  "visitorMinimum": "Please enter at least 1 visitor."
 }
