@@ -23,16 +23,21 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setToken(newToken);
   };
 
-  const clearToken = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    revokeToken(token);
+  const clearToken = async () => {
+    const currentToken = token;
+
+    try {
+      if (currentToken) {
+        await revokeToken(currentToken);
+      }
+    } finally {
+      localStorage.removeItem('token');
+      setToken(null);
+    }
   };
 
   return (
-    <SessionContext.Provider
-      value={{ token, saveToken, clearToken }}
-    >
+    <SessionContext.Provider value={{ token, saveToken, clearToken }}>
       {children}
     </SessionContext.Provider>
   );

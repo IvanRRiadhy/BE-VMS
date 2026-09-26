@@ -11,11 +11,21 @@ import {
 import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
 
-export const login = async (body: LoginRequest): Promise<any> => {
+export const login = async (
+  body: LoginRequest,
+  captchaId?: string,
+  captchaAnswer?: string,
+): Promise<any> => {
   try {
     const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Use-Token': 'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275',
+        'X-Captcha-Id': captchaId,
+        'X-Captcha-Answer': captchaAnswer,
+      },
     });
+
     return response.data;
   } catch (error) {
     throw error;
@@ -58,7 +68,7 @@ export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => 
 export const revokeToken = async (token?: string | null): Promise<RevokeTokenResponse> => {
   try {
     const response = await axiosInstance.get<RevokeTokenResponse>(`/_Auth/RevokeToken`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
   } catch (error) {

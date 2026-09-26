@@ -1,44 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
 
-// import CryptoJS from 'crypto-js';
-
-// const SECRET_KEY = 'YOUR_SECRET_KEY';
-
-// const generateNonce = () => {
-//   return Math.random().toString(36).substring(2);
-// };
-
-// const generateTimestamp = () => {
-//   return new Date().toISOString();
-// };
-
-// const generateSignature = (payload: any, timestamp: string, nonce: string) => {
-//   const data = JSON.stringify(payload) + timestamp + nonce;
-//   return CryptoJS.HmacSHA256(data, SECRET_KEY).toString();
-// };
-
-// const requestInterceptor = (config: any) => {
-//   const method = config.method?.toLowerCase();
-
-//   if (['post', 'put', 'patch', 'delete'].includes(method)) {
-//     const timestamp = generateTimestamp();
-//     const nonce = generateNonce();
-
-//     const originalPayload = config.data ?? {};
-
-//     const signature = generateSignature(originalPayload, timestamp, nonce);
-
-//     config.data = {
-//       data: originalPayload,
-//       timestamp,
-//       nonce,
-//       signature,
-//     };
-//   }
-
-//   return config;
-// };
-
 import { getConfig } from 'src/config';
 
 export let BASE_URL = '';
@@ -47,12 +8,14 @@ export const axiosInstance: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
 
 export const axiosInstance2: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
 
 export function initializeAxiosBaseURL() {

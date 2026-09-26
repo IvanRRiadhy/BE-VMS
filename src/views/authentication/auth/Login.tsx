@@ -30,7 +30,14 @@ import { AxiosError } from 'axios';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { IconEye, IconEyeOff, IconLock, IconUser, IconUserPlus } from '@tabler/icons-react';
+import {
+  IconEye,
+  IconEyeOff,
+  IconLock,
+  IconRefresh,
+  IconUser,
+  IconUserPlus,
+} from '@tabler/icons-react';
 import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import { useMediaQuery } from '@mui/system';
@@ -38,8 +45,9 @@ import Footer from '../components/Footer';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { useTranslation } from 'react-i18next';
 import { getConfig } from 'src/config';
-import 'altcha';
 import BackToTopButton from '../components/BackToTopButton';
+import { getCaptcha } from 'src/customs/api/captcha';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Login = () => {
   const theme = useTheme();
@@ -53,11 +61,6 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaError, setCaptchaError] = useState(false);
-  const altchaRef = useRef<HTMLElement | null>(null);
-  const [altchaVerified, setAltchaVerified] = useState(false);
   const [searchParams] = useSearchParams();
   const codeFromUrl = searchParams.get('code') || '';
   const [guestCode, setGuestCode] = useState(codeFromUrl);
@@ -71,25 +74,55 @@ const Login = () => {
   const config = getConfig();
   const logoUrl = config.LOGIN_LOGO_URL || Logo;
   const [tab, setTab] = useState(0);
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaImage, setCaptchaImage] = useState('');
+  const [captchaCode, setCaptchaCode] = useState('');
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+  const generateCaptcha = async () => {
+    try {
+      setCaptchaLoading(true);
+      setCaptchaError(false);
+      setCaptchaCode('');
+
+      const response = await getCaptcha();
+
+      setCaptchaId(response.captchaId);
+      setCaptchaImage(response.image);
+    } catch (error) {
+      console.error('Failed to generate captcha:', error);
+    } finally {
+      setCaptchaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    // if (!captchaToken) {
-    //   setCaptchaError(true);
-    //   setLoading(false);
-    //   return;
-    // }
-
-    // const body = { username, password, captchaToken };
+    if (!captchaCode.trim()) {
+      setCaptchaError(true);
+      setLoading(false);
+      return;
+    }
 
     const body = { username, password };
 
     try {
-      const response = await login(body);
+      const response = await login(body, captchaId, captchaCode);
+      console.log('LOGIN RESPONSE:', response);
+      console.log('COLLECTION:', response.collection);
+      console.log('TOKEN:', response.collection?.token);
+
       const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
         response.collection;
-      saveToken(token);
+
+      console.log('TOKEN BEFORE SAVE:', token);
+      await saveToken(token);
 
       dispatch(
         setUser({
@@ -131,16 +164,15 @@ const Login = () => {
           navigate('/guest/dashboard');
           break;
       }
-    } catch (err) {
+    } catch (err: any) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
           setError(true);
         }
       }, 500);
+      showSwal('error', err.response?.data?.msg || err.message);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 500);
+      setLoading(false);
     }
   }
 
@@ -162,7 +194,6 @@ const Login = () => {
       // console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
       const status = res.status;
       localStorage.setItem('visitor_ref_code', guestCode);
-      // console.log('status', status);
 
       if (status === 'process') {
         setLoading(false);
@@ -233,33 +264,6 @@ const Login = () => {
     setSnackbarOpen(true);
   };
 
-    const handleAltchaState = (ev: Event) => {
-      const detail = (ev as CustomEvent<{ state: string }>).detail;
-      setAltchaVerified(detail?.state === 'verified');
-    };
-
-    const altchaCallbackRef = (node: HTMLElement | null) => {
-      if (altchaRef.current) {
-        altchaRef.current.removeEventListener('statechange', handleAltchaState);
-      }
-
-      altchaRef.current = node;
-
-      if (node) {
-        node.addEventListener('statechange', handleAltchaState);
-
-        try {
-          const config = getConfig();
-
-          (node as any).configure?.({
-            challenge: `${config.API_BASE_URL}/api/Auth/altcha-challenge`,
-          });
-        } catch {
-          // config belum tersedia
-        }
-      }
-    };
-
   return (
     <>
       {!isAuthenticated && (
@@ -285,7 +289,7 @@ const Login = () => {
                 // height={'100%'}
                 // sx={{ height: { xs: '100vh', lg: '95vh' } }}
                 sx={{
-                  minHeight: 'calc(100vh - 100px)', 
+                  minHeight: 'calc(100vh - 100px)',
                   py: { xs: 2, md: 3, lg: 4 },
                 }}
               >
@@ -302,7 +306,7 @@ const Login = () => {
                     sx={{
                       p: 4,
                       zIndex: 1,
-                      height: lg ? '600px' : '100%',
+                      height: lg ? '660px' : '100%',
                       // minHeight: '600px',
                       // height: '100%',
                       width: '100%',
@@ -358,7 +362,7 @@ const Login = () => {
                     elevation={8}
                     sx={{
                       p: 4,
-                      height: lg ? '600px' : '600px',
+                      height: lg ? '660px' : '660px',
                       // minHeight: '600px',
                       // height: '100%',
                       zIndex: 1,
@@ -403,7 +407,7 @@ const Login = () => {
                         sx={{
                           position: 'absolute',
                           right: -10,
-                          top: '10%',
+                          top: '30%',
                           transform: 'translateY(-50%)',
                         }}
                       >
@@ -509,65 +513,79 @@ const Login = () => {
                                 }}
                               />
                             </Box>
-                            {/* <Box
-                              sx={{
-                                width: '100%',
+                            <Box sx={{ width: '100%', mt: '0px !important' }}>
+                              <CustomFormLabel htmlFor="captcha">CAPTCHA</CustomFormLabel>
 
-                                '& altcha-widget': {
-                                  display: 'block',
-                                  width: '100%',
-                                  maxWidth: '100%',
-                                },
+                              <Stack spacing={1}>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: '100%',
+                                      height: 50,
+                                      border: '1px solid',
+                                      borderColor: 'divider',
+                                      borderRadius: 1,
+                                      backgroundColor: '#f5f5f5',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    {captchaImage ? (
+                                      <Box
+                                        component="img"
+                                        src={captchaImage}
+                                        alt="CAPTCHA"
+                                        sx={{
+                                          width: '100%',
+                                          height: '100%',
+                                          objectFit: 'contain',
+                                        }}
+                                      />
+                                    ) : null}
+                                  </Box>
 
-                                '& altcha-widget .altcha-main': {
-                                  width: '100% !important',
-                                  maxWidth: '100% !important',
-                                  boxSizing: 'border-box',
-                                },
-                              }}
-                            >
-                              <altcha-widget
-                                ref={altchaCallbackRef}
-                                challenge={`${config.API_BASE_URL}/api/Auth/altcha-challenge`}
-                                challengeurl={`${config.API_BASE_URL}/api/Auth/altcha-challenge`}
-                                hidefooter
-                                style={{
-                                  display: 'block',
-                                  width: '100%',
-                                }}
-                              />
-                            </Box> */}
+                                  <Button
+                                    type="button"
+                                    variant="outlined"
+                                    size="large"
+                                    onClick={generateCaptcha}
+                                    disabled={captchaLoading}
+                                  >
+                                    {captchaLoading ? (
+                                      <CircularProgress size={18} />
+                                    ) : (
+                                      <IconRefresh />
+                                    )}
+                                  </Button>
+                                </Box>
 
-                            {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
-                            {/* {showCaptcha && (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={onCaptchaChange}
-                            />
-                          </Box>
-                        )}
-                        {captchaError && (
-                          <Typography variant="body2" color="error" textAlign="center">
-                            Silakan centang captcha sebelum melanjutkan.
-                          </Typography>
-                        )} */}
-                            {/* <Link
-                            to={'/auth/forgot-password'}
-                            // variant="body1"
-                            color="textSecondary"
-                            // textAlign="start"
-                            // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
-                            style={{
-                              opacity: '0.5',
-                              color: '#000',
-                              cursor: 'pointer',
-                              marginTop: '10px',
-                            }}
-                          >
-                            Forgot Password?
-                          </Link> */}
+                                <CustomTextField
+                                  id="captcha"
+                                  variant="outlined"
+                                  fullWidth
+                                  placeholder="Enter CAPTCHA code"
+                                  value={captchaCode}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setCaptchaCode(e.target.value);
+                                    if (captchaError) {
+                                      setCaptchaError(false);
+                                    }
+                                  }}
+                                  error={captchaError}
+                                  helperText={captchaError ? 'Invalid CAPTCHA code' : ''}
+                                  autoComplete="off"
+                                />
+                              </Stack>
+                            </Box>
+
                             <Box display="flex" justifyContent="end" alignItems="center">
                               <Typography
                                 onClick={handleForgotPassword}
@@ -627,21 +645,21 @@ const Login = () => {
                             </Button> */}
                           </Box>
 
-                          <Box
-                            sx={{
-                              height: 28,
-                              display: 'flex',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              mt: 0.5,
-                            }}
-                          >
-                            {error && (
+                          {error && (
+                            <Box
+                              sx={{
+                                height: 28,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                mt: 0.5,
+                              }}
+                            >
                               <Typography variant="subtitle2" color="error">
                                 Username or Password is invalid
                               </Typography>
-                            )}
-                          </Box>
+                            </Box>
+                          )}
                         </form>
                       )}
                     </Box>
@@ -673,20 +691,6 @@ const Login = () => {
                               error={guestError}
                             />
                           </Box>
-                          {/* {showCaptcha && (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={() => {}}
-                            />
-                          </Box>
-                        )}
-                        {captchaError && (
-                          <Typography variant="body2" color="error" textAlign="center">
-                            Silakan centang captcha sebelum melanjutkan.
-                          </Typography>
-                        )} */}
                         </Stack>
 
                         <Box marginTop={3}>
@@ -781,36 +785,6 @@ const Login = () => {
                             />
                           </Box>
 
-                          {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
-                          {/* {showCaptcha && (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={onCaptchaChange}
-                            />
-                          </Box>
-                        )}
-                        {captchaError && (
-                          <Typography variant="body2" color="error" textAlign="center">
-                            Silakan centang captcha sebelum melanjutkan.
-                          </Typography>
-                        )} */}
-                          {/* <Link
-                            to={'/auth/forgot-password'}
-                            // variant="body1"
-                            color="textSecondary"
-                            // textAlign="start"
-                            // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
-                            style={{
-                              opacity: '0.5',
-                              color: '#000',
-                              cursor: 'pointer',
-                              marginTop: '10px',
-                            }}
-                          >
-                            Forgot Password?
-                          </Link> */}
                           <Typography
                             onClick={handleForgotPassword}
                             sx={{
