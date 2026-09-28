@@ -16,15 +16,23 @@ import {
   Divider,
   Badge,
 } from '@mui/material';
-import { IconArrowNarrowDown, IconCaretDown, IconCaretDownFilled, IconChevronDown, IconMail, IconPower } from '@tabler/icons-react';
+import {
+  IconArrowNarrowDown,
+  IconCaretDown,
+  IconCaretDownFilled,
+  IconChevronDown,
+  IconMail,
+  IconPower,
+} from '@tabler/icons-react';
 // import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { useDispatch } from 'react-redux';
 import { clearUser } from 'src/store/apps/user/userSlice';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProfile } from 'src/hooks/Profile/useProfile';
+import { revokeToken } from 'src/customs/api/users';
+import { useAuth } from 'src/customs/contexts/AuthProvider';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
@@ -41,14 +49,15 @@ const Profile = () => {
 
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const { token, clearToken } = useSession();
+  // const { clearToken } = useSession();
+
+  const { logout } = useAuth();
 
   const handleLogout = useCallback(async () => {
     handleClose2();
-    clearToken();
-
+    await revokeToken();
     dispatch(clearUser());
-
+    logout();
     localStorage.clear();
     sessionStorage.clear();
     queryClient.removeQueries({
@@ -56,9 +65,7 @@ const Profile = () => {
     });
     sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
     navigate('/', { replace: true });
-  }, [navigate, clearToken]);
-
-  const fetchedRef = useRef(false);
+  }, [navigate]);
 
   const { data: profile } = useProfile();
 
@@ -112,7 +119,7 @@ const Profile = () => {
         </Badge>
 
         <IconChevronDown
-        size={14}
+          size={14}
           // sx={{
           //   fontSize: 18,
           //   transition: 'transform .2s ease',

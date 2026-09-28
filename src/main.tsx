@@ -37,6 +37,7 @@ loadRuntimeConfig()
     initializeAxiosBaseURL();
     root.render(
       <Provider store={store}>
+        
         {/* <PersistGate loading={<Spinner />}> */}
         <SessionProvider>
           <AuthProvider>

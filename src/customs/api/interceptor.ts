@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
 import { getConfig } from 'src/config';
+import { refreshToken } from './users';
 
 export let BASE_URL = '';
 
@@ -8,14 +9,14 @@ export const axiosInstance: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
 export const axiosInstance2: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
 export function initializeAxiosBaseURL() {
@@ -29,17 +30,27 @@ export function initializeAxiosBaseURL() {
 
 let clearTokenCallback: (() => void) | null = null;
 
-export const setClearTokenCallback = (callback: () => void) => {
-  clearTokenCallback = callback;
+let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
+
+const doRefreshToken = async () => {
+  if (!isRefreshing) {
+    isRefreshing = true;
+
+    refreshPromise = refreshToken().finally(() => {
+      isRefreshing = false;
+      refreshPromise = null;
+    });
+  }
 };
 
 let isHandling401 = false;
 
 const responseInterceptor = (response: any) => response;
-const errorInterceptor = (error: any) => {
+const errorInterceptor = async (error: any) => {
   const status = error.response?.status;
   const method = error.config?.method?.toLowerCase();
-
+  const originalRequest = error.config;
   // 404 untuk GET dianggap sebagai data kosong
   if (status === 404 && method === 'get') {
     return Promise.resolve({
@@ -56,44 +67,34 @@ const errorInterceptor = (error: any) => {
       },
     });
   }
-  // if (
-  //   axios.isAxiosError(error) &&
-  //   (error.response?.status === 401 || error.response?.status === 403)
-  // ) {
-  //   // if (clearTokenCallback) {
-  //   //   clearTokenCallback();
-  //   // }
-  //   // window.location.href = '/';
-  //   //  if (error.response?.status === 401) {
-  //   //    clearTokenCallback?.();
-  //   //    window.location.href = '/';
-  //   //  }
-  // }
-  if (status === 401) {
-    if (!isHandling401) {
-      isHandling401 = true;
-      clearTokenCallback?.();
-    }
+  if (
+    status === 401 &&
+    originalRequest &&
+    !originalRequest._retry &&
+    !originalRequest.url?.includes('/_Auth/RefreshToken')
+  ) {
+    originalRequest._retry = true;
 
-    return Promise.reject(error);
+    try {
+      await doRefreshToken();
+      return axiosInstance(originalRequest);
+    } catch (refreshError) {
+      console.error('Refresh token gagal');
+
+      // Jangan retry lagi
+      return Promise.reject(refreshError);
+    }
   }
 
   if (status === 403) {
-    // Jangan logout
-    // Jangan clear token
     return Promise.reject(error);
   }
+
   return Promise.reject(error);
 };
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     return config;
   },
   (error) => Promise.reject(error),
@@ -101,17 +102,9 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance2.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 axiosInstance.interceptors.response.use(responseInterceptor, errorInterceptor);

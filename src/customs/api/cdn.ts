@@ -19,7 +19,7 @@ export const uploadFileToCDN = async (
   formData.append('path', path);
 
   try {
-    const response = await axiosInstance2.post<UploadCdnResponse>('/cdn/upload', formData, {
+    const response = await axiosInstance2.post<any>('/cdn/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

@@ -25,7 +25,7 @@ import { setUser, clearUser } from '../../../store/apps/user/userSlice';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { AuthVisitor, login } from 'src/customs/api/users';
+import { AuthVisitor, getProfile, login } from 'src/customs/api/users';
 import { AxiosError } from 'axios';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -51,8 +51,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Login = () => {
   const theme = useTheme();
-  const { isAuthenticated } = useAuth();
-  const { saveToken } = useSession();
+  const { isAuthenticated, setAuthenticated } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -100,8 +99,89 @@ const Login = () => {
     generateCaptcha();
   }, []);
 
+  // async function loginSubmit(e: FormEvent<HTMLFormElement>) {
+  //   e.preventDefault();
+  //   setError(false);
+  //   setLoading(true);
+
+  //   if (!captchaCode.trim()) {
+  //     setCaptchaError(true);
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const body = { username, password };
+
+  //   try {
+  //     const response = await login(body, captchaId, captchaCode);
+
+  //     const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
+  //       response.collection;
+
+  //     // await saveToken(token);
+
+  //     dispatch(
+  //       setUser({
+  //         fullname,
+  //         email,
+  //         employee_id,
+  //         phone,
+  //         id,
+  //       }),
+  //     );
+
+  //     switch (role_access) {
+  //       case 'OperatorVMS':
+  //         navigate('/operator/view');
+  //         break;
+
+  //       // case 'Visitor':
+  //       //   navigate('/guest/dashboard');
+  //       //   break;
+
+  //       case 'OperatorAdmin':
+  //         navigate('/operator-admin/dashboard');
+  //         break;
+
+  //       case 'Manager':
+  //         navigate('/manager/dashboard');
+  //         break;
+
+  //       case 'Admin':
+  //         navigate('/admin/dashboard');
+  //         break;
+
+  //       case 'Employee':
+  //         if (type == 0) navigate('/delivery-staff/dashboard');
+  //         else navigate('/employee/dashboard');
+  //         break;
+
+  //       default:
+  //         navigate('/guest/dashboard');
+  //         break;
+  //     }
+  //   } catch (err: any) {
+  //     if (err.response?.status === 429) {
+  //       setError(true);
+  //       setSnackbarMsg('Too many login attempts. Please wait a moment and try again.');
+  //       setSnackbarType('error');
+  //       setSnackbarOpen(true);
+  //       return;
+  //     }
+
+  //     if (err.response) {
+  //       setError(true);
+  //       await generateCaptcha();
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    setError(false);
     setLoading(true);
 
     if (!captchaCode.trim()) {
@@ -110,38 +190,28 @@ const Login = () => {
       return;
     }
 
-    const body = { username, password };
+    const body = {
+      username,
+      password,
+    };
 
     try {
-      const response = await login(body, captchaId, captchaCode);
-      console.log('LOGIN RESPONSE:', response);
-      console.log('COLLECTION:', response.collection);
-      console.log('TOKEN:', response.collection?.token);
-
-      const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
-        response.collection;
-
-      console.log('TOKEN BEFORE SAVE:', token);
-      await saveToken(token);
-
+      await login(body, captchaId, captchaCode);
+      const profile: any = await getProfile();
+      setAuthenticated(profile.collection);
       dispatch(
         setUser({
-          fullname,
-          email,
-          employee_id,
-          phone,
-          id,
+          fullname: profile.collection.fullname,
+          email: profile.collection.email,
+          id: profile.collection.user_id,
         }),
       );
 
-      switch (role_access) {
+      // Redirect berdasarkan group
+      switch (profile.collection.group_name) {
         case 'OperatorVMS':
           navigate('/operator/view');
           break;
-
-        // case 'Visitor':
-        //   navigate('/guest/dashboard');
-        //   break;
 
         case 'OperatorAdmin':
           navigate('/operator-admin/dashboard');
@@ -156,8 +226,7 @@ const Login = () => {
           break;
 
         case 'Employee':
-          if (type == 0) navigate('/delivery-staff/dashboard');
-          else navigate('/employee/dashboard');
+          navigate('/employee/dashboard');
           break;
 
         default:
@@ -165,12 +234,18 @@ const Login = () => {
           break;
       }
     } catch (err: any) {
-      setTimeout(() => {
-        if (err instanceof AxiosError && err.response) {
-          setError(true);
-        }
-      }, 500);
-      showSwal('error', err.response?.data?.msg || err.message);
+      if (err.response?.status === 429) {
+        setError(true);
+        setSnackbarMsg('Too many login attempts. Please wait a moment and try again.');
+        setSnackbarType('error');
+        setSnackbarOpen(true);
+        return;
+      }
+
+      if (err.response) {
+        setError(true);
+        await generateCaptcha();
+      }
     } finally {
       setLoading(false);
     }
@@ -222,7 +297,7 @@ const Login = () => {
       const token = res.collection.token;
       const { id, visitor_id } = res.collection || {};
       if (token) {
-        saveToken(token);
+        // saveToken(token);
         localStorage.removeItem('visitor_ref_code');
         navigate('/guest/dashboard');
 
@@ -407,7 +482,7 @@ const Login = () => {
                         sx={{
                           position: 'absolute',
                           right: -10,
-                          top: '30%',
+                          top: '15%',
                           transform: 'translateY(-50%)',
                         }}
                       >

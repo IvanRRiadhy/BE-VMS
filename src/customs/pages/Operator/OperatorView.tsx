@@ -901,6 +901,7 @@ const OperatorView = () => {
 
   const handleSubmitQRCode = async (value: string) => {
     try {
+      setLoadingAccess(true);
       const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
@@ -1006,6 +1007,8 @@ const OperatorView = () => {
       }
     } catch (e) {
       showSwal('error', t('codeNotExist'), 3000);
+    } finally {
+      setLoadingAccess(false);
     }
   };
 

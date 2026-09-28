@@ -6,6 +6,8 @@ import { AppState } from 'src/store/Store';
 import { useNavigate } from 'react-router-dom'; // gunakan useNavigate
 import { useCallback } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import { useAuth } from 'src/customs/contexts/AuthProvider';
+import { revokeToken } from 'src/customs/api/users';
 
 export const Profile = () => {
   const customizer = useSelector((state: AppState) => state.customizer);
@@ -13,14 +15,27 @@ export const Profile = () => {
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
   const navigate = useNavigate();
 
-  const { token, clearToken } = useSession();
-
+  const { logout } = useAuth();
   // Fungsi logout
-  const handleLogout = useCallback(() => {
-    clearToken();
-    navigate('/', { replace: true });
-  }, [navigate]);
+  const handleLogout = useCallback(async () => {
+    try {
+      // Backend hapus HttpOnly cookies
+      await revokeToken();
+    } catch (error) {
+      console.error('Logout API failed:', error);
+    } finally {
+      // Clear state authentication React
+      logout();
 
+      // Clear data lokal kalau memang ada
+      localStorage.clear();
+      sessionStorage.clear();
+
+      sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
+
+      navigate('/auth/login', { replace: true });
+    }
+  }, [navigate, logout]);
   return (
     <Box
       display={'flex'}

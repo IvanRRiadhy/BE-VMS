@@ -20,7 +20,7 @@ export const login = async (
     const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Use-Token': 'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275',
+        // 'X-Use-Token': 'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275',
         'X-Captcha-Id': captchaId,
         'X-Captcha-Answer': captchaAnswer,
       },
@@ -32,15 +32,21 @@ export const login = async (
   }
 };
 
-export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
-  try {
-    const response = await axiosInstance.post<RefreshTokenResponse>(`/_Auth/RefreshToken`, body, {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
+//   try {
+//     const response = await axiosInstance.post<RefreshTokenResponse>(`/_Auth/RefreshToken`, body, {
+//       headers: { 'Content-Type': 'application/json' },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+  const response = await axiosInstance.post<RefreshTokenResponse>('/_Auth/RefreshToken');
+
+  return response.data;
 };
 
 export const AuthVisitor = async (body: AuthVisitorRequest): Promise<any> => {
@@ -65,7 +71,7 @@ export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => 
   }
 };
 
-export const revokeToken = async (token?: string | null): Promise<RevokeTokenResponse> => {
+export const revokeToken = async (): Promise<RevokeTokenResponse> => {
   try {
     const response = await axiosInstance.get<RevokeTokenResponse>(`/_Auth/RevokeToken`, {
       headers: { 'Content-Type': 'application/json' },
