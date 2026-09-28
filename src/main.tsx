@@ -37,17 +37,16 @@ loadRuntimeConfig()
     initializeAxiosBaseURL();
     root.render(
       <Provider store={store}>
-        
         {/* <PersistGate loading={<Spinner />}> */}
-        <SessionProvider>
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider>
+            <AuthProvider>
               <Suspense fallback={null}>
                 <App />
               </Suspense>
-            </QueryClientProvider>
-          </AuthProvider>
-        </SessionProvider>
+            </AuthProvider>
+          </SessionProvider>
+        </QueryClientProvider>
         {/* </PersistGate> */}
       </Provider>,
     );

@@ -3,7 +3,7 @@
 import React, { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Loadable from 'src/layouts/full/shared/loadable/Loadable';
-import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
+import { ProtectedRoute, PublicOnlyRoute } from 'src/customs/contexts/ProtectedRoute';
 import AuthRedirector from './AuthRedirector';
 import path from 'path';
 // import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
@@ -203,7 +203,6 @@ const ManageEvacuate = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
 );
 
-
 const ManageAdminNotification = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Notification/Content')),
 );
@@ -220,7 +219,7 @@ const InvitationEmployee = Loadable(
 );
 const ShareLinkEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/ShareLink/Content')),
-)
+);
 const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking/Parking')));
 const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report/Report')));
 const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History/History')));
@@ -308,6 +307,16 @@ const Router = [
           {
             element: <BlankLayout />,
             children: [
+              {
+                element: <PublicOnlyRoute />,
+                children: [
+                  {
+                    path: '/auth/login',
+                    element: <Login />,
+                  },
+                ],
+              },
+
               { path: '/auth/login', element: <Login /> },
               { path: '/auth/register', element: <Register /> },
               { path: '/auth/expired', element: <ExpiredPage /> },

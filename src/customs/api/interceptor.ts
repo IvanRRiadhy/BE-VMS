@@ -79,9 +79,6 @@ const errorInterceptor = async (error: any) => {
       await doRefreshToken();
       return axiosInstance(originalRequest);
     } catch (refreshError) {
-      console.error('Refresh token gagal');
-
-      // Jangan retry lagi
       return Promise.reject(refreshError);
     }
   }

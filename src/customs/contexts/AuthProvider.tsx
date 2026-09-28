@@ -67,8 +67,94 @@
 //   return ctx;
 // };
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { getProfile } from '../api/users';
+// import { createContext, useContext, useEffect, useState } from 'react';
+// import { getProfile } from '../api/users';
+// import { useProfile } from 'src/hooks/Profile/useProfile';
+
+// interface AuthUser {
+//   user_id: string;
+//   organization_name: string;
+//   department_name: string;
+//   district_name: string;
+//   group_name: string;
+//   email: string;
+//   username: string;
+//   fullname: string;
+//   gender: string;
+//   address: string;
+//   phone: string;
+//   is_vip: boolean;
+//   is_email_verified: boolean;
+// }
+
+// interface AuthContextType {
+//   isAuthenticated: boolean;
+//   loading: boolean;
+//   user: AuthUser | null;
+//   setAuthenticated: (user: AuthUser) => void;
+//   logout: () => void;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+//   const [isAuthenticated, setIsAuthenticated] = useState(false);
+//   const [loading, setLoading] = useState(false);
+//   const [user, setUser] = useState<AuthUser | null>(null);
+
+//   const setAuthenticated = (user: AuthUser) => {
+//     setUser(user);
+//     setIsAuthenticated(true);
+//   };
+
+//   const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
+
+//   const logout = () => {
+//     setUser(null);
+//     setIsAuthenticated(false);
+//   };
+
+//   useEffect(() => {
+//     if (profileLoading) {
+//       setLoading(true);
+//       return;
+//     }
+
+//     if (profile) {
+//       setAuthenticated(profile);
+//     } else if (profileError) {
+//       logout();
+//     }
+
+//     setLoading(false);
+//   }, [profile, profileLoading, profileError]);
+
+//   return (
+//     <AuthContext.Provider
+//       value={{
+//         isAuthenticated,
+//         loading,
+//         user,
+//         setAuthenticated,
+//         logout,
+//       }}
+//     >
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// };
+
+// export const useAuth = () => {
+//   const ctx = useContext(AuthContext);
+
+//   if (!ctx) {
+//     throw new Error('useAuth must be used within AuthProvider');
+//   }
+
+//   return ctx;
+// };
+
+import { createContext, useCallback, useContext, useState } from 'react';
 
 interface AuthUser {
   user_id: string;
@@ -101,34 +187,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  const setAuthenticated = (user: AuthUser) => {
+  const setAuthenticated = useCallback((user: AuthUser) => {
     setUser(user);
     setIsAuthenticated(true);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setIsAuthenticated(false);
-  };
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response: any = await getProfile();
-
-        if (response?.collection) {
-          setAuthenticated(response.collection);
-        } else {
-          logout();
-        }
-      } catch (error) {
-        logout();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
   }, []);
 
   return (
