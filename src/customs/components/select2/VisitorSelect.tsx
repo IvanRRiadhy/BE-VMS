@@ -48,6 +48,25 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
 
   const [selectedOption, setSelectedOption] = React.useState<OptionType | null>(null);
 
+  const getFaceImage = (item: any) => {
+    const faceImage =
+      item.selfie_image ||
+      item.face_image ||
+      item.faceimage ||
+      item.employee?.faceimage ||
+      item.employee?.face_image ||
+      '';
+
+    if (!faceImage) return '';
+
+    // Kalau sudah full URL
+    if (faceImage.startsWith('http')) {
+      return faceImage;
+    }
+
+    return `${BASE_URL}/cdn${faceImage}`;
+  };
+
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     // if (inputValue.length < 3) return [];
 
@@ -75,11 +94,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
 
       if (!inputValue || inputValue.length < 3) {
         return list.slice(0, 10).map((item) => {
-          const faceimage = item.selfie_image
-            ? `${BASE_URL}/cdn${item.selfie_image}`
-            : item.photo
-              ? `${BASE_URL}/cdn${item.photo}`
-              : '';
+          const faceimage = getFaceImage(item);
 
           return {
             label: item.name || '(No Name)',
@@ -103,11 +118,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
       );
 
       return filtered.map((item) => {
-        const faceimage = item.selfie_image
-          ? `${BASE_URL}/cdn${item.selfie_image}`
-          : item.photo
-            ? `${BASE_URL}/cdn${item.photo}`
-            : '';
+        const faceimage = getFaceImage(item);
 
         return {
           label: item.name || '(No Name)',

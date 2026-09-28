@@ -251,6 +251,71 @@ const Login = () => {
     }
   }
 
+  // const guestSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   if (!guestCode.trim()) {
+  //     setGuestError(true);
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     // const res = await AuthVisitor({ code: guestCode });
+  //     const code = searchParams.get('code') || guestCode;
+
+  //     const res = await AuthVisitor({ code });
+  //     // console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
+  //     const status = res.status;
+  //     localStorage.setItem('visitor_ref_code', guestCode);
+
+  //     if (status === 'process') {
+  //       setLoading(false);
+
+  //       navigate('/portal/waiting', {
+  //         replace: true,
+  //       });
+
+  //       return;
+  //     }
+  //     if (status === 'fiil_form') {
+  //       setLoading(false);
+  //       navigate(`/portal/information?code=${code}`, {
+  //         // replace: true,
+  //         state: {
+  //           snackbar: {
+  //             open: true,
+  //             severity: 'success',
+  //             message: 'Please complete your information form',
+  //           },
+  //         },
+  //       });
+  //       return;
+  //     }
+
+  //     const token = res.collection.token;
+  //     const { id, visitor_id } = res.collection || {};
+  //     if (token) {
+  //       // saveToken(token);
+  //       localStorage.removeItem('visitor_ref_code');
+  //       navigate('/guest/dashboard');
+
+  //       dispatch(
+  //         setUser({
+  //           visitor_id,
+  //           id,
+  //         }),
+  //       );
+
+  //       return;
+  //     }
+  //   } catch (err) {
+  //     setGuestError(true);
+  //     setLoading(false);
+  //   }
+  // };
+
   const guestSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -262,13 +327,12 @@ const Login = () => {
     }
 
     try {
-      // const res = await AuthVisitor({ code: guestCode });
       const code = searchParams.get('code') || guestCode;
 
       const res = await AuthVisitor({ code });
-      // console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
-      const status = res.status;
-      localStorage.setItem('visitor_ref_code', guestCode);
+      const status = res?.status;
+
+      localStorage.setItem('visitor_ref_code', code);
 
       if (status === 'process') {
         setLoading(false);
@@ -281,8 +345,8 @@ const Login = () => {
       }
       if (status === 'fiil_form') {
         setLoading(false);
+
         navigate(`/portal/information?code=${code}`, {
-          // replace: true,
           state: {
             snackbar: {
               open: true,
@@ -291,15 +355,22 @@ const Login = () => {
             },
           },
         });
+
         return;
       }
 
-      const token = res.collection.token;
-      const { id, visitor_id } = res.collection || {};
-      if (token) {
-        // saveToken(token);
-        localStorage.removeItem('visitor_ref_code');
-        navigate('/guest/dashboard');
+      // Login visitor berhasil
+      if (status === 'success') {
+        const { id, visitor_id } = res?.collection || {};
+
+        const profileResponse = await getProfile();
+        const profile: any = profileResponse?.collection;
+
+        if (!profile) {
+          throw new Error('Profile tidak ditemukan');
+        }
+
+        setAuthenticated(profile);
 
         dispatch(
           setUser({
@@ -308,9 +379,17 @@ const Login = () => {
           }),
         );
 
+        localStorage.removeItem('visitor_ref_code');
+
+        navigate('/guest/dashboard', {
+          replace: true,
+        });
+
         return;
       }
+      setLoading(false);
     } catch (err) {
+      console.error('Guest login error:', err);
       setGuestError(true);
       setLoading(false);
     }

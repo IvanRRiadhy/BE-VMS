@@ -20,9 +20,7 @@ import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
@@ -100,9 +98,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   const resetState = () => {
     setEnabled(initialEnabledState);
     setForm(initialFormState);
-    // setSelectedSiteParentIds([]);
-    // setSelectedSiteIds([]);
-    // setSiteTree([]);
   };
 
   const handleToggle = (key: FieldKey, checked: boolean) => {

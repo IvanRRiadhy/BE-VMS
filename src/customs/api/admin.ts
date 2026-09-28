@@ -1623,11 +1623,15 @@ export const deleteDocument = async (documentId: string): Promise<DeleteOrganiza
 
 //#region Employee API
 
-export const getAllEmployee = async (): Promise<GetAllEmployeeResponse> => {
-  const response = await axiosInstance.get(`/employee`, {
-    headers: { Accept: 'application/json' },
-  });
-  return response.data;
+export const getAllEmployee = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/employee`, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getVisitorEmployee = async (): Promise<GetAllEmployeeResponse> => {

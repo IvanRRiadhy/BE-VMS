@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Paper, Stack, keyframes } from '@mui/material';
 import LoadingImage from '../../../assets/images/backgrounds/loading-img.svg';
 import { useNavigate } from 'react-router';
-import { AuthVisitor } from 'src/customs/api/users';
+import { AuthVisitor, getProfile } from 'src/customs/api/users';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { showSwal } from '../alerts/alerts';
 import { HourglassTopOutlined, InfoOutlined } from '@mui/icons-material';
+import { useAuth } from 'src/customs/contexts/AuthProvider';
 
 const WaitingPage = () => {
   const navigate = useNavigate();
-  const { saveToken } = useSession();
+  // const { saveToken } = useSession();
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const [message, setMessage] = useState('');
-
+  const { setAuthenticated } = useAuth();
   useEffect(() => {
     const code = localStorage.getItem('visitor_ref_code');
     if (!code) return;
@@ -29,11 +30,28 @@ const WaitingPage = () => {
         const status = res?.status;
         setMessage(res?.msg);
 
-        if (token) {
-          await saveToken(token);
+        if (status === 'success' || res?.collection) {
+          const profileResponse = await getProfile();
+
+          if (cancelled) return;
+
+          const profile = profileResponse?.collection;
+
+          if (!profile) {
+            console.error('Profile tidak ditemukan');
+            return;
+          }
+
+          setAuthenticated(profile);
+
           localStorage.removeItem('visitor_ref_code');
-          navigate('/guest/dashboard', { replace: true });
+
+          navigate('/guest/dashboard', {
+            replace: true,
+          });
+
           showSwal('success', 'Welcome to the Visitor Management System');
+
           return;
         }
 
