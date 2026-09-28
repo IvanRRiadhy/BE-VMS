@@ -61,7 +61,7 @@ import imageCompression from 'browser-image-compression';
 import { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import Webcam from 'react-webcam';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import dayjs from 'dayjs';
@@ -552,6 +552,7 @@ const FormSelfPraregistration = ({
         'error',
         err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
           err.response?.data?.message ||
+          err.response?.data.msg ||
           'Failed to create visitor.',
       );
 
@@ -625,6 +626,47 @@ const FormSelfPraregistration = ({
     });
   };
 
+  // const handleSaveGroupVisitor = () => {
+  //   if (activeGroupIdx === null) return;
+
+  //   const deepClone = (obj: any) => {
+  //     try {
+  //       return structuredClone(obj);
+  //     } catch {
+  //       return JSON.parse(JSON.stringify(obj));
+  //     }
+  //   };
+
+  //   setGroupVisitors((prev) => {
+  //     const next = [...prev];
+  //     if (!next[activeGroupIdx]) {
+  //       return prev;
+  //     }
+
+  //     let cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
+  //       ...dv,
+  //       question_page: (dv.question_page || []).map((qp: any) => ({
+  //         id: qp.id || generateUUIDv4(),
+  //         sort: qp.sort ?? 0,
+  //         name: qp.name ?? '',
+  //         is_document: qp.is_document ?? false,
+  //         can_multiple_used: qp.can_multiple_used ?? false,
+  //         foreign_id: qp.foreign_id ?? '',
+  //         self_only: qp.self_only ?? false,
+  //         form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
+  //       })),
+  //     }));
+
+  //     cleanDataVisitor = syncPurposeVisitToAllVisitors(cleanDataVisitor);
+  //     next[activeGroupIdx] = {
+  //       ...next[activeGroupIdx],
+  //       data_visitor: cleanDataVisitor,
+  //     };
+
+  //     return next;
+  //   });
+  // };
+
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
 
@@ -638,28 +680,14 @@ const FormSelfPraregistration = ({
 
     setGroupVisitors((prev) => {
       const next = [...prev];
+
       if (!next[activeGroupIdx]) {
         return prev;
       }
 
-      let cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-        ...dv,
-        question_page: (dv.question_page || []).map((qp: any) => ({
-          id: qp.id || generateUUIDv4(),
-          sort: qp.sort ?? 0,
-          name: qp.name ?? '',
-          is_document: qp.is_document ?? false,
-          can_multiple_used: qp.can_multiple_used ?? false,
-          foreign_id: qp.foreign_id ?? '',
-          self_only: qp.self_only ?? false,
-          form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-        })),
-      }));
-
-      cleanDataVisitor = syncPurposeVisitToAllVisitors(cleanDataVisitor);
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
-        data_visitor: cleanDataVisitor,
+        data_visitor: deepClone(dataVisitor),
       };
 
       return next;
