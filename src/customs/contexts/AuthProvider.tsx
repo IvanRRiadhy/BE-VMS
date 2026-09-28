@@ -183,18 +183,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('vms_authenticated') === 'true';
+  });
+
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
+
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const savedUser = sessionStorage.getItem('vms_user');
+
+    if (!savedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(savedUser);
+    } catch {
+      sessionStorage.removeItem('vms_authenticated');
+      return null;
+    }
+  });
 
   const setAuthenticated = useCallback((user: AuthUser) => {
     setUser(user);
     setIsAuthenticated(true);
+
+    sessionStorage.setItem('vms_authenticated', 'true');
+    sessionStorage.setItem('vms_user', JSON.stringify(user));
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     setIsAuthenticated(false);
+
+    sessionStorage.removeItem('vms_authenticated');
   }, []);
 
   return (

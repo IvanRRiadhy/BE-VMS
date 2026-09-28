@@ -67,21 +67,21 @@ const errorInterceptor = async (error: any) => {
       },
     });
   }
-  if (
-    status === 401 &&
-    originalRequest &&
-    !originalRequest._retry &&
-    !originalRequest.url?.includes('/_Auth/RefreshToken')
-  ) {
-    originalRequest._retry = true;
+  // if (
+  //   status === 401 &&
+  //   originalRequest &&
+  //   !originalRequest._retry &&
+  //   !originalRequest.url?.includes('/_Auth/RefreshToken')
+  // ) {
+  //   originalRequest._retry = true;
 
-    try {
-      await doRefreshToken();
-      return axiosInstance(originalRequest);
-    } catch (refreshError) {
-      return Promise.reject(refreshError);
-    }
-  }
+  //   try {
+  //     await doRefreshToken();
+  //     return axiosInstance(originalRequest);
+  //   } catch (refreshError) {
+  //     return Promise.reject(refreshError);
+  //   }
+  // }
 
   if (status === 403) {
     return Promise.reject(error);

@@ -107,7 +107,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading: authLoading, user, setAuthenticated, logout } = useAuth();
+  const { loading: authLoading, setAuthenticated, logout } = useAuth();
 
   const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
 
@@ -188,22 +188,11 @@ const getDashboardPath = (groupName?: string) => {
       return '/';
   }
 };
+
 export const PublicOnlyRoute = () => {
-  const { setAuthenticated, logout } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
-  const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
-
-  useEffect(() => {
-    if (profile) {
-      setAuthenticated(profile);
-    }
-
-    if (profileError) {
-      logout();
-    }
-  }, [profile, profileError, setAuthenticated, logout]);
-
-  if (profileLoading) {
+  if (loading) {
     return (
       <Box
         sx={{
@@ -212,20 +201,18 @@ export const PublicOnlyRoute = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgba(255,255,255,0.7)',
-          zIndex: 9999,
         }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress />
       </Box>
     );
   }
 
-  // Ada session → jangan izinkan masuk login
-  if (profile) {
-    return <Navigate to={getDashboardPath(profile.group_name)} replace />;
+  // Sudah login → jangan boleh masuk halaman login
+  if (isAuthenticated) {
+    return <Navigate to={getDashboardPath(user?.group_name)} replace />;
   }
 
-  // Tidak ada session → boleh masuk login
+  // Belum login → tampilkan halaman login
   return <Outlet />;
 };
