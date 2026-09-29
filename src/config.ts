@@ -4,6 +4,8 @@ export interface RuntimeConfig {
   WS_URL: string;
   LOGO_URL?: string;
   LOGIN_LOGO_URL?: string;
+  API_ID: string;
+  ENABLE_CAPTCHA: boolean;
 }
 
 let runtimeConfig: RuntimeConfig | null = null;

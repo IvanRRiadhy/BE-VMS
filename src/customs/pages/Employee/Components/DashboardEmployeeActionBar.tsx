@@ -26,7 +26,7 @@ const DashboardEmployeeActionBar = ({
   return (
     <Grid
       container
-      spacing={3}
+      spacing={1}
       alignItems="center"
       justifyContent="space-between"
       mb={1}

@@ -1,10 +1,5 @@
 import {
   Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -15,19 +10,8 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import moment from 'moment-timezone';
 import {
-  IconBolt,
-  IconCalendar,
-  IconCircleMinus,
   IconHourglass,
-  IconLink,
-  IconLogin,
-  IconLogout,
-  IconPlus,
-  IconQrcode,
-  IconUser,
-  IconUserPlus,
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
@@ -35,7 +19,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import Heatmap from './Heatmap';
 import {
   getActiveInvitation,
   getOngoingInvitation,
@@ -81,14 +64,6 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import VisitorInvitationActions from './components/VisitorInvitationActions';
 
 const DashboardEmployee = () => {
-  // const CardItems = [
-  //   // { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
-  //   // { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-  //   // { title: 'Pending Approval', key: 'Waiting', icon: <IconHourglass size={25} /> },
-  //   // { title: 'Visitor Today', key: 'Waiting', icon: <IconCalendar size={25} /> },
-  //   // { title: 'Visitor Inside', key: 'Waiting', icon: <IconCalendar size={25} /> },
-  //   // { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-  // ];
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -96,13 +71,11 @@ const DashboardEmployee = () => {
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [pendingPayload, setPendingPayload] = useState<any>(null);
@@ -131,7 +104,6 @@ const DashboardEmployee = () => {
   const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
-  const [isParkingLoading, setIsParkingLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -323,68 +295,6 @@ const DashboardEmployee = () => {
     setOpenDialogInvitation(true);
   };
 
-  function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-    const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
-    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
-    return `${startLocal} - ${endLocal}`;
-  }
-
-  // const handleDownloadPDF = async () => {
-  //   if (!printRef.current) return;
-  //   setIsGenerating(true);
-
-  //   try {
-  //     const clone = printRef.current.cloneNode(true) as HTMLElement;
-
-  //     const logoEl = document.createElement('img');
-  //     logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
-  //     logoEl.style.width = '100px';
-  //     logoEl.style.height = '100px';
-  //     logoEl.style.display = 'block';
-  //     logoEl.style.margin = '0 auto';
-  //     clone.prepend(logoEl);
-
-  //     clone.querySelectorAll('.no-print').forEach((el) => {
-  //       (el as HTMLElement).style.display = 'none';
-  //     });
-
-  //     clone.style.position = 'fixed';
-  //     clone.style.left = '-9999px';
-  //     document.body.appendChild(clone);
-
-  //     const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
-  //     const imgData = canvas.toDataURL('image/png');
-
-  //     const pdf = new jsPDF('p', 'mm', 'a4');
-  //     const pdfWidth = pdf.internal.pageSize.getWidth();
-  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  //     pdf.save(`Access Pass ${accessPass?.group_name || 'Visitor'}.pdf`);
-
-  //     clone.remove();
-  //   } finally {
-  //     setIsGenerating(false);
-  //   }
-  // };
-
-  // const handleOpenParkingBlocker = async () => {
-  //   if (!accessPass?.id) return;
-  //   setIsParkingLoading(true);
-  //   try {
-  //     const res = await openParkingBlocker({ id: accessPass.id });
-
-  //     setSnackbar({
-  //       open: true,
-  //       message: 'Parking blocker opened successfully.',
-  //       severity: 'success',
-  //     });
-  //   } catch (error: any) {
-  //     showSwal('error', error?.message || 'Failed to open parking blocker.');
-  //   } finally {
-  //     setTimeout(() => setIsParkingLoading(false), 600);
-  //   }
-  // };
-
   const handleApproveMeetingHost = async (id: string) => {
     try {
       setIsGenerating(true);
@@ -486,7 +396,6 @@ const DashboardEmployee = () => {
 
       showSwal('success', 'Link copied to clipboard.');
     } catch (error) {
-      console.error('Copy link failed:', error);
       showSwal('error', 'Failed to copy link.');
     }
   };
@@ -500,20 +409,6 @@ const DashboardEmployee = () => {
 
   const handleDeleteLink = async (id: string) => {
     try {
-      // const confirm = await Swal.fire({
-      //   title: 'Do you want to delete this link?',
-      //   icon: 'question',
-      //   showCancelButton: true,
-      //   confirmButtonText: 'Yes',
-      //   cancelButtonText: 'Cancel',
-      //   reverseButtons: true,
-      //   confirmButtonColor: '#4caf50',
-      //   customClass: {
-      //     title: 'swal2-title-custom',
-      //     htmlContainer: 'swal2-text-custom',
-      //   },
-      // });
-
       const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
 
       if (!confirm.isConfirmed) return;
@@ -587,7 +482,6 @@ const DashboardEmployee = () => {
         heightLeft -= pdfHeight;
       }
 
-      // const formatDate = (date: Date) => date.toISOString().split('T')[0];
       const formatDate = (date: Date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -760,7 +654,13 @@ const DashboardEmployee = () => {
         onExport={handleExportPdf}
         isExporting={isExporting}
       />
-      <Grid container spacing={1.5} sx={{ mt: 0, alignItems: 'stretch' }} ref={exportRef}>
+      <Grid
+        container
+        spacing={1.5}
+        sx={{ mt: 0, alignItems: 'stretch' }}
+        ref={exportRef}
+        rowGap={1.5}
+      >
         <Grid
           size={{ xs: 12, lg: 6 }}
           sx={{
@@ -808,9 +708,10 @@ const DashboardEmployee = () => {
 
           <Grid
             size={{ xs: 12, lg: 6 }}
-            height={'100%'}
             sx={{
               display: 'flex',
+              minWidth: 0,
+              minHeight: 0,
             }}
           >
             <LastVisitsCard
@@ -825,7 +726,15 @@ const DashboardEmployee = () => {
           </Grid>
         </Grid>
 
-        <Grid container spacing={2} alignItems="stretch" width={'100%'}>
+        <Grid
+          container
+          spacing={2}
+          alignItems="stretch"
+          sx={{
+            width: '100%',
+       
+          }}
+        >
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
             <DynamicTable
               data={invitationDetailVisitor}

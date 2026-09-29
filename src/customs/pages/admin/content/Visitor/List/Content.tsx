@@ -89,6 +89,7 @@ const Content = () => {
       email: item.email || '-',
       is_email_verified: item.is_email_verified || false,
       phone: item.phone || '-',
+      organization: item.organization || '-',
       // is_vip: item.is_vip || false,
       is_employee: item.is_employee || false,
       is_blacklist: item.is_blacklist,

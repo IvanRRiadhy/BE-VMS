@@ -4,5 +4,6 @@
   "WS_URL": "ws://localhost:3001/ws",
   "LOGO_URL": "/assets/images/BI_Logo.png",
   "LOGIN_LOGO_URL": "/assets/images/bi_pic.png",
-  "API_ID": "be-vms"
+  "API_ID": "be-vms",
+  "ENABLE_CAPTCHA": false
 }

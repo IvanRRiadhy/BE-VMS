@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 
 interface Filters {
   visitor_period_start: string;

@@ -10,6 +10,8 @@ import {
 } from './models/Users';
 import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
+import { getConfig } from 'src/config';
+
 
 export const login = async (
   body: LoginRequest,
@@ -17,13 +19,22 @@ export const login = async (
   captchaAnswer?: string,
 ): Promise<any> => {
   try {
+    const config = getConfig();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (config.ENABLE_CAPTCHA) {
+      headers['X-Captcha-Id'] = captchaId || '';
+      headers['X-Captcha-Answer'] = captchaAnswer || '';
+    } else {
+      headers['X-Bypass-Captcha'] =
+        '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+    }
+
     const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
-      headers: {
-        'Content-Type': 'application/json',
-        // 'X-Use-Token': 'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275',
-        'X-Captcha-Id': captchaId,
-        'X-Captcha-Answer': captchaAnswer,
-      },
+      headers,
     });
 
     return response.data;

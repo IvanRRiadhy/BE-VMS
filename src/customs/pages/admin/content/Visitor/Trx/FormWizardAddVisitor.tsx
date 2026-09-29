@@ -20,19 +20,10 @@ import {
   Button as MuiButton,
   CircularProgress,
   Autocomplete,
-  Accordion,
-  AccordionSummary,
-  TableContainer,
-  AccordionDetails,
-  Paper,
   IconButton,
   FormControlLabel,
-  Table,
-  TableBody,
   FormControl,
   RadioGroup,
-  Divider,
-  Backdrop,
   Snackbar,
   Alert,
   Portal,
@@ -95,7 +86,6 @@ import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { TreeItem } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
-import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconCheck } from '@tabler/icons-react';
 import { IconPencil } from '@tabler/icons-react';
@@ -623,56 +613,75 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       .join('');
   };
 
+  // const handleSaveGroupVisitor = () => {
+  //   if (activeGroupIdx === null) return;
+
+  //   const deepClone = (obj: any) => {
+  //     try {
+  //       return structuredClone(obj);
+  //     } catch {
+  //       return JSON.parse(JSON.stringify(obj));
+  //     }
+  //   };
+
+  //   setGroupVisitors((prev) => {
+  //     const next = [...prev];
+  //     if (!next[activeGroupIdx]) {
+  //       return prev;
+  //     }
+
+  //     const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
+  //       ...dv,
+  //       // question_page: (dv.question_page || []).map((qp: any) => ({
+  //       //   id: qp.id || generateUUIDv4(),
+  //       //   sort: qp.sort ?? 0,
+  //       //   name: qp.name ?? '',
+  //       //   is_document: qp.is_document ?? false,
+  //       //   can_multiple_used: qp.can_multiple_used ?? false,
+  //       //   foreign_id: qp.foreign_id ?? '',
+  //       //   self_only: qp.self_only ?? false,
+  //       //   form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
+  //       // })),
+  //       question_page: (dv.question_page || []).map((qp: any) => {
+  //         const isPurposeVisit = getSectionType(qp) === 'purpose_visit';
+  //         const sourceForm = qp.self_only && isPurposeVisit ? dv.single_page || [] : qp.form || [];
+
+  //         return {
+  //           id: qp.id || generateUUIDv4(),
+  //           sort: qp.sort ?? 0,
+  //           name: qp.name ?? '',
+  //           is_document: qp.is_document ?? false,
+  //           can_multiple_used: qp.can_multiple_used ?? false,
+  //           foreign_id: qp.foreign_id ?? '',
+  //           self_only: qp.self_only ?? false,
+
+  //           form: sourceForm.map(({ id, Id, ...rest }: any) => deepClone(rest)),
+  //         };
+  //       }),
+  //     }));
+
+  //     next[activeGroupIdx] = {
+  //       ...next[activeGroupIdx],
+  //       data_visitor: cleanDataVisitor,
+  //     };
+
+  //     return next;
+  //   });
+  // };
+
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
 
-    const deepClone = (obj: any) => {
-      try {
-        return structuredClone(obj);
-      } catch {
-        return JSON.parse(JSON.stringify(obj));
-      }
-    };
-
     setGroupVisitors((prev) => {
       const next = [...prev];
+
       if (!next[activeGroupIdx]) {
         return prev;
       }
 
-      const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-        ...dv,
-        // question_page: (dv.question_page || []).map((qp: any) => ({
-        //   id: qp.id || generateUUIDv4(),
-        //   sort: qp.sort ?? 0,
-        //   name: qp.name ?? '',
-        //   is_document: qp.is_document ?? false,
-        //   can_multiple_used: qp.can_multiple_used ?? false,
-        //   foreign_id: qp.foreign_id ?? '',
-        //   self_only: qp.self_only ?? false,
-        //   form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-        // })),
-        question_page: (dv.question_page || []).map((qp: any) => {
-          const isPurposeVisit = getSectionType(qp) === 'purpose_visit';
-          const sourceForm = qp.self_only && isPurposeVisit ? dv.single_page || [] : qp.form || [];
-
-          return {
-            id: qp.id || generateUUIDv4(),
-            sort: qp.sort ?? 0,
-            name: qp.name ?? '',
-            is_document: qp.is_document ?? false,
-            can_multiple_used: qp.can_multiple_used ?? false,
-            foreign_id: qp.foreign_id ?? '',
-            self_only: qp.self_only ?? false,
-
-            form: sourceForm.map(({ id, Id, ...rest }: any) => deepClone(rest)),
-          };
-        }),
-      }));
-
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
-        data_visitor: cleanDataVisitor,
+        data_visitor: structuredClone(dataVisitor),
       };
 
       return next;
@@ -5041,21 +5050,48 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
+  // const handleAddDetails = () => {
+  //   if (!isGroup) {
+  //     handleAddDetail(FORM_KEY);
+  //     return;
+  //   }
+
+  //   setDataVisitor((prev: any) => {
+  //     if (prev.length === 0) return prev;
+
+  //     const clone = JSON.parse(JSON.stringify(prev[0])) as {
+  //       question_page: SectionPageVisitor[];
+  //       type: string;
+  //     };
+  //     clone.question_page.forEach((page) => {
+  //       (page.form ?? []).forEach((f) => {
+  //         f.answer_text = '';
+  //         f.answer_datetime = '';
+  //         f.answer_file = '';
+  //       });
+  //     });
+
+  //     clone.type = '';
+
+  //     const next = [...prev, clone];
+  //     setActiveGroupIdx(next.length - 1);
+  //     return next;
+  //   });
+  // };
+
   const handleAddDetails = () => {
     if (!isGroup) {
       handleAddDetail(FORM_KEY);
       return;
     }
 
-    setDataVisitor((prev: any) => {
+    setDataVisitor((prev: any[]) => {
       if (prev.length === 0) return prev;
 
-      const clone = JSON.parse(JSON.stringify(prev[0])) as {
-        question_page: SectionPageVisitor[];
-        type: string;
-      };
-      clone.question_page.forEach((page) => {
-        (page.form ?? []).forEach((f) => {
+      const clone = JSON.parse(JSON.stringify(prev[0]));
+
+      clone.question_page.forEach((page: any) => {
+        (page.form ?? []).forEach((f: any) => {
           f.answer_text = '';
           f.answer_datetime = '';
           f.answer_file = '';
@@ -5064,9 +5100,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       clone.type = '';
 
-      const next = [...prev, clone];
-      setActiveGroupIdx(next.length - 1);
-      return next;
+      return [...prev, clone];
     });
   };
 

@@ -667,29 +667,46 @@ const FormSelfPraregistration = ({
   //   });
   // };
 
-  const handleSaveGroupVisitor = () => {
-    if (activeGroupIdx === null) return;
+  // const handleSaveGroupVisitor = () => {
+  //   if (activeGroupIdx === null) return;
 
-    const deepClone = (obj: any) => {
-      try {
-        return structuredClone(obj);
-      } catch {
-        return JSON.parse(JSON.stringify(obj));
-      }
-    };
+  //   const deepClone = (obj: any) => {
+  //     try {
+  //       return structuredClone(obj);
+  //     } catch {
+  //       return JSON.parse(JSON.stringify(obj));
+  //     }
+  //   };
+
+  //   setGroupVisitors((prev) => {
+  //     const next = [...prev];
+
+  //     if (!next[activeGroupIdx]) {
+  //       return prev;
+  //     }
+
+  //     next[activeGroupIdx] = {
+  //       ...next[activeGroupIdx],
+  //       data_visitor: deepClone(dataVisitor),
+  //     };
+
+  //     return next;
+  //   });
+  // };
+
+  const handleSaveGroupVisitor = () => {
+
+    if (activeGroupIdx === null) {
+      return;
+    }
 
     setGroupVisitors((prev) => {
+
       const next = [...prev];
-
-      if (!next[activeGroupIdx]) {
-        return prev;
-      }
-
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
-        data_visitor: deepClone(dataVisitor),
+        data_visitor: structuredClone(dataVisitor),
       };
-
       return next;
     });
   };
@@ -933,7 +950,7 @@ const FormSelfPraregistration = ({
   }, []);
 
   const seedDataVisitorFromSections = (sections: any[]) => {
-    const result = [
+    return [
       {
         question_page: sections.map((s: any, i: number) => ({
           sort: i,
@@ -953,9 +970,6 @@ const FormSelfPraregistration = ({
         })),
       },
     ];
-
-    setDataVisitor(result as any);
-    return result;
   };
 
   const formsOf = (section: any) =>
@@ -1377,6 +1391,35 @@ const FormSelfPraregistration = ({
     );
   };
 
+  // const handleAddDetails = () => {
+  //   if (!isGroup) {
+  //     handleAddDetail(FORM_KEY);
+  //     return;
+  //   }
+
+  //   setDataVisitor((prev: any) => {
+  //     if (prev.length === 0) return prev;
+
+  //     const clone = JSON.parse(JSON.stringify(prev[0])) as {
+  //       question_page: SectionPageVisitor[];
+  //       type: string;
+  //     };
+  //     clone.question_page.forEach((page) => {
+  //       (page.form ?? []).forEach((f) => {
+  //         f.answer_text = '';
+  //         f.answer_datetime = '';
+  //         f.answer_file = '';
+  //       });
+  //     });
+
+  //     clone.type = '';
+
+  //     const next = [...prev, clone];
+  //     setActiveGroupIdx(next.length - 1);
+  //     return next;
+  //   });
+  // };
+
   const handleAddDetails = () => {
     if (!isGroup) {
       handleAddDetail(FORM_KEY);
@@ -1390,6 +1433,7 @@ const FormSelfPraregistration = ({
         question_page: SectionPageVisitor[];
         type: string;
       };
+
       clone.question_page.forEach((page) => {
         (page.form ?? []).forEach((f) => {
           f.answer_text = '';
@@ -1401,7 +1445,10 @@ const FormSelfPraregistration = ({
       clone.type = '';
 
       const next = [...prev, clone];
-      setActiveGroupIdx(next.length - 1);
+
+      // ❌ JANGAN:
+      // setActiveGroupIdx(next.length - 1);
+
       return next;
     });
   };
@@ -2420,10 +2467,18 @@ const FormSelfPraregistration = ({
 
     if (isGroup) {
       const groupSections = buildGroupSections(rawSections);
+
       setSectionsData(groupSections);
       setDraggableSteps(groupSections.map((s) => s.name));
-      seedDataVisitorFromSections(groupSections);
       setGroupedPages(buildGroupedPages(groupSections));
+
+      setDataVisitor((prev: any) => {
+        if (prev?.length > 0) {
+          return prev;
+        }
+
+        return seedDataVisitorFromSections(groupSections);
+      });
     } else {
       setSectionsData(rawSections);
       setDraggableSteps(rawSections.map((s: any) => s.name));
@@ -2433,25 +2488,6 @@ const FormSelfPraregistration = ({
 
     setActiveStep(0);
   }, [isGroup, rawSections]);
-
-  // useEffect(() => {
-  //   if (isLockedVisitorType) {
-  //     setVisitorType([invitation.visitor_type]);
-  //     return;
-  //   }
-
-  //   const fetchVisitorTypes = async () => {
-  //     try {
-  //       setVtLoading(true);
-  //       const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
-  //       setVisitorType(res.collection || []);
-  //     } finally {
-  //       setVtLoading(false);
-  //     }
-  //   };
-
-  //   fetchVisitorTypes();
-  // }, [invitation]);
 
   useEffect(() => {
     if (isLockedVisitorType) {
@@ -2954,12 +2990,12 @@ const FormSelfPraregistration = ({
                                     }
                                   };
 
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    setDataVisitor(deepClone(g.data_visitor));
+                                  if (g.data_visitor?.length > 0) {
+                                    const restored = deepClone(g.data_visitor);
+                                    setDataVisitor(restored);
                                   } else {
-                                    setDataVisitor(
-                                      deepClone(seedDataVisitorFromSections(sectionsData)),
-                                    );
+                                    const fresh = seedDataVisitorFromSections(sectionsData);
+                                    setDataVisitor(deepClone(fresh));
                                   }
 
                                   setActiveStep(1);
@@ -3007,7 +3043,7 @@ const FormSelfPraregistration = ({
                       sx={{ mb: 1, mt: 1 }}
                       startIcon={<IconPlus />}
                     >
-                      Add Group
+                      {t("add")} Group
                     </Button>
                   )}
                 </Box>

@@ -96,8 +96,10 @@ const Login = () => {
   };
 
   useEffect(() => {
-    generateCaptcha();
-  }, []);
+    if (config.ENABLE_CAPTCHA) {
+      generateCaptcha();
+    }
+  }, [config.ENABLE_CAPTCHA]);
 
   // async function loginSubmit(e: FormEvent<HTMLFormElement>) {
   //   e.preventDefault();
@@ -184,7 +186,10 @@ const Login = () => {
     setError(false);
     setLoading(true);
 
-    if (!captchaCode.trim()) {
+    const config = getConfig();
+
+    // CAPTCHA hanya wajib jika ENABLE_CAPTCHA = true
+    if (config.ENABLE_CAPTCHA && !captchaCode.trim()) {
       setCaptchaError(true);
       setLoading(false);
       return;
@@ -196,9 +201,16 @@ const Login = () => {
     };
 
     try {
-      await login(body, captchaId, captchaCode);
+      await login(
+        body,
+        config.ENABLE_CAPTCHA ? captchaId : undefined,
+        config.ENABLE_CAPTCHA ? captchaCode : undefined,
+      );
+
       const profile: any = await getProfile();
+
       setAuthenticated(profile.collection);
+
       dispatch(
         setUser({
           fullname: profile.collection.fullname,
@@ -244,7 +256,11 @@ const Login = () => {
 
       if (err.response) {
         setError(true);
-        await generateCaptcha();
+
+        // Generate captcha baru hanya jika captcha aktif
+        if (config.ENABLE_CAPTCHA) {
+          await generateCaptcha();
+        }
       }
     } finally {
       setLoading(false);
@@ -359,7 +375,6 @@ const Login = () => {
         return;
       }
 
-      // Login visitor berhasil
       if (status === 'success') {
         const { id, visitor_id } = res?.collection || {};
 
@@ -460,7 +475,7 @@ const Login = () => {
                     sx={{
                       p: 4,
                       zIndex: 1,
-                      height: lg ? '660px' : '100%',
+                      height: lg ? (config.ENABLE_CAPTCHA ? '660px' : '600px') : '100%',
                       // minHeight: '600px',
                       // height: '100%',
                       width: '100%',
@@ -516,7 +531,7 @@ const Login = () => {
                     elevation={8}
                     sx={{
                       p: 4,
-                      height: lg ? '660px' : '660px',
+                      height: lg ? (config.ENABLE_CAPTCHA ? '660px' : '600px') : '660px',
                       // minHeight: '600px',
                       // height: '100%',
                       zIndex: 1,
@@ -667,78 +682,80 @@ const Login = () => {
                                 }}
                               />
                             </Box>
-                            <Box sx={{ width: '100%', mt: '0px !important' }}>
-                              <CustomFormLabel htmlFor="captcha">CAPTCHA</CustomFormLabel>
+                            {config.ENABLE_CAPTCHA && (
+                              <Box sx={{ width: '100%', mt: '0px !important' }}>
+                                <CustomFormLabel htmlFor="captcha">CAPTCHA</CustomFormLabel>
 
-                              <Stack spacing={1}>
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1.5,
-                                  }}
-                                >
+                                <Stack spacing={1}>
                                   <Box
                                     sx={{
-                                      width: '100%',
-                                      height: 50,
-                                      border: '1px solid',
-                                      borderColor: 'divider',
-                                      borderRadius: 1,
-                                      backgroundColor: '#f5f5f5',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      justifyContent: 'center',
-                                      overflow: 'hidden',
+                                      gap: 1.5,
                                     }}
                                   >
-                                    {captchaImage ? (
-                                      <Box
-                                        component="img"
-                                        src={captchaImage}
-                                        alt="CAPTCHA"
-                                        sx={{
-                                          width: '100%',
-                                          height: '100%',
-                                          objectFit: 'contain',
-                                        }}
-                                      />
-                                    ) : null}
+                                    <Box
+                                      sx={{
+                                        width: '100%',
+                                        height: 50,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: 1,
+                                        backgroundColor: '#f5f5f5',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        overflow: 'hidden',
+                                      }}
+                                    >
+                                      {captchaImage ? (
+                                        <Box
+                                          component="img"
+                                          src={captchaImage}
+                                          alt="CAPTCHA"
+                                          sx={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'contain',
+                                          }}
+                                        />
+                                      ) : null}
+                                    </Box>
+
+                                    <Button
+                                      type="button"
+                                      variant="outlined"
+                                      size="large"
+                                      onClick={generateCaptcha}
+                                      disabled={captchaLoading}
+                                    >
+                                      {captchaLoading ? (
+                                        <CircularProgress size={18} />
+                                      ) : (
+                                        <IconRefresh />
+                                      )}
+                                    </Button>
                                   </Box>
 
-                                  <Button
-                                    type="button"
+                                  <CustomTextField
+                                    id="captcha"
                                     variant="outlined"
-                                    size="large"
-                                    onClick={generateCaptcha}
-                                    disabled={captchaLoading}
-                                  >
-                                    {captchaLoading ? (
-                                      <CircularProgress size={18} />
-                                    ) : (
-                                      <IconRefresh />
-                                    )}
-                                  </Button>
-                                </Box>
-
-                                <CustomTextField
-                                  id="captcha"
-                                  variant="outlined"
-                                  fullWidth
-                                  placeholder="Enter CAPTCHA code"
-                                  value={captchaCode}
-                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setCaptchaCode(e.target.value);
-                                    if (captchaError) {
-                                      setCaptchaError(false);
-                                    }
-                                  }}
-                                  error={captchaError}
-                                  helperText={captchaError ? 'Invalid CAPTCHA code' : ''}
-                                  autoComplete="off"
-                                />
-                              </Stack>
-                            </Box>
+                                    fullWidth
+                                    placeholder="Enter CAPTCHA code"
+                                    value={captchaCode}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                      setCaptchaCode(e.target.value);
+                                      if (captchaError) {
+                                        setCaptchaError(false);
+                                      }
+                                    }}
+                                    error={captchaError}
+                                    helperText={captchaError ? 'Invalid CAPTCHA code' : ''}
+                                    autoComplete="off"
+                                  />
+                                </Stack>
+                              </Box>
+                            )}
 
                             <Box display="flex" justifyContent="end" alignItems="center">
                               <Typography
