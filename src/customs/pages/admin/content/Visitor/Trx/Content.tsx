@@ -133,8 +133,11 @@ const Content = () => {
   const { t } = useTranslation();
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
+  // const [hostSearch, setHostSearch] = useState('');
+  // const debouncedSearch = useDebounce(hostSearch, 400);
   const [hostSearch, setHostSearch] = useState('');
-  const debouncedSearch = useDebounce(hostSearch, 400);
+
+  const debouncedSearch = hostSearch ? useDebounce(hostSearch, 400) : '';
   const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =
     useInvitationVisitorEmployee({
       search: debouncedSearch,
@@ -257,6 +260,7 @@ const Content = () => {
     page: quickPage,
     rowsPerPage: quickRowsPerPage,
     search: quickSearch,
+    enabled: openQuickAccess,
   });
 
   const processedQuickAccessData = useMemo(() => {

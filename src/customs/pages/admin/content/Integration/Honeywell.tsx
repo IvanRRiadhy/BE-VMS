@@ -636,13 +636,6 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
           setSyncMsg({ open: true, text: 'ID tidak ditemukan.', severity: 'error' });
           return;
         }
-
-        // const payload = omitEmpty({
-        //   name: companyForm.name?.trim(),
-        //   organization_id: companyForm.organization_id
-        //     ? String(companyForm.organization_id).trim()
-        //     : undefined,
-        // });
         const payload: any = {
           name: companyForm.name?.trim() || null,
           organization_id: companyForm.organization_id
@@ -1098,7 +1091,7 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
 
   return (
     <>
-      <PageContainer title="Integration Detail" description="this is Dashboard page">
+      <PageContainer title="Honeywell" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>

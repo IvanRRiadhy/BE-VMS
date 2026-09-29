@@ -5,20 +5,12 @@ interface Props {
   page: number;
   rowsPerPage: number;
   search: string;
+  enabled?: boolean;
 }
 
-export const useQuickAccessPagination = ({
-  page,
-  rowsPerPage,
-  search,
-}: Props) => {
+export const useQuickAccessPagination = ({ page, rowsPerPage, search, enabled = true }: Props) => {
   return useQuery({
-    queryKey: [
-      'quick-access',
-      page,
-      rowsPerPage,
-      search,
-    ],
+    queryKey: ['quick-access', page, rowsPerPage, search],
 
     queryFn: () =>
       getAllVisitorPagination(
@@ -29,6 +21,8 @@ export const useQuickAccessPagination = ({
         undefined,
         'QuickAccess',
       ),
+
+    enabled,
 
     placeholderData: (prev) => prev,
   });

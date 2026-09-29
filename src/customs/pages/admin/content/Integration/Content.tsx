@@ -101,7 +101,7 @@ const Content = () => {
         integration_type: item.integration_type,
         api_type_auth: item.api_type_auth,
         api_url: item.api_url || '',
-        // active: item.is_active ?? false,
+        active: item.is_active ?? false,
       })),
     [integrationResponse],
   );
@@ -294,29 +294,29 @@ const Content = () => {
     }
   };
 
-  // const handleActiveChange = async (id: string, checked: boolean) => {
-  //   try {
-  //     const integration = integrationResponse.find((item: any) => item.id === id);
+  const handleActiveChange = async (id: string, checked: boolean) => {
+    try {
+      const integration = integrationResponse.find((item: any) => item.id === id);
 
-  //     if (!integration) return;
+      if (!integration) return;
 
-  //     await updateMutation.mutateAsync({
-  //       id,
-  //       data: {
-  //         ...integration,
-  //         is_active: checked,
-  //       },
-  //     });
+      await updateMutation.mutateAsync({
+        id,
+        data: {
+          ...integration,
+          is_active: checked,
+        },
+      });
 
-  //     showSwal(
-  //       'success',
-  //       checked ? 'Integration activated successfully' : 'Integration deactivated successfully',
-  //     );
-  //   } catch (error: any) {
-  //     console.log('error', error);
-  //     showSwal('error', error?.response?.data?.msg || 'Failed to update integration status');
-  //   }
-  // };
+      showSwal(
+        'success',
+        checked ? 'Integration activated successfully' : 'Integration deactivated successfully',
+      );
+    } catch (error: any) {
+      console.log('error', error);
+      showSwal('error', error?.response?.data?.msg || 'Failed to update integration status');
+    }
+  };
 
   return (
     <PageContainer
@@ -352,7 +352,7 @@ const Content = () => {
                 onCopy={(row) => {
                   handleCopy(row.id);
                 }}
-                // isHaveActive
+                // isHaveActive={true}
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
                 isHaveFilterMore={false}
@@ -372,15 +372,10 @@ const Content = () => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
-                // isHaveBooleanSwitch={true}
-                // onBooleanSwitchChange={(id, col, checked) => {
-                //   console.log('SWITCH CHANGE:', {
-                //     id,
-                //     col,
-                //     checked,
-                //   });
-                //   handleActiveChange(id, checked);
-                // }}
+                isHaveBooleanSwitch={true}
+                onBooleanSwitchChange={(id, col, checked) => {
+                  handleActiveChange(id, checked);
+                }}
                 onBatchDelete={handleBatchDelete}
                 onDelete={(row) => {
                   handleDelete(row.id);

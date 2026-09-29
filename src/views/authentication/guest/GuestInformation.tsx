@@ -52,7 +52,6 @@ import {
   IconWoman,
   IconX,
 } from '@tabler/icons-react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import { Snackbar } from '@mui/material';
@@ -172,8 +171,6 @@ const GuestInformationStepper = () => {
     return dayjs.utc(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
   };
 
-  const { saveToken } = useSession();
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code') || '';
@@ -223,7 +220,7 @@ const GuestInformationStepper = () => {
       const token = res?.collection?.token;
 
       if (token) {
-        saveToken(token);
+        // saveToken(token);
 
         navigate('/guest/dashboard', {
           replace: true,
@@ -356,6 +353,7 @@ const GuestInformationStepper = () => {
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
+    formData.append('is_face', 'true');
 
     try {
       const response = await axiosInstance2.post('/cdn/upload', formData, {
@@ -1896,7 +1894,7 @@ const GuestInformationStepper = () => {
       }
 
       if (token) {
-        await saveToken(token);
+        // await saveToken(token);
         setOpenPreview(false);
         showSwal('success', 'Successfully submitted visitor pre-registration.');
 

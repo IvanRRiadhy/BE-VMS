@@ -41,8 +41,6 @@ const Report = () => {
     //   color: 'none',
     // },
   ];
-  const [tableData, setTableData] = useState<[]>([]);
-  const [agenda, setAgenda] = useState('');
 
   const tableDataVisitor = [
     {

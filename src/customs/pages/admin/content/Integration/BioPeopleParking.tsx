@@ -32,7 +32,12 @@ import {
   IconUsersGroup,
 } from '@tabler/icons-react';
 import { Item } from 'src/customs/api/models/Admin/Integration';
-import { getAllVisitorType } from 'src/customs/api/admin';
+import {
+  getAllVisitorType,
+  updateBadgeStatus,
+  updateBadgeType,
+  updateClearcodes,
+} from 'src/customs/api/admin';
 import {
   getAreaParking,
   getAreaParkingById,
@@ -61,6 +66,12 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useNavigate } from 'react-router';
+import { useVehicle } from 'src/hooks/Setting/useVehicle';
+import AreaDialog from './components/Parking/AreaDialog';
+import SlotDialog from './components/Parking/SlotDialog';
+import VehicleDialog from './components/Parking/VehicleDialog';
+import VisitorTypeDialog from './components/Parking/VisitorTypeDialog';
+import BlockDialog from './components/Parking/BlockDialog';
 
 const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
   const [totals, setTotals] = useState<{ [key: string]: number }>({
@@ -243,38 +254,36 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         const res = await getVisitorTypeParking(id as string);
 
         setListData(
-          (res.collection ?? []).map(({ integration_id, uid, ...item }: any) => ({
+          (res.collection ?? []).map(({ integration_id, ...item }: any) => ({
             ...item,
             visitor_types: item.visitor_types?.length
               ? item.visitor_types.map((v: any) => v.visitor_type_name).join(', ')
               : '-',
-            active: item.active,
+            active: item.active ?? false,
           })),
         );
       } else if (type === 'area') {
         const res = await getAreaParking(id as string);
 
-        const data = (res.collection ?? []).map(({ integration_id, uid, ...item }) => item);
+        const data = (res.collection ?? []).map(({ integration_id, ...item }) => item);
 
         setListData(data);
       } else if (type === 'block') {
         const res = await getBlockParking(id as string);
         setListData(
-          (res.collection ?? []).map(({ integration_id, uid, area_id, ...item }: any) => item),
+          (res.collection ?? []).map(({ integration_id, area_id, ...item }: any) => item),
         );
       } else if (type === 'slot') {
         const res = await getSlotParking(id as string);
 
-        const data = (res.collection ?? []).map(
-          ({ integration_id, uid, host_id, ...item }) => item,
-        );
+        const data = (res.collection ?? []).map(({ integration_id, host_id, ...item }) => item);
 
         setListData(data);
       } else if (type === 'vehicle') {
         const res = await getVehicleParking(id as string);
 
         setListData(
-          (res.collection ?? []).map(({ integration_id, uid, ...item }: any) => ({
+          (res.collection ?? []).map(({ integration_id, ...item }: any) => ({
             ...item,
             vehicle_type: item.vehicle_type ?? '-',
           })),
@@ -344,7 +353,6 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         const res = await getAreaParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'vehicle') {
-        // belum ada API by id → pakai row dulu
         const res = await getVehicleParkingById(id as string, String(row.id));
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'block') {
@@ -529,7 +537,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         // setListData((prev) =>
         //   prev.map((it) => (String(it.id) === visitorTypeId ? { ...it, ...payload } : it)),
         // );
-        showSwal('success', 'Visitor type updated successfully');
+        showSwal('success', 'Successfully updated visitor type');
         return;
       }
 
@@ -548,7 +556,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
       );
 
       // setSyncMsg({ open: true, text: 'Visitor type updated successfully', severity: 'success' });
-      showSwal('success', 'Visitor type updated successfully');
+      showSwal('success', 'Successfully updated visitor type');
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update visitor type');
     } finally {
@@ -775,8 +783,61 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
 
   const navigate = useNavigate();
 
+  const idFieldMap: Record<string, string> = {
+    visitor_type: 'uid',
+    block: 'uid',
+    area: 'uid',
+    slot: 'uid',
+    vehicle: 'uid',
+  };
+
   const handleBack = () => {
     navigate('/admin/manage/integration');
+  };
+
+  const handleCopy = async (row: any) => {
+    try {
+      const field = idFieldMap[selectedType];
+      const value = row[field];
+
+      if (!value) {
+        showSwal('error', 'ID not found');
+        return;
+      }
+
+      await navigator.clipboard.writeText(String(value));
+
+      showSwal('success', 'Successfully copied ID');
+    } catch (error) {
+      showSwal('error', 'Failed to copy ID');
+    }
+  };
+
+  const { data: vehicleOptions = [], isLoading: vehicleLoading } = useVehicle();
+
+  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
+    const prev = listData;
+
+    setListData((p) =>
+      p.map((it) => (String(it.id) === String(rowId) ? { ...it, [field]: value } : it)),
+    );
+
+    try {
+      const payload: any = { [field]: value };
+      if (selectedType == 'visitor_type') await updateVisitorTypeParking(String(rowId), payload);
+      else if (selectedType == 'block' || selectedType === 'block')
+        await updateBlockParking(String(rowId), payload as any);
+      else if (selectedType == 'area') await updateAreaParking(String(rowId), payload as any);
+      else if (selectedType == 'slot') {
+        await updateSlotParking(String(rowId), payload as any);
+      } else if (selectedType == 'vehicle')
+        await updateVehicleParking(String(rowId), payload as any);
+
+      showSwal('success', `Successfully updated ${headerMap[selectedType] ?? 'Data'}.`);
+    } catch (e: any) {
+      setListData(prev);
+      showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
+    }
   };
 
   return (
@@ -803,18 +864,14 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   isHaveChecked={true}
                   isHaveAction={false}
                   isSelectedType={selectedType !== 'badge_status'}
-                  isDataVerified={true}
+                  isDataVerified={false}
                   isHaveActionOnlyEdit={true}
+                  isHaveActive={false}
                   isHaveBack={true}
                   onBack={handleBack}
                   isTitleIntegration={`${integrationName || 'Bio People Parking'}`}
-                  isHaveSearch={false}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={false}
-                  isHaveBooleanSwitch={false}
+                  isHaveBooleanSwitch={true}
+                  onBooleanSwitchChange={handleBooleanSwitchChange}
                   onBatchEdit={handleEditBatch}
                   isHaveHeader={true}
                   headerContent={{
@@ -832,530 +889,71 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  isCopy={true}
+                  onCopy={(row) => {
+                    handleCopy(row);
+                  }}
                 />
               </Grid>
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
-      {/* VIsitor Type */}
-      <Dialog
+
+      <VisitorTypeDialog
         open={editDialogType === 'Visitor Type'}
-        fullWidth
-        maxWidth="md"
+        saving={saving}
+        isBatchEdit={isBatchEdit}
+        enabled={{
+          visitor_type_id: enabled.visitor_type_id,
+        }}
+        organizationForm={organizationForm}
+        orgOptions={orgOptions}
         onClose={handleCloseDialog}
-        transitionDuration={0}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Visitor Type
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!organizationForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="visitor_type_id" sx={{ mt: 0 }}>
-                    Visitor Type
-                  </CustomFormLabel>
+        onSubmit={handleSaveVisitorType}
+        setOrganizationForm={setOrganizationForm}
+        setEnabled={setEnabled}
+      />
 
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.visitor_type_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, visitor_type_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  multiple
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={orgOptions.filter((o) =>
-                    (organizationForm?.visitor_type_id ?? []).includes(o.id),
-                  )}
-                  onChange={(_, newVal) =>
-                    setOrganizationForm((p: any) => ({
-                      ...p,
-                      visitor_type_id: newVal.map((v) => v.id),
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.visitor_type_id || saving : saving}
-                    />
-                  )}
-                  disabled={isBatchEdit ? !enabled.visitor_type_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(organizationForm?.active)}
-                  onChange={(e) =>
-                    setOrganizationForm((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={organizationForm?.name ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Group Type</CustomFormLabel>
-                <CustomTextField value={organizationForm?.group_type ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration Id</CustomFormLabel>
-                <CustomTextField
-                  value={organizationForm?.integration_id ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Uid</CustomFormLabel>
-                <CustomTextField value={organizationForm?.uid ?? ''} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!organizationForm || saving}
-            onClick={handleSaveVisitorType}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Block */}
-      <Dialog
+      <BlockDialog
         open={editDialogType === 'Block'}
-        fullWidth
-        maxWidth="md"
+        saving={saving}
+        memberForm={memberForm}
         onClose={handleCloseDialog}
-        transitionDuration={0}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Block
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        onSubmit={handleSaveBlock}
+        setMemberForm={setMemberForm}
+      />
 
-        <DialogContent sx={{ pt: 2 }} dividers>
-          {!memberForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={memberForm?.name ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Block Code</CustomFormLabel>
-                <CustomTextField value={memberForm?.block_code ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Serial</CustomFormLabel>
-                <CustomTextField value={memberForm?.serial ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Area Id</CustomFormLabel>
-                <CustomTextField value={memberForm?.area_id ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration Id</CustomFormLabel>
-                <CustomTextField value={memberForm?.integration_id ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(memberForm?.active)}
-                  onChange={(e) =>
-                    setMemberForm((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!memberForm || saving}
-            onClick={handleSaveBlock}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Area */}
-      <Dialog
+      <AreaDialog
         open={editDialogType === 'Area'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-        transitionDuration={0}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Area
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        districtForm={districtForm}
+        setDistrictForm={setDistrictForm}
+        handleCloseDialog={handleCloseDialog}
+        handleSaveArea={handleSaveArea}
+        saving={saving}
+      />
 
-        <DialogContent sx={{ pt: 2 }} dividers>
-          {!districtForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Uid</CustomFormLabel>
-                <CustomTextField value={districtForm?.uid ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={districtForm?.name ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Code</CustomFormLabel>
-                <CustomTextField value={districtForm?.code ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Type</CustomFormLabel>
-                <CustomTextField value={districtForm?.type ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Location</CustomFormLabel>
-                <CustomTextField value={districtForm?.location ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration Id</CustomFormLabel>
-                <CustomTextField value={districtForm?.integration_id ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Need Barier</CustomFormLabel>
-                <Switch
-                  checked={Boolean(districtForm?.need_barier)}
-                  onChange={(e) =>
-                    setDistrictForm((prev: any) => ({
-                      ...prev,
-                      need_barier: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Need Block</CustomFormLabel>
-                <Switch
-                  checked={Boolean(districtForm?.need_block)}
-                  onChange={(e) =>
-                    setDistrictForm((prev: any) => ({
-                      ...prev,
-                      need_block: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(districtForm?.active)}
-                  onChange={(e) =>
-                    setDistrictForm((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!districtForm || saving}
-            onClick={handleSaveArea}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Slot */}
-      <Dialog
+      <SlotDialog
         open={editDialogType === 'Slot'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-        transitionDuration={0}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Slot
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        departmentForm={departmentForm}
+        setDepartmentForm={setDepartmentForm}
+        handleCloseDialog={handleCloseDialog}
+        handleSaveSlot={handleSaveSlot}
+        saving={saving}
+      />
 
-        <DialogContent sx={{ pt: 2 }} dividers>
-          {!departmentForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Uid</CustomFormLabel>
-                <CustomTextField value={departmentForm?.uid ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={departmentForm?.name ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Number</CustomFormLabel>
-                <CustomTextField value={departmentForm?.number ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Host Id</CustomFormLabel>
-                <CustomTextField value={departmentForm?.host_id ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration Id</CustomFormLabel>
-                <CustomTextField value={departmentForm?.integration_id ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(departmentForm?.active)}
-                  onChange={(e) =>
-                    setDepartmentForm((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!departmentForm || saving}
-            onClick={handleSaveSlot}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Vehicle */}
-      <Dialog
+      <VehicleDialog
         open={editDialogType === 'Vehicle'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-        transitionDuration={0}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Vehicle
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent sx={{ pt: 2 }} dividers>
-          {!cardForm ? (
-            <Box sx={{ py: 2 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {/* Vehicle Type */}
-              <Box>
-                <CustomFormLabel htmlFor="vehicle_type" sx={{ mt: 0 }}>
-                  Vehicle Type
-                </CustomFormLabel>
-                <CustomSelect
-                  size="small"
-                  fullWidth
-                  value={cardForm?.vehicle_type ?? ''}
-                  onChange={(e: any) =>
-                    setCardForm((prev: any) => ({
-                      ...prev,
-                      // vehicle_type: Number(e.target.value), // ⬅️ pastikan jadi number
-                      vehicle_type: e.target.value,
-                    }))
-                  }
-                  disabled={isBatchEdit ? !enabled.vehicle_type || saving : saving}
-                >
-                  <MenuItem value="Car">Car</MenuItem>
-                  <MenuItem value="Motor">Motor</MenuItem>
-                  <MenuItem value="Bus">Bus</MenuItem>
-                  {/* <MenuItem value={3}>Truck</MenuItem>
-                  <MenuItem value={4}>Van</MenuItem> */}
-                  {/* <MenuItem value={99}>Other</MenuItem> */}
-                </CustomSelect>
-              </Box>
-
-              {/* Other info (disabled) */}
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={cardForm?.name ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Type</CustomFormLabel>
-                <CustomTextField value={cardForm?.type ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Slug</CustomFormLabel>
-                <CustomTextField value={cardForm?.slug ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration Id</CustomFormLabel>
-                <CustomTextField value={cardForm?.integration_id ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Uid</CustomFormLabel>
-                <CustomTextField value={cardForm?.uid ?? ''} fullWidth disabled />
-              </Box>
-
-              {/* Active */}
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(cardForm?.active)}
-                  onChange={(e) =>
-                    setCardForm((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!cardForm || saving}
-            onClick={handleSaveVehicle}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
+        cardForm={cardForm}
+        setCardForm={setCardForm}
+        enabled={enabled}
+        vehicleOptions={vehicleOptions}
+        vehicleLoading={vehicleLoading}
+        isBatchEdit={isBatchEdit}
+        saving={saving}
+        handleCloseDialog={handleCloseDialog}
+        handleSaveVehicle={handleSaveVehicle}
+      />
 
       <Portal>
         <Snackbar

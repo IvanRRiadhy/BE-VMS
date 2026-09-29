@@ -167,7 +167,6 @@ const Approval = () => {
         list_trx_visitor_id: selectedRows.map((item: any) => item.id),
       };
 
-      // console.log('payload', payload);
       const response = await approveMeetingHostMutation.mutateAsync({
         id,
         payload: {
@@ -259,7 +258,6 @@ const Approval = () => {
       return;
     }
 
-    // Approve
     setSelectedGroup(group);
     setSelectedId(group.approval_ticket_id);
     setGroupVisitors([]);

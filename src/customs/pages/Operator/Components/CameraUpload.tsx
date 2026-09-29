@@ -29,6 +29,7 @@ const CameraUpload: React.FC<{
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
+    formData.append('is_face', 'true');
     try {
       const { data } = await axiosInstance2.post('/cdn/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

@@ -279,6 +279,7 @@ export const UpdateSiteRequestSchema = z.object({
   need_invitation: z.boolean().nullable().optional().default(false),
   need_approval: z.boolean().default(false),
   can_swap: z.boolean().default(false),
+  code: z.string().nullable().optional(),
   // type_approval: z.number().default(0),
   is_active: z.boolean().nullable().optional(),
   approval_workflow_id: z.string().nullable().optional(),

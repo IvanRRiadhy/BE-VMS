@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Grid2 as Grid, IconButton } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
-import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 
 import { IconBell, IconScript } from '@tabler/icons-react';
 import { AppState, useSelector } from 'src/store/Store';
-import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
@@ -23,8 +15,6 @@ const Content = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [edittingId, setEdittingId] = useState('');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -50,7 +40,6 @@ const Content = () => {
     setSearchInput(keyword);
     setSearchKeyword(keyword);
   }, []);
-
 
   return (
     <Container title="Notification" description="Notification page">

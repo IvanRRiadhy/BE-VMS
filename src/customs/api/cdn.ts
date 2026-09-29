@@ -17,6 +17,7 @@ export const uploadFileToCDN = async (
   formData.append('file_name', filename);
   formData.append('file', file, filename);
   formData.append('path', path);
+  formData.append('is_face', 'true');
 
   try {
     const response = await axiosInstance2.post<any>('/cdn/upload', formData, {

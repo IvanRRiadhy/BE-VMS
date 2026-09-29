@@ -173,20 +173,6 @@ const FormWizardAddEmployee = ({
     setSiteImageFile(null);
   };
 
-  // const handleCapture = () => {
-  //   if (webcamRef.current) {
-  //     const imageSrc = webcamRef.current.getScreenshot();
-  //     if (imageSrc) {
-  //       setScreenshot(imageSrc);
-  //       setPreviewUrl(imageSrc);
-  //       setFormData((prev) => ({
-  //         ...prev,
-  //         faceimage: imageSrc,
-  //       }));
-  //     }
-  //   }
-  // };
-
   const handleCapture = async () => {
     if (!webcamRef.current) return;
 
@@ -200,23 +186,17 @@ const FormWizardAddEmployee = ({
     try {
       setIsUploadingImage(true);
 
-      // Base64 -> Blob
       const response = await fetch(imageSrc);
       const blob = await response.blob();
 
-      // Compress
       const compressedBlob = await compressImage(blob);
 
-      // Blob -> File
       const file = new File([compressedBlob], 'webcam.jpg', {
         type: compressedBlob.type || 'image/jpeg',
         lastModified: Date.now(),
       });
 
-      // Simpan sebagai file yang akan diupload
       setSiteImageFile(file);
-
-      // Preview
       setScreenshot(imageSrc);
       setPreviewUrl(URL.createObjectURL(file));
     } catch (error) {

@@ -1815,6 +1815,7 @@ export const uploadImageEmployee = async (
   try {
     const formData = new FormData();
     formData.append('faceimage', data);
+    formData.append('is_face', 'true');
     const response = await axiosInstance.post(`/employee/upload/${employeeId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

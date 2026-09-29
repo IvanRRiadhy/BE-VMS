@@ -414,6 +414,7 @@ function DynamicTableBase<
     'visitor_give_access',
     'access_control_id',
     'registered_site',
+    'uid',
     'is_email_verified',
     'url',
     'shorten_url',
@@ -421,7 +422,8 @@ function DynamicTableBase<
     'employee_linked',
     'is_blacklist',
     'selfie image',
-    'selfie_image'
+    'selfie_image',
+    'trx_card_access_id'
   ];
 
   const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);
@@ -802,7 +804,7 @@ function DynamicTableBase<
     <>
       {/* HEADER */}
       {isHaveHeader && headerContent && (
-        <Box marginBottom={4}>
+        <Box marginBottom={2}>
           <BlankCard>
             <CardContent sx={{ overflow: 'visible' }}>
               <Grid2 container size={{ xs: 12, sm: 12 }}>

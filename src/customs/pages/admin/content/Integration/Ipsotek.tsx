@@ -37,6 +37,7 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
   const [integration, setIntegration] = useState<any[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [openDialogCategory, setOpenDialogCategory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -83,11 +84,21 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
   const fetchCategories = async () => {
     try {
       setLoadingData(true);
+
       const res = await getIntegrationIpsotekCategoryById(id);
 
       const data = (res.collection ?? []).map((item: any) => {
-        const { integration_id, ...rest } = item;
-        return rest;
+        const visitor = visitorType.find(
+          (v: any) => String(v.id).toLowerCase() === String(item.visitor_type_id).toLowerCase(),
+        );
+
+        const { integration_id, visitor_type_id, active, ...rest } = item;
+
+        return {
+          ...rest,
+          visitor_type: visitor?.name ?? '-',
+          active,
+        };
       });
 
       setCategoryAll(data);
@@ -188,6 +199,51 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
     navigate('/admin/manage/integration');
   };
 
+  const handleCopy = async (row: any) => {
+    try {
+      const value = row.id;
+
+      if (!value) {
+        showSwal('error', 'ID not found');
+        return;
+      }
+
+      await navigator.clipboard.writeText(String(value));
+
+      showSwal('success', 'Successfully copied ID');
+    } catch (error) {
+      showSwal('error', 'Failed to copy ID');
+    }
+  };
+
+  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
+    const prev = categoryAll;
+
+    // Optimistic update
+    setCategoryAll((prevData) =>
+      prevData.map((item) =>
+        String(item.id).toLowerCase() === String(rowId).toLowerCase()
+          ? { ...item, [field]: value }
+          : item,
+      ),
+    );
+
+    try {
+      const payload = {
+        [field]: value,
+      };
+
+      await updateIpsotekCategory(String(rowId), payload);
+
+      showSwal('success', 'Successfully updated Ipsotek.');
+    } catch (e: any) {
+      // rollback kalau API gagal
+      setCategoryAll(prev);
+
+      showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
+    }
+  };
+
   return (
     <PageContainer title="Ipsotek">
       <Box>
@@ -218,13 +274,21 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
               isTitleIntegration={`${integrationName || 'Ipsotek'}`}
               isHaveHeaderTitle={true}
               titleHeader="Category"
-              isDataVerified={true}
               isHaveAddData={true}
               onDelete={(row) => handleDelete(row.id.toString())}
               onAddData={() => {
                 handleAdd();
               }}
               onEdit={(row) => handleEdit(row)}
+              isHaveBooleanSwitch={true}
+              onCheckedChange={(selected) => {
+                setSelectedRows(selected);
+              }}
+              onBooleanSwitchChange={handleBooleanSwitchChange}
+              isCopy={true}
+              onCopy={(row) => {
+                handleCopy(row);
+              }}
             />
           </Grid>
         </Grid>
@@ -284,13 +348,8 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
               <Autocomplete
                 options={integration}
                 getOptionLabel={(opt: any) => opt.name || ''}
-                value={integration.find((i) => i.id === formCategory.integration_id) || null}
-                onChange={(_, newValue: any) =>
-                  setFormCategory((prev) => ({
-                    ...prev,
-                    integration_id: newValue ? newValue.id : '',
-                  }))
-                }
+                value={integration.find((item: any) => item.id === id) || null}
+                disabled
                 renderInput={(params) => (
                   <CustomTextField {...params} placeholder="Select Integration" />
                 )}

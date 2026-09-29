@@ -695,13 +695,11 @@ const FormSelfPraregistration = ({
   // };
 
   const handleSaveGroupVisitor = () => {
-
     if (activeGroupIdx === null) {
       return;
     }
 
     setGroupVisitors((prev) => {
-
       const next = [...prev];
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
@@ -1128,6 +1126,7 @@ const FormSelfPraregistration = ({
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
+    formData.append('is_face', 'true');
 
     try {
       const response = await axiosInstance2.post('/cdn/upload', formData, {
@@ -1201,7 +1200,6 @@ const FormSelfPraregistration = ({
     }
 
     try {
-      // Compression sementara disabled
       const path = await uploadFileToCDN(file);
 
       if (path) {
@@ -3043,7 +3041,7 @@ const FormSelfPraregistration = ({
                       sx={{ mb: 1, mt: 1 }}
                       startIcon={<IconPlus />}
                     >
-                      {t("add")} Group
+                      {t('add')} Group
                     </Button>
                   )}
                 </Box>

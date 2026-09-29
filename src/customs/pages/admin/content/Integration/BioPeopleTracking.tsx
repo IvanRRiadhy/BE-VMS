@@ -144,29 +144,7 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
     severity: 'success',
   });
 
-  const [editDialogType, setEditDialogType] = useState<
-    // | 'Organization'
-    // | 'District'
-    // | 'Department'
-    // | 'Member'
-    // | 'Card'
-    // | 'Visitor'
-    // | 'Visitor Blacklist'
-    // | 'Trx Visitor'
-    // | 'Access CCTV'
-    // | 'Floor Plan'
-    // | 'Floor Plan Masked Area'
-    | 'Card Access'
-    // | 'Brand'
-    // | 'Access Control'
-    // | 'Floor'
-    // | 'Building'
-    // | 'Ble Reader'
-    // | 'Alarm Record'
-    // | 'Alarm Warning'
-    // | 'Tracking Transaction'
-    | null
-  >(null);
+  const [editDialogType, setEditDialogType] = useState<'Card Access' | null>(null);
   const [selectedType, setSelectedType] = useState('card_access');
   const [editingRow, setEditingRow] = useState<Item | null>(null);
   const headerMap: Record<string, string> = {
@@ -216,26 +194,40 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
     setLoading(true);
     try {
       if (type === 'card_access') {
-        const res = await getCardAccessTracking(id as string);
-        const resAllSite = await getAllSite();
+        const [res, resAllSite, resVisitorType] = await Promise.all([
+          getCardAccessTracking(id as string),
+          getAllSite(),
+          getAllVisitorType(),
+        ]);
+
+        const visitorTypeOptions = (resVisitorType.collection ?? []).map((item: any) => ({
+          id: String(item.id).toUpperCase(),
+          label: item.name ?? '',
+        }));
+
+        setVisitorTypeOptions(visitorTypeOptions);
+
         const rows = res.collection.map((item: any) => ({
           id: item.id,
           trx_card_access_id: item.trk_card_access_id,
           name: item.name,
           access_scope: item.accessScope,
           remarks: item.remarks,
-          // integration_id: item.integration_id,
+
           site:
             resAllSite.collection.find(
               (site: any) => String(site.id).toUpperCase() === String(item.site_id).toUpperCase(),
             )?.name ?? item.site_id,
+
           visitor_type:
-            visitoTypeOptions.find(
-              (site: any) =>
-                String(site.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
+            visitorTypeOptions.find(
+              (visitorType: any) =>
+                String(visitorType.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
             )?.label ?? item.visitor_type_id,
+
           active: item.active ? 'Active' : 'Inactive',
         }));
+
         setListData(rows ?? []);
       }
     } catch (e) {
@@ -438,6 +430,23 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
     navigate('/admin/manage/integration');
   };
 
+  const handleCopy = async (row: any) => {
+    try {
+      const value = row?.trx_card_access_id;
+
+      if (!value) {
+        showSwal('error', 'ID not found');
+        return;
+      }
+
+      await navigator.clipboard.writeText(String(value));
+
+      showSwal('success', 'Successfully copied ID');
+    } catch (error) {
+      showSwal('error', 'Failed to copy ID');
+    }
+  };
+
   return (
     <>
       <PageContainer
@@ -491,6 +500,10 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  isCopy={true}
+                  onCopy={(row) => {
+                    handleCopy(row);
+                  }}
                 />
               </Grid>
             </Grid>

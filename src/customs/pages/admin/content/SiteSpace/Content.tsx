@@ -195,6 +195,8 @@ const Content = () => {
         name: item.name,
         type: item.type,
         description: item.description || '',
+        open_time: item.open_time || '',
+        close_time: item.close_time || '',
         image: item.image || '',
         active: item.is_active,
       })) ?? []
@@ -558,6 +560,8 @@ const Content = () => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
+                    // onClose={() => setOpenFilter(false)}
+                    onClose={() => {}}
                   />
                 }
                 // onBatchEdit={handleBatchEdit}
