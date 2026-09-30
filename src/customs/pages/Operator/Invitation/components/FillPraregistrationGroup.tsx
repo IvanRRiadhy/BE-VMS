@@ -102,7 +102,7 @@ function FillPraregistrationGroup({
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
+    // formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
 

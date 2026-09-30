@@ -2014,7 +2014,7 @@ const TableRowItem = React.memo(
                   {isHaveSettingOperator &&
                     (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
                       row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
-                      <Tooltip title="Setting">
+                      <Tooltip title="Setting" arrow>
                         <IconButton
                           onClick={() => onSettingOperator?.(row)}
                           disableRipple
@@ -2034,7 +2034,7 @@ const TableRowItem = React.memo(
                     )}
 
                   {isCopy && (
-                    <Tooltip title="Copy">
+                    <Tooltip title="Copy" arrow>
                       <IconButton
                         onClick={() => onCopy?.(row)}
                         disableRipple
@@ -2120,7 +2120,7 @@ const TableRowItem = React.memo(
                       row.group_name === 'Admin' ||
                       row.group_name === 'Operator VMS') &&
                     row.employee_linked && (
-                      <Tooltip title="Unassign Employee" arrow placement="top">
+                      <Tooltip title="Unassign Employee" arrow placement="top" >
                         <Button
                           onClick={() => onUnAssign?.(row)}
                           disableRipple
@@ -2161,7 +2161,7 @@ const TableRowItem = React.memo(
                     </Tooltip>
                   )}
 
-                  <Tooltip title="Edit">
+                  <Tooltip title="Edit" arrow>
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple
@@ -2180,7 +2180,7 @@ const TableRowItem = React.memo(
                   </Tooltip>
 
                   {/* 🗑 Delete */}
-                  <Tooltip title="Delete">
+                  <Tooltip title="Delete" arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple
@@ -2277,7 +2277,7 @@ const TableRowItem = React.memo(
             >
               <Box display="flex" alignItems="end" gap={0.5}>
                 {isCopy && (
-                  <Tooltip title="Copy">
+                  <Tooltip title="Copy" arrow>
                     <IconButton
                       onClick={() => onCopy?.(row)}
                       disableRipple
@@ -2297,7 +2297,7 @@ const TableRowItem = React.memo(
                 )}
                 {/* Tombol Edit (Primary, Kecil) */}
                 {isSelectedType && (
-                  <Tooltip title="Edit">
+                  <Tooltip title="Edit" arrow>
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple

@@ -325,7 +325,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
+    // formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
     try {

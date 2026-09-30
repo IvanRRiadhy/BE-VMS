@@ -1438,6 +1438,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconEye,
     href: '/operator/view',
   },
+  {
+    id: uniqueId(),
+    title: 'Security',
+    icon: IconEye,
+    href: '/operator/security',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'View',
@@ -1497,6 +1503,12 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     title: 'Operator View',
     icon: IconEye,
     href: '/operator/view',
+  },
+  {
+    id: uniqueId(),
+    title: 'Security',
+    icon: IconEye,
+    href: '/operator/security',
   },
   // {
   //   id: uniqueId(),

@@ -33,10 +33,11 @@ import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useTranslation } from 'react-i18next';
+import { useIntegration } from 'src/hooks/Integration/useIntegration';
 const Ipsotek = ({ id: string, integrationName }: any) => {
   const { id } = useParams();
   const [categoryAll, setCategoryAll] = useState<any[]>([]);
-  const [integration, setIntegration] = useState<any[]>([]);
+  // const [integration, setIntegration] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [openDialogCategory, setOpenDialogCategory] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -52,13 +53,6 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const cards = useMemo(
     () => [
-      // {
-      //   title: 'Integration',
-      //   subTitle: integrationName || '-',
-      //   subTitleSetting: 1,
-      //   icon: IconCategory,
-      //   color: 'none',
-      // },
       {
         title: 'Category',
         subTitle: '' + categoryAll.length,
@@ -71,15 +65,6 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
   );
 
   const { visitorType } = useVisitorType();
-  // const { data: integration = [] } = useIntegration();
-
-  // const integrationMap = React.useMemo(() => {
-  //   const map = new Map<string, string>();
-  //   integration?.forEach((v) => {
-  //     map.set(v.id, v.name);
-  //   });
-  //   return map;
-  // }, [integration]);
 
   const fetchCategories = async () => {
     try {
@@ -109,33 +94,29 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
     }
   };
   useEffect(() => {
-    fetchCategories();
-  }, [id]);
+    if (!id || !visitorType?.length) return;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAllIntegration();
-        setIntegration(res.collection ?? []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+    fetchCategories();
+  }, [id, visitorType]);
+
+  const {
+    data: integration = [],
+    isLoading: loadingIntegration,
+    error: integrationError,
+  } = useIntegration();
 
   const handleCloseDialogCategory = () => {
     setOpenDialogCategory(false);
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'category' }));
+    const confirmed = await showConfirmDelete(t('confirmDelete', { name: 'Category' }));
 
     if (confirmed) {
       setLoading(true);
       try {
         await deleteIpsotekCategory(id);
-        showSwal('success', t('deleteSuccess', { name: 'category' }));
+        showSwal('success', t('deleteSuccess', { name: 'Category' }));
         await fetchCategories();
         setOpenDialogCategory(false);
       } catch (error: any) {
@@ -194,15 +175,15 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
 
       if (editingId) {
         await updateIpsotekCategory(editingId, payload);
-        showSwal('success', 'Category successfully updated');
+        showSwal('success', t('updateSuccess', { name: 'Category' }));
       } else {
         await createIpsotekCategory(payload, id as string);
-        showSwal('success', 'Category successfully created');
+        showSwal('success', t('createSuccess', { name: 'Category' }));
       }
       await fetchCategories();
       setOpenDialogCategory(false);
     } catch (error: any) {
-      showSwal('error', error?.message || 'Failed to save category');
+      showSwal('error', error?.response?.data?.msg || 'Failed to save category');
     } finally {
       setLoading(false);
     }
@@ -250,7 +231,7 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
 
       await updateIpsotekCategory(String(rowId), payload);
 
-      showSwal('success', 'Successfully updated Ipsotek.');
+      showSwal('success', t('updatedSuccess', { name: 'Category' }));
     } catch (e: any) {
       // rollback kalau API gagal
       setCategoryAll(prev);
@@ -367,7 +348,7 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
                 Integration
               </CustomFormLabel>
               <Autocomplete
-                options={integration}
+                options={integration.collection}
                 getOptionLabel={(opt: any) => opt.name || ''}
                 value={integration.find((item: any) => item.id === id) || null}
                 disabled

@@ -15,7 +15,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
-
 interface VehicleDialogProps {
   open: boolean;
   cardForm: any;
@@ -90,13 +89,18 @@ const VehicleDialog = ({
               <CustomSelect
                 size="small"
                 fullWidth
-                value={cardForm?.vehicle_type ?? ''}
-                onChange={(e: any) =>
+                value={cardForm?.vehicle_id ?? ''}
+                onChange={(e: any) => {
+                  const selectedVehicle = vehicleOptions.find(
+                    (vehicle: any) => String(vehicle.id) === String(e.target.value),
+                  );
+
                   setCardForm((prev: any) => ({
                     ...prev,
-                    vehicle_type: e.target.value,
-                  }))
-                }
+                    vehicle_id: selectedVehicle?.id ?? '',
+                    vehicle_type: selectedVehicle?.value ?? '',
+                  }));
+                }}
                 disabled={
                   isBatchEdit
                     ? !enabled.vehicle_type || saving || vehicleLoading
@@ -166,10 +170,6 @@ const VehicleDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleCloseDialog} disabled={saving}>
-          Cancel
-        </Button>
-
         <Button
           variant="contained"
           color="primary"

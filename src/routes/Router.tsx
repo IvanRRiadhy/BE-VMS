@@ -6,6 +6,7 @@ import Loadable from 'src/layouts/full/shared/loadable/Loadable';
 import { ProtectedRoute, PublicOnlyRoute } from 'src/customs/contexts/ProtectedRoute';
 import AuthRedirector from './AuthRedirector';
 import path from 'path';
+import Security from 'src/customs/pages/Operator/Security/Security';
 // import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
 // import Register from 'src/views/authentication/auth/Register';
 // import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
@@ -532,6 +533,7 @@ const Router = [
               { index: true, element: <DashboardOperator /> },
               { path: 'dashboard', element: <DashboardOperator /> },
               { path: 'view', element: <OperatorView /> },
+              { path: 'security', element: <Security /> },
               // { path: 'visitor', element: <ManageVisitorOperator /> },
               // { path: 'transaction-log', element: <TransactionOperatorLog /> },
               // { path: 'approval-workflow', element: <ApprovalOperator /> },

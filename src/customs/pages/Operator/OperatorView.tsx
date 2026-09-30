@@ -307,6 +307,8 @@ const OperatorView = () => {
       visitor_id: string;
       is_vehicle_arrived: boolean;
       vehicle_captured: string;
+      parking_slot: string;
+      parking_area_name: string;
     }[]
   >([]);
 
@@ -1057,6 +1059,7 @@ const OperatorView = () => {
       group_code: v.visitor_group_code ?? '-',
       group_name: v.group_name ?? '-',
       card: v.card ?? [],
+      parking: v.parking ?? [],
       host_name: v.host_name ?? '-',
       site_place_name: v.site_place_name ?? '-',
       is_praregister_done: v.is_praregister_done ?? false,
@@ -1092,7 +1095,7 @@ const OperatorView = () => {
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
 
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
 
           visitor: {
             ...inv.visitor,
@@ -2500,7 +2503,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;

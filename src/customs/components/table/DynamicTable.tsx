@@ -418,12 +418,13 @@ function DynamicTableBase<
     'is_email_verified',
     'url',
     'shorten_url',
+    'vehicle_id',
     'ticket_id',
     'employee_linked',
     'is_blacklist',
     'selfie image',
     'selfie_image',
-    'trx_card_access_id'
+    'trx_card_access_id',
   ];
 
   const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);

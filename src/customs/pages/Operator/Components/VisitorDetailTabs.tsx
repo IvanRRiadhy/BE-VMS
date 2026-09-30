@@ -320,7 +320,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                       <IconCar />
                       <Box>
                         <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Parking Slot</CustomFormLabel>
-                        <Typography>{data?.parking_slot || '-'}</Typography>
+                        <Typography>{data?.parking?.parking_slot || '-'}</Typography>
                       </Box>
                     </Box>
                   </Grid>
@@ -329,7 +329,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                       <IconCar />
                       <Box>
                         <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Parking Area</CustomFormLabel>
-                        <Typography>{data?.parking_are || '-'}</Typography>
+                        <Typography>{data?.parking?.parking_area_name || '-'}</Typography>
                       </Box>
                     </Box>
                   </Grid>

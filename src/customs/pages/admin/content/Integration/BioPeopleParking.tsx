@@ -72,6 +72,7 @@ import SlotDialog from './components/Parking/SlotDialog';
 import VehicleDialog from './components/Parking/VehicleDialog';
 import VisitorTypeDialog from './components/Parking/VisitorTypeDialog';
 import BlockDialog from './components/Parking/BlockDialog';
+import { useTranslation } from 'react-i18next';
 
 const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
   const [totals, setTotals] = useState<{ [key: string]: number }>({
@@ -81,6 +82,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     vehicle: 0,
     block: 0,
   });
+
+  const { t } = useTranslation();
 
   const handleParkingSyncIntegration = async () => {
     if (!id) {
@@ -189,10 +192,10 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
   const [editingRow, setEditingRow] = useState<Item | null>(null);
   const headerMap: Record<string, string> = {
     visitor_type: 'Visitor Type',
-    block: 'Block',
-    area: 'Area',
-    slot: 'Slot',
     vehicle: 'Vehicle',
+    area: 'Area',
+    block: 'Block',
+    slot: 'Slot',
   };
 
   const TYPE_MAP: Record<string, 'Visitor Type' | 'Block' | 'Area' | 'Slot' | 'Vehicle'> = {
@@ -444,6 +447,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         name: detailData.name ?? '',
         type: detailData.type ?? '',
         vehicle_type: detailData.vehicle_type ?? '',
+        vehicle_id: detailData.vehicle_id ?? '',
         slug: detailData.slug ?? '',
         integration_id: detailData.integration_id ?? '',
         active: detailData.active ?? false,
@@ -537,7 +541,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         // setListData((prev) =>
         //   prev.map((it) => (String(it.id) === visitorTypeId ? { ...it, ...payload } : it)),
         // );
-        showSwal('success', 'Successfully updated visitor type');
+        showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
         return;
       }
 
@@ -556,7 +560,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
       );
 
       // setSyncMsg({ open: true, text: 'Visitor type updated successfully', severity: 'success' });
-      showSwal('success', 'Successfully updated visitor type');
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update visitor type');
     } finally {
@@ -580,12 +584,15 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
           return;
         }
 
+        const selectedVehicle = vehicleOptions.find(
+          (vehicle: any) => vehicle.value === cardForm?.vehicle_type,
+        );
+
         const payload = {
           vehicle_type: cardForm?.vehicle_type || '',
+          vehicle_id: cardForm?.vehicle_id || '',
           active: cardForm?.active ?? false,
         };
-
-        console.log('Payload:', payload);
 
         await updateVehicleParking(vehicleId, payload);
         await fetchListByType(selectedType);
@@ -593,7 +600,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         loadTotals();
 
         handleCloseDialog();
-        showSwal('success', 'Vehicle updated successfully');
+        showSwal('success', t('updatedSuccess', { name: 'Vehicle' }));
         return;
       }
 
@@ -609,7 +616,11 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: 'Vehicle updated successfully', severity: 'success' });
+      setSyncMsg({
+        open: true,
+        text: t('updatedSuccess', { name: 'Vehicle' }),
+        severity: 'success',
+      });
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update vehicle');
     } finally {
@@ -639,7 +650,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         loadTotals();
 
         handleCloseDialog();
-        showSwal('success', 'Block updated successfully');
+        showSwal('success', t('updatedSuccess', { name: 'Block' }));
         return;
       }
 
@@ -656,8 +667,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      // setSyncMsg({ open: true, text: 'Block updated successfully', severity: 'success' });
-      showSwal('success', 'Block updated successfully');
+      // setSyncMsg({ open: true, text: t('updatedSuccess', { name: 'Block' }), severity: 'success' });
+      showSwal('success', t('updatedSuccess', { name: 'Block' }));
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update block');
     } finally {
@@ -698,7 +709,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         //   text: 'Area updated successfully',
         //   severity: 'success',
         // });
-        showSwal('success', 'Area updated successfully');
+        showSwal('success', t('updatedSuccess', { name: 'Area' }));
         return;
       }
 
@@ -714,8 +725,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      // setSyncMsg({ open: true, text: 'Area updated successfully', severity: 'success' });
-      showSwal('success', 'Area updated successfully');
+      // setSyncMsg({ open: true, text: t('updatedSuccess', { name: 'Area' }), severity: 'success' });
+      showSwal('success', t('updatedSuccess', { name: 'Area' }));
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update area');
     } finally {
@@ -754,7 +765,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         }));
 
         // setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
-        showSwal('success', 'Slot updated successfully');
+        showSwal('success', t('updatedSuccess', { name: 'Slot' }));
         return;
       }
 
@@ -770,8 +781,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      // setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
-      showSwal('success', 'Slot updated successfully');
+      // setSyncMsg({ open: true, text: t('updatedSuccess', { name: 'Slot' }), severity: 'success' });
+      showSwal('success', t('updatedSuccess', { name: 'Slot' }));
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to update slot');
     } finally {
@@ -840,6 +851,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     }
   };
 
+  const isEditable = ['visitor_type', 'vehicle'].includes(selectedType);
+
   return (
     <>
       <PageContainer
@@ -865,10 +878,12 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   isHaveAction={false}
                   isSelectedType={selectedType !== 'badge_status'}
                   isDataVerified={false}
-                  isHaveActionOnlyEdit={true}
+                  // isHaveActionOnlyEdit={true}
                   isHaveActive={false}
                   isHaveBack={true}
                   onBack={handleBack}
+                  isNoActionTableHead
+                  isHaveActionOnlyEdit={isEditable}
                   isTitleIntegration={`${integrationName || 'Bio People Parking'}`}
                   isHaveBooleanSwitch={true}
                   onBooleanSwitchChange={handleBooleanSwitchChange}
@@ -889,10 +904,10 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  isCopy={true}
-                  onCopy={(row) => {
-                    handleCopy(row);
-                  }}
+                  // isCopy={true}
+                  // onCopy={(row) => {
+                  //   handleCopy(row);
+                  // }}
                 />
               </Grid>
             </Grid>
