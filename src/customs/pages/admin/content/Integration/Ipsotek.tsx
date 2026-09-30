@@ -157,23 +157,38 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
     setOpenDialogCategory(true);
   };
 
-  const handleEdit = (row: any) => {
-    setEditingId(row.id);
-    setFormCategory({
-      category: row.category ?? '',
-      visitor_type_id: row.visitor_type_id ?? '',
-      integration_id: row.integration_id ?? '',
-      active: row.active ?? true,
-    });
-    setOpenDialogCategory(true);
+  const handleEdit = async (row: any) => {
+    try {
+      setEditingId(row.id);
+      setLoading(true);
+
+      const edit = await getIntegrationIpsotekById(id as string, String(row.id));
+
+      const data = edit?.collection ?? edit;
+
+      setFormCategory({
+        category: data?.category ?? '',
+        visitor_type_id: data?.visitor_type_id ?? '',
+        integration_id: data?.integration_id ?? id ?? '',
+        active: data?.active ?? true,
+      });
+
+      setOpenDialogCategory(true);
+    } catch (error: any) {
+      console.error(error);
+      showSwal('error', error?.response?.data?.msg || 'Failed to get category detail');
+    } finally {
+      setLoading(false);
+    }
   };
+
   const handleOnSubmit = async () => {
     setLoading(true);
     try {
       const payload = {
         category: formCategory.category,
         visitor_type_id: formCategory.visitor_type_id,
-        integration_id: formCategory.integration_id,
+        integration_id: id,
         active: formCategory.active,
       };
 
@@ -329,7 +344,13 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
               <Autocomplete
                 options={visitorType}
                 getOptionLabel={(opt: any) => opt.name || ''}
-                value={visitorType.find((v) => v.id === formCategory.visitor_type_id) || null}
+                value={
+                  visitorType.find(
+                    (v: any) =>
+                      String(v.id).toLowerCase() ===
+                      String(formCategory.visitor_type_id).toLowerCase(),
+                  ) || null
+                }
                 onChange={(_, newValue: any) =>
                   setFormCategory((prev) => ({
                     ...prev,
@@ -367,9 +388,6 @@ const Ipsotek = ({ id: string, integrationName }: any) => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="secondary">
-            Cancel
-          </Button>
           <Button variant="contained" color="primary" onClick={handleOnSubmit} disabled={loading}>
             Submit
           </Button>

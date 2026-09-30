@@ -41,8 +41,43 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [listData, setListData] = useState<any[]>([]);
+  const [detailData, setDetailData] = useState<any | null>(null);
+  const [orgOptions, setOrgOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [visitoTypeOptions, setVisitorTypeOptions] = useState<Array<{ id: string; label: string }>>(
+    [],
+  );
+  const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [cardAccessForm, setCardAccessForm] = useState<any>(null);
+  const { t } = useTranslation();
+  const [syncMsg, setSyncMsg] = useState<{
+    open: boolean;
+    text: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    text: '',
+    severity: 'success',
+  });
+
+  const [editDialogType, setEditDialogType] = useState<'Card Access' | null>(null);
+  const [selectedType, setSelectedType] = useState('card_access');
+  const [editingRow, setEditingRow] = useState<Item | null>(null);
+  const headerMap: Record<string, string> = {
+    card_access: 'Card Access',
+  };
+
+  const TYPE_MAP: Record<string, 'Card Access'> = {
+    card_access: 'Card Access',
+  };
+
   const handleTrackingBleSyncIntegration = async () => {
     if (!id) {
       return;
@@ -121,40 +156,6 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
     [totals],
   );
 
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [listData, setListData] = useState<any[]>([]);
-  const [detailData, setDetailData] = useState<any | null>(null);
-  const [orgOptions, setOrgOptions] = useState<Array<{ id: string; label: string }>>([]);
-  const [visitoTypeOptions, setVisitorTypeOptions] = useState<Array<{ id: string; label: string }>>(
-    [],
-  );
-  const [syncing, setSyncing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [cardAccessForm, setCardAccessForm] = useState<any>(null);
-
-  const [syncMsg, setSyncMsg] = useState<{
-    open: boolean;
-    text: string;
-    severity: 'success' | 'error';
-  }>({
-    open: false,
-    text: '',
-    severity: 'success',
-  });
-
-  const [editDialogType, setEditDialogType] = useState<'Card Access' | null>(null);
-  const [selectedType, setSelectedType] = useState('card_access');
-  const [editingRow, setEditingRow] = useState<Item | null>(null);
-  const headerMap: Record<string, string> = {
-    card_access: 'Card Access',
-  };
-
-  const TYPE_MAP: Record<string, 'Card Access'> = {
-    card_access: 'Card Access',
-  };
-
   const getCount = (res: any) => {
     if (!res) return 0;
 
@@ -225,7 +226,7 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
                 String(visitorType.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
             )?.label ?? item.visitor_type_id,
 
-          active: item.active ? 'Active' : 'Inactive',
+          active: item.active ?? false,
         }));
 
         setListData(rows ?? []);
@@ -447,6 +448,40 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
     }
   };
 
+  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
+    const previousData = [...listData];
+
+    // Optimistic update
+    setListData((prevData) =>
+      prevData.map((item) =>
+        String(item.id).toLowerCase() === String(rowId).toLowerCase()
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
+
+    try {
+      const payload = {
+        [field]: value,
+      };
+
+      await updateCardAccessTracking(String(rowId), payload);
+
+      showSwal('success', t('updatedSuccess', { name: 'Card Access' }));
+    } catch (e: any) {
+      // Rollback
+      setListData(previousData);
+
+      showSwal(
+        'error',
+        e?.response?.data?.msg || e?.response?.data?.message || 'Failed to update status.',
+      );
+    }
+  };
+
   return (
     <>
       <PageContainer
@@ -473,7 +508,7 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
                   isSelectedType={selectedType !== 'badge_status'}
                   isHaveActionOnlyEdit={true}
                   isHaveSearch={false}
-                  isDataVerified={true}
+                  isDataVerified={false}
                   isHaveFilter={false}
                   isHaveBack={true}
                   onBack={handleBack}
@@ -483,6 +518,7 @@ const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationNam
                   isHaveFilterDuration={false}
                   isHaveAddData={false}
                   isHaveBooleanSwitch={true}
+                  onBooleanSwitchChange={handleBooleanSwitchChange}
                   onBatchEdit={handleEditBatch}
                   isHaveHeader={true}
                   headerContent={{
