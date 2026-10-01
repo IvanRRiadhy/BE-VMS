@@ -23,7 +23,15 @@ const ScheduleConnector = styled(StepConnector)(({ theme }) => ({
     borderLeft: `1px solid ${theme.palette.divider}`,
   },
 }));
-export type ScheduleStatus = 'Check In' | 'Expected' | 'Upcoming' | 'Completed' | 'Cancelled';
+export type ScheduleStatus =
+  | 'Available'
+  | 'Rejected'
+  | 'Denied'
+  | 'Check In'
+  | 'Preregis'
+  | 'Check Out'
+  | 'Cancelled'
+  | 'Upcoming';
 const ScheduleStepIcon = ({ color }: { color: string }) => {
   return (
     <Box
@@ -42,6 +50,7 @@ const ScheduleStepIcon = ({ color }: { color: string }) => {
 export interface TodayScheduleItem {
   id: string;
   time: string;
+  timeEnd: string;
   visitorName: string;
   company: string;
   agenda: string;
@@ -59,27 +68,55 @@ const statusConfig: Record<
   {
     color: string;
     backgroundColor: string;
+    dotColor: string;
   }
 > = {
+  Available: {
+    color: '#FFFFFF',
+    backgroundColor: '#808080',
+    dotColor: '#808080',
+  },
+
+  Rejected: {
+    color: '#EF4444',
+    backgroundColor: '#FEF2F2',
+    dotColor: '#EF4444',
+  },
+
+  Denied: {
+    color: '#991B1B',
+    backgroundColor: '#FEF2F2',
+    dotColor: '#991B1B',
+  },
+
   'Check In': {
     color: '#16A34A',
     backgroundColor: '#EAF8EF',
+    dotColor: '#16A34A',
   },
-  Expected: {
-    color: '#F59E0B',
-    backgroundColor: '#FFF6E5',
-  },
-  Upcoming: {
+
+  Preregis: {
     color: '#3B82F6',
     backgroundColor: '#EAF3FF',
+    dotColor: '#3B82F6',
   },
-  Completed: {
+
+  'Check Out': {
     color: '#64748B',
     backgroundColor: '#F1F5F9',
+    dotColor: '#64748B',
   },
+
   Cancelled: {
     color: '#EF4444',
     backgroundColor: '#FEF2F2',
+    dotColor: '#EF4444',
+  },
+
+  Upcoming: {
+    color: '#3B82F6',
+    backgroundColor: '#EAF3FF',
+    dotColor: '#3B82F6',
   },
 };
 
@@ -176,14 +213,14 @@ export default function TodayScheduleCard({ schedules, onViewAll }: TodaySchedul
 
               return (
                 <Step key={schedule.id}>
-                  <StepLabel StepIconComponent={() => <ScheduleStepIcon color={status.color} />}>
+                  <StepLabel StepIconComponent={() => <ScheduleStepIcon color={status.dotColor} />}>
                     <Stack
                       direction="row"
                       alignItems="center"
                       sx={{
                         width: '100%',
                         minWidth: 0,
-                        pb: 1.5,
+                        pb: 0,
                       }}
                     >
                       {/* Time */}
@@ -194,7 +231,7 @@ export default function TodayScheduleCard({ schedules, onViewAll }: TodaySchedul
                         }}
                       >
                         <Typography variant="caption" fontWeight={700} color="text.primary">
-                          {schedule.time}
+                          {schedule.time} {schedule.timeEnd}
                         </Typography>
                       </Box>
 
@@ -207,15 +244,14 @@ export default function TodayScheduleCard({ schedules, onViewAll }: TodaySchedul
                         }}
                       >
                         <Typography variant="body2" fontWeight={600} noWrap>
-                          {schedule.visitorName}
+                          {schedule.agenda}
                         </Typography>
 
                         <Typography variant="caption" color="text.secondary" noWrap display="block">
                           {schedule.company}
-                          <Box component="span" sx={{ mx: 0.7 }}>
+                          {/* <Box component="span" sx={{ mx: 0.7 }}>
                             •
-                          </Box>
-                          {schedule.agenda}
+                          </Box> */}
                         </Typography>
                       </Box>
 

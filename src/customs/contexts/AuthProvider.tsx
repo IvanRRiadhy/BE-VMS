@@ -157,8 +157,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { getProfile } from '../api/users';
 
-
-
 interface AuthUser {
   user_id: string;
   organization_name: string;
@@ -195,7 +193,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const initializeAuth = useCallback(async () => {
     try {
-      const profile = await getProfile();
+      const profile: any = await getProfile();
 
       if (profile?.collection) {
         setUser(profile.collection);

@@ -59,7 +59,19 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 import VisitorInvitationActions from './components/VisitorInvitationActions';
 import { undefined } from 'zod';
-import TodayScheduleCard from './components/TodayScheduleCard';
+import TodayScheduleCard, { ScheduleStatus } from './components/TodayScheduleCard';
+import { useApproval } from 'src/hooks/Dashboard/useApproval';
+import {
+  getCurrentlyVisiting,
+  getDashboardSchedule,
+  getTodayVisitors,
+} from 'src/customs/api/Employee/Dashboard';
+
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const DashboardEmployee = () => {
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
@@ -163,21 +175,16 @@ const DashboardEmployee = () => {
   const shareLinkDialogList = shareLinkDialogData?.collection ?? [];
   const totalFilteredRecords = shareLinkDialogData?.RecordsFiltered ?? 0;
   const [approvalStatus, setApprovalStatus] = useState<string>('');
+
   const {
     data: approvalRes,
     refetch: refetchApproval,
     isFetching: loadingApproval,
-  } = useQuery({
-    queryKey: ['approval', page, rowsPerPage, debouncedKeyword, sortDir, approvalStatus],
-    queryFn: async () => {
-      return await getApprovalTicket({
-        start: page * rowsPerPage,
-        length: rowsPerPage,
-        sort_dir: sortDir,
-        keyword: debouncedKeyword,
-        approval_status: approvalStatus,
-      });
-    },
+  } = useApproval({
+    page,
+    rowsPerPage,
+    keyword: debouncedKeyword,
+    sortDir,
   });
 
   const approvalData =
@@ -207,87 +214,64 @@ const DashboardEmployee = () => {
       }),
     ) || [];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getOngoingInvitation();
-        const data = res?.collection ?? [];
-
-        const filtered = data
-          // .filter(
-          //   (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
-          // )
-          .slice(0, 5);
-
-        const mapped = filtered.map((item: any) => ({
-          id: item.id,
-          name: item.visitor_name,
-          email: item.visitor_email,
-          // organization: item.visitor_organization_name,
-          visitor_period_start: item.visitor_period_start,
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          host: item.host_name ?? '-',
-          site: item.site_place_name,
-          visitor_status: item.visitor_status,
-        }));
-
-        setInvitationDetailVisitor(mapped);
-
-        const notDoneInvitations = data.filter(
-          (inv: any) => inv.is_praregister_done === null || inv.is_praregister_done === false,
-        );
-
-        if (notDoneInvitations.length > 0) {
-          setPendingInvitationCount(notDoneInvitations.length);
-          setOpenAlertInvitation(true);
-        }
-      } catch (error) {
-        // console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const { data: quickAccessResult, isLoading: isLoadingQuickAccess } = useQuickAccessPagination({
-    page: quickPage,
-    rowsPerPage: quickRowsPerPage,
-    search: quickSearch,
+  const {
+    data: todayVisitorsRes,
+    isLoading: loadingTodayVisitors,
+    refetch: refetchTodayVisitors,
+  } = useQuery({
+    queryKey: ['today-visitors', startDate, endDate],
+    queryFn: () =>
+      getTodayVisitors({
+        today: 'true',
+        // today: 'false',
+        // startDate: formatLocalDate(startDate),
+        // endDate: formatLocalDate(endDate),
+        start: 0,
+        length: 5,
+        sortDir: 'desc',
+      }),
   });
 
-  const processedQuickAccessData = useMemo(() => {
-    if (!quickAccessResult?.collection) return [];
+  const {
+    data: currentlyVisitingRes,
+    isLoading: loadingCurrentlyVisiting,
+    refetch: refetchCurrentlyVisiting,
+  } = useQuery({
+    queryKey: ['currently-visiting', startDate, endDate],
+    queryFn: () =>
+      getCurrentlyVisiting({
+        today: 'true',
+        // startDate: formatLocalDate(startDate),
+        // endDate: formatLocalDate(endDate),
+        start: 0,
+        length: 5,
+        sort_dir: 'desc',
+      }),
+  });
 
-    return quickAccessResult.collection
-      .map((item: any) => {
-        const isExpired =
-          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+  const invitationMonitoringData =
+    todayVisitorsRes?.collection?.slice(0, 5).map((item: any) => ({
+      id: item.id,
+      name: item.visitor_name,
+      email: item.visitor_email,
+      visitor_period_start: item.visitor_period_start,
+      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+      host: item.host_name ?? '-',
+      site: item.site_place_name,
+      visitor_status: item.visitor_status,
+    })) ?? [];
 
-        return {
-          id: item.id,
-          visitor_type: item.visitor_type_name || '-',
-          name_courier: item.visitor_name || '-',
-          // identity_id: item.visitor_identity_id || '-',
-          email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
-          receiver_name: item.receiver_name || '-',
-          invitation_code: item.invitation_code || '-',
-          phone: item.visitor_phone || '-',
-          visitor_period_start: item.visitor_period_start || '-',
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          invitation_created_at: item.invitation_created_at,
-          host: item.host ?? '-',
-          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
-        };
-      })
-      .sort((a: any, b: any) => {
-        const dateA = a.invitation_created_at ?? a.visitor_period_start;
-        const dateB = b.invitation_created_at ?? b.visitor_period_start;
-
-        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
-      })
-      .map(({ invitation_created_at, ...rest }: any) => rest);
-  }, [quickAccessResult]);
+  const currentlyVisiting =
+    currentlyVisitingRes?.collection?.slice(0, 5).map((item: any) => ({
+      id: item.id,
+      name: item.visitor_name,
+      email: item.visitor_email,
+      visitor_period_start: item.visitor_period_start,
+      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+      host: item.host_name ?? '-',
+      site: item.site_place_name,
+      visitor_status: item.visitor_status,
+    })) ?? [];
 
   const handleView = (row: any) => {
     setSelectedInvitationId(row.id);
@@ -499,24 +483,6 @@ const DashboardEmployee = () => {
     }
   };
 
-  const handleCreateQuickAccess = async (payload: any) => {
-    try {
-      setIsGenerating(true);
-      await createQuickAccess.mutateAsync(payload);
-      showSwal('success', t('createSuccess', { name: 'Quick Access' }));
-    } catch (error: any) {
-      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
-      throw error;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleQuickSearch = useCallback((keyword: string) => {
-    setQuickPage(0);
-    setQuickSearch(keyword);
-  }, []);
-
   const handleOpenApprovalDialog = async (row: any) => {
     try {
       setSelectedId(row.ticket_id);
@@ -595,20 +561,20 @@ const DashboardEmployee = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const {
-    data: activities,
-    isLoading: isLoadingActivities,
-    isFetching: isFetchingActivities,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch: refetchActivities,
-  } = useActivities({
-    start_date: formatLocalDate(startDate),
-    end_date: formatLocalDate(endDate),
-  });
+  // const {
+  //   data: activities,
+  //   isLoading: isLoadingActivities,
+  //   isFetching: isFetchingActivities,
+  //   isFetchingNextPage,
+  //   hasNextPage,
+  //   fetchNextPage,
+  //   refetch: refetchActivities,
+  // } = useActivities({
+  //   start_date: formatLocalDate(startDate),
+  //   end_date: formatLocalDate(endDate),
+  // });
 
-  const activites = activities?.activities ?? [];
+  // const activites = activities?.activities ?? [];
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -637,44 +603,98 @@ const DashboardEmployee = () => {
     },
   ];
 
-  const todaySchedules = [
-    {
-      id: '1',
-      time: '09:00',
-      visitorName: 'John Doe',
-      company: 'ABC Corp',
-      agenda: 'General Meeting',
-      location: 'Main Lobby',
-      status: 'Check In' as const,
-    },
-    {
-      id: '2',
-      time: '11:30',
-      visitorName: 'Sarah Lee',
-      company: 'XYZ Ltd',
-      agenda: 'Business Meeting',
-      location: 'Meeting Room 1',
-      status: 'Expected' as const,
-    },
-    {
-      id: '3',
-      time: '14:00',
-      visitorName: 'Michael Tan',
-      company: 'Tech Solutions',
-      agenda: 'Project Discussion',
-      location: 'Meeting Room 2',
-      status: 'Upcoming' as const,
-    },
-    {
-      id: '4',
-      time: '16:00',
-      visitorName: 'Robert Wilson',
-      company: 'Acme Co',
-      agenda: 'Partnership Meeting',
-      location: 'Meeting Room 3',
-      status: 'Upcoming' as const,
-    },
-  ];
+  // const todaySchedules = [
+  //   {
+  //     id: '1',
+  //     time: '09:00',
+  //     visitorName: 'John Doe',
+  //     company: 'ABC Corp',
+  //     agenda: 'General Meeting',
+  //     location: 'Main Lobby',
+  //     status: 'Check In' as const,
+  //   },
+  //   {
+  //     id: '2',
+  //     time: '11:30',
+  //     visitorName: 'Sarah Lee',
+  //     company: 'XYZ Ltd',
+  //     agenda: 'Business Meeting',
+  //     location: 'Meeting Room 1',
+  //     status: 'Expected' as const,
+  //   },
+  //   {
+  //     id: '3',
+  //     time: '14:00',
+  //     visitorName: 'Michael Tan',
+  //     company: 'Tech Solutions',
+  //     agenda: 'Project Discussion',
+  //     location: 'Meeting Room 2',
+  //     status: 'Upcoming' as const,
+  //   },
+  //   {
+  //     id: '4',
+  //     time: '16:00',
+  //     visitorName: 'Robert Wilson',
+  //     company: 'Acme Co',
+  //     agenda: 'Partnership Meeting',
+  //     location: 'Meeting Room 3',
+  //     status: 'Upcoming' as const,
+  //   },
+  // ];
+
+  const mapScheduleStatus = (status?: string): any => {
+    switch (status) {
+      case 'Available':
+        return 'Available';
+
+      case 'Rejected':
+        return 'Rejected';
+
+      case 'Denied':
+        return 'Denied';
+
+      case 'Checkin':
+        return 'Check In';
+
+      case 'Preregis':
+        return 'Preregis';
+
+      case 'Checkout':
+        return 'Check Out';
+
+      case 'Cancelled':
+      case 'Canceled':
+        return 'Cancelled';
+
+      default:
+        return 'Upcoming';
+    }
+  };
+
+  const {
+    data: dashboardScheduleRes,
+    isLoading: loadingDashboardSchedule,
+    refetch: refetchDashboardSchedule,
+  } = useQuery({
+    queryKey: ['dashboard-schedule'],
+    queryFn: () =>
+      getDashboardSchedule({
+        today: true,
+      }),
+  });
+  const userTimezone = dayjs.tz.guess();
+
+  const todaySchedules: any[] =
+    dashboardScheduleRes?.collection?.map((item: any) => ({
+      id: item.id,
+      time: dayjs.utc(item.visitor_period_start).tz(userTimezone).format('HH:mm'),
+      timeEnd: dayjs.utc(item.visitor_period_end).tz(userTimezone).format('HH:mm'),
+      visitorName: item.list_visitor?.[0]?.visitor_name ?? '-',
+      company: item.host_organization_name ?? '-',
+      agenda: item.agenda ?? '-',
+      location: item.site_place_name ?? '-',
+      status: mapScheduleStatus(item.transaction_status),
+    })) ?? [];
 
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
@@ -731,7 +751,7 @@ const DashboardEmployee = () => {
               isHaveChecked={true}
               isHaveAction={true}
               isHaveViewAll={true}
-              isHaveFilterData={true}
+              isHaveFilterData={false}
               filterDataValue={approvalStatus}
               filterDataOptions={[
                 {
@@ -778,35 +798,13 @@ const DashboardEmployee = () => {
               minHeight: 0,
             }}
           >
-            <LastVisitsCard
-              activites={activites}
-              loading={isLoadingActivities}
-              loadingMore={isFetchingNextPage}
-              hasNextPage={hasNextPage}
-              onLoadMore={fetchNextPage}
-              onRefresh={() => refetchActivities()}
-              refreshing={isFetchingActivities && !isFetchingNextPage}
-            />
-          </Grid>
-        </Grid>
-
-        <Grid
-          container
-          spacing={2}
-          alignItems="stretch"
-          sx={{
-            width: '100%',
-          }}
-        >
-          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
             <DynamicTable
-              data={invitationDetailVisitor}
+              loading={loadingTodayVisitors}
+              data={invitationMonitoringData}
               height={'100%'}
               isHavePagination={false}
               overflowX="auto"
               isHaveChecked={false}
-              // isHaveView={true}
-              // isHaveAction={true}
               isHaveHeaderTitle
               isNoActionTableHead
               isHavePeriod={true}
@@ -820,25 +818,54 @@ const DashboardEmployee = () => {
                 navigate('/employee/my-invitation');
               }}
             />
+            {/* <LastVisitsCard
+              activites={activites}
+              loading={isLoadingActivities}
+              loadingMore={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              onRefresh={() => refetchActivities()}
+              refreshing={isFetchingActivities && !isFetchingNextPage}
+            /> */}
+          </Grid>
+        </Grid>
+
+        <Grid
+          container
+          spacing={2}
+          alignItems="stretch"
+          sx={{
+            width: '100%',
+            pb: 2
+          }}
+        >
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
+            <DynamicTable
+              loading={loadingCurrentlyVisiting}
+              data={currentlyVisiting}
+              height={'100%'}
+              isHavePagination={false}
+              overflowX="auto"
+              isHaveChecked={false}
+              isHaveHeaderTitle
+              isNoActionTableHead
+              isHavePeriod={true}
+              // onView={(row: any) => handleView(row)}
+              titleHeader="Currently Visiting"
+              // isHaveAddEmpty={true}
+              // addDataText="Create Invitation"
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/my-invitation');
+              }}
+            />
           </Grid>
           {/* Today Schedule */}
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
-            {/* <DynamicTable
-              loading={isLoadingShareLink}
-              height={'100%'}
-              overflowX="auto"
-              data={[]}
-              isHaveChecked={true}
-              isNoActionTableHead
-              titleHeader="Today Schedule"
-              isHaveHeaderTitle={true}
-              isHaveViewAll={true}
-              defaultRowsPerPage={5}
-            /> */}
             <TodayScheduleCard
               schedules={todaySchedules}
               onViewAll={() => {
-                navigate('/employee/schedule');
+                navigate('/');
               }}
             />
           </Grid>
@@ -858,20 +885,6 @@ const DashboardEmployee = () => {
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
         pendingInvitationCount={pendingInvitationCount}
-      />
-
-      <QuickAccessDialog
-        open={openQuickAccess}
-        onClose={() => setOpenQuickAccess(false)}
-        visitorTableData={processedQuickAccessData}
-        loading={isLoadingQuickAccess}
-        onSubmit={handleCreateQuickAccess}
-        page={quickPage}
-        setPage={setQuickPage}
-        setRowsPerPage={setQuickRowsPerPage}
-        searchKeyword={quickSearch}
-        onSearch={handleQuickSearch}
-        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
 
       {/* List Share Link */}

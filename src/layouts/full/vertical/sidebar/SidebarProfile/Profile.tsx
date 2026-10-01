@@ -5,7 +5,6 @@ import { IconPower } from '@tabler/icons-react';
 import { AppState } from 'src/store/Store';
 import { useNavigate } from 'react-router-dom'; // gunakan useNavigate
 import { useCallback } from 'react';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { revokeToken } from 'src/customs/api/users';
 

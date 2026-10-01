@@ -26,6 +26,15 @@ function VisitorRow({
     Approve: '#21c45d', // hijau
     Pracheckin: '#21c45d', // hijau
   };
+  const statusLabelMap: Record<string, string> = {
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
+    Block: 'Blocked',
+    Deny: 'Denied',
+    Approve: 'Approved',
+    Cancelled: 'Canceled',
+    Pracheckin: 'Precheckin',
+  };
   const { data: profile } = useProfile();
   const isAdmin = profile?.group_name === 'Admin';
   return (
@@ -90,7 +99,7 @@ function VisitorRow({
               backgroundColor: statusBgMap[visitor.visitor_status] ?? '#757575',
             }}
           >
-            {visitor.visitor_status}
+            {statusLabelMap[visitor.visitor_status] || visitor.visitor_status}
           </Box>
         </TableCell>
 
