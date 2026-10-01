@@ -36,6 +36,7 @@ type AccessCard = {
   cardNumber: string;
   cardBarcode: string;
   cardType: string;
+  site: string;
   cardStatus: string;
   issuedBy: string;
   issuedAt: string;
@@ -49,7 +50,6 @@ type AnalyticsSettings = {
   cctv: boolean;
 };
 
-
 const cards: AccessCard[] = [
   {
     id: 'f7fbff62-8d8c-4ce2-824f-5a2ae9547f0c',
@@ -57,6 +57,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937040',
     cardType: 'Barcode',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Admins',
     issuedAt: '06:36:15',
     currentUsed: true,
@@ -68,6 +69,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937041',
     cardType: 'Barcode',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Admins',
     issuedAt: '06:38:21',
     currentUsed: false,
@@ -79,6 +81,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937042',
     cardType: 'BLE',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Security',
     issuedAt: '06:40:12',
     currentUsed: true,
@@ -90,6 +93,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937043',
     cardType: 'Barcode',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Admins',
     issuedAt: '06:42:10',
     currentUsed: false,
@@ -101,6 +105,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937044',
     cardType: 'Barcode',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Admins',
     issuedAt: '06:43:31',
     currentUsed: false,
@@ -112,6 +117,7 @@ const cards: AccessCard[] = [
     cardBarcode: '1769937045',
     cardType: 'BLE',
     cardStatus: 'Available',
+    site: 'Main Building',
     issuedBy: 'Security',
     issuedAt: '06:45:02',
     currentUsed: true,
@@ -213,17 +219,14 @@ const detections = [
   },
 ];
 
-
-
 const Security = () => {
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLButtonElement | null>(null);
 
   const [settings, setSettings] = useState<AnalyticsSettings>({
-    log: true,
-    deviceId: true,
+    log: false,
+    deviceId: false,
     cctv: false,
   });
-
 
   const handleOpenSettings = (event: React.MouseEvent<HTMLButtonElement>) => {
     setSettingsAnchor(event.currentTarget);
@@ -241,6 +244,26 @@ const Security = () => {
   };
 
   const isSettingsOpen = Boolean(settingsAnchor);
+
+  // const [settings, setSettings] = useState({
+  //   log: false,
+  //   cctv: false,
+  // });
+
+  const [logDevice, setLogDevice] = useState('');
+  const [cctvDevice, setCctvDevice] = useState('');
+
+  const logDevices = [
+    { value: 'device-01', label: 'Device 01' },
+    { value: 'device-02', label: 'Device 02' },
+    { value: 'device-03', label: 'Device 03' },
+  ];
+
+  const cctvDevices = [
+    { value: 'cctv-01', label: 'CCTV Main Entrance' },
+    { value: 'cctv-02', label: 'CCTV Lobby' },
+    { value: 'cctv-03', label: 'CCTV Parking Area' },
+  ];
 
   return (
     <Container title="Security">
@@ -425,68 +448,133 @@ const Security = () => {
           {/* Options */}
 
           <Stack sx={{ py: 0.75 }}>
-            {/* LOG */}
+            {/* LOG DEV */}
 
-            <FormControlLabel
-              sx={{
-                mx: 0,
-                px: 1.5,
-                py: 0.5,
+            <Box>
+              <FormControlLabel
+                sx={{
+                  mx: 0,
+                  px: 1.5,
+                  py: 0.5,
 
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={settings.log}
-                  onChange={() => handleSettingChange('log')}
-                />
-              }
-              label={
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <IconId size={17} />
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.log}
+                    onChange={() => handleSettingChange('log')}
+                  />
+                }
+                label={
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <IconId size={17} />
 
-                  <Typography variant="body2">Log Dev</Typography>
-                </Stack>
-              }
-            />
+                    <Typography variant="body2">Log Dev</Typography>
+                  </Stack>
+                }
+              />
+
+              {/* LOG DROPDOWN */}
+
+              {settings.log && (
+                <Box
+                  sx={{
+                    px: 5,
+                    pb: 1,
+                  }}
+                >
+                  <Select
+                    fullWidth
+                    size="small"
+                    value={logDevice}
+                    onChange={(event) => setLogDevice(event.target.value)}
+                    displayEmpty
+                    sx={{
+                      borderRadius: 1.5,
+                      fontSize: 13,
+                    }}
+                  >
+                    <MenuItem value="">Select Log Dev</MenuItem>
+
+                    {logDevices.map((device) => (
+                      <MenuItem key={device.value} value={device.value}>
+                        {device.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+              )}
+            </Box>
 
             {/* CCTV */}
 
-            <FormControlLabel
-              sx={{
-                mx: 0,
-                px: 1.5,
-                py: 0.5,
+            <Box>
+              <FormControlLabel
+                sx={{
+                  mx: 0,
+                  px: 1.5,
+                  py: 0.5,
 
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={settings.cctv}
-                  onChange={() => handleSettingChange('cctv')}
-                />
-              }
-              label={
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <IconCamera size={17} />
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={settings.cctv}
+                    onChange={() => handleSettingChange('cctv')}
+                  />
+                }
+                label={
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <IconCamera size={17} />
 
-                  <Typography variant="body2">CCTV</Typography>
-                </Stack>
-              }
-            />
+                    <Typography variant="body2">CCTV</Typography>
+                  </Stack>
+                }
+              />
+
+              {/* CCTV DROPDOWN */}
+
+              {settings.cctv && (
+                <Box
+                  sx={{
+                    px: 5,
+                    pb: 1,
+                  }}
+                >
+                  <Select
+                    fullWidth
+                    size="small"
+                    value={cctvDevice}
+                    onChange={(event) => setCctvDevice(event.target.value)}
+                    displayEmpty
+                    sx={{
+                      borderRadius: 1.5,
+                      fontSize: 13,
+                    }}
+                  >
+                    <MenuItem value="">Select CCTV</MenuItem>
+
+                    {cctvDevices.map((device) => (
+                      <MenuItem key={device.value} value={device.value}>
+                        {device.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+              )}
+            </Box>
           </Stack>
         </Popover>
       </Box>
     </Container>
   );
 };
-
 
 type AccessPanelProps = {
   cards: AccessCard[];
@@ -587,7 +675,7 @@ const AccessPanel = ({ cards }: AccessPanelProps) => {
               size={{
                 xs: 12,
                 sm: 6,
-                md: 6,
+                lg: 4,
               }}
             >
               <AccessCardItem card={card} />
@@ -699,6 +787,17 @@ const AccessCardItem = ({ card }: AccessCardItemProps) => {
 
             <Typography variant="caption" fontWeight={600}>
               {card.cardType}
+            </Typography>
+          </Stack>
+
+          {/* Site */}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="caption" color="text.secondary">
+              Site
+            </Typography>
+
+            <Typography variant="caption" fontWeight={600}>
+              {card.site}
             </Typography>
           </Stack>
 
@@ -844,7 +943,7 @@ const AnalyticsPanel = ({ settings }: AnalyticsPanelProps) => {
 
       <Box
         sx={{
-          p: 1.5,
+          p: 0,
           flex: 1,
           minHeight: 0,
         }}
@@ -1200,8 +1299,6 @@ const AnalyticsImageCard = ({
           />
         </Stack>
       </Box>
-
-
 
       <Box
         sx={{

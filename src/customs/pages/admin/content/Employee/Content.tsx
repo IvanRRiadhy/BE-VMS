@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import {  useState, useCallback, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -158,73 +158,6 @@ const Content = () => {
 
     handleOpenDialog();
   };
-
-  // const handleEdit = async (id: string) => {
-  //   const existingData = await getEmployeeById(String(id));
-  //   // const existingData = employeeQuery.data?.collection.find(
-  //   //   (item) => item.id === id
-  //   // );
-  //   if (!existingData) return;
-
-  //   const toNum = (
-  //     v: unknown,
-  //     map: Record<string, number> = {},
-  //     fallback: number | undefined = 0,
-  //   ) => {
-  //     if (v === '' || v == null) return fallback;
-  //     if (typeof v === 'number' && Number.isFinite(v)) return v;
-  //     if (typeof v === 'boolean') return v ? 1 : 0;
-
-  //     if (typeof v === 'string') {
-  //       const t = v.trim().toLowerCase();
-
-  //       if (t in map) return map[t];
-
-  //       const n = Number(t);
-  //       return Number.isFinite(n) ? n : fallback;
-  //     }
-
-  //     return fallback;
-  //   };
-
-  //   const coerceEmployee = (s: any) => ({
-  //     ...s,
-  //     gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
-
-  //     status_employee: toNum(
-  //       s?.status_employee,
-  //       {
-  //         active: 1,
-  //         'non active': 2,
-  //         nonactive: 2,
-  //         inactive: 2,
-  //         '0': 0,
-  //         '1': 1,
-  //         '2': 2,
-  //       },
-  //       0,
-  //     ),
-
-  //     organization_id: String(s?.organization_id ?? ''),
-  //     department_id: String(s?.department_id ?? ''),
-  //     district_id: String(s?.district_id ?? ''),
-  //   });
-
-  //   const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(existingData.collection));
-
-  //   if (isDirty) {
-  //     setPendingEditId(id);
-  //     setConfirmDialogOpen(true);
-  //     return;
-  //   }
-
-  //   setEdittingId(id);
-  //   setFormDataAddEmployee(parsedData);
-  //   setInitialFormData(parsedData);
-  //   setIsDirty(false);
-
-  //   handleOpenDialog();
-  // };
 
   const handleEdit = async (id: string) => {
     try {

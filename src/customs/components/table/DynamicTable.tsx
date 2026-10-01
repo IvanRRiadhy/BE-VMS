@@ -45,6 +45,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { TableBodyContent } from './TableBody';
 import SearchToolbar from './components/SearchToolbar';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 type HeaderItem = { name: string };
 
@@ -97,6 +98,14 @@ type DynamicTableProps<
   onPrint?: () => void;
   isHaveBlacklist?: boolean;
   onBlacklist?: (row: T) => void;
+  filterDataOptions?: {
+    label: string;
+    value: string;
+  }[];
+
+  filterDataValue?: string;
+
+  onFilterDataChange?: (value: string) => void;
   isHaveVisitor?: boolean;
   isButtonRegisteredSite?: boolean;
   isCopy?: boolean;
@@ -187,6 +196,7 @@ type DynamicTableProps<
   onNavigatePage?: any;
   onDuplicate?: (row: T) => void;
   selectedHeaderItem?: string;
+  isHaveFilterData?: boolean;
   onCopy?: (row: T) => void;
   onCopyLink?: (row: T) => void;
   onDetailLink?: (row: T) => void;
@@ -243,6 +253,7 @@ function DynamicTableBase<
     isHaveActionOnlyEdit = false,
     isSelectedType = false,
     triggerCheckAll = false,
+    isHaveFilterData = false,
     borderRadius,
     isHaveVisitor = false,
     isHaveDuplicate = false,
@@ -261,6 +272,9 @@ function DynamicTableBase<
     isHavePrint = false,
     currentPage = 0,
     isHaveExportPdf = false,
+    filterDataOptions = [],
+    filterDataValue = '',
+    onFilterDataChange,
     addDataText,
     isHaveExportXlf = false,
     isHaveImportExcel = false,
@@ -1031,6 +1045,37 @@ function DynamicTableBase<
                 }}
               >
                 <Stack direction="row" spacing={0.5} alignItems="center" flexWrap={'wrap'} gap={0}>
+                  {isHaveFilterData && filterDataOptions.length > 0 && (
+                    <Box>
+                      <CustomSelect
+                        size="small"
+                        value={filterDataValue}
+                        onChange={(e: any) => {
+                          onFilterDataChange?.(e.target.value);
+                        }}
+                        displayEmpty
+                        sx={{
+                          minWidth: 130,
+                          height: 36,
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Typography fontSize="0.8rem" variant="caption">
+                            All Status
+                          </Typography>
+                        </MenuItem>
+
+                        {filterDataOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            <Typography fontSize="0.7rem" variant="caption">
+                              {option.label}
+                            </Typography>
+                          </MenuItem>
+                        ))}
+                      </CustomSelect>
+                    </Box>
+                  )}
                   {/* view all */}
                   {isHaveViewAll && (
                     <Box>

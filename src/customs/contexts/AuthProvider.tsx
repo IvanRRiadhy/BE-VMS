@@ -154,7 +154,10 @@
 //   return ctx;
 // };
 
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { getProfile } from '../api/users';
+
+
 
 interface AuthUser {
   user_id: string;
@@ -183,40 +186,44 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('vms_authenticated') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  const [loading, setLoading] = useState(false);
-
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const savedUser = sessionStorage.getItem('vms_user');
-
-    if (!savedUser) {
-      return null;
-    }
-
+  /**
+   * Restore authentication from HttpOnly cookie
+   */
+  const initializeAuth = useCallback(async () => {
     try {
-      return JSON.parse(savedUser);
+      const profile = await getProfile();
+
+      if (profile?.collection) {
+        setUser(profile.collection);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } catch {
-      sessionStorage.removeItem('vms_authenticated');
-      return null;
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
     }
-  });
+  }, []);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   const setAuthenticated = useCallback((user: AuthUser) => {
     setUser(user);
     setIsAuthenticated(true);
-
-    sessionStorage.setItem('vms_authenticated', 'true');
-    sessionStorage.setItem('vms_user', JSON.stringify(user));
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     setIsAuthenticated(false);
-
-    sessionStorage.removeItem('vms_authenticated');
   }, []);
 
   return (

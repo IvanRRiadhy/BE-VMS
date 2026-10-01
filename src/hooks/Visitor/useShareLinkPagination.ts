@@ -51,9 +51,9 @@ export const useShareLinkPagination = ({ page, rowsPerPage, search, sortDir }: P
       };
     },
 
-    staleTime: 0,
-    gcTime: 0,
-    refetchInterval: 5000,
+    // staleTime: 0,
+    // gcTime: 0,
+    // refetchInterval: 5000,
     refetchIntervalInBackground: false,
     refetchOnMount: true,
     refetchOnWindowFocus: true,

@@ -10,11 +10,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import {
-  IconHourglass,
-  IconUsers,
-  IconX,
-} from '@tabler/icons-react';
+import { IconHourglass, IconUsers, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
@@ -62,6 +58,8 @@ import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 import VisitorInvitationActions from './components/VisitorInvitationActions';
+import { undefined } from 'zod';
+import TodayScheduleCard from './components/TodayScheduleCard';
 
 const DashboardEmployee = () => {
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
@@ -164,19 +162,20 @@ const DashboardEmployee = () => {
 
   const shareLinkDialogList = shareLinkDialogData?.collection ?? [];
   const totalFilteredRecords = shareLinkDialogData?.RecordsFiltered ?? 0;
-
+  const [approvalStatus, setApprovalStatus] = useState<string>('');
   const {
     data: approvalRes,
     refetch: refetchApproval,
     isFetching: loadingApproval,
   } = useQuery({
-    queryKey: ['approval', page, rowsPerPage, debouncedKeyword, sortDir],
+    queryKey: ['approval', page, rowsPerPage, debouncedKeyword, sortDir, approvalStatus],
     queryFn: async () => {
       return await getApprovalTicket({
         start: page * rowsPerPage,
         length: rowsPerPage,
         sort_dir: sortDir,
         keyword: debouncedKeyword,
+        approval_status: approvalStatus,
       });
     },
   });
@@ -637,6 +636,46 @@ const DashboardEmployee = () => {
       icon: <IconUsers size={30} />,
     },
   ];
+
+  const todaySchedules = [
+    {
+      id: '1',
+      time: '09:00',
+      visitorName: 'John Doe',
+      company: 'ABC Corp',
+      agenda: 'General Meeting',
+      location: 'Main Lobby',
+      status: 'Check In' as const,
+    },
+    {
+      id: '2',
+      time: '11:30',
+      visitorName: 'Sarah Lee',
+      company: 'XYZ Ltd',
+      agenda: 'Business Meeting',
+      location: 'Meeting Room 1',
+      status: 'Expected' as const,
+    },
+    {
+      id: '3',
+      time: '14:00',
+      visitorName: 'Michael Tan',
+      company: 'Tech Solutions',
+      agenda: 'Project Discussion',
+      location: 'Meeting Room 2',
+      status: 'Upcoming' as const,
+    },
+    {
+      id: '4',
+      time: '16:00',
+      visitorName: 'Robert Wilson',
+      company: 'Acme Co',
+      agenda: 'Partnership Meeting',
+      location: 'Meeting Room 3',
+      status: 'Upcoming' as const,
+    },
+  ];
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <DashboardEmployeeActionBar
@@ -692,6 +731,31 @@ const DashboardEmployee = () => {
               isHaveChecked={true}
               isHaveAction={true}
               isHaveViewAll={true}
+              isHaveFilterData={true}
+              filterDataValue={approvalStatus}
+              filterDataOptions={[
+                {
+                  label: 'Pending',
+                  value: 'Pending',
+                },
+                {
+                  label: 'Approved',
+                  value: 'Approved',
+                },
+                {
+                  label: 'Rejected',
+                  value: 'Rejected',
+                },
+                {
+                  label: 'Cancelled',
+                  value: 'Cancelled',
+                },
+              ]}
+              onFilterDataChange={(value) => {
+                setApprovalStatus(value);
+                setPage(0);
+              }}
+              // isHaveFilter={true}
               onHaveViewAll={() => {
                 navigate('/employee/approval');
               }}
@@ -732,7 +796,6 @@ const DashboardEmployee = () => {
           alignItems="stretch"
           sx={{
             width: '100%',
-       
           }}
         >
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
@@ -758,8 +821,9 @@ const DashboardEmployee = () => {
               }}
             />
           </Grid>
+          {/* Today Schedule */}
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
-            <DynamicTable
+            {/* <DynamicTable
               loading={isLoadingShareLink}
               height={'100%'}
               overflowX="auto"
@@ -770,6 +834,12 @@ const DashboardEmployee = () => {
               isHaveHeaderTitle={true}
               isHaveViewAll={true}
               defaultRowsPerPage={5}
+            /> */}
+            <TodayScheduleCard
+              schedules={todaySchedules}
+              onViewAll={() => {
+                navigate('/employee/schedule');
+              }}
             />
           </Grid>
         </Grid>
@@ -888,44 +958,6 @@ const DashboardEmployee = () => {
         onClose={() => setOpenSendEmail(false)}
         onSend={handleSendEmail}
       />
-      {/* Praregister */}
-      {/* <Dialog
-        open={openDialogInvitation}
-        onClose={() => setOpenDialogInvitation(false)}
-        fullWidth
-        maxWidth="xl"
-      >
-        <DialogTitle>Fill Praregister</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDialogInvitation(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {selectedInvitationId ? (
-            <FormDialogInvitation
-              id={selectedInvitationId}
-              onClose={() => setOpenDialogInvitation(false)}
-              onSubmitted={() => {
-                setOpenDialogInvitation(false);
-                // setInvitationDetailVisitor([]);
-              }}
-              onSubmitting={setSubmitting}
-            />
-          ) : (
-            <Typography variant="body2" textAlign="center" color="text.secondary">
-              No invitation selected.
-            </Typography>
-          )}
-        </DialogContent>
-      </Dialog> */}
 
       <ApprovalVisitorGroupDialog
         open={openDialog}
