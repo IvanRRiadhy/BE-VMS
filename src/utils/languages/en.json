@@ -237,5 +237,9 @@
   "registerVisitor": "Register Visitor",
   "registerVisitorDescription": "Employee fills visitor information",
   "unassignEmployeeConfirm": "Are you sure you want to unassign this employee?",
-  "visitorMinimum": "Please enter at least 1 visitor."
+  "visitorMinimum": "Please enter at least 1 visitor.",
+  "visitorArrivingByVehicle": "Are you arriving by vehicle?",
+  "vehicleType": "Vehicle Type",
+  "licensePlateNumber": "License Plate Number",
+  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual"
 }

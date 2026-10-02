@@ -142,11 +142,32 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   icon: IconBrandMedium,
       //   href: '/admin/manage/brand',
       // },
+
       {
         id: uniqueId(),
-        title: 'navigation.integration',
-        icon: IconWorldCog,
+        title: 'Integration',
+        icon: IconPackageExport,
         href: '/admin/manage/integration',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'navigation.integration',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration',
+          },
+          {
+            id: uniqueId(),
+            title: 'Event Logs',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration/event-logs',
+          },
+          {
+            id: uniqueId(),
+            title: 'Event Subscription',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration/event-subscription',
+          },
+        ],
       },
       {
         id: uniqueId(),

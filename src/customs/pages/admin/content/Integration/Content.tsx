@@ -384,7 +384,7 @@ const Content = () => {
                 onSearch={handleSearch}
               />
             </Grid>
-            <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
+            <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 1 }} justifyContent={'center'}>
               {availableIntegration.map((integration: any, index: any) => (
                 <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
                   <IntegrationCard integration={integration} onAdd={handleAdd} />

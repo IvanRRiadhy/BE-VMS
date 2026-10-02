@@ -236,5 +236,9 @@
   "registerVisitor": "Daftarkan Pengunjung",
   "registerVisitorDescription": "Karyawan mengisi informasi pengunjung",
   "unassignEmployeeConfirm": "Apakah Anda yakin ingin membatalkan penugasan karyawan ini?",
-  "visitorMinimum": "Minimal isi 1 data visitor."
+  "visitorMinimum": "Minimal isi 1 data visitor.",
+  "visitorArrivingByVehicle": "Apakah Anda datang menggunakan kendaraan?",
+  "vehicleType": "Jenis Kendaraan",
+  "licensePlateNumber": "Nomor Plat Kendaraan",
+  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual"
 }

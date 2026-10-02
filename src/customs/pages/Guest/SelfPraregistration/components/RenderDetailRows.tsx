@@ -552,6 +552,21 @@ const RenderDetailRows = ({
   };
 
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  const getDisplayText = (item: any) => {
+    const remark = (item.remarks || '').toLowerCase();
+
+    switch (remark) {
+      case 'is_driving':
+        return t('visitorArrivingByVehicle');
+      case 'vehicle_id':
+        return t('vehicleType');
+      case 'vehicle_plate':
+        return t('licensePlateNumber');
+
+      default:
+        return item.long_display_text;
+    }
+  };
 
   const handleRemoveFileForField = async (
     currentUrl: string,
@@ -615,7 +630,6 @@ const RenderDetailRows = ({
   return (
     <>
       {filteredDetails.map((item, index) => {
-        // const key = `${activeStep - 1}:${item.id}`;
         const originalIndex = details.findIndex((d) => d.id === item.id);
         const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
 
@@ -639,7 +653,7 @@ const RenderDetailRows = ({
               {!isVisitorPeriodPair && (
                 <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                   <Typography variant="subtitle2" fontWeight={600}>
-                    {item.long_display_text}
+                    {getDisplayText(item)}
                     {item.mandatory && (
                       <Typography component="span" color="error" sx={{ ml: 0.5 }}>
                         *
@@ -705,7 +719,7 @@ const RenderDetailRows = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Choose or write manually agenda"
+                              placeholder={t('choose_or_write_agenda_manually')}
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}

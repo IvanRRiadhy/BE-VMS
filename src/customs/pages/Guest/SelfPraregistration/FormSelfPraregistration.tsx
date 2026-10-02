@@ -1539,7 +1539,7 @@ const FormSelfPraregistration = ({
                 renderInput={(params) => (
                   <CustomTextField
                     {...params}
-                    placeholder="Choose or write manually agenda"
+                    placeholder={t('choose_or_write_agenda_manually')}
                     fullWidth
                     error={!!errorMessage}
                     helperText={errorMessage}

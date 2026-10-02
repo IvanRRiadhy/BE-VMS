@@ -146,6 +146,12 @@ const ManageVisitorType = Loadable(
 const ManageIntegration = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Integration/Content')),
 );
+const ManageEventLogs = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/EventLogs/Content')),
+);
+const ManageEventSubscriptions = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/EventSubscriptions/Content')),
+);
 const ManageIntegrationDetail = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Integration/ManageIntegrationDetail')),
 );
@@ -462,6 +468,11 @@ const Router = [
           { path: '/admin/approval-workflow', element: <ManageApprove /> },
           { path: '/admin/manage/brand', element: <ManageBrand /> },
           { path: '/admin/manage/integration', element: <ManageIntegration /> },
+          { path: '/admin/manage/integration/event-logs', element: <ManageEventLogs /> },
+          {
+            path: '/admin/manage/integration/event-subscription',
+            element: <ManageEventSubscriptions />,
+          },
           { path: '/admin/manage/visitor-role', element: <ManageVisitorRole /> },
           { path: '/admin/manage/visitor-providers', element: <ManageVisitorProviders /> },
           { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },

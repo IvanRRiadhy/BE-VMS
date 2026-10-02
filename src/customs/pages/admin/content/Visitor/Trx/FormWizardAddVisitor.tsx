@@ -2567,10 +2567,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             ? visibilityMap[remark]
             : true;
 
-          // Field tidak terlihat -> tidak perlu divalidasi
           if (!isVisible) return;
 
-          // Mandatory normal + conditional mandatory
           if (!isFieldMandatory(item, visibilityMap)) return;
 
           const fieldId = item.custom_field_id || item.id;
@@ -2655,6 +2653,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     return nodes.map(processNode).filter(Boolean);
   };
+
+    const getDisplayText = (item: any) => {
+      const remark = (item.remarks || '').toLowerCase();
+
+      switch (remark) {
+        case 'is_driving':
+          return t('visitorArrivingByVehicle');
+        case 'vehicle_id':
+          return t('vehicleType');
+        case 'vehicle_plate':
+          return t('licensePlateNumber');
+
+        default:
+          return item.long_display_text;
+      }
+    };
+
 
   const renderDetailRows = (
     details: FormVisitor[] | any,
@@ -2766,7 +2781,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  {item.long_display_text}
+                  {getDisplayText(item)}
                   {item.mandatory && (
                     <Typography component="span" color="error" sx={{ ml: 0.5 }}>
                       *
