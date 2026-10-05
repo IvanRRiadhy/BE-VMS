@@ -66,3 +66,50 @@ export const deleteIntegrationEventInstance = async (id: string) => {
     throw error;
   }
 };
+
+export const getSourceIpsotek = async (integrationId: string) => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration/event-instance/source/${integrationId}/ipsotek`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// get source Honeywell
+export const getSourceHoneywell = async (integrationId: string) => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration/event-instance/source/${integrationId}/honeywell`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// get source parking
+export const getSourceParking = async (integrationId: string) => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration/event-instance/source/${integrationId}/parking`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// get source tracking-ble
+export const getSourceTrackingBle = async (integrationId: string) => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration/event-instance/source/${integrationId}/tracking-ble`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

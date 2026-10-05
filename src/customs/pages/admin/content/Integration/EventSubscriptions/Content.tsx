@@ -31,15 +31,7 @@ import {
 
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import StorageOutlinedIcon from '@mui/icons-material/StorageOutlined';
-import LocalParkingOutlinedIcon from '@mui/icons-material/LocalParkingOutlined';
-import SensorsOutlinedIcon from '@mui/icons-material/SensorsOutlined';
-import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -51,9 +43,14 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import {
+  createIntegrationEventInstance,
   getIntegrationEventInstance,
   getIntegrationEventInstanceTab,
   getIntegrationInstanceByIntegrationId,
+  getSourceIpsotek,
+  getSourceHoneywell,
+  getSourceParking,
+  getSourceTrackingBle,
 } from 'src/customs/api/Admin/Integration';
 import {
   IconCamera,
@@ -65,6 +62,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import AddServerDialog from './components/AddServerDialog';
 
 /* =========================================================
  * Types
@@ -135,146 +134,9 @@ interface EventType {
 //   },
 // ];
 
-const servers: Server[] = [
-  {
-    id: 'server-1',
-    name: 'Ipsotek - Jakarta',
-    address: '192.168.1.100:8080',
-    online: true,
-  },
-  {
-    id: 'server-2',
-    name: 'Ipsotek - Bandung',
-    address: '192.168.2.100:8080',
-    online: true,
-  },
-  {
-    id: 'server-3',
-    name: 'Ipsotek - Surabaya',
-    address: '192.168.3.100:8080',
-    online: false,
-  },
-];
-
-const cameras: Camera[] = [
-  {
-    id: 'CAM-001',
-    name: 'Lobby Entrance',
-    location: 'Ground Floor',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-002',
-    name: 'Main Gate',
-    location: 'Outdoor',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-003',
-    name: 'Parking Area',
-    location: 'Parking',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-004',
-    name: 'Elevator Lobby',
-    location: 'Ground Floor',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-005',
-    name: 'Meeting Room 1',
-    location: '5th Floor',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-006',
-    name: 'Meeting Room 2',
-    location: '5th Floor',
-    status: 'Offline',
-  },
-  {
-    id: 'CAM-007',
-    name: 'Warehouse',
-    location: 'B1',
-    status: 'Online',
-  },
-  {
-    id: 'CAM-008',
-    name: 'Loading Dock',
-    location: 'Outdoor',
-    status: 'Offline',
-  },
-];
-
-const eventTypes: EventType[] = [
-  {
-    code: 'PERSON_DETECTED',
-    name: 'Person Detected',
-    category: 'Detection',
-    estimate: '~ 12,000',
-  },
-  {
-    code: 'FACE_MATCHED',
-    name: 'Face Matched',
-    category: 'Recognition',
-    estimate: '~ 1,200',
-  },
-  {
-    code: 'FACE_UNKNOWN',
-    name: 'Face Unknown',
-    category: 'Recognition',
-    estimate: '~ 3,500',
-  },
-  {
-    code: 'ZONE_ENTER',
-    name: 'Zone Entered',
-    category: 'Zone',
-    estimate: '~ 800',
-  },
-  {
-    code: 'ZONE_EXIT',
-    name: 'Zone Exited',
-    category: 'Zone',
-    estimate: '~ 800',
-  },
-  {
-    code: 'LOITERING',
-    name: 'Loitering',
-    category: 'Behavior',
-    estimate: '~ 300',
-  },
-  {
-    code: 'CROWD',
-    name: 'Crowd Detected',
-    category: 'Behavior',
-    estimate: '~ 200',
-  },
-  {
-    code: 'LINE_CROSSING',
-    name: 'Line Crossing',
-    category: 'Behavior',
-    estimate: '~ 400',
-  },
-  {
-    code: 'OBJECT_DETECTED',
-    name: 'Object Detected',
-    category: 'Detection',
-    estimate: '~ 2,000',
-  },
-  {
-    code: 'TAMPER',
-    name: 'Camera Tamper',
-    category: 'System',
-    estimate: '~ 50',
-  },
-];
+const eventTypes: EventType[] = [];
 
 const steps = ['Select Server', 'Select Source', 'Select Event Type', 'Review & Save'];
-
-/* =========================================================
- * Small Components
- * ======================================================= */
 
 const StatusDot = ({ online }: { online: boolean }) => (
   <Stack direction="row" spacing={0.6} alignItems="center">
@@ -423,20 +285,33 @@ const Content = () => {
 
   const [activeStep, setActiveStep] = useState(0);
 
-  const [selectedServer, setSelectedServer] = useState<string>('server-1');
+  const [selectedServer, setSelectedServer] = useState<string>('');
 
-  const [selectedCameras, setSelectedCameras] = useState<string[]>([
-    'CAM-001',
-    'CAM-002',
-    'CAM-005',
-  ]);
-
+  const [selectedCameras, setSelectedCameras] = useState<string[]>([]);
+  const [cameras, setCameras] = useState<any[]>([]);
+  const [loadingCameras, setLoadingCameras] = useState(false);
   const [selectedEvents, setSelectedEvents] = useState<string[]>([
     'PERSON_DETECTED',
     'FACE_MATCHED',
     'ZONE_ENTER',
     'ZONE_EXIT',
   ]);
+
+  const resetServerForm = () => {
+    const sourceTypeOptions = getSourceTypeOptions(integration);
+
+    setServerForm({
+      source_type: sourceTypeOptions[0]?.value ?? '',
+      external_id: '',
+      description: '',
+      is_active: true,
+      integration_event_subscriptions:
+        integration?.event_type?.map((eventType) => ({
+          event_type: eventType,
+          is_active: true,
+        })) ?? [],
+    });
+  };
 
   const [serverSearch, setServerSearch] = useState('');
   const [cameraSearch, setCameraSearch] = useState('');
@@ -517,13 +392,13 @@ const Content = () => {
   }, []);
 
   const getIntegrationIcon = (name: string) => {
-    const value = name.toLowerCase();
+    const value = name.toLowerCase().trim();
 
     if (value.includes('prowatch')) {
       return <IconShieldFilled size={20} />;
     }
 
-    if (value.includes('ipsptek')) {
+    if (value.includes('ipsotek') || value.includes('ipsptek')) {
       return <IconCamera size={20} />;
     }
 
@@ -540,7 +415,8 @@ const Content = () => {
 
   const [servers, setServers] = useState<any[]>([]);
   const [loadingServers, setLoadingServers] = useState(false);
-
+  const [integrationInstances, setIntegrationInstances] = useState<any[]>([]);
+  const [loadingIntegrationInstances, setLoadingIntegrationInstances] = useState(false);
   useEffect(() => {
     const fetchServers = async () => {
       try {
@@ -587,10 +463,26 @@ const Content = () => {
   }, [selectedEventData]);
 
   const filteredServers = useMemo(() => {
-    return servers.filter((server) =>
-      server.name.toLowerCase().includes(serverSearch.toLowerCase()),
-    );
-  }, [serverSearch]);
+    return integrationInstances
+      .flatMap((instance) =>
+        (instance.integration_event_sources ?? []).map((source: any) => ({
+          id: source.id,
+          instance_id: instance.id,
+          name: source.description,
+          address: source.external_id,
+          source_type: source.source_type,
+          is_active: source.is_active,
+        })),
+      )
+      .filter((server) => {
+        const search = serverSearch.toLowerCase();
+
+        return (
+          server.name?.toLowerCase().includes(search) ||
+          server.address?.toLowerCase().includes(search)
+        );
+      });
+  }, [integrationInstances, serverSearch]);
 
   const [openAddServer, setOpenAddServer] = useState(false);
 
@@ -605,36 +497,67 @@ const Content = () => {
     }[],
   });
 
-  const [integrationInstances, setIntegrationInstances] = useState<any[]>([]);
-  const [loadingIntegrationInstances, setLoadingIntegrationInstances] = useState(false);
+  // useEffect(() => {
+  //   // if (!integration?.integration_list_id) {
+  //   //   setIntegrationInstances([]);
+  //   //   return;
+  //   // }
+
+  //   const fetchIntegrationInstance = async () => {
+  //     try {
+  //       setLoadingIntegrationInstances(true);
+
+  //       // const response = await getIntegrationInstanceByIntegrationId(
+  //       //   integration.integration_list_id,
+  //       // );
+
+  //       const response = await getIntegrationEventInstance();
+
+  //       console.log('Integration Instance:', response);
+
+  //       setIntegrationInstances(response?.collection ?? []);
+  //     } catch (error) {
+  //       console.error('Failed to fetch integration instance:', error);
+  //       setIntegrationInstances([]);
+  //     } finally {
+  //       setLoadingIntegrationInstances(false);
+  //     }
+  //   };
+
+  //   fetchIntegrationInstance();
+  // }, []);
 
   useEffect(() => {
-    if (!integration?.integration_list_id) {
-      setIntegrationInstances([]);
-      return;
-    }
-
-    const fetchIntegrationInstance = async () => {
+    const fetchServers = async () => {
       try {
-        setLoadingIntegrationInstances(true);
+        setLoadingServers(true);
 
-        const response = await getIntegrationInstanceByIntegrationId(
-          integration.integration_list_id,
-        );
+        const response = await getIntegrationEventInstance();
 
-        console.log('Integration Instance:', response);
+        const collection = response?.collection ?? [];
 
-        setIntegrationInstances(response?.collection ?? []);
+        setIntegrationInstances(collection);
       } catch (error) {
-        console.error('Failed to fetch integration instance:', error);
-        setIntegrationInstances([]);
+        console.error('Failed to fetch integration servers:', error);
       } finally {
-        setLoadingIntegrationInstances(false);
+        setLoadingServers(false);
       }
     };
 
-    fetchIntegrationInstance();
-  }, [integration]);
+    fetchServers();
+  }, []);
+
+  useEffect(() => {
+    if (!openAddServer || !integration) return;
+
+    setServerForm((prev) => ({
+      ...prev,
+      integration_event_subscriptions: (integration.event_type ?? []).map((eventType) => ({
+        event_type: eventType,
+        is_active: true,
+      })),
+    }));
+  }, [openAddServer, integration]);
 
   const handleOpenAddServer = () => {
     if (!integration) return;
@@ -661,7 +584,7 @@ const Content = () => {
       console.error('Integration is not selected');
       return;
     }
-
+    const integrationInstance = integrationInstances[0];
     if (!serverForm.source_type) {
       console.error('Source type is required');
       return;
@@ -672,8 +595,13 @@ const Content = () => {
       return;
     }
 
+    const selectedIntegrationInstance = integrationInstances.find(
+      (item) => item.id === selectedServer,
+    );
+    console.log('selectedIntegrationInstance', selectedIntegrationInstance);
+
     const payload = {
-      integration_id: integration.integration_list_id,
+      integration_id: integrationInstance.id,
       is_active: serverForm.is_active,
       integration_event_sources: [
         {
@@ -687,22 +615,31 @@ const Content = () => {
     };
 
     try {
-      console.log('Add Server Payload:', payload);
-
-      // TODO: panggil API POST di sini
-      // await createIntegrationInstance(payload);
-
-      setOpenAddServer(false);
-
-      // refresh data setelah berhasil
+      await createIntegrationEventInstance(payload);
       const response = await getIntegrationInstanceByIntegrationId(integration.integration_list_id);
 
       setIntegrationInstances(response?.collection ?? []);
-    } catch (error) {
-      console.error('Failed to add integration server:', error);
+
+      // Reset form
+      setServerForm({
+        source_type: '',
+        external_id: '',
+        description: '',
+        is_active: true,
+        integration_event_subscriptions: [],
+      });
+
+      // Tutup dialog
+      setOpenAddServer(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to add integration server');
     }
   };
 
+  const handleCloseAddServer = () => {
+    setOpenAddServer(false);
+    resetServerForm();
+  };
   const getSourceTypeOptions = (integration?: Integration | null) => {
     switch (integration?.name) {
       case 'Honeywell Prowatch':
@@ -741,7 +678,7 @@ const Content = () => {
           },
         ];
 
-      case 'Honeywell Ipsptek':
+      case 'Honeywell Ipsptek' || 'Honeywell Ipsotek':
         return [
           {
             label: 'Camera Capture',
@@ -761,6 +698,76 @@ const Content = () => {
 
   const sourceTypeOptions = getSourceTypeOptions(integration);
   const eventTypeOptions = getEventTypeOptions(integration);
+
+  const parkingGroupTypeOptions = [
+    { label: 'Employee', value: 'employee' },
+    { label: 'Resident', value: 'resident' },
+    { label: 'Visitor', value: 'visitor' },
+    { label: 'Vendor', value: 'vendor' },
+  ];
+
+  const sourceColumns = useMemo(() => {
+    const keys = new Set<string>();
+
+    cameras.forEach((camera) => {
+      Object.keys(camera ?? {}).forEach((key) => {
+        keys.add(key);
+      });
+    });
+
+    return Array.from(keys);
+  }, [cameras]);
+
+  const getSourceId = (source: any) => {
+    return String(source?.id ?? source?.external_id ?? '');
+  };
+
+  const selectedSourceServer = useMemo(() => {
+    return filteredServers.find((server) => server.id === selectedServer);
+  }, [filteredServers, selectedServer]);
+
+  useEffect(() => {
+    const loadSource = async () => {
+      if (!selectedSourceServer?.instance_id || !integration?.name) {
+        setCameras([]);
+        return;
+      }
+
+      const integrationName = integration.name.toLowerCase();
+      const instanceId = selectedSourceServer.instance_id;
+
+      try {
+        setLoadingCameras(true);
+
+        let response;
+
+        if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
+          response = await getSourceIpsotek(instanceId);
+        } else if (integrationName.includes('prowatch')) {
+          response = await getSourceHoneywell(instanceId);
+        } else if (integrationName.includes('parking')) {
+          response = await getSourceParking(instanceId);
+        } else if (integrationName.includes('people tracking')) {
+          response = await getSourceTrackingBle(instanceId);
+        } else {
+          setCameras([]);
+          return;
+        }
+
+        console.log('SOURCE:', response);
+
+        setCameras(response?.collection ?? []);
+      } catch (error) {
+        console.error('Failed get source:', error);
+        setCameras([]);
+      } finally {
+        setLoadingCameras(false);
+      }
+    };
+
+    loadSource();
+  }, [selectedSourceServer, integration?.name]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -987,8 +994,25 @@ const Content = () => {
                     Add Server
                   </Button>
                 </Stack>
+                <Stack
+                  spacing={0.6}
+                  sx={{
+                    maxHeight: 330,
+                    overflowY: 'auto',
+                    pr: 0.3,
 
-                <Stack spacing={0.6}>
+                    '&::-webkit-scrollbar': {
+                      width: 5,
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#d5dbe2',
+                      borderRadius: 5,
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
                   {filteredServers.map((server) => {
                     const selected = selectedServer === server.id;
 
@@ -1043,7 +1067,7 @@ const Content = () => {
                             </Typography>
                           </Box>
 
-                          <StatusDot online={server.online} />
+                          <StatusDot online={server.is_active} />
                         </Stack>
                       </Paper>
                     );
@@ -1056,7 +1080,7 @@ const Content = () => {
                 2. CAMERA
             ================================================= */}
 
-            <Card
+            {/* <Card
               elevation={0}
               sx={{
                 border: '1px solid #e4e8ee',
@@ -1120,7 +1144,7 @@ const Content = () => {
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Header */}
+   
                   <Box
                     sx={{
                       display: 'grid',
@@ -1171,62 +1195,68 @@ const Content = () => {
                       </Typography>
                     ))}
                   </Box>
+                  <Box
+                    sx={{
+                      minHeight: 450,
+                      overflowY: 'auto',
+                    }}
+                  >
 
-                  {/* Rows */}
-                  {filteredCameras.map((camera) => {
-                    const checked = selectedCameras.includes(camera.id);
+                    {filteredCameras.map((camera) => {
+                      const checked = selectedCameras.includes(camera.id);
 
-                    return (
-                      <Box
-                        key={camera.id}
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: '34px 0.9fr 1.2fr 1fr 0.7fr',
-                          minHeight: 34,
-                          alignItems: 'center',
-                          px: 0.5,
-                          borderBottom: '1px solid #f0f2f5',
-                          backgroundColor: checked ? '#f4faff' : '#fff',
-                        }}
-                      >
-                        <Checkbox
-                          size="small"
-                          checked={checked}
-                          onChange={() => toggleCamera(camera.id)}
-                          sx={{ p: 0.3 }}
-                        />
-
-                        <Typography
+                      return (
+                        <Box
+                          key={camera.id}
                           sx={{
-                            fontSize: 12,
-                            color: '#344050',
+                            display: 'grid',
+                            gridTemplateColumns: '34px 0.9fr 1.2fr 1fr 0.7fr',
+                            minHeight: 34,
+                            alignItems: 'center',
+                            px: 0.5,
+                            borderBottom: '1px solid #f0f2f5',
+                            backgroundColor: checked ? '#f4faff' : '#fff',
                           }}
                         >
-                          {camera.id}
-                        </Typography>
+                          <Checkbox
+                            size="small"
+                            checked={checked}
+                            onChange={() => toggleCamera(camera.id)}
+                            sx={{ p: 0.3 }}
+                          />
 
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: '#344050',
-                          }}
-                        >
-                          {camera.name}
-                        </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#344050',
+                            }}
+                          >
+                            {camera.id}
+                          </Typography>
 
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: '#667181',
-                          }}
-                        >
-                          {camera.location}
-                        </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#344050',
+                            }}
+                          >
+                            {camera.name}
+                          </Typography>
 
-                        <StatusDot online={camera.status === 'Online'} />
-                      </Box>
-                    );
-                  })}
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#667181',
+                            }}
+                          >
+                            {camera.location}
+                          </Typography>
+
+                          <StatusDot online={camera.status === 'Online'} />
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 </Box>
 
                 <Stack
@@ -1305,7 +1335,242 @@ const Content = () => {
                   >
                     10 / page
                   </Typography>
+                </Stack> 
+              </CardContent>
+            </Card> */}
+
+            <Card
+              elevation={0}
+              sx={{
+                border: '1px solid #e4e8ee',
+                borderRadius: 1.5,
+                overflow: 'hidden',
+              }}
+            >
+              <CardContent
+                sx={{
+                  p: '12px !important',
+                }}
+              >
+                <SectionTitle
+                  number={2}
+                  title="Select Camera (Source)"
+                  subtitle="Choose cameras from the selected server."
+                />
+
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <SearchField
+                      placeholder="Search camera..."
+                      value={cameraSearch}
+                      onChange={setCameraSearch}
+                    />
+                  </Box>
+
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    sx={{
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onClick={() => setShowSelected(!showSelected)}
+                  >
+                    <Checkbox
+                      size="small"
+                      checked={showSelected}
+                      sx={{
+                        p: 0.3,
+                        mr: 0.3,
+                      }}
+                    />
+
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color: '#6e7785',
+                      }}
+                    >
+                      Show selected only
+                    </Typography>
+                  </Stack>
                 </Stack>
+
+                <Box
+                  sx={{
+                    border: '1px solid #edf0f3',
+                    borderRadius: 0.8,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Header */}
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: `34px repeat(${sourceColumns.length}, minmax(140px, 1fr))`,
+                      minHeight: 29,
+                      alignItems: 'center',
+                      backgroundColor: '#f8fafc',
+                      borderBottom: '1px solid #edf0f3',
+                      px: 0.5,
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {filteredCameras.length > 0 && (
+                      <Checkbox
+                        size="small"
+                        sx={{ p: 0.3 }}
+                        checked={filteredCameras.every((camera) =>
+                          selectedCameras.includes(getSourceId(camera)),
+                        )}
+                        indeterminate={
+                          filteredCameras.some((camera) =>
+                            selectedCameras.includes(getSourceId(camera)),
+                          ) &&
+                          !filteredCameras.every((camera) =>
+                            selectedCameras.includes(getSourceId(camera)),
+                          )
+                        }
+                        onChange={() => {
+                          const allSelected = filteredCameras.every((camera) =>
+                            selectedCameras.includes(getSourceId(camera)),
+                          );
+
+                          if (allSelected) {
+                            setSelectedCameras((current) =>
+                              current.filter(
+                                (id) =>
+                                  !filteredCameras.some((camera) => getSourceId(camera) === id),
+                              ),
+                            );
+                          } else {
+                            setSelectedCameras((current) => [
+                              ...new Set([
+                                ...current,
+                                ...filteredCameras.map((camera) => getSourceId(camera)),
+                              ]),
+                            ]);
+                          }
+                        }}
+                      />
+                    )}
+
+                    {/* Dynamic Columns */}
+                    {sourceColumns.map((column) => (
+                      <Typography
+                        key={column}
+                        sx={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: '#6e7785',
+                          px: 0.5,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {column}
+                      </Typography>
+                    ))}
+                  </Box>
+
+                  {/* Rows */}
+                  <Box
+                    sx={{
+                      minHeight: 450,
+                      maxHeight: 450,
+                      overflow: 'auto',
+                    }}
+                  >
+                    {filteredCameras.length === 0 ? (
+                      <Box
+                        sx={{
+                          minHeight: 450,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            color: '#8a94a3',
+                          }}
+                        >
+                          No camera source found.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      filteredCameras.map((camera, index) => {
+                        const cameraId = getSourceId(camera);
+                        const checked = selectedCameras.includes(cameraId);
+
+                        return (
+                          <Box
+                            key={cameraId || index}
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: `34px repeat(${sourceColumns.length}, minmax(140px, 1fr))`,
+                              minHeight: 34,
+                              alignItems: 'center',
+                              px: 0.5,
+                              borderBottom: '1px solid #f0f2f5',
+                              backgroundColor: checked ? '#f4faff' : '#fff',
+                            }}
+                          >
+                            <Checkbox
+                              size="small"
+                              checked={checked}
+                              onChange={() => toggleCamera(cameraId)}
+                              sx={{ p: 0.3 }}
+                            />
+
+                            {sourceColumns.map((column) => {
+                              const value = camera?.[column];
+
+                              return (
+                                <Typography
+                                  key={column}
+                                  sx={{
+                                    fontSize: 12,
+                                    color: '#344050',
+                                    px: 0.5,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                  title={
+                                    value === null || value === undefined
+                                      ? '-'
+                                      : typeof value === 'object'
+                                      ? JSON.stringify(value)
+                                      : String(value)
+                                  }
+                                >
+                                  {value === null || value === undefined
+                                    ? '-'
+                                    : typeof value === 'object'
+                                    ? JSON.stringify(value)
+                                    : String(value)}
+                                </Typography>
+                              );
+                            })}
+                          </Box>
+                        );
+                      })
+                    )}
+                  </Box>
+                </Box>
+
+                <Typography
+                  sx={{
+                    mt: 1,
+                    fontSize: 12,
+                    color: '#7e8997',
+                  }}
+                >
+                  {selectedCameras.length} of {cameras.length} selected
+                </Typography>
               </CardContent>
             </Card>
 
@@ -1434,63 +1699,65 @@ const Content = () => {
                     )}
                   </Box>
 
-                  {filteredEvents.map((event) => {
-                    const checked = selectedEvents.includes(event.code);
+                  <Box sx={{ maxHeight: 450, overflow: 'auto' }}>
+                    {filteredEvents.map((event) => {
+                      const checked = selectedEvents.includes(event.code);
 
-                    return (
-                      <Box
-                        key={event.code}
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: '34px 1.15fr 1.1fr 0.8fr 0.8fr',
-                          minHeight: 34,
-                          alignItems: 'center',
-                          px: 0.5,
-                          borderTop: '1px solid #f0f2f5',
-                          backgroundColor: checked ? '#f4faff' : '#fff',
-                        }}
-                      >
-                        <Checkbox
-                          size="small"
-                          checked={checked}
-                          onChange={() => toggleEvent(event.code)}
-                          sx={{ p: 0.3 }}
-                        />
-
-                        <Typography
+                      return (
+                        <Box
+                          key={event.code}
                           sx={{
-                            fontSize: 12,
-                            color: '#344050',
+                            display: 'grid',
+                            gridTemplateColumns: '34px 1.15fr 1.1fr 0.8fr 0.8fr',
+                            minHeight: 34,
+                            alignItems: 'center',
+                            px: 0.5,
+                            borderTop: '1px solid #f0f2f5',
+                            backgroundColor: checked ? '#f4faff' : '#fff',
                           }}
                         >
-                          {event.code}
-                        </Typography>
+                          <Checkbox
+                            size="small"
+                            checked={checked}
+                            onChange={() => toggleEvent(event.code)}
+                            sx={{ p: 0.3 }}
+                          />
 
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: '#344050',
-                          }}
-                        >
-                          {event.name}
-                        </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#344050',
+                            }}
+                          >
+                            {event.code}
+                          </Typography>
 
-                        <CategoryChip category={event.category} />
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#344050',
+                            }}
+                          >
+                            {event.name}
+                          </Typography>
 
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: '#667181',
-                          }}
-                        >
-                          {event.estimate}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
+                          <CategoryChip category={event.category} />
+
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              color: '#667181',
+                            }}
+                          >
+                            {event.estimate}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 </Box>
 
-                <Stack
+                {/* <Stack
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
@@ -1566,7 +1833,7 @@ const Content = () => {
                   >
                     10 / page
                   </Typography>
-                </Stack>
+                </Stack> */}
               </CardContent>
             </Card>
           </Box>
@@ -1574,7 +1841,7 @@ const Content = () => {
           {/* =================================================
               4. REVIEW & SAVE
           ================================================= */}
-
+          {/* 
           <Card
             elevation={0}
             sx={{
@@ -1605,7 +1872,7 @@ const Content = () => {
                   gap: 1,
                 }}
               >
-                {/* Server */}
+         
                 <Paper
                   elevation={0}
                   sx={{
@@ -1667,7 +1934,6 @@ const Content = () => {
                   </Stack>
                 </Paper>
 
-                {/* Cameras */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -1733,7 +1999,7 @@ const Content = () => {
                   </Stack>
                 </Paper>
 
-                {/* Events */}
+    
                 <Paper
                   elevation={0}
                   sx={{
@@ -1787,7 +2053,7 @@ const Content = () => {
                   </Stack>
                 </Paper>
 
-                {/* Estimated */}
+    
                 <Paper
                   elevation={0}
                   sx={{
@@ -1847,206 +2113,28 @@ const Content = () => {
                 </Paper>
               </Box>
 
-              {/* Footer */}
-              <Stack direction="row" justifyContent="flex-end" spacing={0.8} sx={{ mt: 1.5 }}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<CloseIcon sx={{ fontSize: 15 }} />}
-                  onClick={() => {
-                    setSelectedCameras([]);
-                    setSelectedEvents([]);
-                  }}
-                  size="medium"
-                  sx={{
-                    // height: 34,
-                    textTransform: 'none',
-                    // fontSize: 10.5,
-                    // borderColor: '#d8dde4',
-                    // color: '#596474',
-                    borderRadius: 0.8,
-                  }}
-                >
-                  Cancel
-                </Button>
-
-                <Button
-                  variant="contained"
-                  startIcon={<SaveOutlinedIcon sx={{ fontSize: 15 }} />}
-                  onClick={() => {
-                    console.log({
-                      integration,
-                      server: selectedServerData,
-                      cameras: selectedCameraData,
-                      events: selectedEventData,
-                    });
-                  }}
-                  size="medium"
-                  sx={{
-                    // height: 34,
-                    textTransform: 'none',
-                    // fontSize: 10.5,
-                    borderRadius: 0.8,
-                    boxShadow: 'none',
-                    px: 2,
-                  }}
-                >
-                  Save Subscription
-                </Button>
-              </Stack>
+       
+             
             </CardContent>
-          </Card>
-        </Box>
-        <Dialog
-          open={openAddServer}
-          onClose={() => setOpenAddServer(false)}
-          fullWidth
-          maxWidth="md"
-        >
-          <DialogTitle
-            sx={{
-              fontSize: 18,
-              fontWeight: 700,
-              pb: 1,
-            }}
-          >
-            Add Server
-            <IconButton
-              size="small"
-              onClick={() => setOpenAddServer(false)}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
+          </Card> */}
 
-          <DialogContent dividers>
-            <Stack spacing={1.5} sx={{ mt: 1 }}>
-              <CustomFormLabel>Source</CustomFormLabel>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                value={serverForm.source_type}
-                onChange={(e) =>
-                  setServerForm((prev) => ({
-                    ...prev,
-                    source_type: e.target.value,
-                  }))
-                }
-              >
-                {sourceTypeOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <CustomFormLabel>External ID</CustomFormLabel>
-              <TextField
-                size="small"
-                fullWidth
-                label="External ID"
-                placeholder="e.g. CAM-LOBBY"
-                value={serverForm.external_id}
-                onChange={(e) =>
-                  setServerForm((prev) => ({
-                    ...prev,
-                    external_id: e.target.value,
-                  }))
-                }
-              />
-
-              <CustomFormLabel>Description</CustomFormLabel>
-
-              <TextField
-                size="small"
-                fullWidth
-                label="Description"
-                placeholder="e.g. Camera Lobby"
-                value={serverForm.description}
-                onChange={(e) =>
-                  setServerForm((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-              />
-
-              <CustomFormLabel>Status</CustomFormLabel>
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={serverForm.is_active}
-                    onChange={(e) =>
-                      setServerForm((prev) => ({
-                        ...prev,
-                        is_active: e.target.checked,
-                      }))
-                    }
-                  />
-                }
-                label="Active"
-              />
-
-              <CustomFormLabel>Event Subscriptions</CustomFormLabel>
-
-              <Stack spacing={0.5}>
-                {serverForm.integration_event_subscriptions.map((subscription, index) => (
-                  <Paper
-                    key={subscription.event_type}
-                    elevation={0}
-                    sx={{
-                      px: 1.5,
-                      py: 0.7,
-                      border: '1px solid #e4e8ee',
-                      borderRadius: 0.8,
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {subscription.event_type}
-                      </Typography>
-
-                      <Switch
-                        size="small"
-                        checked={subscription.is_active}
-                        onChange={(e) => {
-                          setServerForm((prev) => ({
-                            ...prev,
-                            integration_event_subscriptions:
-                              prev.integration_event_subscriptions.map((item, itemIndex) =>
-                                itemIndex === index
-                                  ? {
-                                      ...item,
-                                      is_active: e.target.checked,
-                                    }
-                                  : item,
-                              ),
-                          }));
-                        }}
-                      />
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            </Stack>
-          </DialogContent>
-
-          <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Stack direction="row" justifyContent="flex-end" spacing={0.8} sx={{ mt: 1.5 }}>
             <Button
-              onClick={() => setOpenAddServer(false)}
+              variant="outlined"
+              color="error"
+              startIcon={<CloseIcon sx={{ fontSize: 15 }} />}
+              onClick={() => {
+                setSelectedCameras([]);
+                setSelectedEvents([]);
+              }}
+              size="medium"
               sx={{
+                // height: 34,
                 textTransform: 'none',
+                // fontSize: 10.5,
+                // borderColor: '#d8dde4',
+                // color: '#596474',
+                borderRadius: 0.8,
               }}
             >
               Cancel
@@ -2054,15 +2142,40 @@ const Content = () => {
 
             <Button
               variant="contained"
-              onClick={handleSubmitAddServer}
+              startIcon={<SaveOutlinedIcon sx={{ fontSize: 15 }} />}
+              onClick={() => {
+                console.log({
+                  integration,
+                  server: selectedServerData,
+                  cameras: selectedCameraData,
+                  events: selectedEventData,
+                });
+              }}
+              size="medium"
               sx={{
+                // height: 34,
                 textTransform: 'none',
+                // fontSize: 10.5,
+                borderRadius: 0.8,
+                boxShadow: 'none',
+                px: 2,
               }}
             >
-              Save
+              Save Subscription
             </Button>
-          </DialogActions>
-        </Dialog>
+          </Stack>
+        </Box>
+
+        <AddServerDialog
+          open={openAddServer}
+          serverForm={serverForm}
+          sourceTypeOptions={sourceTypeOptions}
+          parkingGroupTypeOptions={parkingGroupTypeOptions}
+          isParking={integration?.name === 'Bio Parking System'}
+          onClose={handleCloseAddServer}
+          onChange={setServerForm}
+          onSubmit={handleSubmitAddServer}
+        />
       </Container>
     </PageContainer>
   );
