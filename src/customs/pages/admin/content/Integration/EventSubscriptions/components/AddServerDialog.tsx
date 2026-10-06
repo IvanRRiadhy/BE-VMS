@@ -26,6 +26,7 @@ interface EventSubscription {
 }
 
 interface ServerForm {
+  integration_id: string;
   source_type: string;
   external_id: string;
   description: string;
@@ -46,10 +47,9 @@ interface GroupTypeOption {
 interface AddServerDialogProps {
   open: boolean;
   serverForm: ServerForm;
-  sourceTypeOptions: SourceTypeOption[];
-  parkingGroupTypeOptions: GroupTypeOption[];
-  isParking: boolean;
   onClose: () => void;
+  integrationOptions?: any;
+  loadingIntegrationOptions?: boolean;
   onChange: React.Dispatch<React.SetStateAction<ServerForm>>;
   onSubmit: () => void;
 }
@@ -57,9 +57,14 @@ interface AddServerDialogProps {
 const AddServerDialog = ({
   open,
   serverForm,
-  sourceTypeOptions,
-  parkingGroupTypeOptions,
-  isParking,
+  // sourceTypeOptions,
+  // parkingGroupTypeOptions,
+  // isParking,
+  // isProwatch,
+  // logdevOptions,
+  // loadingLogdevs,
+  integrationOptions,
+  loadingIntegrationOptions,
   onClose,
   onChange,
   onSubmit,
@@ -89,8 +94,29 @@ const AddServerDialog = ({
 
       <DialogContent dividers>
         <Stack spacing={1.5} sx={{ mt: 1 }}>
+          {/* Integration */}
+          <CustomFormLabel>Integration</CustomFormLabel>
+
+          <TextField
+            select
+            fullWidth
+            size="small"
+            value={serverForm.integration_id}
+            onChange={(e) =>
+              onChange((prev) => ({
+                ...prev,
+                integration_id: e.target.value,
+              }))
+            }
+          >
+            {integrationOptions?.map((option: any) => (
+              <MenuItem key={option.id} value={option.id}>
+                {option.name}
+              </MenuItem>
+            ))}
+          </TextField>
           {/* Source */}
-          <CustomFormLabel>Source</CustomFormLabel>
+          {/* <CustomFormLabel>Source</CustomFormLabel>
 
           <TextField
             select
@@ -111,7 +137,7 @@ const AddServerDialog = ({
             ))}
           </TextField>
 
-          {/* External ID / Group Type */}
+
           <CustomFormLabel>{isParking ? 'Group Type' : 'External ID'}</CustomFormLabel>
 
           {isParking ? (
@@ -135,6 +161,35 @@ const AddServerDialog = ({
                 </MenuItem>
               ))}
             </TextField>
+          ) : isProwatch ? (
+            <TextField
+              select
+              fullWidth
+              size="small"
+              value={serverForm.external_id}
+              disabled={loadingLogdevs}
+              onChange={(e) => {
+                const selected = logdevOptions?.find((item) => item.log_dev_id === e.target.value);
+
+                onChange((prev) => ({
+                  ...prev,
+                  external_id: selected?.log_dev_id ?? '',
+                  description: selected?.description || selected?.name || '',
+                }));
+              }}
+            >
+              <MenuItem value="">
+                {loadingLogdevs ? 'Loading Log Device...' : 'Select Log Device'}
+              </MenuItem>
+
+              {logdevOptions
+                ?.filter((item) => item.active)
+                .map((item) => (
+                  <MenuItem key={item.log_dev_id} value={item.log_dev_id}>
+                    {item.name} ({item.log_dev_id})
+                  </MenuItem>
+                ))}
+            </TextField>
           ) : (
             <TextField
               size="small"
@@ -149,10 +204,10 @@ const AddServerDialog = ({
                 }))
               }
             />
-          )}
+          )} */}
 
           {/* Description */}
-          <CustomFormLabel>Description</CustomFormLabel>
+          {/* <CustomFormLabel>Description</CustomFormLabel>
 
           <TextField
             size="small"
@@ -160,13 +215,14 @@ const AddServerDialog = ({
             label="Description"
             placeholder={isParking ? 'e.g. Parking Visitor' : 'e.g. Camera Lobby'}
             value={serverForm.description}
+            disabled={isProwatch}
             onChange={(e) =>
               onChange((prev) => ({
                 ...prev,
                 description: e.target.value,
               }))
             }
-          />
+          /> */}
 
           {/* Status */}
           <CustomFormLabel>Status</CustomFormLabel>
@@ -187,7 +243,7 @@ const AddServerDialog = ({
           />
 
           {/* Event Subscriptions */}
-          <CustomFormLabel>Event Subscriptions</CustomFormLabel>
+          {/* <CustomFormLabel>Event Subscriptions</CustomFormLabel>
 
           <Stack spacing={0.5}>
             {serverForm.integration_event_subscriptions.map((subscription, index) => (
@@ -232,7 +288,7 @@ const AddServerDialog = ({
                 </Stack>
               </Paper>
             ))}
-          </Stack>
+          </Stack> */}
         </Stack>
       </DialogContent>
 

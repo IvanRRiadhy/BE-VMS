@@ -51,19 +51,31 @@ import {
   getSourceHoneywell,
   getSourceParking,
   getSourceTrackingBle,
+  updateIntegrationEventInstance,
 } from 'src/customs/api/Admin/Integration';
 import {
   IconCamera,
+  IconChartBar,
   IconParking,
   IconPlug,
   IconShield,
   IconShieldFilled,
+  IconSquareCheckFilled,
   IconUsers,
+  IconVideo,
   IconX,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddServerDialog from './components/AddServerDialog';
+import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
+import {
+  useCreateIntegrationEventInstance,
+  useIntegrationInstances,
+  useIntegrationList,
+  useLogdevs,
+} from 'src/hooks/EventSubscriptions';
+import { getVisitorTypeParking } from 'src/customs/api/types/ParkingIntegration';
 
 /* =========================================================
  * Types
@@ -280,9 +292,6 @@ const CategoryChip = ({ category }: { category: string }) => {
 
 const Content = () => {
   const [integration, setIntegration] = useState<Integration | null>(null);
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [loadingIntegrations, setLoadingIntegrations] = useState(false);
-
   const [activeStep, setActiveStep] = useState(0);
 
   const [selectedServer, setSelectedServer] = useState<string>('');
@@ -290,17 +299,30 @@ const Content = () => {
   const [selectedCameras, setSelectedCameras] = useState<string[]>([]);
   const [cameras, setCameras] = useState<any[]>([]);
   const [loadingCameras, setLoadingCameras] = useState(false);
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([
-    'PERSON_DETECTED',
-    'FACE_MATCHED',
-    'ZONE_ENTER',
-    'ZONE_EXIT',
-  ]);
+  const [selectedEventsBySource, setSelectedEventsBySource] = useState<Record<string, string[]>>(
+    {},
+  );
+
+  const toggleEvent = (sourceId: string, eventName: string) => {
+    setSelectedEventsBySource((prev) => {
+      const currentEvents = prev[sourceId] ?? [];
+
+      const updatedEvents = currentEvents.includes(eventName)
+        ? currentEvents.filter((name) => name !== eventName)
+        : [...currentEvents, eventName];
+
+      return {
+        ...prev,
+        [sourceId]: updatedEvents,
+      };
+    });
+  };
 
   const resetServerForm = () => {
     const sourceTypeOptions = getSourceTypeOptions(integration);
 
     setServerForm({
+      integration_id: '',
       source_type: sourceTypeOptions[0]?.value ?? '',
       external_id: '',
       description: '',
@@ -325,25 +347,13 @@ const Content = () => {
    * Filter
    * ----------------------------------------------------- */
 
-  const filteredCameras = useMemo(() => {
-    return cameras.filter((camera) => {
-      const matchSearch =
-        camera.id.toLowerCase().includes(cameraSearch.toLowerCase()) ||
-        camera.name.toLowerCase().includes(cameraSearch.toLowerCase());
-
-      const matchSelected = !showSelected || selectedCameras.includes(camera.id);
-
-      return matchSearch && matchSelected;
-    });
-  }, [cameraSearch, showSelected, selectedCameras]);
-
-  const filteredEvents = useMemo(() => {
-    return eventTypes.filter(
-      (event) =>
-        event.code.toLowerCase().includes(eventSearch.toLowerCase()) ||
-        event.name.toLowerCase().includes(eventSearch.toLowerCase()),
-    );
-  }, [eventSearch]);
+  // const filteredEvents = useMemo(() => {
+  //   return eventTypes.filter(
+  //     (event) =>
+  //       event.code.toLowerCase().includes(eventSearch.toLowerCase()) ||
+  //       event.name.toLowerCase().includes(eventSearch.toLowerCase()),
+  //   );
+  // }, [eventSearch]);
 
   /* -------------------------------------------------------
    * Toggle
@@ -355,41 +365,19 @@ const Content = () => {
     );
   };
 
-  const toggleEvent = (eventCode: string) => {
-    setSelectedEvents((current) =>
-      current.includes(eventCode)
-        ? current.filter((code) => code !== eventCode)
-        : [...current, eventCode],
-    );
-  };
+  // const toggleEvent = (eventCode: string) => {
+  //   setSelectedEvents((current) =>
+  //     current.includes(eventCode)
+  //       ? current.filter((code) => code !== eventCode)
+  //       : [...current, eventCode],
+  //   );
+  // };
 
   /* -------------------------------------------------------
    * Render
    * ----------------------------------------------------- */
 
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        setLoadingIntegrations(true);
-
-        const response = await getIntegrationEventInstanceTab();
-
-        const collection: Integration[] = response?.collection ?? [];
-
-        setIntegrations(collection);
-
-        if (collection.length > 0) {
-          setIntegration(collection[0]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch integrations:', error);
-      } finally {
-        setLoadingIntegrations(false);
-      }
-    };
-
-    fetchIntegrations();
-  }, []);
+  const { data: integrations = [], isLoading: loadingIntegrations } = useIntegrationList();
 
   const getIntegrationIcon = (name: string) => {
     const value = name.toLowerCase().trim();
@@ -413,73 +401,44 @@ const Content = () => {
     return <IconPlug size={20} />;
   };
 
-  const [servers, setServers] = useState<any[]>([]);
-  const [loadingServers, setLoadingServers] = useState(false);
-  const [integrationInstances, setIntegrationInstances] = useState<any[]>([]);
-  const [loadingIntegrationInstances, setLoadingIntegrationInstances] = useState(false);
-  useEffect(() => {
-    const fetchServers = async () => {
-      try {
-        setLoadingServers(true);
-
-        const response = await getIntegrationEventInstance();
-
-        const collection = response?.collection ?? [];
-
-        setServers(collection);
-
-        // if (collection.length > 0) {
-        //   setSelectedServer(collection[0].id);
-        // }
-      } catch (error) {
-        console.error('Failed to fetch integration servers:', error);
-        setServers([]);
-      } finally {
-        setLoadingServers(false);
-      }
-    };
-
-    fetchServers();
-  }, []);
-
-  const selectedServerData = servers.find((server) => server.id === selectedServer);
-
-  const selectedCameraData = cameras.filter((camera) => selectedCameras.includes(camera.id));
-
-  const selectedEventData = eventTypes.filter((event) => selectedEvents.includes(event.code));
-
-  /* -------------------------------------------------------
-   * Estimated Events
-   * ----------------------------------------------------- */
-
-  const estimatedEvents = useMemo(() => {
-    const total = selectedEventData.reduce((sum, event) => {
-      const value = Number(event.estimate.replace(/[^\d]/g, ''));
-
-      return sum + value;
-    }, 0);
-
-    return total;
-  }, [selectedEventData]);
+  const { data: integrationInstances = [], isLoading: loadingServers } = useIntegrationInstances();
 
   const filteredServers = useMemo(() => {
     return integrationInstances
-      .flatMap((instance) =>
-        (instance.integration_event_sources ?? []).map((source: any) => ({
+      .flatMap((instance: any) => {
+        const sources = instance.integration_event_sources ?? [];
+
+        if (sources.length === 0) {
+          return [
+            {
+              id: instance.id,
+              instance_id: instance.id,
+              integration_id: instance.integration_id,
+              name: instance.integration?.name ?? instance.integration_id,
+              address: '',
+              source_type: '',
+              is_active: instance.is_active,
+            },
+          ];
+        }
+
+        return sources.map((source: any) => ({
           id: source.id,
           instance_id: instance.id,
+          integration_id: instance.integration_id,
           name: source.description,
           address: source.external_id,
           source_type: source.source_type,
           is_active: source.is_active,
-        })),
-      )
-      .filter((server) => {
+        }));
+      })
+      .filter((server: any) => {
         const search = serverSearch.toLowerCase();
 
         return (
           server.name?.toLowerCase().includes(search) ||
-          server.address?.toLowerCase().includes(search)
+          server.address?.toLowerCase().includes(search) ||
+          server.integration_id?.toLowerCase().includes(search)
         );
       });
   }, [integrationInstances, serverSearch]);
@@ -487,6 +446,7 @@ const Content = () => {
   const [openAddServer, setOpenAddServer] = useState(false);
 
   const [serverForm, setServerForm] = useState({
+    integration_id: '',
     source_type: '',
     external_id: '',
     description: '',
@@ -497,55 +457,34 @@ const Content = () => {
     }[],
   });
 
-  // useEffect(() => {
-  //   // if (!integration?.integration_list_id) {
-  //   //   setIntegrationInstances([]);
-  //   //   return;
-  //   // }
-
-  //   const fetchIntegrationInstance = async () => {
-  //     try {
-  //       setLoadingIntegrationInstances(true);
-
-  //       // const response = await getIntegrationInstanceByIntegrationId(
-  //       //   integration.integration_list_id,
-  //       // );
-
-  //       const response = await getIntegrationEventInstance();
-
-  //       console.log('Integration Instance:', response);
-
-  //       setIntegrationInstances(response?.collection ?? []);
-  //     } catch (error) {
-  //       console.error('Failed to fetch integration instance:', error);
-  //       setIntegrationInstances([]);
-  //     } finally {
-  //       setLoadingIntegrationInstances(false);
-  //     }
-  //   };
-
-  //   fetchIntegrationInstance();
-  // }, []);
+  const [addIntegrationOptions, setAddIntegrationOptions] = useState<any[]>([]);
+  const [loadingAddIntegrationOptions, setLoadingAddIntegrationOptions] = useState(false);
 
   useEffect(() => {
-    const fetchServers = async () => {
+    if (!integration?.integration_list_id) {
+      setAddIntegrationOptions([]);
+      return;
+    }
+
+    const fetchIntegrationInstance = async () => {
       try {
-        setLoadingServers(true);
+        setLoadingAddIntegrationOptions(true);
 
-        const response = await getIntegrationEventInstance();
+        const response = await getIntegrationInstanceByIntegrationId(
+          integration.integration_list_id,
+        );
 
-        const collection = response?.collection ?? [];
-
-        setIntegrationInstances(collection);
+        setAddIntegrationOptions(response?.collection ?? []);
       } catch (error) {
-        console.error('Failed to fetch integration servers:', error);
+        console.error('Failed to fetch integration options:', error);
+        setAddIntegrationOptions([]);
       } finally {
-        setLoadingServers(false);
+        setLoadingAddIntegrationOptions(false);
       }
     };
 
-    fetchServers();
-  }, []);
+    fetchIntegrationInstance();
+  }, [integration?.integration_list_id]);
 
   useEffect(() => {
     if (!openAddServer || !integration) return;
@@ -559,69 +498,98 @@ const Content = () => {
     }));
   }, [openAddServer, integration]);
 
-  const handleOpenAddServer = () => {
-    if (!integration) return;
+  const { mutateAsync: createIntegrationEventInstance, isPending: isSubmitting } =
+    useCreateIntegrationEventInstance();
 
-    const sourceTypeOptions = getSourceTypeOptions(integration);
+  // const handleSubmitAddServer = async () => {
+  //   if (!integration?.integration_list_id) {
+  //     console.error('Integration is not selected');
+  //     return;
+  //   }
+  //   if (!serverForm.source_type) {
+  //     console.error('Source type is required');
+  //     return;
+  //   }
 
-    setServerForm({
-      source_type: sourceTypeOptions[0]?.value ?? '',
-      external_id: '',
-      description: '',
-      is_active: true,
-      integration_event_subscriptions:
-        integration.event_type?.map((eventType) => ({
-          event_type: eventType,
-          is_active: true,
-        })) ?? [],
-    });
+  //   if (!serverForm.external_id) {
+  //     console.error('External ID is required');
+  //     return;
+  //   }
 
-    setOpenAddServer(true);
-  };
+  //   const payload = {
+  //     integration_id: selectedServerData.integration_id ?? selectedServerData.id,
+  //     is_active: serverForm.is_active,
+  //     integration_event_sources: [
+  //       {
+  //         source_type: serverForm.source_type,
+  //         external_id: serverForm.external_id,
+  //         description: serverForm.description,
+  //         is_active: serverForm.is_active,
+  //         integration_event_subscriptions: serverForm.integration_event_subscriptions,
+  //       },
+  //     ],
+  //   };
+
+  //   setLoadingIntegrationInstances(true);
+  //   try {
+  //     await createIntegrationEventInstance(payload);
+
+  //     setServerForm({
+  //       source_type: '',
+  //       external_id: '',
+  //       description: '',
+  //       is_active: true,
+  //       integration_event_subscriptions: [],
+  //     });
+
+  //     // Tutup dialog
+  //     setOpenAddServer(false);
+  //   } catch (error: any) {
+  //     showSwal('error', error?.response?.data?.msg || 'Failed to add integration server');
+  //   } finally {
+  //     setLoadingIntegrationInstances(false);
+  //   }
+  // };
 
   const handleSubmitAddServer = async () => {
-    if (!integration?.integration_list_id) {
-      console.error('Integration is not selected');
-      return;
-    }
-    const integrationInstance = integrationInstances[0];
-    if (!serverForm.source_type) {
-      console.error('Source type is required');
-      return;
-    }
+    // if (!integration?.integration_list_id) {
+    //   console.error('Integration is not selected');
+    //   showSwal('error', 'Please select an integration');
+    //   return;
+    // }
 
-    if (!serverForm.external_id) {
-      console.error('External ID is required');
-      return;
-    }
+    // if (!serverForm.source_type) {
+    //   console.error('Source type is required');
+    //   showSwal('error', 'Source type is required');
+    //   return;
+    // }
 
-    const selectedIntegrationInstance = integrationInstances.find(
-      (item) => item.id === selectedServer,
-    );
-    console.log('selectedIntegrationInstance', selectedIntegrationInstance);
+    // if (!serverForm.external_id) {
+    //   console.error('External ID is required');
+    //   showSwal('error', 'External ID is required');
+    //   return;
+    // }
 
     const payload = {
-      integration_id: integrationInstance.id,
+      integration_id: serverForm.integration_id,
       is_active: serverForm.is_active,
-      integration_event_sources: [
-        {
-          source_type: serverForm.source_type,
-          external_id: serverForm.external_id,
-          description: serverForm.description,
-          is_active: serverForm.is_active,
-          integration_event_subscriptions: serverForm.integration_event_subscriptions,
-        },
-      ],
+      // integration_event_sources: [
+      //   {
+      //     source_type: serverForm.source_type,
+      //     external_id: serverForm.external_id,
+      //     description: serverForm.description,
+      //     is_active: serverForm.is_active,
+      //     integration_event_subscriptions: serverForm.integration_event_subscriptions,
+      //   },
+      // ],
     };
 
     try {
       await createIntegrationEventInstance(payload);
-      const response = await getIntegrationInstanceByIntegrationId(integration.integration_list_id);
+      showSwal('success', 'Integration server added successfully');
 
-      setIntegrationInstances(response?.collection ?? []);
-
-      // Reset form
       setServerForm({
+        integration_id: '',
         source_type: '',
         external_id: '',
         description: '',
@@ -629,10 +597,63 @@ const Content = () => {
         integration_event_subscriptions: [],
       });
 
-      // Tutup dialog
       setOpenAddServer(false);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to add integration server');
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedServer('');
+    setSelectedEventsBySource({});
+    setServerSearch('');
+    setCameraSearch('');
+  };
+
+  const handleSaveSubscription = async () => {
+    if (!selectedServerData?.integration_id) {
+      showSwal('error', 'Integration server is not selected');
+      return;
+    }
+
+    const integrationId = selectedServerData.integration_id;
+
+    const integrationEventSources = selectedCameraData.map((camera) => {
+      const sourceId = getSourceId(camera);
+
+      const selectedEvents = selectedEventsBySource[sourceId] ?? [];
+
+      return {
+        // source_type: camera.source_type || selectedServerData.source_type || '',
+        source_type: integration?.sourceType?.[0] ?? '',
+        external_id: camera.external_id ?? camera.log_dev_id,
+        description: camera.description ?? camera.name,
+        is_active: true,
+
+        integration_event_subscriptions: selectedEvents.map((eventName) => ({
+          event_type: eventName,
+          is_active: true,
+        })),
+      };
+    });
+
+    const payload = {
+      integration_id: integrationId,
+      is_active: selectedServerData.is_active ?? true,
+      integration_event_sources: integrationEventSources,
+    };
+
+    console.log('CREATE PAYLOAD:', payload);
+
+    try {
+      await createIntegrationEventInstance(payload);
+
+      showSwal('success', 'Integration subscription created successfully');
+      resetForm();
+    } catch (error: any) {
+      console.error(error);
+
+      showSwal('error', error?.response?.data?.msg || 'Failed to create integration subscription');
     }
   };
 
@@ -669,31 +690,42 @@ const Content = () => {
   };
 
   const getEventTypeOptions = (integration?: Integration | null) => {
-    switch (integration?.name) {
-      case 'Honeywell Prowatch':
-        return [
-          {
-            label: 'Tap Reader',
-            value: 'TapReader',
-          },
-        ];
+    const integrationName = integration?.name?.toLowerCase() ?? '';
 
-      case 'Honeywell Ipsptek' || 'Honeywell Ipsotek':
-        return [
-          {
-            label: 'Camera Capture',
-            value: 'CameraCapture',
-          },
-        ];
-
-      default:
-        return (
-          integration?.event_type?.map((eventType) => ({
-            label: eventType,
-            value: eventType,
-          })) ?? []
-        );
+    if (integrationName.includes('prowatch')) {
+      return [
+        {
+          label: 'Tap Reader',
+          value: 'TapReader',
+        },
+      ];
     }
+
+    if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
+      return [
+        {
+          label: 'Camera Capture',
+          value: 'CameraCapture',
+        },
+      ];
+    }
+
+    if (integrationName.includes('people tracking')) {
+      return [
+        { label: 'Idle', value: 'Idle' },
+        { label: 'Ack', value: 'Ack' },
+        { label: 'Dispatch', value: 'Dispatch' },
+        { label: 'Accepted', value: 'Accepted' },
+        { label: 'Done', value: 'Done' },
+      ];
+    }
+
+    return (
+      integration?.event_type?.map((eventType) => ({
+        label: eventType,
+        value: eventType,
+      })) ?? []
+    );
   };
 
   const sourceTypeOptions = getSourceTypeOptions(integration);
@@ -706,7 +738,31 @@ const Content = () => {
     { label: 'Vendor', value: 'vendor' },
   ];
 
+  // const sourceColumns = useMemo(() => {
+  //   const keys = new Set<string>();
+
+  //   cameras.forEach((camera) => {
+  //     Object.keys(camera ?? {}).forEach((key) => {
+  //       keys.add(key);
+  //     });
+  //   });
+
+  //   return Array.from(keys);
+  // }, [cameras]);
+
   const sourceColumns = useMemo(() => {
+    if (integration?.name?.toLowerCase().includes('prowatch')) {
+      return ['name', 'log_dev_id'];
+    }
+
+    if (integration?.name?.toLowerCase().includes('parking')) {
+      return ['name'];
+    }
+
+    if (integration?.name?.toLowerCase().includes('tracking')) {
+      return ['name'];
+    }
+
     const keys = new Set<string>();
 
     cameras.forEach((camera) => {
@@ -716,25 +772,36 @@ const Content = () => {
     });
 
     return Array.from(keys);
-  }, [cameras]);
+  }, [cameras, integration]);
 
   const getSourceId = (source: any) => {
+    if (integration?.name?.toLowerCase().includes('prowatch')) {
+      return String(source?.log_dev_id ?? '');
+    }
+
     return String(source?.id ?? source?.external_id ?? '');
   };
 
+  const cameraId = getSourceId(cameras);
+  const selectedEvents = selectedEventsBySource[cameraId] ?? [];
+
+  const selectedServerData = useMemo(() => {
+    return filteredServers.find((server: any) => server.id === selectedServer);
+  }, [filteredServers, selectedServer]);
+
   const selectedSourceServer = useMemo(() => {
-    return filteredServers.find((server) => server.id === selectedServer);
+    return filteredServers.find((server: any) => server.id === selectedServer);
   }, [filteredServers, selectedServer]);
 
   useEffect(() => {
     const loadSource = async () => {
-      if (!selectedSourceServer?.instance_id || !integration?.name) {
+      if (!selectedSourceServer?.instance_id) {
         setCameras([]);
         return;
       }
 
       const integrationName = integration.name.toLowerCase();
-      const instanceId = selectedSourceServer.instance_id;
+      const instanceId = selectedServerData?.integration_id ?? selectedSourceServer?.integration_id;
 
       try {
         setLoadingCameras(true);
@@ -746,15 +813,48 @@ const Content = () => {
         } else if (integrationName.includes('prowatch')) {
           response = await getSourceHoneywell(instanceId);
         } else if (integrationName.includes('parking')) {
-          response = await getSourceParking(instanceId);
+          // response = await getSourceParking(instanceId);
+          response = await getVisitorTypeParking(instanceId);
         } else if (integrationName.includes('people tracking')) {
-          response = await getSourceTrackingBle(instanceId);
+          // response = await getSourceTrackingBle(instanceId);
+          // response = await getSourceTrackingBle(instanceId);
+
+          // const collection = response?.collection ?? [];
+
+          // setCameras(
+          //   collection.filter((item: any) =>
+          //     ['Member', 'Visitor', 'Security'].includes(item.name),
+          //   ),
+          // );
+
+          setCameras([
+            {
+              id: 'Member',
+              name: 'Member',
+              // external_id: 'Member',
+              // source_type: 'Event',
+            },
+            {
+              id: 'Visitor',
+              name: 'Visitor',
+              // external_id: 'Visitor',
+              // source_type: 'Event',
+            },
+            {
+              id: 'Security',
+              name: 'Security',
+              // external_id: 'Security',
+              // source_type: 'Event',
+            },
+          ]);
+
+          return;
         } else {
           setCameras([]);
           return;
         }
 
-        console.log('SOURCE:', response);
+        // console.log('SOURCE:', response);
 
         setCameras(response?.collection ?? []);
       } catch (error) {
@@ -766,14 +866,102 @@ const Content = () => {
     };
 
     loadSource();
-  }, [selectedSourceServer, integration?.name]);
+  }, [selectedSourceServer?.integration_id, integration?.name]);
+
+  // const { data: logdevs = [], isLoading: loadingLogdevs } = useLogdevs(
+  //   selectedServerData?.integration_id,
+  //   integration?.name === 'Honeywell Prowatch',
+  // );
+  const selectedCameraData = cameras.filter((camera) =>
+    selectedCameras.includes(getSourceId(camera)),
+  );
+  const filteredCameras = useMemo(() => {
+    const search = cameraSearch.trim().toLowerCase();
+
+    return cameras.filter((camera: any) => {
+      const sourceId = getSourceId(camera);
+
+      const searchableValues = [
+        camera?.name,
+        camera?.log_dev_id,
+        camera?.id,
+        camera?.external_id,
+        camera?.description,
+        camera?.location,
+      ];
+
+      const matchSearch =
+        !search ||
+        searchableValues.some((value) =>
+          String(value ?? '')
+            .toLowerCase()
+            .includes(search),
+        );
+
+      const matchSelected = !showSelected || selectedCameras.includes(sourceId);
+
+      return matchSearch && matchSelected;
+    });
+  }, [cameras, cameraSearch, showSelected, selectedCameras, integration]);
+
+  const sourceGridTemplate = '40px minmax(140px, 1fr) minmax(0, 1.5fr)';
+  const PEOPLE_TRACKING_EVENT_GROUPS = [
+    {
+      label: 'Action',
+      values: ['Idle', 'Ack', 'Dispatch', 'Accepted', 'Done'],
+    },
+    {
+      label: 'Alarm',
+      values: ['Card Access', 'Wrong Zone'],
+    },
+    {
+      label: 'Priority',
+      values: ['High', 'Critical'],
+    },
+  ];
+
+  const filteredEvents = useMemo(() => {
+    const integrationName = integration?.name?.toLowerCase() ?? '';
+
+    let events: string[];
+
+    if (integrationName.includes('people tracking')) {
+      events = ['Idle', 'Ack', 'Dispatch', 'Accepted', 'Done'];
+    } else {
+      events = integration?.event_type ?? [];
+    }
+
+    return events
+      .filter((eventType) => eventType.toLowerCase().includes(eventSearch.toLowerCase()))
+      .map((eventType) => ({
+        code: eventType,
+        name: eventType,
+      }));
+  }, [integration?.name, integration?.event_type, eventSearch]);
+
+  const eventTypes = useMemo(() => {
+    return (integration?.event_type ?? []).map((eventType) => ({
+      name: eventType,
+    }));
+  }, [integration?.event_type]);
+
+  const selectedEventData = selectedCameraData.flatMap((camera) => {
+    const sourceId = getSourceId(camera);
+    const selectedEvents = selectedEventsBySource[sourceId] ?? [];
+
+    return selectedEvents.map((eventName) => ({
+      sourceId,
+      sourceName: camera.name ?? camera.description ?? camera.external_id ?? camera.log_dev_id,
+      name: eventName,
+    }));
+  });
 
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Integration" description="Integration page">
+      <Container title="Event Subscriptions" description="Integration page">
         <Box
           sx={{
             backgroundColor: '#f7f9fc',
@@ -820,7 +1008,7 @@ const Content = () => {
                   gap: 1,
                 }}
               >
-                {integrations.map((item) => {
+                {integrations.map((item: any) => {
                   const selected = integration?.integration_list_id === item.integration_list_id;
 
                   return (
@@ -1013,7 +1201,7 @@ const Content = () => {
                     },
                   }}
                 >
-                  {filteredServers.map((server) => {
+                  {filteredServers.map((server: any) => {
                     const selected = selectedServer === server.id;
 
                     return (
@@ -1077,189 +1265,9 @@ const Content = () => {
             </Card>
 
             {/* =================================================
-                2. CAMERA
+                2. Source Type
             ================================================= */}
-
-            {/* <Card
-              elevation={0}
-              sx={{
-                border: '1px solid #e4e8ee',
-                borderRadius: 1.5,
-                overflow: 'hidden',
-              }}
-            >
-              <CardContent
-                sx={{
-                  p: '12px !important',
-                }}
-              >
-                <SectionTitle
-                  number={2}
-                  title="Select Camera (Source)"
-                  subtitle="Choose cameras from the selected server."
-                />
-
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <SearchField
-                      placeholder="Search camera..."
-                      value={cameraSearch}
-                      onChange={setCameraSearch}
-                    />
-                  </Box>
-
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    sx={{
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onClick={() => setShowSelected(!showSelected)}
-                  >
-                    <Checkbox
-                      size="small"
-                      checked={showSelected}
-                      sx={{
-                        p: 0.3,
-                        mr: 0.3,
-                      }}
-                    />
-
-                    <Typography
-                      sx={{
-                        fontSize: 12,
-                        color: '#6e7785',
-                      }}
-                    >
-                      Show selected only
-                    </Typography>
-                  </Stack>
-                </Stack>
-
-                <Box
-                  sx={{
-                    border: '1px solid #edf0f3',
-                    borderRadius: 0.8,
-                    overflow: 'hidden',
-                  }}
-                >
-   
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '34px 0.9fr 1.2fr 1fr 0.7fr',
-                      minHeight: 29,
-                      alignItems: 'center',
-                      backgroundColor: '#f8fafc',
-                      borderBottom: '1px solid #edf0f3',
-                      px: 0.5,
-                    }}
-                  >
-                    <Checkbox
-                      size="small"
-                      sx={{ p: 0.3 }}
-                      checked={
-                        filteredCameras.length > 0 &&
-                        filteredCameras.every((camera) => selectedCameras.includes(camera.id))
-                      }
-                      onChange={() => {
-                        const allSelected = filteredCameras.every((camera) =>
-                          selectedCameras.includes(camera.id),
-                        );
-
-                        if (allSelected) {
-                          setSelectedCameras((current) =>
-                            current.filter(
-                              (id) => !filteredCameras.some((camera) => camera.id === id),
-                            ),
-                          );
-                        } else {
-                          setSelectedCameras((current) => [
-                            ...new Set([...current, ...filteredCameras.map((camera) => camera.id)]),
-                          ]);
-                        }
-                      }}
-                    />
-
-                    {['Camera ID', 'Camera Name', 'Location', 'Status'].map((title) => (
-                      <Typography
-                        key={title}
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: '#6e7785',
-                        }}
-                      >
-                        {title}
-                      </Typography>
-                    ))}
-                  </Box>
-                  <Box
-                    sx={{
-                      minHeight: 450,
-                      overflowY: 'auto',
-                    }}
-                  >
-
-                    {filteredCameras.map((camera) => {
-                      const checked = selectedCameras.includes(camera.id);
-
-                      return (
-                        <Box
-                          key={camera.id}
-                          sx={{
-                            display: 'grid',
-                            gridTemplateColumns: '34px 0.9fr 1.2fr 1fr 0.7fr',
-                            minHeight: 34,
-                            alignItems: 'center',
-                            px: 0.5,
-                            borderBottom: '1px solid #f0f2f5',
-                            backgroundColor: checked ? '#f4faff' : '#fff',
-                          }}
-                        >
-                          <Checkbox
-                            size="small"
-                            checked={checked}
-                            onChange={() => toggleCamera(camera.id)}
-                            sx={{ p: 0.3 }}
-                          />
-
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              color: '#344050',
-                            }}
-                          >
-                            {camera.id}
-                          </Typography>
-
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              color: '#344050',
-                            }}
-                          >
-                            {camera.name}
-                          </Typography>
-
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              color: '#667181',
-                            }}
-                          >
-                            {camera.location}
-                          </Typography>
-
-                          <StatusDot online={camera.status === 'Online'} />
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-
-                <Stack
+            {/*      <Stack
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
@@ -1335,9 +1343,7 @@ const Content = () => {
                   >
                     10 / page
                   </Typography>
-                </Stack> 
-              </CardContent>
-            </Card> */}
+                </Stack>  */}
 
             <Card
               elevation={0}
@@ -1347,17 +1353,14 @@ const Content = () => {
                 overflow: 'hidden',
               }}
             >
-              <CardContent
-                sx={{
-                  p: '12px !important',
-                }}
-              >
+              <CardContent sx={{ p: '12px !important' }}>
                 <SectionTitle
                   number={2}
                   title="Select Camera (Source)"
                   subtitle="Choose cameras from the selected server."
                 />
 
+                {/* Search + Show Selected */}
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   <Box sx={{ flex: 1 }}>
                     <SearchField
@@ -1374,7 +1377,7 @@ const Content = () => {
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
                     }}
-                    onClick={() => setShowSelected(!showSelected)}
+                    onClick={() => setShowSelected((prev) => !prev)}
                   >
                     <Checkbox
                       size="small"
@@ -1396,6 +1399,7 @@ const Content = () => {
                   </Stack>
                 </Stack>
 
+                {/* TABLE */}
                 <Box
                   sx={{
                     border: '1px solid #edf0f3',
@@ -1403,83 +1407,98 @@ const Content = () => {
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Header */}
+                  {/* ================= HEADER ================= */}
                   <Box
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: `34px repeat(${sourceColumns.length}, minmax(140px, 1fr))`,
-                      minHeight: 29,
+                      gridTemplateColumns: sourceGridTemplate,
+                      minHeight: 36,
                       alignItems: 'center',
                       backgroundColor: '#f8fafc',
                       borderBottom: '1px solid #edf0f3',
                       px: 0.5,
-                      overflowX: 'auto',
                     }}
                   >
-                    {filteredCameras.length > 0 && (
-                      <Checkbox
-                        size="small"
-                        sx={{ p: 0.3 }}
-                        checked={filteredCameras.every((camera) =>
-                          selectedCameras.includes(getSourceId(camera)),
-                        )}
-                        indeterminate={
-                          filteredCameras.some((camera) =>
-                            selectedCameras.includes(getSourceId(camera)),
-                          ) &&
-                          !filteredCameras.every((camera) =>
-                            selectedCameras.includes(getSourceId(camera)),
-                          )
-                        }
-                        onChange={() => {
-                          const allSelected = filteredCameras.every((camera) =>
-                            selectedCameras.includes(getSourceId(camera)),
-                          );
-
-                          if (allSelected) {
-                            setSelectedCameras((current) =>
-                              current.filter(
-                                (id) =>
-                                  !filteredCameras.some((camera) => getSourceId(camera) === id),
-                              ),
-                            );
-                          } else {
-                            setSelectedCameras((current) => [
-                              ...new Set([
-                                ...current,
-                                ...filteredCameras.map((camera) => getSourceId(camera)),
-                              ]),
-                            ]);
+                    {/* Select All */}
+                    <Box>
+                      {filteredCameras.length > 0 && (
+                        <Checkbox
+                          size="small"
+                          sx={{
+                            p: 0.3,
+                          }}
+                          checked={
+                            filteredCameras.length > 0 &&
+                            filteredCameras.every((camera) =>
+                              selectedCameras.includes(getSourceId(camera)),
+                            )
                           }
-                        }}
-                      />
-                    )}
+                          indeterminate={
+                            filteredCameras.some((camera) =>
+                              selectedCameras.includes(getSourceId(camera)),
+                            ) &&
+                            !filteredCameras.every((camera) =>
+                              selectedCameras.includes(getSourceId(camera)),
+                            )
+                          }
+                          onChange={() => {
+                            const allSelected =
+                              filteredCameras.length > 0 &&
+                              filteredCameras.every((camera) =>
+                                selectedCameras.includes(getSourceId(camera)),
+                              );
 
-                    {/* Dynamic Columns */}
+                            if (allSelected) {
+                              setSelectedCameras((current) =>
+                                current.filter(
+                                  (id) =>
+                                    !filteredCameras.some((camera) => getSourceId(camera) === id),
+                                ),
+                              );
+                            } else {
+                              setSelectedCameras((current) => [
+                                ...new Set([
+                                  ...current,
+                                  ...filteredCameras.map((camera) => getSourceId(camera)),
+                                ]),
+                              ]);
+                            }
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    {/* Dynamic Header */}
                     {sourceColumns.map((column) => (
                       <Typography
                         key={column}
                         sx={{
                           fontSize: 12,
                           fontWeight: 600,
-                          color: '#6e7785',
-                          px: 0.5,
+                          color: '#344050',
+                          px: 1,
+                          minWidth: 0,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {column}
+                        {column === 'name'
+                          ? 'Name'
+                          : column === 'log_dev_id'
+                            ? 'Log Dev Id'
+                            : column}
                       </Typography>
                     ))}
                   </Box>
 
-                  {/* Rows */}
+                  {/* ================= BODY ================= */}
                   <Box
                     sx={{
                       minHeight: 450,
                       maxHeight: 450,
-                      overflow: 'auto',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
                     }}
                   >
                     {filteredCameras.length === 0 ? (
@@ -1503,6 +1522,7 @@ const Content = () => {
                     ) : (
                       filteredCameras.map((camera, index) => {
                         const cameraId = getSourceId(camera);
+
                         const checked = selectedCameras.includes(cameraId);
 
                         return (
@@ -1510,23 +1530,36 @@ const Content = () => {
                             key={cameraId || index}
                             sx={{
                               display: 'grid',
-                              gridTemplateColumns: `34px repeat(${sourceColumns.length}, minmax(140px, 1fr))`,
-                              minHeight: 34,
+                              gridTemplateColumns: sourceGridTemplate,
+                              minHeight: 36,
                               alignItems: 'center',
                               px: 0.5,
                               borderBottom: '1px solid #f0f2f5',
                               backgroundColor: checked ? '#f4faff' : '#fff',
                             }}
                           >
-                            <Checkbox
-                              size="small"
-                              checked={checked}
-                              onChange={() => toggleCamera(cameraId)}
-                              sx={{ p: 0.3 }}
-                            />
+                            {/* Checkbox */}
+                            <Box>
+                              <Checkbox
+                                size="small"
+                                checked={checked}
+                                onChange={() => toggleCamera(cameraId)}
+                                sx={{
+                                  p: 0.3,
+                                }}
+                              />
+                            </Box>
 
+                            {/* Dynamic Columns */}
                             {sourceColumns.map((column) => {
                               const value = camera?.[column];
+
+                              const displayValue =
+                                value === null || value === undefined
+                                  ? '-'
+                                  : typeof value === 'object'
+                                    ? JSON.stringify(value)
+                                    : String(value);
 
                               return (
                                 <Typography
@@ -1534,24 +1567,15 @@ const Content = () => {
                                   sx={{
                                     fontSize: 12,
                                     color: '#344050',
-                                    px: 0.5,
+                                    px: 1,
+                                    minWidth: 0,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                   }}
-                                  title={
-                                    value === null || value === undefined
-                                      ? '-'
-                                      : typeof value === 'object'
-                                      ? JSON.stringify(value)
-                                      : String(value)
-                                  }
+                                  title={displayValue}
                                 >
-                                  {value === null || value === undefined
-                                    ? '-'
-                                    : typeof value === 'object'
-                                    ? JSON.stringify(value)
-                                    : String(value)}
+                                  {displayValue}
                                 </Typography>
                               );
                             })}
@@ -1562,6 +1586,7 @@ const Content = () => {
                   </Box>
                 </Box>
 
+                {/* Selected Count */}
                 <Typography
                   sx={{
                     mt: 1,
@@ -1573,7 +1598,6 @@ const Content = () => {
                 </Typography>
               </CardContent>
             </Card>
-
             {/* =================================================
                 3. EVENT
             ================================================= */}
@@ -1586,11 +1610,7 @@ const Content = () => {
                 overflow: 'hidden',
               }}
             >
-              <CardContent
-                sx={{
-                  p: '12px !important',
-                }}
-              >
+              <CardContent sx={{ p: '12px !important' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                   <SectionTitle
                     number={3}
@@ -1598,20 +1618,14 @@ const Content = () => {
                     subtitle="Choose event types to store for the selected cameras."
                   />
 
-                  <FormControl
+                  {/* <FormControl
                     size="small"
                     sx={{
                       width: 105,
                       mt: -0.2,
                     }}
                   >
-                    <InputLabel
-                      sx={{
-                        fontSize: 12,
-                      }}
-                    >
-                      Select Preset
-                    </InputLabel>
+                    <InputLabel sx={{ fontSize: 12 }}>Select Preset</InputLabel>
 
                     <Select
                       value={preset}
@@ -1628,7 +1642,7 @@ const Content = () => {
                       <MenuItem value="Recognition">Recognition</MenuItem>
                       <MenuItem value="All">All Events</MenuItem>
                     </Select>
-                  </FormControl>
+                  </FormControl> */}
                 </Stack>
 
                 <Box sx={{ mb: 1 }}>
@@ -1639,201 +1653,227 @@ const Content = () => {
                   />
                 </Box>
 
-                <Box
-                  sx={{
-                    border: '1px solid #edf0f3',
-                    borderRadius: 0.8,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* Header */}
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '34px 1.15fr 1.1fr 0.8fr 0.8fr',
-                      minHeight: 29,
-                      alignItems: 'center',
-                      backgroundColor: '#f8fafc',
-                      px: 0.5,
-                    }}
-                  >
-                    <Checkbox
-                      size="small"
-                      sx={{ p: 0.3 }}
-                      checked={
-                        filteredEvents.length > 0 &&
-                        filteredEvents.every((event) => selectedEvents.includes(event.code))
-                      }
-                      onChange={() => {
-                        const allSelected = filteredEvents.every((event) =>
-                          selectedEvents.includes(event.code),
-                        );
+                <Stack spacing={1.5}>
+                  {selectedCameraData.map((camera) => {
+                    const sourceId = getSourceId(camera);
 
-                        if (allSelected) {
-                          setSelectedEvents((current) =>
-                            current.filter(
-                              (code) => !filteredEvents.some((event) => event.code === code),
-                            ),
-                          );
-                        } else {
-                          setSelectedEvents((current) => [
-                            ...new Set([...current, ...filteredEvents.map((event) => event.code)]),
-                          ]);
-                        }
-                      }}
-                    />
+                    const selectedEvents = selectedEventsBySource[sourceId] ?? [];
 
-                    {['Event Type Code', 'Event Type Name', 'Category', 'Estimate/Day'].map(
-                      (title) => (
-                        <Typography
-                          key={title}
+                    return (
+                      <Box
+                        key={sourceId}
+                        sx={{
+                          border: '1px solid #edf0f3',
+                          borderRadius: 0.8,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {/* SOURCE HEADER */}
+                        <Box
                           sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: '#6e7785',
+                            px: 1,
+                            py: 0.7,
+                            backgroundColor: '#f8fafc',
+                            borderBottom: '1px solid #edf0f3',
                           }}
                         >
-                          {title}
-                        </Typography>
-                      ),
-                    )}
-                  </Box>
+                          <Typography
+                            sx={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: '#344050',
+                            }}
+                          >
+                            {camera.name ?? camera.description ?? camera.external_id}
+                          </Typography>
+                          {/* 
+                          <Typography
+                            sx={{
+                              fontSize: 10,
+                              color: '#8a94a3',
+                            }}
+                          >
+                            {camera.external_id ?? camera.log_dev_id}
+                          </Typography> */}
+                        </Box>
 
-                  <Box sx={{ maxHeight: 450, overflow: 'auto' }}>
-                    {filteredEvents.map((event) => {
-                      const checked = selectedEvents.includes(event.code);
-
-                      return (
+                        {/* EVENT HEADER */}
                         <Box
-                          key={event.code}
                           sx={{
                             display: 'grid',
-                            gridTemplateColumns: '34px 1.15fr 1.1fr 0.8fr 0.8fr',
-                            minHeight: 34,
+                            gridTemplateColumns: '34px 1fr',
+                            minHeight: 29,
                             alignItems: 'center',
                             px: 0.5,
-                            borderTop: '1px solid #f0f2f5',
-                            backgroundColor: checked ? '#f4faff' : '#fff',
+                            backgroundColor: '#fff',
                           }}
                         >
-                          <Checkbox
+                          {/* <Checkbox
                             size="small"
-                            checked={checked}
-                            onChange={() => toggleEvent(event.code)}
                             sx={{ p: 0.3 }}
-                          />
+                            checked={
+                              filteredEvents.length > 0 &&
+                              filteredEvents.every((event) => selectedEvents.includes(event.name))
+                            }
+                            indeterminate={
+                              filteredEvents.some((event) => selectedEvents.includes(event.name)) &&
+                              !filteredEvents.every((event) => selectedEvents.includes(event.name))
+                            }
+                            onChange={() => {
+                              const allSelected =
+                                filteredEvents.length > 0 &&
+                                filteredEvents.every((event) =>
+                                  selectedEvents.includes(event.name),
+                                );
+
+                              setSelectedEventsBySource((prev) => ({
+                                ...prev,
+                                [sourceId]: allSelected
+                                  ? selectedEvents.filter(
+                                      (name) =>
+                                        !filteredEvents.some((event) => event.name === name),
+                                    )
+                                  : [
+                                      ...new Set([
+                                        ...selectedEvents,
+                                        ...filteredEvents.map((event) => event.name),
+                                      ]),
+                                    ],
+                              }));
+                            }}
+                          /> */}
+                          <Box></Box>
 
                           <Typography
                             sx={{
                               fontSize: 12,
-                              color: '#344050',
+                              fontWeight: 600,
+                              color: '#6e7785',
                             }}
                           >
-                            {event.code}
-                          </Typography>
-
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              color: '#344050',
-                            }}
-                          >
-                            {event.name}
-                          </Typography>
-
-                          <CategoryChip category={event.category} />
-
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              color: '#667181',
-                            }}
-                          >
-                            {event.estimate}
+                            Event Type
                           </Typography>
                         </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
 
-                {/* <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ mt: 1 }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: '#7e8997',
-                    }}
-                  >
-                    {selectedEvents.length} of {eventTypes.length} selected
-                  </Typography>
+                        {/* EVENTS */}
+                        {/* EVENTS */}
+                        <Box
+                          sx={{
+                            maxHeight: 320,
+                            overflow: 'auto',
+                          }}
+                        >
+                          {integration?.name?.toLowerCase().includes('people tracking')
+                            ? PEOPLE_TRACKING_EVENT_GROUPS.map((group) => {
+                                const filteredValues = group.values.filter((value) =>
+                                  value.toLowerCase().includes(eventSearch.toLowerCase()),
+                                );
 
-                  <Stack direction="row" spacing={0.4}>
-                    <IconButton
-                      size="small"
-                      sx={{
-                        width: 25,
-                        height: 25,
-                        border: '1px solid #e0e4e9',
-                        borderRadius: 0.7,
-                      }}
-                    >
-                      <ArrowBackIosNewIcon sx={{ fontSize: 10 }} />
-                    </IconButton>
+                                if (filteredValues.length === 0) {
+                                  return null;
+                                }
 
-                    <Button
-                      size="small"
-                      variant="contained"
-                      sx={{
-                        minWidth: 25,
-                        height: 25,
-                        p: 0,
-                        fontSize: 9,
-                        boxShadow: 'none',
-                      }}
-                    >
-                      1
-                    </Button>
+                                return (
+                                  <Box key={group.label}>
+                                    {/* GROUP HEADER */}
+                                    <Box
+                                      sx={{
+                                        px: 1,
+                                        py: 0.7,
+                                        backgroundColor: '#f8fafc',
+                                        borderTop: '1px solid #edf0f3',
+                                        borderBottom: '1px solid #edf0f3',
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          fontSize: 11,
+                                          fontWeight: 700,
+                                          color: '#667181',
+                                          textTransform: 'uppercase',
+                                        }}
+                                      >
+                                        {group.label}
+                                      </Typography>
+                                    </Box>
 
-                    <Button
-                      size="small"
-                      sx={{
-                        minWidth: 25,
-                        height: 25,
-                        p: 0,
-                        fontSize: 9,
-                        color: '#697484',
-                      }}
-                    >
-                      2
-                    </Button>
+                                    {/* GROUP VALUES */}
+                                    {filteredValues.map((value) => {
+                                      const checked = selectedEvents.includes(value);
 
-                    <IconButton
-                      size="small"
-                      sx={{
-                        width: 25,
-                        height: 25,
-                        border: '1px solid #e0e4e9',
-                        borderRadius: 0.7,
-                      }}
-                    >
-                      <ArrowForwardIosIcon sx={{ fontSize: 10 }} />
-                    </IconButton>
-                  </Stack>
+                                      return (
+                                        <Box
+                                          key={value}
+                                          sx={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '34px 1fr',
+                                            minHeight: 34,
+                                            alignItems: 'center',
+                                            px: 0.5,
+                                            borderBottom: '1px solid #f0f2f5',
+                                            backgroundColor: checked ? '#f4faff' : '#fff',
+                                          }}
+                                        >
+                                          <Checkbox
+                                            size="small"
+                                            checked={checked}
+                                            onChange={() => toggleEvent(sourceId, value)}
+                                            sx={{ p: 0.3 }}
+                                          />
 
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: '#667181',
-                    }}
-                  >
-                    10 / page
-                  </Typography>
-                </Stack> */}
+                                          <Typography
+                                            sx={{
+                                              fontSize: 12,
+                                              color: '#344050',
+                                            }}
+                                          >
+                                            {value}
+                                          </Typography>
+                                        </Box>
+                                      );
+                                    })}
+                                  </Box>
+                                );
+                              })
+                            : filteredEvents.map((event) => {
+                                const checked = selectedEvents.includes(event.name);
+
+                                return (
+                                  <Box
+                                    key={event.name}
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: '34px 1fr',
+                                      minHeight: 34,
+                                      alignItems: 'center',
+                                      px: 0.5,
+                                      borderBottom: '1px solid #f0f2f5',
+                                      backgroundColor: checked ? '#f4faff' : '#fff',
+                                    }}
+                                  >
+                                    <Checkbox
+                                      size="small"
+                                      checked={checked}
+                                      onChange={() => toggleEvent(sourceId, event.name)}
+                                      sx={{ p: 0.3 }}
+                                    />
+
+                                    <Typography
+                                      sx={{
+                                        fontSize: 12,
+                                        color: '#344050',
+                                      }}
+                                    >
+                                      {event.name}
+                                    </Typography>
+                                  </Box>
+                                );
+                              })}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
               </CardContent>
             </Card>
           </Box>
@@ -1841,7 +1881,7 @@ const Content = () => {
           {/* =================================================
               4. REVIEW & SAVE
           ================================================= */}
-          {/* 
+
           <Card
             elevation={0}
             sx={{
@@ -1872,7 +1912,6 @@ const Content = () => {
                   gap: 1,
                 }}
               >
-         
                 <Paper
                   elevation={0}
                   sx={{
@@ -1885,8 +1924,8 @@ const Content = () => {
                   <Stack direction="row" spacing={1}>
                     <Box
                       sx={{
-                        width: 28,
-                        height: 28,
+                        width: 50,
+                        height: 50,
                         borderRadius: 0.7,
                         backgroundColor: '#e8f4ff',
                         color: '#1976d2',
@@ -1895,7 +1934,7 @@ const Content = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <StorageOutlinedIcon sx={{ fontSize: 17 }} />
+                      <StorageOutlinedIcon sx={{ fontSize: 25 }} />
                     </Box>
 
                     <Box>
@@ -1909,7 +1948,7 @@ const Content = () => {
                           {selectedServerData?.name}
                         </Typography>
 
-                        <Chip
+                        {/* <Chip
                           label="Online"
                           size="small"
                           sx={{
@@ -1918,7 +1957,7 @@ const Content = () => {
                             backgroundColor: '#e4f7ee',
                             color: '#13905b',
                           }}
-                        />
+                        /> */}
                       </Stack>
 
                       <Typography
@@ -1946,8 +1985,8 @@ const Content = () => {
                   <Stack direction="row" spacing={1}>
                     <Box
                       sx={{
-                        width: 28,
-                        height: 28,
+                        width: 50,
+                        height: 50,
                         borderRadius: 0.7,
                         backgroundColor: '#e8f4ff',
                         color: '#1976d2',
@@ -1957,7 +1996,7 @@ const Content = () => {
                         flexShrink: 0,
                       }}
                     >
-                      <VideocamOutlinedIcon sx={{ fontSize: 17 }} />
+                      <IconVideo size={25} />
                     </Box>
 
                     <Box>
@@ -1980,7 +2019,7 @@ const Content = () => {
                             lineHeight: 1.4,
                           }}
                         >
-                          {camera.id} — {camera.name}
+                          {camera.name}
                         </Typography>
                       ))}
 
@@ -1999,7 +2038,6 @@ const Content = () => {
                   </Stack>
                 </Paper>
 
-    
                 <Paper
                   elevation={0}
                   sx={{
@@ -2012,8 +2050,8 @@ const Content = () => {
                   <Stack direction="row" spacing={1}>
                     <Box
                       sx={{
-                        width: 28,
-                        height: 28,
+                        width: 50,
+                        height: 50,
                         borderRadius: 0.7,
                         backgroundColor: '#f0edff',
                         color: '#6554c0',
@@ -2023,7 +2061,7 @@ const Content = () => {
                         flexShrink: 0,
                       }}
                     >
-                      <CheckCircleIcon sx={{ fontSize: 17 }} />
+                      <IconSquareCheckFilled size={25} />
                     </Box>
 
                     <Box>
@@ -2034,89 +2072,40 @@ const Content = () => {
                           mb: 0.3,
                         }}
                       >
-                        Selected Event Types ({selectedEvents.length})
+                        Selected Event Types ({selectedEventData.length})
                       </Typography>
 
-                      {selectedEventData.slice(0, 4).map((event) => (
+                      {selectedEventData.slice(0, 4).map((event, index) => (
                         <Typography
-                          key={event.code}
+                          key={`${event.sourceId}-${event.name}-${index}`}
                           sx={{
                             fontSize: 12,
                             color: '#727d8b',
                             lineHeight: 1.4,
                           }}
                         >
-                          {event.code}
+                          {event.name}
                         </Typography>
                       ))}
-                    </Box>
-                  </Stack>
-                </Paper>
 
-    
-                <Paper
-                  elevation={0}
-                  sx={{
-                    minHeight: 78,
-                    p: 1,
-                    border: '1px solid #e3e7ec',
-                    borderRadius: 1,
-                  }}
-                >
-                  <Stack direction="row" spacing={1}>
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 0.7,
-                        backgroundColor: '#edf8f3',
-                        color: '#17a36a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <BarChartOutlinedIcon sx={{ fontSize: 18 }} />
-                    </Box>
-
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: 16,
-                          fontWeight: 700,
-                        }}
-                      >
-                        Estimated Events
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: 17,
-                          fontWeight: 800,
-                          color: '#263442',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        ~ {estimatedEvents.toLocaleString()}
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          color: '#8a94a1',
-                        }}
-                      >
-                        events/day
-                      </Typography>
+                      {selectedEventData.length > 4 && (
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            color: '#6554c0',
+                            lineHeight: 1.4,
+                            fontWeight: 600,
+                          }}
+                        >
+                          +{selectedEventData.length - 4} more
+                        </Typography>
+                      )}
                     </Box>
                   </Stack>
                 </Paper>
               </Box>
-
-       
-             
             </CardContent>
-          </Card> */}
+          </Card>
 
           <Stack direction="row" justifyContent="flex-end" spacing={0.8} sx={{ mt: 1.5 }}>
             <Button
@@ -2125,7 +2114,7 @@ const Content = () => {
               startIcon={<CloseIcon sx={{ fontSize: 15 }} />}
               onClick={() => {
                 setSelectedCameras([]);
-                setSelectedEvents([]);
+                // setSelectedEvents([]);
               }}
               size="medium"
               sx={{
@@ -2143,19 +2132,10 @@ const Content = () => {
             <Button
               variant="contained"
               startIcon={<SaveOutlinedIcon sx={{ fontSize: 15 }} />}
-              onClick={() => {
-                console.log({
-                  integration,
-                  server: selectedServerData,
-                  cameras: selectedCameraData,
-                  events: selectedEventData,
-                });
-              }}
+              onClick={handleSaveSubscription}
               size="medium"
               sx={{
-                // height: 34,
                 textTransform: 'none',
-                // fontSize: 10.5,
                 borderRadius: 0.8,
                 boxShadow: 'none',
                 px: 2,
@@ -2169,14 +2149,20 @@ const Content = () => {
         <AddServerDialog
           open={openAddServer}
           serverForm={serverForm}
-          sourceTypeOptions={sourceTypeOptions}
-          parkingGroupTypeOptions={parkingGroupTypeOptions}
-          isParking={integration?.name === 'Bio Parking System'}
+          // sourceTypeOptions={sourceTypeOptions}
+          // parkingGroupTypeOptions={parkingGroupTypeOptions}
+          // logdevOptions={logdevs}
+          // isParking={integration?.name === 'Bio Parking System'}
+          // isProwatch={integration?.name === 'Honeywell Prowatch'}
+          // loadingLogdevs={loadingLogdevs}
+          integrationOptions={addIntegrationOptions}
+          loadingIntegrationOptions={loadingAddIntegrationOptions}
           onClose={handleCloseAddServer}
           onChange={setServerForm}
           onSubmit={handleSubmitAddServer}
         />
       </Container>
+      <GlobalBackdropLoading open={isSubmitting} />
     </PageContainer>
   );
 };
