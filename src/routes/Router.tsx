@@ -192,6 +192,9 @@ const ManageUserGroup = Loadable(
 const ManageReportTransaction = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/TransactionLog/Content')),
 );
+const ManageReportInvestigate = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Investigate/Content')),
+);
 const ManageReportInvitation = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/InvitationLog/Content')),
 );
@@ -483,6 +486,7 @@ const Router = [
           { path: '/admin/users', element: <ManageUser /> },
           { path: '/admin/users-group', element: <ManageUserGroup /> },
           { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
+          { path: '/admin/report/investigate', element: <ManageReportInvestigate /> },
           { path: '/admin/report/invitation', element: <ManageReportInvitation /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
           {

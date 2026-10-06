@@ -13,8 +13,9 @@ import { IconLink, IconUsers } from '@tabler/icons-react';
 import SendEmailDialog from '../../admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
 import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
-import CreateLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
+
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
+import CreateLinkDialog from './components/CreateLinkDialog';
 
 const Content = () => {
   // const [page, setPage] = useState(0);
