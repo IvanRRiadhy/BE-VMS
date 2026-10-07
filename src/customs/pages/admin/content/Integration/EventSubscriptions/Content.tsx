@@ -77,10 +77,6 @@ import {
 } from 'src/hooks/EventSubscriptions';
 import { getVisitorTypeParking } from 'src/customs/api/types/ParkingIntegration';
 
-/* =========================================================
- * Types
- * ======================================================= */
-
 type IntegrationType = 'honeywell' | 'ipsotek' | 'parking' | 'ble';
 
 interface Integration {
@@ -110,41 +106,6 @@ interface EventType {
   category: string;
   estimate: string;
 }
-
-/* =========================================================
- * Data
- * ======================================================= */
-
-// const integrations: Integration[] = [
-//   {
-//     id: 'honeywell',
-//     name: 'Honeywell',
-//     description: 'Access Control',
-//     icon: <StorageOutlinedIcon />,
-//     color: '#e53935',
-//   },
-//   {
-//     id: 'ipsotek',
-//     name: 'Ipsotek',
-//     description: 'Video Analytics',
-//     icon: <VideocamOutlinedIcon />,
-//     color: '#1976d2',
-//   },
-//   {
-//     id: 'parking',
-//     name: 'Parking',
-//     description: 'Parking System',
-//     icon: <LocalParkingOutlinedIcon />,
-//     color: '#f2b300',
-//   },
-//   {
-//     id: 'ble',
-//     name: 'BLE Alarm',
-//     description: 'BLE Tracking',
-//     icon: <SensorsOutlinedIcon />,
-//     color: '#19a974',
-//   },
-// ];
 
 const eventTypes: EventType[] = [];
 
@@ -242,54 +203,6 @@ const SearchField = ({
   />
 );
 
-const CategoryChip = ({ category }: { category: string }) => {
-  const colors: Record<string, any> = {
-    Detection: {
-      background: '#f0e7ff',
-      color: '#7747b7',
-    },
-    Recognition: {
-      background: '#e8e5ff',
-      color: '#6252b5',
-    },
-    Zone: {
-      background: '#fff0da',
-      color: '#d07c00',
-    },
-    Behavior: {
-      background: '#fff1c9',
-      color: '#a87900',
-    },
-    System: {
-      background: '#edf0f3',
-      color: '#687382',
-    },
-  };
-
-  const style = colors[category] || colors.System;
-
-  return (
-    <Chip
-      label={category}
-      size="small"
-      sx={{
-        height: 20,
-        fontSize: 12,
-        backgroundColor: style.background,
-        color: style.color,
-        borderRadius: 0.8,
-        '& .MuiChip-label': {
-          px: 0.9,
-        },
-      }}
-    />
-  );
-};
-
-/* =========================================================
- * Main Component
- * ======================================================= */
-
 const Content = () => {
   const [integration, setIntegration] = useState<Integration | null>(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -341,41 +254,11 @@ const Content = () => {
 
   const [showSelected, setShowSelected] = useState(false);
 
-  const [preset, setPreset] = useState('Custom');
-
-  /* -------------------------------------------------------
-   * Filter
-   * ----------------------------------------------------- */
-
-  // const filteredEvents = useMemo(() => {
-  //   return eventTypes.filter(
-  //     (event) =>
-  //       event.code.toLowerCase().includes(eventSearch.toLowerCase()) ||
-  //       event.name.toLowerCase().includes(eventSearch.toLowerCase()),
-  //   );
-  // }, [eventSearch]);
-
-  /* -------------------------------------------------------
-   * Toggle
-   * ----------------------------------------------------- */
-
   const toggleCamera = (cameraId: string) => {
     setSelectedCameras((current) =>
       current.includes(cameraId) ? current.filter((id) => id !== cameraId) : [...current, cameraId],
     );
   };
-
-  // const toggleEvent = (eventCode: string) => {
-  //   setSelectedEvents((current) =>
-  //     current.includes(eventCode)
-  //       ? current.filter((code) => code !== eventCode)
-  //       : [...current, eventCode],
-  //   );
-  // };
-
-  /* -------------------------------------------------------
-   * Render
-   * ----------------------------------------------------- */
 
   const { data: integrations = [], isLoading: loadingIntegrations } = useIntegrationList();
 
@@ -405,33 +288,15 @@ const Content = () => {
 
   const filteredServers = useMemo(() => {
     return integrationInstances
-      .flatMap((instance: any) => {
-        const sources = instance.integration_event_sources ?? [];
-
-        if (sources.length === 0) {
-          return [
-            {
-              id: instance.id,
-              instance_id: instance.id,
-              integration_id: instance.integration_id,
-              name: instance.integration?.name ?? instance.integration_id,
-              address: '',
-              source_type: '',
-              is_active: instance.is_active,
-            },
-          ];
-        }
-
-        return sources.map((source: any) => ({
-          id: source.id,
-          instance_id: instance.id,
-          integration_id: instance.integration_id,
-          name: source.description,
-          address: source.external_id,
-          source_type: source.source_type,
-          is_active: source.is_active,
-        }));
-      })
+      .map((instance: any) => ({
+        id: instance.id,
+        instance_id: instance.id,
+        integration_id: instance.integration_id,
+        name: instance.integration?.name ?? instance.integration_id,
+        address: '',
+        source_type: '',
+        is_active: instance.is_active,
+      }))
       .filter((server: any) => {
         const search = serverSearch.toLowerCase();
 
@@ -460,29 +325,27 @@ const Content = () => {
   const [addIntegrationOptions, setAddIntegrationOptions] = useState<any[]>([]);
   const [loadingAddIntegrationOptions, setLoadingAddIntegrationOptions] = useState(false);
 
-  useEffect(() => {
+  const fetchIntegrationInstance = async () => {
     if (!integration?.integration_list_id) {
       setAddIntegrationOptions([]);
       return;
     }
 
-    const fetchIntegrationInstance = async () => {
-      try {
-        setLoadingAddIntegrationOptions(true);
+    try {
+      setLoadingAddIntegrationOptions(true);
 
-        const response = await getIntegrationInstanceByIntegrationId(
-          integration.integration_list_id,
-        );
+      const response = await getIntegrationInstanceByIntegrationId(integration.integration_list_id);
 
-        setAddIntegrationOptions(response?.collection ?? []);
-      } catch (error) {
-        console.error('Failed to fetch integration options:', error);
-        setAddIntegrationOptions([]);
-      } finally {
-        setLoadingAddIntegrationOptions(false);
-      }
-    };
+      setAddIntegrationOptions(response?.collection ?? []);
+    } catch (error) {
+      console.error('Failed to fetch integration options:', error);
+      setAddIntegrationOptions([]);
+    } finally {
+      setLoadingAddIntegrationOptions(false);
+    }
+  };
 
+  useEffect(() => {
     fetchIntegrationInstance();
   }, [integration?.integration_list_id]);
 
@@ -500,56 +363,6 @@ const Content = () => {
 
   const { mutateAsync: createIntegrationEventInstance, isPending: isSubmitting } =
     useCreateIntegrationEventInstance();
-
-  // const handleSubmitAddServer = async () => {
-  //   if (!integration?.integration_list_id) {
-  //     console.error('Integration is not selected');
-  //     return;
-  //   }
-  //   if (!serverForm.source_type) {
-  //     console.error('Source type is required');
-  //     return;
-  //   }
-
-  //   if (!serverForm.external_id) {
-  //     console.error('External ID is required');
-  //     return;
-  //   }
-
-  //   const payload = {
-  //     integration_id: selectedServerData.integration_id ?? selectedServerData.id,
-  //     is_active: serverForm.is_active,
-  //     integration_event_sources: [
-  //       {
-  //         source_type: serverForm.source_type,
-  //         external_id: serverForm.external_id,
-  //         description: serverForm.description,
-  //         is_active: serverForm.is_active,
-  //         integration_event_subscriptions: serverForm.integration_event_subscriptions,
-  //       },
-  //     ],
-  //   };
-
-  //   setLoadingIntegrationInstances(true);
-  //   try {
-  //     await createIntegrationEventInstance(payload);
-
-  //     setServerForm({
-  //       source_type: '',
-  //       external_id: '',
-  //       description: '',
-  //       is_active: true,
-  //       integration_event_subscriptions: [],
-  //     });
-
-  //     // Tutup dialog
-  //     setOpenAddServer(false);
-  //   } catch (error: any) {
-  //     showSwal('error', error?.response?.data?.msg || 'Failed to add integration server');
-  //   } finally {
-  //     setLoadingIntegrationInstances(false);
-  //   }
-  // };
 
   const handleSubmitAddServer = async () => {
     // if (!integration?.integration_list_id) {
@@ -570,23 +383,19 @@ const Content = () => {
     //   return;
     // }
 
+    if (!serverForm.integration_id) {
+      showSwal('error', 'Integration is required');
+      return;
+    }
+
     const payload = {
       integration_id: serverForm.integration_id,
       is_active: serverForm.is_active,
-      // integration_event_sources: [
-      //   {
-      //     source_type: serverForm.source_type,
-      //     external_id: serverForm.external_id,
-      //     description: serverForm.description,
-      //     is_active: serverForm.is_active,
-      //     integration_event_subscriptions: serverForm.integration_event_subscriptions,
-      //   },
-      // ],
     };
 
     try {
       await createIntegrationEventInstance(payload);
-      showSwal('success', 'Integration server added successfully');
+      showSwal('success', 'Successfully added integration server');
 
       setServerForm({
         integration_id: '',
@@ -596,7 +405,7 @@ const Content = () => {
         is_active: true,
         integration_event_subscriptions: [],
       });
-
+      await fetchIntegrationInstance();
       setOpenAddServer(false);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to add integration server');
@@ -608,6 +417,24 @@ const Content = () => {
     setSelectedEventsBySource({});
     setServerSearch('');
     setCameraSearch('');
+  };
+
+  const getSourceExternalId = (source: any) => {
+    const integrationName = integration?.name?.toLowerCase() ?? '';
+
+    if (integrationName.includes('parking')) {
+      return String(source?.uid ?? '');
+    }
+
+    if (integrationName.includes('prowatch')) {
+      return String(source?.log_dev_id ?? '');
+    }
+
+    if (integrationName.includes('ipsotek')) {
+      return String(source?.external_id ?? '');
+    }
+
+    return String(source?.external_id ?? source?.id ?? '');
   };
 
   const handleSaveSubscription = async () => {
@@ -626,7 +453,9 @@ const Content = () => {
       return {
         // source_type: camera.source_type || selectedServerData.source_type || '',
         source_type: integration?.sourceType?.[0] ?? '',
-        external_id: camera.external_id ?? camera.log_dev_id,
+        external_id: integration?.name?.toLowerCase().includes('parking')
+          ? camera.uid
+          : getSourceExternalId(camera),
         description: camera.description ?? camera.name,
         is_active: true,
 
@@ -643,16 +472,14 @@ const Content = () => {
       integration_event_sources: integrationEventSources,
     };
 
-    console.log('CREATE PAYLOAD:', payload);
+    // console.log('CREATE PAYLOAD:', payload);
 
     try {
       await createIntegrationEventInstance(payload);
 
-      showSwal('success', 'Integration subscription created successfully');
+      showSwal('success', 'Successfully created integration subscription');
       resetForm();
     } catch (error: any) {
-      console.error(error);
-
       showSwal('error', error?.response?.data?.msg || 'Failed to create integration subscription');
     }
   };
@@ -728,28 +555,6 @@ const Content = () => {
     );
   };
 
-  const sourceTypeOptions = getSourceTypeOptions(integration);
-  const eventTypeOptions = getEventTypeOptions(integration);
-
-  const parkingGroupTypeOptions = [
-    { label: 'Employee', value: 'employee' },
-    { label: 'Resident', value: 'resident' },
-    { label: 'Visitor', value: 'visitor' },
-    { label: 'Vendor', value: 'vendor' },
-  ];
-
-  // const sourceColumns = useMemo(() => {
-  //   const keys = new Set<string>();
-
-  //   cameras.forEach((camera) => {
-  //     Object.keys(camera ?? {}).forEach((key) => {
-  //       keys.add(key);
-  //     });
-  //   });
-
-  //   return Array.from(keys);
-  // }, [cameras]);
-
   const sourceColumns = useMemo(() => {
     if (integration?.name?.toLowerCase().includes('prowatch')) {
       return ['name', 'log_dev_id'];
@@ -761,6 +566,10 @@ const Content = () => {
 
     if (integration?.name?.toLowerCase().includes('tracking')) {
       return ['name'];
+    }
+
+    if (integration?.name?.toLowerCase().includes('ipsptek')) {
+      return ['name', 'external_id'];
     }
 
     const keys = new Set<string>();
@@ -779,6 +588,10 @@ const Content = () => {
       return String(source?.log_dev_id ?? '');
     }
 
+    if (integration?.name?.toLowerCase().includes('parking')) {
+      return String(source?.uid ?? '');
+    }
+
     return String(source?.id ?? source?.external_id ?? '');
   };
 
@@ -793,80 +606,198 @@ const Content = () => {
     return filteredServers.find((server: any) => server.id === selectedServer);
   }, [filteredServers, selectedServer]);
 
-  useEffect(() => {
-    const loadSource = async () => {
-      if (!selectedSourceServer?.instance_id) {
-        setCameras([]);
+  const selectedSourceData = useMemo(() => {
+    if (!selectedServerData) return [];
+
+    const instance = integrationInstances.find(
+      (item: any) => item.id === selectedServerData.instance_id,
+    );
+
+    if (!instance) return [];
+
+    return instance.integration_event_sources ?? [];
+  }, [integrationInstances, selectedServerData]);
+
+  const getCameraExternalId = (camera: any) =>
+    String(camera?.external_id ?? camera?.log_dev_id ?? camera?.id ?? '');
+
+  const isMatchingSource = (camera: any, source: any) => {
+    if (!source) return false;
+
+    const cameraExternalId = getCameraExternalId(camera);
+
+    return (
+      cameraExternalId === String(source.external_id ?? '') &&
+      (!camera?.source_type || camera.source_type === source.source_type)
+    );
+  };
+
+  const loadSource = async () => {
+    if (!selectedSourceServer?.instance_id) {
+      setCameras([]);
+      setSelectedCameras([]);
+      setSelectedEventsBySource({});
+      return;
+    }
+
+    const integrationName = integration?.name?.toLowerCase() ?? '';
+
+    const instanceId = selectedServerData?.integration_id ?? selectedSourceServer?.integration_id;
+
+    try {
+      setLoadingCameras(true);
+
+      /**
+       * =====================================================
+       * HONEYWELL IPSOTEK
+       * Source dan subscription sudah berasal dari
+       * integration_event_sources
+       * =====================================================
+       */
+      if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
+        const savedSources = selectedSourceData ?? [];
+
+        const sourceList = savedSources.map((source: any) => ({
+          ...source,
+          id: source.id ?? source.external_id,
+          name: source.name ?? source.description,
+          external_id: source.external_id,
+          description: source.description,
+        }));
+
+        setCameras(sourceList);
+
+        /**
+         * Source yang aktif/terpilih
+         */
+        const selectedSourceIds = sourceList.map((source: any) => getSourceId(source));
+
+        setSelectedCameras(selectedSourceIds);
+
+        /**
+         * Event yang sudah tersimpan
+         */
+        const eventsBySource: Record<string, string[]> = {};
+
+        sourceList.forEach((source: any) => {
+          const sourceId = getSourceId(source);
+
+          const existingEvents =
+            source.integration_event_subscriptions
+              ?.filter((item: any) => item.is_active)
+              ?.map((item: any) => item.event_type) ?? [];
+
+          eventsBySource[sourceId] = existingEvents;
+        });
+
+        setSelectedEventsBySource(eventsBySource);
+
         return;
       }
 
-      const integrationName = integration.name.toLowerCase();
-      const instanceId = selectedServerData?.integration_id ?? selectedSourceServer?.integration_id;
+      /**
+       * =====================================================
+       * INTEGRATION LAIN
+       * =====================================================
+       */
 
-      try {
-        setLoadingCameras(true);
+      let response;
 
-        let response;
+      if (integrationName.includes('prowatch')) {
+        response = await getSourceHoneywell(instanceId);
+      } else if (integrationName.includes('parking')) {
+        response = await getVisitorTypeParking(instanceId);
+      } else if (integrationName.includes('people tracking')) {
+        setCameras([
+          {
+            id: 'Member',
+            name: 'Member',
+          },
+          {
+            id: 'Visitor',
+            name: 'Visitor',
+          },
+          {
+            id: 'Security',
+            name: 'Security',
+          },
+        ]);
 
-        if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
-          response = await getSourceIpsotek(instanceId);
-        } else if (integrationName.includes('prowatch')) {
-          response = await getSourceHoneywell(instanceId);
-        } else if (integrationName.includes('parking')) {
-          // response = await getSourceParking(instanceId);
-          response = await getVisitorTypeParking(instanceId);
-        } else if (integrationName.includes('people tracking')) {
-          // response = await getSourceTrackingBle(instanceId);
-          // response = await getSourceTrackingBle(instanceId);
+        setSelectedCameras([]);
+        setSelectedEventsBySource({});
 
-          // const collection = response?.collection ?? [];
-
-          // setCameras(
-          //   collection.filter((item: any) =>
-          //     ['Member', 'Visitor', 'Security'].includes(item.name),
-          //   ),
-          // );
-
-          setCameras([
-            {
-              id: 'Member',
-              name: 'Member',
-              // external_id: 'Member',
-              // source_type: 'Event',
-            },
-            {
-              id: 'Visitor',
-              name: 'Visitor',
-              // external_id: 'Visitor',
-              // source_type: 'Event',
-            },
-            {
-              id: 'Security',
-              name: 'Security',
-              // external_id: 'Security',
-              // source_type: 'Event',
-            },
-          ]);
-
-          return;
-        } else {
-          setCameras([]);
-          return;
-        }
-
-        // console.log('SOURCE:', response);
-
-        setCameras(response?.collection ?? []);
-      } catch (error) {
-        console.error('Failed get source:', error);
+        return;
+      } else {
         setCameras([]);
-      } finally {
-        setLoadingCameras(false);
-      }
-    };
+        setSelectedCameras([]);
+        setSelectedEventsBySource({});
 
+        return;
+      }
+
+      const sourceCollection = response?.collection ?? [];
+
+      setCameras(sourceCollection);
+
+      const savedSources = selectedSourceData ?? [];
+
+      if (savedSources.length === 0) {
+        setSelectedCameras([]);
+        setSelectedEventsBySource({});
+        return;
+      }
+
+      const matchedSources = sourceCollection.filter((camera: any) => {
+        const cameraId = String(camera?.external_id ?? camera?.log_dev_id ?? camera?.id ?? '');
+
+        return savedSources.some(
+          (savedSource: any) => cameraId === String(savedSource.external_id ?? ''),
+        );
+      });
+
+      const selectedSourceIds = matchedSources.map((camera: any) => getSourceId(camera));
+
+      setSelectedCameras(selectedSourceIds);
+
+      const eventsBySource: Record<string, string[]> = {};
+
+      matchedSources.forEach((camera: any) => {
+        const sourceId = getSourceId(camera);
+
+        const savedSource = savedSources.find(
+          (source: any) =>
+            String(source.external_id ?? '') ===
+            String(camera?.external_id ?? camera?.log_dev_id ?? camera?.id ?? ''),
+        );
+
+        const existingEvents =
+          savedSource?.integration_event_subscriptions
+            ?.filter((item: any) => item.is_active)
+            ?.map((item: any) => item.event_type) ?? [];
+
+        eventsBySource[sourceId] = existingEvents;
+      });
+
+      setSelectedEventsBySource(eventsBySource);
+    } catch (error) {
+      console.error('Failed get source:', error);
+
+      setCameras([]);
+      setSelectedCameras([]);
+      setSelectedEventsBySource({});
+    } finally {
+      setLoadingCameras(false);
+    }
+  };
+
+  useEffect(() => {
     loadSource();
-  }, [selectedSourceServer?.integration_id, integration?.name]);
+  }, [
+    selectedSourceServer?.id,
+    selectedSourceServer?.integration_id,
+    integration?.name,
+    selectedSourceData,
+  ]);
 
   // const { data: logdevs = [], isLoading: loadingLogdevs } = useLogdevs(
   //   selectedServerData?.integration_id,
@@ -955,6 +886,74 @@ const Content = () => {
       name: eventName,
     }));
   });
+
+  const [openAddSource, setOpenAddSource] = useState(false);
+
+  const [manualSourceForm, setManualSourceForm] = useState({
+    external_id: '',
+    description: '',
+  });
+
+  const handleAddManualSource = async () => {
+    const externalId = manualSourceForm.external_id.trim();
+    const description = manualSourceForm.description.trim();
+
+    if (!externalId) {
+      showSwal('error', 'External ID is required');
+      return;
+    }
+
+    if (!description) {
+      showSwal('error', 'Description is required');
+      return;
+    }
+
+    if (!selectedServerData?.integration_id) {
+      showSwal('error', 'Please select a server first');
+      return;
+    }
+
+    const payload = {
+      integration_id: selectedServerData.integration_id,
+      is_active: selectedServerData.is_active ?? true,
+      integration_event_sources: [
+        {
+          source_type: 'CameraCCTV',
+          external_id: externalId,
+          description,
+          is_active: true,
+          integration_event_subscriptions: [
+            {
+              event_type: 'CameraCapture',
+              is_active: true,
+            },
+          ],
+        },
+      ],
+    };
+
+    try {
+      await createIntegrationEventInstance(payload);
+
+      showSwal('success', 'Successfully added source');
+
+      setManualSourceForm({
+        external_id: '',
+        description: '',
+      });
+
+      setOpenAddSource(false);
+
+      // refresh source/server data
+      await fetchIntegrationInstance();
+
+      // reload source list
+      await loadSource();
+    } catch (error) {
+      console.error('Failed to add source:', error);
+      showSwal('error', 'Failed to add source');
+    }
+  };
 
   return (
     <PageContainer
@@ -1255,7 +1254,7 @@ const Content = () => {
                             </Typography>
                           </Box>
 
-                          <StatusDot online={server.is_active} />
+                          {/* <StatusDot online={server.is_active} /> */}
                         </Stack>
                       </Paper>
                     );
@@ -1263,88 +1262,9 @@ const Content = () => {
                 </Stack>
               </CardContent>
             </Card>
-
             {/* =================================================
-                2. Source Type
+                2. Source
             ================================================= */}
-            {/*      <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ mt: 1 }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: '#7e8997',
-                    }}
-                  >
-                    {selectedCameras.length} of {cameras.length} selected
-                  </Typography>
-
-                  <Stack direction="row" spacing={0.4}>
-                    <IconButton
-                      size="small"
-                      sx={{
-                        width: 25,
-                        height: 25,
-                        border: '1px solid #e0e4e9',
-                        borderRadius: 0.7,
-                      }}
-                    >
-                      <ArrowBackIosNewIcon sx={{ fontSize: 10 }} />
-                    </IconButton>
-
-                    <Button
-                      size="small"
-                      variant="contained"
-                      sx={{
-                        minWidth: 25,
-                        height: 25,
-                        p: 0,
-                        fontSize: 12,
-                        boxShadow: 'none',
-                      }}
-                    >
-                      1
-                    </Button>
-
-                    <Button
-                      size="small"
-                      sx={{
-                        minWidth: 25,
-                        height: 25,
-                        p: 0,
-                        fontSize: 12,
-                        color: '#697484',
-                      }}
-                    >
-                      2
-                    </Button>
-
-                    <IconButton
-                      size="small"
-                      sx={{
-                        width: 25,
-                        height: 25,
-                        border: '1px solid #e0e4e9',
-                        borderRadius: 0.7,
-                      }}
-                    >
-                      <ArrowForwardIosIcon sx={{ fontSize: 10 }} />
-                    </IconButton>
-                  </Stack>
-
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: '#667181',
-                    }}
-                  >
-                    10 / page
-                  </Typography>
-                </Stack>  */}
-
             <Card
               elevation={0}
               sx={{
@@ -1354,17 +1274,35 @@ const Content = () => {
               }}
             >
               <CardContent sx={{ p: '12px !important' }}>
-                <SectionTitle
-                  number={2}
-                  title="Select Camera (Source)"
-                  subtitle="Choose cameras from the selected server."
-                />
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <SectionTitle
+                    number={2}
+                    title="Select Source"
+                    subtitle="Choose source from the selected server."
+                  />
+                  {integration?.name?.toLowerCase().includes('ipsptek') && (
+                    <Button
+                      onClick={() => {
+                        setManualSourceForm({
+                          external_id: '',
+                          description: '',
+                        });
+                        setOpenAddSource(true);
+                      }}
+                      variant="contained"
+                    >
+                      Add Source
+                    </Button>
+                  )}
+                </Box>
 
                 {/* Search + Show Selected */}
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   <Box sx={{ flex: 1 }}>
                     <SearchField
-                      placeholder="Search camera..."
+                      placeholder="Search..."
                       value={cameraSearch}
                       onChange={setCameraSearch}
                     />
@@ -1487,7 +1425,9 @@ const Content = () => {
                           ? 'Name'
                           : column === 'log_dev_id'
                             ? 'Log Dev Id'
-                            : column}
+                            : column === 'external_id'
+                              ? 'External Id'
+                              : column}
                       </Typography>
                     ))}
                   </Box>
@@ -1601,7 +1541,6 @@ const Content = () => {
             {/* =================================================
                 3. EVENT
             ================================================= */}
-
             <Card
               elevation={0}
               sx={{
@@ -1615,7 +1554,7 @@ const Content = () => {
                   <SectionTitle
                     number={3}
                     title="Select Event Type"
-                    subtitle="Choose event types to store for the selected cameras."
+                    subtitle="Choose event types to store for the selected source."
                   />
 
                   {/* <FormControl
@@ -1948,16 +1887,6 @@ const Content = () => {
                           {selectedServerData?.name}
                         </Typography>
 
-                        {/* <Chip
-                          label="Online"
-                          size="small"
-                          sx={{
-                            height: 17,
-                            fontSize: 8,
-                            backgroundColor: '#e4f7ee',
-                            color: '#13905b',
-                          }}
-                        /> */}
                       </Stack>
 
                       <Typography
@@ -2145,6 +2074,62 @@ const Content = () => {
             </Button>
           </Stack>
         </Box>
+
+        <Dialog
+          open={openAddSource}
+          onClose={() => setOpenAddSource(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>
+            Add Source
+            <IconButton
+              size="small"
+              sx={{ position: 'absolute', right: 8, top: 8, color: 'grey.500' }}
+              onClick={() => setOpenAddSource(false)}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent dividers>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="External ID"
+                value={manualSourceForm.external_id}
+                onChange={(e) =>
+                  setManualSourceForm((prev) => ({
+                    ...prev,
+                    external_id: e.target.value,
+                  }))
+                }
+              />
+
+              <TextField
+                fullWidth
+                size="small"
+                label="Description"
+                value={manualSourceForm.description}
+                onChange={(e) =>
+                  setManualSourceForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => setOpenAddSource(false)}>Cancel</Button>
+
+            <Button variant="contained" onClick={handleAddManualSource}>
+              Add Source
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <AddServerDialog
           open={openAddServer}

@@ -32,9 +32,6 @@ import {
   GroupsOutlined,
   MapOutlined,
   AccessTimeOutlined,
-  LoginOutlined,
-  LogoutOutlined,
-  CheckCircleOutline,
 } from '@mui/icons-material';
 
 import Container from 'src/components/container/PageContainer';
