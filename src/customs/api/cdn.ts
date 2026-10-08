@@ -6,6 +6,8 @@ export interface UploadCdnResponse {
   };
 }
 
+export const getCdn = async (path: string) => axiosInstance2.get<UploadCdnResponse>(`/cdn/${path}`);
+
 export const uploadFileToCDN = async (
   file: File | Blob,
   path = 'visitor',

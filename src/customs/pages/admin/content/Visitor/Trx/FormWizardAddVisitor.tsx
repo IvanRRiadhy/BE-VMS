@@ -2654,22 +2654,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return nodes.map(processNode).filter(Boolean);
   };
 
-    const getDisplayText = (item: any) => {
-      const remark = (item.remarks || '').toLowerCase();
+  const getDisplayText = (item: any) => {
+    const remark = (item.remarks || '').toLowerCase();
 
-      switch (remark) {
-        case 'is_driving':
-          return t('visitorArrivingByVehicle');
-        case 'vehicle_id':
-          return t('vehicleType');
-        case 'vehicle_plate':
-          return t('licensePlateNumber');
+    switch (remark) {
+      case 'is_driving':
+        return t('visitorArrivingByVehicle');
+      case 'vehicle_id':
+        return t('vehicleType');
+      case 'vehicle_plate':
+        return t('licensePlateNumber');
 
-        default:
-          return item.long_display_text;
-      }
-    };
-
+      default:
+        return item.long_display_text;
+    }
+  };
 
   const renderDetailRows = (
     details: FormVisitor[] | any,
@@ -3978,7 +3977,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 alignItems: 'center',
                                 gap: 1,
                               }}
-                              onClick={(e) => {
+                              onClick={(e: any) => {
                                 e.stopPropagation();
                                 setOpenCamera(true);
                               }}
@@ -4476,7 +4475,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               alignItems: 'center',
                               gap: 1,
                             }}
-                            onClick={(e) => {
+                            onClick={(e: any) => {
                               e.stopPropagation();
                               setOpenCamera(true);
                             }}

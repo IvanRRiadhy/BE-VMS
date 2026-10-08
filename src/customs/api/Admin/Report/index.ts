@@ -1,7 +1,6 @@
 import axios from 'axios';
 import axiosInstance from '../../interceptor';
 
-
 export const getReportVisitorTransaction = async (): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/report/visitor-transaction`, {
@@ -168,4 +167,42 @@ export const deleteReportVisitorTransaction = async (id: string): Promise<any> =
   } catch (error) {
     throw error;
   }
+};
+
+export const getInvestigateVisitor = async (payload: any) => {
+  try {
+    const response = await axiosInstance.post(`/investigate/visitors`, payload, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getInvestigateVisitorId = async (id: string, payload: any) => {
+  try {
+    const response = await axiosInstance.post(`/investigate/visitors/${id}`, payload, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getInvestigateExport = async (payload: any) => {
+  const response = await axiosInstance.post(`/investigate/visitors/export`, payload, {
+    headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+    responseType: 'blob',
+  });
+
+  return response;
 };

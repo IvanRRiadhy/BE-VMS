@@ -1,19 +1,11 @@
 import { Grid2 as Grid, Card, CardContent, Tooltip, Button, Typography } from '@mui/material';
-import { Box } from '@mui/system';
 import {
   IconCards,
-  IconClipboard,
   IconClock,
-  IconDoor,
-  IconLockAccess,
   IconLogin,
   IconLogout,
-  IconMapPinCheck,
   IconParking,
-  IconPencil,
-  IconPrinter,
   IconQrcode,
-  IconUser,
   IconUserPlus,
 } from '@tabler/icons-react';
 import { FC } from 'react';
@@ -309,8 +301,35 @@ const ActionPanelCard: FC<Props> = ({
                               textTransform: 'none',
                               fontWeight: 600,
                               px: '10px !important',
+                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Card Return
+                            </Typography>
+                          </Button>
+                        </Grid>
+                      )
+                    )}
 
-                              // background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
+                    {loading ? (
+                      <ButtonSkeleton />
+                    ) : (
+                      canCardIssuance && (
+                        <Grid size={{ xs: 12, lg: 12 }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<IconCards size={28} />}
+                            onClick={() => setOpenReturnCard(true)}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: '10px !important',
                               boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
 
                               zIndex: 999,
@@ -320,7 +339,7 @@ const ActionPanelCard: FC<Props> = ({
                             }}
                           >
                             <Typography variant="h6" color="white">
-                              Card Return
+                              Return & Check out
                             </Typography>
                           </Button>
                         </Grid>

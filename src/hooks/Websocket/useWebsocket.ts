@@ -25,8 +25,6 @@ export const useWebSocket = ({
   const [isOnline, setIsOnline] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
-
-  // Keep latest callbacks without recreating socket
   const onBarcodeScanRef = useRef(onBarcodeScan);
   const onOcrResultRef = useRef(onOcrResult);
   const onPrintResultRef = useRef(onPrintResult);

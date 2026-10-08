@@ -6,25 +6,17 @@ import {
   Card,
   CardContent,
   Checkbox,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  FormControl,
-  FormControlLabel,
   IconButton,
   InputAdornment,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Step,
   StepLabel,
   Stepper,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -43,15 +35,9 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import {
-  createIntegrationEventInstance,
-  getIntegrationEventInstance,
-  getIntegrationEventInstanceTab,
   getIntegrationInstanceByIntegrationId,
   getSourceIpsotek,
   getSourceHoneywell,
-  getSourceParking,
-  getSourceTrackingBle,
-  updateIntegrationEventInstance,
 } from 'src/customs/api/Admin/Integration';
 import {
   IconCamera,
@@ -65,7 +51,6 @@ import {
   IconVideo,
   IconX,
 } from '@tabler/icons-react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddServerDialog from './components/AddServerDialog';
 import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
@@ -77,8 +62,6 @@ import {
 } from 'src/hooks/EventSubscriptions';
 import { getVisitorTypeParking } from 'src/customs/api/types/ParkingIntegration';
 
-type IntegrationType = 'honeywell' | 'ipsotek' | 'parking' | 'ble';
-
 interface Integration {
   integration_list_id: string;
   name: string;
@@ -86,52 +69,7 @@ interface Integration {
   sourceType: string[];
 }
 
-interface Server {
-  id: string;
-  name: string;
-  address: string;
-  online: boolean;
-}
-
-interface Camera {
-  id: string;
-  name: string;
-  location: string;
-  status: 'Online' | 'Offline';
-}
-
-interface EventType {
-  code: string;
-  name: string;
-  category: string;
-  estimate: string;
-}
-
-const eventTypes: EventType[] = [];
-
 const steps = ['Select Server', 'Select Source', 'Select Event Type', 'Review & Save'];
-
-const StatusDot = ({ online }: { online: boolean }) => (
-  <Stack direction="row" spacing={0.6} alignItems="center">
-    <Box
-      sx={{
-        width: 7,
-        height: 7,
-        borderRadius: '50%',
-        backgroundColor: online ? '#16a36a' : '#8b95a7',
-      }}
-    />
-
-    <Typography
-      sx={{
-        fontSize: 12,
-        color: online ? '#159a64' : '#7c8492',
-      }}
-    >
-      {online ? 'Online' : 'Offline'}
-    </Typography>
-  </Stack>
-);
 
 const SectionTitle = ({
   number,
@@ -365,24 +303,6 @@ const Content = () => {
     useCreateIntegrationEventInstance();
 
   const handleSubmitAddServer = async () => {
-    // if (!integration?.integration_list_id) {
-    //   console.error('Integration is not selected');
-    //   showSwal('error', 'Please select an integration');
-    //   return;
-    // }
-
-    // if (!serverForm.source_type) {
-    //   console.error('Source type is required');
-    //   showSwal('error', 'Source type is required');
-    //   return;
-    // }
-
-    // if (!serverForm.external_id) {
-    //   console.error('External ID is required');
-    //   showSwal('error', 'External ID is required');
-    //   return;
-    // }
-
     if (!serverForm.integration_id) {
       showSwal('error', 'Integration is required');
       return;
@@ -447,18 +367,15 @@ const Content = () => {
 
     const integrationEventSources = selectedCameraData.map((camera) => {
       const sourceId = getSourceId(camera);
-
       const selectedEvents = selectedEventsBySource[sourceId] ?? [];
-
+      const isPeopleTracking = integration?.name?.toLowerCase().includes('people tracking');
       return {
-        // source_type: camera.source_type || selectedServerData.source_type || '',
-        source_type: integration?.sourceType?.[0] ?? '',
+        source_type: isPeopleTracking ? 'PersonCategory' : (integration?.sourceType?.[0] ?? ''),
         external_id: integration?.name?.toLowerCase().includes('parking')
           ? camera.uid
           : getSourceExternalId(camera),
         description: camera.description ?? camera.name,
         is_active: true,
-
         integration_event_subscriptions: selectedEvents.map((eventName) => ({
           event_type: eventName,
           is_active: true,
@@ -471,9 +388,6 @@ const Content = () => {
       is_active: selectedServerData.is_active ?? true,
       integration_event_sources: integrationEventSources,
     };
-
-    // console.log('CREATE PAYLOAD:', payload);
-
     try {
       await createIntegrationEventInstance(payload);
 
@@ -516,45 +430,6 @@ const Content = () => {
     }
   };
 
-  const getEventTypeOptions = (integration?: Integration | null) => {
-    const integrationName = integration?.name?.toLowerCase() ?? '';
-
-    if (integrationName.includes('prowatch')) {
-      return [
-        {
-          label: 'Tap Reader',
-          value: 'TapReader',
-        },
-      ];
-    }
-
-    if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
-      return [
-        {
-          label: 'Camera Capture',
-          value: 'CameraCapture',
-        },
-      ];
-    }
-
-    if (integrationName.includes('people tracking')) {
-      return [
-        { label: 'Idle', value: 'Idle' },
-        { label: 'Ack', value: 'Ack' },
-        { label: 'Dispatch', value: 'Dispatch' },
-        { label: 'Accepted', value: 'Accepted' },
-        { label: 'Done', value: 'Done' },
-      ];
-    }
-
-    return (
-      integration?.event_type?.map((eventType) => ({
-        label: eventType,
-        value: eventType,
-      })) ?? []
-    );
-  };
-
   const sourceColumns = useMemo(() => {
     if (integration?.name?.toLowerCase().includes('prowatch')) {
       return ['name', 'log_dev_id'];
@@ -569,7 +444,7 @@ const Content = () => {
     }
 
     if (integration?.name?.toLowerCase().includes('ipsptek')) {
-      return ['name', 'external_id'];
+      return ['name'];
     }
 
     const keys = new Set<string>();
@@ -647,13 +522,6 @@ const Content = () => {
     try {
       setLoadingCameras(true);
 
-      /**
-       * =====================================================
-       * HONEYWELL IPSOTEK
-       * Source dan subscription sudah berasal dari
-       * integration_event_sources
-       * =====================================================
-       */
       if (integrationName.includes('ipsotek') || integrationName.includes('ipsptek')) {
         const savedSources = selectedSourceData ?? [];
 
@@ -667,16 +535,10 @@ const Content = () => {
 
         setCameras(sourceList);
 
-        /**
-         * Source yang aktif/terpilih
-         */
         const selectedSourceIds = sourceList.map((source: any) => getSourceId(source));
 
         setSelectedCameras(selectedSourceIds);
 
-        /**
-         * Event yang sudah tersimpan
-         */
         const eventsBySource: Record<string, string[]> = {};
 
         sourceList.forEach((source: any) => {
@@ -694,12 +556,6 @@ const Content = () => {
 
         return;
       }
-
-      /**
-       * =====================================================
-       * INTEGRATION LAIN
-       * =====================================================
-       */
 
       let response;
 
@@ -799,10 +655,6 @@ const Content = () => {
     selectedSourceData,
   ]);
 
-  // const { data: logdevs = [], isLoading: loadingLogdevs } = useLogdevs(
-  //   selectedServerData?.integration_id,
-  //   integration?.name === 'Honeywell Prowatch',
-  // );
   const selectedCameraData = cameras.filter((camera) =>
     selectedCameras.includes(getSourceId(camera)),
   );
@@ -839,15 +691,32 @@ const Content = () => {
   const PEOPLE_TRACKING_EVENT_GROUPS = [
     {
       label: 'Action',
-      values: ['Idle', 'Ack', 'Dispatch', 'Accepted', 'Done'],
+      values: [
+        'Idle',
+        'Acknowledged',
+        'Dispatched',
+        'Accepted',
+        'DoneInvestigated',
+        'Done',
+        'PostponeInvestigated',
+      ],
     },
     {
-      label: 'Alarm',
-      values: ['Card Access', 'Wrong Zone'],
+      label: 'Alarm Status',
+      values: [
+        'CardAccess',
+        'Wrongzone',
+        'Geofence',
+        'LowBattery',
+        'Blacklist',
+        'Block',
+        'Expired',
+        'Help',
+      ],
     },
     {
-      label: 'Priority',
-      values: ['High', 'Critical'],
+      label: 'Alarm Priority',
+      values: ['Critical', 'High', 'Medium', 'Low'],
     },
   ];
 
@@ -857,7 +726,15 @@ const Content = () => {
     let events: string[];
 
     if (integrationName.includes('people tracking')) {
-      events = ['Idle', 'Ack', 'Dispatch', 'Accepted', 'Done'];
+      events = [
+        'Idle',
+        'Acknowledged',
+        'Dispatched',
+        'Accepted',
+        'DoneInvestigated',
+        'Done',
+        'PostponeInvestigated',
+      ];
     } else {
       events = integration?.event_type ?? [];
     }
@@ -869,12 +746,6 @@ const Content = () => {
         name: eventType,
       }));
   }, [integration?.name, integration?.event_type, eventSearch]);
-
-  const eventTypes = useMemo(() => {
-    return (integration?.event_type ?? []).map((eventType) => ({
-      name: eventType,
-    }));
-  }, [integration?.event_type]);
 
   const selectedEventData = selectedCameraData.flatMap((camera) => {
     const sourceId = getSourceId(camera);
@@ -944,14 +815,14 @@ const Content = () => {
 
       setOpenAddSource(false);
 
-      // refresh source/server data
       await fetchIntegrationInstance();
 
-      // reload source list
       await loadSource();
-    } catch (error) {
-      console.error('Failed to add source:', error);
-      showSwal('error', 'Failed to add source');
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error?.response?.data?.msg ?? error?.response?.data?.message ?? 'Failed to add source',
+      );
     }
   };
 
@@ -1546,42 +1417,26 @@ const Content = () => {
               sx={{
                 border: '1px solid #e4e8ee',
                 borderRadius: 1.5,
-                overflow: 'hidden',
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              <CardContent sx={{ p: '12px !important' }}>
+              <CardContent
+                sx={{
+                  p: '12px !important',
+                  minHeight: 0,
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                   <SectionTitle
                     number={3}
                     title="Select Event Type"
                     subtitle="Choose event types to store for the selected source."
                   />
-
-                  {/* <FormControl
-                    size="small"
-                    sx={{
-                      width: 105,
-                      mt: -0.2,
-                    }}
-                  >
-                    <InputLabel sx={{ fontSize: 12 }}>Select Preset</InputLabel>
-
-                    <Select
-                      value={preset}
-                      label="Select Preset"
-                      onChange={(e) => setPreset(e.target.value)}
-                      sx={{
-                        height: 31,
-                        fontSize: 12,
-                        borderRadius: 0.8,
-                      }}
-                    >
-                      <MenuItem value="Custom">Custom</MenuItem>
-                      <MenuItem value="Security">Security</MenuItem>
-                      <MenuItem value="Recognition">Recognition</MenuItem>
-                      <MenuItem value="All">All Events</MenuItem>
-                    </Select>
-                  </FormControl> */}
                 </Stack>
 
                 <Box sx={{ mb: 1 }}>
@@ -1698,7 +1553,7 @@ const Content = () => {
                         {/* EVENTS */}
                         <Box
                           sx={{
-                            maxHeight: 320,
+                            maxHeight: 500,
                             overflow: 'auto',
                           }}
                         >
@@ -1886,7 +1741,6 @@ const Content = () => {
                         >
                           {selectedServerData?.name}
                         </Typography>
-
                       </Stack>
 
                       <Typography
