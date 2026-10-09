@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Autocomplete,
   Avatar,
@@ -57,6 +57,7 @@ import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useDebounce } from 'src/hooks/useDebounce';
+import { useTranslation } from 'react-i18next';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -127,8 +128,10 @@ const Content = () => {
     hostId: '',
     searchValue: '',
     vehicleNumber: '',
+    sourceType: '',
+    eventType: '',
   });
-
+  const { t } = useTranslation();
   const debouncedSearchValue = useDebounce(filter.searchValue, 500);
 
   const getInvestigatePayload = () => ({
@@ -147,35 +150,38 @@ const Content = () => {
     start: 0,
     length: 100,
     sort_dir: 'desc',
+    source_type: filter.sourceType === '' ? undefined : filter.sourceType,
+
+    event_type: filter.eventType === '' ? undefined : filter.eventType,
   });
 
-  const handleSearch = async () => {
-    const payload = {
-      start_date: dayjs.utc(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+  // const handleSearch = async () => {
+  //   const payload = {
+  //     start_date: dayjs.utc(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
 
-      end_date: dayjs.utc(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+  //     end_date: dayjs.utc(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
 
-      keyword: filter.keyword || undefined,
+  //     keyword: filter.keyword || undefined,
 
-      purpose: filter.purpose || undefined,
+  //     purpose: filter.purpose || undefined,
 
-      host_id: filter.hostId || undefined,
-      'search[value]': debouncedSearchValue || undefined,
-      draw: 0,
-      start: 0,
-      length: 100,
-      sort_dir: 'desc',
-    };
+  //     host_id: filter.hostId || undefined,
+  //     'search[value]': debouncedSearchValue || undefined,
+  //     draw: 0,
+  //     start: 0,
+  //     length: 100,
+  //     sort_dir: 'desc',
+  //   };
 
-    try {
-      const response = await getInvestigateVisitor(payload);
-      const collection = response?.collection ?? [];
+  //   try {
+  //     const response = await getInvestigateVisitor(payload);
+  //     const collection = response?.collection ?? [];
 
-      setVisitors(collection);
-    } catch (error) {
-      console.error('Failed to get investigate visitor:', error);
-    }
-  };
+  //     setVisitors(collection);
+  //   } catch (error) {
+  //     console.error('Failed to get investigate visitor:', error);
+  //   }
+  // };
 
   const handleFilterChange = (field: string, value: any) => {
     setFilter((prev) => ({
@@ -196,6 +202,8 @@ const Content = () => {
       hostId: '',
       searchValue: '',
       vehicleNumber: '',
+      sourceType: '',
+      eventType: '',
     });
 
     setStartDate(dayjs.utc().format('YYYY-MM-DD'));
@@ -205,9 +213,12 @@ const Content = () => {
     setSelectedVisitor(null);
   };
 
-  const [startDate, setStartDate] = useState(dayjs.utc().format('YYYY-MM-DD'));
+  // const [startDate, setStartDate] = useState(dayjs.utc().format('YYYY-MM-DD'));
 
-  const [endDate, setEndDate] = useState(dayjs.utc().format('YYYY-MM-DD'));
+  // const [endDate, setEndDate] = useState(dayjs.utc().format('YYYY-MM-DD'));
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const [visitors, setVisitors] = useState<any[]>([]);
   const [selectedVisitor, setSelectedVisitor] = useState<any | null>(null);
@@ -228,6 +239,9 @@ const Content = () => {
       start: 0,
       length: 100,
       sort_dir: 'desc',
+      source_type: filter.sourceType === '' ? undefined : filter.sourceType,
+
+      event_type: filter.eventType === '' ? undefined : filter.eventType,
     };
 
     const response = await getInvestigateVisitorId(visitor.id, payload);
@@ -235,9 +249,17 @@ const Content = () => {
     setSelectedVisitor(response.collection);
   };
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     handleSearch();
   }, [debouncedSearchValue]);
+
   const handleExport = async () => {
     try {
       setLoading(true);
@@ -272,6 +294,75 @@ const Content = () => {
   const statusColor = statusBgMap[visitorStatus] ?? 'gray';
 
   const statusLabel = (statusLabelMap[visitorStatus] ?? visitorStatus) || '-';
+
+  const [visitorPage, setVisitorPage] = useState(0);
+  const [hasMoreVisitors, setHasMoreVisitors] = useState(true);
+  const [loadingMoreVisitors, setLoadingMoreVisitors] = useState(false);
+
+  const VISITOR_PAGE_SIZE = 10;
+
+  const loadVisitors = async (page = 0, append = false) => {
+    try {
+      if (append) {
+        setLoadingMoreVisitors(true);
+      } else {
+        setLoading(true);
+      }
+
+      const payload = {
+        start_date: dayjs.utc(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+
+        end_date: dayjs.utc(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+
+        keyword: filter.keyword || undefined,
+        purpose: filter.purpose || undefined,
+        host_id: filter.hostId || undefined,
+        'search[value]': debouncedSearchValue || undefined,
+
+        draw: 0,
+        start: page * VISITOR_PAGE_SIZE,
+        length: VISITOR_PAGE_SIZE,
+        sort_dir: 'desc',
+        source_type: filter.sourceType === '' ? undefined : filter.sourceType,
+
+        event_type: filter.eventType === '' ? undefined : filter.eventType,
+      };
+
+      const response = await getInvestigateVisitor(payload);
+
+      const collection = response?.collection ?? [];
+
+      setVisitors((prev) => (append ? [...prev, ...collection] : collection));
+
+      setVisitorPage(page);
+
+      // Kalau data yang dikembalikan kurang dari 10,
+      // berarti sudah tidak ada data berikutnya.
+      setHasMoreVisitors(collection.length === VISITOR_PAGE_SIZE);
+    } catch (error) {
+      console.error('Failed to get investigate visitor:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMoreVisitors(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    setVisitorPage(0);
+    setHasMoreVisitors(true);
+    setSelectedVisitor(null);
+
+    await loadVisitors(0, false);
+  };
+
+  const handleLoadMoreVisitors = async () => {
+    if (loadingMoreVisitors || !hasMoreVisitors) return;
+
+    const nextPage = visitorPage + 1;
+
+    await loadVisitors(nextPage, true);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -399,7 +490,7 @@ const Content = () => {
                   onChange={(value) => {
                     setStartDate(value);
 
-                    if (dayjs.utc(value).isAfter(dayjs.utc(endDate), 'day')) {
+                    if (value && endDate && dayjs.utc(value).isAfter(dayjs.utc(endDate), 'day')) {
                       setEndDate(value);
                     }
                   }}
@@ -410,14 +501,17 @@ const Content = () => {
                   type="date"
                   value={endDate}
                   onChange={(value) => {
-                    if (dayjs.utc(value).isBefore(dayjs.utc(startDate), 'day')) {
+                    if (
+                      value &&
+                      startDate &&
+                      dayjs.utc(value).isBefore(dayjs.utc(startDate), 'day')
+                    ) {
                       return;
                     }
 
                     setEndDate(value);
                   }}
                 />
-
                 <FilterSelect
                   label="Status"
                   value="All Status"
@@ -426,13 +520,19 @@ const Content = () => {
 
                 <FilterSelect
                   label="Source Type"
-                  value="All Types"
+                  value={filter.sourceType}
                   options={['All Types', 'AccessControl', 'CameraCCTV', 'Event']}
+                  onChange={(value) =>
+                    setFilter((prev) => ({
+                      ...prev,
+                      sourceType: value,
+                    }))
+                  }
                 />
 
                 <FilterSelect
                   label="Event Type"
-                  value="All Event Types"
+                  value={filter.eventType}
                   options={[
                     'All Event Types',
                     'TapReader',
@@ -442,8 +542,13 @@ const Content = () => {
                     'EvacuateTrigger',
                     'Status',
                   ]}
+                  onChange={(value) =>
+                    setFilter((prev) => ({
+                      ...prev,
+                      eventType: value,
+                    }))
+                  }
                 />
-
                 <FilterSelect
                   label="Purpose"
                   value="All Purposes"
@@ -517,7 +622,7 @@ const Content = () => {
                   }}
                   onClick={handleSearch}
                 >
-                  Search
+                  {t('search')}
                 </Button>
               </Stack>
             </Box>
@@ -606,7 +711,7 @@ const Content = () => {
                 </Box>
 
                 <Divider />
-                {visitors.map((visitor) => (
+                {/* {visitors.map((visitor) => (
                   <Box
                     key={visitor.id}
                     onClick={() => handleSelectVisitor(visitor)}
@@ -622,7 +727,69 @@ const Content = () => {
                       selected={selectedVisitor?.visitor_info?.id === visitor.id}
                     />
                   </Box>
-                ))}
+                ))} */}
+                <Divider />
+
+                <Box
+                  onScroll={(event) => {
+                    const target = event.currentTarget;
+
+                    const isNearBottom =
+                      target.scrollTop + target.clientHeight >= target.scrollHeight - 100;
+
+                    if (isNearBottom) {
+                      handleLoadMoreVisitors();
+                    }
+                  }}
+                  sx={{
+                    height: 500,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {visitors.map((visitor) => (
+                    <Box
+                      key={visitor.id}
+                      onClick={() => handleSelectVisitor(visitor)}
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <VisitorItem
+                        visitor={visitor}
+                        selected={selectedVisitor?.visitor_info?.id === visitor.id}
+                      />
+                    </Box>
+                  ))}
+
+                  {loadingMoreVisitors && (
+                    <Box
+                      sx={{
+                        py: 1.5,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography fontSize={11} color="text.secondary">
+                        Loading more visitors...
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {!hasMoreVisitors && visitors.length > 0 && (
+                    <Box
+                      sx={{
+                        py: 1.5,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography fontSize={11} color="text.secondary">
+                        No more visitors
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </Box>
 
               <Box sx={{ backgroundColor: '#fff', minWidth: 0 }}>
@@ -662,19 +829,17 @@ const Content = () => {
                     </Box>
                   </Stack>
                   <Stack direction="row" spacing={1}>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      size="small"
-                      startIcon={<Download />}
-                      // sx={{
-                      //   textTransform: 'none',
-                      //   borderColor: '#d8e0eb',
-                      // }}
-                      onClick={handleExport}
-                    >
-                      Export Report
-                    </Button>
+                    {selectedVisitor && (
+                      <Button
+                        variant="contained"
+                        color="error"
+                        size="small"
+                        startIcon={<Download />}
+                        onClick={handleExport}
+                      >
+                        Export Report
+                      </Button>
+                    )}
 
                     {/* <Button
                       variant="outlined"
@@ -760,7 +925,6 @@ const Content = () => {
                       {/* LEFT */}
                       <Box>
                         <InformationCard title="Visitor Information" action>
-                          {/* 🔴 GANTI */}
                           <InfoRow
                             label="Full Name"
                             value={selectedVisitor?.visitor_info?.full_name ?? '-'}

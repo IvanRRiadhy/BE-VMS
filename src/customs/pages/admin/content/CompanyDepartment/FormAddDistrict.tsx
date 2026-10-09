@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useDistrictMutation } from 'src/hooks/District/useDistrictMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -40,7 +41,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
   const { allVisitorEmployee } = useVisitorEmployees();
   const schema =
     mode === 'batch' ? CreateDistrictSubmitSchema.partial() : CreateDistrictSubmitSchema;
-
+  const { t } = useTranslation();
   const {
     control,
     handleSubmit,
@@ -70,7 +71,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
       reset({
         name: '',
         code: '',
-        host: '',
+        host: null,
       });
     }
   }, [mode, data, reset]);
@@ -85,15 +86,13 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
 
   const onSubmit = async (form: CreateDistrictRequest) => {
     try {
-
-
       if (mode === 'create') {
         await create.mutateAsync({ data: form });
-        showSwal('success', 'District successfully created!');
+        showSwal('success', t('createSuccess', { name: 'District' }));
       }
       if (mode === 'edit' && data) {
         await update.mutateAsync({ id: data.id, data: form });
-        showSwal('success', 'District successfully updated!');
+        showSwal('success', t('updatedSuccess', { name: 'District' }));
       }
       if (mode === 'batch' && selectedRows.length > 0) {
         await Promise.all(
@@ -194,9 +193,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel  sx={{ mt: 2 }}>
-              Head of District
-            </CustomFormLabel>
+            <CustomFormLabel sx={{ mt: 2 }}>Head of District</CustomFormLabel>
             <Controller
               name="host"
               control={control}

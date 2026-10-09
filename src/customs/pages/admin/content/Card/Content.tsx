@@ -404,7 +404,7 @@ const Content = () => {
       }
 
       // showSuccessAlert('Success', 'Visitor Card imported successfully');
-      showSwal('success', 'Visitor Card imported successfully');
+      showSwal('success', 'Successfully imported card');
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg ?? 'Failed to import card');
     } finally {

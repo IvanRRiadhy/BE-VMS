@@ -54,7 +54,8 @@ const GroupVisitorTable = ({
       p={2}
       sx={{
         height: { xs: '100%', xl: '78vh' },
-        overflow: 'auto',
+        // overflow: 'auto',
+        overlow: 'hidden !important',
       }}
     >
       {selectedGroupId ? (
@@ -204,14 +205,47 @@ const GroupVisitorTable = ({
         </TableContainer>
       ) : (
         <Box
-          height="100%"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          flexDirection="column"
+          sx={{
+            minHeight: {
+              xs: 300,
+              sm: '100%',
+            },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            boxSizing: 'border-box',
+
+            pt: '0 !important',
+          }}
         >
-          <img src={bgNoData} width={150} />
-          <Typography color="text.secondary" mt={2} variant="h5">
+          <Box
+            component="img"
+            src={bgNoData}
+            sx={{
+              width: {
+                xs: 130,
+                sm: 130,
+              },
+              height: 'auto',
+
+              flexShrink: 0,
+            }}
+          />
+
+          <Typography
+            color="text.secondary"
+            mt={2}
+            variant="h5"
+            sx={{
+              textAlign: 'center',
+              px: 2,
+              fontSize: {
+                xs: '1.1rem',
+                sm: '1.1rem',
+              },
+            }}
+          >
             {t('selectGroupFromTheList')}
           </Typography>
         </Box>

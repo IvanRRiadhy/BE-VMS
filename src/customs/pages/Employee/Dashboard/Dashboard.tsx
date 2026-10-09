@@ -11,16 +11,10 @@ import {
   Typography,
 } from '@mui/material';
 import { IconHourglass, IconUsers, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import {
-  getActiveInvitation,
-  getOngoingInvitation,
-  openParkingBlocker,
-} from 'src/customs/api/visitor';
-import FormDialogInvitation from './FormDialogInvitation';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -56,9 +50,7 @@ import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
 import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
-
 import VisitorInvitationActions from './components/VisitorInvitationActions';
-import { undefined } from 'zod';
 import TodayScheduleCard, { ScheduleStatus } from './components/TodayScheduleCard';
 import { useApproval } from 'src/hooks/Dashboard/useApproval';
 import {
@@ -127,6 +119,7 @@ const DashboardEmployee = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
   const { data: profile } = useProfile();
+  const userId = profile?.id;
   const handleCloseInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(false);
   };
@@ -427,8 +420,8 @@ const DashboardEmployee = () => {
       setOpenSendEmail(false);
       setOpenCreateLink(false);
       showSwal('success', t('successSendShareLink'));
-    } catch (err) {
-      showSwal('error', 'Failed to send share link');
+    } catch (err: any) {
+      showSwal('error', err.response.data.message ?? 'Failed to send share link');
     } finally {
       setIsGenerating(false);
     }
@@ -553,14 +546,6 @@ const DashboardEmployee = () => {
     }
   };
 
-  const formatLocalDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  };
-
   // const {
   //   data: activities,
   //   isLoading: isLoadingActivities,
@@ -602,45 +587,6 @@ const DashboardEmployee = () => {
       icon: <IconUsers size={30} />,
     },
   ];
-
-  // const todaySchedules = [
-  //   {
-  //     id: '1',
-  //     time: '09:00',
-  //     visitorName: 'John Doe',
-  //     company: 'ABC Corp',
-  //     agenda: 'General Meeting',
-  //     location: 'Main Lobby',
-  //     status: 'Check In' as const,
-  //   },
-  //   {
-  //     id: '2',
-  //     time: '11:30',
-  //     visitorName: 'Sarah Lee',
-  //     company: 'XYZ Ltd',
-  //     agenda: 'Business Meeting',
-  //     location: 'Meeting Room 1',
-  //     status: 'Expected' as const,
-  //   },
-  //   {
-  //     id: '3',
-  //     time: '14:00',
-  //     visitorName: 'Michael Tan',
-  //     company: 'Tech Solutions',
-  //     agenda: 'Project Discussion',
-  //     location: 'Meeting Room 2',
-  //     status: 'Upcoming' as const,
-  //   },
-  //   {
-  //     id: '4',
-  //     time: '16:00',
-  //     visitorName: 'Robert Wilson',
-  //     company: 'Acme Co',
-  //     agenda: 'Partnership Meeting',
-  //     location: 'Meeting Room 3',
-  //     status: 'Upcoming' as const,
-  //   },
-  // ];
 
   const mapScheduleStatus = (status?: string): any => {
     switch (status) {
@@ -692,7 +638,7 @@ const DashboardEmployee = () => {
       visitorName: item.list_visitor?.[0]?.visitor_name ?? '-',
       company: item.host_organization_name ?? '-',
       agenda: item.agenda ?? '-',
-      location: item.site_place_name ?? '-',
+      location: item.site_location ?? '-',
       status: mapScheduleStatus(item.transaction_status),
     })) ?? [];
 
@@ -781,7 +727,7 @@ const DashboardEmployee = () => {
               }}
               isActionVisitor={false}
               isHaveHeaderTitle
-              titleHeader="Approval"
+              titleHeader="Pending Approval"
               isHaveApproval={true}
               onAccept={(row: any) => handleOpenApprovalDialog(row)}
               onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
@@ -810,6 +756,7 @@ const DashboardEmployee = () => {
               isHavePeriod={true}
               onView={(row: any) => handleView(row)}
               titleHeader="Invitation Monitoring"
+              defaultRowsPerPage={5}
               isHaveAddEmpty={true}
               addDataText="Create Invitation"
               onAddEmpty={() => navigate('/employee/my-invitation')}
@@ -836,7 +783,7 @@ const DashboardEmployee = () => {
           alignItems="stretch"
           sx={{
             width: '100%',
-            pb: 2
+            pb: 2,
           }}
         >
           <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
@@ -847,6 +794,7 @@ const DashboardEmployee = () => {
               isHavePagination={false}
               overflowX="auto"
               isHaveChecked={false}
+              defaultRowsPerPage={5}
               isHaveHeaderTitle
               isNoActionTableHead
               isHavePeriod={true}
@@ -872,7 +820,6 @@ const DashboardEmployee = () => {
         </Grid>
       </Grid>
 
-      {/* Dialog Praregist or Create link */}
       <InviteOrCreateLinkDialog
         open={openInviteOrCreateLink}
         onClose={handleCloseInviteOrCreateLink}
@@ -880,14 +827,12 @@ const DashboardEmployee = () => {
         onCreateLink={handleOpenCreateLink}
       />
 
-      {/* Open Alert Invitation */}
       <PendingInvitationDialog
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
         pendingInvitationCount={pendingInvitationCount}
       />
 
-      {/* List Share Link */}
       <Dialog
         open={openShareLinkList}
         onClose={() => setOpenShareLinkList(false)}

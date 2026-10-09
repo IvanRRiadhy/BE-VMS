@@ -156,7 +156,7 @@ export default function TodayScheduleCard({ schedules, onViewAll }: TodaySchedul
             </Typography>
           </Stack>
 
-          <Typography
+          {/* <Typography
             component="button"
             onClick={onViewAll}
             sx={{
@@ -170,7 +170,7 @@ export default function TodayScheduleCard({ schedules, onViewAll }: TodaySchedul
             }}
           >
             View All
-          </Typography>
+          </Typography> */}
         </Stack>
 
         <Typography

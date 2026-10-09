@@ -316,7 +316,7 @@ const ActionPanelCard: FC<Props> = ({
                       )
                     )}
 
-                    {loading ? (
+                    {/* {loading ? (
                       <ButtonSkeleton />
                     ) : (
                       canCardIssuance && (
@@ -344,7 +344,7 @@ const ActionPanelCard: FC<Props> = ({
                           </Button>
                         </Grid>
                       )
-                    )}
+                    )} */}
 
                     {loading ? (
                       <ButtonSkeleton />

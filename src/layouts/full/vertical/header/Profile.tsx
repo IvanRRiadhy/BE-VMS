@@ -55,17 +55,29 @@ const Profile = () => {
 
   const handleLogout = useCallback(async () => {
     handleClose2();
-    await revokeToken();
-    dispatch(clearUser());
-    logout();
-    localStorage.clear();
-    sessionStorage.clear();
-    queryClient.removeQueries({
-      queryKey: ['profile'],
-    });
-    sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
-    navigate('/', { replace: true });
-  }, [navigate]);
+
+    try {
+      await revokeToken();
+    } catch (error) {
+      console.error('Logout API failed:', error);
+    } finally {
+      // Clear authentication state
+      dispatch(clearUser());
+      logout();
+
+      // Clear React Query cache
+      queryClient.clear();
+
+      // Clear browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Set logout message AFTER sessionStorage.clear()
+      sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
+
+      navigate('/auth/login', { replace: true });
+    }
+  }, [dispatch, logout, navigate, queryClient]);
 
   const { data: profile } = useProfile();
 

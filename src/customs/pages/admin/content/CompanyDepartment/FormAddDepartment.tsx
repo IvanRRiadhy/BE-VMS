@@ -1,9 +1,4 @@
-import {
-  Button,
-  Autocomplete,
-  Switch,
-  Divider,
-} from '@mui/material';
+import { Button, Autocomplete, Switch, Divider } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -19,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useDepartmentMutation } from 'src/hooks/Department/useDepartmentMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -59,6 +55,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     },
   });
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
@@ -82,7 +80,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       reset({
         name: '',
         code: '',
-        host: '',
+        host: null,
       });
     }
   }, [mode, data, reset]);
@@ -94,13 +92,11 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
   const onSubmit = async (form: CreateDepartmentRequest) => {
     try {
-
       if (mode === 'create') {
         await create.mutateAsync({
-
           data: form,
         });
-        showSwal('success', 'Department successfully created!');
+        showSwal('success', t('createSuccess', { name: 'Department' }));
       }
 
       if (mode === 'edit' && data) {
@@ -109,7 +105,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
           data: form,
         });
-        showSwal('success', 'Department successfully updated!');
+        showSwal('success', t('updatedSuccess', { name: 'Department' }));
       }
 
       if (mode === 'batch' && selectedRows.length > 0) {
@@ -215,9 +211,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel  sx={{ mt: 2 }}>
-              Head of Department
-            </CustomFormLabel>
+            <CustomFormLabel sx={{ mt: 2 }}>Head of Department</CustomFormLabel>
             <Controller
               name="host"
               control={control}

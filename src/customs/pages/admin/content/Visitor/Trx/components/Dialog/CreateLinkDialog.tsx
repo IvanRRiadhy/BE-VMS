@@ -468,7 +468,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }))
               }
             >
-              <MenuItem value={0}>No Expired</MenuItem>
+              {/* <MenuItem value={0}>No Expired</MenuItem> */}
               <MenuItem value={30}>30 Min</MenuItem>
               <MenuItem value={60}>1 Hour</MenuItem>
               <MenuItem value={300}>5 Hour</MenuItem>

@@ -72,7 +72,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
 }) => {
   const groupPermissionMap: Record<string, string[]> = {
     employee: [
-      'AsHead',
+      // 'AsHead',
       'InviteVistor',
       'InviteWithinAllowPreRegister',
       'InviteWithinOwnOrganization',
@@ -87,7 +87,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
     ],
 
     operatorvms: [
-      'AsHead',
+      // 'AsHead',
       'OperatorAsWatcher',
       'ManageInvite',
       'ManageBlacklist',
@@ -102,7 +102,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
     ],
 
     manager: [
-      'AsHead',
+      // 'AsHead',
       'ManageApprove',
       'ManageSchedule',
       'AllowMobileLogin',

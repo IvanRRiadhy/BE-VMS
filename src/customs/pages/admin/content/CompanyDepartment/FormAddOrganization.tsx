@@ -24,6 +24,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
 import { useOrganizationMutation } from 'src/hooks/Organization/useOrganizationMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 type Mode = 'create' | 'edit' | 'batch';
 
@@ -48,7 +49,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
 }) => {
   const schema =
     mode === 'batch' ? CreateOrganizationSubmitSchema.partial() : CreateOrganizationSubmitSchema;
-
+  const { t } = useTranslation();
   const {
     control,
     handleSubmit,
@@ -83,7 +84,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
       reset({
         name: '',
         code: '',
-        host: '',
+        host: null,
         is_internal: undefined,
       });
     }
@@ -103,12 +104,12 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
     try {
       if (mode === 'create') {
         await create.mutateAsync({ data: form });
-        showSwal('success', 'Organization successfully created!');
+        showSwal('success', t('createSuccess', { name: 'Organization' }));
       }
 
       if (mode === 'edit' && data) {
         await update.mutateAsync({ id: data.id, data: form });
-        showSwal('success', 'Organization successfully updated!');
+        showSwal('success', t('updatedSuccess', { name: 'Organization' }));
       }
 
       if (mode === 'batch' && selectedRows.length > 0) {
@@ -133,8 +134,8 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
 
       reset();
       onSuccess?.();
-    } catch {
-      showSwal('error', 'Failed to process organization.');
+    } catch (error: any) {
+      showSwal('error', error?.respoonse?.data?.msg || 'Failed to process organization.');
     }
   };
   return (
@@ -209,9 +210,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
           </>
         ) : (
           <>
-            <CustomFormLabel  sx={{ mt: 2 }}>
-              Head of Organization
-            </CustomFormLabel>
+            <CustomFormLabel sx={{ mt: 2 }}>Head of Organization</CustomFormLabel>
             <Controller
               name="host"
               control={control}

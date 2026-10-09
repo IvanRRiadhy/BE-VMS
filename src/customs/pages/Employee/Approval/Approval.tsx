@@ -76,7 +76,7 @@ const Approval = () => {
       approve: 0,
       reject: 0,
       pending: 0,
-    };
+    }; 
 
     approvalData.forEach((item: any) => {
       const status = item.approval_status;
