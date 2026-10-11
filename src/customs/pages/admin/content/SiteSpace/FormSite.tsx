@@ -395,14 +395,18 @@ const FormSite = ({
 
         const updateData = {
           ...updateDataRaw,
+          host: localForm.host || null,
           open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
-
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
 
-          if (key !== 'image' && (val === '' || val === null || val === undefined)) {
+          if (
+            key !== 'image' &&
+            key !== 'host' &&
+            (val === '' || val === null || val === undefined)
+          ) {
             delete (updateData as any)[key];
           }
         });
@@ -525,7 +529,7 @@ const FormSite = ({
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', err.message || 'Failed to create site');
+      showSwal('error', err.message ?? err.msg ?? 'Failed to create site');
     }
   };
 

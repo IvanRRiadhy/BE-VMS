@@ -316,36 +316,6 @@ const ActionPanelCard: FC<Props> = ({
                       )
                     )}
 
-                    {/* {loading ? (
-                      <ButtonSkeleton />
-                    ) : (
-                      canCardIssuance && (
-                        <Grid size={{ xs: 12, lg: 12 }}>
-                          <Button
-                            variant="contained"
-                            startIcon={<IconCards size={28} />}
-                            onClick={() => setOpenReturnCard(true)}
-                            size="large"
-                            sx={{
-                              textTransform: 'none',
-                              fontWeight: 600,
-                              px: '10px !important',
-                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-
-                              zIndex: 999,
-                              width: '100%',
-                              height: '50px',
-                              p: 0,
-                            }}
-                          >
-                            <Typography variant="h6" color="white">
-                              Return & Check out
-                            </Typography>
-                          </Button>
-                        </Grid>
-                      )
-                    )} */}
-
                     {loading ? (
                       <ButtonSkeleton />
                     ) : (
