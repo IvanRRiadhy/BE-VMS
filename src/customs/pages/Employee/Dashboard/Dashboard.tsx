@@ -546,20 +546,28 @@ const DashboardEmployee = () => {
     }
   };
 
-  // const {
-  //   data: activities,
-  //   isLoading: isLoadingActivities,
-  //   isFetching: isFetchingActivities,
-  //   isFetchingNextPage,
-  //   hasNextPage,
-  //   fetchNextPage,
-  //   refetch: refetchActivities,
-  // } = useActivities({
-  //   start_date: formatLocalDate(startDate),
-  //   end_date: formatLocalDate(endDate),
-  // });
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-  // const activites = activities?.activities ?? [];
+    return `${year}-${month}-${day}`;
+  };
+
+  const {
+    data: activities,
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchActivities,
+  } = useActivities({
+    start_date: formatLocalDate(startDate),
+    end_date: formatLocalDate(endDate),
+  });
+
+  const activites = activities?.activities ?? [];
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -744,6 +752,48 @@ const DashboardEmployee = () => {
               minHeight: 0,
             }}
           >
+            <LastVisitsCard
+              activites={activites}
+              loading={isLoadingActivities}
+              loadingMore={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              onRefresh={() => refetchActivities()}
+              refreshing={isFetchingActivities && !isFetchingNextPage}
+            />
+          </Grid>
+        </Grid>
+
+        <Grid
+          container
+          spacing={2}
+          alignItems="stretch"
+          sx={{
+            width: '100%',
+            pb: 2,
+          }}
+        >
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
+            {/* <DynamicTable
+              loading={loadingCurrentlyVisiting}
+              data={currentlyVisiting}
+              height={'100%'}
+              isHavePagination={false}
+              overflowX="auto"
+              isHaveChecked={false}
+              defaultRowsPerPage={5}
+              isHaveHeaderTitle
+              isNoActionTableHead
+              isHavePeriod={true}
+              // onView={(row: any) => handleView(row)}
+              titleHeader="Currently Visiting"
+              // isHaveAddEmpty={true}
+              // addDataText="Create Invitation"
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/my-invitation');
+              }}
+            /> */}
             <DynamicTable
               loading={loadingTodayVisitors}
               data={invitationMonitoringData}
@@ -760,48 +810,6 @@ const DashboardEmployee = () => {
               isHaveAddEmpty={true}
               addDataText="Create Invitation"
               onAddEmpty={() => navigate('/employee/my-invitation')}
-              isHaveViewAll={true}
-              onHaveViewAll={() => {
-                navigate('/employee/my-invitation');
-              }}
-            />
-            {/* <LastVisitsCard
-              activites={activites}
-              loading={isLoadingActivities}
-              loadingMore={isFetchingNextPage}
-              hasNextPage={hasNextPage}
-              onLoadMore={fetchNextPage}
-              onRefresh={() => refetchActivities()}
-              refreshing={isFetchingActivities && !isFetchingNextPage}
-            /> */}
-          </Grid>
-        </Grid>
-
-        <Grid
-          container
-          spacing={2}
-          alignItems="stretch"
-          sx={{
-            width: '100%',
-            pb: 2,
-          }}
-        >
-          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
-            <DynamicTable
-              loading={loadingCurrentlyVisiting}
-              data={currentlyVisiting}
-              height={'100%'}
-              isHavePagination={false}
-              overflowX="auto"
-              isHaveChecked={false}
-              defaultRowsPerPage={5}
-              isHaveHeaderTitle
-              isNoActionTableHead
-              isHavePeriod={true}
-              // onView={(row: any) => handleView(row)}
-              titleHeader="Currently Visiting"
-              // isHaveAddEmpty={true}
-              // addDataText="Create Invitation"
               isHaveViewAll={true}
               onHaveViewAll={() => {
                 navigate('/employee/my-invitation');

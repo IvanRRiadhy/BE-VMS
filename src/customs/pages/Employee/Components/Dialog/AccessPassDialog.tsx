@@ -130,12 +130,14 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                 <Typography>Parking Area</Typography>
-                <Typography fontWeight="bold">{data.parking_area || '-'}</Typography>
+                {/* <Typography fontWeight="bold">{data.parking_area || '-'}</Typography> */}
+                {data && <Typography>Area Parkir</Typography>}
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                 <Typography>Parking Slot</Typography>
-                <Typography fontWeight="bold">{data.parking_slot || '-'}</Typography>
+                {/* <Typography fontWeight="bold">{data.parking_slot || '-'}</Typography> */}
+                {data && <Typography>1A</Typography>}
               </Grid>
             </Grid>
 
@@ -147,9 +149,7 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
                 onClick={onOpenParking}
                 disabled={isParkingLoading}
               >
-
                 Open Parking Blocker
-
               </Button>
             )}
           </Box>

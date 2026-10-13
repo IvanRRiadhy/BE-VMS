@@ -1054,7 +1054,7 @@ const OperatorView = () => {
       visitor_identity_id: v.visitor_identity_id ?? '-',
       visitor_code: v.visitor_code ?? '-',
       vehicle_plate_number: v.vehicle_plate_number ?? '-',
-      vehicle_type: v.vehicle_type ?? '-',
+      vehicle_type: v.vehicle_type ?? 'Car',
       is_group: v.is_group ?? false,
       group_code: v.visitor_group_code ?? '-',
       group_name: v.group_name ?? '-',

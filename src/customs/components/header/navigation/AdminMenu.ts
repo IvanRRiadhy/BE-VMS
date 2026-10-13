@@ -348,14 +348,14 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   //   chipColor: 'secondary',
   //   href: '/admin/print-badge',
   // },
-  {
-    id: uniqueId(),
-    title: 'evacuate',
-    icon: IconRun,
-    href: '/admin/evacuate',
-    backgroundColor: '#D32F2F',
-    color: '#FFFFFF',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'evacuate',
+  //   icon: IconRun,
+  //   href: '/admin/evacuate',
+  //   backgroundColor: '#D32F2F',
+  //   color: '#FFFFFF',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Operator View',
@@ -651,12 +651,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   chipColor: 'secondary',
   //   href: '/admin/print-badge',
   // },
-  {
-    id: uniqueId(),
-    title: 'evacuate',
-    icon: IconRun,
-    href: '/admin/evacuate',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'evacuate',
+  //   icon: IconRun,
+  //   href: '/admin/evacuate',
+  // },
 
   // {
   //   id: uniqueId(),
@@ -914,12 +914,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/operator-admin/print-badge',
   },
-  {
-    id: uniqueId(),
-    title: 'evacuate',
-    icon: IconRun,
-    href: '/operator-admin/evacuate',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'evacuate',
+  //   icon: IconRun,
+  //   href: '/operator-admin/evacuate',
+  // },
   {
     id: uniqueId(),
     title: 'Operator View',

@@ -329,7 +329,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
             /> */}
             <DetailItem
               label="Vehicle Type"
-              value={selectedVisitor.vehicle_type || '-'}
+              value={selectedVisitor.vehicle_type || 'Car'}
               icon={<IconCar size={18} stroke={1.9} />}
             />
             <DetailItem
