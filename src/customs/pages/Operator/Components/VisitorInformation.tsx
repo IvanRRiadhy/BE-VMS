@@ -273,7 +273,7 @@ const VisitorInformation = ({
                           <IconQrcode size={20} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Edit Visitor Information" arrow placement="top">
+                      {/* <Tooltip title="Edit Visitor Information" arrow placement="top">
                         <IconButton
                           size="small"
                           onClick={handleOpenEnableEdit}
@@ -290,7 +290,7 @@ const VisitorInformation = ({
                         >
                           <IconPencil size={20} />
                         </IconButton>
-                      </Tooltip>
+                      </Tooltip> */}
                     </Box>
                   )}
                 </Box>
@@ -334,12 +334,12 @@ const VisitorInformation = ({
                   value={invitationCode[0]?.invitation_code}
                 /> */}
 
-                {/* 
+                
                 <InfoRow
                   icon={<IconCreditCard size={18} />}
                   label="Citizenship ID"
                   value={invitationCode[0]?.visitor_identity_id}
-                /> */}
+                />
                 {/* <InfoRow
                   icon={
                     <Box

@@ -120,7 +120,7 @@ const InvitationQrDialog = ({ open, onClose, activeVisitor }: InvitationQrDialog
                 </Typography>
 
                 <Typography variant="body1" fontWeight={600}>
-                  {formatDateTime(data?.checkout_at || data?.visitor_period_end) || '-'}
+                  {formatDateTime(data?.checkout_at) || '-'}
                 </Typography>
               </Box>
             </Box>

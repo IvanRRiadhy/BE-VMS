@@ -60,7 +60,7 @@ const PreviewDialog = ({
       return host?.name || raw;
     }
     // SITE
-    if (f.remarks === 'site_place') {
+    if (f.remarks === 'site_place') { 
       const site = invitation?.site || sites?.find((s: any) => s.id === raw);
       return site?.name || raw;
     }
@@ -125,9 +125,8 @@ const PreviewDialog = ({
                   );
                 }
                 if (f.remarks === 'is_driving') {
-                  const option = f.multiple_option_fields?.find(
-                    (o: any) => String(o.value) === String(f.answer_text),
-                  );
+                  const isDriving =
+                    f.answer_text === true || String(f.answer_text).toLowerCase() === 'true';
 
                   return (
                     <Grid item xs={12} sm={6} key={idx}>
@@ -135,7 +134,9 @@ const PreviewDialog = ({
                         {f.long_display_text}
                       </Typography>
 
-                      <Typography sx={{textTransform: 'capitalize'}}>{f.answer_text ?? '-'}</Typography>
+                      <Typography sx={{ textTransform: 'capitalize' }}>
+                        {f.answer_text == null ? '-' : isDriving ? 'Yes' : 'No'}
+                      </Typography>
                     </Grid>
                   );
                 }
@@ -144,8 +145,6 @@ const PreviewDialog = ({
                     <Typography variant="caption" color="text.secondary">
                       {f.long_display_text}
                     </Typography>
-
-                    {/* FILE / IMAGE */}
                     {[10, 11, 12].includes(f.field_type) ? (
                       value.match(/\.(jpg|jpeg|png)$/i) ? (
                         <Box mt={1}>
@@ -180,7 +179,7 @@ const PreviewDialog = ({
 
       <DialogActions>
         <Button onClick={onClose}>Back</Button>
-        <Button variant="contained" color="primary" onClick={onConfirm}>
+        <Button variant="contained" color="primary" onClick={onConfirm} >
           Confirm & Submit
         </Button>
       </DialogActions>

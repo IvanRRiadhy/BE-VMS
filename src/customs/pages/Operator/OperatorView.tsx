@@ -93,7 +93,6 @@ import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitation
 import VisitorInformation from './Components/VisitorInformation';
 import HostInformation from './Components/HostInformation';
 import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
-import Footer from './Components/Footer';
 import { getConfig } from 'src/config';
 import { Joyride, STATUS } from 'react-joyride';
 import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
@@ -1054,7 +1053,7 @@ const OperatorView = () => {
       visitor_identity_id: v.visitor_identity_id ?? '-',
       visitor_code: v.visitor_code ?? '-',
       vehicle_plate_number: v.vehicle_plate_number ?? '-',
-      vehicle_type: v.vehicle_type ?? 'Car',
+      vehicle_type: v.vehicle_type ?? '-',
       is_group: v.is_group ?? false,
       group_code: v.visitor_group_code ?? '-',
       group_name: v.group_name ?? '-',
@@ -3622,6 +3621,7 @@ const OperatorView = () => {
           onApplyToAllChange={handleApplyToAllChange}
           onSubmit={handleExtend}
         />
+
         {/* Create Invitation */}
         <Dialog
           fullWidth

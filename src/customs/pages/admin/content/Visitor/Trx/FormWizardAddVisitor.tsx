@@ -39,14 +39,7 @@ import {
 import 'select2';
 import 'select2/dist/css/select2.min.css';
 import { IconInfoCircle } from '@tabler/icons-react';
-import {
-  IconArrowLeft,
-  IconCamera,
-  IconDeviceFloppy,
-  IconTrash,
-  IconUser,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconArrowLeft, IconCamera, IconTrash } from '@tabler/icons-react';
 import imageCompression from 'browser-image-compression';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
@@ -81,28 +74,23 @@ import 'dayjs/locale/id';
 import { renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { TreeItem } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { IconCheck } from '@tabler/icons-react';
-import { IconPencil } from '@tabler/icons-react';
 import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
-import { InfoOutlined } from '@mui/icons-material';
-import { IconPlus } from '@tabler/icons-react';
 import CameraDialog from './components/Dialog/CameraDialog';
 import { useTranslation } from 'react-i18next';
 import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { format } from 'path';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { uploadFileToCDN } from 'src/customs/api/cdn';
 import InvitationAndVisitorTypeStep from './components/ui/InvitationAndVisitorTypeStep';
 import VisitorFormStep from './components/ui/VisitorFormStep';
+import PreviewInvitation from './components/Dialog/PreviewInvitation';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -226,6 +214,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     single_page: [],
     batch_page: {},
   });
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+
+  const [pendingSubmitType, setPendingSubmitType] = useState<
+    | 'single-preregister'
+    | 'single-invitation'
+    | 'group-preregister'
+    | 'group-invitation'
+    | 'add-transaction'
+    | null
+  >(null);
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
   const [siteTree, setSiteTree] = useState<any[]>([]);
@@ -612,62 +611,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       )
       .join('');
   };
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   const deepClone = (obj: any) => {
-  //     try {
-  //       return structuredClone(obj);
-  //     } catch {
-  //       return JSON.parse(JSON.stringify(obj));
-  //     }
-  //   };
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     if (!next[activeGroupIdx]) {
-  //       return prev;
-  //     }
-
-  //     const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-  //       ...dv,
-  //       // question_page: (dv.question_page || []).map((qp: any) => ({
-  //       //   id: qp.id || generateUUIDv4(),
-  //       //   sort: qp.sort ?? 0,
-  //       //   name: qp.name ?? '',
-  //       //   is_document: qp.is_document ?? false,
-  //       //   can_multiple_used: qp.can_multiple_used ?? false,
-  //       //   foreign_id: qp.foreign_id ?? '',
-  //       //   self_only: qp.self_only ?? false,
-  //       //   form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-  //       // })),
-  //       question_page: (dv.question_page || []).map((qp: any) => {
-  //         const isPurposeVisit = getSectionType(qp) === 'purpose_visit';
-  //         const sourceForm = qp.self_only && isPurposeVisit ? dv.single_page || [] : qp.form || [];
-
-  //         return {
-  //           id: qp.id || generateUUIDv4(),
-  //           sort: qp.sort ?? 0,
-  //           name: qp.name ?? '',
-  //           is_document: qp.is_document ?? false,
-  //           can_multiple_used: qp.can_multiple_used ?? false,
-  //           foreign_id: qp.foreign_id ?? '',
-  //           self_only: qp.self_only ?? false,
-
-  //           form: sourceForm.map(({ id, Id, ...rest }: any) => deepClone(rest)),
-  //         };
-  //       }),
-  //     }));
-
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: cleanDataVisitor,
-  //     };
-
-  //     return next;
-  //   });
-  // };
 
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
@@ -4948,9 +4891,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
          * ==========================================
          */
         if (isAddTransaction) {
+          // const addTransactionPayload = list_group[0];
+
+          // // optional: cek visitor terlebih dahulu
+          // const hasVisitor =
+          //   addTransactionPayload.data_visitor?.some((visitor: any) =>
+          //     visitor.question_page?.some(
+          //       (page: any) =>
+          //         page.name === 'Visitor Information' &&
+          //         page.form?.some(
+          //           (field: any) =>
+          //             field.remarks === 'name' &&
+          //             typeof field.answer_text === 'string' &&
+          //             field.answer_text.trim() !== '',
+          //         ),
+          //     ),
+          //   ) ?? false;
+
+          // if (!hasVisitor) {
+          //   toast('Minimal isi 1 visitor pada Visitor Information.', 'warning');
+          //   return;
+          // }
+
+          // await createVisitorAddTransactionMutation.mutateAsync(addTransactionPayload);
+
+          // showSwal('success', t('visitorAddedSuccessfully'), 3000);
+
+          // resetMediaState();
+          // clearAnswerFiles();
           const addTransactionPayload = list_group[0];
 
-          // optional: cek visitor terlebih dahulu
           const hasVisitor =
             addTransactionPayload.data_visitor?.some((visitor: any) =>
               visitor.question_page?.some(
@@ -4970,27 +4940,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             return;
           }
 
-          await createVisitorAddTransactionMutation.mutateAsync(addTransactionPayload);
-
-          showSwal('success', t('visitorAddedSuccessfully'), 3000);
-
-          resetMediaState();
-          clearAnswerFiles();
+          setPendingPayload(addTransactionPayload);
+          setPendingSubmitType('add-transaction');
+          setPreviewOpen(true);
+          return;
         } else {
           payload = { list_group };
 
+          // const parsed = CreateGroupVisitorRequestSchema.parse(payload);
+
+          // if (TYPE_REGISTERED === 0) {
+          //   await createPraRegisterGroupMutation.mutateAsync(parsed);
+          // } else {
+          //   await createVisitorsGroupMutation.mutateAsync(parsed);
+          // }
+
+          // showSwal('success', t('groupVisitorCreatedSuccessfully'));
+
+          // resetMediaState();
+          // clearAnswerFiles();
           const parsed = CreateGroupVisitorRequestSchema.parse(payload);
 
-          if (TYPE_REGISTERED === 0) {
-            await createPraRegisterGroupMutation.mutateAsync(parsed);
-          } else {
-            await createVisitorsGroupMutation.mutateAsync(parsed);
-          }
-
-          showSwal('success', t('groupVisitorCreatedSuccessfully'));
-
-          resetMediaState();
-          clearAnswerFiles();
+          setPendingPayload(parsed);
+          setPendingSubmitType(TYPE_REGISTERED === 0 ? 'group-preregister' : 'group-invitation');
+          setPreviewOpen(true);
+          return;
         }
       } else {
         if (!sectionsData.length) {
@@ -5015,24 +4989,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
         // console.log('Payload :', JSON.stringify(payload, null, 2));
-        const parsed = CreateVisitorRequestSchema.parse(payload);
+        // const parsed = CreateVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
         // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         // await submitFn(parsed);
-        if (TYPE_REGISTERED === 0) {
-          await createPraRegisterMutation.mutateAsync(parsed);
-        } else {
-          await createVisitorMutation.mutateAsync(parsed);
-        }
+        // if (TYPE_REGISTERED === 0) {
+        //   await createPraRegisterMutation.mutateAsync(parsed);
+        // } else {
+        //   await createVisitorMutation.mutateAsync(parsed);
+        // }
 
-        const successMessage =
-          TYPE_REGISTERED === 0
-            ? t('preRegistrationCreatedSuccessfully')
-            : t('invitationVisitorCreatedSuccessfully');
+        // const successMessage =
+        //   TYPE_REGISTERED === 0
+        //     ? t('preRegistrationCreatedSuccessfully')
+        //     : t('invitationVisitorCreatedSuccessfully');
 
-        showSwal('success', successMessage, 3000);
-        resetMediaState();
-        clearAnswerFiles();
+        // showSwal('success', successMessage, 3000);
+        // resetMediaState();
+        // clearAnswerFiles();
+        const parsed = CreateVisitorRequestSchema.parse(payload);
+
+        setPendingPayload(parsed);
+        setPendingSubmitType(TYPE_REGISTERED === 0 ? 'single-preregister' : 'single-invitation');
+        setPreviewOpen(true);
+        return;
       }
 
       setActiveStep(0);
@@ -5057,6 +5037,63 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       } else if (err?.errors) {
         setErrors(err.errors);
       }
+    }
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!pendingPayload || !pendingSubmitType) return;
+
+    try {
+      switch (pendingSubmitType) {
+        case 'single-preregister':
+          await createPraRegisterMutation.mutateAsync(pendingPayload);
+          showSwal('success', t('preRegistrationCreatedSuccessfully'), 3000);
+          break;
+
+        case 'single-invitation':
+          await createVisitorMutation.mutateAsync(pendingPayload);
+          showSwal('success', t('invitationVisitorCreatedSuccessfully'), 3000);
+          break;
+
+        case 'group-preregister':
+          await createPraRegisterGroupMutation.mutateAsync(pendingPayload);
+          showSwal('success', t('groupVisitorCreatedSuccessfully'), 3000);
+          break;
+
+        case 'group-invitation':
+          await createVisitorsGroupMutation.mutateAsync(pendingPayload);
+          showSwal('success', t('groupVisitorCreatedSuccessfully'), 3000);
+          break;
+
+        case 'add-transaction':
+          await createVisitorAddTransactionMutation.mutateAsync(pendingPayload);
+          showSwal('success', t('visitorAddedSuccessfully'), 3000);
+          break;
+      }
+
+      setPreviewOpen(false);
+      setPendingPayload(null);
+      setPendingSubmitType(null);
+
+      resetMediaState();
+      clearAnswerFiles();
+      setActiveStep(0);
+      onSuccess?.();
+    } catch (err: any) {
+      const errorData = err?.response?.data;
+
+      const errorMessage = Array.isArray(errorData?.collection)
+        ? errorData.collection
+            .flatMap((item: any) =>
+              Array.isArray(item.error)
+                ? item.error.map((error: any) => error.message)
+                : [item.message ?? item.msg],
+            )
+            .filter(Boolean)
+            .join('\n')
+        : errorData?.message || errorData?.msg || 'Failed to submit visitor.';
+
+      showSwal('error', errorMessage);
     }
   };
 
@@ -5854,6 +5891,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Alert>
         </Snackbar>
       </Portal>
+      <PreviewInvitation
+        open={previewOpen}
+        payload={pendingPayload}
+        loading={loading}
+        onClose={() => setPreviewOpen(false)}
+        onConfirm={handleConfirmSubmit}
+        sites={sites}
+        employee={employee}
+      />
     </Box>
   );
 };

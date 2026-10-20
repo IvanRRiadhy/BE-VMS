@@ -1,7 +1,15 @@
-import { Avatar, Button, Checkbox, IconButton, TableCell, TableRow, Tooltip } from '@mui/material';
+import {
+  Avatar,
+  Button,
+  Checkbox,
+  IconButton,
+  TableCell,
+  TableRow,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { Box } from '@mui/system';
-import { IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconClock, IconTimeDuration0, IconTrash } from '@tabler/icons-react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 
@@ -37,6 +45,7 @@ function VisitorRow({
   };
   const { data: profile } = useProfile();
   const isAdmin = profile?.group_name === 'Admin';
+  const canExtend = ['Preregis', 'Checkin', 'Available'].includes(visitor.visitor_status);
   return (
     <>
       <TableRow>
@@ -103,7 +112,7 @@ function VisitorRow({
           </Box>
         </TableCell>
 
-        <TableCell>
+        <TableCell sx={{ display: 'flex' }}>
           {isAdmin && visitor.visitor_status !== 'Canceled' && (
             <Tooltip title="Remove Visitor" arrow>
               <span>
@@ -113,6 +122,39 @@ function VisitorRow({
               </span>
             </Tooltip>
           )}
+          <Tooltip title="Extend Time" arrow>
+            {/* <span>
+              <IconButton color="error" onClick={handleRemoveVisitor} disabled={!selectedVisitor}>
+                <IconTimeDuration0 size={26} />
+              </IconButton>
+            </span> */}
+            <Button
+              variant="contained"
+              startIcon={<IconClock size={25} />}
+              // onClick={() => handleOpenAction('extend')}
+              disabled={!canExtend}
+              size="small"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                // boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                backgroundColor: 'primary.main',
+                zIndex: 999,
+                width: '100%',
+                height: '40px',
+                '&.Mui-disabled': {
+                  background: '#E0E0E0',
+                  color: '#9E9E9E',
+                  boxShadow: 'none',
+                },
+                p: 0,
+              }}
+            >
+              Extend
+            </Button>
+          </Tooltip>
         </TableCell>
       </TableRow>
     </>

@@ -1201,203 +1201,204 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 />
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-              >
-                {t('selectStatusVisitor')}
-                {/* <br /> */}
-              </CustomFormLabel>
-              <Typography sx={{ color: 'secondary', opacity: '0.7' }}>
-                {t('subtitleStatusVisitor')}
-              </Typography>
-
-              <Box display="flex" gap={2} flexWrap={'wrap'} mt={0.6}>
-                {/* Single */}
-                <Paper
-                  variant="outlined"
-                  onClick={() => {
-                    setIsSingle(true);
-                    setIsGroup(false);
-
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      is_group: false,
-                    }));
-                  }}
-                  sx={{
-                    flex: 1,
-                    p: 2,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    borderColor: formData.is_group === false ? 'primary.main' : 'divider',
-                    bgcolor: formData.is_group === false ? 'primary.50' : 'background.paper',
-                    transition: 'all .2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    },
-                  }}
+            {formData.visitor_type && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CustomFormLabel
+                  htmlFor="visitor-type"
+                  sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
                 >
-                  <Box display="flex" alignItems="center">
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: formData.is_group === false ? 'primary.main' : 'grey.200',
-                        color: formData.is_group === false ? '#fff' : 'text.secondary',
-                      }}
-                    >
-                      <IconUser size={20} />
-                    </Avatar>
+                  {t('selectStatusVisitor')}
+                  {/* <br /> */}
+                </CustomFormLabel>
+                <Typography sx={{ color: 'secondary', opacity: '0.7' }}>
+                  {t('subtitleStatusVisitor')}
+                </Typography>
 
-                    <Box ml={2} flex={1}>
-                      <Typography fontWeight={600}>Single</Typography>
+                <Box display="flex" gap={2} flexWrap={'wrap'} mt={0.6}>
+                  {/* Single */}
+                  <Paper
+                    variant="outlined"
+                    onClick={() => {
+                      setIsSingle(true);
+                      setIsGroup(false);
 
-                      <Typography variant="body2" color="text.secondary">
-                        {t('onlyOneVisitor')}
-                      </Typography>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_group: false,
+                      }));
+                    }}
+                    sx={{
+                      flex: 1,
+                      p: 2,
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      borderColor: formData.is_group === false ? 'primary.main' : 'divider',
+                      bgcolor: formData.is_group === false ? 'primary.50' : 'background.paper',
+                      transition: 'all .2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                      },
+                    }}
+                  >
+                    <Box display="flex" alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: formData.is_group === false ? 'primary.main' : 'grey.200',
+                          color: formData.is_group === false ? '#fff' : 'text.secondary',
+                        }}
+                      >
+                        <IconUser size={20} />
+                      </Avatar>
+
+                      <Box ml={2} flex={1}>
+                        <Typography fontWeight={600}>Single</Typography>
+
+                        <Typography variant="body2" color="text.secondary">
+                          {t('onlyOneVisitor')}
+                        </Typography>
+                      </Box>
+
+                      <Tooltip arrow title="Only one visitor can be added">
+                        <IconButton size="small">
+                          <IconInfoCircle size={18} />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Radio checked={formData.is_group === false} />
                     </Box>
+                  </Paper>
 
-                    <Tooltip arrow title="Only one visitor can be added">
-                      <IconButton size="small">
-                        <IconInfoCircle size={18} />
-                      </IconButton>
-                    </Tooltip>
+                  {/* Group */}
+                  <Paper
+                    variant="outlined"
+                    onClick={() => {
+                      setIsSingle(false);
+                      setIsGroup(true);
 
-                    <Radio checked={formData.is_group === false} />
-                  </Box>
-                </Paper>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_group: true,
+                      }));
+                    }}
+                    sx={{
+                      flex: 1,
+                      p: 2,
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      borderColor: formData.is_group ? 'primary.main' : 'divider',
+                      bgcolor: formData.is_group ? 'primary.50' : 'background.paper',
+                      transition: 'all .2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                      },
+                    }}
+                  >
+                    <Box display="flex" alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: formData.is_group ? 'primary.main' : 'grey.200',
+                          color: formData.is_group ? '#fff' : 'text.secondary',
+                        }}
+                      >
+                        <IconUsers size={20} />
+                      </Avatar>
 
-                {/* Group */}
-                <Paper
-                  variant="outlined"
-                  onClick={() => {
-                    setIsSingle(false);
-                    setIsGroup(true);
+                      <Box ml={2} flex={1}>
+                        <Typography fontWeight={600}>Group</Typography>
 
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      is_group: true,
-                    }));
-                  }}
-                  sx={{
-                    flex: 1,
-                    p: 2,
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    borderColor: formData.is_group ? 'primary.main' : 'divider',
-                    bgcolor: formData.is_group ? 'primary.50' : 'background.paper',
-                    transition: 'all .2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                >
-                  <Box display="flex" alignItems="center">
-                    <Avatar
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        bgcolor: formData.is_group ? 'primary.main' : 'grey.200',
-                        color: formData.is_group ? '#fff' : 'text.secondary',
-                      }}
-                    >
-                      <IconUsers size={20} />
-                    </Avatar>
+                        <Typography variant="body2" color="text.secondary">
+                          {t('moreThanOneVisitor')}
+                        </Typography>
+                      </Box>
 
-                    <Box ml={2} flex={1}>
-                      <Typography fontWeight={600}>Group</Typography>
+                      <Tooltip arrow title="Multiple visitors can be added">
+                        <IconButton size="small">
+                          <IconInfoCircle size={18} />
+                        </IconButton>
+                      </Tooltip>
 
-                      <Typography variant="body2" color="text.secondary">
-                        {t('moreThanOneVisitor')}
-                      </Typography>
+                      <Radio checked={formData.is_group === true} />
                     </Box>
+                  </Paper>
+                </Box>
 
-                    <Tooltip arrow title="Multiple visitors can be added">
-                      <IconButton size="small">
-                        <IconInfoCircle size={18} />
-                      </IconButton>
-                    </Tooltip>
+                {isGroup && (
+                  <Box>
+                    <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                      Group List
+                    </CustomFormLabel>
 
-                    <Radio checked={formData.is_group === true} />
-                  </Box>
-                </Paper>
-              </Box>
-
-              {isGroup && (
-                <Box>
-                  <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                    Group List
-                  </CustomFormLabel>
-
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Group Name</TableCell>
-                          <TableCell>Code</TableCell>
-                          <TableCell>Visitor Form</TableCell>
-                          {/* <TableCell>Fill Form Scanner</TableCell> */}
-                          <TableCell align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groupVisitors.map((g, index) => (
-                          <TableRow key={g.id}>
-                            <TableCell>
-                              <CustomTextField
-                                size="small"
-                                fullWidth
-                                name="group_name"
-                                value={g.group_name}
-                                placeholder="Enter group name"
-                                sx={{ minWidth: '100px' }}
-                                onChange={(e) =>
-                                  setGroupVisitors((prev) =>
-                                    prev.map((item) =>
-                                      item.id === g.id
-                                        ? { ...item, group_name: e.target.value }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <CustomTextField
-                                size="small"
-                                fullWidth
-                                name="group_code"
-                                value={g.group_code}
-                                InputProps={{ readOnly: true }}
-                                sx={{ minWidth: '100px' }}
-                                disabled
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  setActiveGroupIdx(index);
-
-                                  const visitors = groupVisitors[index]?.data_visitor;
-                                  if (visitors && visitors.length > 0) {
-                                    setDataVisitor(structuredClone(visitors));
-                                  } else {
-                                    setDataVisitor(seedDataVisitorFromSections(sectionsData));
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Group Name</TableCell>
+                            <TableCell>Code</TableCell>
+                            <TableCell>Visitor Form</TableCell>
+                            {/* <TableCell>Fill Form Scanner</TableCell> */}
+                            <TableCell align="center">Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {groupVisitors.map((g, index) => (
+                            <TableRow key={g.id}>
+                              <TableCell>
+                                <CustomTextField
+                                  size="small"
+                                  fullWidth
+                                  name="group_name"
+                                  value={g.group_name}
+                                  placeholder="Enter group name"
+                                  sx={{ minWidth: '100px' }}
+                                  onChange={(e) =>
+                                    setGroupVisitors((prev) =>
+                                      prev.map((item) =>
+                                        item.id === g.id
+                                          ? { ...item, group_name: e.target.value }
+                                          : item,
+                                      ),
+                                    )
                                   }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <CustomTextField
+                                  size="small"
+                                  fullWidth
+                                  name="group_code"
+                                  value={g.group_code}
+                                  InputProps={{ readOnly: true }}
+                                  sx={{ minWidth: '100px' }}
+                                  disabled
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  size="small"
+                                  endIcon={<IconArrowRight size={20} />}
+                                  onClick={() => {
+                                    setActiveGroupIdx(index);
 
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell>
-                            {/* <TableCell>
+                                    const visitors = groupVisitors[index]?.data_visitor;
+                                    if (visitors && visitors.length > 0) {
+                                      setDataVisitor(structuredClone(visitors));
+                                    } else {
+                                      setDataVisitor(seedDataVisitorFromSections(sectionsData));
+                                    }
+
+                                    setActiveStep(1);
+                                  }}
+                                >
+                                  Visitor Form
+                                </Button>
+                              </TableCell>
+                              {/* <TableCell>
                               <Button
                                 variant="outlined"
                                 color="primary"
@@ -1438,43 +1439,43 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 }}
                               />
                             </TableCell> */}
-                            <TableCell align="center">
-                              <Tooltip title="Delete Group" arrow>
-                                <IconButton
-                                  color="error"
-                                  onClick={() => handleDeleteGroup(g.id || '')}
-                                  size="small"
-                                >
-                                  <IconTrash />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              <TableCell align="center">
+                                <Tooltip title="Delete Group" arrow>
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => handleDeleteGroup(g.id || '')}
+                                    size="small"
+                                  >
+                                    <IconTrash />
+                                  </IconButton>
+                                </Tooltip>
+                              </TableCell>
+                            </TableRow>
+                          ))}
 
-                        {groupVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              No group added yet.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  {groupVisitors.length === 0 && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={handleAddGroup}
-                      sx={{ mb: 1, mt: 1 }}
-                    >
-                      + Add Group
-                    </Button>
-                  )}
-                </Box>
-              )}
-              {/* {isSingle && (
+                          {groupVisitors.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={4} align="center">
+                                No group added yet.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    {groupVisitors.length === 0 && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={handleAddGroup}
+                        sx={{ mb: 1, mt: 1 }}
+                      >
+                        + Add Group
+                      </Button>
+                    )}
+                  </Box>
+                )}
+                {/* {isSingle && (
                 <Box mt={2}>
                   <Box display="flex" alignItems="center">
                     <CustomFormLabel
@@ -1540,7 +1541,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   />
                 </Box>
               )} */}
-            </Grid>
+              </Grid>
+            )}
           </Grid>
         </Box>
       );
@@ -4281,7 +4283,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 alignItems: 'center',
                                 gap: 1,
                               }}
-                              onClick={(e) => {
+                              onClick={(e: any) => {
                                 e.stopPropagation();
                                 setOpenCamera(true);
                               }}
@@ -4801,7 +4803,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               alignItems: 'center',
                               gap: 1,
                             }}
-                            onClick={(e) => {
+                            onClick={(e: any) => {
                               e.stopPropagation();
                               setOpenCamera(true);
                             }}

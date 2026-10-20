@@ -167,7 +167,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         conditions,
       };
 
-      console.log('payload', JSON.stringify(payload, null, 2));
+      // console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
         await updateMutation.mutateAsync({

@@ -63,6 +63,7 @@ interface StepContentProps {
   setFormData: any;
   setSelectedAccess: any;
   setSelectedAnalytics: any;
+  sites?: any;
 }
 
 const StepContentComponent: React.FC<StepContentProps> = ({
@@ -92,6 +93,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   setSelectedAccess,
   setSelectedAnalytics,
   visitorRole,
+  sites,
 }) => {
   const identityOptions = [
     { value: -1, label: '' },
@@ -105,11 +107,11 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
   const options = [
     { id: 1, name: 'Regular', value: 'Regular' },
-    { id: 2, name: 'VIP', value: 'VIP' },
-    { id: 3, name: 'Contractor', value: 'Contractor' },
-    { id: 4, name: 'Vendor', value: 'Vendor' },
-    { id: 5, name: 'Internship', value: 'Internship' },
-    { id: 6, name: 'TemporaryWorker', value: 'TemporaryWorker' },
+    // { id: 2, name: 'VIP', value: 'VIP' },
+    // { id: 3, name: 'Contractor', value: 'Contractor' },
+    { id: 2, name: 'Remise', value: 'Remise' },
+    { id: 3, name: 'CIT', value: 'CIT' },
+    { id: 4, name: 'DC Vendor', value: 'DCVendor' },
   ];
 
   useEffect(() => {
@@ -312,7 +314,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   {selectedAccess.map((row, index) => (
                     <TableRow key={index}>
                       {/* <TableCell>{index + 1}</TableCell> */}
-
                       <TableCell>
                         <FormControl size="small" fullWidth>
                           <Autocomplete
@@ -459,6 +460,68 @@ const StepContentComponent: React.FC<StepContentProps> = ({
           )}
           <Grid size={12}>
             <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
+              Agenda
+            </CustomFormLabel>
+            <CustomTextField
+              id="pre_agenda"
+              value={formData.pre_agenda}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  pre_agenda: e.target.value,
+                }));
+              }}
+              error={Boolean(errors.pre_agenda)}
+              helperText={errors.pre_agenda || ''}
+              fullWidth
+              inputProps={{ min: 0 }}
+            />
+          </Grid>
+
+          <Grid size={12} mt={1}>
+            <Box>
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 1,
+                    // borderLeft: '4px solid #673ab7',
+                    mt: 2,
+                  }}
+                >
+                  Site
+                </Typography>
+
+                <Tooltip title="Select the site where the visitor's visit will take place." arrow>
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Autocomplete
+                options={sites}
+                value={
+                  sites.find((x: any) => String(x.id) === String(formData.pre_site_id)) ?? null
+                }
+                disablePortal
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={(option) => option.name ?? ''}
+                onChange={(_, newValue) => {
+                  setValueVisitorProvider(newValue);
+
+                  setFormData((prev: any) => ({
+                    ...prev,
+                    pre_site_id: newValue?.id ?? null,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField {...params} placeholder="Select Site" sx={{ mt: 1 }} />
+                )}
+              />
+            </Box>
+          </Grid>
+          <Grid size={12}>
+            <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1.5 }}>
               Description
             </CustomFormLabel>
             <CustomTextField
@@ -939,7 +1002,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid>
-{/* 
+          {/* 
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
@@ -1031,7 +1094,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid> */}
-{/* 
+          {/* 
           {formData.simple_visitor && (
             <Grid size={12} mt={1}>
               <Box>

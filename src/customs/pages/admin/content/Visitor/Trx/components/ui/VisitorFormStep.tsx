@@ -391,7 +391,7 @@ const VisitorFormStep = ({
                                 ))}
                               <TableCell align="center">
                                 <Typography variant="subtitle2" fontWeight={600}>
-                                  Action
+                                  {t("action")}
                                 </Typography>
                               </TableCell>
                             </TableRow>

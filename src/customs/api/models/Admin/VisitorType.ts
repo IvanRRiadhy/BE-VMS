@@ -87,6 +87,8 @@ export type Item = {
   simple_period: boolean;
   site_visitor_types?: string | null;
   visitor_roles: VisitorRole[];
+  pre_agenda: string;
+  pre_site_id: string;
   visitor_category?: string | null;
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
@@ -174,6 +176,8 @@ export const CreateVisitorTypeRequestSchema = z.object({
   simple_period: z.boolean().default(false),
   is_quick_access: z.boolean().nullable().optional().default(false),
   visitor_category: z.string().optional().nullable(),
+  pre_agenda: z.string().default(''),
+  pre_site_id: z.string().default(''),
   visitor_type_accesses: z
     .array(
       z.object({
@@ -243,6 +247,8 @@ export const updateVisitorTypeSchmea = z.object({
   expiry_reminder_minutes: z.coerce.number().default(0),
   is_quick_access: z.boolean().nullable().optional().default(false),
   visitor_category: z.string().optional().nullable(),
+  pre_agenda: z.string().default(''),
+  pre_site_id: z.string().default(''),
   visitor_roles: z
     .array(
       z.object({

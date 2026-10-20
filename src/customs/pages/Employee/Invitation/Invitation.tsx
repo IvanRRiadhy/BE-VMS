@@ -596,8 +596,8 @@ const Content = () => {
       setOpenSendEmail(false);
       setOpenCreateLink(false);
       showSwal('success', t('successSendShareLink'));
-    } catch (err) {
-      showSwal('error', 'Failed to send share link');
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to send share link');
     }
   };
 
@@ -756,13 +756,11 @@ const Content = () => {
         visitor_role: '',
       });
 
-      // tandai bahwa dialog dibuka dari Add Transaction
       setIsAddTransaction(true);
 
       setWizardKey((prev) => prev + 1);
       setOpenInvitationVisitor(true);
     } catch (error: any) {
-      // console.error(error);
       showSwal('error', error?.response?.data?.msg ?? 'Failed to get visitor form');
     } finally {
       setLoadingAddTransaction(false);
@@ -832,7 +830,7 @@ const Content = () => {
                     xs: 'column',
                     md: 'row',
                   },
-                  gap: 2,
+                  gap: 1,
                 }}
               >
                 {/* List */}

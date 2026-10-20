@@ -17,7 +17,13 @@ import {
 
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 
-import { IconFileExport, IconFileSpreadsheet, IconFileTypePdf, IconPdf, IconPlus } from '@tabler/icons-react';
+import {
+  IconFileExport,
+  IconFileSpreadsheet,
+  IconFileTypePdf,
+  IconPdf,
+  IconPlus,
+} from '@tabler/icons-react';
 
 import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/VisitorRow';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
@@ -178,6 +184,9 @@ export default function VisitorListTable({
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Status
+              </TableCell>
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                Action
               </TableCell>
             </TableRow>
           </TableHead>

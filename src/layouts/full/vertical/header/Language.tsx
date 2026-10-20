@@ -32,7 +32,11 @@ const Languages = [
   // },
 ];
 
-const Language = () => {
+interface LanguageProps {
+  colorTxt?: string;
+}
+
+const Language = ({ colorTxt }: LanguageProps) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const dispatch = useDispatch();
   const open = Boolean(anchorEl);
@@ -87,7 +91,7 @@ const Language = () => {
           alignItems: 'center',
           gap: 0.6,
           px: 1.25,
-          py: 0.7,
+          py: 0.9,
           border: '1px solid',
           borderColor: 'divider',
           borderRadius: 1.5,
@@ -99,8 +103,22 @@ const Language = () => {
           transition: 'all 0.2s ease',
 
           '&:hover': {
-            backgroundColor: 'action.hover',
-            boxShadow: '0 3px 10px rgba(0, 0, 0, 0.18)',
+            backgroundColor: colorTxt ? 'rgba(255,255,255,0.12)' : 'action.hover',
+            borderColor: colorTxt ? '#FFFFFF' : 'text.secondary',
+            boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
+
+            '& .language-label': {
+              color: colorTxt || 'text.primary',
+            },
+
+            '& .language-arrow': {
+              color: colorTxt || 'text.primary',
+            },
+          },
+
+          '&:focus-visible': {
+            outline: '2px solid #FFC247',
+            outlineOffset: 2,
           },
         }}
       >
@@ -120,6 +138,7 @@ const Language = () => {
             fontSize: 12,
             textTransform: 'uppercase',
             lineHeight: 1,
+            color: colorTxt || 'text.primary',
           }}
         >
           {currentLang.value}
@@ -128,8 +147,8 @@ const Language = () => {
         <KeyboardArrowDownIcon
           sx={{
             fontSize: 18,
-            color: 'text.secondary',
             ml: 0.1,
+            color: colorTxt || 'text.primary',
           }}
         />
       </Box>

@@ -46,6 +46,7 @@ import NewSectionDialog from './components/NewSectionDialog';
 import { useCameraAnalytics } from 'src/hooks/VisitorType/useCameraAnalaytics';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -97,7 +98,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const { documents } = useDocuments();
   const { customField } = useCustomField();
   const { analyticCctv } = useCameraAnalytics();
+  const { data: sites = [], isLoading } = useSites();
   const { createMutation, updateMutation } = useVisitorTypeMutation();
+
+  const filteredVisitorRole = visitorRole?.filter(
+    (item: any) => item.name?.toLowerCase() == 'Visitor',
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -948,6 +954,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 setSelectedAccess={setSelectedAccess}
                 setSelectedAnalytics={setSelectedAnalytics}
                 setDeletedAccessIds={setDeletedAccessIds}
+                sites={sites}
               />
             </Box>
           </Box>

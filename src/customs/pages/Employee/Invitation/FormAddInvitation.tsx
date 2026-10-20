@@ -609,62 +609,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       .join('');
   };
 
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   const deepClone = (obj: any) => {
-  //     try {
-  //       return structuredClone(obj);
-  //     } catch {
-  //       return JSON.parse(JSON.stringify(obj));
-  //     }
-  //   };
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     if (!next[activeGroupIdx]) {
-  //       return prev;
-  //     }
-
-  //     const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-  //       ...dv,
-  //       // question_page: (dv.question_page || []).map((qp: any) => ({
-  //       //   id: qp.id || generateUUIDv4(),
-  //       //   sort: qp.sort ?? 0,
-  //       //   name: qp.name ?? '',
-  //       //   is_document: qp.is_document ?? false,
-  //       //   can_multiple_used: qp.can_multiple_used ?? false,
-  //       //   foreign_id: qp.foreign_id ?? '',
-  //       //   self_only: qp.self_only ?? false,
-  //       //   form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-  //       // })),
-  //       question_page: (dv.question_page || []).map((qp: any) => {
-  //         const isPurposeVisit = getSectionType(qp) === 'purpose_visit';
-  //         const sourceForm = qp.self_only && isPurposeVisit ? dv.single_page || [] : qp.form || [];
-
-  //         return {
-  //           id: qp.id || generateUUIDv4(),
-  //           sort: qp.sort ?? 0,
-  //           name: qp.name ?? '',
-  //           is_document: qp.is_document ?? false,
-  //           can_multiple_used: qp.can_multiple_used ?? false,
-  //           foreign_id: qp.foreign_id ?? '',
-  //           self_only: qp.self_only ?? false,
-
-  //           form: sourceForm.map(({ id, Id, ...rest }: any) => deepClone(rest)),
-  //         };
-  //       }),
-  //     }));
-
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: cleanDataVisitor,
-  //     };
-
-  //     return next;
-  //   });
-  // };
-
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
 

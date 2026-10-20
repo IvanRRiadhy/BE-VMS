@@ -316,20 +316,9 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               value={selectedVisitor.is_driving ? 'Yes' : 'No'}
               icon={<IconSteeringWheel size={18} stroke={1.9} />}
             />
-            {/* <DetailItem
-              label="Parking Access"
-              value={
-                <Chip
-                  size="small"
-                  label={selectedVisitor.can_parking ? 'Allowed' : 'Not Allowed'}
-                  color={selectedVisitor.can_parking ? 'success' : 'default'}
-                />
-              }
-              icon={<IconParking size={18} stroke={1.9} />}
-            /> */}
             <DetailItem
               label="Vehicle Type"
-              value={selectedVisitor.vehicle_type || 'Car'}
+              value={selectedVisitor.vehicle_type || '-'}
               icon={<IconCar size={18} stroke={1.9} />}
             />
             <DetailItem

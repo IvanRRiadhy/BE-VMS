@@ -312,7 +312,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                         <IconLicense />
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                            Vehicle Plate No.
+                            License Plate Number
                           </CustomFormLabel>
                           <Typography>{visitorData[0]?.vehicle_plate_number || '-'}</Typography>
                         </Box>

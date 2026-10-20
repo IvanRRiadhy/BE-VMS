@@ -148,7 +148,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
           <Autocomplete
             options={employee}
             getOptionLabel={(option) => option.name}
-            value={employee.find((o) => o.id === filters.host) || null}
+            value={employee.find((o: any) => o.id === filters.host) || null}
             onChange={(_, val) =>
               setFilters((prev: any) => ({
                 ...prev,

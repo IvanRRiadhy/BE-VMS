@@ -215,7 +215,7 @@ const ActionPanelCard: FC<Props> = ({
                         </Grid>
                       )
                     )}
-                    {loading ? (
+                    {/* {loading ? (
                       <ButtonSkeleton />
                     ) : (
                       canExtend && (
@@ -244,7 +244,7 @@ const ActionPanelCard: FC<Props> = ({
                           </Button>
                         </Grid>
                       )
-                    )}
+                    )} */}
                   </Grid>
                 </Grid>
                 <Grid size={{ xs: 6, lg: 4 }}>

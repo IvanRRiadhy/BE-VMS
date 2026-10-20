@@ -169,12 +169,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
           },
         ],
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.setting_smtp',
-        icon: IconMailFilled,
-        href: '/admin/manage/setting-smtp',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.setting_smtp',
+      //   icon: IconMailFilled,
+      //   href: '/admin/manage/setting-smtp',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.access_control',
@@ -187,12 +187,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconSettings,
         href: '/admin/manage/custom-field',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.visitor_role',
-        icon: IconUserCircle,
-        href: '/admin/manage/visitor-role',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.visitor_role',
+      //   icon: IconUserCircle,
+      //   href: '/admin/manage/visitor-role',
+      // },
 
       {
         id: uniqueId(),
@@ -482,12 +482,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconWorldCog,
         href: '/admin/manage/integration',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.setting_smtp',
-        icon: IconMailFilled,
-        href: '/admin/manage/setting-smtp',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.setting_smtp',
+      //   icon: IconMailFilled,
+      //   href: '/admin/manage/setting-smtp',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.access_control',
@@ -500,12 +500,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconSettings,
         href: '/admin/manage/custom-field',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.visitor_role',
-        icon: IconUserCircle,
-        href: '/admin/manage/visitor-role',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.visitor_role',
+      //   icon: IconUserCircle,
+      //   href: '/admin/manage/visitor-role',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.visitor_providers',

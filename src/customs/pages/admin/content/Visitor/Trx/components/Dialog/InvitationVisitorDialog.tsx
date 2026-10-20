@@ -4,6 +4,8 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useTranslation } from 'react-i18next';
 import FormAddInvitation from 'src/customs/pages/Employee/Invitation/FormAddInvitation';
+import FormWizardAddInvitation from '../../FormWizardAddInvitation';
+import FormWizardAddVisitor from '../../FormWizardAddVisitor';
 
 interface Props {
   open: boolean;
@@ -79,7 +81,7 @@ export default function InvitationVisitorDialog({
       <Divider />
 
       <DialogContent>
-        <FormAddInvitation
+        <FormWizardAddVisitor
           key={wizardKey}
           formData={formDataAddVisitor}
           setFormData={setFormDataAddVisitor}
