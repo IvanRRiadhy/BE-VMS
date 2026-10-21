@@ -89,6 +89,7 @@ export type Item = {
   visitor_roles: VisitorRole[];
   pre_agenda: string;
   pre_site_id: string;
+  pre_host_id: string;
   visitor_category?: string | null;
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
@@ -178,6 +179,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   visitor_category: z.string().optional().nullable(),
   pre_agenda: z.string().default(''),
   pre_site_id: z.string().default(''),
+  pre_host_id: z.string().default(''),
   visitor_type_accesses: z
     .array(
       z.object({
@@ -236,7 +238,7 @@ export const updateVisitorTypeSchmea = z.object({
   need_document: z.boolean().default(false),
   grace_time: z.string().default(''),
   direct_visit: z.boolean().optional(),
-  period: z.string().default(''),
+  period: z.number().default(0),
   can_notification_arrival: z.boolean().optional(),
   is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),
@@ -249,6 +251,7 @@ export const updateVisitorTypeSchmea = z.object({
   visitor_category: z.string().optional().nullable(),
   pre_agenda: z.string().default(''),
   pre_site_id: z.string().default(''),
+  pre_host_id: z.string().default(''),
   visitor_roles: z
     .array(
       z.object({

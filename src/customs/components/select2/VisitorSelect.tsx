@@ -12,6 +12,7 @@ import {
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { components } from 'react-select';
 import { IconSearch } from '@tabler/icons-react';
+import { getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
 type Visitor = {
   id: string;
   visitor_status: string;
@@ -72,15 +73,17 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
 
     try {
       let list: any[] = [];
-
+      const params = {
+        'search[value]': inputValue,
+        start: 0,
+        length: 10,
+      };
       if (isEmployee) {
         // const res = await getAllEmployee(token);
-        const res = await getVisitorEmployee();
+        // const res = await getVisitorEmployee();
+        const res = await getInvitationVisitorEmployee(params);
         list = res?.collection ?? [];
       } else {
-        // const res = await getInvitationVisitor(token);
-        // const res = await getListVisitor();
-        // list = res?.collection ?? [];
         const res = await getListVisitorPagination(
           0, // start
           10, // length

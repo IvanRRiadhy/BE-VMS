@@ -19,12 +19,14 @@ function VisitorRow({
   selectedVisitor,
   setSelectedVisitor,
   handleRemoveVisitor,
+  handleExtend,
 }: {
   visitor: any;
   index: number;
   selectedVisitor?: any;
   setSelectedVisitor?: any;
   handleRemoveVisitor?: () => void;
+  handleExtend?: () => void;
 }) {
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
@@ -112,49 +114,68 @@ function VisitorRow({
           </Box>
         </TableCell>
 
-        <TableCell sx={{ display: 'flex' }}>
-          {isAdmin && visitor.visitor_status !== 'Canceled' && (
-            <Tooltip title="Remove Visitor" arrow>
-              <span>
-                <IconButton color="error" onClick={handleRemoveVisitor} disabled={!selectedVisitor}>
-                  <IconTrash size={26} />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-          <Tooltip title="Extend Time" arrow>
-            {/* <span>
+        <TableCell
+          sx={{
+            verticalAlign: 'middle',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              minHeight: 50,
+            }}
+          >
+            {isAdmin && visitor.visitor_status !== 'Canceled' && (
+              <Tooltip title="Remove Visitor" arrow>
+                <span>
+                  <IconButton
+                    color="error"
+                    onClick={handleRemoveVisitor}
+                    disabled={!selectedVisitor}
+                  >
+                    <IconTrash size={26} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+            <Tooltip title="Extend Time" arrow>
+              {/* <span>
               <IconButton color="error" onClick={handleRemoveVisitor} disabled={!selectedVisitor}>
                 <IconTimeDuration0 size={26} />
               </IconButton>
             </span> */}
-            <Button
-              variant="contained"
-              startIcon={<IconClock size={25} />}
-              // onClick={() => handleOpenAction('extend')}
-              disabled={!canExtend}
-              size="small"
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 2.5,
-                // boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-                backgroundColor: 'primary.main',
-                zIndex: 999,
-                width: '100%',
-                height: '40px',
-                '&.Mui-disabled': {
-                  background: '#E0E0E0',
-                  color: '#9E9E9E',
-                  boxShadow: 'none',
-                },
-                p: 0,
-              }}
-            >
-              Extend
-            </Button>
-          </Tooltip>
+              <Button
+                variant="contained"
+                startIcon={<IconClock size={25} />}
+                onClick={handleExtend}
+                disabled={!canExtend}
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 2.5,
+                  // boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                  background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                  backgroundColor: 'primary.main',
+                  zIndex: 999,
+                  width: '100%',
+                  height: '40px',
+                  '&.Mui-disabled': {
+                    background: '#E0E0E0',
+                    color: '#9E9E9E',
+                    boxShadow: 'none',
+                  },
+                  p: 0,
+                }}
+              >
+                Extend
+              </Button>
+            </Tooltip>
+          </Box>
         </TableCell>
       </TableRow>
     </>

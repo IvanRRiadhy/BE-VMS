@@ -72,6 +72,7 @@ const VisitorFormStep = ({
             const section = sectionsData[sectionIndex];
             const sectionType = getSectionType(section);
             const isEmployee = isEmployeeSection(section);
+
             if (sectionType === 'visitor_information') {
               return (
                 <>
@@ -125,25 +126,46 @@ const VisitorFormStep = ({
                 </Table>
               );
             } else if (sectionType === 'purpose_visit') {
+              const hiddenRemarks = ['agenda', 'host', 'site_place'];
+
+              const visibleForms = formsOf(section)
+                .map((item: any, originalIndex: number) => ({
+                  item,
+                  originalIndex,
+                }))
+                .filter(
+                  ({ item }: any) =>
+                    !hiddenRemarks.includes(
+                      String(item.remarks ?? '')
+                        .trim()
+                        .toLowerCase(),
+                    ),
+                );
+
               return (
                 <Table>
                   <TableBody>
-                    {renderDetailRows(formsOf(section), (index, field, value) => {
-                      // Add Transaction tidak boleh mengubah Purpose Visit
-                      if (isAddTransaction) return;
+                    {renderDetailRows(
+                      visibleForms.map(({ item }: any) => item),
+                      (index, field, value) => {
+                        // Add Transaction tidak boleh mengubah Purpose Visit
+                        if (isAddTransaction) return;
 
-                      setSectionsData((prev) =>
-                        prev.map((s, sIdx) =>
-                          sIdx !== (isAddTransaction ? activeStep : sectionIndex)
-                            ? s
-                            : updateSectionForm(s, (arr) =>
-                                arr.map((item, i) =>
-                                  i === index ? { ...item, [field]: value } : item,
+                        const originalIndex = visibleForms[index]?.originalIndex;
+
+                        setSectionsData((prev: any) =>
+                          prev.map((s: any, sIdx: number) =>
+                            sIdx !== sectionIndex
+                              ? s
+                              : updateSectionForm(s, (arr: any[]) =>
+                                  arr.map((item, i) =>
+                                    i === originalIndex ? { ...item, [field]: value } : item,
+                                  ),
                                 ),
-                              ),
-                        ),
-                      );
-                    })}
+                          ),
+                        );
+                      },
+                    )}
                   </TableBody>
                 </Table>
               );
@@ -391,7 +413,7 @@ const VisitorFormStep = ({
                                 ))}
                               <TableCell align="center">
                                 <Typography variant="subtitle2" fontWeight={600}>
-                                  {t("action")}
+                                  {t('action')}
                                 </Typography>
                               </TableCell>
                             </TableRow>
@@ -559,6 +581,15 @@ const VisitorFormStep = ({
                 return shared ? { ...f, ...pickAns(shared) } : f;
               });
 
+              const hiddenRemarks = ['agenda', 'host', 'site_place'];
+              const visibleVisitForm = mergedVisitForm.filter(
+                (f: any) =>
+                  !hiddenRemarks.includes(
+                    String(f.remarks ?? '')
+                      .trim()
+                      .toLowerCase(),
+                  ),
+              );
               const visibilityMap: any = getVisibilityMap(mergedVisitForm);
 
               mergedVisitForm.forEach((item: any) => {
@@ -580,11 +611,13 @@ const VisitorFormStep = ({
                 <Table>
                   <TableBody>
                     {renderDetailRows(
-                      mergedVisitForm,
+                      visibleVisitForm,
                       (idx, fieldKey, value) => {
                         setGroupedPages((prev) => {
                           const next = { ...prev, single_page: [...prev.single_page] };
-                          const base = formsOf(section)[idx];
+
+                          // Gunakan field yang benar setelah filtering
+                          const base = visibleVisitForm[idx];
                           const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
                           const resolvedForeign =

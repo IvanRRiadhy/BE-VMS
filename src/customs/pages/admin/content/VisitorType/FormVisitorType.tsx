@@ -1,13 +1,10 @@
 import {
   Button,
-  Grid2 as Grid,
-  CircularProgress,
   IconButton,
   Step,
   StepLabel,
   Stepper,
   TextField,
-  Backdrop,
   Box,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
@@ -30,12 +27,9 @@ import {
   updateVisitorTypeAccess,
 } from 'src/customs/api/VisitorType/Access';
 import {
-  createVisitorTypeAnalytics,
   createVisitorTypeAnalyticsBulk,
   deleteVisitorTypeAnalyticsBulk,
   getVisitorTypeAnalyticsByVisitorId,
-  updateVisitorTypeAnalytics,
-  updateVisitorTypeAnalyticsBulk,
 } from 'src/customs/api/VisitorType/Analytics';
 import StepComponent from './components/StepComponent';
 import { useVisitorRoles } from 'src/hooks/VisitorRole/useVisitorRole';
@@ -174,12 +168,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             analytics_id: item.id,
           })),
         );
-
-        // setSelectedAnalytics({
-        //   id: existing.id,
-        //   integration_id: existing.integration_id,
-        //   name: existing.integration_name,
-        // });
       } catch (error) {
         // setSelectedAnalytics(null);
       }
@@ -272,7 +260,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         duration_visit: Number(localForm.duration_visit),
         max_time_visit: Number(localForm.max_time_visit),
         grace_time: Number(localForm.grace_time),
-        period: Number(localForm.period),
+        period: localForm.period == null  ? 0 : Number(localForm.period),
         section_page_visitor_types: transformedSections,
         expiry_reminder_minutes: localForm.expiry_reminder_minutes
           ? Number(localForm.expiry_reminder_minutes)
@@ -292,7 +280,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         visitor_category: localForm.visitor_category ?? null,
       };
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
-
+      console.log('parseData', parseData);
       if (edittingId) {
         // await updateVisitorType(edittingId, parseData);
         await updateMutation.mutateAsync({
@@ -315,31 +303,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         }
 
         setDeletedAccessIds([]);
-
-        // const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
-        // for (const payload of analyticsPayloads) {
-        //   if (edittingId) {
-        //     await updateVisitorTypeAnalytics(payload.id, payload);
-        //   } else {
-        //     await createVisitorTypeAnalytics(payload);
-        //   }
-        // }
-
-        // const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
-
-        // for (const payload of analyticsPayloads) {
-        //   if (payload.id) {
-        //     await updateVisitorTypeAnalytics(payload.id, payload);
-        //   } else {
-        //     await createVisitorTypeAnalytics(payload);
-        //   }
-        // }
-
-        // if (formData.can_track_cctv && selectedAnalytics.length > 0) {
-        //   const analyticsPayload = buildUpdateAnalyticsPayload(edittingId);
-
-        //   await updateVisitorTypeAnalyticsBulk(analyticsPayload);
-        // }
 
         await deleteVisitorTypeAnalyticsBulk(edittingId);
 

@@ -98,7 +98,7 @@ const Content = () => {
       period: item.period,
       grace_time: item.grace_time,
       active: item.is_enable,
-      quick_access: item.is_quick_access,
+      // quick_access: item.is_quick_access,
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;

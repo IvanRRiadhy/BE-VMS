@@ -29,7 +29,7 @@ import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
-import useUsers from 'src/hooks/User/useUsers';
+import useUsers, { useUserRole } from 'src/hooks/User/useUsers';
 import useUsersMutation from 'src/hooks/User/userUsersMutation';
 import { useTranslation } from 'react-i18next';
 
@@ -356,6 +356,20 @@ const Content = () => {
     }
   };
 
+  const { data: userRoleData } = useUserRole();
+
+  const roleItems = useMemo(() => {
+    const roles = userRoleData?.collection?.roles ?? {};
+
+    return [
+      { name: 'All' },
+      ...Object.entries(roles).map(([role, items]) => ({
+        name: role === 'OperatorVMS' ? 'Operator VMS' : role,
+        children: items as { id: string; name: string }[],
+      })),
+    ];
+  }, [userRoleData]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -396,22 +410,17 @@ const Content = () => {
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
+                isHaveRole={true}
                 onBatchDelete={handleBatchDelete}
                 onAddData={handleAdd}
                 isHaveAddEmpty={true}
                 addDataText="Add User"
-                isHaveHeader
+                isHaveHeader={false}
                 defaultSelectedHeaderItem="All"
                 headerContent={{
                   title: '',
                   subTitle: 'Role',
-                  items: [
-                    { name: 'All' },
-                    { name: 'Guest/Visitor' },
-                    { name: 'Employee' },
-                    { name: 'Admin' },
-                    { name: 'Operator VMS' },
-                  ],
+                  items: roleItems,
                 }}
                 onHeaderItemClick={(item) => {
                   setSelectedGroup(item.name);

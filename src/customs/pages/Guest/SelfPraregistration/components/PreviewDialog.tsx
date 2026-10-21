@@ -60,7 +60,7 @@ const PreviewDialog = ({
       return host?.name || raw;
     }
     // SITE
-    if (f.remarks === 'site_place') { 
+    if (f.remarks === 'site_place') {
       const site = invitation?.site || sites?.find((s: any) => s.id === raw);
       return site?.name || raw;
     }
@@ -125,8 +125,9 @@ const PreviewDialog = ({
                   );
                 }
                 if (f.remarks === 'is_driving') {
-                  const isDriving =
-                    f.answer_text === true || String(f.answer_text).toLowerCase() === 'true';
+                  const answer = f.answer_text;
+
+                  const isDriving = answer === true || String(answer).toLowerCase() === 'true';
 
                   return (
                     <Grid item xs={12} sm={6} key={idx}>
@@ -135,7 +136,7 @@ const PreviewDialog = ({
                       </Typography>
 
                       <Typography sx={{ textTransform: 'capitalize' }}>
-                        {f.answer_text == null ? '-' : isDriving ? 'Yes' : 'No'}
+                        {answer == null || answer === '' ? '-' : isDriving ? 'Yes' : 'No'}
                       </Typography>
                     </Grid>
                   );
@@ -179,7 +180,7 @@ const PreviewDialog = ({
 
       <DialogActions>
         <Button onClick={onClose}>Back</Button>
-        <Button variant="contained" color="primary" onClick={onConfirm} >
+        <Button variant="contained" color="primary" onClick={onConfirm}>
           Confirm & Submit
         </Button>
       </DialogActions>

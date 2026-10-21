@@ -72,42 +72,6 @@ const formatDateTime = (value: any): string => {
   return date.local().format('dddd, DD MMMM YYYY, HH:mm');
 };
 
-const getVisitors = (payload: any) => {
-  if (Array.isArray(payload?.list_group)) {
-    return payload.list_group.flatMap((group: any, groupIndex: number) =>
-      (group.data_visitor ?? []).map((visitor: any, visitorIndex: number) => ({
-        ...visitor,
-        _groupName: group.group_name || `Group ${groupIndex + 1}`,
-        _groupCode: group.group_code,
-        _visitorNumber: visitorIndex + 1,
-      })),
-    );
-  }
-
-  if (Array.isArray(payload?.data_visitor)) {
-    return payload.data_visitor;
-  }
-
-  // Add transaction sends the group payload directly.
-  if (Array.isArray(payload?.data_visitor)) {
-    return payload.data_visitor;
-  }
-
-  return [];
-};
-
-const getGroups = (payload: any) => {
-  if (Array.isArray(payload?.list_group)) {
-    return payload.list_group;
-  }
-
-  if (Array.isArray(payload?.data_visitor)) {
-    return [payload];
-  }
-
-  return [];
-};
-
 const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
   open,
   payload,
@@ -184,12 +148,44 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
 
     return field?.answer_text;
   };
-  const groups = getGroups(payload);
-  const visitors = getVisitors(payload);
-  const isGroup = Boolean(payload?.is_group) || Array.isArray(payload?.list_group);
 
   const flow =
     payload?.flow ?? (Number(payload?.type_registered) === 0 ? 'Pre-registration' : 'Invitation');
+
+  const getGroups = (payload: any) => {
+    if (Array.isArray(payload?.list_group)) {
+      return payload.list_group;
+    }
+
+    // Add Transaction: satu objek group dikirim langsung
+    if (Array.isArray(payload?.data_visitor)) {
+      return [payload];
+    }
+
+    return [];
+  };
+
+  const getVisitors = (payload: any) => {
+    const groups = Array.isArray(payload?.list_group)
+      ? payload.list_group
+      : Array.isArray(payload?.data_visitor)
+        ? [payload]
+        : [];
+
+    return groups.flatMap((group: any, groupIndex: number) =>
+      (group.data_visitor ?? []).map((visitor: any, visitorIndex: number) => ({
+        ...visitor,
+        _groupName: group.group_name || `Group ${groupIndex + 1}`,
+        _groupCode: group.group_code,
+        _visitorNumber: visitorIndex + 1,
+      })),
+    );
+  };
+
+  const groups = getGroups(payload);
+  const visitors = getVisitors(payload);
+
+  const isGroup = Boolean(payload?.is_group) || Array.isArray(payload?.list_group);
 
   return (
     <Dialog
@@ -282,9 +278,8 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
               >
                 <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
                   <Typography fontWeight={700}>
-                    {visitor._groupName
-                      ? `${visitor._groupName} — Visitor ${visitor._visitorNumber}`
-                      : `Visitor ${visitorIndex + 1}`}
+                
+                      {`Visitor ${visitorIndex + 1}`}
                   </Typography>
                 </Box>
 

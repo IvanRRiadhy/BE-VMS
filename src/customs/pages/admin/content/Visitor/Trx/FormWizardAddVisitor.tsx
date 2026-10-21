@@ -640,13 +640,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'visitor_period_start') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
+      f.some(
+        (x: any) =>
+          x.remarks === 'host' || x.remarks === 'agenda' || x.remarks === 'visitor_period_start',
+      ) &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -4578,7 +4581,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
 
-  const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
+  // const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
+  //   const out: any = {
+  //     remarks: tpl.remarks ?? '',
+  //     visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
+  //     field_type: tpl.field_type ?? 0,
+  //     sort: tpl.sort ?? sortIdx,
+  //     short_name: tpl.short_name ?? '',
+  //     long_display_text: tpl.long_display_text ?? '',
+  //     custom_field_id: tpl.custom_field_id ?? null,
+  //     form_visitor_type_id: '',
+  //   };
+
+  //   const ans = pickAns(src ?? {});
+
+  //   if (tpl.field_type === 9 && ans?.answer_datetime) {
+  //     const parsed = dayjs(ans.answer_datetime);
+  //     out.answer_datetime = parsed.isValid()
+  //       ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+  //       : ans.answer_datetime;
+  //   } else if ([10, 11, 12].includes(tpl.field_type) && ans?.answer_file) {
+  //     out.answer_file = ans.answer_file;
+  //   } else if (ans?.answer_text) {
+  //     out.answer_text = ans.answer_text;
+  //   }
+
+  //   return out;
+  // };
+
+  const mapFieldOut = (
+    tpl: any,
+    sortIdx: number,
+    src?: any,
+    preAnswerByRemarks: Record<string, string | null> = {},
+  ) => {
     const out: any = {
       remarks: tpl.remarks ?? '',
       visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
@@ -4591,16 +4627,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
 
     const ans = pickAns(src ?? {});
+    const remarks = sanitize(tpl.remarks);
+
+    const hasPreAnswer = Object.prototype.hasOwnProperty.call(preAnswerByRemarks, remarks);
+
+    const answerText = hasPreAnswer ? preAnswerByRemarks[remarks] : ans?.answer_text;
 
     if (tpl.field_type === 9 && ans?.answer_datetime) {
       const parsed = dayjs(ans.answer_datetime);
+
       out.answer_datetime = parsed.isValid()
         ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
         : ans.answer_datetime;
     } else if ([10, 11, 12].includes(tpl.field_type) && ans?.answer_file) {
       out.answer_file = ans.answer_file;
-    } else if (ans?.answer_text) {
-      out.answer_text = ans.answer_text;
+    } else if (answerText != null && answerText !== '') {
+      out.answer_text = answerText;
     }
 
     return out;
@@ -4644,15 +4686,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const batchIdx = indexBy(Object.values(groupedPages.batch_page || {}));
 
     const materialRows = rows?.length ? rows : [fakeRowFromBatchPage(groupedPages.batch_page)];
-
+    const preAnswerByRemarks: Record<string, string | null> = {
+      agenda: meta.pre_agenda ?? null,
+      site_place: meta.pre_site_id ?? null,
+      host: meta.pre_host_id ?? null,
+    };
     const outRows = materialRows.map((row, rowIdx) => {
       const rowForms = flattenRowForms(row);
       const rowIdxMap = indexBy(rowForms);
 
       const question_page = rawSections.map((section: any, sIdx: number) => {
         const formsTpl = formsOf(section);
+        const purposeRemarks = ['site_place', 'host', 'agenda'];
 
-        const form = formsTpl.map((tpl: any, fIdx: number) => {
+        const allFormTemplates = [
+          ...rawSections.flatMap((section: any) => formsOf(section)),
+          ...(groupedPages.single_page ?? []),
+          ...Object.values(groupedPages.batch_page ?? {}),
+        ];
+
+        const finalFormsTpl = isPurposeVisit(section)
+          ? [
+              ...formsTpl,
+              ...purposeRemarks
+                .filter(
+                  (remark) => !formsTpl.some((field: any) => sanitize(field.remarks) === remark),
+                )
+                .map((remark) =>
+                  allFormTemplates.find((field: any) => sanitize(field.remarks) === remark),
+                )
+                .filter(Boolean),
+            ]
+          : formsTpl;
+
+        const form = finalFormsTpl.map((tpl: any, fIdx: number) => {
           const r = sanitize(tpl?.remarks);
           const cf = tpl?.custom_field_id;
 
@@ -4669,7 +4736,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               undefined;
           }
 
-          return mapFieldOut(tpl, fIdx, pick);
+          return mapFieldOut(tpl, fIdx, pick, preAnswerByRemarks);
         });
 
         return {
@@ -4686,12 +4753,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       return { question_page };
     });
+
+    const updatedOutRows = outRows.map((visitor: any) => ({
+      ...visitor,
+      question_page: visitor.question_page?.map((page: any) => ({
+        ...page,
+        form: page.form?.map((field: any) => {
+          if (Object.prototype.hasOwnProperty.call(preAnswerByRemarks, field.remarks)) {
+            return {
+              ...field,
+              answer_text: preAnswerByRemarks[field.remarks],
+            };
+          }
+
+          return field;
+        }),
+      })),
+    }));
     const basePayload: any = {
       visitor_type: meta.visitor_type,
       is_group: !!meta.is_group,
       type_registered: meta.type_registered ?? 0,
       tz: meta.tz?.trim() ? meta.tz : 'Asia/Jakarta',
-      data_visitor: outRows,
+      // data_visitor: outRows,
+      data_visitor: updatedOutRows,
     };
 
     if (meta.type_registered !== 0) {
@@ -4730,6 +4815,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     createPraRegisterGroupMutation.isPending ||
     createVisitorAddTransactionMutation.isPending;
 
+  const selectedVisitorType = visitorType?.find(
+    (type: any) => String(type.id) === String(formData.visitor_type),
+  );
+
+  const visitorTypeMeta = {
+    pre_agenda: selectedVisitorType?.pre_agenda ?? null,
+    pre_site_id: selectedVisitorType?.pre_site_id ?? null,
+    pre_host_id: selectedVisitorType?.pre_host_id ?? null,
+  };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -4739,6 +4834,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     try {
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+
+      const preAnswerByRemarks: Record<string, string | null> = {
+        agenda: visitorTypeMeta.pre_agenda,
+        site_place: visitorTypeMeta.pre_site_id,
+        host: visitorTypeMeta.pre_host_id,
+      };
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -4760,6 +4861,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         //   return String(val).trim();
         // };
 
+        const hasPreAnswer = Object.prototype.hasOwnProperty.call(preAnswerByRemarks, base.remarks);
+
+        // Gunakan preAnswer hanya jika jawaban field belum tersedia.
+        const answerText = hasPreAnswer
+          ? (preAnswerByRemarks[base.remarks] ?? field.answer_text ?? null)
+          : (field.answer_text ?? (base.remarks === 'is_driving' ? 'false' : null));
+
         const safeTrim = (val: any): string | null => {
           if (val === undefined || val === null) return null;
 
@@ -4769,6 +4877,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           return String(val).trim();
         };
+
+        // const answerText = hasPreAnswer ? preAnswerByRemarks[base.remarks] : field.answer_text;
 
         switch (base.field_type) {
           case 9: // Date/Datetime
@@ -4786,18 +4896,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           case 5:
           case 6:
-          case 7: // Radio, Checkbox, Dropdown
-            if (Array.isArray(field.answer_text)) {
-              base.answer_text = field.answer_text.map(String).join(',');
-            } else if (typeof field.answer_text === 'boolean') {
-              base.answer_text = field.answer_text ? 'true' : 'false';
+          case 7:
+            if (Array.isArray(answerText)) {
+              base.answer_text = answerText.map(String).join(',');
+            } else if (typeof answerText === 'boolean') {
+              base.answer_text = answerText ? 'true' : 'false';
             } else {
-              base.answer_text = safeTrim(field.answer_text);
+              base.answer_text = safeTrim(answerText);
             }
             break;
 
           default:
-            base.answer_text = safeTrim(field.answer_text);
+            base.answer_text = safeTrim(answerText);
             break;
         }
 
@@ -4819,6 +4929,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       };
 
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
+
       if (isGroup) {
         const list_group = groupVisitors.map((g) => {
           const built = buildFinalPayload(
@@ -4837,17 +4948,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
             const original = dataVisitor[idx];
 
+            // const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
+            //   const isPurposeVisit =
+            //     qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
+
+            //   if (isPurposeVisit && original?.single_page?.length) {
+            //     return {
+            //       ...qp,
+            //       self_only: true,
+            //       form: original.single_page.map((f: any, idx: number) => mapField(f, idx)),
+            //     };
+            //   }
+
+            //   return {
+            //     id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+            //     sort: qp.sort ?? sIdx,
+            //     name: qp.name ?? `Section ${sIdx + 1}`,
+            //     status: qp.status ?? 0,
+            //     is_document: qp.is_document ?? false,
+            //     can_multiple_used: qp.can_multiple_used ?? false,
+            //     foreign_id: qp.foreign_id ?? '',
+            //     self_only: qp.self_only ?? false,
+            //     form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+            //   };
+            // });
+
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =
                 qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
 
-              if (isPurposeVisit && original?.single_page?.length) {
-                return {
-                  ...qp,
-                  self_only: true,
-                  form: original.single_page.map((f: any, idx: number) => mapField(f, idx)),
-                };
-              }
+              const originalPurposeFields = isPurposeVisit ? original?.single_page : null;
+
+              const fieldsToMap = originalPurposeFields?.length
+                ? originalPurposeFields
+                : (qp.form ?? []);
 
               return {
                 id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
@@ -4857,8 +4991,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 is_document: qp.is_document ?? false,
                 can_multiple_used: qp.can_multiple_used ?? false,
                 foreign_id: qp.foreign_id ?? '',
-                self_only: qp.self_only ?? false,
-                form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+                self_only: isPurposeVisit && !!originalPurposeFields?.length,
+                form: fieldsToMap.map((field: any, fieldIdx: number) => mapField(field, fieldIdx)),
               };
             });
 
@@ -4884,12 +5018,79 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             }),
           };
         });
+        // const list_group = groupVisitors.map((g) => {
+        //   // const visitorsToBuild =
+        //   //   activeGroupIdx === groupVisitors.indexOf(g) ? dataVisitor : g.data_visitor;
+        //   const visitorsToBuild = g.data_visitor ?? [];
+
+        //   const built = buildFinalPayload(rawSections, groupedPages, visitorsToBuild, {
+        //     visitor_type: formData.visitor_type ?? '',
+        //     is_group: true,
+        //     type_registered: TYPE_REGISTERED,
+        //     tz,
+        //     registered_site: formData.registered_site ?? '',
+        //   });
+
+        //   const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
+        //     const original = visitorsToBuild[idx];
+
+        //     const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
+        //       const isPurposeVisit =
+        //         qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
+
+        //       if (isPurposeVisit && original?.single_page?.length) {
+        //         return {
+        //           ...qp,
+        //           self_only: true,
+        //           form: original.single_page.map((f: any, fieldIdx: number) =>
+        //             mapField(f, fieldIdx),
+        //           ),
+        //         };
+        //       }
+
+        //       return {
+        //         id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+        //         sort: qp.sort ?? sIdx,
+        //         name: qp.name ?? `Section ${sIdx + 1}`,
+        //         status: qp.status ?? 0,
+        //         is_document: qp.is_document ?? false,
+        //         can_multiple_used: qp.can_multiple_used ?? false,
+        //         foreign_id: qp.foreign_id ?? '',
+        //         self_only: qp.self_only ?? false,
+        //         form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+        //       };
+        //     });
+
+        //     return {
+        //       ...dv,
+        //       question_page,
+        //     };
+        //   });
+
+        //   return {
+        //     group_name: g.group_name ?? '',
+        //     group_code: g.group_code ?? '',
+        //     is_group: true,
+        //     visitor_type: formData.visitor_type ?? '',
+        //     tz,
+        //     registered_site: formData.registered_site ?? '',
+        //     type_registered: TYPE_REGISTERED,
+        //     data_visitor: cleanDataVisitor,
+        //     flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
+        //     ...(isAddTransaction && {
+        //       transaction_visitor_id: formData.transaction_visitor_id ?? '',
+        //     }),
+        //   };
+        // });
+
+   
 
         /*
          * ==========================================
          * ADD TRANSACTION
          * ==========================================
          */
+   
         if (isAddTransaction) {
           // const addTransactionPayload = list_group[0];
 
@@ -4947,6 +5148,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         } else {
           payload = { list_group };
 
+
           // const parsed = CreateGroupVisitorRequestSchema.parse(payload);
 
           // if (TYPE_REGISTERED === 0) {
@@ -4960,7 +5162,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           // resetMediaState();
           // clearAnswerFiles();
           const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-
           setPendingPayload(parsed);
           setPendingSubmitType(TYPE_REGISTERED === 0 ? 'group-preregister' : 'group-invitation');
           setPreviewOpen(true);
@@ -4972,17 +5173,34 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           return;
         }
 
-        const question_page = sectionsData.map((section, sIdx) => ({
-          id: section.id?.toString() || section.Id?.toString() || sIdx.toString(),
-          sort: section.sort ?? sIdx,
-          name: section.name,
-          status: 0,
-          is_document: section.is_document ?? false,
-          can_multiple_used: section.can_multiple_used ?? false,
-          foreign_id: section.foreign_id ?? '',
-          self_only: section.self_only ?? false,
-          form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-        }));
+        // const question_page = sectionsData.map((section, sIdx) => ({
+        //   id: section.id?.toString() || section.Id?.toString() || sIdx.toString(),
+        //   sort: section.sort ?? sIdx,
+        //   name: section.name,
+        //   status: 0,
+        //   is_document: section.is_document ?? false,
+        //   can_multiple_used: section.can_multiple_used ?? false,
+        //   foreign_id: section.foreign_id ?? '',
+        //   self_only: section.self_only ?? false,
+        //   form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
+        // }));
+
+        const question_page = sectionsData.map((section, sIdx) => {
+          const forms = formsOf(section);
+
+          return {
+            id: section.id?.toString() || section.Id?.toString() || sIdx.toString(),
+            sort: section.sort ?? sIdx,
+            name: section.name,
+            status: 0,
+            is_document: section.is_document ?? false,
+            can_multiple_used: section.can_multiple_used ?? false,
+            foreign_id: section.foreign_id ?? '',
+            self_only: section.self_only ?? false,
+
+            form: forms.map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
+          };
+        });
 
         payload = {
           ...baseMeta,
@@ -5018,6 +5236,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setActiveStep(0);
       onSuccess?.();
     } catch (err: any) {
+      console.error('[GROUP] Submit error:', err);
+      console.error('[GROUP] Zod issues:', err?.issues ?? err?.errors);
+      console.error('[GROUP] API response:', err?.response?.data);
+
       setNextDialogOpen(false);
       const errorData = err.response?.data;
       const errorMessage = Array.isArray(errorData?.collection)
@@ -5101,35 +5323,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
-  // const handleAddDetails = () => {
-  //   if (!isGroup) {
-  //     handleAddDetail(FORM_KEY);
-  //     return;
-  //   }
-
-  //   setDataVisitor((prev: any) => {
-  //     if (prev.length === 0) return prev;
-
-  //     const clone = JSON.parse(JSON.stringify(prev[0])) as {
-  //       question_page: SectionPageVisitor[];
-  //       type: string;
-  //     };
-  //     clone.question_page.forEach((page) => {
-  //       (page.form ?? []).forEach((f) => {
-  //         f.answer_text = '';
-  //         f.answer_datetime = '';
-  //         f.answer_file = '';
-  //       });
-  //     });
-
-  //     clone.type = '';
-
-  //     const next = [...prev, clone];
-  //     setActiveGroupIdx(next.length - 1);
-  //     return next;
-  //   });
-  // };
-
   const handleAddDetails = () => {
     if (!isGroup) {
       handleAddDetail(FORM_KEY);
@@ -5181,18 +5374,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return v === 'indentity_id' ? 'identity_id' : v;
   };
 
-  const cloneFormWithEmptyAnswers = (f: any, idx: number) => ({
-    ...f,
-    sort: f.sort ?? idx,
-    remarks: sanitizeRemarks(f.remarks),
-    foreign_id: asStr(f.foreign_id),
-    answer_text: '',
-    answer_datetime: '',
-    answer_file: '',
-    multiple_option_fields: Array.isArray(f.multiple_option_fields)
-      ? f.multiple_option_fields.map((opt: any) => (typeof opt === 'object' ? { ...opt } : opt))
-      : [],
-  });
+  const cloneFormWithEmptyAnswers = (f: any, idx: number) => {
+    const remarks = sanitizeRemarks(f.remarks);
+
+    return {
+      ...f,
+      sort: f.sort ?? idx,
+      remarks,
+      answer_text: remarks === 'is_driving' ? 'false' : '',
+      answer_datetime: '',
+      answer_file: '',
+      multiple_option_fields: Array.isArray(f.multiple_option_fields)
+        ? f.multiple_option_fields.map((opt: any) => (typeof opt === 'object' ? { ...opt } : opt))
+        : [],
+    };
+  };
 
   const REQUIRED_VI = ['name', 'email', 'organization'] as const;
   const hasVIFields = (s?: any) => {
@@ -5567,9 +5763,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const hasCurrentEditingData =
     Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
-
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
-
   const getSectionIndex = (step: number) => (isAddTransaction ? step : step - 1);
 
   return (
@@ -5620,7 +5814,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           fontSize: '0.875rem',
                           whiteSpace: 'nowrap',
                           maxWidth: 200,
-                          overflow: 'hidden',
+                          // overflow: 'hidden',
                           textWrap: 'wrap',
                           textAlign: 'center',
                         },

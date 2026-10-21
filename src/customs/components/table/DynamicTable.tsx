@@ -22,6 +22,7 @@ import {
   Tabs,
   TablePagination,
   Breadcrumbs,
+  Menu,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
 import { Stack } from '@mui/system';
@@ -46,8 +47,12 @@ import { Link } from 'react-router';
 import { TableBodyContent } from './TableBody';
 import SearchToolbar from './components/SearchToolbar';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers';
 
-type HeaderItem = { name: string };
+type HeaderItem = {
+  name: string;
+  children?: { id: string; name: string }[];
+};
 
 type HeaderContent = {
   title?: string;
@@ -83,6 +88,7 @@ type DynamicTableProps<
   isHaveAssignTracking?: boolean;
   onAssignTracking?: any;
   isHaveExportExcel?: boolean;
+  isHaveRole?: boolean;
   triggerCheckAll?: boolean;
   isHavePrint?: boolean;
   isHaveConnection?: boolean;
@@ -279,6 +285,7 @@ function DynamicTableBase<
     isHaveExportXlf = false,
     isHaveImportExcel = false,
     isHaveQrCode,
+    isHaveRole = false,
     isHaveFilterDuration = false,
     isActionEmployee = false,
     isButtonSiteAccess = false,
@@ -571,7 +578,7 @@ function DynamicTableBase<
   const ACTION_COL_WIDTH = 105;
   const INDEX_COL_WIDTH = 56;
   const DATA_COL_WIDTH = 180;
-  const STICKY_DATA_COUNT = 2;
+  const STICKY_DATA_COUNT = 1;
 
   const getLeftBase = () =>
     (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
@@ -815,6 +822,12 @@ function DynamicTableBase<
     headerContent?.items.findIndex((item) => item.name === selectedHeaderItem) ?? 0,
   );
 
+  const [roleMenuAnchor, setRoleMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const [activeRole, setActiveRole] = useState<HeaderItem | null>(null);
+
+  const [selectedSubRole, setSelectedSubRole] = useState('All');
+
   return (
     <>
       {/* HEADER */}
@@ -901,6 +914,122 @@ function DynamicTableBase<
                   </Stack>
                 </Grid2>
               </Grid2>
+            </CardContent>
+          </BlankCard>
+        </Box>
+      )}
+
+      {isHaveRole && headerContent && (
+        <Box marginBottom={2}>
+          <BlankCard>
+            <CardContent sx={{ overflow: 'visible' }}>
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
+                  {headerContent.title}
+                </Typography>
+
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  gap={1}
+                  sx={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    pb: 0.5,
+                  }}
+                >
+                  {headerContent.items.map((item) => {
+                    const isDropdown = Boolean(item.children?.length);
+                    const isSelected = selectedHeader === item.name;
+
+                    return (
+                      <Button
+                        key={item.name}
+                        variant="outlined"
+                        disableRipple
+                        onClick={(event) => {
+                          if (isDropdown) {
+                            setActiveRole(item);
+                            setRoleMenuAnchor(event.currentTarget);
+                            return;
+                          }
+
+                          setSelectedHeader(item.name);
+                          setSelectedSubRole('All');
+                          onHeaderItemClick?.(item);
+                        }}
+                        endIcon={isDropdown ? <ArrowDropDownIcon /> : undefined}
+                        sx={{
+                          flexShrink: 0,
+                          minWidth: 'auto',
+                          whiteSpace: 'nowrap',
+                          minHeight: 30,
+                          textTransform: 'none',
+                          fontSize: '0.8rem',
+                          px: 1.5,
+                          py: 1,
+                          borderRadius: '999px',
+                          borderColor: 'primary.main',
+                          color: isSelected ? '#fff' : 'primary.main',
+                          backgroundColor: isSelected ? 'primary.main' : 'transparent',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            backgroundColor: isSelected ? 'primary.dark' : 'action.hover',
+                          },
+                        }}
+                      >
+                        {headerMap[item.name] ||
+                          item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                      </Button>
+                    );
+                  })}
+                </Stack>
+
+                <Menu
+                  anchorEl={roleMenuAnchor}
+                  open={Boolean(roleMenuAnchor)}
+                  onClose={() => {
+                    setRoleMenuAnchor(null);
+                    setActiveRole(null);
+                  }}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                  }}
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        minWidth: 180,
+                        maxHeight: 320,
+                      },
+                    },
+                  }}
+                >
+                  {activeRole?.children?.map((child) => (
+                    <MenuItem
+                      key={child.id}
+                      selected={selectedSubRole === child.name}
+                      onClick={() => {
+                        setSelectedHeader(activeRole.name);
+                        setSelectedSubRole(child.name);
+
+                        // Kirim nama role yang dipilih ke halaman pemanggil.
+                        onHeaderItemClick?.({ name: child.name });
+
+                        setRoleMenuAnchor(null);
+                        setActiveRole(null);
+                      }}
+                    >
+                      {child.name}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </Stack>
             </CardContent>
           </BlankCard>
         </Box>

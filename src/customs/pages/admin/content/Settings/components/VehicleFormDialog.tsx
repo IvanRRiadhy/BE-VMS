@@ -113,7 +113,7 @@ const VehicleFormDialog = ({
             label="Vehicle Type"
             value={formData.value}
             onChange={(e) => handleVehicleChange(e.target.value)}
-            required
+            // required
           >
             {VEHICLE_OPTIONS.map((vehicle) => (
               <MenuItem key={vehicle.value} value={vehicle.value}>

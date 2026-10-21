@@ -137,48 +137,49 @@ const ApprovalSidebar = ({
                     {group.agenda}
                   </Typography>
 
-                  {group.approval_status === 'Pending' && (
-                    <Box display="flex" gap={0.5}>
-                      <Tooltip title="Approve" arrow>
-                        <IconButton
-                          sx={{
-                            // backgroundColor: '#4CAF50',
-                            backgroundColor: 'primary.main',
-                            borderRadius: '5px',
-                            width: 30,
-                            height: 30,
-                            color: '#fff',
-                            '&:hover': {
-                              backgroundColor: '#388E3C',
+                  {group.approval_status === 'Pending' &&
+                    group.approval_actor_status === 'Pending' && (
+                      <Box display="flex" gap={0.5}>
+                        <Tooltip title="Approve" arrow>
+                          <IconButton
+                            sx={{
+                              // backgroundColor: '#4CAF50',
+                              backgroundColor: 'primary.main',
+                              borderRadius: '5px',
+                              width: 30,
+                              height: 30,
                               color: '#fff',
-                            },
-                          }}
-                          onClick={(e) => onOpenApprovalDialog(e, group, 'Approve')}
-                        >
-                          <IconCheck size={20} />
-                        </IconButton>
-                      </Tooltip>
+                              '&:hover': {
+                                backgroundColor: '#388E3C',
+                                color: '#fff',
+                              },
+                            }}
+                            onClick={(e) => onOpenApprovalDialog(e, group, 'Approve')}
+                          >
+                            <IconCheck size={20} />
+                          </IconButton>
+                        </Tooltip>
 
-                      <Tooltip title="Reject" arrow>
-                        <IconButton
-                          sx={{
-                            backgroundColor: '#f44336',
-                            color: '#fff',
-                            borderRadius: '5px',
-                            width: 30,
-                            height: 30,
-                            '&:hover': {
-                              backgroundColor: '#d32f2f',
+                        <Tooltip title="Reject" arrow>
+                          <IconButton
+                            sx={{
+                              backgroundColor: '#f44336',
                               color: '#fff',
-                            },
-                          }}
-                          onClick={(e) => onOpenApprovalDialog(e, group, 'Reject')}
-                        >
-                          <IconX size={20} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  )}
+                              borderRadius: '5px',
+                              width: 30,
+                              height: 30,
+                              '&:hover': {
+                                backgroundColor: '#d32f2f',
+                                color: '#fff',
+                              },
+                            }}
+                            onClick={(e) => onOpenApprovalDialog(e, group, 'Reject')}
+                          >
+                            <IconX size={20} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    )}
                 </Box>
 
                 <Box display="flex" justifyContent="space-between">

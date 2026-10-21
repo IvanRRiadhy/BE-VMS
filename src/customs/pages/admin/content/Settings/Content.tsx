@@ -25,6 +25,7 @@ import { uploadLicense } from 'src/customs/api/Admin/Setting';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import Vehicle from './Vehicle';
 import LicenseSettings from './components/LicenseSettings';
+import IdentityType from './IdentityType/content';
 const Content = () => {
   const [settingData, setSettingData] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -201,6 +202,7 @@ const Content = () => {
               <Tab label="Apikey Setting" />
               <Tab label="License" />
               <Tab label="Vehicle" />
+              <Tab label="Identity Type" />
               {/* <Tab label="Visitor Card Setting" /> */}
               {/* <Tab label="Notification Setting" /> */}
             </Tabs>
@@ -285,6 +287,8 @@ const Content = () => {
               ) : null}
 
               {tabIndex === 5 ? <Vehicle /> : null}
+
+              {tabIndex === 6 ? <IdentityType /> : null}
             </Box>
           </Paper>
         </Box>

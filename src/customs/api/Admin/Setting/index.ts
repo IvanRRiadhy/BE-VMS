@@ -186,3 +186,77 @@ export const deleteVehicle = async (id: string): Promise<any> => {
   const response = await axiosInstance.delete(`/setting/vehicle/${id}`);
   return response.data;
 };
+
+// get identittype same in vehicle
+
+export const getIdentityType = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/setting/identity-type');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getIdentityTypeById = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/setting/identity-type/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getIdentityTypeByDT = async (
+  start: number,
+  length: number,
+  sort_column: string,
+  sortDir: string,
+  keyword: string = '',
+): Promise<any> => {
+  try {
+    const params: any = {
+      start,
+      length,
+      sort_dir: sortDir,
+    };
+
+    if (sort_column) params.sort_column = sort_column;
+    if (keyword) params['search[value]'] = keyword;
+
+    const response = await axiosInstance.get('/setting/identity-type/dt', {
+      params,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createIdentityType = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/setting/identity-type', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateIdentityType = async (id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/setting/identity-type/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteIdentityType = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/setting/identity-type/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

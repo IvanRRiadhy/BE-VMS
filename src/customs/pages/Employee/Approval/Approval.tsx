@@ -252,7 +252,6 @@ const Approval = () => {
   ) => {
     e.stopPropagation();
 
-    // Reject langsung eksekusi
     if (action === 'Reject') {
       await handleActionApproval(group.approval_ticket_id, 'Reject');
       return;

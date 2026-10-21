@@ -44,6 +44,7 @@ type RuleNode = {
   role?: string;
   entity_id?: string;
   step_order?: number;
+  is_reviewer?: boolean;
   children?: RuleNode[];
 };
 
@@ -65,10 +66,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   ];
   const [expanded, setExpanded] = useState<string[]>([]);
   const { employee } = useEmployees();
-  const {
-    createMutation,
-    updateMutation,
-  } = useApprovalWorkflowMutation();
+  const { createMutation, updateMutation } = useApprovalWorkflowMutation();
 
   const createId = () => Math.random().toString(36).substring(2, 9);
   const [rules, setRules] = useState<RuleNode[]>([]);
@@ -97,6 +95,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         role: roleName,
         entity_id: cond.entity_id,
         step_order: cond.step_order,
+        is_reviewer: cond.is_reviewer,
       };
     };
 
@@ -108,7 +107,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
     const loadData = async () => {
       try {
-
         const res = await getApprovalWorkflowById(edittingId);
         const data = res.collection;
 
@@ -215,7 +213,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
     markDirty();
   };
 
-  const uuid = () => crypto.randomUUID();
   const roleMap: Record<string, string> = {
     Host: 'InvitationHost',
     Manager: 'Manager',
@@ -247,6 +244,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
           parent_id: null,
           // step_order: Number(formData.step_order) ? step++ : null,
           // step_order: Number(formData.step_order) ? stepRef.current++ : null,
+          is_reviewer: node.is_reviewer,
           step_order: myStep,
           escalation_hours: formData.escalation_hours ?? null,
           // escalation_status: null,
@@ -259,11 +257,12 @@ const FormApprove: React.FC<FormApproveProps> = ({
       if (!node.role) return [];
 
       return {
-        logic: parentLogic === rootLogic ? 'NONE' : parentLogic ?? 'NONE',
+        logic: parentLogic === rootLogic ? 'NONE' : (parentLogic ?? 'NONE'),
         // logic: parentLogic ?? 'NONE',
         approver_type: roleMap[node.role] ?? null,
         entity_id: node.entity_id ?? null,
         parent_id: null,
+        is_reviewer: node.is_reviewer,
         // step_order: Number(formData.step_order) ? step++ : null,
         // step_order: Number(formData.step_order) ? stepRef.current++ : null,
         // step_order: stepRef.current++,
@@ -522,6 +521,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                   },
                 }}
               />
+
               <Button
                 size="small"
                 variant="contained"
@@ -532,7 +532,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
               >
                 + AND
               </Button>
-
+              {/* 
               <Button
                 size="small"
                 variant="contained"
@@ -543,7 +543,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 }}
               >
                 + OR
-              </Button>
+              </Button> */}
 
               <IconTrash
                 size={20}
@@ -553,6 +553,32 @@ const FormApprove: React.FC<FormApproveProps> = ({
                   deleteNode(node.id);
                 }}
               />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Switch
+                  size="small"
+                  checked={node.is_reviewer ?? false}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+
+                    const update = (nodes: RuleNode[]): RuleNode[] =>
+                      nodes.map((n) => {
+                        if (n.id === node.id) {
+                          return { ...n, is_reviewer: checked };
+                        }
+
+                        if (n.children) {
+                          return { ...n, children: update(n.children) };
+                        }
+
+                        return n;
+                      });
+
+                    setRules((prev) => update(prev));
+                    markDirty();
+                  }}
+                />
+                <Typography variant="body2">Reviewer</Typography>
+              </Box>
             </Box>
           }
         />
@@ -764,9 +790,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 Add AND
               </Button>
 
-              <Button variant="contained" color="secondary" onClick={() => addRootRule('OR')}>
+              {/* <Button variant="contained" color="secondary" onClick={() => addRootRule('OR')}>
                 Add OR
-              </Button>
+              </Button> */}
             </Box>
 
             <SimpleTreeView

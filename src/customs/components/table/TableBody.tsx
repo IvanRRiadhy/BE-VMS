@@ -586,7 +586,7 @@ const TableRowItem = React.memo(
     const INDEX_COL_WIDTH = 56;
     const DATA_COL_WIDTH = 180;
 
-    const STICKY_DATA_COUNT = 2;
+    const STICKY_DATA_COUNT = 1;
 
     const COLUMN_WIDTHS: Record<string, number> = {
       is_vip: 30,

@@ -186,9 +186,6 @@ const Content = () => {
   const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
   const [openGroup, setOpenGroup] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-
   const {
     data: tableTransaction,
     isLoading,
@@ -285,55 +282,55 @@ const Content = () => {
 
   const groupHeader = detailData?.collection?.[0] ?? null;
 
-  const [quickSearch, setQuickSearch] = useState('');
-  const [quickPage, setQuickPage] = useState(0);
-  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  // const [quickSearch, setQuickSearch] = useState('');
+  // const [quickPage, setQuickPage] = useState(0);
+  // const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const { data: quickAccessResult, isLoading: isLoadingQuickAccess } = useQuickAccessPagination({
-    page: quickPage,
-    rowsPerPage: quickRowsPerPage,
-    search: quickSearch,
-  });
+  // const { data: quickAccessResult, isLoading: isLoadingQuickAccess } = useQuickAccessPagination({
+  //   page: quickPage,
+  //   rowsPerPage: quickRowsPerPage,
+  //   search: quickSearch,
+  // });
 
-  const { createMutation: createQuickAccess } = useQuickAccessMutation();
+  // const { createMutation: createQuickAccess } = useQuickAccessMutation();
 
-  const processedQuickAccessData = useMemo(() => {
-    if (!quickAccessResult?.collection) return [];
+  // const processedQuickAccessData = useMemo(() => {
+  //   if (!quickAccessResult?.collection) return [];
 
-    return quickAccessResult.collection
-      .map((item: any) => {
-        const isExpired =
-          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+  //   return quickAccessResult.collection
+  //     .map((item: any) => {
+  //       const isExpired =
+  //         item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
 
-        return {
-          id: item.id,
-          visitor_type: item.visitor_type_name || '-',
-          name: item.visitor_name || '-',
-          // identity_id: item.visitor_identity_id || '-',
-          email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
-          receiver_name: item.receiver_name || '-',
-          invitation_code: item.invitation_code || '-',
-          phone: item.visitor_phone || '-',
-          visitor_period_start: item.visitor_period_start || '-',
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          invitation_created_at: item.invitation_created_at,
-          host: item.host ?? '-',
-          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
-        };
-      })
-      .sort((a: any, b: any) => {
-        const dateA = a.invitation_created_at ?? a.visitor_period_start;
-        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+  //       return {
+  //         id: item.id,
+  //         visitor_type: item.visitor_type_name || '-',
+  //         name: item.visitor_name || '-',
+  //         // identity_id: item.visitor_identity_id || '-',
+  //         email: item.visitor_email || '-',
+  //         organization: item.visitor_organization_name || '-',
+  //         receiver_name: item.receiver_name || '-',
+  //         invitation_code: item.invitation_code || '-',
+  //         phone: item.visitor_phone || '-',
+  //         visitor_period_start: item.visitor_period_start || '-',
+  //         visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //         invitation_created_at: item.invitation_created_at,
+  //         host: item.host ?? '-',
+  //         visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+  //       };
+  //     })
+  //     .sort((a: any, b: any) => {
+  //       const dateA = a.invitation_created_at ?? a.visitor_period_start;
+  //       const dateB = b.invitation_created_at ?? b.visitor_period_start;
 
-        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
-      })
-      .map(({ invitation_created_at, ...rest }: any) => rest);
-  }, [quickAccessResult]);
+  //       return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+  //     })
+  //     .map(({ invitation_created_at, ...rest }: any) => rest);
+  // }, [quickAccessResult]);
 
   const visitorTableData = {
     // data: visitorDataAll,
-    dataQuickAccess: processedQuickAccessData,
+    // dataQuickAccess: processedQuickAccessData,
     // RecordsFiltered: processedData.length,
     // RecordsTotal: processedData.length,
   };
@@ -359,13 +356,13 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
-    {
-      title: t('quickAccess'),
-      icon: IconBolt,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    // {
+    //   title: t('quickAccess'),
+    //   icon: IconBolt,
+    //   subTitle: iconAdd,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
   ];
 
   const handleCloseDialog = () => {
@@ -380,7 +377,6 @@ const Content = () => {
     setFormDataAddVisitor(defaultFormData);
     setSelectedSite(null);
     setPendingEditId(null);
-    setIsDirty(false);
     setIsAddTransaction(false);
     setOpenInvitationVisitor(true);
   };
@@ -388,7 +384,6 @@ const Content = () => {
   const handleSuccess = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
-    setIsDirty(false);
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
     handleCloseDialog();
   };
@@ -405,7 +400,6 @@ const Content = () => {
   const resetFormData = () => {
     setFormDataAddVisitor(defaultFormData);
     setEdittingId('');
-    setIsDirty(false);
   };
 
   const confirmDiscardAndClose = () => {
@@ -612,26 +606,26 @@ const Content = () => {
     }
   };
 
-  const handleCreateQuickAccess = async (payload: any) => {
-    try {
-      await createQuickAccess.mutateAsync(payload);
+  // const handleCreateQuickAccess = async (payload: any) => {
+  //   try {
+  //     await createQuickAccess.mutateAsync(payload);
 
-      showSwal('success', t('createSuccess', { name: 'Quick Access' }));
+  //     showSwal('success', t('createSuccess', { name: 'Quick Access' }));
 
-      setOpenQuickAccess(false);
-    } catch (error: any) {
-      showSwal(
-        'error',
-        error?.response?.data?.message || t('createdFailed', { name: 'Quick Access' }),
-      );
-      throw error;
-    }
-  };
+  //     setOpenQuickAccess(false);
+  //   } catch (error: any) {
+  //     showSwal(
+  //       'error',
+  //       error?.response?.data?.message || t('createdFailed', { name: 'Quick Access' }),
+  //     );
+  //     throw error;
+  //   }
+  // };
 
-  const handleQuickSearch = useCallback((keyword: string) => {
-    setQuickPage(0);
-    setQuickSearch(keyword);
-  }, []);
+  // const handleQuickSearch = useCallback((keyword: string) => {
+  //   setQuickPage(0);
+  //   setQuickSearch(keyword);
+  // }, []);
 
   const filteredVisitors = tableRowVisitors.filter((item) => {
     const keyword = searchAgenda.trim().toLowerCase();
@@ -767,6 +761,66 @@ const Content = () => {
     }
   };
 
+  
+
+  const handleExtend = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // if (!selectedMinutes) return;
+    // if (!selectedVisitors || selectedVisitors.length === 0) {
+    //   toast('Please select visitor first.', 'info');
+    //   return;
+    // }
+
+    // try {
+    //   setLoadingAccess(true);
+    //   const payload = {
+    //     id: selectedVisitors[0],
+    //     period: selectedMinutes,
+    //     apply_to_all: applyToAll,
+    //   };
+
+    //   await extendPeriodOperator(payload);
+
+    //   setRelatedVisitors((prev) =>
+    //     prev.map((v) =>
+    //       selectedVisitors.includes(v.id)
+    //         ? {
+    //             ...v,
+    //             extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+    //           }
+    //         : v,
+    //     ),
+    //   );
+
+    //   setInvitationCode((prev) =>
+    //     prev.map((item) =>
+    //       selectedVisitors.includes(item.id)
+    //         ? {
+    //             ...item,
+    //             extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+    //           }
+    //         : item,
+    //     ),
+    //   );
+
+    //   showSwal('success', `Visit extended by ${selectedMinutes} minutes`);
+    //   setOpenExtendVisit(false);
+    //   setSelectedMinutes(null);
+    // } catch (error: any) {
+    //   let msg = 'Failed to extend visit.';
+
+    //   if (error.response && error.response.data) {
+    //     msg = error.response.data.msg || error.response.data.message || msg;
+    //     status = error.response.data.status;
+    //   }
+    //   // toast(msg, 'error');
+    //   showSwal('error', msg || 'Failed to extend visit.');
+    // } finally {
+    //   setTimeout(() => setLoadingAccess(false), 600);
+    // }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -844,6 +898,7 @@ const Content = () => {
                   openGroup={openGroup}
                   setOpenGroup={setOpenGroup}
                   handleAddInvitation={handleAddInvitation}
+                  handleExtend={handleExtend}
                 />
                 {/* Detail From List */}
                 {selectedVisitor && (
@@ -898,7 +953,7 @@ const Content = () => {
         // isAddTransaction={isAddTransaction}
       />
 
-      <QuickAccessDialog
+      {/* <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
         visitorTableData={visitorTableData.dataQuickAccess}
@@ -911,7 +966,7 @@ const Content = () => {
         searchKeyword={quickSearch}
         onSearch={handleQuickSearch}
         totalCount={quickAccessResult?.RecordsFiltered ?? 0}
-      />
+      /> */}
 
       {/* Employee Detail */}
       <EmployeeDetailDialog
@@ -1012,7 +1067,7 @@ const Content = () => {
       />
       <GlobalBackdropLoading
         open={
-          createQuickAccess.isPending ||
+          // createQuickAccess.isPending ||
           createMutation.isPending ||
           sendEmailMutation.isPending ||
           deleteMutation.isPending ||

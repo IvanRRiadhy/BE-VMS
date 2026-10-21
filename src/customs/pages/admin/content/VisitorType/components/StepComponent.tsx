@@ -34,7 +34,10 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import RenderDetailRows from '../RenderDetailRows';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
+import { getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
+import { useDebounce } from 'src/hooks/useDebounce';
 
 interface StepContentProps {
   activeStep: number;
@@ -137,7 +140,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
       })
       .filter(Boolean);
 
-    // urutkan default di posisi pertama
     mappedRoles.sort((a: any, b: any) => {
       if (a.is_default) return -1;
       if (b.is_default) return 1;
@@ -148,7 +150,76 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   }, [formData?.visitor_roles, visitorRole]);
 
   const [value, setValue] = useState<any[]>([]);
-  const [valueVisitorProvider, setValueVisitorProvider] = useState<any | null>(null);
+  // const [valueVisitorProvider, setValueVisitorProvider] = useState<any | null>(null);
+
+  const [hostInput, setHostInput] = useState('');
+  // const [selectedHost, setSelectedHost] = useState<any>(null);
+
+  const debounceSearch = useDebounce(hostInput, 500);
+  const {
+    data: visitorEmployee = [],
+    isFetching,
+    isError,
+  } = useInvitationVisitorEmployee({
+    search: debounceSearch,
+    start: 0,
+    length: 10,
+  });
+
+  // const selectedSite = sites.find((site: any) => String(site.id) === String(formData.pre_site_id));
+  const selectedSite = useMemo(
+    () =>
+      sites.find(
+        (site: any) =>
+          String(site.id).toLowerCase() === String(formData.pre_site_id ?? '').toLowerCase(),
+      ) ?? null,
+    [sites, formData.pre_site_id],
+  );
+  const destinationHostId = selectedSite?.host;
+  const sortedVisitorEmployee = [...visitorEmployee].sort((a: any, b: any) => {
+    const aIsDestination = String(a.id) === String(destinationHostId);
+    const bIsDestination = String(b.id) === String(destinationHostId);
+
+    if (aIsDestination && !bIsDestination) return -1;
+    if (!aIsDestination && bIsDestination) return 1;
+
+    return 0;
+  });
+
+  const [selectedHost, setSelectedHost] = useState<any>(null);
+  useEffect(() => {
+    const hostId = formData.pre_host_id;
+
+    if (!hostId) {
+      setSelectedHost(null);
+      setHostInput('');
+      return;
+    }
+
+    const found = visitorEmployee.find(
+      (item: any) => String(item.id).toLowerCase() === String(hostId).toLowerCase(),
+    );
+
+    if (found) {
+      setSelectedHost(found);
+      setHostInput(found.name ?? '');
+    }
+  }, [formData.pre_host_id, visitorEmployee]);
+  
+  const hostOptions = useMemo(() => {
+    const options = [...sortedVisitorEmployee];
+
+    if (
+      selectedHost &&
+      !options.some(
+        (item: any) => String(item.id).toLowerCase() === String(selectedHost.id).toLowerCase(),
+      )
+    ) {
+      options.unshift(selectedHost);
+    }
+
+    return options;
+  }, [sortedVisitorEmployee, selectedHost]);
 
   if (activeStep === 0) {
     return (
@@ -500,14 +571,14 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               </Box>
               <Autocomplete
                 options={sites}
-                value={
-                  sites.find((x: any) => String(x.id) === String(formData.pre_site_id)) ?? null
-                }
+                value={selectedSite}
                 disablePortal
-                isOptionEqualToValue={(option, value) => option.id === value.id}
+                isOptionEqualToValue={(option, value) =>
+                  String(option.id).toLowerCase() === String(value.id).toLowerCase()
+                }
                 getOptionLabel={(option) => option.name ?? ''}
                 onChange={(_, newValue) => {
-                  setValueVisitorProvider(newValue);
+                  // setValueVisitorProvider(newValue);
 
                   setFormData((prev: any) => ({
                     ...prev,
@@ -516,6 +587,86 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 }}
                 renderInput={(params) => (
                   <CustomTextField {...params} placeholder="Select Site" sx={{ mt: 1 }} />
+                )}
+              />
+            </Box>
+          </Grid>
+
+          <Grid size={12} mt={1}>
+            <Box>
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
+                  Host
+                </Typography>
+
+                <Tooltip title="Select the host of the visitor." arrow>
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              <Autocomplete
+                options={hostOptions}
+                loading={isFetching}
+                value={selectedHost}
+                inputValue={hostInput}
+                disablePortal
+                groupBy={(option: any) =>
+                  String(option.id).toLowerCase() === String(destinationHostId).toLowerCase()
+                    ? 'Host on Destination'
+                    : 'All Host'
+                }
+                renderGroup={(params) => (
+                  <li key={params.key} style={{ listStyle: 'none' }}>
+                    <Box
+                      sx={{
+                        backgroundColor: 'grey.100',
+                        borderRadius: 1,
+                        px: 2,
+                        py: 1,
+                        fontWeight: 700,
+                        color: 'text.primary',
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      {params.group}
+                    </Box>
+
+                    <ul
+                      style={{
+                        padding: 0,
+                        margin: 0,
+                        listStyle: 'none',
+                      }}
+                    >
+                      {params.children}
+                    </ul>
+                  </li>
+                )}
+                isOptionEqualToValue={(option, value) =>
+                  String(option.id).toLowerCase() === String(value.id).toLowerCase()
+                }
+                getOptionLabel={(option) => option?.name ?? ''}
+                filterOptions={(options) => options}
+                onInputChange={(_, newInputValue, reason) => {
+                  if (reason === 'input') {
+                    setHostInput(newInputValue);
+                  } else if (reason === 'clear') {
+                    setHostInput('');
+                  }
+                }}
+                onChange={(_, newValue) => {
+                  setHostInput(newValue?.name ?? '');
+
+                  setFormData((prev: any) => ({
+                    ...prev,
+                    pre_host_id: newValue?.id ?? null,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField {...params} placeholder="Select Host" sx={{ mt: 1 }} />
                 )}
               />
             </Box>
@@ -1255,7 +1406,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) => option.name}
                 onChange={(_, newValue) => {
-                  setValueVisitorProvider(newValue);
+                  // setValueVisitorProvider(newValue);
 
                   setFormData((prev: any) => ({
                     ...prev,

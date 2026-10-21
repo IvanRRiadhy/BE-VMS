@@ -84,7 +84,7 @@ const Vehicle = () => {
   };
 
   return (
-    <Container title="Apikey Setting" description="">
+    <Container title="Vehicle" description="">
       <DynamicTable
         overflowX={'auto'}
         data={rows ?? []}

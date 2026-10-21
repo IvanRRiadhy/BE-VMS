@@ -85,12 +85,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
             icon: IconUsers,
             href: '/admin/manage/blacklist-employees',
           },
-          {
-            id: uniqueId(),
-            title: 'navigation.staff',
-            icon: IconSteeringWheel,
-            href: '/admin/manage/delivery/staff',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'navigation.staff',
+          //   icon: IconSteeringWheel,
+          //   href: '/admin/manage/delivery/staff',
+          // },
 
           // {
           //   id: uniqueId(),
@@ -419,12 +419,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
             icon: IconUsers,
             href: '/admin/manage/employees',
           },
-          {
-            id: uniqueId(),
-            title: 'navigation.staff',
-            icon: IconSteeringWheel,
-            href: '/admin/manage/delivery/staff',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'navigation.staff',
+          //   icon: IconSteeringWheel,
+          //   href: '/admin/manage/delivery/staff',
+          // },
 
           // {
           //   id: uniqueId(),
@@ -713,12 +713,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
             icon: IconUsers,
             href: '/operator-admin/manage/employees',
           },
-          {
-            id: uniqueId(),
-            title: 'navigation.staff',
-            icon: IconSteeringWheel,
-            href: '/operator-admin/manage/delivery/staff',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'navigation.staff',
+          //   icon: IconSteeringWheel,
+          //   href: '/operator-admin/manage/delivery/staff',
+          // },
           // {
           //   id: uniqueId(),
           //   title: 'VIP',
@@ -962,12 +962,12 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
             icon: IconUsers,
             href: '/operator-admin/manage/employees',
           },
-          {
-            id: uniqueId(),
-            title: 'navigation.staff',
-            icon: IconSteeringWheel,
-            href: '/operator-admin/manage/delivery/staff',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'navigation.staff',
+          //   icon: IconSteeringWheel,
+          //   href: '/operator-admin/manage/delivery/staff',
+          // },
           // {
           //   id: uniqueId(),
           //   title: 'VIP',
