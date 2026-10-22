@@ -2442,11 +2442,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       });
     });
 
+    // const isFieldMandatory = (item: any, visibilityMap: any) => {
+    //   const remark = (item.remarks || '').toLowerCase();
+    //   if (remark === 'is_driving' || remark === 'is_employee') {
+    //     return false;
+    //   }
+    //   if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+    //     return true;
+    //   }
+
+    //   return !!item.mandatory;
+    // };
+
     const isFieldMandatory = (item: any, visibilityMap: any) => {
       const remark = (item.remarks || '').toLowerCase();
+
+      if (item.is_enable !== true) {
+        return false;
+      }
+
       if (remark === 'is_driving' || remark === 'is_employee') {
         return false;
       }
+
       if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
         return true;
       }
@@ -5083,14 +5101,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         //   };
         // });
 
-   
-
         /*
          * ==========================================
          * ADD TRANSACTION
          * ==========================================
          */
-   
+
         if (isAddTransaction) {
           // const addTransactionPayload = list_group[0];
 
@@ -5147,7 +5163,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           return;
         } else {
           payload = { list_group };
-
 
           // const parsed = CreateGroupVisitorRequestSchema.parse(payload);
 

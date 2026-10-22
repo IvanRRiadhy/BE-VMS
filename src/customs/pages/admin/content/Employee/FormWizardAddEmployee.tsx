@@ -16,8 +16,6 @@ import {
   Paper,
   Dialog,
   Divider,
-  CircularProgress,
-  Backdrop,
   Switch,
   Checkbox,
   StepButton,
@@ -27,6 +25,9 @@ import {
   Snackbar,
   Portal,
   Alert,
+  Tooltip,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -54,10 +55,15 @@ import {
   IconArrowRight,
   IconCamera,
   IconDeviceFloppy,
+  IconPlus,
   IconTrash,
   IconX,
 } from '@tabler/icons-react';
-
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { useVisitorCardPagination } from 'src/hooks/Card/useVisitorCard';
+import { useDebounce } from 'src/hooks/useDebounce';
+import type { CreateVisitorCardRequest } from 'src/customs/api/models/Admin/VisitorCard';
+import FormWizardAddVisitorCard from '../Card/FormWizardAddVisitorCard';
 type EnabledFields = {
   organization_id: boolean;
   department_id: boolean;
@@ -70,7 +76,7 @@ type EnabledFields = {
 interface FormEmployeeProps {
   formData: CreateEmployeeRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateEmployeeRequest>>;
-  edittingId?: string;
+  edittingId?: string | null;
   onSuccess?: () => void;
   isBatchEdit?: boolean;
   selectedRows?: Item[];
@@ -112,6 +118,9 @@ const FormWizardAddEmployee = ({
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const [removing, setRemoving] = useState(false);
+  const [openAddCard, setOpenAddCard] = useState(false);
+  const initialCardFormData: any = {};
+  const [cardFormData, setCardFormData] = useState<CreateVisitorCardRequest>(initialCardFormData);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
@@ -293,11 +302,11 @@ const FormWizardAddEmployee = ({
 
       return true;
     }
-    if (step === 1) {
-      (payload as any).district_id = String((payload as any).district_id ?? '');
-      (payload as any).organization_id = String((payload as any).organization_id ?? '');
-      (payload as any).department_id = String((payload as any).department_id ?? '');
-    }
+    // if (step === 1) {
+    //   (payload as any).district_id = String((payload as any).district_id ?? '');
+    //   (payload as any).organization_id = String((payload as any).organization_id ?? '');
+    //   (payload as any).department_id = String((payload as any).department_id ?? '');
+    // }
 
     const res = schema.safeParse(payload);
 
@@ -539,13 +548,14 @@ const FormWizardAddEmployee = ({
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal(
-        'error',
-        err?.response.data?.msg ??
-          err?.response.data?.message ??
-          err?.message ??
-          'Failed to submit. Please try again.',
-      );
+      const message =
+        err?.response?.data?.msg ??
+        err?.response?.data?.message ??
+        err?.message ??
+        err?.msg ??
+        'Failed to submit. Please try again.';
+
+      showSwal('error', message);
     }
   };
 
@@ -627,9 +637,6 @@ const FormWizardAddEmployee = ({
 
       return response;
     } catch (error) {
-      console.error('========== UPLOAD ERROR ==========');
-      console.error(error);
-
       throw error;
     } finally {
       setIsUploadingImage(false);
@@ -687,13 +694,22 @@ const FormWizardAddEmployee = ({
 
   const [localForm, setLocalForm] = useState(formData);
 
+  const previousEditingId = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (edittingId && edittingId !== previousEditingId.current) {
+      previousEditingId.current = edittingId;
+      setLocalForm(formData);
+    }
+  }, [edittingId, formData]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setFormData(localForm);
     }, 200);
 
     return () => clearTimeout(handler);
-  }, [localForm]);
+  }, [localForm, setFormData]);
 
   useEffect(() => {
     if (siteImageFile) return;
@@ -716,6 +732,44 @@ const FormWizardAddEmployee = ({
   }, [localForm.faceimage, siteImageFile]);
 
   const showVendorCode = localForm.type === 'Vendor' || localForm.type === 'Contractor';
+  const [cardSearch, setCardSearch] = useState('');
+  const debouncedCardSearch = useDebounce(cardSearch, 500);
+  const { data: visitorCardData, isLoading: isLoadingVisitorCards } = useVisitorCardPagination({
+    page: 0,
+    rowsPerPage: 25,
+    sortDir: 'desc',
+    search: debouncedCardSearch,
+    filters: {
+      type: 2,
+      card_status: 1,
+    },
+  });
+
+  const visitorCardOptions = (visitorCardData?.collection ?? []).map(
+    ({ card_number, card_mac }: { card_number: string; card_mac: string }) => ({
+      label: card_number,
+      value: card_number,
+      cardMac: card_mac,
+    }),
+  );
+
+  const currentCardNumber = String(localForm.card_number ?? '');
+  const currentCardMac = String(localForm.ble_card_number ?? '');
+
+  const cardOptions = [
+    ...visitorCardOptions.filter(
+      (option) => option.value.toLowerCase() !== currentCardNumber.toLowerCase(),
+    ),
+    ...(currentCardNumber
+      ? [
+          {
+            label: currentCardNumber,
+            value: currentCardNumber,
+            cardMac: currentCardMac,
+          },
+        ]
+      : []),
+  ];
 
   const StepContent = (step: number) => {
     switch (step) {
@@ -1019,73 +1073,7 @@ const FormWizardAddEmployee = ({
               />
             </Grid2>
 
-            <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ marginX: 0, marginTop: 0.8 }}
-              >
-                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="district_id" required>
-                  <Typography variant="caption">Employee District</Typography>
-                </CustomFormLabel>
-
-                {isBatchEdit && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        size="small"
-                        checked={enabledFields?.district_id || false}
-                        onChange={(e) =>
-                          setEnabledFields((prev) => ({
-                            ...prev,
-                            district_id: e.target.checked,
-                          }))
-                        }
-                      />
-                    }
-                    label=""
-                    labelPlacement="start"
-                  />
-                )}
-              </Box>
-              <Autocomplete
-                fullWidth
-                autoHighlight
-                disablePortal
-                options={districts.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
-                value={(() => {
-                  const cur = String(localForm.district_id ?? '');
-                  return (
-                    districts
-                      .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
-                      .find((opt: any) => opt.id === cur) || null
-                  );
-                })()}
-                onChange={(_, newVal) => {
-                  setLocalForm((prev) => ({
-                    ...prev,
-                    district_id: newVal ? newVal.id : '',
-                  }));
-                  setErrors((prev) => ({ ...prev, district_id: '' }));
-                }}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                disabled={isBatchEdit && !enabledFields?.district_id}
-                renderInput={(params) => (
-                  <CustomTextField
-                    {...params}
-                    id="district_id"
-                    placeholder="Search district…"
-                    variant="outlined"
-                    error={Boolean(errors.district_id)}
-                    helperText={errors.district_id}
-                  />
-                )}
-              />
-            </Grid2>
-
-            <Grid2 size={{ xs: 6, sm: 6 }}>
+            <Grid2 size={{ xs: 6, sm: 12 }}>
               <Box
                 display="flex"
                 alignItems="center"
@@ -1154,6 +1142,72 @@ const FormWizardAddEmployee = ({
               />
             </Grid2>
 
+            <Grid2 size={{ xs: 12, sm: 6 }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 0, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="district_id">
+                  <Typography variant="caption">Employee District</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.district_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            district_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+              <Autocomplete
+                fullWidth
+                autoHighlight
+                disablePortal
+                options={districts.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
+                value={(() => {
+                  const cur = String(localForm.district_id ?? '');
+                  return (
+                    districts
+                      .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
+                      .find((opt: any) => opt.id === cur) || null
+                  );
+                })()}
+                onChange={(_, newVal) => {
+                  setLocalForm((prev) => ({
+                    ...prev,
+                    district_id: newVal ? newVal.id : '',
+                  }));
+                  setErrors((prev) => ({ ...prev, district_id: '' }));
+                }}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                disabled={isBatchEdit && !enabledFields?.district_id}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    id="district_id"
+                    placeholder="Search district…"
+                    variant="outlined"
+                    error={Boolean(errors.district_id)}
+                    helperText={errors.district_id}
+                  />
+                )}
+              />
+            </Grid2>
+
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <Box
                 display="flex"
@@ -1161,7 +1215,7 @@ const FormWizardAddEmployee = ({
                 justifyContent="space-between"
                 sx={{ marginX: 0, marginTop: 0.8 }}
               >
-                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="department_id" required>
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="department_id">
                   <Typography variant="caption">Employee Department</Typography>
                 </CustomFormLabel>
 
@@ -1247,32 +1301,86 @@ const FormWizardAddEmployee = ({
               />
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
-                <Typography variant="caption">Card Access</Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="card_number"
-                value={localForm.card_number}
-                onChange={(e: any) => {
-                  setLocalForm((prev) => ({ ...prev, qr_code: prev.card_number }));
-                  handleChange(e);
-                }}
+              <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
+                  <Typography variant="caption">Card Number</Typography>
+                </CustomFormLabel>
+                <IconButton
+                  size="small"
+                  onClick={() => setOpenAddCard(true)}
+                  sx={{
+                    bgcolor: '#055499',
+                    color: '#fff',
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    '&:hover': {
+                      bgcolor: '#044478',
+                    },
+                  }}
+                >
+                  <IconPlus size={16} />
+                </IconButton>
+              </Box>
+
+              <Autocomplete
                 fullWidth
-                variant="outlined"
+                options={cardOptions}
+                value={
+                  cardOptions.find(
+                    (option) => option.value.toLowerCase() === currentCardNumber.toLowerCase(),
+                  ) ?? null
+                }
+                loading={isLoadingVisitorCards}
+                filterOptions={(options) => options}
+                getOptionLabel={(option) => option.label ?? ''}
+                isOptionEqualToValue={(option, value) =>
+                  option.value.toLowerCase() === value.value.toLowerCase()
+                }
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') {
+                    setCardSearch(value);
+                  }
+                }}
+                onChange={(_, selected) => {
+                  setLocalForm((prev: any) => ({
+                    ...prev,
+                    card_number: selected?.value ?? '',
+                    ble_card_number: selected?.cardMac ?? '',
+                    qr_code: selected?.value ?? '',
+                  }));
+                }}
                 disabled={isBatchEdit}
+                renderInput={(params) => (
+                  <CustomTextField {...params} placeholder="Search Card Number" size="medium" />
+                )}
               />
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
-                <Typography variant="caption">BLE Card</Typography>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="ble_card_number">
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Typography variant="caption">Card Mac</Typography>
+
+                  <Tooltip title="MAC address of the selected BLE card" arrow placement="top">
+                    <IconButton size="small" sx={{ p: 0.25 }}>
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </CustomFormLabel>
+
               <CustomTextField
                 id="ble_card_number"
-                value={localForm.ble_card_number}
-                onChange={handleChange}
+                value={currentCardMac}
                 fullWidth
                 variant="outlined"
-                disabled={isBatchEdit}
+                size="medium"
+                disabled
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                  },
+                }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12 }}>
@@ -1457,7 +1565,7 @@ const FormWizardAddEmployee = ({
                           component="span"
                           color="primary"
                           sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                          onClick={(e) => {
+                          onClick={(e: any) => {
                             e.stopPropagation();
                             if (!isUploadingImage) {
                               setOpenCamera(true);
@@ -1802,6 +1910,25 @@ const FormWizardAddEmployee = ({
         </Snackbar>
       </Portal>
       <GlobalBackdropLoading open={loading} />
+      <Dialog open={openAddCard} onClose={() => setOpenAddCard(false)} fullWidth maxWidth="md">
+        <DialogTitle display="flex" alignItems="center" justifyContent="space-between">
+          Add Card
+          <IconButton onClick={() => setOpenAddCard(false)} size="small">
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <FormWizardAddVisitorCard
+            formData={cardFormData}
+            setFormData={setCardFormData}
+            // setEnabledFields={setCardEnabledFields}
+            onSuccess={() => {
+              setOpenAddCard(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

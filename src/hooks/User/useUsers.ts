@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAllUser } from 'src/customs/api/admin';
+import { getAllUser, getUserPagination } from 'src/customs/api/admin';
 import { getUserRoles } from 'src/customs/api/Admin/User';
 
 const useUsers = () => {
@@ -27,5 +27,30 @@ export const useUserRole = () => {
         collection: response.collection,
       };
     },
+  });
+};
+
+interface Props {
+  page: number;
+  rowsPerPage: number;
+  sortDir: string;
+  sort_column?: string;
+  searchKeyword?: string;
+  user_group_id?: string;
+}
+
+export const useUserPagination = ({
+  page,
+  rowsPerPage,
+  sortDir,
+  searchKeyword,
+  user_group_id,
+}: Props) => {
+  return useQuery({
+    queryKey: ['users', 'pagination', page, rowsPerPage, sortDir, searchKeyword, user_group_id],
+    // enabled: !!token,
+    queryFn: () =>
+      getUserPagination(page * rowsPerPage, rowsPerPage, sortDir, searchKeyword, user_group_id),
+    placeholderData: (previousData) => previousData,
   });
 };

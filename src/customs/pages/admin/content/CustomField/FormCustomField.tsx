@@ -29,6 +29,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
 import { useVehicle } from 'src/hooks/Setting/useVehicle';
+import { useIdentityType } from 'src/hooks/Setting/useIdentityType';
 
 interface FormCustomFieldProps {
   formData: any;
@@ -94,22 +95,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
   };
 
   const { data: vehicle = [], isLoading: isVehicleLoading } = useVehicle();
-  useEffect(() => {
-    if (formData.remarks !== 'vehicle_id') return;
-
-    if (!vehicle.length) {
-      setMultiOptionList([]);
-      return;
-    }
-
-    const vehicleOptions: any[] = vehicle?.map((item: any) => ({
-      id: item.id ?? '',
-      name: item.name,
-      value: item.id,
-    }));
-
-    setMultiOptionList(vehicleOptions);
-  }, [formData.remarks, vehicle]);
+  const { data: identityType = [], isLoading: isIdentityTypeLoading } = useIdentityType();
 
   return (
     <>
@@ -222,6 +208,30 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                           disabled={isVehicleLoading}
                         >
                           {vehicle.map((item: any) => (
+                            <MenuItem key={item.id} value={item.id}>
+                              {item.name}
+                            </MenuItem>
+                          ))}
+                        </CustomSelect>
+                      ) : formData.remarks === 'identity_type' ? (
+                        <CustomSelect
+                          id="identity-type"
+                          value={newMultiOption.id}
+                          onChange={(e: any) => {
+                            const selected = identityType.find(
+                              (item: any) => item.id === e.target.value,
+                            );
+
+                            setNewMultiOption({
+                              id: selected?.id ?? '',
+                              name: selected?.name ?? '',
+                              value: selected?.id ?? '',
+                            });
+                          }}
+                          fullWidth
+                          disabled={isIdentityTypeLoading}
+                        >
+                          {identityType.map((item: any) => (
                             <MenuItem key={item.id} value={item.id}>
                               {item.name}
                             </MenuItem>

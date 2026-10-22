@@ -39,7 +39,7 @@ type Props = {
   openGroup: boolean;
   setOpenGroup: React.Dispatch<React.SetStateAction<boolean>>;
   handleAddInvitation: () => void;
-  handleExtend: () => void;
+  handleExtend: any;
 };
 
 export default function VisitorListTable({
@@ -208,7 +208,7 @@ export default function VisitorListTable({
                   index={index}
                   selectedVisitor={selectedVisitor}
                   setSelectedVisitor={setSelectedVisitor}
-                  handleExtend={handleExtend}
+                  handleExtend={() => handleExtend(visitor)}
                 />
               ))
             ) : (

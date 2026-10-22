@@ -21,11 +21,22 @@ import {
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
 import { useTranslation } from 'react-i18next';
+import { getApprovalWorkflowById } from 'src/customs/api/Admin/ApprovalWorkflow';
 
-const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, setPage }: any) => {
+const Content = ({
+  tableData,
+  loading,
+  searchKeyword,
+  setSearchKeyword,
+  page,
+  setPage,
+  rowsPerPage,
+  setRowsPerPage,
+  totalRecords,
+}: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   // const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  // const [rowsPerPage, setRowsPerPage] = useState(10);
   const [edittingId, setEdittingId] = useState('');
   const defaultApprovalWorkflow: CreateApprovalWorkflowRequest = {
     name: '',
@@ -68,12 +79,14 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
     setOpenFormAddDocument(true);
   }, [isDirty]);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
     if (isDirty) {
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
     }
+
+    const res = await getApprovalWorkflowById(id);
 
     setEdittingId(id);
     setIsDirty(false);
@@ -185,6 +198,7 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
               isHaveExportPdf={false}
               isHaveExportXlf={false}
               isHaveFilterDuration={false}
+              totalCount={totalRecords}
               isHaveAddData={true}
               isHaveFilterMore={false}
               isNoActionTableHead={true}
@@ -203,7 +217,7 @@ const Content = ({ tableData, loading, searchKeyword, setSearchKeyword, page, se
           </Grid>
         </Grid>
       </Box>
-      <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="lg">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit Approval Workflow' : 'Add Approval Workflow'}
           <IconButton

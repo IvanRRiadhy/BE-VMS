@@ -69,6 +69,8 @@ import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/use
 import PreRegistrationDialog from './components/PraRegistrationDialog';
 import FilterTransaction from './components/FilterMoreContent';
 import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationVisitorDialog';
+import ExtendVisitDialog from '../../Operator/Dialog/ExtendVisitDialog';
+import { extendPeriodOperator } from 'src/customs/api/operator';
 
 type Group = {
   id: string;
@@ -761,64 +763,48 @@ const Content = () => {
     }
   };
 
-  
+  const [openExtendVisit, setOpenExtendVisit] = useState(false);
+  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
+  const [applyToAll, setApplyToAll] = useState(false);
+
+  const durationOptions = [15, 30, 60, 120, 360];
+
+  const handleOpenExtend = (visitor: any) => {
+    setSelectedVisitor(visitor);
+    setSelectedMinutes(null);
+    setApplyToAll(false);
+    setOpenExtendVisit(true);
+  };
+
+  const [loadingAccess, setLoadingAccess] = useState(false);
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // if (!selectedMinutes) return;
-    // if (!selectedVisitors || selectedVisitors.length === 0) {
-    //   toast('Please select visitor first.', 'info');
-    //   return;
-    // }
+    if (!selectedVisitor?.id || !selectedMinutes || loadingAccess) {
+      return;
+    }
 
-    // try {
-    //   setLoadingAccess(true);
-    //   const payload = {
-    //     id: selectedVisitors[0],
-    //     period: selectedMinutes,
-    //     apply_to_all: applyToAll,
-    //   };
+    try {
+      setLoadingAccess(true);
 
-    //   await extendPeriodOperator(payload);
+      const payload = {
+        id: selectedVisitor.id,
+        period: selectedMinutes,
+        apply_to_all: applyToAll,
+      };
 
-    //   setRelatedVisitors((prev) =>
-    //     prev.map((v) =>
-    //       selectedVisitors.includes(v.id)
-    //         ? {
-    //             ...v,
-    //             extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-    //           }
-    //         : v,
-    //     ),
-    //   );
+      await extendPeriodOperator(payload);
 
-    //   setInvitationCode((prev) =>
-    //     prev.map((item) =>
-    //       selectedVisitors.includes(item.id)
-    //         ? {
-    //             ...item,
-    //             extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-    //           }
-    //         : item,
-    //     ),
-    //   );
-
-    //   showSwal('success', `Visit extended by ${selectedMinutes} minutes`);
-    //   setOpenExtendVisit(false);
-    //   setSelectedMinutes(null);
-    // } catch (error: any) {
-    //   let msg = 'Failed to extend visit.';
-
-    //   if (error.response && error.response.data) {
-    //     msg = error.response.data.msg || error.response.data.message || msg;
-    //     status = error.response.data.status;
-    //   }
-    //   // toast(msg, 'error');
-    //   showSwal('error', msg || 'Failed to extend visit.');
-    // } finally {
-    //   setTimeout(() => setLoadingAccess(false), 600);
-    // }
+      setOpenExtendVisit(false);
+      setSelectedMinutes(null);
+      setApplyToAll(false);
+      setSelectedVisitor(null);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed Extend Time');
+    } finally {
+      setLoadingAccess(false);
+    }
   };
 
   return (
@@ -898,7 +884,7 @@ const Content = () => {
                   openGroup={openGroup}
                   setOpenGroup={setOpenGroup}
                   handleAddInvitation={handleAddInvitation}
-                  handleExtend={handleExtend}
+                  handleExtend={handleOpenExtend}
                 />
                 {/* Detail From List */}
                 {selectedVisitor && (
@@ -909,6 +895,19 @@ const Content = () => {
           </Grid>
         </Box>
       </PageContainer>
+
+      <ExtendVisitDialog
+        open={openExtendVisit}
+        onClose={() => setOpenExtendVisit(false)}
+        durationOptions={durationOptions}
+        selectedMinutes={selectedMinutes}
+        setSelectedMinutes={setSelectedMinutes}
+        applyToAll={applyToAll}
+        onApplyToAllChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          setApplyToAll(event.target.checked)
+        }
+        onSubmit={handleExtend}
+      />
 
       <InvitationVisitorDialog
         open={openInvitationVisitor}
@@ -1071,7 +1070,8 @@ const Content = () => {
           createMutation.isPending ||
           sendEmailMutation.isPending ||
           deleteMutation.isPending ||
-          cancelMutation.isPending
+          cancelMutation.isPending ||
+          loadingAccess
         }
       />
     </>

@@ -213,6 +213,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
               label="Visit Date"
               value={`${formatDateTime(selectedVisitor.visitor_period_start)} - ${formatDateTime(
                 selectedVisitor.visitor_period_end,
+                selectedVisitor.extend_visitor_period,
               )}`}
               icon={<IconCalendarEvent size={18} />}
             />

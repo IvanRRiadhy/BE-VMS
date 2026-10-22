@@ -259,7 +259,7 @@ const Content = () => {
         setLoading(false);
         return;
       }
-
+      
       const res = rep ? await generateReportVisitorById(rep) : await generateReport(formData);
 
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
@@ -297,10 +297,8 @@ const Content = () => {
         })) ?? [];
 
       setReportData(rows);
-    } catch (err) {
-      setTimeout(() => {
-        showSwal('error', 'Failed to generate report.');
-      }, 400);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to generate report');
     } finally {
       setLoading(false);
     }
@@ -458,6 +456,26 @@ const Content = () => {
     URL.revokeObjectURL(url);
   };
 
+  const getReportPeriodLabel = () => {
+    if (formData.time_report === 'CustomDate') {
+      if (formData.start_date && formData.end_date) {
+        return `Period: ${formData.start_date} - ${formData.end_date}`;
+      }
+
+      return 'Period: Custom Date';
+    }
+
+    const periodLabels: Record<string, string> = {
+      all: 'All Period',
+      Daily: 'Daily',
+      Weekly: 'Weekly',
+      Monthly: 'Monthly',
+      Yearly: 'Yearly',
+    };
+
+    return `Period: ${periodLabels[formData.time_report] ?? formData.time_report}`;
+  };
+
   const exportToPDF = () => {
     if (!reportData?.length) return;
     setLoading(true);
@@ -492,11 +510,12 @@ const Content = () => {
       doc.text('Visitor Transaction Report', 14, 42);
 
       doc.setFontSize(8);
+      doc.text(getReportPeriodLabel(), 14, 47);
 
       doc.text(`Total Visitors: ${reportData.length}`, pageWidth - 14, 36, { align: 'right' });
 
       doc.setDrawColor(220, 220, 220);
-      doc.line(14, 47, pageWidth - 14, 47);
+      doc.line(14, 53, pageWidth - 14, 53);
 
       const tableColumn = exportColumns.map((column) => column.label);
 
@@ -508,7 +527,7 @@ const Content = () => {
         head: [tableColumn],
         body: tableRows,
 
-        startY: 51,
+        startY: 56,
 
         margin: {
           left: 14,

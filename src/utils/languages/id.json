@@ -240,5 +240,12 @@
   "visitorArrivingByVehicle": "Apakah Anda datang menggunakan kendaraan?",
   "vehicleType": "Jenis Kendaraan",
   "licensePlateNumber": "Nomor Plat Kendaraan",
-  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual"
+  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual",
+  "approval_workflow_rules": "Aturan Approval Workflow",
+  "approval_workflow_rules_description": "Ikuti aturan berikut saat mengatur alur persetujuan.",
+  "approval_workflow_rule_1": "Setiap workflow harus memiliki minimal satu kondisi Final.",
+  "approval_workflow_rule_2": "Hanya satu kondisi Final yang diperbolehkan dalam setiap workflow, kecuali beberapa kondisi Final dalam grup OR yang sama, yang dianggap sebagai satu kondisi Final.",
+  "approval_workflow_rule_3": "Kondisi Final harus menjadi kondisi terakhir dalam grupnya dan memiliki Step Order tertinggi.",
+  "approval_workflow_rule_4": "Kondisi Final tidak boleh memiliki kondisi turunan (child conditions).",
+  "approval_workflow_rule_5": "Pastikan semua kondisi mengikuti urutan logika yang benar (AND/OR)."
 }

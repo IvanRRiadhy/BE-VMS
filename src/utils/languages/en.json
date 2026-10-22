@@ -241,5 +241,12 @@
   "visitorArrivingByVehicle": "Are you arriving by vehicle?",
   "vehicleType": "Vehicle Type",
   "licensePlateNumber": "License Plate Number",
-  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual"
+  "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual",
+  "approval_workflow_rules": "Approval Workflow Rules",
+  "approval_workflow_rules_description": "Please follow these rules when configuring the approval workflow.",
+  "approval_workflow_rule_1": "Each workflow must have at least one Final condition.",
+  "approval_workflow_rule_2": "Only one Final condition is allowed per workflow, except for multiple Final conditions within the same OR group, which are treated as a single Final condition.",
+  "approval_workflow_rule_3": "The Final condition must be the last condition in its group and have the highest Step Order.",
+  "approval_workflow_rule_4": "A Final condition cannot have child conditions.",
+  "approval_workflow_rule_5": "Ensure all conditions follow the correct logical order (AND/OR)."
 }

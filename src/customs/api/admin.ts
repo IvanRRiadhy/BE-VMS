@@ -390,6 +390,43 @@ export const getUserById = async (id: string): Promise<GetUserByIdResponse> => {
   return response.data;
 };
 
+// get user pagination
+export const getUserPagination = async (
+  start: number,
+  length: number,
+  sortDir: string,
+  keyword: string = '',
+  user_group_id?: string,
+  is_employee?: string,
+  // startDate?: string,
+  // endDate?: string,
+  // visitor?: string,
+  // status?: string | boolean,
+): Promise<any> => {
+  try {
+    const params: any = {
+      start,
+      length,
+      sort_dir: sortDir,
+    };
+
+    if (keyword) params['search[value]'] = keyword;
+    if (user_group_id) params['user-group-id'] = user_group_id;
+    if (is_employee) params.is_employee = is_employee;
+    // if (startDate) params['start-date'] = startDate;
+    // if (endDate) params['end-date'] = endDate;
+    // if (visitor) params.visitor = visitor;
+
+    const response = await axiosInstance.get('/user/dt', {
+      params,
+    });
+
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const createUser = async (data: any): Promise<any> => {
   const response = await axiosInstance.post('/user', data);
   return response.data;

@@ -260,6 +260,9 @@ const Content = () => {
                       setSearchKeyword={setSearch}
                       page={page}
                       setPage={setPage}
+                      rowsPerPage={rowsPerPage}
+                      setRowsPerPage={setRowsPerPage}
+                      totalRecords={data?.totalRecords ?? 0}
                     />
                   ) : null}
                 </Box>

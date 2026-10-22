@@ -11,9 +11,12 @@ import {
   MenuItem,
   Autocomplete,
   Switch,
+  Card,
+  CardContent,
+  Divider,
 } from '@mui/material';
-import { Box, useMediaQuery, useTheme } from '@mui/system';
-import { IconTrash } from '@tabler/icons-react';
+import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
+import { IconCircleCheck, IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -28,7 +31,9 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getAllUser, getAllEmployee } from 'src/customs/api/admin';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
-
+import useUsers from 'src/hooks/User/useUsers';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useTranslation } from 'react-i18next';
 interface FormApproveProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -45,6 +50,7 @@ type RuleNode = {
   entity_id?: string;
   step_order?: number;
   is_reviewer?: boolean;
+  is_final?: boolean;
   children?: RuleNode[];
 };
 
@@ -57,7 +63,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const { t } = useTranslation();
+  // const [users, setUsers] = useState<any[]>([]);
   const roleOptions = [
     { label: 'Host', value: 'Host' },
     // { label: 'User', value: 'User' },
@@ -96,6 +103,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         entity_id: cond.entity_id,
         step_order: cond.step_order,
         is_reviewer: cond.is_reviewer,
+        is_final: cond.is_final ?? false,
       };
     };
 
@@ -115,6 +123,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
           description: data.description,
           type: data.type,
           step_order: data.step_order ?? false,
+          is_reviewer: data.is_reviewer ?? false,
+          is_final: data.is_final ?? false,
         });
 
         const parsedRules = buildRulesFromConditions(data.conditions, data.root_logic);
@@ -144,6 +154,13 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // const finalError = validateFinalRules(rules);
+
+    // if (finalError) {
+    //   showSwal('error', finalError);
+    //   return;
+    // }
     setLoading(true);
     setErrors({});
     stepRef.current = 1;
@@ -245,6 +262,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
           // step_order: Number(formData.step_order) ? step++ : null,
           // step_order: Number(formData.step_order) ? stepRef.current++ : null,
           is_reviewer: node.is_reviewer,
+          is_final: node.is_final ?? false,
           step_order: myStep,
           escalation_hours: formData.escalation_hours ?? null,
           // escalation_status: null,
@@ -263,6 +281,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         entity_id: node.entity_id ?? null,
         parent_id: null,
         is_reviewer: node.is_reviewer,
+        is_final: node.is_final ?? false,
         // step_order: Number(formData.step_order) ? step++ : null,
         // step_order: Number(formData.step_order) ? stepRef.current++ : null,
         // step_order: stepRef.current++,
@@ -377,18 +396,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
     markDirty();
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await getAllUser();
-        setUsers(res.collection || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  const { data: user } = useUsers();
+  const users = user?.collection ?? [];
+  const [userSearch, setUserSearch] = useState<Record<string, string>>({});
 
   const getOptionsByRole = (role?: string) => {
     if (role === 'Manager') {
@@ -401,18 +411,11 @@ const FormApprove: React.FC<FormApproveProps> = ({
     }
 
     if (role === 'PIC') {
-      return employee.map((e) => ({
-        label: e.name,
+      return users.map((e: any) => ({
+        label: e.fullname,
         value: e.id,
       }));
     }
-
-    // if (role === 'InvitationHost' || role === 'Host') {
-    //   return employees.map((e) => ({
-    //     label: e.name,
-    //     value: e.id,
-    //   }));
-    // }
 
     return [];
   };
@@ -426,7 +429,22 @@ const FormApprove: React.FC<FormApproveProps> = ({
   const stepOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
   const renderNode = (node: RuleNode) => {
-    const options = getOptionsByRole(node.role);
+    const baseOptions = getOptionsByRole(node.role);
+
+    const selectedOption = baseOptions.find(
+      (opt) => String(opt.value).toLowerCase() === String(node.entity_id ?? '').toLowerCase(),
+    );
+
+    const options =
+      selectedOption || !node.entity_id
+        ? baseOptions
+        : [
+            ...baseOptions,
+            {
+              label: userSearch[node.id] || node.entity_id,
+              value: node.entity_id,
+            },
+          ];
     if (node.type === 'ROLE') {
       return (
         <TreeItem
@@ -480,7 +498,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                   </MenuItem>
                 ))}
               </CustomSelect> */}
-              <Autocomplete
+              {/* <Autocomplete
                 size="small"
                 options={options}
                 value={options.find((opt) => opt.value === node.entity_id) || null}
@@ -520,6 +538,65 @@ const FormApprove: React.FC<FormApproveProps> = ({
                     },
                   },
                 }}
+              /> */}
+              <Autocomplete
+                size="small"
+                options={options}
+                value={options.find((opt) => String(opt.value) === String(node.entity_id)) ?? null}
+                inputValue={
+                  userSearch[node.id] ??
+                  options.find((opt) => String(opt.value) === String(node.entity_id))?.label ??
+                  ''
+                }
+                getOptionLabel={(option) => option.label ?? ''}
+                isOptionEqualToValue={(option, value) =>
+                  String(option.value) === String(value.value)
+                }
+                sx={{ minWidth: 200 }}
+                onInputChange={(_, newValue, reason) => {
+                  if (reason === 'input' || reason === 'clear') {
+                    setUserSearch((prev) => ({
+                      ...prev,
+                      [node.id]: newValue,
+                    }));
+                  }
+                }}
+                onChange={(_, selected) => {
+                  setRules((prev) => {
+                    const update = (nodes: RuleNode[]): RuleNode[] =>
+                      nodes.map((n) => {
+                        if (n.id === node.id) {
+                          return {
+                            ...n,
+                            entity_id: selected?.value ?? '',
+                          };
+                        }
+
+                        if (n.children) {
+                          return { ...n, children: update(n.children) };
+                        }
+
+                        return n;
+                      });
+
+                    return update(prev);
+                  });
+
+                  setUserSearch((prev) => ({
+                    ...prev,
+                    [node.id]: selected?.label ?? '',
+                  }));
+
+                  markDirty();
+                }}
+                filterOptions={(options, state) =>
+                  options.filter((option) =>
+                    option.label.toLowerCase().includes(state.inputValue.toLowerCase()),
+                  )
+                }
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="Select User" size="small" />
+                )}
               />
 
               <Button
@@ -532,7 +609,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
               >
                 + AND
               </Button>
-              {/* 
+
               <Button
                 size="small"
                 variant="contained"
@@ -543,7 +620,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 }}
               >
                 + OR
-              </Button> */}
+              </Button>
 
               <IconTrash
                 size={20}
@@ -579,11 +656,38 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 />
                 <Typography variant="body2">Reviewer</Typography>
               </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Switch
+                  size="small"
+                  checked={node.is_final ?? false}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+
+                    const update = (nodes: RuleNode[]): RuleNode[] =>
+                      nodes.map((n) => {
+                        if (n.id === node.id) {
+                          return { ...n, is_final: checked };
+                        }
+
+                        if (n.children) {
+                          return { ...n, children: update(n.children) };
+                        }
+
+                        return n;
+                      });
+
+                    setRules((prev) => update(prev));
+                    markDirty();
+                  }}
+                />
+                <Typography variant="body2">Final</Typography>
+              </Box>
             </Box>
           }
         />
       );
     }
+
     return (
       <TreeItem
         key={node.id}
@@ -702,59 +806,127 @@ const FormApprove: React.FC<FormApproveProps> = ({
     markDirty();
   };
 
+  const approvalRules = [
+    'approval_workflow_rule_1',
+    'approval_workflow_rule_2',
+    'approval_workflow_rule_3',
+    'approval_workflow_rule_4',
+    'approval_workflow_rule_5',
+  ];
+
   return (
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} sx={{ mb: 0 }}>
-          <Grid2 size={{ xs: 12, lg: 12 }}>
-            <CustomFormLabel htmlFor="description" sx={{ mt: 0 }} required>
-              Name
-            </CustomFormLabel>
+          <Grid2 size={{ xs: 12, lg: 6 }}>
+            <Grid2 container>
+              <Grid2 size={{ xs: 12, lg: 12 }}>
+                <CustomFormLabel htmlFor="description" sx={{ mt: 0 }} required>
+                  Name
+                </CustomFormLabel>
 
-            <TextField
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={Boolean(errors.name)}
-              helperText={errors.name ?? ''}
-              fullWidth
-            />
+                <TextField
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={Boolean(errors.name)}
+                  helperText={errors.name ?? ''}
+                  fullWidth
+                />
+              </Grid2>
+              <Grid2 size={{ xs: 12, lg: 12 }}>
+                <CustomFormLabel htmlFor="description" sx={{ mt: 0 }}>
+                  Description
+                </CustomFormLabel>
+
+                <TextField
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  error={Boolean(errors.description)}
+                  helperText={errors.description ?? ''}
+                  fullWidth
+                />
+              </Grid2>
+              <Grid2 size={{ xs: 12, lg: 12 }}>
+                <CustomFormLabel htmlFor="type" sx={{ mt: 0 }} required>
+                  Type Approve
+                </CustomFormLabel>
+
+                <CustomTextField
+                  id="type"
+                  name="type"
+                  select
+                  value={formData.type ?? ''}
+                  onChange={handleChange}
+                  error={Boolean(errors.type)}
+                  helperText={errors.type ?? ''}
+                  fullWidth
+                >
+                  <MenuItem value="Invitation">Invitation</MenuItem>
+                </CustomTextField>
+              </Grid2>
+            </Grid2>
           </Grid2>
-          <Grid2 size={{ xs: 12, lg: 12 }}>
-            <CustomFormLabel htmlFor="description" sx={{ mt: 0 }}>
-              Description
-            </CustomFormLabel>
 
-            <TextField
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              error={Boolean(errors.description)}
-              helperText={errors.description ?? ''}
-              fullWidth
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, lg: 12 }}>
-            <CustomFormLabel htmlFor="type" sx={{ mt: 0 }} required>
-              Type Approve
-            </CustomFormLabel>
-
-            <CustomTextField
-              id="type"
-              name="type"
-              select
-              value={formData.type ?? ''}
-              onChange={handleChange}
-              error={Boolean(errors.type)}
-              helperText={errors.type ?? ''}
-              fullWidth
+          <Grid2 size={{ xs: 12, lg: 6 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                height: '100%',
+                borderRadius: 2,
+                boxShadow: 'none',
+              }}
             >
-              <MenuItem value="Invitation">Invitation</MenuItem>
-            </CustomTextField>
+              <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                <Typography variant="h6" fontWeight={600}>
+                  {t('approval_workflow_rules')}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
+                  {t('approval_workflow_rules_description')}
+                </Typography>
+
+                <Divider sx={{ mb: 2 }} />
+
+                <Stack spacing={2}>
+                  {approvalRules.map((key, index) => (
+                    <Box
+                      key={key}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.25,
+                      }}
+                    >
+                      <CheckCircleOutlineIcon
+                        sx={{
+                          fontSize: 20,
+                          color: 'primary.main',
+                          mt: '1px',
+                          flexShrink: 0,
+                        }}
+                      />
+
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          lineHeight: 1.6,
+                          flex: 1,
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {t(key)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
           </Grid2>
-          <Grid2 size={{ xs: 12, lg: 12 }}>
+          {/* <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="step_order" sx={{ mt: 0 }}>
               Escalation Hour
             </CustomFormLabel>
@@ -768,7 +940,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
               helperText={errors.escalation_hours ?? null}
               fullWidth
             />
-          </Grid2>
+          </Grid2> */}
           {/* <Grid2 size={{ xs: 12, lg: 12 }}>
             <Box>
        
@@ -785,7 +957,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
           </Grid2> */}
 
           <Grid2 size={{ xs: 12, lg: 12 }}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <Typography>Select Conditions</Typography>
+            <Box sx={{ display: 'flex', gap: 1, my: 1 }}>
               <Button variant="contained" onClick={() => addRootRule('AND')}>
                 Add AND
               </Button>

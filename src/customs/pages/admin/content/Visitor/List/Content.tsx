@@ -15,7 +15,7 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { getListVisitorById, getVisitorById } from 'src/customs/api/admin';
+import { getEmployeeById, getListVisitorById, getVisitorById } from 'src/customs/api/admin';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
@@ -86,13 +86,14 @@ const Content = () => {
       photo: item.is_employee ? item.employee?.faceimage || '' : item.face_image || '',
       name: item.name || '-',
       email: item.email || '-',
-      citizenship_id: item.identity_id || '-',
+      identity_id: item.identity_id || '-',
       is_email_verified: item.is_email_verified || false,
       phone: item.phone || '-',
       organization: item.organization || '-',
       // is_vip: item.is_vip || false,
       is_employee: item.is_employee || false,
       is_blacklist: item.is_blacklist,
+      employee_id: item.employee_id ?? item.employee?.id ?? null,
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
@@ -268,11 +269,31 @@ const Content = () => {
       setLoadingData(false);
     }
   };
-  const handleEdit = async (id: string) => {
+
+  const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
+  const [employeeEdit, setEmployeeEdit] = useState<any>(null);
+
+  const handleEdit = async (row: any) => {
     try {
       setLoadingData(true);
+      if (row.is_employee === true) {
+        if (!row.employee_id) {
+          showSwal('error', 'Employee ID not found.');
+          return;
+        }
 
-      const res = await getListVisitorById(id);
+        const response = await getEmployeeById(row.employee_id);
+
+        const employeeData =
+          response?.collection ?? response?.data?.collection ?? response?.data ?? response;
+
+        setEmployeeEdit(employeeData);
+        setOpenEmployeeDialog(true);
+
+        return;
+      }
+
+      const res = await getListVisitorById(row.id);
 
       const visitor = res?.collection ?? res;
 
@@ -351,13 +372,7 @@ const Content = () => {
                   isHaveGender={true}
                   isHaveVisitor={true}
                   isBlacklistAction={true}
-                  // onBlacklist={(row) => {
-                  //   handleBlacklist(row.id, Boolean(row.is_blacklist));
-                  // }}
                   isActionVisitor={false}
-                  // onView={(row) => {
-                  //   handleView(row.id);
-                  // }}
                   isHaveEmployee={true}
                   // isHaveVerified={true}
                   onCheckedChange={(selected) => console.log('Checked table row:', selected)}
@@ -375,7 +390,7 @@ const Content = () => {
                     navigate('/admin/visitor/blacklist-visitor');
                   }}
                   onEdit={(row) => {
-                    handleEdit(row.id);
+                    handleEdit(row);
                     // setEdittingId(row.id);
                   }}
                   onDelete={(row) => handleDelete(row.id)}

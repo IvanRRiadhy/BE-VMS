@@ -28,9 +28,9 @@ export const Step0Schema = z
 
 // Step 1: Work Details
 export const Step1Schema = z.object({
-  district_id: z.string().min(1, 'District is required'),
+  // district_id: z.string().min(1, 'District is required'),
   organization_id: z.string().min(1, 'Organization is required'),
-  department_id: z.string().min(1, 'Department is required'),
+  // department_id: z.string().min(1, 'Department is required'),
 });
 
 // Step 3: Other Details
@@ -52,7 +52,7 @@ export const stepFieldMap: Record<number, Array<keyof CreateEmployeeRequest>> = 
     'type',
     'vendor_code',
   ],
-  1: ['district_id', 'organization_id', 'department_id'],
+  1: ['organization_id'],
   2: [],
   3: ['birth_date', 'join_date'],
   4: [],

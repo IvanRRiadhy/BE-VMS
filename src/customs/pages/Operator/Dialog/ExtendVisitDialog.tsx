@@ -42,7 +42,14 @@ export default function ExtendVisitDialog({
 
       <DialogContent dividers>
         <form onSubmit={onSubmit}>
-          <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
+          <Typography>Choose Duration</Typography>
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            gap={1.5}
+            justifyContent="center"
+            sx={{ mb: 2, mt: 2 }}
+          >
             {durationOptions.map((minutes: any) => (
               <Chip
                 key={minutes}

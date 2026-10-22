@@ -1622,7 +1622,7 @@ const FormSite = ({
                   </Box>
                 </Grid>
                 {localForm.need_approval && (
-                  <Grid size={{ xs: 12, xl: 6 }}>
+                  <Grid size={{ xs: 12, xl: 12 }}>
                     <Box>
                       <Box display="flex" alignItems="center" gap={0.5}>
                         <CustomFormLabel

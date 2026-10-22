@@ -56,7 +56,7 @@ interface FormVisitorCardProps {
   selectedRows?: Item[];
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
-  setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  setEnabledFields?: React.Dispatch<React.SetStateAction<EnabledFields>>;
   setIsDirty?: any;
 }
 
@@ -403,7 +403,7 @@ const FormWizardAddVisitorCard = ({
                           is_employee_used: checked,
                         }));
 
-                        setEnabledFields((prev) => ({
+                        setEnabledFields?.((prev) => ({
                           ...prev,
                           employee_id: checked,
                           is_employee_used: checked,
@@ -657,7 +657,7 @@ const FormWizardAddVisitorCard = ({
       is_employee_used: false,
       employee_id: null,
     }));
-    setEnabledFields({
+    setEnabledFields?.({
       is_multi_site: false,
       registered_site: false,
       is_employee_used: false,

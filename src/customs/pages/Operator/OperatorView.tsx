@@ -28,8 +28,6 @@ import {
   getAvailableCardOperator,
   getInvitationCode,
   getInvitationOperatorRelated,
-  getUpComingPurpose,
-  getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import frImage from 'src/assets/images/products/pic_fr.webp';

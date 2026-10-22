@@ -29,7 +29,7 @@ import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
 import EmployeeAssignDialog from './components/EmployeeAssignDialog';
 import AssignTrackingDialog from './components/AssignTrackingDialog';
-import useUsers, { useUserRole } from 'src/hooks/User/useUsers';
+import useUsers, { useUserPagination, useUserRole } from 'src/hooks/User/useUsers';
 import useUsersMutation from 'src/hooks/User/userUsersMutation';
 import { useTranslation } from 'react-i18next';
 
@@ -54,34 +54,44 @@ const Content = () => {
   const { employee } = useEmployees();
   const { organizations } = useOrganization();
   const queryClient = useQueryClient();
-  const { data, isLoading } = useUsers();
+  // const { data, isLoading } = useUsers();
   const { deleteMutation: deleteUser } = useUsersMutation();
   const [selectedGroup, setSelectedGroup] = useState('All');
 
-  const filteredData = useMemo(() => {
-    if (!data?.collection) return [];
+  const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined);
 
-    return data.collection
-      .map((item: any) => ({
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+
+  const [sortDir] = useState('asc');
+
+  const { data: users, isLoading: isLoadingPagination } = useUserPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    searchKeyword: search,
+    user_group_id: selectedGroupId,
+  });
+
+  const filteredData = useMemo(
+    () =>
+      (users?.collection ?? []).map((item: any) => ({
         id: item.id,
         fullname: item.fullname,
         username: item.username,
         email: item.email,
-        group_name: item.group_name,
+        // group_name: item.group_name,
         description: item.description || '',
         employee_linked: item.employee_linked,
-      }))
-      .filter((item: any) => {
-        const matchSearch = item.fullname?.toLowerCase().includes(search.toLowerCase());
+      })),
+    [users],
+  );
 
-        const matchGroup =
-          selectedGroup === 'All' || item.group_name?.toLowerCase() === selectedGroup.toLowerCase();
-
-        return matchSearch && matchGroup;
-      });
-  }, [data, search, selectedGroup]);
-
-  const totalRecords = data?.collection.length ?? 0;
+  const totalRecords =
+    users?.RecordsTotal ??
+    users?.recordsTotal ??
+    users?.recordsFiltered ??
+    users?.collection?.length ??
+    0;
 
   const cards = useMemo(
     () => [
@@ -384,10 +394,10 @@ const Content = () => {
 
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={isLoading}
+                loading={isLoadingPagination}
                 overflowX="auto"
                 data={filteredData}
-                isHavePagination={false}
+                isHavePagination={true}
                 selectedRows={selectedRows}
                 isHaveChecked
                 isHaveAction={true}
@@ -405,6 +415,13 @@ const Content = () => {
                 isHaveAssignTracking={true}
                 onAssignTracking={handleAssignTracking}
                 onAssign={handleAssign}
+                defaultRowsPerPage={25}
+                rowsPerPageOptions={[25, 50, 100]}
+                currentPage={page}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 onUnAssign={handleUnassign}
                 onSearch={handleSearch}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
@@ -423,7 +440,7 @@ const Content = () => {
                   items: roleItems,
                 }}
                 onHeaderItemClick={(item) => {
-                  setSelectedGroup(item.name);
+                  setSelectedGroupId(item.name === 'All' ? undefined : item.id);
                   setPage(0);
                 }}
                 onAddEmpty={() => {

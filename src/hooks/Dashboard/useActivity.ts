@@ -28,9 +28,9 @@ export const useActivities = ({ start_date, end_date }: ActivitiesParams) => {
       return allPages.length * PAGE_SIZE;
     },
 
-    retry: false,
+    // retry: false,
 
-    refetchInterval: 10000,
+    // refetchInterval: 10000,
 
     select: (data) => ({
       ...data,

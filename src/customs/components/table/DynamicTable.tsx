@@ -440,6 +440,7 @@ function DynamicTableBase<
     'url',
     'shorten_url',
     'vehicle_id',
+    'employee_id',
     'ticket_id',
     'employee_linked',
     'is_blacklist',
@@ -956,6 +957,8 @@ function DynamicTableBase<
 
                           setSelectedHeader(item.name);
                           setSelectedSubRole('All');
+
+                          // Kirim item, termasuk name dan id jika tersedia
                           onHeaderItemClick?.(item);
                         }}
                         endIcon={isDropdown ? <ArrowDropDownIcon /> : undefined}
@@ -975,7 +978,7 @@ function DynamicTableBase<
                           fontWeight: isSelected ? 'bold' : 'normal',
                           '&:hover': {
                             borderColor: 'primary.main',
-                            backgroundColor: isSelected ? 'primary.dark' : 'action.hover',
+                            // backgroundColor: isSelected ? 'primary.dark' : 'action.hover',
                           },
                         }}
                       >
@@ -1019,7 +1022,7 @@ function DynamicTableBase<
                         setSelectedSubRole(child.name);
 
                         // Kirim nama role yang dipilih ke halaman pemanggil.
-                        onHeaderItemClick?.({ name: child.name });
+                        onHeaderItemClick?.(child);
 
                         setRoleMenuAnchor(null);
                         setActiveRole(null);

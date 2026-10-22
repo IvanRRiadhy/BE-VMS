@@ -1,4 +1,4 @@
-import {  useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -35,6 +35,7 @@ import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination'
 import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { importEmployeeBatch } from 'src/customs/api/employee';
+import EmployeeFormDialog from './components/EmployeeFormDialog';
 
 type EmployeesTableRow = {
   id: string;
@@ -510,7 +511,7 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
+      {/* <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle
           sx={{
             display: 'flex',
@@ -566,7 +567,25 @@ const Content = () => {
             />
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
+
+      <EmployeeFormDialog
+        open={openFormAddEmployee}
+        onClose={handleCloseDialog}
+        onRequestClose={handleDialogClose}
+        loadingEdit={loadingEdit}
+        isBatchEdit={isBatchEdit}
+        edittingId={edittingId}
+        formData={formDataAddEmployee}
+        setFormData={setFormDataAddEmployee}
+        onSuccess={handleSuccess}
+        selectedRows={selectedRows}
+        enabledFields={enabledFields}
+        setEnabledFields={setEnabledFields}
+        organizations={organizations}
+        department={department}
+        districts={districts}
+      />
 
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}

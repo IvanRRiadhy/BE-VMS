@@ -73,7 +73,7 @@ const FormUser: React.FC<FormUserProps> = ({
 
   const groupOptions = useMemo(() => {
     return userGroup
-      .filter((group: any) => group.role_access !== 'Employee')
+      // .filter((group: any) => group.role_access !== 'Employee')
       .map((g: any) => ({
         id: g.id,
         label: g.name,

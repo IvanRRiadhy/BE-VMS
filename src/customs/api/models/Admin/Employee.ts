@@ -109,8 +109,8 @@ export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   gender: z.coerce
     .number({ required_error: 'Gender is required' })
     .refine((v) => v === 0 || v === 1, { message: 'Gender is required' }),
-  department_id: z.string().trim().min(1, 'Department is required'),
-  district_id: z.string().trim().min(1, 'District is required'),
+  // department_id: z.string().trim().min(1, 'Department is required'),
+  // district_id: z.string().trim().min(1, 'District is required'),
   birth_date: z.string().trim().min(1, 'Birth date is required'),
   join_date: z.string().trim().min(1, 'Join date is required'),
   vendor_code: z.string().nullable().optional(),

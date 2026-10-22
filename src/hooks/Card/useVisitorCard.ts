@@ -2,15 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { getAllVisitorCardPagination } from 'src/customs/api/admin';
 
 interface Filters {
-  type: number;
-  card_status: number;
+  type?: number;
+  card_status?: number;
 }
 
 interface Props {
   page: number;
   rowsPerPage: number;
   sortDir: string;
-  sort_column: string;
+  sort_column?: string;
   search: string;
   filters: Filters;
 }
