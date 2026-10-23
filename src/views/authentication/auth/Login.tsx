@@ -625,7 +625,7 @@ const Login = () => {
                       <FormControl fullWidth size="medium">
                         <Select
                           value={tab}
-                          onChange={(e) => setTab(e.target.value)}
+                          onChange={(e) => setTab(e.target.value as number)}
                           fullWidth
                           sx={{
                             minHeight: 55,
@@ -1112,7 +1112,7 @@ const Login = () => {
                             }}
                           >
                             {loading ? (
-                              <CircularProgress sx={{ color: 'white' }} size={24} />
+                              <CircularProgress sx={{ color: 'primary' }} size={24} />
                             ) : (
                               t('verify')
                             )}

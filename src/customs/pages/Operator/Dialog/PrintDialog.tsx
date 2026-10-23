@@ -298,7 +298,7 @@ const PrintDialog = ({ open, onClose, invitationData, printData, onPrint }: any)
           onClick={handlePrint}
           disabled={printing}
         >
-          {printing ? <CircularProgress size={20} color="inherit" /> : 'Print'}
+          {printing ? <CircularProgress size={20} color="primary" /> : 'Print'}
         </Button>
       </DialogContent>
       <Snackbar

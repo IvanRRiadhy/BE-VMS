@@ -1,10 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -329,13 +325,6 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  // const handleSuccess = async () => {
-  //   setInitialFormData((_) => formDataAddEmployee);
-  //   // queryClient.invalidateQueries({ queryKey: ['employees'] });
-  //   await employeeQuery.refetch();
-  //   setOpenFormAddEmployee(false);
-  // };
-
   const handleSuccess = async () => {
     const result = await employeeQuery.refetch();
 
@@ -511,63 +500,6 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      {/* <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: 2,
-          }}
-        >
-          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Employee
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                setConfirmDialogOpen(true);
-              } else {
-                handleCloseDialog();
-              }
-            }}
-            sx={{
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {loadingEdit ? (
-            <Box
-              sx={{
-                minHeight: 500,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 2,
-              }}
-            >
-              <CircularProgress size={36} />
-            </Box>
-          ) : (
-            <FormWizardAddEmployee
-              formData={formDataAddEmployee}
-              setFormData={setFormDataAddEmployee}
-              edittingId={edittingId}
-              onSuccess={handleSuccess}
-              isBatchEdit={isBatchEdit}
-              selectedRows={selectedRows}
-              enabledFields={enabledFields}
-              setEnabledFields={setEnabledFields}
-              organizations={organizations}
-              department={department}
-              districts={districts}
-            />
-          )}
-        </DialogContent>
-      </Dialog> */}
 
       <EmployeeFormDialog
         open={openFormAddEmployee}
@@ -582,9 +514,6 @@ const Content = () => {
         selectedRows={selectedRows}
         enabledFields={enabledFields}
         setEnabledFields={setEnabledFields}
-        organizations={organizations}
-        department={department}
-        districts={districts}
       />
 
       <ConfirmUnsavedDialog

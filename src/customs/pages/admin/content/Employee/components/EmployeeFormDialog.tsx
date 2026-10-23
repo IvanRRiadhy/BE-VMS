@@ -8,6 +8,9 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import FormWizardAddEmployee from '../FormWizardAddEmployee';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
+import { useDistricts } from 'src/hooks/District/useDistricts';
 
 interface EmployeeFormDialogProps {
   open: boolean;
@@ -26,10 +29,6 @@ interface EmployeeFormDialogProps {
   selectedRows: any[];
   enabledFields: any;
   setEnabledFields: (fields: any) => void;
-
-  organizations: any[];
-  department: any[];
-  districts: any[];
 }
 
 const EmployeeFormDialog = ({
@@ -45,10 +44,11 @@ const EmployeeFormDialog = ({
   selectedRows,
   enabledFields,
   setEnabledFields,
-  organizations,
-  department,
-  districts,
 }: EmployeeFormDialogProps) => {
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
+
   return (
     <Dialog open={open} onClose={onRequestClose} fullWidth maxWidth="md">
       <DialogTitle

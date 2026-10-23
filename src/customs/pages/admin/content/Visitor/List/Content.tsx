@@ -28,6 +28,10 @@ import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagina
 import { useListVisitorMutation } from 'src/hooks/Visitor/useListVisitorMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import VisitorEditDialog from './components/VisitorEditDialog';
+import { CreateEmployeeRequestSchema } from 'src/customs/api/models/Admin/Employee';
+import EmployeeFormDialog from '../../Employee/components/EmployeeFormDialog';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useDepartment } from 'src/hooks/Department/useDepartment';
 
 interface VisitorFilters {
   organization_id: string;
@@ -273,6 +277,61 @@ const Content = () => {
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [employeeEdit, setEmployeeEdit] = useState<any>(null);
 
+  const toNum = (
+    v: unknown,
+    map: Record<string, number> = {},
+    fallback: number | undefined = 0,
+  ) => {
+    if (v === '' || v == null) return fallback;
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'boolean') return v ? 1 : 0;
+
+    if (typeof v === 'string') {
+      const t = v.trim().toLowerCase();
+
+      if (t in map) return map[t];
+
+      const n = Number(t);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    return fallback;
+  };
+  const coerceEmployee = (employee: any) =>
+    CreateEmployeeRequestSchema.parse({
+      ...employee,
+      gender: toNum(
+        employee.gender,
+        {
+          female: 0,
+          male: 1,
+          f: 0,
+          m: 1,
+          '0': 0,
+          '1': 1,
+        },
+        0,
+      ),
+
+      status_employee: toNum(
+        employee.status_employee,
+        {
+          active: 1,
+          'non active': 2,
+          nonactive: 2,
+          inactive: 2,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
+        0,
+      ),
+
+      organization_id: String(employee.organization_id ?? ''),
+      department_id: String(employee.department_id ?? ''),
+      district_id: String(employee.district_id ?? ''),
+    });
+
   const handleEdit = async (row: any) => {
     try {
       setLoadingData(true);
@@ -287,7 +346,18 @@ const Content = () => {
         const employeeData =
           response?.collection ?? response?.data?.collection ?? response?.data ?? response;
 
-        setEmployeeEdit(employeeData);
+        // ID employee untuk mode edit
+        setEdittingId(employeeData.id);
+
+        // Data employee untuk form Master Employee
+        const parsedData = CreateEmployeeRequestSchema.parse(coerceEmployee(employeeData));
+
+        setFormDataAddEmployee(parsedData);
+        setInitialFormData(parsedData);
+        setIsDirty(false);
+        setIsBatchEdit(false);
+
+        // Buka form Master Employee
         setOpenEmployeeDialog(true);
 
         return;
@@ -325,6 +395,25 @@ const Content = () => {
       setLoadingData(false);
     }
   };
+
+  const [edittingId, setEdittingId] = useState('');
+
+  const [formDataAddEmployee, setFormDataAddEmployee] = useState(
+    CreateEmployeeRequestSchema.parse({}),
+  );
+
+  const [initialFormData, setInitialFormData] = useState(CreateEmployeeRequestSchema.parse({}));
+
+  const [isDirty, setIsDirty] = useState(false);
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const [enabledFields, setEnabledFields] = useState({
+    gender: false,
+    organization_id: false,
+    department_id: false,
+    district_id: false,
+  });
 
   return (
     <>
@@ -440,6 +529,30 @@ const Content = () => {
           onSave={handleUpdate}
         />
       </PageContainer>
+
+      <EmployeeFormDialog
+        open={openEmployeeDialog}
+        onClose={() => {
+          setOpenEmployeeDialog(false);
+          setEdittingId('');
+          setEmployeeEdit(null);
+        }}
+        onRequestClose={() => {
+          setOpenEmployeeDialog(false);
+        }}
+        loadingEdit={loadingEdit}
+        isBatchEdit={isBatchEdit}
+        edittingId={edittingId}
+        formData={formDataAddEmployee}
+        setFormData={setFormDataAddEmployee}
+        onSuccess={async () => {
+          setOpenEmployeeDialog(false);
+          setEmployeeEdit(null);
+        }}
+        selectedRows={[]}
+        enabledFields={enabledFields}
+        setEnabledFields={setEnabledFields}
+      />
 
       <GlobalBackdropLoading open={loadingData} />
     </>

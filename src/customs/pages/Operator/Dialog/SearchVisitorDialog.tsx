@@ -161,7 +161,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
               variant="contained"
               onClick={handleSearch}
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <IconSearch />}
+              startIcon={loading ? <CircularProgress size={18} color="primary" /> : <IconSearch />}
             >
               {loading ? 'Searching...' : t('search')}
             </Button>

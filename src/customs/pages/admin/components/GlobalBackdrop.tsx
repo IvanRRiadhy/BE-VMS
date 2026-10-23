@@ -15,7 +15,7 @@ const GlobalBackdropLoading = ({ open }: GlobalBackdropLoadingProps) => {
           margin: '0 auto',
         }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress color="primary" thickness={4} />
       </Backdrop>
     </Portal>
   );

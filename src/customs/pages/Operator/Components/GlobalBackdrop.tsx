@@ -1,4 +1,5 @@
 import { Portal, Backdrop, CircularProgress } from '@mui/material';
+import { Box } from '@mui/system';
 
 interface GlobalBackdropLoadingProps {
   open: boolean;
@@ -12,10 +13,29 @@ const GlobalBackdropLoading = ({ open }: GlobalBackdropLoadingProps) => {
         sx={{
           zIndex: 999999999,
           position: 'fixed',
-          margin: '0 auto',
+          inset: 0,
+          color: '#fff',
         }}
       >
-        <CircularProgress color="primary" />
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress
+            color="primary"
+            size={40}
+            thickness={4}
+            sx={{
+              position: 'relative',
+              zIndex: 2,
+            }}
+          />
+        </Box>
       </Backdrop>
     </Portal>
   );

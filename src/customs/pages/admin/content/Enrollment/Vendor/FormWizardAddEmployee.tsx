@@ -29,10 +29,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
-import Swal from 'sweetalert2';
-import ReactCrop, { Crop } from 'react-image-crop';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   createEmployee,
   getAllDepartmentsPagination,
