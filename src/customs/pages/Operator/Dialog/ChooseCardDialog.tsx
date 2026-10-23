@@ -13,6 +13,7 @@ import {
   Checkbox,
   Divider,
   FormControlLabel,
+  CircularProgress,
 } from '@mui/material';
 import { IconX, IconSearch, IconSwipe, IconCards } from '@tabler/icons-react';
 import CardSearchInput from '../Components/CardSearchInput';
@@ -38,6 +39,7 @@ const ChooseCardDialog = ({
   handleConfirmChooseCards,
   setOpenRevokeDialog,
   initialValues,
+  isLoadingCards,
 }: any) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
@@ -55,120 +57,136 @@ const ChooseCardDialog = ({
       </IconButton>
 
       <DialogContent dividers>
-        <Box mb={2}>
-          <CardSearchInput value={searchTerm} onChange={setSearchTerm} />
-        </Box>
-        <Box mb={2}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isChecked}
-                indeterminate={isIndeterminate}
-                onChange={handleSelectAll}
-                disabled={capacity === 0}
-              />
-            }
-            label="Select All"
-          />
-        </Box>
-
-        {currentUsedCards.map((visitorItem: any) => (
-          <Box key={visitorItem.visitorId} mb={3}>
-            <Typography variant="h5" fontWeight={700} mb={2} color="">
-              Current Card - {visitorItem.visitorName}
+        {isLoadingCards ? (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            minHeight={300}
+            gap={2}
+          >
+            <CircularProgress thickness={4} size={30} />
+            <Typography variant="body2" color="text.secondary">
+              Loading available cards...
             </Typography>
+          </Box>
+        ) : (
+          <>
+            <Box mb={2}>
+              <CardSearchInput value={searchTerm} onChange={setSearchTerm} />
+            </Box>
+            <Box mb={2}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isChecked}
+                    indeterminate={isIndeterminate}
+                    onChange={handleSelectAll}
+                    disabled={capacity === 0}
+                  />
+                }
+                label="Select All"
+              />
+            </Box>
 
-            <Grid container spacing={2}>
-              {visitorItem.cards.map((card: any) => {
-                const isSelectable = card.current_used;
+            {currentUsedCards.map((visitorItem: any) => (
+              <Box key={visitorItem.visitorId} mb={3}>
+                <Typography variant="h5" fontWeight={700} mb={2} color="">
+                  Current Card - {visitorItem.visitorName}
+                </Typography>
 
-                return (
-                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                    <Paper
-                      sx={(theme) => ({
-                        p: 2,
-                        borderRadius: 2,
-                        position: 'relative',
-                        height: 280,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        textAlign: 'center',
-                        border: '2px solid',
-                        borderColor: theme.palette.warning.main,
-                        backgroundColor: theme.palette.warning.light,
-                        boxShadow: theme.shadows[6],
-                        opacity: isSelectable ? 1 : 0.5,
-                      })}
-                      onClick={(e) => {
-                        if (!isSelectable) return;
+                <Grid container spacing={2}>
+                  {visitorItem.cards.map((card: any) => {
+                    const isSelectable = card.current_used;
 
-                        e.stopPropagation();
+                    return (
+                      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
+                        <Paper
+                          sx={(theme) => ({
+                            p: 2,
+                            borderRadius: 2,
+                            position: 'relative',
+                            height: 280,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            border: '2px solid',
+                            borderColor: theme.palette.warning.main,
+                            backgroundColor: theme.palette.warning.light,
+                            boxShadow: theme.shadows[6],
+                            opacity: isSelectable ? 1 : 0.5,
+                          })}
+                          onClick={(e) => {
+                            if (!isSelectable) return;
 
-                        handleToggleCard(card.card_number);
-                      }}
-                    >
-                      <Box
-                        flexGrow={1}
-                        minHeight={0}
-                        width="100%"
-                        display="flex"
-                        flexDirection="column"
-                        justifyContent="center"
-                        alignItems="center"
-                        overflow="hidden"
-                      >
-                        <Typography
-                          variant="h1"
-                          color="text.secondary"
-                          mt={1}
-                          sx={{
-                            maxWidth: '100%',
-                            overflowWrap: 'anywhere',
-                            wordBreak: 'break-word',
-                            whiteSpace: 'normal',
+                            e.stopPropagation();
+
+                            handleToggleCard(card.card_number);
                           }}
                         >
-                          {card.card_number}
-                        </Typography>
+                          <Box
+                            flexGrow={1}
+                            minHeight={0}
+                            width="100%"
+                            display="flex"
+                            flexDirection="column"
+                            justifyContent="center"
+                            alignItems="center"
+                            overflow="hidden"
+                          >
+                            <Typography
+                              variant="h1"
+                              color="text.secondary"
+                              mt={1}
+                              sx={{
+                                maxWidth: '100%',
+                                overflowWrap: 'anywhere',
+                                wordBreak: 'break-word',
+                                whiteSpace: 'normal',
+                              }}
+                            >
+                              {card.card_number}
+                            </Typography>
 
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          width="100%"
-                          maxWidth={300}
-                          mt={1}
-                        >
-                          <Typography variant="body1" fontWeight={600}>
-                            Card
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              width="100%"
+                              maxWidth={300}
+                              mt={1}
+                            >
+                              <Typography variant="body1" fontWeight={600}>
+                                Card
+                              </Typography>
+
+                              <Typography variant="body1">{card.card_number}</Typography>
+                            </Box>
+
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              width="100%"
+                              maxWidth={300}
+                              flexWrap="wrap"
+                              gap={1}
+                            >
+                              <Typography variant="body1" fontWeight={600}>
+                                BLE
+                              </Typography>
+
+                              <Typography variant="body1">{card.card_mac || '-'}</Typography>
+                            </Box>
+                          </Box>
+
+                          <Typography variant="body1">{visitorItem.visitorName}</Typography>
+
+                          <Typography variant="body2" color="warning.main" fontWeight={600}>
+                            (Current Card)
                           </Typography>
-
-                          <Typography variant="body1">{card.card_number}</Typography>
-                        </Box>
-
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          width="100%"
-                          maxWidth={300}
-                          flexWrap="wrap"
-                          gap={1}
-                        >
-                          <Typography variant="body1" fontWeight={600}>
-                            BLE
-                          </Typography>
-
-                          <Typography variant="body1">{card.card_mac || '-'}</Typography>
-                        </Box>
-                      </Box>
-
-                      <Typography variant="body1">{visitorItem.visitorName}</Typography>
-
-                      <Typography variant="body2" color="warning.main" fontWeight={600}>
-                        (Current Card)
-                      </Typography>
-{/* 
+                          {/* 
                       <FormControlLabel
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
@@ -181,167 +199,167 @@ const ChooseCardDialog = ({
                         label=""
                         sx={{ m: 0 }}
                       /> */}
-                    </Paper>
-                  </Grid>
-                );
-              })}
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+
+                <Divider sx={{ mt: 2 }} />
+              </Box>
+            ))}
+            {/* CARD LIST */}
+            <Grid container spacing={2}>
+              {filteredCards
+                .filter((card: any) => !card.is_used)
+                .map((card: any) => {
+                  const isChosen = selectedCards.includes(card.card_number);
+                  const isLimitReached =
+                    selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
+                  const isUsed = card.is_used || card.current_used;
+                  const isDisabled = isLimitReached || isUsed;
+                  return (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
+                      <Paper
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isDisabled) return;
+                          handleToggleCard(card.card_number);
+                        }}
+                        sx={(theme) => ({
+                          p: 2,
+                          borderRadius: 2,
+                          position: 'relative',
+                          height: 280,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          // cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          border: '1px solid',
+                          borderColor: isChosen ? theme.palette.primary.main : 'divider',
+                          boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
+                          // backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
+                          backgroundColor: isUsed
+                            ? theme.palette.action.disabledBackground
+                            : isChosen
+                              ? theme.palette.primary.light
+                              : 'background.paper',
+
+                          opacity: isUsed ? 0.6 : 1,
+                          // transition: theme.transitions.create(
+                          //   ['transform', 'box-shadow', 'border-color', 'background-color'],
+                          //   {
+                          //     duration: theme.transitions.duration.shorter,
+                          //   },
+                          // ),
+                          // '&:hover': {
+                          //   transform: isLimitReached ? 'none' : 'translateY(-3px)',
+                          //   boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
+                          // },
+                          transition: theme.transitions.create(
+                            ['transform', 'box-shadow', 'border-color', 'background-color'],
+                            {
+                              duration: theme.transitions.duration.shorter,
+                            },
+                          ),
+
+                          '&:hover': {
+                            transform: isDisabled ? 'none' : 'translateY(-3px)',
+                            boxShadow: isDisabled ? theme.shadows[1] : theme.shadows[6],
+                          },
+                        })}
+                      >
+                        <Box
+                          flexGrow={1}
+                          display="flex"
+                          flexDirection="column"
+                          justifyContent="center"
+                          alignItems="center"
+                        >
+                          {isUsed && (
+                            <Box
+                              sx={(theme) => ({
+                                position: 'absolute',
+                                top: 8,
+                                left: 8,
+                                backgroundColor: theme.palette.primary.main,
+                                color: '#fff',
+                                px: 1,
+                                py: '2px',
+                                borderRadius: 1,
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                zIndex: 1,
+                              })}
+                            >
+                              Used
+                            </Box>
+                          )}
+                          <Typography variant="h1" color="text.secondary" mt={2}>
+                            {card.remarks || '-'}
+                          </Typography>
+
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            mt={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              Card
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                              {card.card_number || '-'}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            flexWrap={'wrap'}
+                            gap={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              BLE
+                            </Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                              {card.card_mac || '-'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body1">{card.name}</Typography>
+
+                        <FormControlLabel
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          control={
+                            <Checkbox
+                              checked={isChosen}
+                              // disabled={!isChosen}
+                              disabled={isDisabled}
+                              onChange={() => {
+                                // if (isDisabled) return;
+                                handleToggleCard(card.card_number);
+                              }}
+                            />
+                          }
+                          label=""
+                          sx={{ m: 0 }}
+                        />
+                      </Paper>
+                    </Grid>
+                  );
+                })}
             </Grid>
 
-            <Divider sx={{ mt: 2 }} />
-          </Box>
-        ))}
-        {/* CARD LIST */}
-        <Grid container spacing={2}>
-          {filteredCards
-            .filter((card: any) => !card.is_used)
-            .map((card: any) => {
-              const isChosen = selectedCards.includes(card.card_number);
-              const isLimitReached =
-                selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-              const isUsed = card.is_used || card.current_used;
-              const isDisabled = isLimitReached || isUsed;
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                  <Paper
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isDisabled) return;
-                      handleToggleCard(card.card_number);
-                    }}
-                    sx={(theme) => ({
-                      p: 2,
-                      borderRadius: 2,
-                      position: 'relative',
-                      height: 280,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      // cursor: isDisabled ? 'not-allowed' : 'pointer',
-                      border: '1px solid',
-                      borderColor: isChosen ? theme.palette.primary.main : 'divider',
-                      boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                      // backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
-                      backgroundColor: isUsed
-                        ? theme.palette.action.disabledBackground
-                        : isChosen
-                          ? theme.palette.primary.light
-                          : 'background.paper',
-
-                      opacity: isUsed ? 0.6 : 1,
-                      // transition: theme.transitions.create(
-                      //   ['transform', 'box-shadow', 'border-color', 'background-color'],
-                      //   {
-                      //     duration: theme.transitions.duration.shorter,
-                      //   },
-                      // ),
-                      // '&:hover': {
-                      //   transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                      //   boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
-                      // },
-                      transition: theme.transitions.create(
-                        ['transform', 'box-shadow', 'border-color', 'background-color'],
-                        {
-                          duration: theme.transitions.duration.shorter,
-                        },
-                      ),
-
-                      '&:hover': {
-                        transform: isDisabled ? 'none' : 'translateY(-3px)',
-                        boxShadow: isDisabled ? theme.shadows[1] : theme.shadows[6],
-                      },
-                    })}
-                  >
-                    <Box
-                      flexGrow={1}
-                      display="flex"
-                      flexDirection="column"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      {isUsed && (
-                        <Box
-                          sx={(theme) => ({
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            backgroundColor: theme.palette.primary.main,
-                            color: '#fff',
-                            px: 1,
-                            py: '2px',
-                            borderRadius: 1,
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            zIndex: 1,
-                          })}
-                        >
-                          Used
-                        </Box>
-                      )}
-                      <Typography variant="h1" color="text.secondary" mt={2}>
-                        {card.remarks || '-'}
-                      </Typography>
-
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        mt={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          Card
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          {card.card_number || '-'}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        flexWrap={'wrap'}
-                        gap={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          BLE
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {card.card_mac || '-'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Typography variant="body1">{card.name}</Typography>
-
-                    <FormControlLabel
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      control={
-                        <Checkbox
-                          checked={isChosen}
-                          // disabled={!isChosen}
-                          disabled={isDisabled}
-                          onChange={() => {
-                            // if (isDisabled) return;
-                            handleToggleCard(card.card_number);
-                          }}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Paper>
-                </Grid>
-              );
-            })}
-        </Grid>
-
-        {/* <Box mt={3} display="flex" gap={1}>
+            {/* <Box mt={3} display="flex" gap={1}>
           <Typography>
             Cards chosen: {selectedCards.length} / {availableCount}
           </Typography>
@@ -350,6 +368,8 @@ const ChooseCardDialog = ({
             Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
           </Typography>
         </Box> */}
+          </>
+        )}
       </DialogContent>
 
       <DialogActions>

@@ -91,6 +91,7 @@ import { uploadFileToCDN } from 'src/customs/api/cdn';
 import InvitationAndVisitorTypeStep from './components/ui/InvitationAndVisitorTypeStep';
 import VisitorFormStep from './components/ui/VisitorFormStep';
 import PreviewInvitation from './components/Dialog/PreviewInvitation';
+import { InfoOutlined } from '@mui/icons-material';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -2394,6 +2395,42 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const isEmptyDate = !item.answer_datetime;
 
     switch (item.field_type) {
+      case 0:
+        if ((item.remarks || '').toLowerCase() === 'phone') {
+          const phone = String(item.answer_text ?? '').trim();
+
+          if (!phone) {
+            errors[key] = t('phone_required');
+            return;
+          }
+
+          if (!/^\d{10,15}$/.test(phone)) {
+            errors[key] = t('phone_invalid');
+            return;
+          }
+
+          return;
+        }
+        // if ((item.remarks || '').toLowerCase() === 'indentity_id') {
+        //   const identityId = String(item.answer_text ?? '').trim();
+
+        //   if (!identityId) {
+        //     errors[key] = `${label} ${t('is_required')}`;
+        //     return;
+        //   }
+
+        //   if (!/^\d{16}$/.test(identityId)) {
+        //     errors[key] = t('identity_id_invalid');
+        //     return;
+        //   }
+
+        //   return;
+        // }
+
+        if (isEmptyText) {
+          errors[key] = `${label} ${t('is_required')}`;
+        }
+        break;
       case 2: // Email
         if (isEmptyText) {
           errors[key] = `${label} is required`;
@@ -2404,23 +2441,24 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailRegex.test(email)) {
-          errors[key] = `${label} must be a valid email address`;
+          errors[key] = t('email_invalid');
         }
 
         break;
+
       case 10:
       case 11:
       case 12:
-        if (isEmptyFile) errors[key] = `${label} is required`;
+        if (isEmptyFile) errors[key] = `${label} ${t('is_required')}`;
         break;
 
       case 8:
       case 9:
-        if (isEmptyDate) errors[key] = `${label} is required`;
+        if (isEmptyDate) errors[key] = `${label} ${t('is_required')}`;
         break;
 
       default:
-        if (isEmptyText) errors[key] = `${label} is required`;
+        if (isEmptyText) errors[key] = `${label} ${t('is_required')}`;
         break;
     }
   };
@@ -3858,6 +3896,42 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <Box>
                         <Box
                           sx={{
+                            mb: 2,
+                            p: 2,
+                            borderRadius: 2,
+                            bgcolor: '#EFF6FF',
+                            border: '1px solid #BFDBFE',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <InfoOutlined sx={{ color: '#2563EB', fontSize: 20 }} />
+
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ fontWeight: 600, color: '#1E3A8A' }}
+                            >
+                              {t('selfie_guidelines_title')}
+                            </Typography>
+                          </Box>
+
+                          <Box component="ul" sx={{ m: 0, pl: 3, color: '#475569' }}>
+                            <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                              {t('selfie_guideline_face')}
+                            </Typography>
+                            <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                              {t('selfie_guideline_glasses')}
+                            </Typography>
+                            <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                              {t('selfie_guideline_lighting')}
+                            </Typography>
+                            <Typography component="li" variant="body1">
+                              {t('selfie_guideline_background')}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box
+                          sx={{
                             position: 'relative',
                             border: '2px dashed',
                             borderColor: isDragging ? 'primary.main' : '#90caf9',
@@ -4698,6 +4772,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       registered_site?: string;
       group_code?: string;
       group_name?: string;
+      pre_agenda?: string;
+      pre_site_id?: string;
+      pre_host_id?: string;
     },
   ) {
     const sharedPVIdx = indexBy(groupedPages.single_page || []);

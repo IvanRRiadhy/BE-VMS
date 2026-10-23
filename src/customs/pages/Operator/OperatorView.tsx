@@ -231,7 +231,7 @@ const OperatorView = () => {
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
   const [vtLoading, setVTLoading] = useState(false);
-
+const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -724,27 +724,54 @@ const OperatorView = () => {
     setOpenChooseCardDialog(false);
   };
 
+  // const handleChooseCard = async () => {
+  //   if (!selectedVisitors.length) {
+  //     toast('Please select a visitor first.', 'info');
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoadingAccess(true);
+  //     await fetchAvailableCards();
+  //     setSelectedCards([]);
+
+  //     const visitor = relatedVisitors.find(
+  //       (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
+  //     );
+
+  //     setVisitorCards(visitor?.card ?? []);
+  //     setOpenChooseCardDialog(true);
+  //   } catch (error) {
+  //     showSwal('error', 'Failed to choose card');
+  //   } finally {
+  //     setTimeout(() => setLoadingAccess(false), 200);
+  //   }
+  // };
+
   const handleChooseCard = async () => {
     if (!selectedVisitors.length) {
       toast('Please select a visitor first.', 'info');
       return;
     }
 
+    const visitor = relatedVisitors.find(
+      (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
+    );
+
+    // Buka dialog terlebih dahulu
+    setVisitorCards(visitor?.card ?? []);
+    setSelectedCards([]);
+    setSearchTerm('');
+    setOpenChooseCardDialog(true);
+
+    // Baru jalankan API
     try {
-      setLoadingAccess(true);
+      setIsLoadingCards(true);
       await fetchAvailableCards();
-      setSelectedCards([]);
-
-      const visitor = relatedVisitors.find(
-        (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
-      );
-
-      setVisitorCards(visitor?.card ?? []);
-      setOpenChooseCardDialog(true);
     } catch (error) {
       showSwal('error', 'Failed to choose card');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 200);
+      setIsLoadingCards(false);
     }
   };
 
@@ -3533,6 +3560,7 @@ const OperatorView = () => {
           handleConfirmChooseCards={handleConfirmChooseCards}
           setAccessIssuance={setAccessIssuance}
           // setSelectedCurrentCards={setSelectedCurrentCards}
+          isLoadingCards={isLoadingCards}
         />
 
         {/* Dialog Swipe Card */}

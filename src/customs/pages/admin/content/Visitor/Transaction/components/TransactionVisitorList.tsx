@@ -64,7 +64,7 @@ const TransactionVisitorList = ({
         p: 2,
         pt: 2,
         overflow: 'auto',
-        height: { xs: '100%', md: '75vh' },
+        height: { xs: '100%', md: '80vh' },
       }}
     >
       <Typography variant="h5" mb={2}>

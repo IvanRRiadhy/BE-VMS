@@ -134,7 +134,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
         height: 'fit-content',
         width: {
           xs: '100%',
-          md: 360,
+          md: 300,
         },
         flexShrink: 0,
       }}

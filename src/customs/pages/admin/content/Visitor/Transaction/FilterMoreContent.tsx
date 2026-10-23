@@ -17,7 +17,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { useSites } from 'src/hooks/Sites/useSites';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 
-
 type FilterMoreContentProps = {
   open: any;
   onClose: any;
@@ -51,9 +50,9 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
     Employee: 'Employee',
   };
 
-  const visitorRoleOptions = Object.values(visitorRole);
-  const statusOptions = Object.values(statusMap);
-  const { data: sites = [] } = useSites();
+  // const visitorRoleOptions = Object.values(visitorRole);
+  // const statusOptions = Object.values(statusMap);
+  // const { data: sites = [] } = useSites();
   const { employee } = useEmployees();
 
   return (
@@ -101,33 +100,11 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
             />
           </Grid> */}
 
-          {/* <Grid size={{ xs: 12, lg: 12 }}>
-            <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Role</CustomFormLabel>
-            <Autocomplete
-              options={visitorRoleOptions}
-              value={filters.visitor_role || null}
-              onChange={(_, val) =>
-                setFilters((prev: any) => ({
-                  ...prev,
-                  visitor_role: val || '',
-                }))
-              }
-              renderInput={(params) => (
-                <CustomTextField
-                  {...params}
-                  placeholder="Select Visitor Role"
-                  variant="outlined"
-                  InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
-                />
-              )}
-            />
-          </Grid> */}
-
           <Grid size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period Start</CustomFormLabel>
 
             <CustomTextField
-              type="datetime-local"
+              type="date"
               fullWidth
               value={filters.start_date}
               onChange={(e) =>
@@ -143,7 +120,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
             <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period End</CustomFormLabel>
 
             <CustomTextField
-              type="datetime-local"
+              type="date"
               fullWidth
               value={filters.end_date}
               onChange={(e) =>
@@ -160,7 +137,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
             <Autocomplete
               options={employee}
               getOptionLabel={(option) => option.name}
-              value={employee.find((o) => o.id === filters.host) || null}
+              value={employee.find((o: any) => o.id === filters.host) || null}
               onChange={(_, val) =>
                 setFilters((prev: any) => ({
                   ...prev,
@@ -245,7 +222,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
               />
             </FormGroup>
           </Grid> */}
-{/* 
+          {/* 
           <Grid size={{ xs: 12, lg: 4 }}>
             <CustomFormLabel sx={{ mt: 0 }}>Transaction Status</CustomFormLabel>
             <FormGroup row>

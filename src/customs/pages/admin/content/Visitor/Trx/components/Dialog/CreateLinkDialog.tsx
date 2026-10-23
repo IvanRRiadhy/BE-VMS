@@ -31,6 +31,7 @@ import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
 import { useSites } from 'src/hooks/Sites/useSites';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 
@@ -53,9 +54,9 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }: Props) => {
-  const { employee } = useEmployees();
+  // const { employee } = useEmployees();
   const { visitorType } = useVisitorType();
-  const { data: sites } = useSites();
+  // const { data: sites } = useSites();
 
   const initialEnabledState = {
     visitorType: false,
@@ -105,11 +106,19 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   };
 
   const buildPayload = () => {
+    const selectedVisitorType = form.visitor_type_id;
     return {
-      host: enabled.host ? (form.host?.id ?? null) : null,
-      agenda: enabled.agenda ? form.agenda : null,
-      visitor_type_id: enabled.visitorType ? (form.visitor_type_id?.id ?? null) : null,
-      site_id: enabled.site ? form.site_id : null,
+      // host: enabled.host ? (form.host?.id ?? null) : null,
+      // agenda: enabled.agenda ? form.agenda : null,
+      // visitor_type_id: enabled.visitorType ? (form.visitor_type_id?.id ?? null) : null,
+      // site_id: enabled.site ? form.site_id : null,
+      host: enabled.visitorType ? (selectedVisitorType?.pre_host_id ?? null) : null,
+
+      agenda: enabled.visitorType ? (selectedVisitorType?.pre_agenda ?? null) : null,
+
+      visitor_type_id: enabled.visitorType ? (selectedVisitorType?.id ?? null) : null,
+
+      site_id: enabled.visitorType ? (selectedVisitorType?.pre_site_id ?? null) : null,
       visitor_period_start: enabled.visitStart ? form.visitor_period_start : null,
       visitor_period_end: enabled.visitEnd ? form.visitor_period_end : null,
       // link_active_at: new Date().toISOString(),
@@ -121,27 +130,37 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
     };
   };
 
-  const handleCreateLink = (sendEmail: boolean) => {
-    try {
-      const payload = buildPayload();
-      // console.log('payload', payload);
+  // const handleCreateLink = async (sendEmail: boolean) => {
+  //   try {
+  //     const payload = buildPayload();
+  //     // console.log('payload', payload);
 
-      if (sendEmail) {
-        onSendEmail(payload);
-      } else {
-        onCreateLink(payload);
-      }
+  //     if (sendEmail) {
+  //       onSendEmail(payload);
+  //     } else {
+  //       onCreateLink(payload);
+  //     }
 
-      resetState();
-      onClose();
-    } catch (error) {
-      showSwal('error', 'Failed to create link');
+  //     // resetState();
+  //     // onClose();
+  //   } catch (error) {
+  //     showSwal('error', 'Failed to create link');
+  //   }
+  // };
+
+  const handleCreateLink = async (sendEmail: boolean) => {
+    const payload = buildPayload();
+
+    if (sendEmail) {
+      onSendEmail(payload);
+      return;
     }
-  };
 
-  // const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
-  // const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  // const [siteTree, setSiteTree] = useState<any[]>([]);
+    try {
+      await onCreateLink(payload);
+      resetState();
+    } catch {}
+  };
 
   const buildSiteTree = (
     sites: any[],
@@ -173,6 +192,8 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
     onClose();
   };
 
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
@@ -183,7 +204,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
       </DialogTitle>
       <DialogContent dividers>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Host</CustomFormLabel>
               <Switch
@@ -200,8 +221,8 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               onChange={(_, value) => setForm((prev) => ({ ...prev, host: value }))}
               renderInput={(params) => <CustomTextField {...params} placeholder="Select Host" />}
             />
-          </Grid>
-
+          </Grid> */}
+          {/* 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Site</CustomFormLabel>
@@ -239,16 +260,10 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               )}
             />
 
-            {/* TREE */}
-            {/* {enabled.site && siteTree.length > 0 && (
-              <Box mt={2}>
-                <SimpleTreeView>{siteTree.map((node) => renderTreeSite(node))}</SimpleTreeView>
-              </Box>
-            )} */}
-          </Grid>
+          </Grid> */}
 
           {/* VISITOR TYPE */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 12 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Type</CustomFormLabel>
               <Switch
@@ -263,19 +278,22 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               options={visitorType}
               getOptionLabel={(option: any) => option.name ?? ''}
               value={form.visitor_type_id}
-              onChange={(_, value) =>
+              onChange={(_, value) => {
                 setForm((prev) => ({
                   ...prev,
                   visitor_type_id: value,
-                }))
-              }
+                  host: value?.pre_host_id ? { id: value.pre_host_id } : null,
+                  site_id: value?.pre_site_id ?? null,
+                  agenda: value?.pre_agenda ?? '',
+                }));
+              }}
               renderInput={(params) => (
                 <CustomTextField {...params} placeholder="Select Visitor Type" sx={{ mt: 1 }} />
               )}
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Agenda
@@ -300,7 +318,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }))
               }
             />
-          </Grid>
+          </Grid> */}
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -507,7 +525,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
             />
 
             <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              Enter the maximum number of visitors allowed. Use 0 for no limit.
+              {t('maxVisitorsDescription')}
             </Typography>
           </Grid>
         </Grid>
@@ -543,8 +561,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
           />
           <br />
           <Typography variant="caption" sx={{ opacity: 0.7 }}>
-            Enable this option to allow the link to be used only once. After the first use, the link
-            will become inactive.
+            {t('singleUseLinkDescription')}
           </Typography>
         </Grid>
       </DialogContent>

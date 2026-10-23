@@ -723,18 +723,68 @@ const FormSelfPraregistration = ({
 
     switch (item.field_type) {
       case 10:
+      case 0:
+        if ((item.remarks || '').toLowerCase() === 'phone') {
+          const phone = String(item.answer_text ?? '').trim();
+
+          if (!phone) {
+            errors[key] = t('phone_required');
+            return;
+          }
+
+          if (!/^\d{10,15}$/.test(phone)) {
+            errors[key] = t('phone_invalid');
+            return;
+          }
+
+          return;
+        }
+        // if ((item.remarks || '').toLowerCase() === 'indentity_id') {
+        //   const identityId = String(item.answer_text ?? '').trim();
+
+        //   if (!identityId) {
+        //     errors[key] = `${label} ${t('is_required')}`;
+        //     return;
+        //   }
+
+        //   if (!/^\d{16}$/.test(identityId)) {
+        //     errors[key] = t('identity_id_invalid');
+        //     return;
+        //   }
+
+        //   return;
+        // }
+
+        if (isEmptyText) {
+          errors[key] = `${label} ${t('is_required')}`;
+        }
+        break;
+      case 2: // Email
+        if (isEmptyText) {
+          errors[key] = `${label} is required`;
+          break;
+        }
+
+        const email = String(item.answer_text).trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+          errors[key] = t('email_invalid');
+        }
+
+        break;
       case 11:
       case 12:
-        if (isEmptyFile) errors[key] = `${label} is required`;
+        if (isEmptyFile) errors[key] = `${label} ${t('is_required')}`;
         break;
 
       case 8:
       case 9:
-        if (isEmptyDate) errors[key] = `${label} is required`;
+        if (isEmptyDate) errors[key] = `${label} ${t('is_required')}`;
         break;
 
       default:
-        if (isEmptyText) errors[key] = `${label} is required`;
+        if (isEmptyText) errors[key] = `${label} ${t('is_required')}`;
         break;
     }
   };

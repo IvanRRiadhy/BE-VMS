@@ -7,6 +7,13 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  Typography,
+  InputAdornment,
+  IconButton,
+  FormControlLabel,
+  Divider,
+  Checkbox,
+  TextField,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -28,7 +35,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import { IconUserPlus, IconUsers } from '@tabler/icons-react';
+import { IconFilterFilled, IconSearch, IconUserPlus, IconUsers } from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -58,6 +65,10 @@ import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/u
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
+import VisitorFilterSidebar from './components/VisitorFilterSidebar';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -506,7 +517,7 @@ const Content = () => {
 
     try {
       await removeMutation.mutateAsync({
-        trx_id_visitor: selectedVisitor.id, 
+        trx_id_visitor: selectedVisitor.id,
       });
 
       showSwal('success', 'Visitor removed successfully');
@@ -607,6 +618,8 @@ const Content = () => {
               marginTop: '5px',
             }}
           >
+            {/* <VisitorFilterSidebar mdUp={mdUp} /> */}
+
             <TransactionVisitorList
               mdUp={mdUp}
               secdrawerWidth={secdrawerWidth}

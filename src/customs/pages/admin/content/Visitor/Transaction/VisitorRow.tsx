@@ -104,6 +104,7 @@ function VisitorRow({
               display: 'inline-block',
               px: 1.5,
               py: 0.8,
+              width: '80px',
               borderRadius: 2,
               color: '#fff',
               fontWeight: 600,
@@ -162,7 +163,7 @@ function VisitorRow({
                   background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
                   backgroundColor: 'primary.main',
                   zIndex: 999,
-                  width: '100%',
+                  width: '100px',
                   height: '40px',
                   '&.Mui-disabled': {
                     background: '#E0E0E0',

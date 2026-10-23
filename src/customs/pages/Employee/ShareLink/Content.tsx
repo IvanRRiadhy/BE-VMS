@@ -89,8 +89,8 @@ const Content = () => {
   const handleCreateLink = async (payload: any) => {
     try {
       await createMutation.mutateAsync(payload);
+      showSwal('success', t('createSuccess', { name: 'Share Link' }));
       setOpenCreateLink(false);
-      showSwal('success', 'Share link created successfully');
     } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to create share link');
     }
