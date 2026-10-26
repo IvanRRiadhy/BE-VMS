@@ -9,9 +9,15 @@ import {
   Typography,
 } from '@mui/material';
 import { ContentCopy } from '@mui/icons-material';
-import { IconFilterFilled, IconSearch } from '@tabler/icons-react';
+import {
+  IconCalendarEvent,
+  IconCalendarTime,
+  IconFilterFilled,
+  IconSearch,
+} from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconPlus } from '@tabler/icons-react';
+import { Stack } from '@mui/system';
 
 interface TransactionVisitorListProps {
   mdUp: boolean;
@@ -116,13 +122,17 @@ const TransactionVisitorList = ({
               <Box
                 key={group.id}
                 sx={{
-                  backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
+                  backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#fff',
+                  border: '1px solid',
+                  borderColor: selectedGroup?.id === group.id ? '#90caf9' : '#e0e7ef',
+                  borderLeft: selectedGroup?.id === group.id ? '4px solid #1976d2' : '',
                   borderRadius: 2,
                   p: 1.5,
                   cursor: 'pointer',
                   mb: 1,
+                  transition: 'all 0.2s ease',
                   '&:hover': {
-                    backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#eee',
+                    backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f9ff',
                   },
                 }}
                 onClick={() => {
@@ -130,16 +140,30 @@ const TransactionVisitorList = ({
                   setSelectedGroupId(group.id);
                 }}
               >
-                <Typography fontWeight="bold">{group.agenda}</Typography>
+                <Typography fontWeight="bold" variant="h6">
+                  {group.agenda}
+                </Typography>
 
-                <Box display="flex" justifyContent="space-between">
+                <Box display="flex" justifyContent="space-between" mt={0.5} alignItems={'center'}>
                   <Typography>{group.visitor_type}</Typography>
                   <Typography>{group.host_name}</Typography>
                 </Box>
 
-                <Typography>Start : {group.visitor_period_start}</Typography>
+                <Stack spacing={0.75} sx={{ mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarEvent size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      Start: {group.visitor_period_start}
+                    </Typography>
+                  </Stack>
 
-                <Typography>End : {group.visitor_period_end}</Typography>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarTime size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      End: {group.visitor_period_end}
+                    </Typography>
+                  </Stack>
+                </Stack>
                 {group.transaction_status !== 'Canceled' &&
                   group.transaction_status !== 'Expired' && (
                     <Box

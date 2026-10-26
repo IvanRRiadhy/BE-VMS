@@ -73,6 +73,8 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
     Deny: '#8B0000',
     Approve: '#21c45d',
     Pracheckin: '#21c45d',
+    Waiting: 'gray',
+    Available: 'gray',
   };
   const statusLabelMap: Record<string, string> = {
     Checkin: 'Check In',
@@ -81,6 +83,8 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
     Deny: 'Deny',
     Approve: 'Approve',
     Pracheckin: 'Precheckin',
+    Available: 'Available',
+    Waiting: 'Waiting',
   };
 
   const { t } = useTranslation();
@@ -134,7 +138,7 @@ export default function VisitorDetailPanel({ selectedVisitor, tab, setTab }: Pro
         height: 'fit-content',
         width: {
           xs: '100%',
-          md: 300,
+          lg: 300,
         },
         flexShrink: 0,
       }}

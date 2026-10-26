@@ -7,7 +7,13 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { IconFilter, IconFilterFilled } from '@tabler/icons-react';
+import { Stack } from '@mui/system';
+import {
+  IconCalendarEvent,
+  IconCalendarTime,
+  IconFilter,
+  IconFilterFilled,
+} from '@tabler/icons-react';
 import { IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
@@ -125,7 +131,7 @@ const ApprovalSidebar = ({
               >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography
-                    variant="body1"
+                    variant="h6"
                     fontWeight="bold"
                     sx={{
                       width: '150px',
@@ -150,13 +156,13 @@ const ApprovalSidebar = ({
                               height: 30,
                               color: '#fff',
                               '&:hover': {
-                                backgroundColor: '#388E3C',
+                                backgroundColor: 'primary.main',
                                 color: '#fff',
                               },
                             }}
                             onClick={(e) => onOpenApprovalDialog(e, group, 'Approve')}
                           >
-                            <IconCheck size={20} />
+                            <IconCheck size={24} />
                           </IconButton>
                         </Tooltip>
 
@@ -175,20 +181,32 @@ const ApprovalSidebar = ({
                             }}
                             onClick={(e) => onOpenApprovalDialog(e, group, 'Reject')}
                           >
-                            <IconX size={20} />
+                            <IconX size={24} />
                           </IconButton>
                         </Tooltip>
                       </Box>
                     )}
                 </Box>
 
-                <Box display="flex" justifyContent="space-between">
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt={0.5}>
                   <Typography>{group.visitor_type_name}</Typography>
                   <Typography>{group.host_name}</Typography>
                 </Box>
+                <Stack spacing={0.75} sx={{ mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarEvent size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      Start: {group.visitor_period_start}
+                    </Typography>
+                  </Stack>
 
-                <Typography>Start : {group.visitor_period_start}</Typography>
-                <Typography>End : {group.visitor_period_end}</Typography>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarTime size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      End: {group.visitor_period_end}
+                    </Typography>
+                  </Stack>
+                </Stack>
 
                 <Typography
                   sx={{

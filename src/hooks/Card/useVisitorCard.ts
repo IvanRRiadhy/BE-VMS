@@ -4,6 +4,7 @@ import { getAllVisitorCardPagination } from 'src/customs/api/admin';
 interface Filters {
   type?: number;
   card_status?: number;
+  is_used?: boolean | undefined;
 }
 
 interface Props {
@@ -35,6 +36,7 @@ export const useVisitorCardPagination = ({
         sort_column,
         filters.type === -1 ? undefined : filters.type,
         filters.card_status === -1 ? undefined : filters.card_status,
+        filters.is_used,
       ),
 
     placeholderData: (previousData) => previousData,

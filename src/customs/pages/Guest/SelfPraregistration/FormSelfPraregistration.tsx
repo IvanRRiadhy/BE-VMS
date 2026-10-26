@@ -2559,6 +2559,10 @@ const FormSelfPraregistration = ({
     fetchVisitorTypes();
   }, [isLockedVisitorType]);
 
+  const selectedVisitorType = visitorType?.find(
+    (type: any) => String(type.id) === String(formData.visitor_type),
+  );
+
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
@@ -3131,6 +3135,7 @@ const FormSelfPraregistration = ({
                       sites={sites}
                       employee={employee}
                       allVisitorEmployee={allVisitorEmployee}
+                      selectedVisitorType={selectedVisitorType}
                       onChange={(index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
@@ -3490,6 +3495,7 @@ const FormSelfPraregistration = ({
                         sites={sites}
                         employee={employee}
                         allVisitorEmployee={allVisitorEmployee}
+                        selectedVisitorType={selectedVisitorType}
                         onChange={(index, field, value) => {
                           setGroupedPages((prev: any) => {
                             const next = { ...prev, single_page: [...prev.single_page] };

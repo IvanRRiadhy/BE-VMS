@@ -261,5 +261,6 @@
   "is_required": "wajib diisi",
   "identity_id_invalid": "Nomor identitas harus terdiri dari 16 digit angka",
   "maxVisitorsDescription": "Masukkan jumlah maksimum pengunjung yang diizinkan.",
-  "singleUseLinkDescription": "Aktifkan opsi ini agar tautan hanya dapat digunakan satu kali. Setelah digunakan pertama kali, tautan akan menjadi tidak aktif."
+  "singleUseLinkDescription": "Aktifkan opsi ini agar tautan hanya dapat digunakan satu kali. Setelah digunakan pertama kali, tautan akan menjadi tidak aktif.",
+  "estimatedReturnTime": "Ini adalah perkiraan waktu kembali dan dapat berubah tergantung pada durasi kunjungan yang sebenarnya."
 }

@@ -69,6 +69,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
 import VisitorFilterSidebar from './components/VisitorFilterSidebar';
+import VisitorDetailDialog from './components/VisitorDetailDialog';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -582,6 +583,13 @@ const Content = () => {
     setOpenDialogIndex(2);
     setIsAddTransaction(false);
   };
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailVisitor, setDetailVisitor] = useState<any>(null);
+
+  const handleViewDetail = (visitor: any) => {
+    setDetailVisitor(visitor);
+    setDetailDialogOpen(true);
+  };
 
   return (
     <PageContainer
@@ -618,7 +626,7 @@ const Content = () => {
               marginTop: '5px',
             }}
           >
-            {/* <VisitorFilterSidebar mdUp={mdUp} /> */}
+            <VisitorFilterSidebar mdUp={mdUp} />
 
             <TransactionVisitorList
               mdUp={mdUp}
@@ -653,15 +661,22 @@ const Content = () => {
               setSelectedVisitor={setSelectedVisitor}
               handleRemoveVisitor={handleRemoveVisitor}
               handleAddInvitation={handleAddInvitation}
+              handleViewDetail={handleViewDetail}
             />
-            <Box sx={{ mt: 2 }}>
+            {/* <Box sx={{ mt: 2 }}>
               {selectedVisitor && (
                 <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
               )}
-            </Box>
+            </Box> */}
           </Box>
         </Box>
       </Container>
+
+      <VisitorDetailDialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        visitor={detailVisitor}
+      />
 
       <InvitationVisitorDialog
         open={openInvitationVisitor}

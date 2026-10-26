@@ -846,6 +846,7 @@ export const getAllVisitorCardPagination = async (
   sort_column?: string,
   type?: number | null,
   cardStatus?: number,
+  is_used?: boolean
 ): Promise<GetAllVisitorCardPaginationResponse> => {
   const params: Record<string, any> = {
     start,
@@ -868,6 +869,10 @@ export const getAllVisitorCardPagination = async (
   if (cardStatus !== undefined && cardStatus !== null) {
     params['card-status'] = cardStatus;
   }
+  
+  if (is_used !== undefined && is_used !== null) {
+    params.is_used = is_used;
+  }
 
   try {
     const response = await axiosInstance.get('/card/dt', {
@@ -882,12 +887,7 @@ export const getAllVisitorCardPagination = async (
       collection: response.data?.collection ?? [],
     };
   } catch (error) {
-    return {
-      collection: [],
-      RecordsTotal: 0,
-      RecordsFiltered: 0,
-      Draw: 0,
-    } as any;
+     throw error;
   }
 };
 

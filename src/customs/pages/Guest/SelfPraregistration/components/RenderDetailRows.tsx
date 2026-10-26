@@ -11,6 +11,7 @@ interface Props {
   employee: any[];
   allVisitorEmployee: any[];
   visitorRoles: any[];
+  selectedVisitorType: any;
 }
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -63,6 +64,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useMediaQuery, useTheme } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+import { InfoOutlined } from '@mui/icons-material';
 
 const RenderDetailRows = ({
   details,
@@ -77,6 +79,7 @@ const RenderDetailRows = ({
   allVisitorEmployee,
   employee,
   sites,
+  selectedVisitorType,
 }: Props) => {
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
@@ -1218,7 +1221,17 @@ const RenderDetailRows = ({
                                   )}
                                 </Typography>
 
-                                <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
+                                <Tooltip
+                                  title={
+                                    ['Remise', 'CIT'].includes(
+                                      selectedVisitorType?.visitor_category ?? '',
+                                    )
+                                      ? t('estimatedReturnTime')
+                                      : t('visitorPeriodEnd')
+                                  }
+                                  arrow
+                                  placement="top"
+                                >
                                   <IconInfoCircle
                                     size={20}
                                     style={{ color: '#1976d2', cursor: 'pointer' }}
@@ -1343,6 +1356,41 @@ const RenderDetailRows = ({
                         <Box>
                           <Box
                             sx={{
+                              mb: 2,
+                              p: 2,
+                              borderRadius: 2,
+                              bgcolor: '#EFF6FF',
+                              border: '1px solid #BFDBFE',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <InfoOutlined sx={{ color: '#2563EB', fontSize: 20 }} />
+
+                              <Typography
+                                variant="subtitle2"
+                                sx={{ fontWeight: 600, color: '#1E3A8A' }}
+                              >
+                                {t('selfie_guidelines_title')}
+                              </Typography>
+                            </Box>
+
+                            <Box component="ul" sx={{ m: 0, pl: 3, color: '#475569' }}>
+                              <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                                {t('selfie_guideline_face')}
+                              </Typography>
+                              <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                                {t('selfie_guideline_glasses')}
+                              </Typography>
+                              <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+                                {t('selfie_guideline_lighting')}
+                              </Typography>
+                              <Typography component="li" variant="body1">
+                                {t('selfie_guideline_background')}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box
+                            sx={{
                               position: 'relative',
                               border: '2px dashed',
                               borderColor: isDragging ? 'primary.main' : '#90caf9',
@@ -1430,7 +1478,7 @@ const RenderDetailRows = ({
                                   alignItems: 'center',
                                   gap: 1,
                                 }}
-                                onClick={(e) => {
+                                onClick={(e: any) => {
                                   e.stopPropagation();
                                   setOpenCamera(true);
                                 }}
@@ -1930,7 +1978,7 @@ const RenderDetailRows = ({
                                 alignItems: 'center',
                                 gap: 1,
                               }}
-                              onClick={(e) => {
+                              onClick={(e: any) => {
                                 e.stopPropagation();
                                 setOpenCamera(true);
                               }}

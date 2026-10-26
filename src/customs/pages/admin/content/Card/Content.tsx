@@ -24,10 +24,7 @@ import {
   CreateVisitorCardRequestSchema,
   Item,
 } from 'src/customs/api/models/Admin/VisitorCard';
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import {
   IconCards,
   IconUserCheck,
@@ -98,11 +95,20 @@ const Content = () => {
   const [importErrorRows, setImportErrorRows] = useState<ImportErrorRow[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const { t } = useTranslation();
-
+  const [selectedHeader, setSelectedHeader] = useState('all');
   const [filters, setFilters] = useState<Filters>({
     type: -1,
     card_status: -1,
   });
+  const cardHeaderContent = {
+    // title: t('visitorCard'),
+    items: [{ name: 'all' }, { name: 'used' }, { name: 'unused' }],
+  };
+  const isUsedFilter = useMemo(() => {
+    if (selectedHeader === 'used') return true;
+    if (selectedHeader === 'unused') return false;
+    return undefined;
+  }, [selectedHeader]);
   const [appliedFilters, setAppliedFilters] = useState<Filters>({
     type: -1,
     card_status: -1,
@@ -114,7 +120,10 @@ const Content = () => {
     sortDir,
     sort_column: 'created_at',
     search,
-    filters: appliedFilters,
+    filters: {
+      ...appliedFilters,
+      is_used: isUsedFilter,
+    },
   });
 
   const { deleteMutation } = useVisitorCardMutation();
@@ -228,34 +237,6 @@ const Content = () => {
     Broken: 3,
     'Not Returned': 4,
   };
-
-  // const handleEdit = async (id: string) => {
-  //   const existingData = tableVisitorCard.find((item) => item.id === id);
-  //   // const existingData = await getVisitorCardById(String(id));
-
-  //   if (!existingData) return;
-
-  //   const parsedData = {
-  //     ...existingData,
-  //     registered_site: existingData.registered_site ?? '',
-
-  //     // GET API -> form number
-  //     type:
-  //       typeof existingData.type === 'number'
-  //         ? existingData.type
-  //         : (typeMap[existingData.type] ?? 0),
-
-  //     card_status:
-  //       typeof existingData.card_status === 'number'
-  //         ? existingData.card_status
-  //         : (cardStatusMap[existingData.card_status] ?? 0),
-  //   } as CreateVisitorCardRequest;
-
-  //   setEdittingId(id);
-  //   setFormAddVisitorCard(parsedData);
-  //   setInitialFormData(parsedData);
-  //   handleOpenDialog();
-  // };
 
   const handleEdit = async (id: string) => {
     try {
@@ -508,7 +489,13 @@ const Content = () => {
                 isHaveImportExcel={true}
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
-                isHaveHeader={false}
+                defaultSelectedHeaderItem="all"
+                isHaveHeader={true}
+                headerContent={cardHeaderContent}
+                onHeaderItemClick={(item) => {
+                  setSelectedHeader(item.name);
+                  setPage(0);
+                }}
                 isDataVerified={true}
                 searchPlaceholder="Search Card"
                 sortColumns={['name']}

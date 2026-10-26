@@ -3,13 +3,22 @@ import {
   Button,
   Checkbox,
   IconButton,
+  Menu,
+  MenuItem,
   TableCell,
   TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import { IconClock, IconTimeDuration0, IconTrash } from '@tabler/icons-react';
+import {
+  IconClock,
+  IconDotsVertical,
+  IconEye,
+  IconTimeDuration0,
+  IconTrash,
+} from '@tabler/icons-react';
+import { useState } from 'react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 
@@ -20,6 +29,7 @@ function VisitorRow({
   setSelectedVisitor,
   handleRemoveVisitor,
   handleExtend,
+  handleViewDetail,
 }: {
   visitor: any;
   index: number;
@@ -27,6 +37,7 @@ function VisitorRow({
   setSelectedVisitor?: any;
   handleRemoveVisitor?: () => void;
   handleExtend?: () => void;
+  handleViewDetail?: (visitor: any) => void;
 }) {
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
@@ -48,6 +59,17 @@ function VisitorRow({
   const { data: profile } = useProfile();
   const isAdmin = profile?.group_name === 'Admin';
   const canExtend = ['Preregis', 'Checkin', 'Available'].includes(visitor.visitor_status);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   return (
     <>
       <TableRow>
@@ -104,8 +126,9 @@ function VisitorRow({
               display: 'inline-block',
               px: 1.5,
               py: 0.8,
-              width: '80px',
+              width: '100%',
               borderRadius: 2,
+              textAlign: 'center',
               color: '#fff',
               fontWeight: 600,
               backgroundColor: statusBgMap[visitor.visitor_status] ?? '#757575',
@@ -115,7 +138,7 @@ function VisitorRow({
           </Box>
         </TableCell>
 
-        <TableCell
+        {/* <TableCell
           sx={{
             verticalAlign: 'middle',
             whiteSpace: 'nowrap',
@@ -144,11 +167,6 @@ function VisitorRow({
               </Tooltip>
             )}
             <Tooltip title="Extend Time" arrow>
-              {/* <span>
-              <IconButton color="error" onClick={handleRemoveVisitor} disabled={!selectedVisitor}>
-                <IconTimeDuration0 size={26} />
-              </IconButton>
-            </span> */}
               <Button
                 variant="contained"
                 startIcon={<IconClock size={25} />}
@@ -176,6 +194,77 @@ function VisitorRow({
                 Extend
               </Button>
             </Tooltip>
+          </Box>
+        </TableCell> */}
+        <TableCell
+          sx={{
+            verticalAlign: 'middle',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 50,
+            }}
+          >
+            <Tooltip title="More actions" arrow>
+              <IconButton onClick={handleMenuOpen} size="small">
+                <IconDotsVertical size={24} />
+              </IconButton>
+            </Tooltip>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={menuOpen}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  handleViewDetail?.(visitor);
+                }}
+                sx={{ gap: 1 }}
+              >
+                <IconEye size={20} />
+                Detail
+              </MenuItem>
+              {isAdmin && visitor.visitor_status !== 'Canceled' && (
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    handleRemoveVisitor?.();
+                  }}
+                  disabled={!selectedVisitor}
+                  sx={{ color: 'error.main', gap: 1 }}
+                >
+                  <IconTrash size={20} />
+                  Remove Visitor
+                </MenuItem>
+              )}
+
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  handleExtend?.();
+                }}
+                disabled={!canExtend}
+                sx={{ gap: 1 }}
+              >
+                <IconClock size={20} />
+                Extend Time
+              </MenuItem>
+            </Menu>
           </Box>
         </TableCell>
       </TableRow>

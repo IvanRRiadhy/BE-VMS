@@ -3752,8 +3752,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   </Typography>
                                 )}
                               </Typography>
-
-                              <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
+                              <Tooltip
+                                title={
+                                  ['Remise', 'CIT'].includes(
+                                    selectedVisitorType?.visitor_category ?? '',
+                                  )
+                                    ? t('estimatedReturnTime')
+                                    : t('visitorPeriodEnd')
+                                }
+                                arrow
+                                placement="top"
+                              >
                                 <IconInfoCircle
                                   size={20}
                                   style={{ color: '#1976d2', cursor: 'pointer' }}

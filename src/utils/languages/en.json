@@ -262,5 +262,6 @@
   "is_required": "is required",
   "identity_id_invalid": "Identity number must contain exactly 16 digits",
   "maxVisitorsDescription": "Enter the maximum number of visitors allowed.",
-  "singleUseLinkDescription": "Enable this option to allow the link to be used only once. After the first use, the link will become inactive."
+  "singleUseLinkDescription": "Enable this option to allow the link to be used only once. After the first use, the link will become inactive.",
+  "estimatedReturnTime": "This is an estimated return time and may very depending on the actual duration of the visit."
 }

@@ -30,8 +30,6 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import VisitorEditDialog from './components/VisitorEditDialog';
 import { CreateEmployeeRequestSchema } from 'src/customs/api/models/Admin/Employee';
 import EmployeeFormDialog from '../../Employee/components/EmployeeFormDialog';
-import { useOrganization } from 'src/hooks/Organization/useOrganization';
-import { useDepartment } from 'src/hooks/Department/useDepartment';
 
 interface VisitorFilters {
   organization_id: string;
@@ -117,18 +115,18 @@ const Content = () => {
       //   subTitle: `${0}`,
       //   color: 'none',
       // },
-      {
-        title: 'Total New Visitor',
-        icon: IconUsers,
-        subTitle: `${0}`,
-        color: 'none',
-      },
-      {
-        title: 'Total Repeat Visitor',
-        icon: IconUsers,
-        subTitle: `${0}`,
-        color: 'none',
-      },
+      // {
+      //   title: 'Total New Visitor',
+      //   icon: IconUsers,
+      //   subTitle: `${0}`,
+      //   color: 'none',
+      // },
+      // {
+      //   title: 'Total Repeat Visitor',
+      //   icon: IconUsers,
+      //   subTitle: `${0}`,
+      //   color: 'none',
+      // },
     ],
     [totalFilteredRecords, t],
   );

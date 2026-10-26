@@ -40,6 +40,7 @@ interface TransactionVisitorDetailProps {
   setSelectedVisitor?: any;
   handleRemoveVisitor: () => void;
   handleAddInvitation: () => void;
+  handleViewDetail: (visitor: any) => void;
 }
 
 const TransactionVisitorDetail = ({
@@ -56,6 +57,7 @@ const TransactionVisitorDetail = ({
   setSelectedVisitor,
   handleRemoveVisitor,
   handleAddInvitation,
+  handleViewDetail,
 }: TransactionVisitorDetailProps) => {
   return (
     <Box
@@ -134,9 +136,7 @@ const TransactionVisitorDetail = ({
               </TableRow>
 
               <TableRow>
-                <TableCell>
-                  <Checkbox />
-                </TableCell>
+                <TableCell>{/* <Checkbox /> */}</TableCell>
                 <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                   Visitor Name
                 </TableCell>
@@ -184,6 +184,7 @@ const TransactionVisitorDetail = ({
                       selectedVisitor={selectedVisitor}
                       setSelectedVisitor={setSelectedVisitor}
                       handleRemoveVisitor={handleRemoveVisitor}
+                      handleViewDetail={handleViewDetail}
                     />
                   ))
                 ) : (

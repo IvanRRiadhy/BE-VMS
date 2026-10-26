@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
   IconButton,
   Portal,
@@ -71,6 +68,8 @@ import FilterTransaction from './components/FilterMoreContent';
 import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationVisitorDialog';
 import ExtendVisitDialog from '../../Operator/Dialog/ExtendVisitDialog';
 import { extendPeriodOperator } from 'src/customs/api/operator';
+import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
+import VisitorDetailDialog from '../../admin/content/Visitor/Transaction/components/VisitorDetailDialog';
 
 type Group = {
   id: string;
@@ -135,7 +134,7 @@ const Content = () => {
   const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const secdrawerWidth = 430;
+  const secdrawerWidth = 350;
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const handleEmployeeClick = (employeeId: string) => {
@@ -164,7 +163,7 @@ const Content = () => {
     setEmployeeError(null);
   };
   const theme = useTheme();
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const mdUp = useMediaQuery(theme.breakpoints.up('lg'));
 
   const [searchHost, setSearchHost] = useState<any>('');
   const [appliedFilters, setAppliedFilters] = useState<any>({
@@ -351,13 +350,13 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
-    {
-      title: t('shareLink'),
-      icon: IconLink,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    // {
+    //   title: t('shareLink'),
+    //   icon: IconLink,
+    //   subTitle: iconAdd,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
     // {
     //   title: t('quickAccess'),
     //   icon: IconBolt,
@@ -807,6 +806,14 @@ const Content = () => {
     }
   };
 
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailVisitor, setDetailVisitor] = useState<any>(null);
+
+  const handleViewDetail = (visitor: any) => {
+    setDetailVisitor(visitor);
+    setDetailDialogOpen(true);
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -820,10 +827,12 @@ const Content = () => {
                   if (index === 1) {
                     // setFlowTarget('preReg');
                     handleAddInvitation();
-                  } else if (index === 2) {
-                    setOpenDetailShareLink(true);
-                  } else if (index === 3) {
-                    setOpenQuickAccess(true);
+                  // } else if (index === 2) {
+                  //   setOpenDetailShareLink(true);
+                  // } else if (index === 3) {
+                  //   setOpenQuickAccess(true);
+                  // }else {
+
                   }
                 }}
                 size={{ xs: 12, lg: 3 }}
@@ -840,6 +849,8 @@ const Content = () => {
                 marginTop: '5px',
               }}
             >
+              <VisitorFilterSidebar mdUp={mdUp} />
+
               <TransactionVisitorList
                 mdUp={mdUp}
                 secdrawerWidth={secdrawerWidth}
@@ -865,7 +876,8 @@ const Content = () => {
                   height: { xs: 'auto', xl: '78vh' },
                   overflow: 'hidden',
                   display: 'flex',
-                  width: '100%',
+                  // width: '100%',
+                  flexGrow: 1,
                   flexDirection: {
                     xs: 'column',
                     md: 'row',
@@ -885,16 +897,23 @@ const Content = () => {
                   setOpenGroup={setOpenGroup}
                   handleAddInvitation={handleAddInvitation}
                   handleExtend={handleOpenExtend}
+                  handleViewDetail={handleViewDetail}
                 />
                 {/* Detail From List */}
-                {selectedVisitor && (
+                {/* {selectedVisitor && (
                   <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
-                )}
+                )} */}
               </Box>
             </Box>
           </Grid>
         </Box>
       </PageContainer>
+
+      <VisitorDetailDialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        visitor={detailVisitor}
+      />
 
       <ExtendVisitDialog
         open={openExtendVisit}
