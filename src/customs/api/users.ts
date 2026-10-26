@@ -4,19 +4,65 @@ import {
   AuthVisitorResponse,
   LoginRequest,
   LoginResponse,
-  PraformRequest,
   RefreshTokenRequest,
   RefreshTokenResponse,
   RevokeTokenResponse,
 } from './models/Users';
 import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
+import { getConfig } from 'src/config';
 
-const url: string = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
-// const url: string = `https://programmes-cloudy-litigation-sixth.trycloudflare.com/api`;
-export const login = async (body: LoginRequest): Promise<LoginResponse> => {
+
+export const login = async (
+  body: LoginRequest,
+  captchaId?: string,
+  captchaAnswer?: string,
+): Promise<any> => {
   try {
-    const response = await axios.post<LoginResponse>(`${url}/_Auth/RequestToken`, body, {
+    const config = getConfig();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (config.ENABLE_CAPTCHA) {
+      headers['X-Captcha-Id'] = captchaId || '';
+      headers['X-Captcha-Answer'] = captchaAnswer || '';
+    } else {
+      headers['X-Bypass-Captcha'] =
+        '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+    }
+
+    const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
+      headers,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
+//   try {
+//     const response = await axiosInstance.post<RefreshTokenResponse>(`/_Auth/RefreshToken`, body, {
+//       headers: { 'Content-Type': 'application/json' },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+  const response = await axiosInstance.post<RefreshTokenResponse>('/_Auth/RefreshToken');
+
+  return response.data;
+};
+
+export const AuthVisitor = async (body: AuthVisitorRequest): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/on-portal/VisitorRequest`, body, {
       headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
@@ -25,9 +71,9 @@ export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   }
 };
 
-export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
+export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => {
   try {
-    const response = await axios.post<RefreshTokenResponse>(`${url}/_Auth/RefreshToken`, body, {
+    const response = await axiosInstance.post(`/on-portal/submit/pra-form`, body, {
       headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
@@ -36,9 +82,9 @@ export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTo
   }
 };
 
-export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitorResponse> => {
+export const revokeToken = async (): Promise<RevokeTokenResponse> => {
   try {
-    const response = await axios.post(`${url}/_Auth/VisitorRequest`, body, {
+    const response = await axiosInstance.get<RevokeTokenResponse>(`/_Auth/RevokeToken`, {
       headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
@@ -47,46 +93,114 @@ export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitor
   }
 };
 
-export const SubmitPraForm = async (
-  body: any, // bisa diganti dengan type PraformRequest
-  id: string,
-): Promise<AuthVisitorResponse> => {
-  try {
-    const response = await axios.post(
-      `${url}/_Auth/submit/pra-form`,
-      body, // body JSON lengkap
-      {
-        headers: { 'Content-Type': 'application/json' },
-        params: { id }, // id visitor sebagai query param
-      },
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const revokeToken = async (token: string): Promise<RevokeTokenResponse> => {
-  try {
-    const response = await axios.get<RevokeTokenResponse>(`${url}/_Auth/RevokeToken`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getProfile = async (token: string): Promise<GetProfileResponse> => {
+export const getProfile = async (): Promise<GetProfileResponse> => {
   try {
     const response = await axiosInstance.get('/profile/me', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: { Accept: 'application/json' },
     });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data;
     }
+    throw error;
+  }
+};
+
+export const updatePasswordUser = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/profile/password', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const updateProfile = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/profile/me', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+// POST Sharelink
+export const invitationLink = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/_Auth/invitation-link', data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
+};
+
+export const getInvitationLink = async (
+  d: string,
+  code: string,
+  timestamp: string,
+  sig: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/on-portal/invitation-link', {
+      headers: { Accept: 'application/json' },
+      params: { d, code, timestamp, sig },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
+};
+
+export const getPermission = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/user-permission', {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
+};
+export const cancelVisitor = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      `/visitor/transaction/${id}/cancel`,
+      {},
+      {
+        headers: {
+          Accept: 'application/json',
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+
     throw error;
   }
 };

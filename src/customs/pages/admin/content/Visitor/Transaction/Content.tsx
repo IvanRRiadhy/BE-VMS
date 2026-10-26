@@ -1,0 +1,807 @@
+import { useState, useEffect, useRef, use, useMemo } from 'react';
+import {
+  Box,
+  Grid2 as Grid,
+  Portal,
+  Snackbar,
+  Alert,
+  useTheme,
+  useMediaQuery,
+  Typography,
+  InputAdornment,
+  IconButton,
+  FormControlLabel,
+  Divider,
+  Checkbox,
+  TextField,
+} from '@mui/material';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+import type { AlertColor } from '@mui/material/Alert';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
+import iconAdd from 'src/assets/images/svgs/add-circle.svg';
+import TopCard from 'src/customs/components/cards/TopCard';
+import {
+  CreateVisitorRequestSchema,
+  Item,
+  CreateVisitorRequest,
+} from 'src/customs/api/models/Admin/Visitor';
+import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
+import { IconFilterFilled, IconSearch, IconUserPlus, IconUsers } from '@tabler/icons-react';
+import { getInvitationCode } from 'src/customs/api/operator';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
+import { useDebounce } from 'src/hooks/useDebounce';
+import FilterTransaction from './FilterMoreContent';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
+import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
+import InvitationVisitorDialog from '../Trx/components/Dialog/InvitationVisitorDialog';
+import PreRegistrationDialog from '../Trx/components/Dialog/PreRegistrationDialog';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
+import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useTranslation } from 'react-i18next';
+import {
+  exportVisitorExcel,
+  exportVisitorPdf,
+} from 'src/customs/pages/Employee/Invitation/components/VisitorExport';
+import TransactionVisitorDetail from './components/TransactionVisitorDetail';
+import TransactionVisitorList from './components/TransactionVisitorList';
+import { useTransactionVisitorDetail } from 'src/hooks/Visitor/Transaction/useTransactionVisitorDetail';
+import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/useTransactionPagination';
+import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
+import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
+import VisitorFilterSidebar from './components/VisitorFilterSidebar';
+import VisitorDetailDialog from './components/VisitorDetailDialog';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+type Group = {
+  id: string;
+  name: string;
+  agenda: string;
+  rows: any[];
+};
+
+const Content = () => {
+  const { data: profile } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const [loading, setLoading] = useState(false);
+  const theme = useTheme();
+  const mdUp = useMediaQuery(theme.breakpoints.up('lg'));
+  const [edittingId, setEdittingId] = useState('');
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [visitorData, setVisitorData] = useState<any[]>([]);
+  const defaultFormData = CreateVisitorRequestSchema.parse({});
+  const [formDataAddVisitor, setFormDataAddVisitor] =
+    useState<CreateVisitorRequest>(defaultFormData);
+  const { t } = useTranslation();
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
+
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+  const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
+  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
+  const [openPreRegistration, setOpenPreRegistration] = useState(false);
+  const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
+  const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  const [qrValue, setQrValue] = useState('');
+  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
+  const [hasDecoded, setHasDecoded] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [torchOn, setTorchOn] = useState(false);
+  const scanContainerRef = useRef<HTMLDivElement | null>(null);
+  const [wizardKey, setWizardKey] = useState(0);
+  const secdrawerWidth = 350;
+  const [search, setSearch] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [openGroup, setOpenGroup] = useState(true);
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [hostSearch, setHostSearch] = useState('');
+  const debouncedSearch = useDebounce(hostSearch, 500);
+  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
+  const [isAddTransaction, setIsAddTransaction] = useState(false);
+  const [searchAgenda, setSearchAgenda] = useState('');
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
+  const [tab, setTab] = useState<any>(0);
+  const { visitorType } = useVisitorType();
+  const { data: sites } = useSites();
+  const { data: siteData } = useRegisteredSite();
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
+    'search[value]': debouncedSearch,
+    sortDir: 'desc',
+  });
+  const employeeData = data?.collection ?? [];
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const [vtLoading, setVtLoading] = useState(false);
+  const [duplicateData, setDuplicateData] = useState<any>(null);
+  const [selectedType, setSelectedType] = useState<
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
+  >('All');
+
+  const statusMap: Record<string, string> = {
+    All: 'All',
+    Preregis: 'Preregis',
+    Checkin: 'Checkin',
+    Checkout: 'Checkout',
+    Denied: 'Denied',
+    Block: 'Block',
+  };
+
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const {
+    data: tableTransaction,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTransactionVisitorPagination({
+    rowsPerPage,
+    sortDir,
+    search: debouncedSearchAgenda,
+    filters: appliedFilters,
+  });
+
+  const { data: detailData, isLoading: groupDetailLoading } = useTransactionVisitorDetail(
+    selectedGroupId as string,
+  );
+
+  const getVisitorStatus = (visitor: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = dayjs().tz(systemTz);
+    const periodEnd = dayjs.utc(visitor.visitor_period_end).tz(systemTz);
+    const canExpire =
+      visitor.visitor_status === 'Preregis' ||
+      visitor.visitor_status === 'Checkin' ||
+      visitor.visitor_status === 'Available' ||
+      visitor.visitor_status === 'Waiting';
+
+    if (canExpire && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+
+    return visitor.visitor_status;
+  };
+
+  useEffect(() => {
+    if (detailData?.collection) {
+      const visitors = detailData.collection.map((visitor: any) => ({
+        ...visitor,
+        visitor_status: getVisitorStatus(visitor),
+      }));
+
+      setGroupVisitors(visitors);
+    } else {
+      setGroupVisitors([]);
+    }
+  }, [detailData]);
+
+  const groupHeader = detailData?.collection?.[0] ?? null;
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+
+  const getTransactionStatus = (item: any) => {
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = dayjs().tz(systemTz);
+    const periodEnd = dayjs.utc(item.visitor_period_end).tz(systemTz);
+    if (item.transaction_status !== 'Canceled' && periodEnd.isValid() && now.isAfter(periodEnd)) {
+      return 'Expired';
+    }
+    return item.transaction_status;
+  };
+
+  const tableRowVisitors = useMemo(() => {
+    return (
+      tableTransaction?.pages.flatMap((page) =>
+        page.collection.map((item: any) => ({
+          id: item.id,
+          agenda: item.agenda || '-',
+          visitor_type_id: item.visitor_type_id,
+          visitor_type: item.visitor_type_name || '-',
+          site_id: item.site_id,
+          host_name: item.host_name || '-',
+
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
+
+          invitation_code: item.invitation_code || '-',
+          invited_by: item.invited_by || '-',
+          remarks: item.remarks,
+          transaction_status: getTransactionStatus(item),
+          original_transaction_status: item.transaction_status,
+        })),
+      ) ?? []
+    );
+  }, [tableTransaction]);
+
+  const totalFilteredRecords = tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
+  const totalRecords = tableTransaction?.pages[0]?.RecordsTotal ?? 0;
+
+  const cards = [
+    {
+      title: t('totalVisitor'),
+      icon: IconUsers,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    // {
+    //   title: 'Scan QR ' + t('navigation.visitor'),
+    //   icon: IconQrcode,
+    //   subTitle: iconScanQR,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
+    ...(!isOperatorAdmin
+      ? [
+          {
+            title: t('add') + ' Invitation',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          // {
+          //   title: t('add') + ' Pre Registration',
+          //   icon: IconUserPlus,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
+        ]
+      : []),
+  ];
+
+  const resetRegisteredFlow = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor(defaultFormData);
+  };
+  const handleDialogClose = () => {
+    setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setDuplicateData(null);
+    setEdittingId('');
+    setIsAddTransaction(false);
+    setWizardKey((prev) => prev + 1);
+    setFormDataAddVisitor({
+      visitor_type: '',
+      is_group: false,
+      registered_site: '',
+    } as any);
+    resetRegisteredFlow();
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedSite(null);
+    setOpenDialog(false);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setDuplicateData(null);
+    setIsAddTransaction(false);
+    // reset edit mode
+    setEdittingId('');
+
+    // reset wizard
+    setWizardKey((prev) => prev + 1);
+    setIsAddTransaction(false);
+    // reset form
+    setFormDataAddVisitor({
+      visitor_type: '',
+      is_group: false,
+      registered_site: '',
+    } as any);
+    handleDialogClose();
+  };
+
+  const handleSuccess = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor((prev: any) => ({
+      ...prev,
+      registered_site: '',
+    }));
+    setGroupVisitors([]);
+    // setRefreshTrigger((prev) => prev + 1);
+    handleCloseDialog();
+  };
+
+  const openDiscardForCloseAdd = () => {
+    setConfirmDialogOpen(true);
+  };
+
+  const handleCancelDiscard = () => {
+    setConfirmDialogOpen(false);
+    setPendingEditId(null);
+  };
+
+  const resetFormData = () => {
+    setFormDataAddVisitor(defaultFormData);
+    setEdittingId('');
+  };
+
+  const confirmDiscardAndClose = () => {
+    resetFormData();
+    setWizardKey((k) => k + 1);
+    setOpenDialog(false);
+    setOpenDialogIndex(null);
+    setFormDataAddVisitor(defaultFormData);
+    setConfirmDialogOpen(false);
+    handleDialogClose();
+  };
+
+  const handleSubmitQRCode = async (value: string) => {
+    try {
+      setLoading(true);
+      const res = await getInvitationCode(value);
+      const data = res.collection?.data ?? [];
+
+      setVisitorData(data);
+      setOpenDetail(true);
+
+      if (data.length === 0) {
+        showSwal('error', 'Your code does not exist.');
+        return;
+      }
+    } catch (error) {
+      showSwal('error', 'Failed to fetch visitor data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetFilter = () => {
+    const empty = {
+      visitor_status: '',
+      visitor_type: '',
+      visitor_role: '',
+      host_id: '',
+      site_id: '',
+      is_block: '',
+      transaction_status: '',
+      emergency_situation: '',
+      start_date: '',
+      end_date: '',
+    };
+
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    setSearch('');
+    setSelectedType('All');
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedFilters({
+      status: selectedType === 'All' ? undefined : statusMap[selectedType],
+      ...filters,
+    });
+
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+    // setShowDrawerFilterMore(false);
+  };
+
+  const handleSelectSite = (site: any) => {
+    setFormDataAddVisitor((prev: any) => ({
+      ...prev,
+      registered_site: site.id,
+    }));
+
+    setOpenDialogIndex(null);
+    setIsAddTransaction(false);
+    if (flowTarget === 'invitation') {
+      setOpenInvitationVisitor(true);
+    } else if (flowTarget === 'preReg') {
+      setOpenPreRegistration(true);
+    }
+  };
+  const { cancelMutation, removeMutation } = useTransactionVisitorMutation();
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelMutation.mutateAsync(id);
+
+      showSwal('success', 'Successfully canceled visitor');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to cancel visitor');
+    }
+  };
+
+  const filteredVisitors = tableRowVisitors.filter((item: any) => {
+    const keyword = searchAgenda.trim().toLowerCase();
+
+    return (
+      item.agenda?.toLowerCase().includes(keyword) ||
+      item.host_name?.toLowerCase().includes(keyword)
+    );
+  });
+
+  const handleDuplicate = async (group: any) => {
+    try {
+      const res = await getVisitorTransactionByIds(group.id);
+
+      const visitors = res.collection;
+
+      const isGroup = visitors.length > 1;
+
+      setDuplicateData({
+        group,
+        visitors,
+      });
+
+      setFormDataAddVisitor({
+        visitor_type: group.visitor_type_id,
+        is_group: isGroup,
+        registered_site: group.site_id,
+      } as any);
+
+      if (isGroup) {
+        setGroupVisitors([
+          {
+            id: crypto.randomUUID(),
+            group_name: visitors[0]?.group_name || '',
+            group_code: visitors[0]?.visitor_code || '',
+            // data_visitor: [],
+          },
+        ]);
+      }
+
+      setOpenInvitationVisitor(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveVisitor = async () => {
+    if (!selectedVisitor) return;
+
+    try {
+      await removeMutation.mutateAsync({
+        trx_id_visitor: selectedVisitor.id,
+      });
+
+      showSwal('success', 'Visitor removed successfully');
+
+      setSelectedVisitor(null);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to remove visitor');
+    }
+  };
+
+  const handleAdd = async (group: any) => {
+    try {
+      setLoadingAddTransaction(true);
+
+      const response = await getVisitorFormTransaction(group.id);
+      const data = response?.collection;
+
+      if (!data) return;
+
+      setDuplicateData({
+        group: {
+          ...group,
+          group_name: data.group_name ?? group.group_name,
+        },
+        visitors: [
+          {
+            ...data,
+            visitor_name: '',
+            visitor_email: '',
+            visitor_phone: '',
+            visitor_identity_id: '',
+            visitor_organization_name: '',
+            visitor_role: '',
+          },
+        ],
+      });
+
+      setFormDataAddVisitor({
+        ...data,
+        transaction_visitor_id: data.transaction_visitor_id ?? group.id,
+        visitor_name: '',
+        visitor_email: '',
+        visitor_phone: '',
+        visitor_identity_id: '',
+        visitor_organization_name: '',
+        visitor_role: '',
+      });
+
+      setIsAddTransaction(true);
+
+      setWizardKey((prev) => prev + 1);
+      setOpenInvitationVisitor(true);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to get visitor form transaction');
+    } finally {
+      setLoadingAddTransaction(false);
+    }
+  };
+
+  const handleAddInvitation = () => {
+    setFlowTarget('invitation');
+    setOpenDialogIndex(2);
+    setIsAddTransaction(false);
+  };
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailVisitor, setDetailVisitor] = useState<any>(null);
+
+  const handleViewDetail = (visitor: any) => {
+    setDetailVisitor(visitor);
+    setDetailDialogOpen(true);
+  };
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Transaction Visitor" description="this is transaction visitor page">
+        <Box>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard
+                cardMarginBottom={1}
+                items={cards}
+                onImageClick={(_, index) => {
+                  if (index === 1) {
+                    handleAddInvitation();
+                  } else {
+                    setOpenDialogIndex(index);
+                  }
+                }}
+                size={{ xs: 12, lg: 4 }}
+              />
+            </Grid>
+          </Grid>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: mdUp ? 'row' : 'column',
+              backgroundColor: '#fff',
+              // bgcolor: 'background.paper',
+              height: '100%',
+              width: '100%',
+              // overflow: 'hidden',
+              marginTop: '5px',
+            }}
+          >
+            <VisitorFilterSidebar mdUp={mdUp} />
+
+            <TransactionVisitorList
+              mdUp={mdUp}
+              secdrawerWidth={secdrawerWidth}
+              loading={isLoading}
+              profile={profile}
+              searchAgenda={searchAgenda}
+              setSearchAgenda={setSearchAgenda}
+              setShowDrawerFilterMore={setShowDrawerFilterMore}
+              filteredVisitors={filteredVisitors}
+              selectedGroup={selectedGroup}
+              setSelectedGroup={setSelectedGroup}
+              setSelectedGroupId={setSelectedGroupId}
+              handleDuplicate={handleDuplicate}
+              handleCancel={handleCancel}
+              loadingMore={isFetchingNextPage}
+              hasMore={hasNextPage ?? false}
+              fetchNextPage={fetchNextPage}
+              handleAdd={handleAdd}
+            />
+            <TransactionVisitorDetail
+              selectedGroupId={selectedGroupId}
+              openGroup={openGroup}
+              setOpenGroup={setOpenGroup}
+              groupHeader={groupHeader}
+              groupVisitors={groupVisitors}
+              groupDetailLoading={groupDetailLoading}
+              exportVisitorPdf={exportVisitorPdf}
+              exportVisitorExcel={exportVisitorExcel}
+              t={t}
+              selectedVisitor={selectedVisitor}
+              setSelectedVisitor={setSelectedVisitor}
+              handleRemoveVisitor={handleRemoveVisitor}
+              handleAddInvitation={handleAddInvitation}
+              handleViewDetail={handleViewDetail}
+            />
+            {/* <Box sx={{ mt: 2 }}>
+              {selectedVisitor && (
+                <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
+              )}
+            </Box> */}
+          </Box>
+        </Box>
+      </Container>
+
+      <VisitorDetailDialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        visitor={detailVisitor}
+      />
+
+      <InvitationVisitorDialog
+        open={openInvitationVisitor}
+        onClose={handleDialogClose}
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employeeData}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        search={setHostSearch}
+        isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
+        isAddTransaction={isAddTransaction}
+      />
+
+      <PreRegistrationDialog
+        open={openPreRegistration}
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employeeData}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        search={setHostSearch}
+        isLoadingEmployee={isLoadingEmployee}
+        duplicateData={duplicateData}
+        // isAddTransaction={isAddTransaction}
+      />
+
+      {/* Select Registered Site */}
+      <RegisteredSiteDialog
+        open={openDialogIndex === 2}
+        siteData={siteData as any[]}
+        selectedSite={selectedSite}
+        setSelectedSite={(nv) => {
+          setSelectedSite(nv);
+          setFormDataAddVisitor((prev) => ({
+            ...prev,
+            registered_site: nv?.id || '',
+          }));
+        }}
+        isFormChanged={isFormChanged}
+        onDiscard={openDiscardForCloseAdd}
+        onClose={handleCloseDialog}
+        toast={toast as any}
+        onSubmit={handleSelectSite}
+      />
+
+      {/* QR Code */}
+      <QrScannerDialog
+        open={openDialogIndex === 1}
+        onClose={handleDialogClose}
+        qrMode={qrMode}
+        setQrMode={setQrMode}
+        qrValue={qrValue}
+        setQrValue={setQrValue}
+        loading={loading}
+        onSubmit={handleSubmitQRCode}
+        scanContainerRef={scanContainerRef as any}
+        facingMode={facingMode}
+        setFacingMode={setFacingMode}
+        torchOn={torchOn}
+        setTorchOn={setTorchOn}
+        hasDecoded={hasDecoded}
+        setHasDecoded={setHasDecoded}
+      />
+
+      <DetailVisitorDialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        visitorData={visitorData}
+      />
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelDiscard}
+        onDiscard={confirmDiscardAndClose}
+      />
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 99999 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <FilterTransaction
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+        filters={filters}
+        setFilters={setFilters}
+        onApply={handleApplyFilter}
+        onResetFilter={handleResetFilter}
+      />
+      <GlobalBackdropLoading
+        open={loadingAddTransaction || removeMutation.isPending || cancelMutation.isPending}
+      />
+    </PageContainer>
+  );
+};
+
+export default Content;

@@ -1,0 +1,82 @@
+import {
+  Avatar,
+  Checkbox,
+  Collapse,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import { Box } from '@mui/system';
+import { useState } from 'react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { CheckBox, KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+
+function VisitorRow({
+  visitor,
+  index,
+  selectedVisitor,
+  setSelectedVisitor,
+}: {
+  visitor: any;
+  index: number;
+  selectedVisitor?: any;
+  setSelectedVisitor?: any;
+}) {
+  const [open, setOpen] = useState(true);
+  const statusBgMap: Record<string, string> = {
+    Checkin: '#21c45d', // hijau
+    Checkout: '#F44336', // merah
+    Block: '#000000', // hitam
+    Deny: '#8B0000', // merah tua
+    Approve: '#21c45d', // hijau
+    Pracheckin: '#21c45d', // hijau
+  };
+  return (
+    <>
+      <TableRow>
+        <TableCell sx={{ fontSize: '13px', width: 50, textAlign: 'center' }}>{index + 1}</TableCell>
+        <TableCell
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            fontSize: '13px',
+          }}
+        >
+          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
+          {visitor.visitor_name}
+        </TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
+        {/* <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell> */}
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
+
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_type ?? '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_plate_number ?? '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>
+          <Box
+            sx={{
+              display: 'inline-block',
+              px: 1.5,
+              py: 0.8,
+              borderRadius: 2,
+              color: '#fff',
+              fontWeight: 600,
+              backgroundColor: statusBgMap[visitor.visitor_status] ?? '#757575',
+            }}
+          >
+            {visitor.visitor_status}
+          </Box>
+        </TableCell>
+      </TableRow>
+    </>
+  );
+}
+
+export default VisitorRow;

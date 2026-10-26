@@ -8,7 +8,7 @@ export const AvailableIntegrationItemSchema = z.object({
   brand_name: z.string(),
   brand_type: z.number(),
   integration_type: z.number(),
-  api_type_auth: z.number(),
+  api_type_auth: z.string(),
   id: z.string(),
 });
 
@@ -19,7 +19,7 @@ export const IntegrationItemScheme = z.object({
   brand_name: z.string(),
   brand_type: z.number(),
   integration_type: z.number(),
-  api_type_auth: z.number(),
+  api_type_auth: z.string(),
   api_url: z.string(),
   api_auth_username: z.string(),
   api_auth_passwd: z.string(),
@@ -36,13 +36,14 @@ export type Item = {
   brand_name: string;
   brand_type: number;
   integration_type: number;
-  api_type_auth: number;
+  api_type_auth: string;
   api_url: string;
   api_auth_username: string;
   api_auth_passwd: string;
   api_key_field: string;
   api_key_value: string;
   integration_list_id: string;
+  ipsotek_url_dashboard_incident?: string;
 };
 
 export type AvailableItem = z.infer<typeof AvailableIntegrationItemSchema>;
@@ -100,21 +101,30 @@ export type GetIntegrationByIdResponse = {
   collection: Item | null;
 };
 
+const numberWithDefault = (def = 0) =>
+  z.preprocess((val) => {
+    if (val === '' || val === null || val === undefined) return def;
+    const num = Number(val);
+    return Number.isNaN(num) ? def : num;
+  }, z.number());
+
 //CREATE
 export const CreateIntegrationRequestSchema = z.object({
   name: z.string().default(''),
   brand_name: z.string().default(''),
-  brand_type: z.number().default(0),
+  // brand_type: z.number().default(0),
+  brand_type: numberWithDefault(0),
   integration_type: z.number().default(0),
-  api_type_auth: z.number().default(0),
+  api_type_auth: z.string().default(''),
   api_url: z.string().default(''),
   api_auth_username: z.string().default(''),
   api_auth_passwd: z.string().default(''),
   api_key_field: z.string().default(''),
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
+  ipsotek_url_dashboard_incident: z.string().optional(),
+  is_active: z.boolean().optional(),
 });
-
 export type CreateIntegrationRequest = z.infer<typeof CreateIntegrationRequestSchema>;
 
 export interface CreateIntegrationResponse {
@@ -140,13 +150,15 @@ export const UpdateIntegrationRequestSchema = z.object({
   brand_name: z.string().default(''),
   brand_type: z.number().default(0),
   integration_type: z.number().default(0),
-  api_type_auth: z.number().default(0),
+  api_type_auth: z.string().default(''),
   api_url: z.string().default(''),
   api_auth_username: z.string().default(''),
   api_auth_passwd: z.string().default(''),
   api_key_field: z.string().default(''),
   api_key_value: z.string().default(''),
   integration_list_id: z.string().default(''),
+  ipsotek_url_dashboard_incident: z.string().optional(),
+  is_active: z.boolean().optional(),
 });
 
 export type UpdateIntegrationRequest = z.infer<typeof UpdateIntegrationRequestSchema>;
@@ -1043,15 +1055,16 @@ export type UpdateFloorPlanTrackingRequest = z.infer<typeof UpdateFloorPlanTrack
 // Floor Plan Masked Area
 export type FloorPlanMaskedAreaTracking = {
   id: string;
-  floorplan_maskedarea_id: string;
-  floorplanId: string;
-  floorId: string;
+  trk_floorplan_masked_area_id: string;
+  floorplan_id: string;
+  floor_id: string;
   name: string;
-  areaShape: string;
-  colorArea: string;
-  restrictedStatus: string;
-  engineAreaId: string;
-  status: number;
+  area_shape: string;
+  color_area: string;
+  restricted_status: string;
+  integration_id: string;
+  site_id: string;
+  active: boolean;
 };
 
 export type GetFloorPlanMaskedAreaTrackingResponse = {

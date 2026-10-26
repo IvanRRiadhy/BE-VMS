@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { useState } from 'react';
 import { useSelector } from 'src/store/Store';
@@ -65,7 +65,7 @@ const NavCollapse = ({
   };
 
   // menu collapse for sub-levels
-  React.useEffect(() => {
+  useEffect(() => {
     setOpen(false);
     menu?.children?.forEach((item: any) => {
       if (item?.href === pathname) {
@@ -80,8 +80,26 @@ const NavCollapse = ({
     marginTop: '13px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     borderRadius: `${customizer.borderRadius}px`,
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
-    color: open && level < 2 ? theme.palette.primary.light : '',
+    // backgroundColor: open ? theme.palette.primary.main : '',
+    backgroundColor: 'transparent',
+    ...(open && {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    }),
+    // color: open && level < 2 ? '#fff' : '',
+    color: open ? '#fff' : theme.palette.text.primary,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    },
+    '&.Mui-selected': {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    },
+
+    '&.Mui-selected:hover': {
+      backgroundColor: theme.palette.primary.dark,
+    },
   }));
 
   // If Menu has Children
@@ -118,12 +136,15 @@ const NavCollapse = ({
         onClick={handleClick}
         selected={pathWithoutLastPart === menu.href}
         key={menu?.id}
+        // sx={{ backgroundColor: 'red' }}
+        sx={{ ':hover': { backgroundColor: 'primary.main' } }}
       >
         <ListItemIcon
           sx={{
             minWidth: '36px',
             p: '3px 0',
             color: 'inherit',
+            zIndex: 99999,
           }}
         >
           {menuIcon}

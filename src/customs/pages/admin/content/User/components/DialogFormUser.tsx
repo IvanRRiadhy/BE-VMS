@@ -1,0 +1,101 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Divider,
+  DialogActions,
+  Button,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { getUserById } from 'src/customs/api/admin';
+import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
+import FormUser from '../FormUser';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  edittingId?: string;
+  onSuccess?: () => void;
+  organizationRes: any[];
+}
+
+const DialogFormUser: React.FC<Props> = ({
+  open,
+  onClose,
+  edittingId,
+  onSuccess,
+  organizationRes,
+}) => {
+  const [formData, setFormData] = useState<any>({});
+
+  useEffect(() => {
+    if (!open) return;
+
+    const loadData = async () => {
+      if (edittingId) {
+        const response = await getUserById(edittingId);
+
+        setFormData({
+          ...response.collection,
+          user_group_id: response.collection?.user_group_id ?? '',
+        });
+      } else {
+        setFormData(CreateUserSchema.parse({}));
+      }
+    };
+
+    loadData();
+  }, [open, edittingId]);
+
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const handleRequestClose = () => {
+    if (isDirty) {
+      setConfirmOpen(true);
+      return;
+    }
+
+    onClose();
+  };
+
+  const handleDiscard = () => {
+    setConfirmOpen(false);
+    setIsDirty(false);
+    localStorage.removeItem('unsavedUserForm');
+    onClose();
+  };
+  return (
+    <>
+      <Dialog open={open} onClose={handleRequestClose} fullWidth maxWidth="md">
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+          {edittingId ? 'Edit' : 'Add'} User
+          <IconButton onClick={handleRequestClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <FormUser
+            formData={formData}
+            setFormData={setFormData}
+            edittingId={edittingId}
+            onSuccess={onSuccess}
+            organizationRes={organizationRes}
+            onDirtyChange={setIsDirty}
+          />
+        </DialogContent>
+      </Dialog>
+      <ConfirmUnsavedDialog 
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onDiscard={handleDiscard}
+      />
+    </>
+  );
+};
+
+export default React.memo(DialogFormUser);

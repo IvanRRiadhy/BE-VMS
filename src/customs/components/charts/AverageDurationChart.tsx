@@ -13,43 +13,31 @@ type PurposeData = {
 };
 
 const AvarageDurationChart = () => {
-  const { token } = useSession();
   const { t } = useTranslation();
   const [data, setData] = useState<PurposeData[]>([]);
   const [avgMinutes, setAvgMinutes] = useState<number>(0);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
+
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
 
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
-
-        const res = await getAvarageDuration(
-          token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
-        );
+        const res = await getAvarageDuration( start, end);
 
         if (Array.isArray(res?.collection)) {
-          // 🔹 Ubah array API menjadi object buckets { "0-30": 3, "30-60": 1, ">240": 3 }
           const buckets: Record<string, number> = {};
           res.collection.forEach((item: { time_average: string; count: number }) => {
             buckets[item.time_average] = item.count;
           });
 
-          // 🔹 Kalau kamu mau tampilkan total average (jumlah semua count)
           const total = Object.values(buckets).reduce((acc, val) => acc + val, 0);
           setAvgMinutes(total);
 
-          // 🔹 Map ke data chart
           const mapped: PurposeData[] = [
-            { label: '0 - 30 minutes', value: buckets['0-30'] ?? 0, color: '#3b82f5' },
+            { label: '0 - 30 minutes', value: buckets['0-30'] ?? 0, color: '#055499' },
             { label: '30 - 60 minutes', value: buckets['30-60'] ?? 0, color: '#f97316' },
             { label: '60 - 90 minutes', value: buckets['60-90'] ?? 0, color: '#94a3b8' },
             { label: '90 - 120 minutes', value: buckets['90-120'] ?? 0, color: '#22c55e' },
@@ -70,23 +58,23 @@ const AvarageDurationChart = () => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [ start, end]);
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('avarage_duration')}
-      </Typography>
       <Box
         sx={{
           py: 2,
-          borderRadius: 3,
+          borderRadius: 1,
           bgcolor: 'background.paper',
           boxShadow: 3,
           height: 420,
           // border: '1px solid #d6d3d3ff',
         }}
       >
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600, pl: 2 }}>
+          {t('avarage_duration')}
+        </Typography>
         <GlobalStyles
           styles={{
             '.MuiChartsAxis-line': { display: 'none' },
@@ -98,7 +86,7 @@ const AvarageDurationChart = () => {
           {avgMinutes}
         </Typography>
         <Typography variant="body2" sx={{ mb: 0, fontWeight: 400, pl: 3 }}>
-          Visiting Time Average (Minutes)
+          {t('averageTimeMinutes')}
         </Typography>
 
         <BarChart
@@ -119,7 +107,7 @@ const AvarageDurationChart = () => {
           series={[
             {
               data: data.map((d) => d.value),
-              color: '#3b82f5',
+              color: '#055499',
               // label: '',
             },
           ]}

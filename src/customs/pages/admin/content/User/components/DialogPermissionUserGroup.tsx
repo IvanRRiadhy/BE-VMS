@@ -1,0 +1,747 @@
+import React from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Button,
+  Grid2 as Grid,
+  Box,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Typography,
+  Autocomplete,
+  MenuItem,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  FormControl,
+  Select,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { useOrganization } from 'src/hooks/Organization/useOrganization';
+import { useAccessControl } from 'src/hooks/AccessControl/useAccessControl';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  loading?: any;
+  onSubmit: () => void;
+  selectedRoleAccess: string;
+  dropPoint: any;
+  formData: any;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  permissionSites: Record<string, string[]>;
+  setPermissionSites: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+  // getDropdownOptions: any;
+  handleAddSiteAssignment: () => void;
+  formatPermissionLabel: (value: string) => string;
+  siteOptions: any[];
+}
+
+const DialogPermissionUserGroup: React.FC<Props> = ({
+  open,
+  onClose,
+  loading,
+  onSubmit,
+  selectedRoleAccess,
+  formData,
+  setFormData,
+  dropPoint,
+  permissionSites,
+  setPermissionSites,
+  formatPermissionLabel,
+  handleAddSiteAssignment,
+
+  siteOptions,
+}) => {
+  const groupPermissionMap: Record<string, string[]> = {
+    employee: [
+      // 'AsHead',
+      'InviteVistor',
+      'InviteWithinAllowPreRegister',
+      'InviteWithinOwnOrganization',
+      'InviteWithinOwnSite',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      // 'External',
+      // 'ManageTeam',
+      'VisitorTypeAssignment',
+      'OrganizationAssignment',
+      'SiteAssignment',
+    ],
+
+    operatorvms: [
+      // 'AsHead',
+      'OperatorAsWatcher',
+      'ManageInvite',
+      'ManageBlacklist',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'ManageVisitorTypeScope',
+      'ManageAccessScope',
+      'ManageSiteScope',
+      'OperatorRegisterSite',
+      'ManageVisitor',
+      'OrganizationAssignment',
+    ],
+
+    manager: [
+      // 'AsHead',
+      'ManageApprove',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+    ],
+
+    operatoradmin: [
+      'AllowSSOLoginParking',
+      'AllowSSOLoginTracking',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'ManageUser',
+    ],
+    visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
+  };
+  const permissionNeedSite = [
+    'OrganizationAssignment',
+    'ManageOperator',
+    'OperatorRegisterSite',
+    'ManageAccessScope',
+    'ManageVisitor',
+    'ManageSiteScope',
+    'VisitorTypeAssignment',
+    'SiteAssignment',
+    'ManageVisitorTypeScope',
+    'DropPoint',
+  ];
+  const MANAGE_VISITOR_PERMISSIONS = [
+    { id: 'OperatorVisitorSendNotificationArrival', name: 'Send Notification Arrival' },
+    { id: 'OperatorVisitorWalkIn', name: 'Walk In' },
+    { id: 'OperatorVisitorPreregister', name: 'Pre Register' },
+    { id: 'OperatorVisitorCheckIn', name: 'Check In' },
+    { id: 'OperatorVisitorCheckout', name: 'Check Out' },
+    { id: 'OperatorVisitorBlock', name: 'Block Visitor' },
+    { id: 'OperatorVisitorExtend', name: 'Extend Visit' },
+    { id: 'OperatorVisitorTriggerOpen', name: 'Trigger Open Gate' },
+    { id: 'OperatorVisitorCardIssuance', name: 'Card Issuance' },
+    { id: 'OperatorVisitorParkingIssuance', name: 'Parking Issuance' },
+  ];
+
+  const { organizations } = useOrganization();
+  const { accessControl } = useAccessControl();
+  const { visitorType } = useVisitorType();
+  const { data: registeredSite = [] } = useRegisteredSite();
+  const getDropdownOptions = (perm: string) => {
+    switch (perm) {
+      case 'ManageSiteScope':
+        return siteOptions;
+      case 'OrganizationAssignment':
+        return organizations;
+      case 'InviteWithinOwnSite':
+        return siteOptions;
+      case 'ManageAccessScope':
+        return accessControl;
+      case 'OperatorRegisterSite':
+        return registeredSite;
+      case 'ManageVisitor':
+        return MANAGE_VISITOR_PERMISSIONS;
+      case 'ManageVisitorTypeScope':
+        return visitorType;
+      case 'VisitorTypeAssignment':
+        return visitorType;
+      case 'SiteAssignment':
+        return siteOptions;
+      default:
+        return [];
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+          onClose();
+        }
+      }}
+      fullWidth
+      transitionDuration={0}
+      maxWidth="md"
+    >
+      <DialogTitle sx={{ textTransform: 'capitalize' }}>
+        Permission {selectedRoleAccess ? `- ${selectedRoleAccess}` : ''}
+      </DialogTitle>
+
+      <IconButton
+        aria-label="close"
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
+
+      <DialogContent
+        dividers
+        sx={{
+          position: 'relative',
+          minHeight: 300,
+        }}
+      >
+        {/* <Grid size={{ xs: 12 }}> */}
+        {loading ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'background.paper',
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Grid container spacing={1}>
+            {(groupPermissionMap[selectedRoleAccess] ?? []).map((perm) => {
+              const checked = formData.permissions?.includes(perm);
+
+              return (
+                <Grid
+                  size={
+                    perm === 'SiteAssignment' ||
+                    perm === 'DropPoint' ||
+                    perm === 'OperatorRegisterSite' ||
+                    perm === 'ManageVisitor' ||
+                    perm === 'ManageSiteScope' ||
+                    perm === 'ManageAccessScope' ||
+                    perm === 'ManageVisitorTypeScope' ||
+                    perm === 'VisitorTypeAssignment' ||
+                    perm === 'VisitorTypeAssignment' ||
+                    perm === 'OrganizationAssignment'
+                      ? { xs: 12 }
+                      : { xs: 12, md: 6 }
+                  }
+                  key={perm}
+                >
+                  <Box>
+                    <FormControlLabel
+                      labelPlacement="end"
+                      control={
+                        <Switch
+                          checked={checked}
+                          sx={{ m: 0 }}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+
+                            setFormData((prev: any) => {
+                              let newPermissions = prev.permissions ?? [];
+
+                              if (isChecked) {
+                                newPermissions = [...newPermissions, perm];
+                                return {
+                                  ...prev,
+                                  permissions: newPermissions,
+                                };
+                              } else {
+                                newPermissions = newPermissions.filter((p: string) => p !== perm);
+
+                                if (
+                                  perm === 'VisitorTypeAssignment' ||
+                                  perm === 'ManageVisitorTypeScope'
+                                ) {
+                                  return {
+                                    ...prev,
+                                    permissions: newPermissions,
+                                    visitorType: [],
+                                  };
+                                }
+
+                                return {
+                                  ...prev,
+                                  permissions: newPermissions,
+                                };
+                              }
+                            });
+                          }}
+                        />
+                      }
+                      label={formatPermissionLabel(perm)}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        flexDirection: 'row-reverse',
+                        width: '100%',
+                        m: 0,
+                      }}
+                    />
+
+                    {checked && perm === 'ManageAccessScope' && (
+                      <TableContainer component={Paper} sx={{ mt: 1 }}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Access</TableCell>
+                              <TableCell align="center">Can Grant</TableCell>
+                              <TableCell align="center">Can Revoke</TableCell>
+                              <TableCell align="center">Can Block</TableCell>
+                              <TableCell align="center">Action</TableCell>
+                            </TableRow>
+                          </TableHead>
+
+                          <TableBody>
+                            {formData.accesses.map((row: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Autocomplete
+                                    size="small"
+                                    fullWidth
+                                    options={accessControl}
+                                    value={
+                                      accessControl.find(
+                                        (ac: any) => ac.id === row.access_control_id,
+                                      ) ?? null
+                                    }
+                                    getOptionLabel={(option: any) => option.name ?? ''}
+                                    isOptionEqualToValue={(option: any, value: any) =>
+                                      option.id === value.id
+                                    }
+                                    getOptionDisabled={(option: any) =>
+                                      formData.accesses.some(
+                                        (x: any, i: number) =>
+                                          x.access_control_id === option.id && i !== index,
+                                      )
+                                    }
+                                    onChange={(_, newValue: any) => {
+                                      setFormData((prev: any) => ({
+                                        ...prev,
+                                        accesses: prev.accesses.map((r: any, i: number) =>
+                                          i === index
+                                            ? {
+                                                ...r,
+                                                access_control_id: newValue?.id ?? '',
+                                              }
+                                            : r,
+                                        ),
+                                      }));
+                                    }}
+                                    renderInput={(params) => (
+                                      <CustomTextField {...params} placeholder="Select access" />
+                                    )}
+                                  />
+                                </TableCell>
+
+                                <TableCell align="center">
+                                  <Switch
+                                    checked={row.can_grant}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+
+                                      setFormData((prev: any) => ({
+                                        ...prev,
+                                        accesses: prev.accesses.map((r: any, i: number) =>
+                                          i === index ? { ...r, can_grant: checked } : r,
+                                        ),
+                                      }));
+                                    }}
+                                  />
+                                </TableCell>
+
+                                <TableCell align="center">
+                                  <Switch
+                                    checked={row.can_revoke}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+
+                                      setFormData((prev: any) => ({
+                                        ...prev,
+                                        accesses: prev.accesses.map((r: any, i: number) =>
+                                          i === index ? { ...r, can_revoke: checked } : r,
+                                        ),
+                                      }));
+                                    }}
+                                  />
+                                </TableCell>
+
+                                <TableCell align="center">
+                                  <Switch
+                                    checked={row.can_block}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+
+                                      setFormData((prev: any) => ({
+                                        ...prev,
+                                        accesses: prev.accesses.map((r: any, i: number) =>
+                                          i === index ? { ...r, can_block: checked } : r,
+                                        ),
+                                      }));
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell align="center">
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => {
+                                      setFormData((prev: any) => {
+                                        const removed = prev.accesses[index];
+
+                                        return {
+                                          ...prev,
+                                          accesses: prev.accesses.filter(
+                                            (_: any, i: number) => i !== index,
+                                          ),
+                                          deleted_access_ids: removed?.id
+                                            ? [...(prev.deleted_access_ids ?? []), removed.id]
+                                            : prev.deleted_access_ids,
+                                        };
+                                      });
+                                    }}
+                                  >
+                                    <IconTrash size={18} />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+
+                            {formData.accesses.length === 0 && (
+                              <TableRow>
+                                <TableCell colSpan={5} align="center">
+                                  No site added yet
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+
+                        <Box sx={{ p: 2 }}>
+                          <Button
+                            variant="contained"
+                            onClick={handleAddSiteAssignment}
+                            startIcon={<IconPlus />}
+                          >
+                            Add Access
+                          </Button>
+                        </Box>
+                      </TableContainer>
+                    )}
+
+                    {/* ORGANIZATION */}
+                    {checked && perm === 'OrganizationAssignment' && (
+                      <Autocomplete
+                        multiple
+                        options={organizations}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={organizations.filter((opt: any) =>
+                          formData.organization.includes(opt.id),
+                        )}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            organization: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select organization"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    )}
+
+                    {checked && perm === 'SiteAssignment' && (
+                      <>
+                        <Autocomplete
+                          multiple
+                          options={siteOptions}
+                          getOptionLabel={(option: any) => option.name || ''}
+                          value={siteOptions.filter((opt: any) =>
+                            formData.siteAssignment.includes(opt.id),
+                          )}
+                          onChange={(_, newValues) => {
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              siteAssignment: newValues.map((v: any) => v.id),
+                            }));
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Select sites"
+                              size="small"
+                              fullWidth
+                            />
+                          )}
+                          renderOption={(props, option: any) => (
+                            <li {...props} key={option.id}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span>{option.name}</span>
+
+                                {option.is_drop_point && (
+                                  <small style={{ color: 'orange', fontSize: 11 }}>
+                                    Drop Point
+                                  </small>
+                                )}
+                              </div>
+                            </li>
+                          )}
+                        />
+                      </>
+                    )}
+
+                    {/* REGISTERED SITE */}
+                    {checked && perm === 'OperatorRegisterSite' && (
+                      <Autocomplete
+                        multiple
+                        options={registeredSite}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={registeredSite.filter((opt: any) =>
+                          formData.registeredSite.includes(opt.id),
+                        )}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            registeredSite: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select registered site"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    )}
+
+                    {/* REGISTERED SITE */}
+                    {checked && perm === 'ManageSiteScope' && (
+                      <>
+                        <Autocomplete
+                          multiple
+                          disableCloseOnSelect
+                          options={siteOptions}
+                          getOptionLabel={(option: any) => option.name || ''}
+                          value={siteOptions.filter((site) =>
+                            formData.manageSite.includes(site.id),
+                          )}
+                          onChange={(_, newValues) => {
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              manageSite: newValues.map((v: any) => v.id),
+                            }));
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Select sites"
+                              size="small"
+                              fullWidth
+                            />
+                          )}
+                        />
+                      </>
+                    )}
+
+                    {checked && perm === 'ManageVisitorTypeScope' && (
+                      <Autocomplete
+                        multiple
+                        options={visitorType}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={visitorType.filter((opt: any) =>
+                          formData.visitorType.includes(opt.id),
+                        )}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            visitorType: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select visitor type"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    )}
+
+                    {checked && perm === 'VisitorTypeAssignment' && (
+                      <Autocomplete
+                        multiple
+                        options={visitorType}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={visitorType.filter((opt: any) =>
+                          formData.visitorType.includes(opt.id),
+                        )}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            visitorType: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select visitor type"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    )}
+
+                    {/* GENERIC PERMISSION DROPDOWN */}
+                    {checked &&
+                      permissionNeedSite.includes(perm) &&
+                      perm !== 'OrganizationAssignment' &&
+                      perm !== 'ManageSiteScope' &&
+                      perm !== 'ManageVisitorTypeScope' &&
+                      perm !== 'VisitorTypeAssignment' &&
+                      perm !== 'ManageAccessScope' &&
+                      perm !== 'SiteAssignment' &&
+                      perm !== 'OperatorRegisterSite' && (
+                        <Autocomplete
+                          multiple
+                          options={getDropdownOptions(perm)}
+                          disableCloseOnSelect
+                          getOptionLabel={(option: any) => option.name || ''}
+                          value={getDropdownOptions(perm).filter((opt: any) =>
+                            (permissionSites[perm] ?? []).includes(opt.id),
+                          )}
+                          onChange={(_, newValues) => {
+                            setPermissionSites((prev) => ({
+                              ...prev,
+                              [perm]: newValues.map((v: any) => v.id),
+                            }));
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Select values"
+                              size="small"
+                              fullWidth
+                            />
+                          )}
+                        />
+                      )}
+
+                    {checked &&
+                      perm === 'ManageVisitor' &&
+                      (permissionSites['ManageVisitor'] ?? []).includes(
+                        'OperatorVisitorSendNotificationArrival',
+                      ) && (
+                        <Accordion
+                          defaultExpanded
+                          disableGutters
+                          sx={{
+                            mt: 2,
+                            boxShadow: 'none',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography fontWeight="semibold">
+                              Operator Send Notification Arrival Permissions
+                            </Typography>
+                          </AccordionSummary>
+
+                          <AccordionDetails>
+                            <Grid container spacing={2}>
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CustomFormLabel>Notification Subject</CustomFormLabel>
+                                <CustomSelect size="small" fullWidth>
+                                  <MenuItem value="Host">Host</MenuItem>
+                                  <MenuItem value="OperatorVms">OperatorVms</MenuItem>
+                                  <MenuItem value="Head">Head</MenuItem>
+                                  <MenuItem value="Manager">Manager</MenuItem>
+                                  <MenuItem value="Other">Other</MenuItem>
+                                </CustomSelect>
+                              </Grid>
+
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CustomFormLabel>Entity</CustomFormLabel>
+                                <CustomSelect size="small" fullWidth />
+                              </Grid>
+
+                              <Grid size={{ xs: 12 }}>
+                                <CustomFormLabel>Notification Type</CustomFormLabel>
+                                <CustomSelect size="small" fullWidth>
+                                  <MenuItem value="1">Email</MenuItem>
+                                </CustomSelect>
+                              </Grid>
+
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CustomFormLabel>To Name</CustomFormLabel>
+                                <CustomTextField size="small" fullWidth placeholder="To Name" />
+                              </Grid>
+
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <CustomFormLabel>To Email</CustomFormLabel>
+                                <CustomTextField size="small" fullWidth placeholder="To Email" />
+                              </Grid>
+
+                              <Grid size={{ xs: 12 }}>
+                                <CustomFormLabel>Description</CustomFormLabel>
+                                <CustomTextField
+                                  multiline
+                                  rows={3}
+                                  fullWidth
+                                  size="small"
+                                  placeholder="Description for this notification permission"
+                                />
+                              </Grid>
+                            </Grid>
+                          </AccordionDetails>
+                        </Accordion>
+                      )}
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+
+        {/* </Grid> */}
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={onSubmit}>
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default DialogPermissionUserGroup;

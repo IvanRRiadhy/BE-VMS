@@ -1,90 +1,64 @@
-// import { FC, useState } from 'react';
-// import PropTypes from 'prop-types';
-// import { DateRangePicker, RangeKeyDict } from 'react-date-range';
-// import { subDays, addDays } from 'date-fns';
-
-// import 'react-date-range/dist/styles.css';
-// import 'react-date-range/dist/theme/default.css';
-
-// interface CalendarProps {
-//   onChange: (selection: any) => void;
-// }
-// const today = new Date();
-
-// const Calendar: FC<CalendarProps> = ({ onChange }) => {
-//   const [state, setState] = useState<
-//     Array<{
-//       startDate: Date;
-//       endDate: Date;
-//       key: string;
-//     }>
-//   >([
-//     {
-//       startDate: new Date(),
-//       endDate: new Date(),
-//       key: 'selection', // key harus ada agar `ranges` dapat dimanipulasi
-//     },
-//   ]);
-
-//   const handleOnChange = (ranges: RangeKeyDict) => {
-//     const selection = ranges.selection;
-
-//     if (selection.startDate && selection.endDate) {
-//       setState([
-//         {
-//           startDate: selection.startDate,
-//           endDate: selection.endDate,
-//           key: 'selection',
-//         },
-//       ]);
-//       onChange(selection);
-//     }
-//   };
-
-//   return (
-//     <DateRangePicker months={2} onChange={handleOnChange} ranges={state} direction="vertical" />
-//   );
-// };
-
-// Calendar.propTypes = {
-//   onChange: PropTypes.func.isRequired,
-// };
-
-// export default Calendar;
-
-
 import { FC, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { DateRangePicker, RangeKeyDict } from 'react-date-range';
 import { addDays } from 'date-fns';
-
+import { subDays } from 'date-fns';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
+import { Button } from '@mui/material';
+import { Box } from '@mui/system';
 
 interface CalendarProps {
-  onChange: (selection: any) => void;
+  // onChange: (selection: any) => void;
   value?: {
     startDate: Date;
     endDate: Date;
   };
+  onChange: (selection: { startDate: Date; endDate: Date }) => void;
 }
 
 const Calendar: FC<CalendarProps> = ({ onChange, value }) => {
-  // 🗓 Default: hari ini - 7 hari ke depan
-  const defaultStart = value?.startDate ?? new Date();
-  const defaultEnd = value?.endDate ?? addDays(new Date(), 7);
+  // const defaultStart = value?.startDate ?? new Date();
+  // const defaultEnd = value?.endDate ?? addDays(new Date(), 7);
+
+  // const [state, setState] = useState([
+  //   {
+  //     startDate: defaultStart,
+  //     endDate: defaultEnd,
+  //     key: 'selection',
+  //   },
+  // ]);
+
+  // const [state, setState] = useState([
+  //   {
+  //     startDate: new Date(),
+  //     endDate: new Date(),
+  //     key: 'selection',
+  //   },
+  // ]);
+
+  // useEffect(() => {
+  //   if (value) {
+  //     setState([
+  //       {
+  //         startDate: value.startDate,
+  //         endDate: value.endDate,
+  //         key: 'selection',
+  //       },
+  //     ]);
+  //   }
+  // }, [value]);
 
   const [state, setState] = useState([
     {
-      startDate: defaultStart,
-      endDate: defaultEnd,
+      startDate: value?.startDate ?? new Date(),
+      endDate: value?.endDate ?? new Date(),
       key: 'selection',
     },
   ]);
 
-  // ✅ Sync jika parent mengubah dateRange
   useEffect(() => {
-    if (value) {
+    if (value?.startDate && value?.endDate) {
       setState([
         {
           startDate: value.startDate,
@@ -97,20 +71,62 @@ const Calendar: FC<CalendarProps> = ({ onChange, value }) => {
 
   const handleOnChange = (ranges: RangeKeyDict) => {
     const selection = ranges.selection;
-    if (selection.startDate && selection.endDate) {
-      setState([
-        {
-          startDate: selection.startDate,
-          endDate: selection.endDate,
-          key: 'selection',
-        },
-      ]);
-      onChange(selection);
-    }
+    if (!selection.startDate || !selection.endDate) return;
+
+    // if (selection.startDate && selection.endDate) {
+    setState([
+      {
+        startDate: selection.startDate,
+        endDate: selection.endDate,
+        key: 'selection',
+      },
+    ]);
+    // onChange(selection);
+    // }
   };
 
   return (
-    <DateRangePicker months={2} direction="vertical" ranges={state} onChange={handleOnChange} />
+    <>
+      <DateRangePicker months={2} direction="vertical" ranges={state} onChange={handleOnChange} />
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, px: 2, gap: 1 }}>
+        <Button
+          variant="outlined"
+          sx={{ mt: 2 }}
+          onClick={() => {
+            const defaultStart = subDays(new Date(), 7);
+            const defaultEnd = new Date();
+
+            setState([
+              {
+                startDate: defaultStart,
+                endDate: defaultEnd,
+                key: 'selection',
+              },
+            ]);
+
+            onChange({
+              startDate: defaultStart,
+              endDate: defaultEnd,
+            });
+          }}
+        >
+          Reset
+        </Button>
+        <Button
+          variant="contained"
+          sx={{ mt: 2 }}
+          onClick={() =>
+            onChange({
+              startDate: state[0].startDate,
+              endDate: state[0].endDate,
+            })
+          }
+        >
+          Apply
+        </Button>
+      </Box>
+    </>
   );
 };
 
@@ -120,4 +136,3 @@ Calendar.propTypes = {
 };
 
 export default Calendar;
-

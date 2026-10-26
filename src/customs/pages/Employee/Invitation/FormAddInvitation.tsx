@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { AlertColor } from '@mui/material/Alert';
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   TableHead,
   MenuItem,
   Grid2 as Grid,
-  FormLabel,
   Dialog,
   Checkbox,
   TableRow,
@@ -21,83 +20,56 @@ import {
   Button as MuiButton,
   CircularProgress,
   Autocomplete,
-  DialogTitle,
-  DialogContent,
-  Stack,
-  Accordion,
-  AccordionSummary,
-  TableContainer,
-  AccordionDetails,
-  Paper,
   IconButton,
   FormControlLabel,
-  Table,
-  TableBody,
   FormControl,
-  Card,
-  Skeleton,
   RadioGroup,
-  Divider,
-  Tooltip,
-  Backdrop,
-  InputAdornment,
   Snackbar,
   Alert,
-  Chip,
   Portal,
   useTheme,
   useMediaQuery,
+  MobileStepper,
+  Tooltip,
+  Select,
+  FormHelperText,
+  Avatar,
+  LinearProgress,
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
+import 'select2';
 import 'select2/dist/css/select2.min.css';
-import { IconTrash } from '@tabler/icons-react';
-import PageContainer from 'src/components/container/PageContainer';
+import { IconInfoCircle } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconCamera,
+  IconDeviceFloppy,
+  IconTrash,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react';
+import imageCompression from 'browser-image-compression';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
 import 'react-image-crop/dist/ReactCrop.css';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconSearch } from '@tabler/icons-react';
 import {
   CreateGroupVisitorRequest,
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
-  DataVisitor,
-  Item,
+  FormField,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
-
-import {
-  createCheckGiveAccess,
-  createPraRegister,
-  createPraRegisterGroup,
-  createVisitor,
-  createVisitors,
-  getAllCustomFieldPagination,
-  getAllEmployee,
-  getAllSite,
-  getAllVisitor,
-  getAllVisitorCard,
-  getAllVisitorType,
-  getAvailableCard,
-  getFormEmployee,
-  getGrantAccess,
-  getVisitorEmployee,
-  getVisitorTypeById,
-} from 'src/customs/api/admin';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { createPraRegister, getVisitorTypeById } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import CloseIcon from '@mui/icons-material/Close';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import VisitorSelect from 'src/customs/components/select2/VisitorSelect';
 import moment from 'moment-timezone';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -106,12 +78,27 @@ import utc from 'dayjs/plugin/utc';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
-import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
+import { renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
-// import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useQuery } from '@tanstack/react-query';
+import CameraUpload from 'src/customs/components/camera/CameraUpload';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { TreeItem } from '@mui/x-tree-view';
+import { SimpleTreeView } from '@mui/x-tree-view';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
+import CameraDialog from './components/Dialog/CameraDialog';
+import { useTranslation } from 'react-i18next';
+import { useVisitorMutation } from 'src/hooks/Visitor/useVisitorMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import RequiredFieldNotice from './components/ui/RequiredFieldNotice';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { format } from 'path';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { uploadFileToCDN } from 'src/customs/api/cdn';
+import InvitationAndVisitorTypeStep from './components/ui/InvitationAndVisitorTypeStep';
+import VisitorFormStep from './components/ui/VisitorFormStep';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -119,6 +106,16 @@ interface FormVisitorTypeProps {
   edittingId?: string;
   onSuccess?: () => void;
   formKey?: 'visit_form' | 'pra_form';
+  vtLoading?: any;
+  search?: any;
+  visitorType?: any;
+  sites?: any;
+  employee?: any;
+  allVisitorEmployee?: any;
+  enableInvitationTypeStep?: boolean;
+  isLoadingEmployee?: any;
+  duplicateData?: any;
+  isAddTransaction?: any;
 }
 
 dayjs.extend(utc);
@@ -133,6 +130,12 @@ type GroupedPages = {
   batch_page: Record<string, any>;
 };
 
+type VisitorItem = {
+  question_page: SectionPageVisitor[];
+  single_page: FormField[];
+  type?: string;
+};
+
 interface GroupVisitor {
   id?: string;
   visitor_type?: string;
@@ -141,7 +144,7 @@ interface GroupVisitor {
   is_group?: boolean;
   tz?: string;
   registered_site?: string;
-  data_visitor: any[]; // nanti hasil form visitor per group
+  data_visitor: any[];
 }
 
 const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
@@ -150,130 +153,430 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   edittingId,
   onSuccess,
   formKey = 'visit_form',
+  vtLoading,
+  search,
+  visitorType,
+  sites,
+  employee,
+  allVisitorEmployee,
+  enableInvitationTypeStep,
+  isLoadingEmployee,
+  duplicateData,
+  isAddTransaction,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [customField, setCustomField] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
-  const { token } = useSession();
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [skipped, setSkipped] = React.useState(new Set());
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
-
-  const [tableKey, setTableKey] = useState(0);
-  const [vtLoading, setVtLoading] = useState(true);
-  // const [visitorType, setVisitorType] = useState<any[]>([]);
-  const [selfOnlyOverrides, setSelfOnlyOverrides] = useState<Record<string, any[]>>({});
-  // const visitor type by id
-  const [submitted, setSubmitted] = useState(false);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const [activeStep, setActiveStep] = useState(
+    isAddTransaction ? 0 : enableInvitationTypeStep ? -1 : 0,
+  );
+  const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
-  // const [dataVisitor, setDataVisitor] = useState<DataVisitor[]>([]);
-  // const [dataVisitor, setDataVisitor] = useState<
-  //   { id?: string; question_page: SectionPageVisitor[] }[]
-  // >([]);
-  const totalSteps = 1 + draggableSteps.length;
+  const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
+  const totalSteps = isAddTransaction ? draggableSteps.length : 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
   const [isSingle, setIsSingle] = useState(false);
   const [isGroup, setIsGroup] = useState(false);
-  const [visitorDatas, setVisitorDatas] = useState<Item[]>([]);
-  // (opsional) jika mau pilih group yang sedang diedit
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
-  // Duplikat Question Page
-  const [groupForms, setGroupForms] = useState<Record<number, FormVisitor[][]>>({});
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
   const [rawSections, setRawSections] = useState<any[]>([]);
-  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+  const firstStep = enableInvitationTypeStep && !isAddTransaction ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
+  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
+  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
+  const [showOtherAgenda, setShowOtherAgenda] = useState<Record<number, boolean>>({});
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
+  useEffect(() => {
+    if (!open) return;
 
-  // 3) helper supaya snackbar pasti muncul walau pesannya sama
+    setActiveStep(0);
+  }, [open, isAddTransaction]);
+  const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [openCamera, setOpenCamera] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
+  const theme = useTheme();
+  const md = useMediaQuery(theme.breakpoints.up('md'));
+
+  const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
-
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // const [cards, setCard] = useState<any[]>([]);
-
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
   });
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
-
-  const [previews, setPreviews] = useState<Record<string, string | null>>({}); // blob/CDN preview
-
-  const handleSaveGroupForm = () => {
-    setGroupVisitors((prev) =>
-      prev.map((g, idx) =>
-        idx === activeGroupIdx
-          ? { ...g, data_visitor: structuredClone(dataVisitor) } // simpan hasil form
-          : g,
-      ),
-    );
-
-    // reset
-    setDataVisitor([]);
-    setActiveStep(0);
-  };
-
+  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
+  const [siteTree, setSiteTree] = useState<any[]>([]);
+  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const toCsv = (ids: string[]) => ids.join(',');
+  const [previews, setPreviews] = useState<Record<string, string | null>>({});
+  const { t } = useTranslation();
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
     [FORM_KEY]: updater(formsOf(sec)),
   });
+  const [selfOnlyOpen, setSelfOnlyOpen] = useState(false);
+  const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
+  const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
+    Record<number, string[]>
+  >({});
 
-  const [pvDlg, setPvDlg] = useState<{ open: boolean; rowIdx: number | null; forms: any[] }>({
-    open: false,
-    rowIdx: null,
-    forms: [],
-  });
+  useEffect(() => {
+    if (!duplicateData) return;
+    if (!sectionsData.length) return;
 
-  const [accessData, setAccessData] = useState<any[]>([]);
-  const [selfOnlyAccessData, setSelfOnlyAccessData] = useState<Record<string, any[]>>({});
-  const [checkedItems, setCheckedItems] = useState<number[]>([]);
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
+    if (isGroup) return;
 
-  const handleToggle = (id: number) => {
-    setCheckedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    const visitor = duplicateData?.visitors?.[0];
+
+    setSectionsData((prev) =>
+      prev.map((section) => ({
+        ...section,
+        [FORM_KEY]: formsOf(section).map((field: any) => {
+          const remark = (field.remarks || '').toLowerCase();
+
+          switch (remark) {
+            case 'host':
+              return {
+                ...field,
+                answer_text: visitor.host,
+              };
+
+            case 'agenda':
+              return {
+                ...field,
+                answer_text: duplicateData.group.agenda,
+              };
+            case 'site_place':
+              return {
+                ...field,
+                answer_text: duplicateData.group?.site_id?.toUpperCase() ?? '',
+              };
+            case 'visitor_period_start':
+              return {
+                ...field,
+                answer_datetime: duplicateData.group.visitor_period_start,
+              };
+
+            case 'visitor_period_end':
+              return {
+                ...field,
+                answer_datetime: duplicateData.group.visitor_period_end,
+              };
+
+            case 'visitor_role':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_role,
+              };
+
+            case 'fullname':
+            case 'name':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_name,
+              };
+
+            case 'email':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_email,
+              };
+
+            case 'phone':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_phone,
+              };
+
+            case 'organization':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_organization_name,
+              };
+
+            case 'indentity_id':
+            case 'identity_id':
+              return {
+                ...field,
+                answer_text: visitor?.visitor_identity_id,
+              };
+
+            default:
+              return field;
+          }
+        }),
+      })),
     );
-  };
+  }, [duplicateData, sectionsData.length]);
 
-  const dummyData = [
-    { id: 1, visitor: 'Budi', card: null },
-    { id: 2, visitor: 'Siti', card: null },
-    { id: 3, visitor: 'Andi', card: null },
-  ];
+  useEffect(() => {
+    if (!duplicateData) return;
+    const siteId = duplicateData?.group?.site_id;
 
-  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
+    if (!siteId || !sites?.length) return;
 
-  const handleAddGroup = () => {
+    const parentId = siteId.toUpperCase();
+
+    setSelectedSiteParentIds([parentId]);
+
+    const rawTrees = buildSiteTreeWithParent(sites, parentId);
+    const uniqueTrees = dedupeTree(rawTrees);
+
+    setSiteTree(uniqueTrees);
+
+    setSelectedSiteIds([parentId]);
+  }, [duplicateData, sites]);
+
+  useEffect(() => {
+    if (formData.is_group === false) {
+      setIsSingle(true);
+      setIsGroup(false);
+    } else if (formData.is_group === true) {
+      setIsSingle(false);
+      setIsGroup(true);
+    }
+  }, [formData.is_group]);
+
+  useEffect(() => {
+    if (!duplicateData) return;
+    if (!duplicateData?.visitors?.length) return;
+    if (!isGroup) return;
+    if (!rawSections.length) return;
+
+    const groupSections = buildGroupSections(rawSections);
+
+    setSectionsData(groupSections);
+    setDraggableSteps(groupSections.map((s) => s.name));
+
+    const grouped = buildGroupedPages(groupSections);
+    setGroupedPages(grouped);
+
+    const seed = seedDataVisitorFromSections(groupSections);
+
+    const mappedVisitors = duplicateData.visitors.map((visitor: any) => {
+      const template = structuredClone(seed[0]);
+
+      template.question_page.forEach((page: any) => {
+        page.form.forEach((field: any) => {
+          switch (field.remarks?.toLowerCase()) {
+            case 'name':
+              field.answer_text = visitor.visitor_name ?? '';
+              break;
+
+            case 'email':
+              field.answer_text = visitor.visitor_email ?? '';
+              break;
+
+            case 'phone':
+              field.answer_text = visitor.visitor_phone ?? '';
+              break;
+
+            case 'indentity_id':
+              field.answer_text = visitor.visitor_identity_id ?? '';
+              break;
+
+            case 'organization':
+              field.answer_text = visitor.visitor_organization_name ?? '';
+              break;
+
+            case 'visitor_role':
+              field.answer_text = visitor.visitor_role ?? '';
+              break;
+
+            case 'host':
+              field.answer_text = visitor.host ?? '';
+              break;
+
+            case 'agenda':
+              field.answer_text = visitor.agenda ?? '';
+              break;
+
+            case 'visitor_period_start':
+              field.answer_datetime = formatDateTime(visitor.visitor_period_start) ?? '';
+              break;
+
+            case 'visitor_period_end':
+              field.answer_datetime = formatDateTime(visitor.visitor_period_end) ?? '';
+              break;
+
+            case 'site_place':
+              field.answer_text = duplicateData.group?.site_id?.toUpperCase() ?? '';
+              break;
+          }
+        });
+      });
+
+      return template;
+    });
+
+    const firstVisitor = duplicateData.visitors[0];
+    grouped.single_page = grouped.single_page.map((field: any) => {
+      const remarks = field.remarks?.trim().toLowerCase();
+      switch (remarks) {
+        case 'host':
+          return {
+            ...field,
+            answer_text: firstVisitor.host ?? '',
+          };
+
+        case 'agenda':
+        case 'Agenda':
+          return {
+            ...field,
+            answer_text: firstVisitor.agenda ?? '',
+          };
+
+        case 'visitor_period_start':
+          return {
+            ...field,
+            answer_datetime: formatDateTime(firstVisitor.visitor_period_start),
+          };
+
+        case 'visitor_period_end':
+          return {
+            ...field,
+            answer_datetime: formatDateTime(firstVisitor.visitor_period_end),
+          };
+
+        case 'site_place':
+          return {
+            ...field,
+            answer_text: duplicateData.group?.site_id?.toUpperCase() ?? '',
+          };
+
+        default:
+          return field;
+      }
+    });
+    setGroupedPages(grouped);
+
     const randomCode = Array.from({ length: 6 }, () =>
       Math.random().toString(36).charAt(2).toUpperCase(),
     ).join('');
 
+    setGroupVisitors([
+      {
+        id: generateUUIDv4(),
+        group_name: duplicateData.visitors[0]?.group_name ?? '',
+        group_code: randomCode,
+        data_visitor: mappedVisitors,
+      },
+    ]);
+
+    setDataVisitor(mappedVisitors);
+  }, [duplicateData, rawSections, isGroup]);
+
+  const handleOpenSelfOnly = (visitorIdx: number) => {
+    setDataVisitor((prev) => {
+      const next = [...prev];
+
+      if (!next[visitorIdx]) {
+        next[visitorIdx] = {
+          question_page: [],
+          single_page: [],
+        };
+      }
+
+      if (!next[visitorIdx].single_page?.length) {
+        next[visitorIdx].single_page = formsOf(
+          sectionsData.find((x: any) => getSectionType(x) === 'purpose_visit'),
+        ).map((f: any) => ({
+          ...f,
+          answer_text: f.remarks === 'site_place' ? '' : f.answer_text || '',
+          answer_datetime: f.answer_datetime || null,
+          answer_file: f.answer_file || null,
+        }));
+      }
+
+      const purposeIdx = next[visitorIdx]?.question_page?.findIndex(
+        (p: any) => getSectionType(p) === 'purpose_visit',
+      );
+
+      if (purposeIdx >= 0) {
+        next[visitorIdx].question_page[purposeIdx] = {
+          ...next[visitorIdx].question_page[purposeIdx],
+          self_only: true,
+        };
+      }
+
+      const siteField = next[visitorIdx]?.single_page?.find((x: any) => x.remarks === 'site_place');
+
+      setSelfOnlySelectedSiteIdsMap((prev) => ({
+        ...prev,
+        [visitorIdx]: siteField?.answer_text
+          ? siteField.answer_text.split(',').filter(Boolean)
+          : [],
+      }));
+      return next;
+    });
+    setSelfOnlyVisitorIdx(visitorIdx);
+
+    setSelfOnlyOpen(true);
+  };
+
+  const handleSaveSelfOnly = () => {
+    setDataVisitor((prev) => {
+      const next = [...prev];
+
+      const idx = selfOnlyVisitorIdx!;
+
+      const purposeIdx = next[idx].question_page.findIndex(
+        (p: any) => getSectionType(p) === 'purpose_visit',
+      );
+
+      if (purposeIdx >= 0) {
+        next[idx].question_page[purposeIdx] = {
+          ...next[idx].question_page[purposeIdx],
+          self_only: true,
+          form: [...next[idx].single_page],
+        };
+      }
+
+      return next;
+    });
+
+    setSelfOnlyOpen(false);
+  };
+
+  const selfForms =
+    selfOnlyVisitorIdx !== null ? dataVisitor[selfOnlyVisitorIdx]?.single_page || [] : [];
+
+  const handleCloseSelfOnly = () => {
+    setSelfOnlyOpen(false);
+    setSelfOnlyVisitorIdx(0);
+  };
+
+  const handleAddGroup = () => {
+    const newGroupIndex = groupVisitors.length;
+    const randomCode = Array.from({ length: 6 }, () =>
+      Math.random().toString(36).charAt(2).toUpperCase(),
+    ).join('');
+    setInputValues({});
     const detectedTz =
       moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
 
     const newGroup: GroupVisitor = {
-      id: crypto.randomUUID(),
+      id: generateUUIDv4(),
       group_name: '',
       group_code: randomCode,
       is_group: formData.is_group || false,
@@ -290,606 +593,35 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  const [grantAccessMap, setGrantAccessMap] = useState<Record<string, any[]>>({});
-  const allSite = dataVisitor
-    .map(
-      (v) =>
-        v.question_page
-          ?.flatMap((p: any) => p.form ?? [])
-          ?.find((f: any) => f.remarks === 'site_place')?.answer_text,
-    )
-    .filter(Boolean);
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
 
-  // const isSingle = !isGroup;
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
-  const [groupAccessData, setGroupAccessData] = useState<any[]>([]);
-
-  const selfOnlyVisitors = useMemo(() => {
-    return (dataVisitor || [])
-      .map((dv, idx) => {
-        const hasSelf = dv?.question_page?.some((p: any) => p?.self_only === true);
-        if (!hasSelf) return null;
-
-        // ambil field name
-        const nameField = dv?.question_page
-          ?.flatMap((p: any) => p.form || [])
-          ?.find((f: any) => f.remarks === 'name');
-
-        // ambil site_place (optional, kalau mau ditampilkan)
-        const siteField = dv?.question_page
-          ?.flatMap((p: any) => p.form || [])
-          ?.find((f: any) => f.remarks === 'site_place');
-
-        return {
-          key: `row${idx + 1}`, // ✅ konsisten dengan overrides
-          idx,
-          dv,
-          name: nameField?.answer_text || `Visitor ${idx + 1}`,
-          sitePlace: siteField?.answer_text || null,
-        };
-      })
-      .filter(Boolean);
-  }, [dataVisitor]);
-
-  function getSitePlaceFromOverrides(overrides: any, idx: number) {
-    if (!overrides) return null;
-
-    const forms = overrides[`row${idx + 1}`];
-    if (!Array.isArray(forms)) return null;
-
-    const siteField = forms.find((f: any) => f.remarks === 'site_place');
-    return siteField?.answer_text || null;
-  }
-
-  useEffect(() => {
-    const fetchGrantAccess = async () => {
-      if (!dataVisitor?.length) return;
-
-      try {
-        // 1️⃣ Group access
-        const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-        console.log('🔎 siteAnswer dari getSiteFromForm:', siteAnswer);
-
-        if (siteAnswer) {
-          const res = await getGrantAccess(token as string, siteAnswer);
-          console.log('✅ Response getGrantAccess (group):', res);
-
-          setAccessData(res.collection ?? []);
-          setGroupAccessData(res.collection ?? []);
-        }
-
-        // 2️⃣ Self only access dari localStorage.selfOnlyOverrides
-        const overrides = JSON.parse(localStorage.getItem('selfOnlyOverrides') || '{}');
-        const map: Record<string, any[]> = {};
-
-        for (const v of selfOnlyVisitors) {
-          const sitePlaceId = getSitePlaceFromOverrides(overrides, v?.idx || 0);
-          if (sitePlaceId) {
-            const resSelf = await getGrantAccess(token as string, sitePlaceId);
-            console.log(`✅ Response getGrantAccess (self only ${v?.name}):`, resSelf);
-            if (v?.key !== undefined) {
-              map[v.key] = resSelf.collection ?? [];
-            }
-          } else {
-            console.log(`⚠️ self_only ${v?.name} tidak punya site_place`);
-            if (v?.key !== undefined) {
-              map[v.key] = [];
-            }
-          }
-        }
-
-        setGrantAccessMap(map);
-      } catch (err) {
-        console.error('❌ Failed to fetch grant access:', err);
-      }
-    };
-
-    if (token && submitted) fetchGrantAccess();
-  }, [token, submitted, isGroup, dataVisitor, sectionsData, selfOnlyVisitors]);
-
-  function getSiteFromForm(
-    isGroup: boolean,
-    sectionsData: any[],
-    dataVisitor: any[],
-  ): string | null {
-    if (isGroup) {
-      // ✅ Group → ambil dari dataVisitor
-      for (const visitor of dataVisitor) {
-        for (const page of visitor.question_page ?? []) {
-          const found = page.form?.find((f: any) => f.remarks === 'site_place');
-          if (found?.answer_text) {
-            console.log('[getSiteFromForm] ✅ Group mode → site_place:', found.answer_text);
-            return found.answer_text;
-          }
-        }
-      }
-      console.log('[getSiteFromForm] ⚠️ Group mode → site_place belum diisi');
-      return null;
-    } else {
-      const purposeVisitPage = sectionsData.find((p: any) => p.name === 'Purpose Visit');
-      const siteFieldUI =
-        purposeVisitPage?.visit_form?.find((f: any) => f.remarks === 'site_place') ??
-        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place'); // 👈 fallback ke form juga
-
-      if (siteFieldUI?.answer_text) {
-        console.log(
-          '[getSiteFromForm] ✅ Single mode (sectionsData) → site_place:',
-          siteFieldUI.answer_text,
-        );
-        return siteFieldUI.answer_text;
-      }
-
-      // ✅ Kalau tidak ada di sectionsData, fallback ke dataVisitor
-      for (const page of dataVisitor[0]?.question_page ?? []) {
-        const found = page.form?.find((f: any) => f.remarks === 'site_place');
-        if (found?.answer_text) {
-          console.log(
-            '[getSiteFromForm] ✅ Single mode (dataVisitor) → site_place:',
-            found.answer_text,
-          );
-          return found.answer_text;
-        }
-      }
-
-      console.log('[getSiteFromForm] ⚠️ Single mode → site_place belum diisi');
-      return null;
-    }
-  }
-
-  // useEffect(() => {
-  //   const fetchCards = async () => {
-  //     try {
-  //       const res = await getAvailableCard(token as string, formData.registered_site as string);
-  //       console.log('Available Cards:', res);
-  //       setAvailableCards(res.collection ?? []);
-  //     } catch (error) {
-  //       console.error('Failed to fetch cards:', error);
-  //     }
-  //   };
-
-  //   fetchCards();
-  // }, [token, formData.registered_site]);
-
-  // useEffect(() => {
-  //   const fetchDataCard = async () => {
-  //     try {
-  //       const res = await getAllVisitorCard(token as string);
-  //       setCard(res.collection ?? []);
-  //     } catch (error) {
-  //       console.error('Failed to fetch cards:', error);
-  //     }
-  //   };
-
-  //   fetchDataCard();
-  // }, [token]);
-
-  // filter cards berdasarkan search
-  const filteredCards = availableCards.filter((card) =>
-    [card.remarks, card.card_number, card.card_mac]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  );
-
-  // utils
-  const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
-
-  const normalizeIdsDeep = (payload: any): number[] => {
-    const flat = flatDeep(payload);
-    const ids = flat
-      .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
-      .filter((n) => Number.isFinite(n) && n > 0);
-    // dedupe
-    return Array.from(new Set(ids));
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
   };
-
-  const handleSelectInvitation = (payload: Row[]) => {
-    console.group('onCheckedChange');
-    console.log('raw payload (rows):', payload);
-    console.groupEnd();
-
-    setSelectedInvitations(payload); // langsung array of row
-  };
-
-  // kalau klik choose card (dari DynamicTable)
-  const handleOpenChooseCard = () => {
-    if (!selectedInvitations?.length) {
-      toast('Please select at least one invitation first.'); // <— tampilkan snackbar
-      return;
-    }
-    setSelectedCards([]);
-    setOpenChooseCardDialog(true);
-  };
-
-  const handleCloseGrantDialog = () => {
-    setNextDialogOpen(false);
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-  };
-
-  // amankan juga kalau ditutup via ESC/backdrop
-
-  // amankan pagination/reopen Grant dialog
-  useEffect(() => {
-    if (!nextDialogOpen) {
-      setSelectedInvitations([]);
-      setSelectedCards([]);
-    }
-  }, [nextDialogOpen]);
-
-  function buildDataAccess(rows: Row[], selectedInvitations: Row[], checkedItems: string[]) {
-    const data_access: any[] = [];
-
-    for (const visitorRow of selectedInvitations) {
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.card;
-
-      if (!trxVisitorId || !cardNumber) continue;
-
-      for (const accessControlId of checkedItems) {
-        data_access.push({
-          access_control_id: accessControlId,
-          action: 1, // 1 = Grant
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
-    }
-
-    return { data_access };
-  }
-
-  // const handleAccessSubmit = async () => {
-  //   if (!selectedInvitations?.length) {
-  //     console.warn('No visitor selected');
-  //     return;
-  //   }
-  //   console.log('👉 selectedInvitations', selectedInvitations);
-
-  //   const payload = buildDataAccess(rows, selectedInvitations, checkedItems.map(String));
-
-  //   // if (!payload.data_access.length) {
-  //   //   console.warn('No access data to submit');
-  //   //   return;
-  //   // }
-
-  //   console.log('📦 Final payload:', payload);
-
-  //   try {
-  //     const res = await createCheckGiveAccess(token as string, payload as any);
-  //     toast('Grant access successful', 'success');
-  //     console.log('✅ Grant access success:', res);
-  //   } catch (err) {
-  //     console.error('❌ Failed grant access:', err);
-  //   } finally {
-  //     setSelectedInvitations([]);
-  //     setSelectedCards([]);
-  //     setCheckedItems([]);
-  //     setNextDialogOpen(false);
-  //     setAccessDialogOpen(false);
-  //     setTimeout(() => {
-  //       onSuccess && onSuccess();
-  //     }, 500);
-  //   }
-  // };
-
-  // const handleAccessSubmit = async () => {
-  //   if (!selectedInvitations?.length) {
-  //     console.warn('No visitor selected');
-  //     return;
-  //   }
-
-  //   // ✅ Gabungkan kedua state
-  //   const allChecked = [...checkedGroupItems, ...checkedSelfItems];
-
-  //   console.log('👉 selectedInvitations', selectedInvitations);
-  //   const payload = buildDataAccess(rows, selectedInvitations, allChecked.map(String));
-  //   console.log('📦 Final payload:', payload);
-
-  //   try {
-  //     const res = await createCheckGiveAccess(token as string, payload as any);
-  //     toast('Grant access successful', 'success');
-  //     console.log('✅ Grant access success:', res);
-  //   } catch (err) {
-  //     console.error('❌ Failed grant access:', err);
-  //   } finally {
-  //     setSelectedInvitations([]);
-  //     setSelectedCards([]);
-  //     setCheckedGroupItems([]);
-  //     setCheckedSelfItems([]);
-  //     setNextDialogOpen(false);
-  //     setAccessDialogOpen(false);
-  //     setTimeout(() => {
-  //       onSuccess && onSuccess();
-  //     }, 500);
-  //   }
-  // };
-
-  const handleAccessSubmit = async () => {
-    if (!selectedInvitations?.length) {
-      console.warn('No visitor selected');
-      return;
-    }
-
-    // payload akhir
-    const data_access: any[] = [];
-
-    // 1️⃣ Group Access → apply ke semua selected visitors
-    for (const visitorRow of selectedInvitations) {
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
-      if (!trxVisitorId || !cardNumber) continue;
-
-      for (const acId of checkedGroupItems) {
-        data_access.push({
-          access_control_id: acId,
-          action: 1,
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
-    }
-
-    // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
-    // for (const visitorRow of selectedInvitations) {
-    //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-    //   const trxVisitorId = visitorRow.trx_visitor_id;
-    //   const cardNumber = visitorRow.assigned_card_number;
-    //   if (!trxVisitorId || !cardNumber) continue;
-
-    //   for (const acId of checkedSelfItems) {
-    //     data_access.push({
-    //       access_control_id: acId,
-    //       action: 1,
-    //       card_number: cardNumber,
-    //       trx_visitor_id: trxVisitorId,
-    //     });
-    //   }
-    // }
-
-    for (const visitorRow of selectedInvitations) {
-      if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number;
-      if (!trxVisitorId || !cardNumber) continue;
-
-      for (const fullId of checkedSelfItems) {
-        // ✅ parse "visitorKey:acId" → ambil hanya acId
-        const parts = fullId.split(':');
-        const acId = parts.length > 1 ? parts[1] : parts[0];
-
-        data_access.push({
-          access_control_id: acId,
-          action: 1,
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
-    }
-
-    const payload = { data_access };
-    console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
-
-    try {
-      const res = await createCheckGiveAccess(token as string, payload);
-      console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
-      toast('Grant access successful', 'success');
-      console.log('✅ Grant access success:', res);
-    } catch (err) {
-      console.error('❌ Failed grant access:', err);
-    } finally {
-      // reset
-      setSelectedInvitations([]);
-      setSelectedCards([]);
-      setCheckedGroupItems([]);
-      setCheckedSelfItems([]);
-      // setNextDialogOpen(false);
-      // setAccessDialogOpen(false);
-      // setTimeout(() => {
-      //   onSuccess && onSuccess();
-      // }, 500);
-    }
-  };
-
-  // end PV
-
-  // useEffect(() => {
-  //   if (!isGroup || sectionsData.length === 0) return;
-
-  //   const templateQP: SectionPageVisitor[] = sectionsData.map((s, sIdx) => ({
-  //     sort: s.sort ?? sIdx,
-  //     name: s.name,
-  //     status: 0,
-  //     is_document: s.is_document ?? false,
-  //     can_multiple_used: s.can_multiple_used ?? false,
-  //     self_only: s.self_only ?? false,
-  //     foreign_id: s.foreign_id ?? '',
-  //     // Penting: pakai visit_form sebagai "form" untuk payload
-  //     form: formsOf(s).map((f, fIdx) => ({
-  //       ...f,
-  //       sort: f.sort ?? fIdx,
-  //       answer_text: '',
-  //       answer_datetime: '',
-  //       answer_file: '',
-  //     })),
-  //   }));
-
-  //   setDataVisitor([{ question_page: templateQP }]);
-  //   setActiveGroupIdx(0);
-  // }, [isGroup, sectionsData]);
-
-  useEffect(() => {
-    if (!sectionsData?.length) return;
-
-    setGroupForms((prev) => {
-      const next = { ...prev };
-      sectionsData.forEach((section, secIdx) => {
-        if (section.can_multiple_used) {
-          const template = formsOf(section).map((f) => ({
-            ...f,
-            answer_text: '',
-            answer_datetime: '',
-            answer_file: '',
-          }));
-          // kalau belum ada, seed dengan 1 lembar
-          // if (!next[secIdx] || next[secIdx].length === 0) {
-          //   next[secIdx] = [template];
-          // }
-        }
-      });
-      return next;
-    });
-  }, [sectionsData]);
-
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const reordered = Array.from(draggableSteps);
-    const [moved] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, moved);
-    setDraggableSteps(reordered);
-
-    // 🔁 Reorder sectionsData sesuai urutan baru draggableSteps
-    const reorderedSections = reordered.map((sectionName, index) => {
-      const matchedSection = sectionsData.find((s) => s.name === sectionName);
-      return {
-        ...matchedSection!,
-        sort: index, // update nilai sort berdasarkan urutan baru
-      };
-    });
-
-    setSectionsData(reorderedSections);
-  };
-
-  //   useEffect(() => {
-  //     const fetchVisitorTypeDetails = async () => {
-  //       if (!formData.visitor_type || !token) return;
-
-  //       setVtLoading(true); // mulai skeleton
-  //       const minLoadingTime = 500; // ms, minimal loading terlihat
-  //       const startTime = Date.now();
-
-  //       try {
-  //         const res = await getVisitorTypeById(token, formData.visitor_type);
-  //         const selectedType = res?.collection;
-
-  //         if (selectedType && selectedType.section_page_visitor_types) {
-  //           const sections = selectedType.section_page_visitor_types;
-  //           setDraggableSteps(sections.map((s: any) => s.name));
-  //           setSectionsData(sections);
-  //         } else {
-  //           setDraggableSteps([]);
-  //           setSectionsData([]);
-  //         }
-  //       } catch (error) {
-  //         console.error('Failed to fetch visitor type details', error);
-  //         setDraggableSteps([]);
-  //         setSectionsData([]);
-  //       } finally {
-  //         const elapsed = Date.now() - startTime;
-  //         const remaining = Math.max(minLoadingTime - elapsed, 0);
-  //         setTimeout(() => setVtLoading(false), remaining);
-  //       }
-  //     };
-
-  //     fetchVisitorTypeDetails();
-  //   }, [formData.visitor_type, token]);
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: structuredClone(dataVisitor), // simpan form hasil pengisian
-  //     };
-  //     return next;
-  //   });
-
-  //   // reset temporary data
-  //   setActiveGroupIdx(0);
-  //   setDataVisitor([]);
-  //   setActiveStep(0);
-  // };
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-
-  //     // 🔧 Bersihkan id di level form, tapi pertahankan id di level question_page
-  //     const cleanDataVisitor = structuredClone(dataVisitor).map((dv) => ({
-  //       ...dv,
-  //       question_page: dv.question_page.map((qp) => ({
-  //         // id pada section tetap ada dan ditampilkan
-  //         id: qp.id || crypto.randomUUID(), // jaga section ID tetap ada
-  //         sort: qp.sort ?? 0,
-  //         name: qp.name ?? '',
-  //         // status: qp.s ?? 0,
-  //         is_document: qp.is_document ?? false,
-  //         can_multiple_used: qp.can_multiple_used ?? false,
-  //         foreign_id: qp.foreign_id ?? '',
-  //         self_only: qp.self_only ?? false,
-
-  //         // 🔹 tapi semua form di dalamnya id-nya dihapus
-  //         form: (qp.form || []).map(({ id, ...rest }) => rest),
-  //       })),
-  //     }));
-
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: cleanDataVisitor,
-  //     };
-
-  //     console.log(
-  //       `💾 Saved group ${next[activeGroupIdx].group_name || '(no name)'}`,
-  //       cleanDataVisitor,
-  //     );
-
-  //     return next;
-  //   });
-  // };
 
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
-    console.log('💾 Saving existing group:', activeGroupIdx);
-
-    const deepClone = (obj: any) => {
-      try {
-        return structuredClone(obj);
-      } catch {
-        return JSON.parse(JSON.stringify(obj));
-      }
-    };
 
     setGroupVisitors((prev) => {
       const next = [...prev];
+
       if (!next[activeGroupIdx]) {
-        console.warn('⚠️ activeGroupIdx invalid, skip save');
         return prev;
       }
 
-      const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-        ...dv,
-        question_page: (dv.question_page || []).map((qp: any) => ({
-          id: qp.id || crypto.randomUUID(),
-          sort: qp.sort ?? 0,
-          name: qp.name ?? '',
-          is_document: qp.is_document ?? false,
-          can_multiple_used: qp.can_multiple_used ?? false,
-          foreign_id: qp.foreign_id ?? '',
-          self_only: qp.self_only ?? false,
-          form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-        })),
-      }));
-
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
-        data_visitor: cleanDataVisitor,
+        data_visitor: structuredClone(dataVisitor),
       };
 
       return next;
@@ -899,19 +631,19 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const getSectionType = (section: any) => {
     const f = formsOf(section);
     if (
-      f.some((x: any) => x.remarks === 'vehicle_plate') &&
+      f.some((x: any) => x.remarks === 'vehicle_plate' || x.remarks === 'vehicle_id') &&
       !section.is_document &&
       !section.can_multiple_used
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -938,845 +670,268 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
-  const handleSteps = (step: number) => {
-    const hasVisitorTypes = (visitorType?.length ?? 0) > 0;
-    const showVTListSkeleton = vtLoading || !hasVisitorTypes;
-    if (step == 0) {
-      return (
-        <Box>
-          <Grid container spacing={2}>
-            <Grid sx={{ mt: 0 }} size={{ xs: 12, sm: 12 }}>
-              {/* <Alert severity="info">Complete the following data properly and correctly</Alert> */}
-              <Divider />
-            </Grid>
+  const handleSelectVisitor = (gIdx: number, v: any) => {
+    const sectionIndex = getSectionIndex(activeStep);
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-              >
-                Visitor Type
-              </CustomFormLabel>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  row
-                  value={formData.visitor_type}
-                  onChange={(e) => {
-                    const newType = e.target.value;
+    if (!v) {
+      const resetKeys = [
+        'name',
+        'email',
+        'phone',
+        'organization',
+        'indentity_id',
+        'identity_id',
+        'gender',
+        'employee',
+      ];
 
-                    // 💡 Reset data tanpa ubah mode (isGroup tetap!)
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      visitor_type: newType,
-                    }));
+      setDataVisitor((prev) => {
+        const next = [...prev];
+        const page = next[gIdx]?.question_page?.[sectionIndex];
 
-                    localStorage.removeItem('unsavedVisitorData');
-                    setSectionsData([]);
-                    setDataVisitor([]);
-                    setGroupedPages({} as any);
-                    setDraggableSteps([]);
-                    setRawSections([]);
-                    setActiveStep(0);
-                  }}
-                >
-                  {/* <Fade in={!showVTListSkeleton} timeout={100}> */}
-                  <Grid container spacing={1}>
-                    {showVTListSkeleton
-                      ? Array.from({ length: 6 }).map((_, i) => (
-                          <Grid size={{ xs: 6, sm: 6 }} key={`sk-${i}`}>
-                            <Card sx={{ width: '100%', p: 1 }}>
-                              <Skeleton />
-                              <Skeleton animation="wave" />
-                              <Skeleton animation={false} />
-                            </Card>
-                          </Grid>
-                        ))
-                      : visitorType.map((type) => (
-                          <Grid size={{ xs: 12, md: 6 }} key={type.id}>
-                            <FormControlLabel
-                              value={type.id}
-                              control={<Radio sx={{}} />}
-                              sx={{ m: 0, width: '100%' }}
-                              label={
-                                <Paper
-                                  sx={{
-                                    px: 2,
-                                    py: 1,
-                                    cursor: 'pointer',
-                                    transition: '0.2s',
-                                    textAlign: 'center',
-                                    fontWeight: formData.visitor_type === type.id ? 600 : 400,
-                                    border: '1px solid',
-                                    borderColor:
-                                      formData.visitor_type === type.id
-                                        ? 'primary.main'
-                                        : 'divider',
-                                    bgcolor:
-                                      formData.visitor_type === type.id
-                                        ? 'primary.light'
-                                        : 'background.paper',
-                                  }}
-                                >
-                                  {type.name}
-                                </Paper>
-                              }
-                            />
-                          </Grid>
-                        ))}
-                  </Grid>
-                  {/* </Fade> */}
-                </RadioGroup>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-              >
-                Select Status Visitor
-              </CustomFormLabel>
-              {/* {formData.visitor_type && ( */}
-              <Box display="flex" alignItems="center" gap={2}>
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === false}
-                      value={formData.is_group}
-                      onChange={() => {
-                        setIsSingle(true);
-                        setIsGroup(false);
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: false, // ubah nilainya jadi false
-                        }));
-                      }}
-                    />
-                  }
-                  label="Single"
-                />
+        if (!page?.form) return prev;
 
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === true}
-                      value={formData.is_group}
-                      onChange={() => {
-                        setIsSingle(false);
-                        setIsGroup(true);
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: true, // ubah nilainya jadi true
-                        }));
-                      }}
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Group
-                      <Tooltip title="When activated, you can add more than one visitor">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              {isGroup && (
-                <Box>
-                  <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                    Group List
-                  </CustomFormLabel>
+        page.form = page.form.map((item: any) => {
+          if (resetKeys.includes(item.remarks)) {
+            clearFieldError(`${sectionIndex}:${gIdx}:${item.custom_field_id}`);
 
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Group Name</TableCell>
-                          <TableCell>Code</TableCell>
-                          <TableCell>Visitor Form</TableCell>
-                          <TableCell align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groupVisitors.map((g, index) => (
-                          <TableRow key={g.id}>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_name"
-                                value={g.group_name}
-                                placeholder="Enter group name"
-                                onChange={(e) =>
-                                  setGroupVisitors((prev) =>
-                                    prev.map((item) =>
-                                      item.id === g.id
-                                        ? { ...item, group_name: e.target.value }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_code"
-                                value={g.group_code}
-                                InputProps={{ readOnly: true }}
-                              />
-                            </TableCell>
-                            {/* <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  // Simpan index group aktif
-                                  setActiveGroupIdx(index);
+            return {
+              ...item,
+              answer_text: '',
+            };
+          }
 
-                                  // Jika group sudah punya data_visitor sebelumnya → load ke form
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    setDataVisitor(structuredClone(g.data_visitor));
-                                  } else {
-                                    // kalau belum pernah isi, buat dari sectionsData
-                                    const fresh = seedDataVisitorFromSections(sectionsData);
-                                    setDataVisitor(fresh);
-                                  }
+          return item;
+        });
 
-                                  // Pindah ke form step
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell> */}
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  // Simpan index group aktif
-                                  setActiveGroupIdx(index);
+        return next;
+      });
 
-                                  // Helper deep clone universal
-                                  const deepClone = (obj: any) => {
-                                    try {
-                                      return structuredClone(obj);
-                                    } catch {
-                                      return JSON.parse(JSON.stringify(obj));
-                                    }
-                                  };
-
-                                  // Jika group sudah punya data_visitor sebelumnya → load ke form
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    const cloned = deepClone(g.data_visitor);
-                                    setDataVisitor(cloned);
-                                    console.log(
-                                      `📋 Load group ${g.group_name || '(no name)'}`,
-                                      cloned,
-                                    );
-                                  } else {
-                                    // Kalau belum pernah isi, buat baru dari template sectionsData
-                                    const fresh = deepClone(
-                                      seedDataVisitorFromSections(sectionsData),
-                                    );
-                                    setDataVisitor(fresh);
-                                    console.log(
-                                      `🆕 New visitor form for group ${
-                                        g.group_name || '(no name)'
-                                      }`,
-                                      fresh,
-                                    );
-                                  }
-
-                                  // Pindah ke form step
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                color="error"
-                                onClick={() => handleDeleteGroup(g.id || '')}
-                                size="small"
-                              >
-                                <IconX />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {groupVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              No group added yet.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                      <MuiButton
-                        variant="contained"
-                        size="small"
-                        onClick={handleAddGroup}
-                        sx={{ mb: 1, ml: 2, mt: 1 }}
-                      >
-                        + Add Group
-                      </MuiButton>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              )}
-              {/* )} */}
-            </Grid>
-          </Grid>
-        </Box>
-      );
+      return;
     }
-    const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
-    if (!currentSection) return null;
 
-    const handleDeleteDetail = (sectionKey: SectionKey, indexToRemove: number) => {
-      setSectionsData((prev) =>
-        prev.map((section, index) => {
-          if (index === activeStep - 1) {
-            const originalFields = section[sectionKey];
-            if (!Array.isArray(originalFields)) return section;
+    let genderValue: string | undefined;
 
-            const updatedFields = originalFields.filter((_, idx) => idx !== indexToRemove);
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
 
-            return {
-              ...section,
-              [sectionKey]: updatedFields,
-            };
-          }
-          return section;
-        }),
-      );
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: v.Organization?.name ?? v.organization?.name ?? v.organization ?? '',
+      indentity_id: v.identity_id,
+      identity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
     };
 
-    // split access berdasarkan apakah datang dari section self_only
-    const groupSections = sectionsData.filter((s) => !s.self_only);
-    const selfOnlySections = sectionsData.filter((s) => s.self_only);
+    setDataVisitor((prev) => {
+      const next = [...prev];
 
-    // lalu masing-masing bisa dipetakan ke accessData
-    const groupAccess = accessData.filter((a) =>
-      groupSections.some((s) => s.foreign_id === a.section_id),
-    );
-    const selfAccess = accessData.filter((a) =>
-      selfOnlySections.some((s) => s.foreign_id === a.section_id),
-    );
+      const page = next[gIdx]?.question_page?.[sectionIndex];
 
-    const handleDetailChange = (
-      sectionKey: SectionKey,
-      index: number,
-      field: keyof FormVisitor,
-      value: any,
-    ) => {
-      setSectionsData((prev) =>
-        prev.map((section, i) => {
-          if (i === activeStep - 1) {
-            const originalFields = section[sectionKey];
-            if (!Array.isArray(originalFields)) {
-              console.error(`Expected array for ${sectionKey}, got:`, originalFields);
-              return section; // jangan ubah kalau tidak valid
-            }
+      if (!page?.form) return prev;
 
-            const updatedFields = [...originalFields];
-            updatedFields[index] = {
-              ...updatedFields[index],
-              [field]: value,
-            };
+      page.form = page.form.map((item: any) => {
+        const value = mapping[item.remarks];
 
-            return {
-              ...section,
-              [sectionKey]: updatedFields,
-            };
-          }
-          return section;
-        }),
-      );
-    };
+        if (value !== undefined) {
+          clearFieldError(`${sectionIndex}:${gIdx}:${item.custom_field_id}`);
+
+          return {
+            ...item,
+            answer_text: value,
+          };
+        }
+
+        return item;
+      });
+
+      return next;
+    });
+  };
+
+  const handleVisitorTypeChange = useCallback((e: any) => {
+    const newType = e.target.value;
+
+    setFormData((prev) => ({
+      ...prev,
+      visitor_type: newType,
+    }));
+
+    setSectionsData([]);
+    setDataVisitor([]);
+    setGroupedPages({} as any);
+    setDraggableSteps([]);
+    setRawSections([]);
+    setInputValues({});
+    setActiveStep(0);
+  }, []);
+
+  const isEmployeeSection = (section: any): boolean => {
+    const fields = formsOf(section);
+    if (!Array.isArray(fields)) return false;
+
+    const flag = fields.find((f) => f.remarks === 'is_employee');
+    if (!flag) return false;
 
     return (
-      <>
-        {isSingle && (
-          <Grid>
-            {(() => {
-              const section = sectionsData[activeStep - 1];
-              const sectionType = getSectionType(section);
+      flag.answer_text === true ||
+      flag.answer_text === 'true' ||
+      flag.answer_text === '1' ||
+      flag.answer_text === 1
+    );
+  };
 
-              if (sectionType === 'visitor_information') {
-                return (
-                  <>
-                    <VisitorSelect
-                      token={token as string}
-                      onSelect={(visitor) => {
-                        const v = visitor.visitor; // ⬅️ ambil nested visitor
-                        let genderValue: string | undefined;
+  const handleSelectDataVisitor = (v: any | null, isEmployee: boolean = false) => {
+    const currentStep = activeStep - 1;
 
-                        if (v.gender === 'Male') genderValue = '1';
-                        else if (v.gender === 'Female') genderValue = '0';
-                        else if (v.gender === 'Prefer not to say') genderValue = '2';
+    const resetKeys = [
+      'name',
+      'email',
+      'phone',
+      'organization',
+      'indentity_id',
+      'gender',
+      'employee',
+    ];
 
-                        const mapping: Record<string, string | undefined> = {
-                          name: v.name,
-                          email: v.email,
-                          phone: v.phone,
-                          organization: v.organization ?? undefined,
-                          indentity_id: v.identity_id, // typo: "indentity_id" -> harusnya identity_id
-                          gender: genderValue,
-                        };
+    if (!v) {
+      setSectionsData((prev) =>
+        prev.map((section, sectionIndex) =>
+          sectionIndex !== currentStep
+            ? section
+            : updateSectionForm(section, (arr) =>
+                arr.map((item) => {
+                  if (resetKeys.includes(item.remarks)) {
+                    const fieldKey = item.custom_field_id || item.id;
+                    const errorKey = `${currentStep}:${fieldKey}`;
 
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item) =>
-                                    mapping[item.remarks] !== undefined
-                                      ? { ...item, answer_text: mapping[item.remarks]! }
-                                      : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      }}
-                    />
+                    return {
+                      ...item,
+                      answer_text: '',
+                    };
+                  }
 
-                    <Accordion key={activeStep} expanded sx={{ mt: 2 }}>
-                      <AccordionSummary onClick={(e) => e.stopPropagation()}>
-                        <Typography fontWeight={600}>{section.name}</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ paddingTop: 0 }}>
-                        <Table>
-                          <TableBody>
-                            {renderDetailRows(formsOf(section), (index, field, value) => {
-                              setSectionsData((prev) =>
-                                prev.map((s, sIdx) =>
-                                  sIdx !== activeStep - 1
-                                    ? s
-                                    : updateSectionForm(s, (arr) =>
-                                        arr.map((item, i) =>
-                                          i === index ? { ...item, [field]: value } : item,
-                                        ),
-                                      ),
-                                ),
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </AccordionDetails>
-                    </Accordion>
-                  </>
-                );
-              } else if (sectionType === 'parking') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'purpose_visit') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'nda') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'identity_image') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              } else if (sectionType === 'selfie_image') {
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(formsOf(section), (index, field, value) => {
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item, i) =>
-                                    i === index ? { ...item, [field]: value } : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              }
+                  return item;
+                }),
+              ),
+        ),
+      );
 
-              return null;
-            })()}
-          </Grid>
-        )}
-        {isGroup && (
-          <Grid>
-            {(() => {
-              const section = sectionsData[activeStep - 1];
-              console.log('section', section);
-              const sectionType = getSectionType(section);
+      return;
+    }
 
-              if (sectionType === 'visitor_information_group') {
-                return (
-                  <Grid>
-                    <Box>
-                      <TableContainer component={Paper} sx={{ mb: 1 }}>
-                        {/* ========== 📱 MOBILE MODE (Accordion) ========== */}
-                        {isMobile ? (
-                          <>
-                            {dataVisitor.length > 0 ? (
-                              dataVisitor.map((group, gIdx) => {
-                                const page = group.question_page[activeStep - 1];
-                                if (!page) return null;
+    let genderValue: string | undefined;
 
-                                return (
-                                  <Accordion key={gIdx} sx={{ mb: 1 }}>
-                                    <AccordionSummary
-                                      expandIcon={<ExpandMoreIcon />}
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between', // 🔹 Biar teks kiri dan tombol kanan sejajar
-                                        p: 1,
-                                      }}
-                                    >
-                                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <Typography fontWeight="bold" mb={0}>
-                                          Visitor {gIdx + 1}
-                                        </Typography>
-                                      </Box>
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
 
-                                      {dataVisitor.length > 1 && (
-                                        <IconButton
-                                          size="small"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteGroupRow(gIdx);
-                                          }}
-                                        >
-                                          <IconTrash />
-                                        </IconButton>
-                                      )}
-                                    </AccordionSummary>
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: isEmployee ? v.Organization?.name || '' : v.organization || '',
+      indentity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
+    };
 
-                                    <AccordionDetails>
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+    setSectionsData((prev) =>
+      prev.map((section, sectionIndex) =>
+        sectionIndex !== currentStep
+          ? section
+          : updateSectionForm(section, (arr) =>
+              arr.map((item) => {
+                if (mapping[item.remarks] !== undefined) {
+                  const fieldKey = item.custom_field_id || item.id;
+                  const errorKey = `${currentStep}:${fieldKey}`;
 
-                                        return (
-                                          <Box key={fIdx} sx={{ mb: 2 }}>
-                                            {renderFieldInput(
-                                              proxyField,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: true,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </Box>
-                                        );
-                                      })}
-                                    </AccordionDetails>
-                                  </Accordion>
-                                );
-                              })
-                            ) : (
-                              <Typography align="center" sx={{ py: 2 }}>
-                                No visitor data. Click "Add New" to start.
-                              </Typography>
-                            )}
+                  clearFieldError(errorKey);
 
-                            <MuiButton
-                              size="small"
-                              onClick={handleAddDetails}
-                              sx={{ my: 2 }}
-                              variant="contained"
-                              fullWidth
-                            >
-                              Add New
-                            </MuiButton>
-                          </>
-                        ) : (
-                          /* ========== 💻 DESKTOP MODE (Table) ========== */
-                          <Table
-                            size="small"
-                            sx={{
-                              minWidth: 1000,
-                              tableLayout: 'auto',
-                              '& th, & td': { whiteSpace: 'nowrap' },
-                            }}
-                          >
-                            <TableHead>
-                              <TableRow>
-                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
-                                  (f: any, i: any) => (
-                                    <TableCell key={f.custom_field_id || i}>
-                                      <Typography variant="subtitle2" fontWeight={600}>
-                                        {f.long_display_text}
-                                      </Typography>
-                                    </TableCell>
-                                  ),
-                                )}
-                                <TableCell align="right">
-                                  <Typography variant="subtitle2" fontWeight={600}>
-                                    Actions
-                                  </Typography>
-                                </TableCell>
-                              </TableRow>
-                            </TableHead>
+                  return {
+                    ...item,
+                    answer_text: mapping[item.remarks]!,
+                  };
+                }
 
-                            <TableBody sx={{ overflow: 'auto' }}>
-                              {dataVisitor.length > 0 ? (
-                                dataVisitor.map((group, gIdx) => {
-                                  const page = group.question_page[activeStep - 1];
-                                  if (!page) return null;
+                return item;
+              }),
+            ),
+      ),
+    );
+  };
 
-                                  return (
-                                    <TableRow key={gIdx}>
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+  const handleSteps = (step: number) => {
+    if ((step === -1 && enableInvitationTypeStep) || (step === 0 && !isAddTransaction)) {
+      return (
+        <InvitationAndVisitorTypeStep
+          step={step}
+          enableInvitationTypeStep={enableInvitationTypeStep}
+          isAddTransaction={isAddTransaction}
+          isSelfInvitation={isSelfInvitation}
+          setIsSelfInvitation={setIsSelfInvitation as any}
+          vtLoading={vtLoading}
+          visitorType={visitorType}
+          formData={formData}
+          handleVisitorTypeChange={handleVisitorTypeChange}
+          isSingle={isSingle}
+          setIsSingle={setIsSingle}
+          isGroup={isGroup}
+          setIsGroup={setIsGroup}
+          setFormData={setFormData}
+          groupVisitors={groupVisitors}
+          setGroupVisitors={setGroupVisitors}
+          setActiveGroupIdx={setActiveGroupIdx}
+          sectionsData={sectionsData}
+          setDataVisitor={setDataVisitor}
+          setActiveStep={setActiveStep}
+          seedDataVisitorFromSections={seedDataVisitorFromSections}
+          handleDeleteGroup={handleDeleteGroup}
+          handleAddGroup={handleAddGroup}
+          t={t}
+        />
+      );
+    }
 
-                                        return (
-                                          <TableCell
-                                            key={field.custom_field_id || `${gIdx}-${fIdx}`}
-                                          >
-                                            {renderFieldInput(
-                                              proxyField,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: false,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </TableCell>
-                                        );
-                                      })}
-
-                                      <TableCell align="right">
-                                        {dataVisitor.length > 1 && (
-                                          <IconButton
-                                            aria-label="delete-row"
-                                            onClick={() => handleDeleteGroupRow(gIdx)}
-                                            size="small"
-                                          >
-                                            <IconTrash />
-                                          </IconButton>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })
-                              ) : (
-                                <TableRow>
-                                  <TableCell colSpan={12} align="center">
-                                    No visitor data. Click "Add New" to start.
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              <TableRow>
-                                <TableCell colSpan={12} align="left">
-                                  <MuiButton
-                                    size="small"
-                                    onClick={handleAddDetails}
-                                    sx={{ mx: 1, my: 1 }}
-                                    variant="contained"
-                                  >
-                                    Add New
-                                  </MuiButton>
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        )}
-                      </TableContainer>
-                    </Box>
-                  </Grid>
-                );
-              } else if (sectionType === 'purpose_visit') {
-                const pickAns = (f: any) => {
-                  const out: any = {};
-                  if (f?.answer_text != null) out.answer_text = f.answer_text;
-                  if (f?.answer_datetime != null) out.answer_datetime = f.answer_datetime;
-                  if (f?.answer_file != null) out.answer_file = f.answer_file;
-                  return out;
-                };
-
-                const sameField = (a: any, b: any) =>
-                  (a?.custom_field_id &&
-                    b?.custom_field_id &&
-                    a.custom_field_id === b.custom_field_id) ||
-                  (a?.remarks && b?.remarks && a.remarks === b.remarks);
-
-                // ✅ Ambil state paling baru: groupPages + section forms
-                const mergedVisitForm = formsOf(section).map((f: any) => {
-                  const shared = groupedPages.single_page.find((sf) => sameField(sf, f));
-                  return shared ? { ...f, ...pickAns(shared) } : f;
-                });
-
-                return (
-                  <Table>
-                    <TableBody>
-                      {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
-                        setGroupedPages((prev) => {
-                          const next = { ...prev, single_page: [...prev.single_page] };
-
-                          // 🔄 gunakan mergedVisitForm bukan formsOf(section)
-                          const base = formsOf(section)[idx];
-                          const found = next.single_page.findIndex((sf) => sameField(sf, base));
-
-                          const resolvedForeign =
-                            base?.foreign_id ??
-                            section?.foreign_id ??
-                            base?.custom_field_id ??
-                            null;
-
-                          const payload = {
-                            ...(found >= 0 ? next.single_page[found] : base),
-                            foreign_id:
-                              found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
-                                : resolvedForeign,
-                            [fieldKey]: value,
-                          };
-
-                          if (found >= 0) next.single_page[found] = payload;
-                          else next.single_page.push(payload);
-
-                          return next;
-                        });
-                      })}
-                    </TableBody>
-                  </Table>
-                );
-              }
-
-              return null;
-            })()}
-          </Grid>
-        )}
-      </>
+    return (
+      <VisitorFormStep
+        step={step}
+        activeStep={activeStep}
+        isAddTransaction={isAddTransaction}
+        isSingle={isSingle}
+        isGroup={isGroup}
+        sectionsData={sectionsData}
+        setSectionsData={setSectionsData}
+        dataVisitor={dataVisitor}
+        setDataVisitor={setDataVisitor}
+        activeGroupIdx={activeGroupIdx}
+        isMobile={isMobile}
+        groupedPages={groupedPages}
+        setGroupedPages={setGroupedPages}
+        errors={errors}
+        getSectionIndex={getSectionIndex}
+        getSectionType={getSectionType}
+        isEmployeeSection={isEmployeeSection}
+        handleSelectDataVisitor={handleSelectDataVisitor}
+        handleSelectVisitor={handleSelectVisitor}
+        renderDetailRows={renderDetailRows}
+        updateSectionForm={updateSectionForm}
+        renderFieldInput={renderFieldInput}
+        formsOf={formsOf}
+        getVisibilityMap={getVisibilityMap}
+        validateField={validateField}
+        handleDeleteGroupRow={handleDeleteGroupRow}
+        handleAddDetails={handleAddDetails}
+        handleOpenSelfOnly={handleOpenSelfOnly}
+        sameField={sameField}
+        hasAns={hasAns}
+        pickAns={pickAns}
+        t={t}
+      />
     );
   };
 
@@ -1796,8 +951,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             is_enable: false,
             is_primary: true,
             field_type: 0,
-            remarks: '', // akan diisi setelah short_name dipilih
-            custom_field_id: '', // akan diisi setelah short_name dipilih
+            remarks: '',
+            custom_field_id: '',
             multiple_option_fields: [],
             mandatory: false,
             answer_datetime: '',
@@ -1815,7 +970,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -1824,97 +978,165 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     try {
       const page = dataVisitor[rowIdx]?.question_page?.[activeStep - 1];
 
-      // kumpulkan semua URL CDN di baris ini
       const urls: string[] =
         (page?.form ?? [])
           .map((f: any) => f?.answer_file)
           .filter((u: any) => typeof u === 'string' && u.trim().length > 0) || [];
 
-      // hapus file CDN satu per satu
       await Promise.all(
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => {
-              console.log(`✅ Berhasil hapus file CDN: ${u}`);
-            })
-            .catch((err) => {
-              console.warn(`⚠️ Gagal hapus file CDN ${u}:`, err);
-            }),
+            .then(() => {})
+            .catch((err) => {}),
         ),
       );
 
-      // setelah file dihapus, hapus row di state
       setDataVisitor((prev) => prev.filter((_, i) => i !== rowIdx));
 
-      // atur ulang index aktif kalau perlu
       setActiveGroupIdx((prevIdx) => {
         if (rowIdx < prevIdx) return prevIdx - 1;
         if (rowIdx === prevIdx) return Math.max(0, prevIdx - 1);
         return prevIdx;
       });
     } catch (e) {
-      console.error('❌ Failed to delete row:', e);
+      console.error('Failed to delete row:', e);
     }
   };
 
-  const fieldKey = (f: any) => f?.custom_field_id || sanitize(f?.remarks) || '';
-  const [uploadNames, setUploadNames] = React.useState<Record<string, string>>({});
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
 
   const renderFieldInput = (
     field: FormVisitor,
     index: number,
     onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void,
-    onDelete?: (index: number) => void,
-    opts?: { showLabel?: boolean; uniqueKey?: string },
+    opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] },
   ) => {
+    if (field.is_enable !== true) {
+      return null;
+    }
     const showLabel = opts?.showLabel ?? true;
+    const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
+    const errorMessage = fieldErrors[errorKey];
+
+    let shouldDisable = false;
+
+    const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
+      onChange(idx, fieldKey, value);
+    };
 
     const renderInput = () => {
-      // const [uploadMethod, setUploadMethod] = React.useState('file'); // default file upload
-      const key = opts?.uniqueKey ?? String(index);
+      const startField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+      );
+      if ((field.remarks || '').toLowerCase() === 'employee') {
+        return null;
+      }
+
+      const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+      const employeeSelected = !!opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
+      );
+      const isDrivingField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'is_driving',
+      );
+
+      const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
+      const vehicleTypeField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'vehicle_id',
+      );
+
+      const vehicleType = String(vehicleTypeField?.answer_text ?? '')
+        .trim()
+        .toLowerCase();
+
+      const isBicycle = vehicleType === 'bicycle';
+
       switch (field.field_type) {
         case 0: // Text
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder=""
+              onChange={(e) => {
+                let value = e.target.value;
+
+                if ((field.remarks || '').toLowerCase() === 'phone') {
+                  value = value.replace(/\D/g, '');
+                }
+
+                onChange(index, 'answer_text', value);
+
+                if (value) {
+                  clearFieldError(errorKey);
+                }
+              }}
+              inputProps={
+                (field.remarks || '').toLowerCase() === 'phone'
+                  ? {
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*',
+                    }
+                  : undefined
+              }
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
+              error={!!errorMessage}
+              helperText={errorMessage}
+              disabled={
+                shouldDisable ||
+                ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&
+                  (!isDriving || isBicycle))
+              }
             />
           );
 
         case 1: // Number
           return (
-            <TextField
+            <CustomTextField
               type="number"
               size="small"
               value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder="Enter number"
+              onChange={(e) => {
+                onChange(index, 'answer_text', e.target.value);
+                if (e.target.value) clearFieldError(errorKey);
+              }}
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
+              error={!!errorMessage}
+              helperText={errorMessage}
             />
           );
 
         case 2: // Email
           return (
-            <TextField
+            <CustomTextField
               type="email"
               size="small"
               value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder=""
+              onChange={(e) => {
+                onChange(index, 'answer_text', e.target.value);
+                if (e.target.value) clearFieldError(errorKey);
+              }}
+              placeholder={
+                'Enter your ' + (field.long_display_text?.toLowerCase() || field.remarks)
+              }
               fullWidth
               sx={{ minWidth: 160, maxWidth: '100%' }}
+              error={!!errorMessage}
+              helperText={errorMessage}
             />
           );
 
         case 3: {
-          let options: { value: string; name: string }[] = [];
+          let options: { value: string; name: string; disabled?: boolean | undefined }[] = [];
 
-          // 🔹 Build option list berdasarkan remarks
           switch (field.remarks) {
             case 'host':
               options = employee.map((emp: any) => ({
@@ -1946,43 +1168,148 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               break;
           }
 
-          // 🔹 Gunakan uniqueKey biar gak tabrakan antar visitor group
-          const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
+          // const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
+          const uniqueKey =
+            opts?.uniqueKey ?? `${activeStep}:${field.custom_field_id || field.remarks}`;
           const inputVal = inputValues[uniqueKey as any] || '';
+          const siteKey = `group-${uniqueKey}`;
+          const parents: any = selectedSiteParentIds[siteKey as any] || [];
+          if (field.remarks === 'site_place') {
+            return (
+              <>
+                <Autocomplete
+                  key={siteKey}
+                  multiple
+                  size="small"
+                  options={options}
+                  getOptionLabel={(option) => option.name}
+                  inputValue={inputValues[siteKey as any] || ''}
+                  onInputChange={(_, newInputValue, reason) => {
+                    if (reason !== 'input') return;
 
+                    setInputValues((prev: any) => ({
+                      ...prev,
+                      [siteKey]: newInputValue,
+                    }));
+                  }}
+                  filterOptions={(opts, state) => {
+                    if (state.inputValue.length < 3) return [];
+                    return opts.filter((opt) =>
+                      opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                    );
+                  }}
+                  noOptionsText={
+                    (inputValues[index] || '').length < 3
+                      ? t('enterMin3CharsToSearch')
+                      : 'Not found'
+                  }
+                  value={options.filter((opt) => parents.includes(opt.value))}
+                  onChange={(_, newValues) => {
+                    const parentIds = newValues.map((v) => v.value);
+
+                    setSelectedSiteParentIds((prev: any) => ({
+                      ...prev,
+                      [siteKey]: parentIds,
+                    }));
+
+                    setSiteTree((prev: any) => ({
+                      ...prev,
+                      [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
+                    }));
+                    onChange(index, 'answer_text', parentIds.join(','));
+                  }}
+                  renderInput={(params) => (
+                    <CustomTextField
+                      {...params}
+                      placeholder={t('enterMin3CharsToSearch')}
+                      fullWidth
+                      error={!!errorMessage}
+                      helperText={errorMessage}
+                    />
+                  )}
+                />
+                {siteTree[siteKey as any]?.length > 0 && (
+                  <SimpleTreeView>
+                    {siteTree[siteKey as any].map((node: any) =>
+                      renderTree(node, index, handleSitePlaceChange),
+                    )}
+                  </SimpleTreeView>
+                )}
+              </>
+            );
+          }
+          if ((field.remarks || '').toLowerCase() === 'visitor_role') {
+            return (
+              <CustomTextField
+                select
+                size="small"
+                fullWidth
+                value={field.answer_text || ''}
+                onChange={(e) => {
+                  const selectedRole = e.target.value;
+
+                  onChange(index, 'answer_text', selectedRole);
+
+                  if (selectedRole) {
+                    clearFieldError(errorKey);
+                  }
+                }}
+                error={!!errorMessage}
+                helperText={errorMessage}
+                sx={{
+                  minWidth: 160,
+                  maxWidth: '100%',
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                }}
+              >
+                <MenuItem value="">{t('selectRole')}</MenuItem>
+
+                {visitorRoles.map((role: any) => (
+                  <MenuItem key={role.id} value={role.role}>
+                    {role.role}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            );
+          }
           return (
             <Autocomplete
               size="small"
-              freeSolo // ✅ Biar tetap bisa diketik dari awal
+              freeSolo
+              disabled={shouldDisable}
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
               onInputChange={(_, newInputValue) =>
                 setInputValues((prev) => ({ ...prev, [uniqueKey]: newInputValue }))
               }
-              // ✅ Filter: hanya aktif kalau >= 3 huruf
               filterOptions={(opts, state) => {
                 const term = (state.inputValue || '').toLowerCase();
                 if (term.length < 3) return [];
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
-              }
+              noOptionsText={inputVal.length < 3 ? t('enterMin3CharsToSearch') : 'Not found'}
               value={
                 options.find(
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
                 ) || null
               }
-              onChange={(_, newValue) =>
-                onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
-              }
+              onChange={(_, newValue) => {
+                const value = newValue instanceof Object ? newValue.value : '';
+                onChange(index, 'answer_text', value);
+                if (value) clearFieldError(errorKey);
+              }}
               renderInput={(params) => (
-                <TextField
+                <CustomTextField
                   {...params}
-                  placeholder="Ketik minimal 3 karakter"
+                  placeholder={t('enterMin3CharsToSearch')}
                   fullWidth
+                  disabled={shouldDisable}
                   sx={{ minWidth: 160 }}
+                  error={!!errorMessage}
+                  helperText={errorMessage}
                 />
               )}
             />
@@ -1991,109 +1318,182 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
-              onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
+              onChange={(e) => {
+                onChange(index, 'answer_datetime', e.target.value);
+                if (e.target.value) clearFieldError(errorKey);
+              }}
               fullWidth
+              error={!!errorMessage}
+              helperText={errorMessage}
             />
           );
 
         case 5: // Radio
           if (field.remarks === 'gender') {
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={field.answer_text || ''}
-                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  onChange(index, 'answer_text', value);
+                  if (value) clearFieldError(errorKey);
+                }}
                 fullWidth
                 sx={{ width: 100 }}
+                error={!!errorMessage}
+                helperText={errorMessage}
               >
                 {field.multiple_option_fields?.map((opt: any) => (
                   <MenuItem key={opt.id} value={opt.value}>
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
-          if (field.remarks === 'vehicle_type') {
+          if (field.remarks === 'vehicle_id') {
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={field.answer_text || ''}
-                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  onChange(index, 'answer_text', value);
+                  if (value) clearFieldError(errorKey);
+                }}
                 fullWidth
+                disabled={!isDriving}
+                error={!!errorMessage}
+                helperText={errorMessage}
               >
                 {field.multiple_option_fields?.map((opt: any) => (
                   <MenuItem key={opt.id} value={opt.value}>
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
-          return (
-            <TextField
-              size="small"
-              value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder="Enter text"
-              fullWidth
-            />
-          );
-        case 6:
-          if (field.remarks === 'is_employee') {
-            const options = field.multiple_option_fields || [];
-            const value = field.answer_text ?? ''; // '' | 'true' | 'false'
 
+          if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
-              <FormGroup row>
-                {options.map((opt: any, idx: number) => (
-                  <FormControlLabel
-                    key={idx}
-                    control={
-                      <Checkbox
-                        checked={value === opt.value}
-                        onChange={(e) => {
-                          // hanya satu yang aktif dalam waktu bersamaan
-                          const newVal = e.target.checked ? opt.value : '';
-                          onChange(index, 'answer_text', newVal);
-                        }}
-                      />
-                    }
-                    label={opt.name}
-                  />
-                ))}
-              </FormGroup>
+              <>
+                <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
+                  <RadioGroup
+                    row
+                    value={field.answer_text || 'false'}
+                    onChange={(e) => {
+                      onChange(index, 'answer_text', e.target.value);
+                      if (e.target.value) clearFieldError(errorKey);
+                    }}
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {field.multiple_option_fields
+                      ?.sort((a: any, b: any) => {
+                        if (a.name === 'Yes') return -1;
+                        if (b.name === 'Yes') return 1;
+                        return 0;
+                      })
+                      .map((opt: any) => (
+                        <FormControlLabel
+                          key={opt.id}
+                          value={opt.value}
+                          control={<Radio size="small" />}
+                          label={opt.name}
+                        />
+                      ))}
+                  </RadioGroup>
+                </FormControl>
+                <br />
+                {errorMessage && (
+                  <Typography variant="caption" color="error">
+                    {errorMessage}
+                  </Typography>
+                )}
+              </>
             );
           }
-
-          // fallback default (checkbox tunggal)
           return (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={Boolean(field.answer_text)}
-                  onChange={(e) => onChange(index, 'answer_text', e.target.checked)}
-                />
-              }
-              label=""
-            />
+            <>
+              <FormControl error={!!errorMessage}>
+                <RadioGroup
+                  row
+                  value={field.answer_text || ''}
+                  onChange={(e) => {
+                    onChange(index, 'answer_text', e.target.value);
+                    if (e.target.value) clearFieldError(errorKey);
+                  }}
+                  sx={{
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                  }}
+                >
+                  {field.multiple_option_fields?.map((opt: any) => (
+                    <FormControlLabel
+                      key={opt.id}
+                      value={opt.value}
+                      control={<Radio size="small" />}
+                      label={opt.name}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <br />
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </>
           );
 
-        case 8: // Time
+        case 6: //Checkbox
           return (
-            <TextField
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={Boolean(field.answer_text)}
+                    onChange={(e) => {
+                      onChange(index, 'answer_text', e.target.checked);
+                      if (e.target.checked) clearFieldError(errorKey);
+                    }}
+                  />
+                }
+                label=""
+              />
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </>
+          );
+
+        case 8:
+          return (
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
               onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
               fullWidth
+              error={!!errorMessage}
+              helperText={errorMessage}
             />
           );
 
@@ -2103,21 +1503,30 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               <DateTimePicker
                 value={field.answer_datetime ? dayjs(field.answer_datetime) : null}
                 ampm={false}
+                minDateTime={
+                  field.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                }
                 onChange={(newValue) => {
                   if (newValue) {
-                    const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                    const utc = newValue.utc().format();
                     onChange(index, 'answer_datetime', utc);
+                    clearFieldError(errorKey);
                   }
                 }}
-                format="ddd, DD - MMM - YYYY, HH:mm"
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
+                format="dddd, DD MMMM YYYY, HH:mm"
+                // viewRenderers={{
+                //   hours: renderTimeViewClock,
+                //   minutes: renderTimeViewClock,
+                //   seconds: renderTimeViewClock,
+                // }}
                 slotProps={{
+                  actionBar: {
+                    actions: ['clear', 'accept'],
+                  },
                   textField: {
                     fullWidth: true,
+                    error: !!errorMessage,
+                    helperText: errorMessage,
                   },
                 }}
               />
@@ -2125,256 +1534,253 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 10: // Camera
+          if ((field.remarks || '').toLowerCase() === 'selfie_image') {
+            // const key = opts?.uniqueKey ?? String(index);
+            const key = `camera_${opts?.uniqueKey ?? index}`;
+
+            return (
+              <Box
+                display="flex"
+                flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
+                alignItems={{ xs: 'stretch', md: 'center' }}
+                // justifyContent="space-between"
+                gap={1.5}
+                width="100%"
+                sx={{ maxWidth: 400 }}
+              >
+                <TextField
+                  select
+                  size="small"
+                  value={uploadMethods[key] || 'file'}
+                  onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+                  fullWidth
+                  sx={{ width: { xs: '100%', md: '200px' } }}
+                >
+                  <MenuItem value="file">Choose File</MenuItem>
+                  <MenuItem value="camera">{t('takePhoto')}</MenuItem>
+                </TextField>
+
+                {(uploadMethods[key] || 'file') === 'camera' ? (
+                  <CameraUpload
+                    value={field.answer_file as string | undefined}
+                    onChange={(url) => {
+                      onChange(index, 'answer_file', url);
+                      if (url) clearFieldError(errorKey);
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+                    <label htmlFor={key}>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1.5,
+                          borderRadius: 2,
+                          p: 0.5,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
+                          cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
+                          width: '100%',
+                          opacity: uploadingFiles[key] ? 0.6 : 1,
+                        }}
+                      >
+                        {uploadingFiles[key] ? (
+                          <>
+                            <CircularProgress size={20} />
+                            <Typography variant="subtitle1">Uploading...</Typography>
+                          </>
+                        ) : (
+                          <>
+                            <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                            <Typography variant="subtitle1">Upload File</Typography>
+                          </>
+                        )}
+                      </Box>
+                    </label>
+
+                    <input
+                      id={key}
+                      type="file"
+                      accept="image/jpg,image/jpeg,image/png"
+                      hidden
+                      disabled={!!uploadingFiles[key]}
+                      onChange={(e) => {
+                        handleFileChangeForField(
+                          e.target.files?.[0],
+                          (url) => {
+                            onChange(index, 'answer_file', url);
+
+                            if (url) {
+                              clearFieldError(key);
+                            }
+                          },
+                          key,
+                        );
+
+                        e.target.value = '';
+                      }}
+                    />
+
+                    {!!(field as any).answer_file && !uploadingFiles[key] && (
+                      <Box
+                        mt={0.5}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        gap={1}
+                        sx={{
+                          overflow: 'hidden',
+                          width: '100%',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          noWrap
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          {uploadNames[key] || 'File uploaded'}
+                        </Typography>
+
+                        <IconButton
+                          size="small"
+                          color="error"
+                          disabled={!!removing[key]}
+                          onClick={() =>
+                            handleRemoveFileForField(
+                              (field as any).answer_file,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        >
+                          <IconX size={16} />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {errorMessage && (
+                  <Typography variant="caption" color="error">
+                    {errorMessage}
+                  </Typography>
+                )}
+              </Box>
+            );
+          }
+
           return (
-            <CameraUpload
-              value={field.answer_file}
-              onChange={(url) => onChange(index, 'answer_file', url)}
-            />
+            <>
+              <CameraUpload
+                value={field.answer_file as string | undefined}
+                onChange={(url) => {
+                  onChange(index, 'answer_file', url);
+                  if (url) clearFieldError(errorKey);
+                }}
+              />
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </>
           );
 
         case 11: {
-          // File upload (PDF / NDA)
-          // const inputId = `pdf-${opts?.uniqueKey ?? index}`;
           const key = opts?.uniqueKey ?? String(index);
           const fileUrl = (field as any).answer_file as string | undefined;
           return (
-            <Box>
-              <label htmlFor={key}>
-                <Box
-                  sx={{
-                    border: '2px dashed #90caf9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    borderRadius: 2,
-                    p: 0.5,
-                    textAlign: 'center',
-                    backgroundColor: '#f5faff',
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
-                >
-                  <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                  <Typography variant="subtitle1">Upload File</Typography>
-                </Box>
-              </label>
-
-              <input
-                id={key}
-                type="file"
-                accept="*"
-                hidden
-                // onChange={handlePDFUploadFor(index, onChange)
-                onChange={(e) =>
-                  handleFileChangeForField(
-                    e as React.ChangeEvent<HTMLInputElement>,
-                    (url) => onChange(index, 'answer_file', url),
-                    key,
-                  )
-                }
-              />
-
-              {fileUrl && (
-                <Box mt={1} display="flex" alignItems="center" gap={1}>
-                  <Typography variant="caption" noWrap>
-                    {/* {fileUrl.split('/').pop()} */}
-                    {uploadNames[key] ?? ''}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() =>
-                      handleRemoveFileForField(
-                        (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), // kosongkan state
-                        key, // reset <input id=key>
-                      )
-                    }
+            <>
+              <Box>
+                <label htmlFor={key}>
+                  <Box
+                    sx={{
+                      border: '2px dashed #90caf9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 2,
+                      borderRadius: 2,
+                      p: 0.5,
+                      textAlign: 'center',
+                      backgroundColor: '#f5faff',
+                      cursor: 'pointer',
+                      width: '100%',
+                    }}
                   >
-                    <IconX size={16} />
-                  </IconButton>
-                </Box>
+                    <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                    <Typography variant="subtitle1">Upload your file</Typography>
+                  </Box>
+                </label>
+
+                <input
+                  id={key}
+                  type="file"
+                  accept="*"
+                  hidden
+                  onChange={(e) => {
+                    handleFileChangeForField(
+                      e.target.files?.[0],
+                      (url) => {
+                        onChange(index, 'answer_file', url);
+
+                        if (url) {
+                          clearFieldError(key);
+                        }
+                      },
+                      key,
+                    );
+
+                    e.target.value = '';
+                  }}
+                />
+
+                {fileUrl && (
+                  <Box mt={1} display="flex" alignItems="center" gap={1}>
+                    <Typography variant="caption" noWrap>
+                      {uploadNames[key] ?? ''}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() =>
+                        handleRemoveFileForField(
+                          (field as any).answer_file,
+                          (url) => onChange(index, 'answer_file', url),
+                          key,
+                        )
+                      }
+                    >
+                      <IconX size={16} />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+              {errorMessage && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {errorMessage}
+                </Typography>
               )}
-            </Box>
+            </>
           );
         }
-
-        // case 12: {
-        //   const key = opts?.uniqueKey ?? String(index);
-        //   return (
-        //     <Box
-        //       display={'flex'}
-        //       alignItems={''}
-        //       justifyContent={'space-between'}
-        //       gap={1}
-        //       width={'380px'}
-        //     >
-        //       <TextField
-        //         select
-        //         size="small"
-        //         value={uploadMethods[key] || 'file'}
-        //         onChange={(e) => handleUploadMethodChange(key, e.target.value)}
-        //         fullWidth
-        //         sx={{ width: '200px' }}
-        //       >
-        //         <MenuItem value="file">Choose File</MenuItem>
-        //         <MenuItem value="camera">Take Photo</MenuItem>
-        //       </TextField>
-
-        //       {(uploadMethods[key] || 'file') === 'camera' ? (
-        //         <CameraUpload
-        //           value={field.answer_file}
-        //           onChange={(url) => onChange(index, 'answer_file', url)}
-        //         />
-        //       ) : (
-        //         // <Box>
-        //         //   <label htmlFor={key}>
-        //         //     <Box
-        //         //       sx={{
-        //         //         border: '2px dashed #90caf9',
-        //         //         display: 'flex',
-        //         //         alignItems: 'center',
-        //         //         // minHeight: 60,
-        //         //         justifyContent: 'center',
-        //         //         gap: 2,
-        //         //         borderRadius: 2,
-        //         //         p: 0.5,
-        //         //         textAlign: 'center',
-        //         //         backgroundColor: '#f5faff',
-        //         //         cursor: 'pointer',
-        //         //         width: '100%',
-        //         //       }}
-        //         //     >
-        //         //       <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //         //       <Typography variant="subtitle1">Upload File</Typography>
-        //         //     </Box>
-        //         //   </label>
-
-        //         //   <input
-        //         //     id={key}
-        //         //     type="file"
-        //         //     accept="*"
-        //         //     hidden
-        //         //     onChange={(e) =>
-        //         //       handleFileChangeForField(
-        //         //         e as React.ChangeEvent<HTMLInputElement>,
-        //         //         (url) => onChange(index, 'answer_file', url),
-        //         //         key,
-        //         //       )
-        //         //     }
-        //         //   />
-
-        //         //   {/* INFO + REMOVE */}
-        //         //   {!!(field as any).answer_file && (
-        //         //     <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
-        //         //       <Typography variant="caption" color="text.secondary" noWrap>
-        //         //         {uploadNames[key] ?? ''}
-        //         //       </Typography>
-
-        //         //       <IconButton
-        //         //         size="small"
-        //         //         color="error"
-        //         //         disabled={!!removing[key]}
-        //         //         onClick={() =>
-        //         //           handleRemoveFileForField(
-        //         //             (field as any).answer_file,
-        //         //             (url) => onChange(index, 'answer_file', url),
-        //         //             key,
-        //         //           )
-        //         //         }
-        //         //       >
-        //         //         <IconX size={16} />
-        //         //       </IconButton>
-        //         //     </Box>
-        //         //   )}
-        //         // </Box>
-        //         <Box sx={{ width: '200px' }}>
-        //           <label htmlFor={key}>
-        //             <Box
-        //               sx={{
-        //                 border: '2px dashed #90caf9',
-        //                 display: 'flex',
-        //                 alignItems: 'center',
-        //                 justifyContent: 'center',
-        //                 gap: 2,
-        //                 borderRadius: 2,
-        //                 p: 0.5,
-        //                 textAlign: 'center',
-        //                 backgroundColor: '#f5faff',
-        //                 cursor: 'pointer',
-        //                 width: '100%',
-        //               }}
-        //             >
-        //               <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //               <Typography variant="subtitle1">Upload File</Typography>
-        //             </Box>
-        //           </label>
-
-        //           <input
-        //             id={key}
-        //             type="file"
-        //             accept="*"
-        //             hidden
-        //             onChange={(e) =>
-        //               handleFileChangeForField(
-        //                 e as React.ChangeEvent<HTMLInputElement>,
-        //                 (url) => onChange(index, 'answer_file', url),
-        //                 key,
-        //               )
-        //             }
-        //           />
-
-        //           {/* INFO + REMOVE */}
-        //           {!!(field as any).answer_file && (
-        //             <Box
-        //               mt={0.5}
-        //               display="flex"
-        //               alignItems="center"
-        //               justifyContent="space-between"
-        //               sx={{ overflow: 'hidden' }}
-        //             >
-        //               <Typography
-        //                 variant="caption"
-        //                 color="text.secondary"
-        //                 noWrap
-        //                 sx={{ flex: 1, minWidth: 0 }}
-        //               >
-        //                 {uploadNames[key] ?? ''}
-        //               </Typography>
-
-        //               <IconButton
-        //                 size="small"
-        //                 color="error"
-        //                 disabled={!!removing[key]}
-        //                 onClick={() =>
-        //                   handleRemoveFileForField(
-        //                     (field as any).answer_file,
-        //                     (url) => onChange(index, 'answer_file', url),
-        //                     key,
-        //                   )
-        //                 }
-        //               >
-        //                 <IconX size={16} />
-        //               </IconButton>
-        //             </Box>
-        //           )}
-        //         </Box>
-        //       )}
-        //     </Box>
-        //   );
-        // }
-
         case 12: {
           const key = opts?.uniqueKey ?? String(index);
           return (
             <Box
               display="flex"
-              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }} // ⬅️ stack on mobile
+              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
               alignItems={{ xs: 'stretch', md: 'center' }}
               justifyContent="space-between"
               gap={1.5}
-              width="100%" // ⬅️ let it adapt instead of fixed width
+              width="100%"
               sx={{ maxWidth: 400 }}
             >
               <TextField
@@ -2384,7 +1790,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 onChange={(e) => handleUploadMethodChange(key, e.target.value)}
                 fullWidth
                 sx={{
-                  width: { xs: '100%', md: '200px' }, // full on mobile
+                  width: { xs: '100%', md: '200px' },
                 }}
               >
                 <MenuItem value="file">Choose File</MenuItem>
@@ -2393,8 +1799,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
-                  value={field.answer_file}
-                  onChange={(url) => onChange(index, 'answer_file', url)}
+                  value={field.answer_file as string | undefined}
+                  onChange={(url) => {
+                    onChange(index, 'answer_file', url);
+                    if (url) clearFieldError(errorKey);
+                  }}
                 />
               ) : (
                 <Box sx={{ width: { xs: '100%', md: '200px' } }}>
@@ -2410,49 +1819,80 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         p: 0.5,
                         textAlign: 'center',
                         backgroundColor: '#f5faff',
-                        cursor: 'pointer',
+                        cursor: uploadingFiles[key] ? 'not-allowed' : 'pointer',
                         width: '100%',
                         transition: '0.2s',
-                        '&:hover': { backgroundColor: '#e3f2fd' },
+                        opacity: uploadingFiles[key] ? 0.6 : 1,
+                        '&:hover': {
+                          backgroundColor: uploadingFiles[key] ? '#f5faff' : '#e3f2fd',
+                        },
                       }}
                     >
-                      <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
-                        Upload File
-                      </Typography>
+                      {uploadingFiles[key] ? (
+                        <>
+                          <CircularProgress size={20} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Uploading...
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+                          <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                            Upload File
+                          </Typography>
+                        </>
+                      )}
                     </Box>
                   </label>
 
                   <input
                     id={key}
                     type="file"
-                    accept="*"
+                    accept="image/jpg, image/jpeg, image/png"
                     hidden
-                    onChange={(e) =>
+                    disabled={!!uploadingFiles[key]}
+                    onChange={(e) => {
                       handleFileChangeForField(
-                        e as React.ChangeEvent<HTMLInputElement>,
-                        (url) => onChange(index, 'answer_file', url),
+                        e.target.files?.[0],
+                        (url) => {
+                          onChange(index, 'answer_file', url);
+
+                          if (url) {
+                            clearFieldError(key);
+                          }
+                        },
                         key,
-                      )
-                    }
+                      );
+
+                      e.target.value = '';
+                    }}
                   />
 
-                  {!!(field as any).answer_file && (
+                  {!!(field as any).answer_file && !uploadingFiles[key] && (
                     <Box
                       mt={0.5}
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
+                      gap={1}
+                      sx={{
+                        overflow: 'hidden',
+                        width: '100%',
+                      }}
                     >
                       <Typography
                         variant="caption"
                         color="text.secondary"
                         noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
                       >
-                        {uploadNames[key] ?? ''}
+                        {uploadNames[key] || 'File uploaded'}
                       </Typography>
+
                       <IconButton
                         size="small"
                         color="error"
@@ -2471,123 +1911,83 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   )}
                 </Box>
               )}
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
             </Box>
           );
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
               placeholder="Enter value"
               fullWidth
+              error={!!errorMessage}
+              helperText={errorMessage}
             />
           );
       }
     };
 
     return (
-      <Box sx={{ overflow: 'auto', width: '100%' }}>
+      <Box sx={{ width: '100%' }}>
         {showLabel && (
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+          <CustomFormLabel required={field.mandatory === true}>
             {field.long_display_text}
-          </Typography>
+          </CustomFormLabel>
         )}
         {renderInput()}
       </Box>
     );
   };
 
-  // Upload Image && file
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewUrls, setPreviewUrls] = useState<{ [index: number]: string | null }>({});
-  const [openCamera, setOpenCamera] = useState(false);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-
-  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
-  const webcamRef = useRef<Webcam>(null);
-
-  const clearFileForField = (setAnswerFile: (url: string) => void) => {
+  const resetMediaState = () => {
+    setPreviews({});
+    setUploadNames({});
     setScreenshot(null);
-    setPreviewUrl(null);
     setOpenCamera(false);
-    setAnswerFile(''); // kosongkan answer_file di field aktif
-  };
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setGroupVisitors([]);
+    setSiteTree([]);
+    setSelfOnlySelectedSiteIdsMap({});
+    setSelfOnlySelectedSiteParentIdsMap({});
 
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-
-    try {
-      const response = await axiosInstance2.post('/cdn/upload', formData, {
-        // const response = await axios.post('http://localhost:8000/cdn/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const fileUrl = response.data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
-
-      if (!fileUrl) return null;
-
-      // Tambahkan protokol jika belum ada
-      return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      return null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
+  const clearAnswerFiles = () => {
+    setSectionsData((prev) =>
+      prev.map((section) => ({
+        ...section,
+        form: section?.form?.map((f: any) =>
+          [10, 11, 12].includes(f.field_type) ? { ...f, answer_file: '' } : f,
+        ),
+      })),
+    );
+  };
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // ⬇️ Kalau mau batasi PDF saja, uncomment ini
-      // if (file.type !== 'application/pdf') {
-      //   console.warn('Hanya file PDF yang diperbolehkan.');
-      //   e.target.value = '';
-      //   return;
-      // }
-
       const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path); // ⬅️ update baris yang benar
+      if (path) onChange(idx, 'answer_file', path);
 
-      // reset supaya memilih file yang sama tetap memicu onChange
       e.target.value = '';
     };
-
-  const onChangesByFieldTypes = (key: keyof FormVisitor, value: any, targetFieldType: number) => {
-    setSectionsData((prev) =>
-      prev.map((sec) =>
-        updateSectionForm(sec, (arr) =>
-          arr.map((form) =>
-            form.field_type === targetFieldType ? { ...form, [key]: value } : form,
-          ),
-        ),
-      ),
-    );
-
-    // (opsional) sinkronisasi tambahan kamu tetap bisa lanjut di bawah ini
-    setGroupedPages((prev) => {
-      const pvSection = sectionsData.find(isPurposeVisit);
-      if (!pvSection) return prev;
-      return {
-        ...prev,
-        single_page: prev.single_page.map((f) =>
-          f.field_type === targetFieldType ? { ...f, [key]: value } : f,
-        ),
-      };
-    });
-  };
 
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
@@ -2596,9 +1996,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return r.startsWith('/cdn/') ? `${BASE_URL}${r}` : `${BASE_URL}/cdn${r}`;
   };
 
-  // tentukan preview yg ditampilkan:
-  // 1) kalau ada previews[key] (ObjectURL hasil pilih file / kamera) -> pakai itu
-  // 2) else, kalau answer_file punya ekstensi image -> pakai cdn url
   const getPreviewSrc = (key: string, answerFile?: string) => {
     if (previews[key]) return previews[key];
     if (!answerFile) return null;
@@ -2612,7 +2009,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return isImg ? makeCdnUrl(answerFile) : null;
   };
 
-  // —— optional: helper untuk tampilkan nama file dari answer_file (fallback)
   const fileNameFromAnswer = (answerFile?: string) => {
     if (!answerFile) return '';
     try {
@@ -2622,40 +2018,82 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       return String(answerFile).split('/').pop() || '';
     }
   };
+
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
 
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
-    if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
     }
 
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
-    e.target.value = '';
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
+
+    if (trackKey) {
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
+    }
+
+    try {
+      const path = await uploadFileToCDN(file);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error: any) {
+      toast(error?.response?.data?.msg ?? 'Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
-  // === GANTI: bersihkan juga previews & nama file ===
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -2663,37 +2101,525 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
-      console.error('Delete failed:', e);
+      toast('Failed to delete file', 'error');
     } finally {
       setRemoving((s) => ({ ...s, [inputId]: false }));
     }
   };
 
-  // === (opsional) kamera: simpan preview & nama file default ===
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
-
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      setScreenshot(imageSrc);
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+      if (blob.size > 5 * 1024 * 1024) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
+      const path = await uploadFileToCDN(blob);
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error: any) {
+      toast(error?.response?.data?.msg ?? 'Failed to upload photo', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
-  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
+  const buildSiteTree = (
+    sites: any[],
+    parentId: string | null,
+  ): {
+    id: string;
+    name: string;
+    children?: {
+      id: string;
+      name: string;
+      children?: { id: string; name: string; children?: any[] }[];
+    }[];
+  }[] => {
+    return sites
+      .filter((s) => {
+        const siteParent = s.parent ? s.parent.toLowerCase() : null;
+        const target = parentId ? parentId.toLowerCase() : null;
+        return siteParent === target;
+      })
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        children: buildSiteTree(sites, s.id),
+      }));
+  };
+
+  const buildSiteTreeWithParent = (sites: any[], parentId: string) => {
+    const parent = sites.find((s) => s.id === parentId);
+    if (!parent) return [];
+
+    return [{ id: parent.id, name: parent.name, children: buildSiteTree(sites, parentId) }];
+  };
+
+  const collectAllChildIds = (node: any): string[] => {
+    if (!node.children || node.children.length === 0) {
+      return [];
+    }
+
+    return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
+  };
+
+  const handleSiteCheck = (
+    node: any,
+    isChecked: boolean,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const isParentNode = !!node.children?.length;
+
+    const setter = isSelfOnly
+      ? (callback: any) =>
+          setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+            ...prevMap,
+            [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+          }))
+      : setSelectedSiteIds;
+
+    setter((prev: string[]) => {
+      let updated = [...prev];
+
+      if (isChecked) {
+        // tambah current
+        if (!updated.includes(node.id)) {
+          updated.push(node.id);
+        }
+
+        // child pilih -> parent ikut
+        if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+          updated.push(node.parentId);
+        }
+      } else {
+        updated = updated.filter((id) => id !== node.id);
+
+        if (isParentNode) {
+          const childIds = collectAllChildIds(node);
+
+          updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+        }
+        if (!isParentNode && node.parentId) {
+          const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+          const collectSiblingIds = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => (n.children ? n.children.map((c: any) => c.id) : []));
+
+          const siblingIds = collectSiblingIds(parentTree);
+
+          const stillHasCheckedSibling = siblingIds.some((id: string) => updated.includes(id));
+
+          if (!stillHasCheckedSibling) {
+            updated = updated.filter((id) => id !== node.parentId);
+          }
+        }
+      }
+
+      const activeParentIds = isSelfOnly
+        ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+        : selectedSiteParentIds;
+
+      updated = updated.filter((id) => {
+        return activeParentIds.some((parentId) => {
+          if (id === parentId) return true;
+
+          const tree = buildSiteTreeWithParent(sites, parentId);
+
+          const collect = (nodes: any[]): string[] =>
+            nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+          return collect(tree).includes(id);
+        });
+      });
+
+      updated = [...new Set(updated)];
+
+      onChange(index, 'answer_text', toCsv(updated));
+
+      return updated;
+    });
+  };
+
+  const renderTree = (
+    node: any,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+    disabled = false,
+  ) => {
+    const originalSite = sites.find(
+      (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+    );
+    const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+    const isDisabled = !canVisited || disabled;
+    const isChecked = isSelfOnly
+      ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+      : selectedSiteIds.includes(node.id);
+
+    return (
+      <TreeItem
+        key={`${node.parentId ?? 'root'}-${node.id}`}
+        itemId={`${node.parentId ?? 'root'}-${node.id}`}
+        label={
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              if (isDisabled) return;
+
+              handleSiteCheck(node, !isChecked, index, onChange, isSelfOnly);
+            }}
+            sx={{
+              cursor: isDisabled ? 'default' : 'pointer',
+              width: '100%',
+            }}
+          >
+            <Checkbox
+              size="small"
+              disabled={isDisabled}
+              checked={isChecked}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                handleSiteCheck(node, e.target.checked, index, onChange, isSelfOnly);
+              }}
+            />
+
+            <Box display="flex" flexDirection="column">
+              <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+                {node.name}
+              </Typography>
+
+              {!canVisited && (
+                <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                  {t('siteCannotBeVisited')}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        }
+      >
+        {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
+      </TreeItem>
+    );
+  };
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const getVisibilityMap = (details: any[]) => {
+    const getFlag = (key: string) => {
+      const field = details.find((f: any) => f.remarks?.toLowerCase() === key.toLowerCase());
+
+      if (!field) return false;
+
+      const value = String(field.answer_text ?? '')
+        .trim()
+        .toLowerCase();
+
+      return ['true', 'yes', '1'].includes(value);
+    };
+
+    const isDriving = getFlag('is_driving');
+    const isEmployee = getFlag('is_employee');
+
+    return {
+      vehicle_id: isDriving,
+      vehicle_plate: isDriving,
+      employee: isEmployee,
+    };
+  };
+
+  const validateField = (item: any, key: string, errors: Record<string, string>) => {
+    const label = item.long_display_text || item.remarks || 'This field';
+    const isEmptyText =
+      item.answer_text === null ||
+      item.answer_text === undefined ||
+      (typeof item.answer_text === 'string' && item.answer_text.trim() === '') ||
+      (Array.isArray(item.answer_text) && item.answer_text.length === 0);
+
+    const isEmptyFile = !item.answer_file;
+    const isEmptyDate = !item.answer_datetime;
+
+    switch (item.field_type) {
+      case 2: // Email
+        if (isEmptyText) {
+          errors[key] = `${label} is required`;
+          break;
+        }
+
+        const email = String(item.answer_text).trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+          errors[key] = `${label} must be a valid email address`;
+        }
+
+        break;
+      case 10:
+      case 11:
+      case 12:
+        if (isEmptyFile) errors[key] = `${label} is required`;
+        break;
+
+      case 8:
+      case 9:
+        if (isEmptyDate) errors[key] = `${label} is required`;
+        break;
+
+      default:
+        if (isEmptyText) errors[key] = `${label} is required`;
+        break;
+    }
+  };
+
+  const validateCurrentStep = () => {
+    if (activeStep === 0) return true;
+
+    const errors: Record<string, string> = {};
+    sectionsData.forEach((section: any) => {
+      const forms = formsOf(section);
+
+      forms.forEach((item: any) => {
+        if (
+          item.remarks?.toLowerCase() === 'is_driving' &&
+          (item.answer_text === undefined || item.answer_text === null || item.answer_text === '')
+        ) {
+          item.answer_text = 'false';
+        }
+      });
+    });
+
+    const isFieldMandatory = (item: any, visibilityMap: any) => {
+      const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'is_driving' || remark === 'is_employee') {
+        return false;
+      }
+      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+        return true;
+      }
+
+      return !!item.mandatory;
+    };
+
+    const getVisibilityMapForValidation = (details: any[]) => {
+      const getFieldValue = (remarkName: string) => {
+        const field = details.find(
+          (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
+        );
+
+        return String(field?.answer_text ?? '')
+          .trim()
+          .toLowerCase();
+      };
+
+      const isDriving = ['true', 'yes', '1'].includes(getFieldValue('is_driving'));
+
+      const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
+
+      const vehicleType = getFieldValue('vehicle_id');
+
+      const isBicycle = vehicleType === 'bicycle';
+
+      return {
+        vehicle_id: isDriving,
+
+        // Vehicle plate tidak berlaku untuk Bicycle
+        vehicle_plate: isDriving && !isBicycle,
+
+        employee: isEmployee,
+      };
+    };
+
+    if (isGroup) {
+      const section = sectionsData[activeStep - 1];
+
+      if (section.name === 'Purpose Visit') {
+        const sameField = (a: any, b: any) =>
+          (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
+          (a?.remarks && b?.remarks && a.remarks === b.remarks);
+
+        const mergedFields = formsOf(section).map((f: any) => {
+          const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
+
+          return shared
+            ? {
+                ...f,
+                answer_text: shared.answer_text,
+                answer_datetime: shared.answer_datetime,
+                answer_file: shared.answer_file,
+              }
+            : f;
+        });
+
+        const visibilityMap: any = getVisibilityMapForValidation(mergedFields);
+
+        mergedFields.forEach((item: any) => {
+          const remark = (item.remarks || '').toLowerCase();
+
+          const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+            ? visibilityMap[remark]
+            : true;
+
+          if (!isVisible) return;
+
+          if (!isFieldMandatory(item, visibilityMap)) return;
+
+          const fieldId = item.custom_field_id || item.id;
+
+          validateField(item, `${activeStep - 1}:${fieldId}`, errors);
+        });
+      } else {
+        dataVisitor.forEach((visitor, gIdx) => {
+          const page = visitor.question_page?.[activeStep - 1];
+          if (!page?.form) return;
+          const details = page.form;
+          const visibilityMap: any = getVisibilityMapForValidation(details);
+          details.forEach((item: any) => {
+            const remark = (item.remarks || '').toLowerCase();
+
+            const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+              ? visibilityMap[remark]
+              : true;
+            if (!isVisible) return;
+            if (!isFieldMandatory(item, visibilityMap)) return;
+
+            const fieldId = item.custom_field_id || item.id;
+
+            validateField(item, `${activeStep - 1}:${gIdx}:${fieldId}`, errors);
+          });
+        });
+      }
+    } else {
+      const section = sectionsData[activeStep - 1];
+      const details = formsOf(section);
+      const visibilityMap: any = getVisibilityMapForValidation(details);
+      details.forEach((item: any) => {
+        const remark = (item.remarks || '').toLowerCase();
+        const isVisible = Object.prototype.hasOwnProperty.call(visibilityMap, remark)
+          ? visibilityMap[remark]
+          : true;
+        if (!isVisible) return;
+        if (!isFieldMandatory(item, visibilityMap)) return;
+        const fieldId = item.custom_field_id || item.id;
+        const key = `${activeStep - 1}:${fieldId}`;
+        validateField(item, key, errors);
+      });
+    }
+
+    setFieldErrors(errors);
+
+    return Object.keys(errors).length === 0;
+  };
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+  };
+  const [selfOnlySelectedSiteParentIdsMap, setSelfOnlySelectedSiteParentIdsMap] = useState<
+    Record<number, string[]>
+  >({});
+
+  const [selfOnlySiteTreeMap, setSelfOnlySiteTreeMap] = useState<Record<number, any[]>>({});
+
+  const [selfOnlyInputValuesMap, setSelfOnlyInputValuesMap] = useState<
+    Record<number, Record<number, string>>
+  >({});
+
+  const dedupeTree = (nodes: any[]) => {
+    const visited = new Set();
+
+    const processNode = (node: any): any => {
+      if (visited.has(node.id)) {
+        return null;
+      }
+
+      visited.add(node.id);
+
+      return {
+        ...node,
+        children: (node.children || []).map(processNode).filter(Boolean),
+      };
+    };
+
+    return nodes.map(processNode).filter(Boolean);
+  };
+
+  const getDisplayText = (item: any) => {
+    const remark = (item.remarks || '').toLowerCase();
+
+    switch (remark) {
+      case 'is_driving':
+        return t('visitorArrivingByVehicle');
+      case 'vehicle_id':
+        return t('vehicleType');
+      case 'vehicle_plate':
+        return t('licensePlateNumber');
+
+      default:
+        return item.long_display_text;
+    }
+  };
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    groupIdx?: string | undefined,
+    isSelfOnly: boolean = false,
+    option?: {
+      disabled?: boolean;
+    },
   ) => {
     if (!Array.isArray(details)) {
-      console.error('Expected array for details, but got:', details);
       return (
         <TableRow>
           <TableCell colSpan={5}>Invalid data format</TableCell>
@@ -2701,79 +2627,284 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       );
     }
 
-    return details.map((item, index) => {
-      const key = `${activeStep - 1}:${index}`;
+    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
+      onChange(idx, field, value);
+    };
+
+    const visibilityMap: any = getVisibilityMap(details);
+    const filteredDetails = details.filter((item) => {
+      if (item.is_enable !== true) {
+        return false;
+      }
+      const originalIndex = details.findIndex((d) => d.id === item.id);
+      const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'vehicle_plate') {
+        const vehicleType = details.find((d) => (d.remarks || '').toLowerCase() === 'vehicle_id');
+        const vehicleTypeValue = String(vehicleType?.answer_text || '').toLowerCase();
+        if (vehicleTypeValue === 'bicycle') {
+          if (item.answer_text) {
+            onChange(originalIndex, 'answer_text', null);
+          }
+          return false;
+        }
+      }
+      const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+      if (!visible && item.answer_text) {
+        onChange(originalIndex, 'answer_text', null);
+      }
+
+      return visible;
+    });
+
+    const employeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'employee',
+    );
+
+    const isEmployeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+    );
+
+    if (employeeIndex !== -1 && isEmployeeIndex !== -1) {
+      const [employeeItem] = filteredDetails.splice(employeeIndex, 1);
+
+      const newIsEmployeeIndex = filteredDetails.findIndex(
+        (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+      );
+
+      filteredDetails.splice(newIsEmployeeIndex + 1, 0, employeeItem);
+    }
+
+    const startField = details.find(
+      (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+    const isEmployee = filteredDetails.some((x) => x.remarks === 'employee' && x.answer_text);
+
+    return filteredDetails.map((item: any) => {
+      if (item.is_enable !== true) {
+        return false;
+      }
+      const originalIndex = details.findIndex((d) => d.id === item.id);
+      const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
+
+      const key = `${activeStep - 1}:${fieldKey}`;
+
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
+      const errorMessage = fieldErrors[key];
+
+      const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'visitor_period_end') {
+        return null;
+      }
+      const isVisitorPeriodPair =
+        remark === 'visitor_period_start' &&
+        filteredDetails[originalIndex + 1] &&
+        (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
+
+      const agendaOptions = ['Meeting', 'Presentation', 'Visit', 'Training', 'Report'];
+
+      const isOtherAgenda =
+        showOtherAgenda[originalIndex] ||
+        (!!item.answer_text && !agendaOptions.includes(item.answer_text));
       return (
         <TableRow key={key}>
-          {/* Display Text (label) */}
-          <TableCell>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              {item.long_display_text}
-              {item.mandatory && (
-                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                  *
+          <TableCell
+            sx={{
+              display: item.remarks === 'employee' ? 'none' : 'table-cell',
+              borderBottom: 'none',
+            }}
+          >
+            {!isVisitorPeriodPair && (
+              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  {getDisplayText(item)}
+                  {item.mandatory && (
+                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                      *
+                    </Typography>
+                  )}
                 </Typography>
-              )}
-            </Typography>
-            {/* Render sesuai field_type */}
+
+                {item.remarks === 'host' && (
+                  <Tooltip title={t('hostInformation')} arrow placement="top">
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'agenda' && (
+                  <Tooltip title={t('agendaInformation')} arrow placement="top">
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'site_place' && (
+                  <Tooltip title={t('sitePlaceInformation')} arrow placement="top">
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_start' && (
+                  <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_end' && (
+                  <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+              </Box>
+            )}
+
             {(() => {
               switch (item.field_type) {
-                // case 0: // Text
-                //   return (
-                //     <TextField
-                //       size="small"
-                //       value={item.answer_text}
-                //       onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //       placeholder="Enter text"
-                //       fullWidth
-                //     />
-                //   );
                 case 0: // Text
+                  if (item.remarks === 'agenda') {
+                    return (
+                      <Box>
+                        <FormControl fullWidth error={!!errorMessage}>
+                          <CustomSelect
+                            value={isOtherAgenda ? 'Others' : item.answer_text || ''}
+                            onChange={(e: any) => {
+                              const value = e.target.value;
+
+                              if (value === 'Others') {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: true,
+                                }));
+
+                                // kosongkan dulu, nanti diisi oleh text field
+                                onChange(originalIndex, 'answer_text', '');
+                              } else {
+                                setShowOtherAgenda((prev) => ({
+                                  ...prev,
+                                  [originalIndex]: false,
+                                }));
+
+                                onChange(originalIndex, 'answer_text', value);
+                              }
+
+                              clearFieldError(key);
+                            }}
+                            fullWidth
+                            displayEmpty
+                            disabled={option?.disabled}
+                            sx={{
+                              '&.Mui-disabled': {
+                                backgroundColor: '#eeeaeaff',
+                              },
+                            }}
+                          >
+                            <MenuItem value="" disabled>
+                              {t('select')} agenda
+                            </MenuItem>
+
+                            <MenuItem value="Meeting">Meeting</MenuItem>
+                            <MenuItem value="Presentation">Presentation</MenuItem>
+                            <MenuItem value="Visit">Visit</MenuItem>
+                            <MenuItem value="Training">Training</MenuItem>
+                            <MenuItem value="Report">Report</MenuItem>
+                            <MenuItem value="Others">Others</MenuItem>
+                          </CustomSelect>
+                        </FormControl>
+                        <FormHelperText sx={{ color: 'red' }}>{errorMessage}</FormHelperText>
+
+                        {/* {showOtherAgenda[originalIndex] && (
+                          <CustomTextField
+                            sx={{ mt: 2 }}
+                            fullWidth
+                            placeholder="Please specify agenda"
+                            value={item.answer_text || ''}
+                            onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
+                          /> */}
+                        {/* )} */}
+                        {isOtherAgenda && (
+                          <CustomTextField
+                            sx={{ mt: 2 }}
+                            fullWidth
+                            placeholder="Please specify agenda"
+                            disabled={option?.disabled}
+                            value={item.answer_text || ''}
+                            onChange={(e) => onChange(originalIndex, 'answer_text', e.target.value)}
+                          />
+                        )}
+                      </Box>
+                    );
+                  }
                   return (
-                    <TextField
+                    <CustomTextField
                       size="small"
                       value={item.answer_text || ''}
-                      onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                      placeholder={
-                        item.remarks === 'name'
-                          ? ''
-                          : item.remarks === 'phone'
-                          ? ''
-                          : item.remarks === 'organization'
-                          ? ''
-                          : item.remarks === 'indentity_id'
-                          ? ''
-                          : ''
+                      onChange={(e) => {
+                        let value = e.target.value;
+
+                        if ((item.remarks || '').toLowerCase() === 'phone') {
+                          value = value.replace(/\D/g, '');
+                        }
+
+                        onChange(originalIndex, 'answer_text', value);
+
+                        if (value) clearFieldError(key);
+                      }}
+                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
+                      inputProps={
+                        (item.remarks || '').toLowerCase() === 'phone'
+                          ? {
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*',
+                            }
+                          : undefined
                       }
+                      disabled={item.remarks === 'name' && isEmployee}
                       fullWidth
+                      error={!!errorMessage}
+                      helperText={errorMessage}
                     />
                   );
                 case 1: // Number
                   return (
-                    <TextField
+                    <CustomTextField
                       type="number"
                       size="small"
                       value={item.answer_text}
-                      onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                      placeholder="Enter number"
+                      onChange={(e) => {
+                        onChange(originalIndex, 'answer_text', e.target.value);
+                        if (e.target.value) clearFieldError(key);
+                      }}
+                      placeholder={'Enter your ' + item.long_display_text.toLowerCase()}
                       fullWidth
+                      error={!!errorMessage}
+                      helperText={errorMessage}
                     />
                   );
                 case 2: // Email
                   return (
-                    <TextField
+                    <CustomTextField
                       type="email"
                       size="small"
                       value={item.answer_text}
-                      onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                      placeholder={item.remarks === 'email' ? '' : ''}
+                      onChange={(e) => {
+                        onChange(originalIndex, 'answer_text', e.target.value);
+                        if (e.target.value) clearFieldError(key);
+                      }}
+                      placeholder={
+                        item.remarks?.toLowerCase() === 'email'
+                          ? 'Example: name@gmail.com'
+                          : 'Enter your ' + item.long_display_text.toLowerCase()
+                      }
                       fullWidth
+                      error={!!errorMessage}
+                      helperText={errorMessage}
                     />
                   );
                 case 3: {
-                  let options: { value: string; name: string }[] = [];
+                  let options: {
+                    value: string;
+                    name: string;
+                    disabled?: boolean | undefined;
+                    helperText?: string;
+                  }[] = [];
 
                   if (item.remarks === 'host') {
                     options = employee.map((emp: any) => ({
@@ -2782,30 +2913,454 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     }));
                   } else if (item.remarks === 'employee') {
                     options = allVisitorEmployee.map((emp: any) => ({
+                      ...emp,
                       value: emp.id,
                       name: emp.name,
                     }));
                   } else if (item.remarks === 'site_place') {
-                    options = sites
-                      .filter((site: any) => site.can_visited === true)
-                      .map((site: any) => ({
-                        value: site.id,
-                        name: site.name,
-                      }));
+                    options = sites.map((site: any) => ({
+                      value: site.id,
+                      name: site.name,
+                      // disabled: site.can_visited === false,
+                      disabled: site.is_drop_point === true,
+                      can_visited: site.can_visited,
+                      helperText: site.can_visited === false ? t('siteCannotBeVisited') : '',
+                    }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
+                  if (item.remarks === 'site_place') {
+                    return (
+                      <>
+                        <Autocomplete
+                          disabled={option?.disabled}
+                          multiple
+                          size="small"
+                          options={options}
+                          getOptionLabel={(option) => option.name}
+                          getOptionDisabled={(option) => option.disabled === true}
+                          inputValue={
+                            isSelfOnly
+                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
+                              : inputValues[originalIndex] || ''
+                          }
+                          onInputChange={(_, newInputValue, reason) => {
+                            if (reason !== 'input') return;
 
+                            if (isSelfOnly) {
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [originalIndex]: newInputValue,
+                                },
+                              }));
+                            } else {
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [originalIndex]: newInputValue,
+                              }));
+                            }
+                          }}
+                          filterOptions={(opts, state) => {
+                            const keyword = state.inputValue.trim().toLowerCase();
+
+                            // default tampil 10 data
+                            if (keyword.length < 3) {
+                              return opts.slice(0, 10);
+                            }
+
+                            return opts
+                              .filter((opt) => opt.name.toLowerCase().includes(keyword))
+                              .slice(0, 10);
+                          }}
+                          noOptionsText={
+                            (
+                              (isSelfOnly
+                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
+                                : inputValues[originalIndex]) || ''
+                            ).length < 3
+                              ? t('enterMin3CharsToSearch')
+                              : 'Not found'
+                          }
+                          value={options.filter((opt) =>
+                            (isSelfOnly
+                              ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                              : selectedSiteParentIds
+                            ).includes(opt.value),
+                          )}
+                          onChange={(_, newValues) => {
+                            const validValues = newValues.filter((v) => v.disabled !== true);
+
+                            const parentIds = [...new Set(validValues.map((v) => v.value))];
+
+                            const rawTrees = parentIds.flatMap((pid) =>
+                              buildSiteTreeWithParent(sites, pid),
+                            );
+
+                            const collectIds = (nodes: any[]): string[] => {
+                              return nodes.flatMap((n) => [
+                                n.id,
+                                ...(n.children ? collectIds(n.children) : []),
+                              ]);
+                            };
+
+                            const validIds = collectIds(rawTrees);
+
+                            // ambil value lama
+                            const currentAnswers = Array.isArray(item.answer_text)
+                              ? item.answer_text
+                              : item.answer_text
+                                ? String(item.answer_text).split(',')
+                                : [];
+
+                            // hanya simpan child yang masih valid
+                            const filteredChildren = currentAnswers.filter((id: string) =>
+                              validIds.includes(id),
+                            );
+
+                            // final value
+                            const finalAnswer = [...new Set([...parentIds, ...filteredChildren])];
+
+                            // update
+                            onChange(originalIndex, 'answer_text', finalAnswer);
+                            if (finalAnswer.length > 0) {
+                              clearFieldError(key);
+                            }
+
+                            const uniqueTrees = dedupeTree(rawTrees);
+
+                            if (isSelfOnly) {
+                              setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: parentIds,
+                              }));
+
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [originalIndex]: '',
+                                },
+                              }));
+
+                              setSelfOnlySiteTreeMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: uniqueTrees,
+                              }));
+                            } else {
+                              setSelectedSiteParentIds(parentIds);
+
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [originalIndex]: '',
+                              }));
+
+                              setSiteTree(uniqueTrees);
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder={t('selectSiteMin3Chars')}
+                              fullWidth
+                              error={!!errorMessage}
+                              helperText={errorMessage}
+                            />
+                          )}
+                        />
+
+                        {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
+                          .length > 0 && (
+                          <SimpleTreeView>
+                            {(isSelfOnly
+                              ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                              : siteTree
+                            ).map((node) =>
+                              renderTree(
+                                node,
+                                originalIndex,
+                                handleSitePlaceChange,
+                                isSelfOnly,
+                                isAddTransaction,
+                              ),
+                            )}
+                          </SimpleTreeView>
+                        )}
+                      </>
+                    );
+                  }
+                  if (item.remarks === 'host') {
+                    // const selectedSiteIds =
+                    //   details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+                    // const siteHostIds = [
+                    //   ...new Set(
+                    //     sites
+                    //       .filter((site: any) => selectedSiteIds.includes(site.id))
+                    //       .map((site: any) => site.host)
+                    //       .filter(Boolean),
+                    //   ),
+                    // ];
+
+                    // // host yang sesuai site
+                    // const matchedHosts = employee
+                    //   .filter((emp: any) => siteHostIds.includes(emp.id))
+                    //   .map((emp: any) => ({
+                    //     value: emp.id,
+                    //     name: emp.name,
+                    //     group: 'Host Based on Destination',
+                    //   }));
+
+                    const selectedSiteIds =
+                      details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+                    const siteHostIds = [
+                      ...new Set(
+                        sites
+                          .filter((site: any) => selectedSiteIds.includes(site.id))
+                          .map((site: any) => site.host)
+                          .filter(Boolean),
+                      ),
+                    ];
+                    // host yang sesuai site
+                    const matchedHosts = employee
+                      .filter((emp: any) => siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'Host Based on Destination',
+                      }));
+                    const searchText = (inputValues[originalIndex] || '').trim();
+                    const isSearchActive = searchText.length >= 3;
+                    const selectedHost = employee.find((emp: any) => emp.id === item.answer_text);
+                    const visibleHosts = isSearchActive ? employee : employee.slice(0, 10);
+                    const mergedHosts = selectedHost
+                      ? [selectedHost, ...visibleHosts.filter((x: any) => x.id !== selectedHost.id)]
+                      : visibleHosts;
+
+                    const otherHosts = mergedHosts.map((emp: any) => ({
+                      value: emp.id,
+                      name: emp.name,
+                      group: 'All Host',
+                    }));
+
+                    const finalOptions = [...matchedHosts, ...otherHosts];
+
+                    return (
+                      <Autocomplete
+                        disabled={option?.disabled}
+                        loading={isLoadingEmployee}
+                        loadingText="Searching Host..."
+                        size="small"
+                        options={finalOptions}
+                        groupBy={(option) => option.group}
+                        getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.value === value.value}
+                        inputValue={inputValues[originalIndex] || ''}
+                        onInputChange={(_, newInputValue, reason) => {
+                          setInputValues((prev: any) => ({
+                            ...prev,
+                            [originalIndex]: newInputValue,
+                          }));
+
+                          if (reason === 'input') {
+                            if (newInputValue.length >= 3 || newInputValue.length === 0) {
+                              search?.(newInputValue);
+                            }
+                          }
+                        }}
+                        filterOptions={(opts, state) => {
+                          if (!state.inputValue) {
+                            return opts;
+                          }
+
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        value={finalOptions.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          const selectedValue = newValue?.value || '';
+
+                          onChange(originalIndex, 'answer_text', selectedValue);
+
+                          if (selectedValue) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        renderGroup={(params) => (
+                          <Box key={params.key}>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1,
+                                bgcolor:
+                                  // params.group === 'Host Based on Destination'
+                                  //   ? '#E3F2FD'
+                                  '#F5F5F5',
+                                borderTop:
+                                  params.group !== 'Host Based on Destination'
+                                    ? '1px solid #E0E0E0'
+                                    : 'none',
+                                borderBottom: '1px solid #E0E0E0',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                fontWeight={700}
+                                color="text.secondary"
+                                textTransform="capitalize"
+                              >
+                                {params.group}
+                              </Typography>
+                            </Box>
+
+                            {params.children}
+                          </Box>
+                        )}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder={t('selectPicHostMin3Chars')}
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                        renderOption={(props, option) => {
+                          const { key, ...rest } = props;
+
+                          return (
+                            <li {...rest} key={option.value}>
+                              {option.name}
+                            </li>
+                          );
+                        }}
+                      />
+                    );
+                  }
+                  if (item.remarks === 'employee') {
+                    return (
+                      <Autocomplete
+                        sx={{ display: 'none' }}
+                        size="small"
+                        options={options}
+                        getOptionLabel={(option) => option.name}
+                        inputValue={inputValues[originalIndex] || ''}
+                        getOptionDisabled={(option) => option.disabled || false}
+                        onInputChange={(_, newInputValue) =>
+                          setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
+                        }
+                        filterOptions={(opts, state) => {
+                          if (state.inputValue.length < 3) return [];
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        noOptionsText={
+                          (inputValues[originalIndex] || '').length < 3
+                            ? t('enterMin3CharsToSearch')
+                            : 'Not found'
+                        }
+                        value={options.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          if (!newValue) {
+                            onChange(originalIndex, 'answer_text', null);
+                            return;
+                          }
+                          const selected = newValue;
+                          onChange(originalIndex, 'answer_text', selected.value);
+                          setSectionsData((prev) =>
+                            prev.map((s, sIdx) =>
+                              sIdx !== activeStep - 1
+                                ? s
+                                : updateSectionForm(s, (arr) =>
+                                    arr.map((item) => {
+                                      switch (item.remarks) {
+                                        case 'name':
+                                          return { ...item, answer_text: selected.name || '' };
+
+                                        case 'email':
+                                          return { ...item, answer_text: selected?.email ?? '' };
+
+                                        case 'phone':
+                                          return { ...item, answer_text: selected?.phone || '' };
+
+                                        case 'employee':
+                                          return { ...item, answer_text: selected?.id || '' };
+
+                                        case 'organization':
+                                          return {
+                                            ...item,
+                                            answer_text:
+                                              selected.Organization?.name ||
+                                              selected.organization ||
+                                              '',
+                                          };
+
+                                        case 'identity_id':
+                                        case 'indentity_id':
+                                          return {
+                                            ...item,
+                                            answer_text: selected?.identity_id || '',
+                                          };
+
+                                        default:
+                                          return item;
+                                      }
+                                    }),
+                                  ),
+                            ),
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder={t('enterMin3CharsToSearch')}
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
+                    );
+                  }
+                  if ((item.remarks || '').toLowerCase() === 'visitor_role') {
+                    return (
+                      <Autocomplete
+                        size="small"
+                        fullWidth
+                        options={visitorRoles}
+                        getOptionLabel={(option) => option.role}
+                        value={visitorRoles.find((r: any) => r.role === item.answer_text) || null}
+                        onChange={(_, value) => {
+                          onChange(originalIndex, 'answer_text', value?.role || '');
+
+                          if (value) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder={t('selectRole')}
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
+                    );
+                  }
                   return (
                     <Autocomplete
                       size="small"
                       options={options}
                       getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
+                      inputValue={inputValues[originalIndex] || ''}
+                      getOptionDisabled={(option) => option.disabled || false}
                       onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                       }
                       filterOptions={(opts, state) => {
                         if (state.inputValue.length < 3) return [];
@@ -2814,20 +3369,23 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         );
                       }}
                       noOptionsText={
-                        (inputValues[index] || '').length < 3
-                          ? 'Ketik minimal 3 karakter untuk mencari'
+                        (inputValues[originalIndex] || '').length < 3
+                          ? t('enterMin3CharsToSearch')
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
-                      onChange={(_, newValue) =>
-                        onChange(index, 'answer_text', newValue ? newValue.value : '')
-                      }
+                      onChange={(_, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
+                        onChange(originalIndex, 'answer_text', selectedValue);
+                        if (selectedValue) clearFieldError(key);
+                      }}
                       renderInput={(params) => (
-                        <TextField
+                        <CustomTextField
                           {...params}
-                          label=""
-                          placeholder="Ketik minimal 3 karakter"
+                          placeholder={t('enterMin3CharsToSearch')}
                           fullWidth
+                          error={!!errorMessage}
+                          helperText={errorMessage}
                         />
                       )}
                     />
@@ -2840,12 +3398,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
+                        format="dddd, DD  MMMM YYYY, HH:mm"
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -2854,145 +3412,137 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                // case 5: // Radio
-                //   return (
-                //     <FormControl component="fieldset">
-                //       <RadioGroup
-                //         value={item.answer_text}
-                //         onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //         sx={{
-                //           flexDirection: 'row', // tampil horizontal
-                //           flexWrap: 'wrap', // bisa pindah baris
-                //           gap: 1, // beri jarak antar item (opsional)
-                //         }}
-                //       >
-                //         {(item.multiple_option_fields || [])
-                //           .sort((a: any, b: any) => {
-                //             // pakai nilai value untuk urutan: 0 -> 1 -> 2
-                //             return Number(a.value) - Number(b.value);
-                //           })
-                //           .map((opt: any, idx: number) => (
-                //             <FormControlLabel
-                //               key={idx}
-                //               value={opt.value}
-                //               control={<Radio />}
-                //               label={opt.name}
-                //             />
-                //           ))}
-                //       </RadioGroup>
-                //     </FormControl>
-                //   );
                 case 5: // Radio
                   return (
-                    <FormControl component="fieldset">
-                      <RadioGroup
-                        value={String(item.answer_text)} // ✅ pastikan string
-                        onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                        sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                      >
-                        {(item.multiple_option_fields || [])
-                          .sort((a: any, b: any) => Number(a.value) - Number(b.value))
-                          .map((opt: any, idx: number) => (
-                            <FormControlLabel
-                              key={idx}
-                              value={String(opt.value)} // ✅ samain jadi string
-                              control={<Radio />}
-                              label={opt.name}
-                            />
-                          ))}
-                      </RadioGroup>
-                    </FormControl>
+                    <>
+                      <FormControl component="fieldset" error={!!errorMessage}>
+                        <RadioGroup
+                          value={String(
+                            item.answer_text === null ||
+                              item.answer_text === undefined ||
+                              item.answer_text === ''
+                              ? 'false'
+                              : item.answer_text,
+                          )}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            onChange(originalIndex, 'answer_text', value);
+
+                            if (value) {
+                              clearFieldError(key);
+                            }
+
+                            if ((item.remarks || '').toLowerCase() === 'is_driving') {
+                              const isDriving = ['true', 'yes', '1'].includes(value.toLowerCase());
+                              if (!isDriving) {
+                                details.forEach((field: any, fieldIndex: number) => {
+                                  const remark = (field.remarks || '').toLowerCase();
+
+                                  if (remark === 'vehicle_id' || remark === 'vehicle_plate') {
+                                    onChange(fieldIndex, 'answer_text', null);
+                                  }
+                                });
+                              }
+                            }
+                          }}
+                          sx={{
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                          }}
+                        >
+                          {(item.multiple_option_fields || [])
+                            .sort((a: any, b: any) => {
+                              if (item.remarks === 'is_driving') {
+                                const order: Record<string, number> = {
+                                  true: 0,
+                                  false: 1,
+                                };
+
+                                return order[a.value] - order[b.value];
+                              }
+
+                              return 0;
+                            })
+                            .map((opt: any, idx: number) => (
+                              <FormControlLabel
+                                key={idx}
+                                value={String(opt.value)}
+                                control={<Radio />}
+                                label={opt.name}
+                              />
+                            ))}
+                        </RadioGroup>
+                      </FormControl>
+
+                      <br />
+
+                      {errorMessage && (
+                        <Typography variant="caption" color="error">
+                          {errorMessage}
+                        </Typography>
+                      )}
+                    </>
                   );
-
-                // case 6: // Checkbox
-                //   return (
-                //     <FormGroup>
-                //       {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
-                //         <FormControlLabel
-                //           key={idx}
-                //           control={
-                //             <Checkbox
-                //               checked={item.answer_text?.includes(
-                //                 typeof opt === 'object' ? opt.value : opt,
-                //               )}
-                //               onChange={(e) => {
-                //                 const val = typeof opt === 'object' ? opt.value : opt;
-                //                 const newValue = e.target.checked
-                //                   ? [...(item.answer_text || []), val]
-                //                   : (item.answer_text || []).filter((v: string) => v !== val);
-                //                 onChange(index, 'answer_text', newValue);
-                //               }}
-                //             />
-                //           }
-                //           label={typeof opt === 'object' ? opt.name : opt}
-                //         />
-                //       ))}
-                //     </FormGroup>
-                //   );
-
                 case 6: // Checkbox
                   return (
-                    <FormGroup>
-                      {(item.multiple_option_fields || []).map((opt: any, idx: number) => {
-                        const val = typeof opt === 'object' ? opt.value : opt;
-                        const label = typeof opt === 'object' ? opt.name : opt;
-                        const answerArray = Array.isArray(item.answer_text)
-                          ? item.answer_text
-                          : item.answer_text
-                          ? [String(item.answer_text)]
-                          : [];
+                    <>
+                      <FormControl error={!!errorMessage}>
+                        <FormGroup>
+                          {(item.multiple_option_fields || []).map((opt: any, idx: number) => {
+                            const val = typeof opt === 'object' ? opt.value : opt;
+                            const label = typeof opt === 'object' ? opt.name : opt;
+                            const answerArray = Array.isArray(item.answer_text)
+                              ? item.answer_text
+                              : item.answer_text
+                                ? [String(item.answer_text)]
+                                : [];
 
-                        return (
-                          <FormControlLabel
-                            key={idx}
-                            control={
-                              <Checkbox
-                                checked={answerArray.includes(val)}
-                                onChange={(e) => {
-                                  const newValue = e.target.checked
-                                    ? [...answerArray, val]
-                                    : answerArray.filter((v: string) => v !== val);
-                                  onChange(index, 'answer_text', newValue);
-                                }}
+                            return (
+                              <FormControlLabel
+                                key={idx}
+                                control={
+                                  <Checkbox
+                                    checked={answerArray.includes(val)}
+                                    onChange={(e) => {
+                                      const newValue = e.target.checked
+                                        ? [...answerArray, val]
+                                        : answerArray.filter((v: string) => v !== val);
+                                      onChange(originalIndex, 'answer_text', newValue);
+                                      if (newValue.length > 0) {
+                                        clearFieldError(key);
+                                      }
+                                    }}
+                                  />
+                                }
+                                label={label}
                               />
-                            }
-                            label={label}
-                          />
-                        );
-                      })}
-                    </FormGroup>
+                            );
+                          })}
+                        </FormGroup>
+                      </FormControl>
+                      <br />
+                      {errorMessage && (
+                        <Typography variant="caption" color="error">
+                          {errorMessage}
+                        </Typography>
+                      )}
+                    </>
                   );
 
                 case 8: // TimePicker
                   return (
-                    <TextField
-                      type="time"
-                      size="small"
-                      value={item.answer_datetime}
-                      onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-                      fullWidth
-                    />
-                  );
-                case 9:
-                  return (
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                      <DateTimePicker
-                        value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
-                        ampm={false}
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <TimePicker
+                        value={item.answer_datetime ? dayjs(item.answer_datetime, 'HH:mm') : null}
                         onChange={(newValue) => {
-                          if (newValue) {
-                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
-                            onChange(index, 'answer_datetime', utc);
-                          }
-                        }}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
+                          const utcTime = newValue?.utc().format('HH:mm');
+                          onChange(originalIndex, 'answer_datetime', utcTime);
                         }}
                         slotProps={{
                           textField: {
+                            size: 'small',
                             fullWidth: true,
                           },
                         }}
@@ -3000,7 +3550,526 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     </LocalizationProvider>
                   );
 
-                case 10: // TakePicture (Assuming image capture from device camera)
+                // Data Picker
+                case 9: {
+                  const remark = (item.remarks || '').toLowerCase();
+
+                  if (
+                    remark === 'visitor_period_start' &&
+                    filteredDetails[originalIndex + 1] &&
+                    (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
+                      'visitor_period_end'
+                  ) {
+                    const startItem = item;
+                    const endItem = filteredDetails[originalIndex + 1];
+
+                    const startIndex = details.findIndex((d) => d.id === startItem.id);
+                    const endIndex = details.findIndex((d) => d.id === endItem.id);
+
+                    const startFieldKey =
+                      startItem.custom_field_id ||
+                      startItem.id ||
+                      `visitor_period_start-${startIndex}`;
+
+                    const endFieldKey =
+                      endItem.custom_field_id || endItem.id || `visitor_period_end-${endIndex}`;
+
+                    const startKey = `${activeStep - 1}:${startFieldKey}`;
+                    const endKey = `${activeStep - 1}:${endFieldKey}`;
+
+                    const startError = fieldErrors[startKey];
+                    const endError = fieldErrors[endKey];
+
+                    return (
+                      <Box sx={{ width: '100%' }}>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {startItem.long_display_text}
+                                {startItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip title={t('visitorPeriodStart')} arrow placement="top">
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                disabled={option?.disabled}
+                                open={openStartPicker}
+                                onOpen={() => setOpenStartPicker(true)}
+                                onClose={() => setOpenStartPicker(false)}
+                                value={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : null
+                                }
+                                ampm={false}
+                                minDate={dayjs()}
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const utc = newValue.utc().format();
+
+                                    onChange(startIndex, 'answer_datetime', utc);
+                                    clearFieldError(startKey);
+
+                                    if (
+                                      endItem.answer_datetime &&
+                                      dayjs(endItem.answer_datetime).isBefore(newValue)
+                                    ) {
+                                      onChange(endIndex, 'answer_datetime', '');
+                                    }
+                                  } else {
+                                    onChange(startIndex, 'answer_datetime', '');
+                                    clearFieldError(startKey);
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                slotProps={{
+                                  actionBar: {
+                                    actions: ['today', 'clear', 'accept'],
+                                    sx: {
+                                      '&.Mui-disabled': {
+                                        backgroundColor: '#eeeaeaff',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                                        color: 'secondary !important',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                                        backgroundColor: '#d32f2f !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                                        backgroundColor: '#055499 !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                    },
+                                  },
+                                  textField: {
+                                    fullWidth: true,
+                                    error: !!startError,
+                                    helperText: startError,
+                                    onClick: () => {
+                                      setOpenStartPicker(true);
+                                    },
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
+                                      },
+                                    },
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {endItem.long_display_text}
+                                {endItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip title={t('visitorPeriodEnd')} arrow placement="top">
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                disabled={option?.disabled}
+                                open={openEndPicker}
+                                onOpen={() => setOpenEndPicker(true)}
+                                onClose={() => setOpenEndPicker(false)}
+                                value={
+                                  endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
+                                }
+                                ampm={false}
+                                minDateTime={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : dayjs()
+                                }
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const startDateTime = startItem.answer_datetime
+                                      ? dayjs(startItem.answer_datetime)
+                                      : dayjs();
+
+                                    // Jangan izinkan End sebelum Start
+                                    if (newValue.isBefore(startDateTime)) {
+                                      return;
+                                    }
+
+                                    const utc = newValue.utc().format();
+
+                                    onChange(endIndex, 'answer_datetime', utc);
+                                    clearFieldError(endKey);
+                                  } else {
+                                    onChange(endIndex, 'answer_datetime', '');
+                                    clearFieldError(endKey);
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                slotProps={{
+                                  actionBar: {
+                                    actions: ['today', 'clear', 'accept'],
+                                    sx: {
+                                      '& .MuiButtonBase-root:nth-of-type(1)': {
+                                        color: 'secondary !important',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(2)': {
+                                        backgroundColor: '#d32f2f !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                      '& .MuiButtonBase-root:nth-of-type(3)': {
+                                        backgroundColor: '#055499 !important',
+                                        color: 'white',
+                                        marginLeft: '3px',
+                                      },
+                                    },
+                                  },
+                                  textField: {
+                                    fullWidth: true,
+                                    onClick: () => {
+                                      setOpenEndPicker(true);
+                                    },
+                                    error: !!endError,
+                                    helperText: endError,
+                                    FormHelperTextProps: {
+                                      sx: {
+                                        ml: 0,
+                                        mr: 0,
+                                      },
+                                    },
+                                    sx: {
+                                      '& .MuiInputBase-root.Mui-disabled': {
+                                        backgroundColor: '#eeeaea',
+                                      },
+                                    },
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    );
+                  }
+                  if (remark === 'visitor_period_end') {
+                    return null;
+                  }
+
+                  return (
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        // open={openStartPicker}
+                        value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
+                        // onOpen={() => setOpenStartPicker(true)}
+                        // onClose={() => setOpenStartPicker(false)}
+                        ampm={false}
+                        minDateTime={
+                          item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                        }
+                        onChange={(newValue) => {
+                          if (newValue) {
+                            const utc = newValue.utc().format();
+                            onChange(originalIndex, 'answer_datetime', utc);
+                            clearFieldError(key);
+                          }
+                        }}
+                        format="dddd, DD MMMM YYYY, HH:mm"
+                        // viewRenderers={{
+                        //   hours: renderTimeViewClock,
+                        //   minutes: renderTimeViewClock,
+                        //   seconds: renderTimeViewClock,
+                        // }}
+                        slotProps={{
+                          actionBar: {
+                            actions: ['today', 'clear', 'accept'],
+                          },
+                          textField: {
+                            fullWidth: true,
+                            error: !!errorMessage,
+                            // onClick: () => {
+                            //   setOpenStartPicker(true);
+                            // },
+                            helperText: errorMessage,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  );
+                }
+                // TakePicture
+                case 10: {
+                  const isUploading = !!uploadingFiles[key];
+                  if (remark == 'selfie_image') {
+                    return (
+                      <Box>
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            border: '2px dashed',
+                            borderColor: isDragging ? 'primary.main' : '#90caf9',
+                            borderRadius: 2,
+                            padding: 4,
+                            textAlign: 'center',
+                            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
+                            cursor: isUploading ? 'not-allowed' : 'pointer',
+                            width: '100%',
+                            pointerEvents: isUploading ? 'none' : 'auto',
+                            opacity: isUploading ? 0.6 : 1,
+                          }}
+                          onClick={() => {
+                            if (!isUploading) {
+                              fileInputRef.current?.click();
+                            }
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (!isUploading) {
+                              setIsDragging(true);
+                            }
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            setIsDragging(false);
+
+                            if (isUploading) return;
+
+                            handleFileChangeForField(
+                              e.dataTransfer.files?.[0],
+                              (url) => {
+                                onChange(originalIndex, 'answer_file', url);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
+                              },
+                              key,
+                            );
+                          }}
+                        >
+                          <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                          <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
+                            Upload File
+                          </Typography>
+                          <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+                            {t('dragDropOrTapToSelectFile')}
+                          </Typography>
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Typography variant="body1" color="textSecondary">
+                              Supports: JPG, PNG, JPEG, Up to
+                              <span style={{ fontWeight: '700' }}> 5 MB or </span>
+                            </Typography>
+
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              color="primary"
+                              sx={{
+                                fontWeight: 600,
+                                ml: 1,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                              onClick={(e: any) => {
+                                e.stopPropagation();
+                                setOpenCamera(true);
+                              }}
+                            >
+                              <IconCamera /> Use Camera
+                            </Typography>
+                          </Box>
+                          {isUploading && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                mt: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <LinearProgress
+                                sx={{
+                                  width: '220px',
+                                  height: 6,
+                                  borderRadius: 3,
+                                }}
+                              />
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  mt: 0.75,
+                                }}
+                              >
+                                Uploading file...
+                              </Typography>
+                            </Box>
+                          )}
+                          <input
+                            id={`file-${key}`}
+                            type="file"
+                            // accept="*"
+                            accept="image/jpeg,image/png,image/jpg"
+                            hidden
+                            ref={fileInputRef}
+                            onChange={(e) => {
+                              handleFileChangeForField(
+                                e.target.files?.[0],
+                                (url) => {
+                                  onChange(originalIndex, 'answer_file', url);
+
+                                  if (url) {
+                                    clearFieldError(key);
+                                  }
+                                },
+                                key,
+                              );
+
+                              e.target.value = '';
+                            }}
+                          />
+                          {(previewSrc || shownName) && (
+                            <Box
+                              mt={2}
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              {previewSrc ? (
+                                <>
+                                  <img
+                                    src={previewSrc}
+                                    alt="preview"
+                                    style={{
+                                      width: md ? 350 : 220,
+                                      height: 200,
+                                      borderRadius: 12,
+                                      objectFit: 'cover',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                    }}
+                                  />
+                                  <MuiButton
+                                    color="error"
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ mt: 2, minWidth: 120 }}
+                                    onClick={(e: any) => {
+                                      e.stopPropagation();
+                                      handleRemoveFileForField(
+                                        (item as any).answer_file,
+                                        (url) => onChange(originalIndex, 'answer_file', url),
+                                        key,
+                                      );
+                                    }}
+                                    startIcon={<IconTrash />}
+                                  >
+                                    Remove
+                                  </MuiButton>
+                                </>
+                              ) : (
+                                <Typography variant="caption" noWrap>
+                                  {shownName}
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+                        </Box>
+
+                        {errorMessage && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            sx={{ mt: 1, display: 'block' }}
+                          >
+                            {errorMessage}
+                          </Typography>
+                        )}
+                        <CameraDialog
+                          open={openCamera}
+                          onClose={() => setOpenCamera(false)}
+                          webcamRef={webcamRef as any}
+                          screenshot={screenshot}
+                          facingMode={facingMode}
+                          isUploading={isUploading}
+                          onSwitchCamera={() =>
+                            setFacingMode((prev) =>
+                              prev === 'environment' ? 'user' : 'environment',
+                            )
+                          }
+                          onCapture={() =>
+                            handleCaptureForField(
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onClear={() =>
+                            handleRemoveFileForField(
+                              (item as any).answer_file,
+                              (url) => onChange(originalIndex, 'answer_file', url),
+                              key,
+                            )
+                          }
+                          onSubmit={() => {
+                            setOpenCamera(false);
+                            setScreenshot(null);
+                          }}
+                        />
+                      </Box>
+                    );
+                  }
+
                   return (
                     <Box>
                       <Box
@@ -3026,9 +4095,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCamera(true);
+                          }}
                         >
-                          {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                           <Box
                             sx={{
@@ -3038,7 +4109,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             }}
                           >
                             <Typography
-                              variant="subtitle1"
+                              variant="h6"
                               component="span"
                               color="primary"
                               sx={{ fontWeight: 600 }}
@@ -3053,17 +4124,25 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
-                              (url) => onChange(index, 'answer_file', url),
+                              e.target.files?.[0],
+                              (url) => {
+                                onChange(originalIndex, 'answer_file', url);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
+                              },
                               key,
-                            )
-                          }
+                            );
+
+                            e.target.value = '';
+                          }}
                         />
+                        <br />
                       </Box>
 
-                      {/* PREVIEW / INFO */}
                       {(previewSrc || shownName) && (
                         <Box
                           mt={1}
@@ -3078,16 +4157,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 src={previewSrc}
                                 alt="preview"
                                 style={{
-                                  width: 200,
+                                  width: md ? 350 : 220,
                                   height: 200,
+                                  borderRadius: 12,
                                   objectFit: 'cover',
-                                  borderRadius: 8,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                                 }}
                               />
-                              {/* <Typography variant="caption" noWrap>
-                                {shownName}
-                              </Typography> */}
-                              <MuiButton
+                              <Button
                                 color="error"
                                 size="small"
                                 variant="outlined"
@@ -3095,14 +4173,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                    key, // reset <input id=key>
+                                    (url) => onChange(originalIndex, 'answer_file', url),
+                                    key,
                                   )
                                 }
                                 startIcon={<IconTrash />}
                               >
                                 Remove
-                              </MuiButton>
+                              </Button>
                             </Box>
                           ) : (
                             <></>
@@ -3110,110 +4188,45 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         </Box>
                       )}
 
-                      <Dialog
+                      {errorMessage && (
+                        <Typography color="error" variant="caption" display="block" mt={1}>
+                          {errorMessage}
+                        </Typography>
+                      )}
+
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 3 }}>
-                          <Box>
-                            <Typography variant="h6" mb={2}>
-                              Take Photo From Camera
-                            </Typography>
-                            {/* close button */}
-                            <IconButton
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ position: 'absolute', top: 10, right: 10 }}
-                            >
-                              <IconX size={22} />
-                            </IconButton>
-                          </Box>
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {previews[key] ? (
-                                <img
-                                  src={previews[key] as string}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ textAlign: 'right' }}>
-                            <MuiButton
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="warning"
-                              sx={{ mr: 2 }}
-                            >
-                              Clear Foto
-                            </MuiButton>
-                            <MuiButton
-                              variant="contained"
-                              onClick={() =>
-                                handleCaptureForField(
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                            >
-                              Take Foto
-                            </MuiButton>
-                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                              Submit
-                            </MuiButton>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef as any}
+                        screenshot={previews[key] as string | null}
+                        facingMode={facingMode}
+                        isUploading={!!uploadingFiles[key]}
+                        onSwitchCamera={() =>
+                          setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                        }
+                        onCapture={() =>
+                          handleCaptureForField((url) => {
+                            onChange(originalIndex, 'answer_file', url);
+                            if (url) clearFieldError(key);
+                          }, key)
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onSubmit={() => {
+                          setOpenCamera(false);
+                          setScreenshot(null);
+                        }}
+                      />
                     </Box>
                   );
-
+                }
+                // FileUpload
                 case 11: {
-                  // FileUpload
                   return (
                     <Box>
                       <Box
@@ -3236,14 +4249,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: PDF, DOCX, JPG, PNG, up to
+                          Supports: JPG, JPEG, PNG, up to
                           <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
                         </Typography>
-
-                        {/* <Typography variant="body2" color="textSecondary" mt={1}>
-                          Maximal Size 5 MB
-                        </Typography> */}
-
                         {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
@@ -3256,7 +4264,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 200,
+                                    width: 350,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -3272,8 +4280,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
+                                      (url) => onChange(originalIndex, 'answer_file', url),
+                                      key,
                                     )
                                   }
                                   startIcon={<IconTrash />}
@@ -3295,67 +4303,173 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          onChange={handlePDFUploadFor(index, onChange)}
+                          // onChange={handlePDFUploadFor(originalIndex, onChange)}
+                          onChange={(e) =>
+                            handlePDFUploadFor(originalIndex, (idx, field, url) => {
+                              onChange(idx, field, url);
+                              if (url) clearFieldError(key);
+                            })(e)
+                          }
                         />
                       </Box>
+                      {errorMessage && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: 'block' }}
+                        >
+                          {errorMessage}
+                        </Typography>
+                      )}
                     </Box>
                   );
                 }
-
+                // Take Picture and File Upload
                 case 12: {
+                  const isUploading = !!uploadingFiles[key];
                   return (
                     <Box>
                       <Box
                         sx={{
-                          border: '2px dashed #90caf9',
+                          position: 'relative',
+                          border: '2px dashed',
+                          borderColor: isDragging ? 'primary.main' : '#90caf9',
                           borderRadius: 2,
                           padding: 4,
                           textAlign: 'center',
-                          backgroundColor: '#f5faff',
-                          cursor: 'pointer',
+                          backgroundColor: isDragging ? 'action.hover' : '#f5faff',
+                          cursor: isUploading ? 'not-allowed' : 'pointer',
                           width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
+                          pointerEvents: isUploading ? 'none' : 'auto',
+                          opacity: isUploading ? 0.6 : 1,
+                          transition: 'all 0.2s ease',
                         }}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          if (!isUploading) {
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          if (!isUploading) {
+                            setIsDragging(true);
+                          }
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setIsDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setIsDragging(false);
+
+                          if (isUploading) return;
+
+                          handleFileChangeForField(
+                            e.dataTransfer.files?.[0],
+                            (url) => {
+                              onChange(originalIndex, 'answer_file', url);
+
+                              if (url) {
+                                clearFieldError(key);
+                              }
+                            },
+                            key,
+                          );
+                        }}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                        <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
                           Upload File
                         </Typography>
-
-                        <Typography variant="caption" color="textSecondary">
-                          Supports: PDF, DOCX, JPG, PNG
+                        <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+                          {t('dragDropOrTapToSelectFile')}
                         </Typography>
-
-                        <Typography
-                          variant="subtitle1"
-                          component="span"
-                          color="primary"
-                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCamera(true);
-                          }}
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          Use Camera
-                        </Typography>
+                          <Typography variant="body1" color="textSecondary">
+                            Supports: JPG, PNG, JPEG, Up to
+                            <span style={{ fontWeight: '700' }}> 5 MB or </span>
+                          </Typography>
+
+                          <Typography
+                            variant="h6"
+                            component="span"
+                            color="primary"
+                            sx={{
+                              fontWeight: 600,
+                              ml: 1,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              setOpenCamera(true);
+                            }}
+                          >
+                            <IconCamera /> Use Camera
+                          </Typography>
+                        </Box>
+
+                        {isUploading && (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: '220px',
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
 
                         <input
                           id={`file-${key}`}
                           type="file"
-                          accept="*"
+                          accept="image/jpeg,image/png,image/jpg"
                           hidden
                           ref={fileInputRef}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
-                              (url) => onChange(index, 'answer_file', url),
+                              e.target.files?.[0],
+                              (url) => {
+                                onChange(originalIndex, 'answer_file', url);
+
+                                if (url) {
+                                  clearFieldError(key);
+                                }
+                              },
                               key,
-                            )
-                          }
+                            );
+
+                            e.target.value = '';
+                          }}
                         />
-                        {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}
@@ -3367,7 +4481,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 200,
+                                    width: md ? 350 : 220,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -3380,13 +4494,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   size="small"
                                   variant="outlined"
                                   sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
-                                    )
-                                  }
+                                      (url) => onChange(originalIndex, 'answer_file', url),
+                                      key,
+                                    );
+                                  }}
                                   startIcon={<IconTrash />}
                                 >
                                   Remove
@@ -3401,104 +4516,50 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         )}
                       </Box>
 
-                      <Dialog
+                      {errorMessage && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: 'block' }}
+                        >
+                          {errorMessage}
+                        </Typography>
+                      )}
+
+                      <CameraDialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 3 }}>
-                          <Typography variant="h6" mb={2}>
-                            Take Photo From Camera
-                          </Typography>
-
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {screenshot ? (
-                                <img
-                                  src={screenshot}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ textAlign: 'right' }}>
-                            <MuiButton
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="warning"
-                              sx={{ mr: 2 }}
-                            >
-                              Clear Foto
-                            </MuiButton>
-                            <MuiButton
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
-                              }}
-                            >
-                              Take Foto
-                            </MuiButton>
-                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                              Close
-                            </MuiButton>
-                          </Box>
-                        </Box>
-                      </Dialog>
+                        webcamRef={webcamRef as any}
+                        screenshot={screenshot}
+                        facingMode={facingMode}
+                        isUploading={isUploading}
+                        onSwitchCamera={() =>
+                          setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                        }
+                        onCapture={() =>
+                          handleCaptureForField(
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onClear={() =>
+                          handleRemoveFileForField(
+                            (item as any).answer_file,
+                            (url) => onChange(originalIndex, 'answer_file', url),
+                            key,
+                          )
+                        }
+                        onSubmit={() => setOpenCamera(false)}
+                      />
                     </Box>
                   );
                 }
                 default:
                   return (
-                    <TextField
+                    <CustomTextField
                       size="small"
                       value={item.long_display_text}
-                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                      onChange={(e) => onChange(originalIndex, 'long_display_text', e.target.value)}
                       placeholder="Enter value"
                       fullWidth
                     />
@@ -3511,25 +4572,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     });
   };
 
-  // helpers
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
-
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
-
-  // const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => ({
-  //   remarks: tpl.remarks ?? '',
-  //   visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
-  //   field_type: tpl.field_type ?? 0,
-  //   sort: tpl.sort ?? sortIdx,
-  //   short_name: tpl.short_name ?? '',
-  //   long_display_text: tpl.long_display_text ?? '',
-  //   custom_field_id: tpl.custom_field_id ?? null,
-  //   // properti ekstra yang diminta contoh lama:
-  //   form_visitor_type_id: '',
-
-  //   ...pickAns(src ?? {}),
-
-  // });
 
   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
     const out: any = {
@@ -3543,10 +4587,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       form_visitor_type_id: '',
     };
 
-    // ambil nilai jawaban (kalau ada)
     const ans = pickAns(src ?? {});
 
-    // 🟢 handle khusus datetime agar selalu format UTC ISO
     if (tpl.field_type === 9 && ans?.answer_datetime) {
       const parsed = dayjs(ans.answer_datetime);
       out.answer_datetime = parsed.isValid()
@@ -3574,15 +4616,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return { byRemarks, byCF };
   };
 
-  // kumpulkan semua form (apapun section-nya) dari satu row dataVisitor
   const flattenRowForms = (row: any) =>
     (row?.question_page ?? []).flatMap((p: any) => (Array.isArray(p.form) ? p.form : []));
 
-  // kalau rows kosong, fallback nilai row dari groupedPages.batch_page (satu baris)
   const fakeRowFromBatchPage = (batch_page: Record<string, any>) => ({
-    question_page: [
-      { form: Object.values(batch_page || {}) }, // cukup biar flattenRowForms dapat sumber nilai
-    ],
+    question_page: [{ form: Object.values(batch_page || {}) }],
   });
 
   function buildFinalPayload(
@@ -3594,11 +4632,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       is_group: boolean;
       type_registered: number;
       tz: string;
-      registered_site?: string; // <-- jadikan optional
-      group_code?: string; // <-- jadikan optional
-      group_name?: string; // <-- jadikan optional
+      registered_site?: string;
+      group_code?: string;
+      group_name?: string;
     },
-    selfOnlyOverrides: Record<string, any[]> = {}, // 👈 inject dari state
   ) {
     const sharedPVIdx = indexBy(groupedPages.single_page || []);
     const batchIdx = indexBy(Object.values(groupedPages.batch_page || {}));
@@ -3612,30 +4649,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const question_page = rawSections.map((section: any, sIdx: number) => {
         const formsTpl = formsOf(section);
 
-        // ambil flag self_only dari row (kalau ada), atau fallback dari overrides
-        const rowSelfOnly =
-          row?.question_page?.[sIdx]?.self_only === true ||
-          !!selfOnlyOverrides[`row${rowIdx}`]?.length;
-
         const form = formsTpl.map((tpl: any, fIdx: number) => {
           const r = sanitize(tpl?.remarks);
           const cf = tpl?.custom_field_id;
 
           let pick: any;
-
+          pick =
+            (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           if (isPurposeVisit(section)) {
-            if (rowSelfOnly) {
-              // per-row override
-              pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
-            } else {
-              // shared (semua baris sama)
-              pick =
-                (r && sharedPVIdx.byRemarks.get(r)) ||
-                (cf && sharedPVIdx.byCF.get(cf)) ||
-                undefined;
-            }
           } else {
-            // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
               (cf && rowIdxMap.byCF.get(cf)) ||
@@ -3653,18 +4675,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           name: section.name ?? `Page ${sIdx + 1}`,
           is_document: !!section.is_document,
           can_multiple_used: !!section.can_multiple_used,
-          // penting: tulis kembali flag per-row, bukan dari template
-          self_only: !!rowSelfOnly,
+          self_only: false,
           foreign_id: asStr(section.foreign_id),
           form,
         };
       });
-      console.log('question_page:', question_page);
 
       return { question_page };
     });
-
-    // --- susun meta payload
     const basePayload: any = {
       visitor_type: meta.visitor_type,
       is_group: !!meta.is_group,
@@ -3683,229 +4701,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return basePayload;
   }
 
-  // v1
-  // const handleOnSubmits = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-  //     // --- builder field tetap sama ---
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (base.field_type === 9) {
-  //         // 🟢 Format ke UTC ISO string
-  //         if (typeof field.answer_datetime === 'string' && field.answer_datetime.trim()) {
-  //           base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-  //         }
-  //       } else if ([10, 11, 12].includes(base.field_type)) {
-  //         if (typeof field.answer_file === 'string' && field.answer_file.trim()) {
-  //           base.answer_file = field.answer_file;
-  //         }
-  //       } else {
-  //         if (typeof field.answer_text === 'string' && field.answer_text.trim()) {
-  //           base.answer_text = field.answer_text;
-  //         }
-  //       }
-  //       return base;
-  //     };
-
-  //     // --- build payload (single / group) ---
-  //     let payload: CreateVisitorRequest | CreateGroupVisitorRequest | null = null;
-
-  //     const tz = moment.tz.guess();
-
-  //     const baseMeta = {
-  //       visitor_type: formData.visitor_type ?? '',
-  //       type_registered: TYPE_REGISTERED,
-  //       tz,
-  //       is_group: isGroup,
-  //     };
-
-  //     // kalau preregister (TYPE_REGISTERED=0) jangan sertakan registered_site
-  //     if (TYPE_REGISTERED !== 0) {
-  //       (baseMeta as any).registered_site = formData.registered_site || '';
-  //     }
-
-  //     if (isGroup) {
-  //       if (groupVisitors.length === 0) {
-  //         setErrors({ submit: 'Minimal tambah 1 group dulu.' });
-  //         return;
-  //       }
-
-  //       const tz = moment.tz.guess();
-
-  //       // Bangun list_group
-  //       const list_group = groupVisitors.map((g) => {
-  //         const built = buildFinalPayload(
-  //           rawSections,
-  //           groupedPages,
-  //           g.data_visitor.length ? g.data_visitor : dataVisitor,
-  //           {
-  //             visitor_type: formData.visitor_type ?? '',
-  //             is_group: true,
-  //             type_registered: TYPE_REGISTERED,
-  //             tz,
-  //             registered_site: formData.registered_site ?? '',
-  //           },
-  //           selfOnlyOverrides,
-  //         );
-
-  //         return {
-  //           ...built,
-  //           group_code: g.group_code ?? '',
-  //           group_name: g.group_name ?? '',
-  //         };
-  //       });
-
-  //       // ✅ Payload clean hanya berisi list_group
-  //       let payload: CreateGroupVisitorRequest = { list_group };
-
-  //       const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-  //       console.log('🚀 Final Payload:', JSON.stringify(parsed, null, 2));
-  //     } else {
-  //       if (!sectionsData.length) {
-  //         toast('Minimal isi 1 data visitor.', 'warning');
-  //         return;
-  //       }
-  //       const question_page = sectionsData.map((section, sIdx) => {
-  //         const base = {
-  //           id: section.id || section.Id || sIdx,
-  //           sort: section.sort ?? sIdx,
-  //           name: section.name,
-  //           status: 0,
-  //           is_document: section.is_document ?? false,
-  //           can_multiple_used: section.can_multiple_used ?? false,
-  //           foreign_id: section.foreign_id ?? '',
-  //           self_only: section.self_only ?? false,
-  //           form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //         };
-
-  //         // ✅ handle id kecil & Id besar
-  //         return section.id || section.Id ? { ...base, id: section.id ?? section.Id } : base;
-  //       });
-
-  //       console.log('🔥 question_page:', question_page);
-
-  //       payload = {
-  //         ...baseMeta,
-  //         data_visitor: [{ question_page }],
-  //       };
-  //       setSubmitted(true);
-  //       console.log('✅ payload (single):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // --- validasi + pilih endpoint berdasar TYPE_REGISTERED ---
-  //     const newRows = (payload?.data_visitor || []).map((v, i) => {
-  //       // Pastikan question_page selalu array
-  //       const pages = Array.isArray(v.question_page) ? v.question_page : [v.question_page];
-
-  //       // Pastikan form juga aman
-  //       const allForms = pages.flatMap((p: any) => (Array.isArray(p.form) ? p.form : []));
-
-  //       // Cari field "name"
-  //       const visitorForm = allForms.find((f: any) => f.remarks === 'name');
-
-  //       return {
-  //         id: i + 1,
-  //         visitor: visitorForm?.answer_text ?? '',
-  //         card: null,
-  //       };
-  //     });
-
-  //     console.log('✅ newRows:', newRows);
-
-  //     setRows(newRows);
-  //     const parsed = CreateVisitorRequestSchema.parse(payload as any);
-  //     console.log('🚀 parsed final payload:', parsed);
-  //     const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-  //     const backendResponse = await submitFn(token, parsed); // ⬅️ kirim ke endpoint yang benar
-  //     // setLoading(false);
-
-  //     toast('Visitor created successfully.', 'success');
-  //     // isi rows awal: { id, visitor, card }
-  //     // setRows((prevRows) =>
-  //     //   prevRows.map((row, idx) => ({
-  //     //     ...row,
-  //     //     trx_visitor_id: backendResponse.collection?.[idx]?.trx_visitor_id ?? null,
-  //     //   })),
-  //     // );
-
-  //     const visitors = backendResponse.collection?.visitors || [];
-  //     const availableCards = backendResponse.collection?.available_cards || [];
-
-  //     setAvailableCards(availableCards);
-
-  //     console.group('Visitors (trx_visitor_id)');
-  //     visitors.forEach((v, i) => {
-  //       console.log(
-  //         `Row ${i + 1} → trx_visitor_id: ${v.id}, visitor_id: ${v.visitor_id}, name: ${
-  //           v.visitor?.name
-  //         }`,
-  //       );
-  //     });
-  //     console.groupEnd();
-
-  //     setRows((prevRows) =>
-  //       prevRows.map((row, idx) => ({
-  //         ...row,
-  //         trx_visitor_id: visitors[idx]?.visitor_id ?? null,
-  //       })),
-  //     );
-
-  //     const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //     if (siteAnswer) {
-  //       try {
-  //         const res = await getGrantAccess(token, siteAnswer);
-  //         setAccessData(res.collection ?? []);
-  //         console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-  //       } catch (err) {
-  //         console.error('❌ Failed to fetch grant access:', err);
-  //       }
-  //     }
-
-  //     setTimeout(() => {
-  //       setLoading(false); // backdrop hilang
-  //       onSuccess?.();
-  //       setNextDialogOpen(true); // dialog muncul
-  //     }, 1500);
-
-  //     localStorage.removeItem('selfOnlyOverrides');
-  //     setSelfOnlyOverrides({});
-  //   } catch (err: any) {
-  //     setTimeout(() => {
-  //       setLoading(false); // backdrop hilang
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-  //     toast('Failed to create visitor.', 'error');
-  //     console.error(err);
-  //     if (err?.errors) {
-  //       setErrors(err.errors);
-  //     } else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
-
   const removeIdsDeep = (obj: any): any => {
     if (Array.isArray(obj)) return obj.map(removeIdsDeep);
     if (obj && typeof obj === 'object') {
-      const { id, Id, ...rest } = obj; // hapus id & Id
+      const { id, Id, ...rest } = obj;
       const cleaned = Object.fromEntries(
         Object.entries(rest).map(([k, v]) => [k, removeIdsDeep(v)]),
       );
@@ -3914,20 +4713,29 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return obj;
   };
 
+  const {
+    createVisitorMutation,
+    createPraRegisterMutation,
+    createVisitorsGroupMutation,
+    createPraRegisterGroupMutation,
+    createVisitorAddTransactionMutation,
+  } = useVisitorMutation();
+  const loading =
+    createVisitorMutation.isPending ||
+    createPraRegisterMutation.isPending ||
+    createVisitorsGroupMutation.isPending ||
+    createPraRegisterGroupMutation.isPending ||
+    createVisitorAddTransactionMutation.isPending;
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!token) return;
-
+    if (!validateCurrentStep()) {
+      return;
+    }
     try {
-      setLoading(true);
-
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
-
-      console.log('🕒 Final detected timezone:', tz);
-
-      // 🧩 Helper: Format Field
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -3942,25 +4750,23 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
+        // const safeTrim = (val: any): string => {
+        //   if (val === undefined || val === null) return '';
+        //   if (typeof val === 'string') return val.trim();
+        //   if (Array.isArray(val)) return val.map(String).join(',');
+        //   return String(val).trim();
+        // };
 
-        // if (base.field_type === 9 && typeof field.answer_datetime === 'string') {
-        //   base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-        // } else if ([10, 11, 12].includes(base.field_type)) {
-        //   base.answer_file = field.answer_file?.trim() || '';
-        // } else {
-        //   base.answer_text = field.answer_text?.trim() || '';
-        // }
+        const safeTrim = (val: any): string | null => {
+          if (val === undefined || val === null) return null;
 
-        // return base;
-        // 🧩 Safe converter
-        const safeTrim = (val: any): string => {
-          if (val === undefined || val === null) return '';
           if (typeof val === 'string') return val.trim();
-          if (Array.isArray(val)) return val.map(String).join(','); // join array → "true,false"
-          return String(val).trim(); // number / boolean → "true"/"false"
+
+          if (Array.isArray(val)) return val.map(String).join(',');
+
+          return String(val).trim();
         };
 
-        // 🧠 Field type-specific handler
         switch (base.field_type) {
           case 9: // Date/Datetime
             if (typeof field.answer_datetime === 'string') {
@@ -3971,14 +4777,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           case 10:
           case 11:
           case 12: // File upload
-            base.answer_file = safeTrim(field.answer_file);
+            const file = safeTrim(field.answer_file);
+            base.answer_file = file ? file : null;
             break;
 
           case 5:
           case 6:
           case 7: // Radio, Checkbox, Dropdown
             if (Array.isArray(field.answer_text)) {
-              base.answer_text = field.answer_text.map(String).join(','); // e.g. ["true"] -> "true"
+              base.answer_text = field.answer_text.map(String).join(',');
             } else if (typeof field.answer_text === 'boolean') {
               base.answer_text = field.answer_text ? 'true' : 'false';
             } else {
@@ -3994,107 +4801,140 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         return base;
       };
 
-      // 🧱 Common Meta
       const baseMeta = {
         visitor_type: formData.visitor_type ?? '',
         type_registered: TYPE_REGISTERED,
         tz: tz,
         is_group: isGroup,
+        flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
+        // visitor_role: 'Visitor',
         ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
+        ...(TYPE_REGISTERED !== 0 && {
+          is_self_registered: isSelfInvitation ?? false,
+          filled_by_relationship: 'Admin',
+        }),
       };
 
-      // --- Payload Builder ---
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
-
-      // 🟩 GROUP MODE
       if (isGroup) {
         const list_group = groupVisitors.map((g) => {
           const built = buildFinalPayload(
             rawSections,
             groupedPages,
-            g.data_visitor.length ? g.data_visitor : dataVisitor,
+            dataVisitor.length ? dataVisitor : g.data_visitor,
             {
               visitor_type: formData.visitor_type ?? '',
               is_group: true,
               type_registered: TYPE_REGISTERED,
-              tz: tz,
+              tz,
               registered_site: formData.registered_site ?? '',
             },
-            selfOnlyOverrides,
           );
 
-          // 🔹 Clean up data_visitor structure
-          const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
-            ...dv,
-            question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-              // buat id baru jika tidak ada
-              id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || crypto.randomUUID(),
-              sort: qp.sort ?? sIdx,
-              name: qp.name ?? `Section ${sIdx + 1}`,
-              status: qp.status ?? 0,
-              is_document: qp.is_document ?? false,
-              can_multiple_used: qp.can_multiple_used ?? false,
-              foreign_id: qp.foreign_id ?? '',
-              self_only: qp.self_only ?? false,
-              // hapus id pada setiap form
-              form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-            })),
-          }));
+          const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
+            const original = dataVisitor[idx];
 
-          // 🔥 Hapus id di level group (tidak di-include)
+            const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
+              const isPurposeVisit =
+                qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
+
+              if (isPurposeVisit && original?.single_page?.length) {
+                return {
+                  ...qp,
+                  self_only: true,
+                  form: original.single_page.map((f: any, idx: number) => mapField(f, idx)),
+                };
+              }
+
+              return {
+                id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+                sort: qp.sort ?? sIdx,
+                name: qp.name ?? `Section ${sIdx + 1}`,
+                status: qp.status ?? 0,
+                is_document: qp.is_document ?? false,
+                can_multiple_used: qp.can_multiple_used ?? false,
+                foreign_id: qp.foreign_id ?? '',
+                self_only: qp.self_only ?? false,
+                form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+              };
+            });
+
+            return {
+              ...dv,
+              question_page,
+            };
+          });
+
           return {
             group_name: g.group_name ?? '',
             group_code: g.group_code ?? '',
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
-            tz: tz,
+            tz,
             registered_site: formData.registered_site ?? '',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
+            flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
+
+            ...(isAddTransaction && {
+              transaction_visitor_id: formData.transaction_visitor_id ?? '',
+            }),
           };
         });
 
-        payload = { list_group };
+        /*
+         * ==========================================
+         * ADD TRANSACTION
+         * ==========================================
+         */
+        if (isAddTransaction) {
+          const addTransactionPayload = list_group[0];
 
-        // ✅ Validasi Group Schema
-        const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+          // optional: cek visitor terlebih dahulu
+          const hasVisitor =
+            addTransactionPayload.data_visitor?.some((visitor: any) =>
+              visitor.question_page?.some(
+                (page: any) =>
+                  page.name === 'Visitor Information' &&
+                  page.form?.some(
+                    (field: any) =>
+                      field.remarks === 'name' &&
+                      typeof field.answer_text === 'string' &&
+                      field.answer_text.trim() !== '',
+                  ),
+              ),
+            ) ?? false;
 
-        // Submit ke endpoint group
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitors;
-        const backendResponse = await submitFn(token, parsed as any);
-        toast('Group visitor created successfully.', 'success');
-        const visitors = backendResponse.collection?.visitors || [];
+          if (!hasVisitor) {
+            toast('Minimal isi 1 visitor pada Visitor Information.', 'warning');
+            return;
+          }
 
-        // const availableCards = backendResponse.collection?.available_cards || [];
-        // setAvailableCards(availableCards);
+          await createVisitorAddTransactionMutation.mutateAsync(addTransactionPayload);
 
-        // setRows(
-        //   visitors.map((v: any, i: number) => ({
-        //     id: i + 1,
-        //     visitor: v.visitor?.name,
-        //     trx_visitor_id: v.visitor_id ?? null,
-        //     card: null,
-        //   })),
-        // );
+          showSwal('success', t('visitorAddedSuccessfully'), 3000);
 
-        // // Cek akses site
-        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        // if (siteAnswer) {
-        //   try {
-        //     const res = await getGrantAccess(token, siteAnswer);
-        //     setAccessData(res.collection ?? []);
-        //     console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-        //   } catch (err) {
-        //     console.error('❌ Failed to fetch grant access:', err);
-        //   }
-        // }
-      }
+          resetMediaState();
+          clearAnswerFiles();
+        } else {
+          payload = { list_group };
 
-      // 🟦 SINGLE MODE
-      else {
+          const parsed = CreateGroupVisitorRequestSchema.parse(payload);
+
+          if (TYPE_REGISTERED === 0) {
+            await createPraRegisterGroupMutation.mutateAsync(parsed);
+          } else {
+            await createVisitorsGroupMutation.mutateAsync(parsed);
+          }
+
+          showSwal('success', t('groupVisitorCreatedSuccessfully'));
+
+          resetMediaState();
+          clearAnswerFiles();
+        }
+      } else {
         if (!sectionsData.length) {
-          toast('Minimal isi 1 data visitor.', 'warning');
+          toast(t('visitorMinimum'), 'warning');
           return;
         }
 
@@ -4114,61 +4954,42 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-
+        // console.log('Payload :', JSON.stringify(payload, null, 2));
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('✅ Final Payload (Single):', JSON.stringify(parsed, null, 2));
-
-        // Submit ke endpoint single
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        const backendResponse = await submitFn(token, parsed);
-        console.log('✅ Visitor created:', backendResponse);
-        toast('Visitor created successfully.', 'success');
-
-        // Mapping hasil visitor
-        const visitors = backendResponse.collection?.visitors || [];
-        const availableCards = backendResponse.collection?.available_cards || [];
-        setAvailableCards(availableCards);
-
-        setRows(
-          visitors.map((v: any, i: number) => ({
-            id: i + 1,
-            visitor: v.visitor?.name,
-            trx_visitor_id: v.visitor_id ?? null,
-            card: null,
-          })),
-        );
-
-        // Cek akses site
-        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        if (siteAnswer) {
-          try {
-            const res = await getGrantAccess(token, siteAnswer);
-            setAccessData(res.collection ?? []);
-            console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-          } catch (err) {
-            console.error('❌ Failed to fetch grant access:', err);
-          }
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
+        // await submitFn(parsed);
+        if (TYPE_REGISTERED === 0) {
+          await createPraRegisterMutation.mutateAsync(parsed);
+        } else {
+          await createVisitorMutation.mutateAsync(parsed);
         }
+
+        const successMessage =
+          TYPE_REGISTERED === 0
+            ? t('preRegistrationCreatedSuccessfully')
+            : t('invitationVisitorCreatedSuccessfully');
+
+        showSwal('success', successMessage, 3000);
+        resetMediaState();
+        clearAnswerFiles();
       }
 
-      // 🕒 Post submit actions
-      setTimeout(() => {
-        setLoading(false);
-        onSuccess?.();
-        // setNextDialogOpen(true);
-      }, 1000);
-
-      localStorage.removeItem('selfOnlyOverrides');
-      setSelfOnlyOverrides({});
+      setActiveStep(0);
+      onSuccess?.();
     } catch (err: any) {
-      setTimeout(() => {
-        setLoading(false);
-        setNextDialogOpen(false);
-      }, 1500);
+      setNextDialogOpen(false);
+      const errorData = err.response?.data;
+      const errorMessage = Array.isArray(errorData?.collection)
+        ? errorData.collection
+            .flatMap((item: any) =>
+              Array.isArray(item.error) ? item.error.map((err: any) => err.message) : [],
+            )
+            .filter(Boolean)
+            .join('\n')
+        : errorData?.message || errorData?.msg || 'Failed to create visitor.';
 
-      toast('Failed to create visitor.', 'error');
-      console.error(err);
-
+      showSwal('error', errorMessage);
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
@@ -4179,281 +5000,66 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-
-  //     // 🧩 Utility untuk mapping field
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (base.field_type === 9 && field.answer_datetime?.trim()) {
-  //         base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString(); // ✅ Zod-compatible
-  //       } else if ([10, 11, 12].includes(base.field_type)) {
-  //         if (field.answer_file?.trim()) base.answer_file = field.answer_file;
-  //       } else if (field.answer_text?.trim()) {
-  //         base.answer_text = field.answer_text;
-  //       }
-
-  //       return base;
-  //     };
-
-  //     // 🧩 Base meta untuk payload
-  //     const tz = moment.tz.guess();
-  //     const baseMeta = {
-  //       visitor_type: formData.visitor_type ?? '',
-  //       type_registered: TYPE_REGISTERED,
-  //       tz,
-  //       is_group: isGroup,
-  //     };
-
-  //     if (TYPE_REGISTERED !== 0) (baseMeta as any).registered_site = formData.registered_site || '';
-
-  //     let payload: any;
-
-  //     // ==========================================================
-  //     // 🧱 CASE 1: MULTI-GROUP VISITOR
-  //     // ==========================================================
-  //     if (isGroup) {
-  //       if (!groupVisitors.length) {
-  //         setErrors({ submit: 'Minimal tambah 1 group dulu.' });
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       // 🧩 Bangun struktur list_group
-  //       const list_group = groupVisitors.map((g) => {
-  //         // 🔍 Ambil visitor-visitor yang termasuk grup ini
-  //        const visitorRows = dataVisitor;
-
-  //         // 🚧 Jika visitorRows kosong, isi minimal 1 kosong
-  //         const safeRows = visitorRows.length ? visitorRows : [{ question_page: [] }];
-
-  //         // 🔨 Bangun payload group lengkap
-  //         const groupPayload = {
-  //           visitor_type: formData.visitor_type ?? '',
-  //           is_group: true,
-  //           group_code: g.group_code,
-  //           group_name: g.group_name,
-  //           type_registered: TYPE_REGISTERED,
-  //           tz: moment.tz.guess(),
-  //           registered_site: formData.registered_site ?? '',
-  //           data_visitor: safeRows.map((row) => ({
-  //             question_page: row.question_page.map((section, sIdx) => ({
-  //               id: section.id || sIdx,
-  //               sort: section.sort ?? sIdx,
-  //               name: section.name,
-  //               is_document: section.is_document ?? false,
-  //               can_multiple_used: section.can_multiple_used ?? false,
-  //               foreign_id: section.foreign_id ?? '',
-  //               self_only: section.self_only ?? false,
-  //               form: (section.form ?? []).map((f, fIdx) => ({
-  //                 sort: f.sort ?? fIdx,
-  //                 short_name: f.short_name ?? '',
-  //                 long_display_text: f.long_display_text ?? '',
-  //                 field_type: f.field_type ?? 0,
-  //                 is_primary: f.is_primary ?? false,
-  //                 is_enable: f.is_enable ?? false,
-  //                 mandatory: f.mandatory ?? false,
-  //                 remarks: f.remarks ?? '',
-  //                 custom_field_id: f.custom_field_id ?? '',
-  //                 multiple_option_fields: f.multiple_option_fields ?? [],
-  //                 visitor_form_type: f.visitor_form_type ?? DEFAULT_VFT,
-  //                 answer_text: f.answer_text ?? undefined,
-  //                 answer_datetime:
-  //                   f.field_type === 9 && f.answer_datetime
-  //                     ? dayjs(f.answer_datetime).utc().toISOString()
-  //                     : undefined,
-  //                 answer_file: f.answer_file ?? undefined,
-  //               })),
-  //             })),
-  //           })),
-  //         };
-
-  //         return groupPayload;
-  //       });
-
-  //       // 🚀 Wrap jadi format akhir
-  //       payload = { list_group };
-  //       setSubmitted(true);
-
-  //       console.log('✅ Final payload (group):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧱 CASE 2: SINGLE VISITOR
-  //     // ==========================================================
-  //     else {
-  //       if (!sectionsData.length) {
-  //         toast('Minimal isi 1 data visitor.', 'warning');
-  //         return;
-  //       }
-
-  //       const question_page = sectionsData.map((section, sIdx) => ({
-  //         id: section.id || section.Id || sIdx,
-  //         sort: section.sort ?? sIdx,
-  //         name: section.name,
-  //         status: 0,
-  //         is_document: section.is_document ?? false,
-  //         can_multiple_used: section.can_multiple_used ?? false,
-  //         foreign_id: section.foreign_id ?? '',
-  //         self_only: section.self_only ?? false,
-  //         form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //       }));
-
-  //       payload = {
-  //         ...baseMeta,
-  //         data_visitor: [{ question_page }],
-  //       };
-
-  //       setSubmitted(true);
-  //       console.log('✅ payload (single):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧩 VALIDASI PAYLOAD (ZOD)
-  //     // ==========================================================
-
-  //     const parsed = isGroup
-  //       ? CreateGroupVisitorRequestSchema.parse(payload)
-  //       : CreateVisitorRequestSchema.parse(payload);
-
-  //     console.log('🚀 parsed final payload:', parsed);
-
-  //     const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-  //     const backendResponse = await submitFn(token, parsed as any);
-
-  //     toast('Visitor created successfully.', 'success');
-
-  //     // ==========================================================
-  //     // 🔎 Handle hasil dari backend
-  //     // ==========================================================
-  //     const visitors = backendResponse.collection?.visitors || [];
-  //     const availableCards = backendResponse.collection?.available_cards || [];
-  //     setAvailableCards(availableCards);
-
-  //     setRows((prev) =>
-  //       prev.map((r, i) => ({
-  //         ...r,
-  //         trx_visitor_id: visitors[i]?.visitor_id ?? null,
-  //       })),
-  //     );
-
-  //     // ==========================================================
-  //     // 🌐 Grant Access (Site)
-  //     // ==========================================================
-  //     const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //     if (siteAnswer) {
-  //       try {
-  //         const res = await getGrantAccess(token, siteAnswer);
-  //         setAccessData(res.collection ?? []);
-  //         console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-  //       } catch (err) {
-  //         console.error('❌ Failed to fetch grant access:', err);
-  //       }
-  //     }
-
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       onSuccess?.();
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     localStorage.removeItem('selfOnlyOverrides');
-  //     setSelfOnlyOverrides({});
-  //   } catch (err: any) {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     toast('Failed to create visitor.', 'error');
-  //     console.error(err);
-
-  //     if (err?.errors) setErrors(err.errors);
-  //     else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
-
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
-  //   // kalau tidak ada draft → fetch dari API
-  useEffect(() => {
-    if (!formData.visitor_type) return;
+  // const handleAddDetails = () => {
+  //   if (!isGroup) {
+  //     handleAddDetail(FORM_KEY);
+  //     return;
+  //   }
 
-    const draft = isGroup
-      ? {
-          visitor_type: formData.visitor_type,
-          is_group: true,
-          type_registered: 1,
-          grouped_pages: groupedPages,
-          data_visitor: dataVisitor,
-          sections: sectionsData, // ⬅️ simpan full structure
-        }
-      : {
-          visitor_type: formData.visitor_type,
-          is_group: false,
-          type_registered: 1,
-          data_visitor: [{ question_page: sectionsData }],
-          sections: sectionsData, // ⬅️ simpan juga untuk single
-        };
+  //   setDataVisitor((prev: any) => {
+  //     if (prev.length === 0) return prev;
 
-    localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
-  }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
+  //     const clone = JSON.parse(JSON.stringify(prev[0])) as {
+  //       question_page: SectionPageVisitor[];
+  //       type: string;
+  //     };
+  //     clone.question_page.forEach((page) => {
+  //       (page.form ?? []).forEach((f) => {
+  //         f.answer_text = '';
+  //         f.answer_datetime = '';
+  //         f.answer_file = '';
+  //       });
+  //     });
+
+  //     clone.type = '';
+
+  //     const next = [...prev, clone];
+  //     setActiveGroupIdx(next.length - 1);
+  //     return next;
+  //   });
+  // };
 
   const handleAddDetails = () => {
     if (!isGroup) {
-      // fallback ke add field biasa kalau single
       handleAddDetail(FORM_KEY);
       return;
     }
 
-    setDataVisitor((prev) => {
+    setDataVisitor((prev: any[]) => {
       if (prev.length === 0) return prev;
 
-      // Clone dari group pertama sebagai template
-      const clone = JSON.parse(JSON.stringify(prev[0])) as {
-        question_page: SectionPageVisitor[];
-      };
+      const clone = JSON.parse(JSON.stringify(prev[0]));
 
-      // Kosongkan semua jawaban di clone
-      clone.question_page.forEach((page) => {
-        (page.form ?? []).forEach((f) => {
+      clone.question_page.forEach((page: any) => {
+        (page.form ?? []).forEach((f: any) => {
           f.answer_text = '';
           f.answer_datetime = '';
           f.answer_file = '';
         });
       });
 
-      const next = [...prev, clone];
-      setActiveGroupIdx(next.length - 1); // opsional: fokus ke group baru
-      return next;
+      clone.type = '';
+
+      return [...prev, clone];
     });
   };
 
   const asStr = (v: any) => (v == null ? '' : String(v));
-  // Aman untuk forms yang mungkin undefined/null
+
   const cloneForms = (forms?: any[]) =>
     Array.isArray(forms)
       ? forms.map((f, idx) => ({
@@ -4478,7 +5084,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return v === 'indentity_id' ? 'identity_id' : v;
   };
 
-  // clone form + kosongkan jawaban
   const cloneFormWithEmptyAnswers = (f: any, idx: number) => ({
     ...f,
     sort: f.sort ?? idx,
@@ -4502,9 +5107,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return REQUIRED_VI.every((x) => r.has(x));
   };
 
-  const getBatchKey = (sectionId?: string, formId?: string) =>
-    `${sectionId ?? 'section'}-${formId ?? 'field'}`;
-
   const isPurposeVisit = (section: any) => {
     if (section?.is_document) return false;
     const forms = formsOf(section);
@@ -4518,101 +5120,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
   };
 
-  // index section Purpose Visit
-  // const pvIndex = sectionsData.findIndex((s) => isPurposeVisit(s));
-  const pvIndex = React.useMemo(() => sectionsData.findIndex(isPurposeVisit), [sectionsData]);
   const hasAns = (f: any) => !!(f?.answer_text || f?.answer_datetime || f?.answer_file);
-  // ada override PV di baris?
-  const hasRowPv = (rowIdx: number) => !!dataVisitor[rowIdx]?.question_page?.[pvIndex]?.self_only;
-
-  // buka dialog PV utk row tertentu
-  const openPvDialog = (rowIdx: number) => {
-    if (pvIndex < 0) return;
-
-    const tpl = sectionsData[pvIndex];
-    const base = formsOf(tpl).map((f: any, i: number) => ({
-      ...f,
-      sort: f.sort ?? i,
-    }));
-
-    // prefill dari shared
-    const prefilled = base.map((f: any) => {
-      const shared = (groupedPages.single_page || []).find((sf: any) => sameField(sf, f));
-      return { ...f, ...pickAns(shared || {}) };
-    });
-
-    // 1) tandai self_only + seed page PV di baris itu SEKARANG,
-    //    supaya switch langsung On dan payload punya self_only: true
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const row = next[rowIdx];
-      const existing = row?.question_page?.[pvIndex];
-
-      row.question_page[pvIndex] = {
-        id: existing?.id,
-        sort: tpl?.sort ?? pvIndex,
-        name: tpl?.name ?? 'Purpose Visit',
-        is_document: !!tpl?.is_document,
-        can_multiple_used: !!tpl?.can_multiple_used,
-        self_only: true,
-        foreign_id: tpl?.foreign_id ?? '',
-        form: existing?.form?.length ? existing.form : prefilled,
-      };
-      return next;
-    });
-
-    // 2) buka dialog untuk edit PV per-baris
-    setPvDlg({ open: true, rowIdx, forms: prefilled });
-  };
-
-  const savePvDialog = () => {
-    if (pvDlg.rowIdx == null) return;
-
-    setSelfOnlyOverrides((prev) => {
-      const next = { ...prev };
-      next[`row${pvDlg.rowIdx}`] = pvDlg.forms; // simpan full forms untuk row ini
-      return next;
-    });
-
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const s = activeStep - 1;
-      if (pvDlg.rowIdx !== null && pvDlg.rowIdx !== undefined) {
-        if (next[pvDlg.rowIdx]?.question_page?.[s]) {
-          next[pvDlg.rowIdx].question_page[s].self_only = true;
-        }
-      }
-      return next;
-    });
-
-    setPvDlg({ open: false, rowIdx: null, forms: [] });
-  };
-
-  useEffect(() => {
-    localStorage.setItem('selfOnlyOverrides', JSON.stringify(selfOnlyOverrides));
-  }, [selfOnlyOverrides]);
-
-  // matikan override PV di baris (optional: hapus file CDN)
-  // matikan override PV di baris (optional: hapus file CDN)
-  const clearRowPv = (rowIdx: number) => {
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const pvIdx = next[rowIdx].question_page.findIndex((q) => {
-        if (q !== undefined && q.form !== undefined) {
-          return q.form.some((f) => f.remarks === 'host');
-        }
-        return false;
-      });
-      if (pvIdx >= 0) {
-        next[rowIdx].question_page[pvIdx] = {
-          ...next[rowIdx].question_page[pvIdx],
-          form: [],
-          self_only: false,
-        };
-      }
-      return next;
-    });
-  };
 
   const buildGroupedPages = (sections: any[] = []): GroupedPages => {
     const single_page: any[] = [];
@@ -4621,23 +5129,17 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     sections.forEach((section) => {
       const forms = formsOf(section);
 
-      // Purpose Visit → single_page
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
           forms.forEach((f: any, idx: number) => {
             const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
           });
         }
-        // kalau self_only = true → biarkan kosong di groupedPages
         return;
       }
-
-      // Non-document → batch_page (template kolom)
       if (!section?.is_document) {
         forms.forEach((f: any, idx: number) => {
-          const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
           const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
           const secForeign = (section as any)?.foreign_id ?? (section as any)?.foreignId ?? null;
           const formForeign = (f as any)?.foreign_id ?? (f as any)?.foreignId ?? null;
@@ -4656,7 +5158,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return {
       single_page,
       batch_page,
-      // batch_rows: [{}], // ← siapkan 1 baris default
     };
   };
   const pickVisitorInfoSingle = (sections: any[] = []) =>
@@ -4673,25 +5174,20 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         ),
     );
 
-  // Ambil form dokumen dari sections mentah
   const collectDocForms = (sections: any[]) => {
     const docs = sections.filter((s) => s?.is_document && formsOf(s).length);
     const all = docs.flatMap((s) => formsOf(s) || []);
-    // ambil hanya selfie/identity/nda
     return all
       .map((f, i) => ({ ...f, remarks: sanitizeRemarks(f.remarks), sort: f.sort ?? i }))
       .filter((f) => DOC_REMARKS.has(f.remarks));
   };
 
-  // >>> GANTI fungsi buildGroupSections kamu dengan ini
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
-    // sumber Visitor Info (single) untuk dijadikan Group
     const viSrc = pickVisitorInfoSingle(list);
     const pvSrc = pickPurposeVisit(list);
 
-    // Kumpulkan form dokumen dan clone
     const docForms = cloneForms(collectDocForms(list));
     const otherSingles = list
       .filter(
@@ -4704,14 +5200,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       )
       .flatMap((s) => formsOf(s));
 
-    // Siapkan Visitor Information (Group)
     const vi = viSrc
       ? {
           ...viSrc,
           name: 'Visitor Information (Group)',
           can_multiple_used: true,
           is_document: false,
-          // gabung form VI + dokumen, pastikan sort berlanjut
+
           [FORM_KEY]: (() => {
             const base = cloneForms(formsOf(viSrc));
             const extra = cloneForms(otherSingles);
@@ -4725,7 +5220,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           })(),
         }
       : {
-          // fallback kalau tidak ada VI di visitor_type
           Id: 'visitor_info_group',
           sort: 0,
           name: 'Visitor Information (Group)',
@@ -4745,7 +5239,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               field_type: 0,
               remarks: 'organization',
             },
-            // minimal kolom dokumen
             {
               short_name: 'Selfie Image',
               long_display_text: 'Selfie Image',
@@ -4767,7 +5260,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           ]),
         };
 
-    // Purpose Visit tetap section tersendiri (umumnya can_multiple_used true)
+    // Purpose Visit
     const pv = pvSrc
       ? {
           ...pvSrc,
@@ -4815,10 +5308,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             },
           ]),
         };
-
-    // Penting: JANGAN ikutkan lagi section dokumen terpisah agar tidak dobel
-    // Kalau kamu masih butuh halaman dokumen terpisah, hapus blok ini dan return [vi, pv, ...docs]
-    return [vi, pv];
+    return [pv, vi];
   };
 
   const seedDataVisitorFromSections = (sections: any[]) => {
@@ -4843,235 +5333,68 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       },
     ];
 
-    // setDataVisitor((prev) =>
-    //   prev.map((x) => ({
-    //     ...x,
-    //     question_page: x.question_page.map((p: any) => ({ ...p, form: [] })),
-    //   })),
-    // );
-    setDataVisitor(result);
+    setDataVisitor(result as any);
     return result;
   };
 
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   let cancelled = false;
-  //   const min = 500; // ms biar skeleton minimal kelihatan
-
-  //   (async () => {
-  //     const t0 = Date.now();
-  //     setVtLoading(true);
-  //     try {
-  //       const [
-  //         customFieldRes,
-  //         visitorTypeRes,
-  //         EmployeeRes,
-  //         AllEmployeeRes,
-  //         siteSpaceRes,
-  //         visitorRes,
-  //       ] = await Promise.all([
-  //         getAllCustomFieldPagination(token, 0, 99, 'id'),
-  //         getAllVisitorType(token),
-  //         // getAllEmployee(token),
-  //         // getVisitorEmployee(token),
-  //         getFormEmployee(token),
-  //         getVisitorEmployee(token),
-  //         getAllSite(token),
-  //         getAllVisitor(token),
-  //       ]);
-
-  //       if (cancelled) return;
-  //       setCustomField(customFieldRes?.collection ?? []);
-  //       setVisitorType(visitorTypeRes?.collection ?? []); // << penting
-  //       setEmployee(EmployeeRes?.collection ?? []);
-  //       setAllVisitorEmployee(AllEmployeeRes?.collection ?? []);
-  //       setSites(siteSpaceRes?.collection ?? []);
-  //       setVisitorDatas(visitorRes?.collection ?? []);
-  //     } finally {
-  //       const elapsed = Date.now() - t0;
-  //       const wait = Math.max(0, min - elapsed);
-  //       setTimeout(() => {
-  //         if (!cancelled) setVtLoading(false);
-  //       }, wait);
-  //     }
-  //   })();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [token]);
-
-  const {
-    data: visitorType = [],
-    isLoading: vtFetching,
-    isError: vtError,
-  } = useQuery({
-    queryKey: ['visitorType', token],
-    queryFn: async () => {
-      if (!token) return [];
-      const res = await getAllVisitorType(token);
-      return res?.collection ?? [];
-    },
-    staleTime: 10 * 60 * 1000, // cache 10 menit
-    gcTime: 30 * 60 * 1000, // simpan 30 menit di memori
-    refetchOnWindowFocus: false, // tidak refetch tiap ganti tab
-    enabled: !!token, // hanya jalan kalau token sudah siap
-  });
-
-  // ✅ useEffect lain tetap dipakai untuk data lainnya
   useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    const min = 500;
-
-    const fetchMainData = async () => {
-      const t0 = Date.now();
-      setVtLoading(true);
-
-      try {
-        const siteSpaceRes = await getAllSite(token);
-        if (cancelled) return;
-
-        setSites(siteSpaceRes?.collection ?? []);
-
-        // lanjut background
-        fetchSecondaryData();
-      } catch (error) {
-        console.error('❌ Error fetching main data:', error);
-      } finally {
-        const elapsed = Date.now() - t0;
-        const wait = Math.max(0, min - elapsed);
-        setTimeout(() => {
-          if (!cancelled) setVtLoading(false);
-        }, wait);
-      }
-    };
-
-    const fetchSecondaryData = async () => {
-      try {
-        const [customFieldRes, employeeRes, allEmployeeRes, visitorRes] = await Promise.all([
-          getAllCustomFieldPagination(token, 0, 99, 'id'),
-          getFormEmployee(token),
-          getVisitorEmployee(token),
-          getAllVisitor(token),
-        ]);
-
-        if (cancelled) return;
-
-        setCustomField(customFieldRes?.collection ?? []);
-        setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
-        setVisitorDatas(visitorRes?.collection ?? []);
-      } catch (error) {
-        console.error('⚠️ Error fetching secondary data:', error);
-      }
-    };
-
-    fetchMainData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
-  // ✅ UI
-  // if (vtFetching) {
-  //   return <Skeleton variant="rectangular" height={40} />;
-  // }
-
-  // if (vtError) {
-  //   return <Typography color="error">Failed to load visitor types</Typography>;
-  // }
-
-  useEffect(() => {
-    if (!formData.visitor_type || !token) return;
-
-    const raw = localStorage.getItem('unsavedVisitorData');
-    const saved = raw ? JSON.parse(raw) : null;
-    const sameType = saved?.visitor_type === formData.visitor_type;
-    const sameMode = saved?.is_group === isGroup;
-
-    // ✅ Restore jika cocok
-    if (sameType && sameMode && saved.sections?.length) {
-      setSectionsData(saved.sections);
-      setDataVisitor(saved.data_visitor ?? []);
-      setGroupedPages(saved.grouped_pages ?? {});
-      setDraggableSteps(saved.sections.map((s: any) => s.name));
-      setRawSections(saved.sections);
-      return;
+    if (!duplicateData) {
+      setInputValues({});
+      setSelectedSiteParentIds([]);
+      setSelectedSiteIds([]);
+      setSiteTree([]);
     }
-
-    // 🌐 Kalau tidak cocok → fetch baru
+    if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
-      setVtLoading(true);
-      try {
-        const res = await getVisitorTypeById(token, formData.visitor_type as string);
-        let sections = res?.collection?.section_page_visitor_types ?? [];
+      const res = await getVisitorTypeById(formData.visitor_type as string);
 
-        if (TYPE_REGISTERED === 0 || FORM_KEY == 'pra_form')
-          sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
+      let sections = res?.collection?.section_page_visitor_types ?? [];
+      const roles = res?.collection?.visitor_roles ?? [];
 
-        setRawSections(sections);
+      setVisitorRoles(roles);
 
-        if (isGroup) {
+      if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
+        sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
+      }
+
+      setRawSections(sections);
+
+      if (isGroup) {
+        if (!duplicateData) {
           const groupSections = buildGroupSections(sections);
           setSectionsData(groupSections);
           setDraggableSteps(groupSections.map((s) => s.name));
           seedDataVisitorFromSections(groupSections);
           setGroupedPages(buildGroupedPages(groupSections));
-        } else {
-          setSectionsData(sections);
-          setDraggableSteps(sections.map((s: any) => s.name));
-          setDataVisitor([]);
-          setGroupedPages({} as any);
         }
-      } catch (err) {
-        console.error('Failed to fetch visitor type details', err);
-        setSectionsData([]);
-        setDraggableSteps([]);
-      } finally {
-        setVtLoading(false);
+      } else {
+        setSectionsData(sections);
+        setDraggableSteps(sections.map((s: any) => s.name));
+        setDataVisitor([]);
+        setGroupedPages({} as any);
       }
     };
-
+    setInputValues({});
     fetchVisitorTypeDetails();
-  }, [formData.visitor_type, token]);
-
-  useEffect(() => {
-    if (!isGroup) return;
-
-    setDataVisitor((prev) => {
-      if (!prev[0]) return prev;
-      const next = [...prev];
-      const qps = next[0].question_page;
-
-      // merge groupedPages.single_page ke Purpose Visit section
-      const purpose = qps.find((s) => s.name.toLowerCase().includes('purpose visit'));
-      if (purpose) {
-        purpose.form = purpose?.form?.map((f: any) => {
-          const match = groupedPages.single_page.find(
-            (sf) =>
-              (sf.custom_field_id && sf.custom_field_id === f.custom_field_id) ||
-              (sf.remarks && sf.remarks === f.remarks),
-          );
-          return match ? { ...f, ...match } : f;
-        });
-      }
-      return next;
-    });
-  }, [isGroup, groupedPages.single_page]);
+  }, [formData.visitor_type]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
-
+    if (!duplicateData) {
+      setInputValues({});
+      setSelectedSiteParentIds([]);
+      setSelectedSiteIds([]);
+      setSiteTree([]);
+    }
     if (isGroup) {
-      const groupSections = buildGroupSections(rawSections);
-      setSectionsData(groupSections);
-      setDraggableSteps(groupSections.map((s) => s.name));
-      seedDataVisitorFromSections(groupSections);
-      setGroupedPages(buildGroupedPages(groupSections));
+      if (!duplicateData) {
+        const groupSections = buildGroupSections(rawSections);
+        setSectionsData(groupSections);
+        setDraggableSteps(groupSections.map((s) => s.name));
+        // seedDataVisitorFromSections(groupSections);
+        seedDataVisitorFromSections(groupSections);
+        setGroupedPages(buildGroupedPages(groupSections));
+      }
     } else {
       setSectionsData(rawSections);
       setDraggableSteps(rawSections.map((s: any) => s.name));
@@ -5096,364 +5419,246 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return o;
   };
 
-  const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
-  useEffect(() => {
-    if (!openChooseCardDialog) setSelectedCards([]);
-  }, [openChooseCardDialog]);
+  const stepLabels = useMemo(() => {
+    if (isAddTransaction) {
+      return draggableSteps;
+    }
 
-  const resetSelections = () => {
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-    setTableKey((k) => k + 1); // ← paksa remount DynamicTable
-  };
+    return ['User Type', ...draggableSteps];
+  }, [draggableSteps, isAddTransaction]);
 
-  const handleCloseChooseCard = () => {
-    setOpenChooseCardDialog(false);
-    resetSelections();
-  };
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
 
-  type Row = {
-    id: number;
-    visitor?: string;
-    card: string | React.ReactNode | null;
-    trx_visitor_id?: string | null;
-    assigned_card_number?: string | null;
-    assigned_card_remarks?: string | null;
-  };
-  const [rows, setRows] = useState<Row[]>([]);
+    const result = validateCurrentStep();
 
-  const cardIndex = useMemo(() => {
-    const m = new Map<string, (typeof availableCards)[number]>();
-    availableCards.forEach((c) => m.set(c.card_number, c));
-    return m;
-  }, [availableCards]);
-
-  const handleConfirmChooseCards = () => {
-    const ids = normalizeIdsDeep(selectedInvitations);
-
-    if (!ids.length || !selectedCards.length) {
-      handleCloseChooseCard();
+    if (!result) {
       return;
     }
 
-    const N = Math.min(ids.length, selectedCards.length);
-
-    // pair: id ↔ (remarks, card_number)
-    const pairs = ids.slice(0, N).map((id, i) => {
-      const num = selectedCards[i];
-      const meta = cardIndex.get(num);
-      return { id, card_number: num, remarks: meta?.remarks ?? '-' };
-    });
-
-    setRows((prevRows) =>
-      prevRows.map((row) => {
-        const p = pairs.find((x) => x.id === row.id);
-        if (!p) return row;
-
-        return {
-          ...row,
-          card: (
-            <Box display="flex" flexDirection="column">
-              <Typography variant="body2" fontWeight={600}>
-                {p.remarks}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {p.card_number}
-              </Typography>
-            </Box>
-          ),
-          assigned_card_number: p.card_number,
-          assigned_card_remarks: p.remarks,
-        };
-      }),
-    );
-
-    toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
-
-    // kosongkan selection
-    setSelectedInvitations([]);
-    handleCloseChooseCard();
+    setActiveStep((prev) => prev + 1);
   };
 
-  const filteredRows = useMemo(() => {
-    if (!searchKeyword) return rows;
-    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [rows, searchKeyword]);
+  const handleSaveGroup = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!validateCurrentStep()) return;
 
-  const assignedByCard = useMemo(() => {
-    const m = new Map<string, string | number>();
-    rows.forEach((r: any) => {
-      if (r.assigned_card_number) {
-        m.set(String(r.assigned_card_number), r.id);
-      }
-    });
-    return m;
-  }, [rows]);
-
-  // id invitation yang sedang dipilih (a,b,c)
-  const selectedIdSet = useMemo(() => {
-    return new Set(normalizeIdsDeep(selectedInvitations).map(String));
-  }, [selectedInvitations]);
-
-  const handleToggleCard = (cardNumber: string) => {
-    const holderRowId = assignedByCard.get(String(cardNumber));
-    const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
-
-    if (isUsedByOther) return; // hanya return kalau milik visitor lain
-
-    setSelectedCards((prev) => {
-      if (prev.includes(cardNumber)) {
-        // sudah ada → remove
-        return prev.filter((c) => c !== cardNumber);
-      }
-      if (prev.length >= selectedInvitations.length) {
-        toast('You have reached the maximum number of invitations.', 'warning');
-        return prev; // tidak nambah
-      }
-      return [...prev, cardNumber];
-    });
+    handleSaveGroupVisitor();
+    toast('Successfully saved group form', 'success');
+    setActiveStep(0);
   };
 
-  const availableVisibleCards = useMemo(() => {
-    return filteredCards.filter((c) => {
-      const holder = assignedByCard.get(String(c.card_number));
-      // singkirkan hanya jika dipegang orang lain
-      return !(holder && !selectedIdSet.has(String(holder)));
-    });
-  }, [filteredCards, assignedByCard, selectedIdSet]);
-
-  const availableCount = availableVisibleCards.length;
-
-  const handleSelectAll = () => {
-    const visible = availableVisibleCards.map((c) => c.card_number);
-    const capacity = selectedInvitations.length;
-    const cappedVisibleCount = Math.min(visible.length, capacity);
-    const visibleSelectedCount = visible.filter((n) => selectedCards.includes(n)).length;
-
-    const fullySelected = cappedVisibleCount > 0 && visibleSelectedCount === cappedVisibleCount;
-
-    if (fullySelected) {
-      // klik kedua: hapus semua yg terlihat
-      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-      toast('Visible cards cleared.', 'info');
-    } else {
-      if (capacity <= 0) return toast('Please select invitations first.', 'warning');
-      // klik pertama: pilih sebanyak kuota dari yg terlihat
-      const toAdd = visible.slice(0, capacity);
-      setSelectedCards(toAdd); // RESET & isi ulang (bukan append)
-      toast(`Selected ${toAdd.length} available card(s).`, 'success');
+  const handleStepChange = (targetStep: number) => {
+    if (targetStep > activeStep) {
+      if (!validateCurrentStep()) return;
     }
+
+    setActiveStep(targetStep);
   };
 
-  // function hasSelfOnly(sectionsData: any[]): boolean {
-  //   return sectionsData.some(
-  //     (s) =>
-  //       s.form?.some?.((f: any) => f.self_only === true) ||
-  //       s.visit_form?.some?.((f: any) => f.self_only === true),
-  //   );
-  // }
+  const isVisitorEmpty = (visitor: any) => {
+    if (!visitor?.question_page?.length) return true;
 
-  const hasSelfOnly = (dataVisitor: any[]) =>
-    dataVisitor?.some((dv) => dv.question_page?.some((page: any) => page.self_only === true));
-
-  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
-  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
-
-  // ambil list visitor self_only dari dataVisitor
-
-  const sameSite = allSite.length > 0 && allSite.every((s) => s === allSite[0]);
-
-  const hasSelf = selfOnlyVisitors.length > 0;
-  const showGroupOnly = isGroup && sameSite;
-  const showGroupAndSelf = isGroup && hasSelf;
-
-  const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
-  const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
-
-  const handleToggleGroup = (id: string) => {
-    setCheckedGroupItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    return !visitor.question_page.some((page: any) =>
+      page?.form?.some((f: any) => f?.answer_text || f?.answer_datetime || f?.answer_file),
     );
   };
 
-  const handleToggleSelf = (id: string) => {
-    setCheckedSelfItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  };
+  const hasSavedGroupData = groupVisitors.some(
+    (g) => Array.isArray(g?.data_visitor) && g.data_visitor.some((v: any) => !isVisitorEmpty(v)),
+  );
 
-  const getCheckedCount = () => {
-    if (!isGroup) {
-      return checkedItems.length; // Single Access
-    }
+  const hasCurrentEditingData =
+    Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
 
-    if (isGroup && !hasSelfOnly(dataVisitor)) {
-      return checkedGroupItems.length; // Group only
-    }
+  const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
 
-    if (isGroup && hasSelfOnly(dataVisitor)) {
-      return checkedSelfItems.length + checkedItems.length; // Group + Self Only
-    }
-
-    return 0;
-  };
-
-  useEffect(() => {
-    if (openChooseCardDialog) {
-      const preselected: string[] = [];
-      for (const [cardNumber, holderRowId] of assignedByCard.entries()) {
-        if (selectedIdSet.has(String(holderRowId))) {
-          preselected.push(cardNumber);
-        }
-      }
-      setSelectedCards(preselected); // isi lagi biar counter & toggle sinkron
-    }
-  }, [openChooseCardDialog, assignedByCard, selectedIdSet]);
+  const getSectionIndex = (step: number) => (isAddTransaction ? step : step - 1);
 
   return (
-    <PageContainer title="Invitation" description="this is Add Visitor page">
+    <Box>
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
-          <DragDropContext onDragEnd={() => {}}>
-            <Droppable
-              droppableId="stepper"
-              direction="horizontal"
-              isDropDisabled={true}
-              isCombineEnabled={false}
-              ignoreContainerClipping={false}
-            >
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '0 0',
-                  }}
-                >
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel
-                    sx={{
-                      width: '100%',
-                      // overflowX: 'auto',
-                      // px: 2,
-                      flexWrap: 'nowrap',
-                      justifyContent: 'flex-start',
-                      // columnGap: 6,
-                      '& .MuiStep-root': {
-                        flex: '1 1 0',
-                        // px: 1.5,
-                      },
-                      '& .MuiStepLabel-label': {
-                        fontSize: '0.875rem',
-                        whiteSpace: 'nowrap',
-                        maxWidth: 200,
-                        overflow: 'hidden',
-                        textWrap: 'wrap',
-                        // textOverflow: 'ellipsis',
-                        textAlign: 'center',
-                      },
-                      '& .MuiStepIcon-root': {
-                        width: 30,
-                        height: 30,
-                      },
+          {!isMobile ? (
+            <DragDropContext onDragEnd={() => {}}>
+              <Droppable
+                droppableId="stepper"
+                direction="horizontal"
+                isDropDisabled={true}
+                isCombineEnabled={false}
+                ignoreContainerClipping={false}
+              >
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      padding: '0 0',
+                      marginTop: '10px',
                     }}
-                    // connector={null}
                   >
-                    {/* Static Step Pertama */}
-                    <Step
-                      key="User Type"
-                      completed={false}
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel
+                      connector={isAddTransaction ? <></> : undefined}
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        m: 0,
+                        width: '100%',
+                        flexWrap: 'nowrap',
+                        justifyContent: 'flex-start',
+
+                        '& .MuiStep-root': {
+                          flex: '1 1 0',
+                        },
+                        ...(isAddTransaction && {
+                          '& > .MuiStepConnector-root': {
+                            '&:first-of-type': {
+                              display: 'none !important',
+                            },
+                          },
+                        }),
+
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.875rem',
+                          whiteSpace: 'nowrap',
+                          maxWidth: 200,
+                          overflow: 'hidden',
+                          textWrap: 'wrap',
+                          textAlign: 'center',
+                        },
+
+                        '& .MuiStepIcon-root': {
+                          width: 30,
+                          height: 30,
+                        },
                       }}
                     >
-                      <StepLabel
-                        onClick={() => setActiveStep(0)}
-                        StepIconProps={{ sx: { width: 30, height: 30 } }}
-                        sx={{
-                          '& .MuiStepLabel-label': {
-                            fontWeight: activeStep === 0 ? 600 : 400,
-                            color: activeStep === 0 ? 'primary.main' : 'text.secondary',
-                          },
-                        }}
-                      >
-                        User Type
-                      </StepLabel>
-                    </Step>
-
-                    {/* Dynamic Draggable Steps */}
-                    {draggableSteps.map((label, index) => (
-                      <Draggable key={label} draggableId={label} index={index} isDragDisabled>
-                        {(provided, snapshot) => (
-                          <Step
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
+                      {!isAddTransaction && (
+                        <Step
+                          key="User Type"
+                          completed={false}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            m: 0,
+                          }}
+                        >
+                          <StepLabel
+                            // onClick={() => setActiveStep(0)}
+                            onClick={() => handleStepChange(0)}
+                            StepIconProps={{ sx: { width: 30, height: 30 } }}
                             sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              mx: 1,
-                              cursor: 'pointer',
+                              '& .MuiStepLabel-label': {
+                                fontWeight: activeStep === 0 ? 600 : 400,
+                                color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                              },
                             }}
-                            onClick={() => setActiveStep(index + 1)}
-                            // key={section.id ?? index}
                           >
-                            <Box
+                            User Type
+                          </StepLabel>
+                        </Step>
+                      )}
+
+                      {/* Dynamic Draggable Steps */}
+                      {draggableSteps.map((label, index) => (
+                        <Draggable key={label} draggableId={label} index={index} isDragDisabled>
+                          {(provided, snapshot) => (
+                            <Step
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
                               sx={{
-                                backgroundColor: snapshot.isDragging
-                                  ? '#1976d2'
-                                  : activeStep === index + 1
-                                  ? 'primary.main'
-                                  : '#9e9e9e',
-                                color:
-                                  snapshot.isDragging || activeStep === index + 1 ? '#fff' : '#fff',
-                                width: 30,
-                                height: 30,
-                                borderRadius: '50%',
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                mb: 0.5,
-                                fontWeight: 'bold',
-                                // border:
-                                //   activeStep === index + 1
-                                //     ? '2px solid #1976d2'
-                                //     : '1px solid #33393dff',
-                                transition: 'all 0.2s ease',
-                                marginRight: -2,
+                                mx: 1,
+                                cursor: 'pointer',
                               }}
+                              // onClick={() => setActiveStep(index + 1)}
+                              // onClick={() => handleStepChange(index + 1)}
+                              onClick={() => handleStepChange(isAddTransaction ? index : index + 1)}
                             >
-                              {index + 2}
-                            </Box>
-                            <StepLabel
-                              sx={{
-                                '& .MuiStepLabel-label': {
-                                  fontWeight: activeStep === index + 1 ? 600 : 400,
+                              <Box
+                                sx={{
+                                  backgroundColor: snapshot.isDragging
+                                    ? '#1976d2'
+                                    : activeStep === (isAddTransaction ? index : index + 1)
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
-                                    activeStep === index + 1 ? 'primary.main' : 'text.secondary',
-                                },
-                              }}
-                            >
-                              {label}
-                            </StepLabel>
-                          </Step>
-                        )}
-                      </Draggable>
-                    ))}
-                  </Stepper>
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                                    snapshot.isDragging ||
+                                    activeStep === (isAddTransaction ? index : index + 1)
+                                      ? '#fff'
+                                      : '#fff',
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  mb: 0.5,
+                                  fontWeight: 'bold',
+                                  transition: 'all 0.2s ease',
+                                  marginRight: -2,
+                                }}
+                              >
+                                {/* {index + 2} */}
+                                {isAddTransaction ? index + 1 : index + 2}
+                              </Box>
+                              <StepLabel
+                                sx={{
+                                  '& .MuiStepLabel-label': {
+                                    fontWeight:
+                                      activeStep === (isAddTransaction ? index : index + 1)
+                                        ? 600
+                                        : 400,
+
+                                    color:
+                                      activeStep === (isAddTransaction ? index : index + 1)
+                                        ? 'primary.main'
+                                        : 'text.secondary',
+                                  },
+                                }}
+                              >
+                                {label}
+                              </StepLabel>
+                            </Step>
+                          )}
+                        </Draggable>
+                      ))}
+                    </Stepper>
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          ) : (
+            <>
+              <Typography fontWeight={600} color="black" textAlign="center" variant="h5" mt={2}>
+                {enableInvitationTypeStep && activeStep === -1
+                  ? 'Invitation Type'
+                  : stepLabels[Math.max(activeStep, 0)]}
+              </Typography>
+              <MobileStepper
+                steps={stepLabels.length + (enableInvitationTypeStep ? 1 : 0)}
+                activeStep={
+                  enableInvitationTypeStep ? (activeStep === -1 ? 0 : activeStep + 1) : activeStep
+                }
+                variant="dots"
+                position="static"
+                sx={{
+                  background: 'transparent',
+                  justifyContent: 'center',
+                  mb: 0,
+                }}
+                nextButton={null}
+                backButton={null}
+              />
+            </>
+          )}
 
           <Box mt={3}>{handleSteps(activeStep)}</Box>
 
@@ -5464,748 +5669,131 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             sx={{
               position: 'sticky',
               bottom: -20,
-              backgroundColor: 'white', // kasih background supaya gak tembus konten
+              backgroundColor: 'white',
               padding: 2,
               zIndex: 10,
-              // borderTop: '1px solid #ddd',
+              borderTop: '1px solid #ddd',
             }}
           >
-            {/* Tombol Back */}
             <MuiButton
-              disabled={activeStep === 0}
-              onClick={() => setActiveStep((prev) => prev - 1)}
+              // disabled={activeStep === -1}
+              disabled={activeStep === firstStep}
+              onClick={() => {
+                setActiveStep((prev) => prev - 1);
+              }}
+              startIcon={<IconArrowLeft width={18} />}
             >
-              Back
+              {t('back')}
             </MuiButton>
 
-            {/* Tombol Next / Submit */}
-            {/* {isLastStep ? (
-              <Button color="primary" type="submit" variant="contained" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={(e) => {
-                  e.preventDefault();
-
-                
-                  if (activeStep === 1 && isGroup) {
-                    handleSaveGroupVisitor();
-                  }
-
-               
-                  if (activeStep === 0 && isGroup) {
-                    const unfilled = groupVisitors.filter(
-                      (g) => !g.data_visitor || g.data_visitor.length === 0,
-                    );
-                    if (unfilled.length > 0) {
-                      toast(
-                        `Masih ada ${unfilled.length} group yang belum diisi form-nya.`,
-                        'warning',
-                      );
-                      return;
-                    }
-                  }
-
-                  // ⬆️ Pindah ke step berikutnya
-                  setActiveStep((prev) => prev + 1);
-                }}
-              >
-                Next
-              </Button>
-            )} */}
-
-            {/* 🔹 Tombol Next / Save */}
             {isGroup ? (
-              // === Mode GROUP ===
               isLastStep ? (
-                // ✅ Step terakhir: Simpan group
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={loading}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSaveGroupVisitor(); // 💾 simpan data visitor ke group aktif
-                    toast('Group form saved successfully.', 'success');
-                    setActiveStep(0); // ⬅️ balik ke list group
-                  }}
+                  disabled={loading || !formData.visitor_type}
+                  onClick={isAddTransaction ? handleOnSubmit : handleSaveGroup}
                 >
-                  {loading ? 'Saving...' : 'Save Group'}
+                  {loading
+                    ? isAddTransaction
+                      ? 'Submitting...'
+                      : 'Saving Group'
+                    : isAddTransaction
+                      ? 'Submit'
+                      : 'Save Group'}
                 </Button>
-              ) : activeStep === 0 ? (
-                // ✅ Step awal group → lanjutkan ke submit semua
-                <Button variant="contained" color="primary" onClick={handleOnSubmit}>
+              ) : !isAddTransaction && activeStep === 0 ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleOnSubmit}
+                  disabled={loading || !hasAnyFilled || !formData.visitor_type}
+                >
                   Submit All
                 </Button>
               ) : (
-                // ✅ Step biasa di group → lanjut ke step berikut
                 <Button
                   variant="contained"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setActiveStep((prev) => prev + 1);
-                  }}
+                  onClick={handleNext}
+                  endIcon={<IconArrowRight width={18} />}
                 >
-                  Next
+                  {t('next')}
                 </Button>
               )
-            ) : // === Mode SINGLE ===
-            isLastStep ? (
-              // ✅ Step terakhir untuk single → Submit
+            ) : isLastStep ? (
               <Button
                 variant="contained"
                 color="primary"
-                disabled={loading}
-                onClick={
-                  handleOnSubmit // 🔥 langsung submit
+                disabled={
+                  loading ||
+                  !formData.visitor_type ||
+                  formData.is_group === null ||
+                  formData.is_group === undefined
                 }
+                onClick={handleOnSubmit}
               >
-                {loading ? 'Submitting...' : 'Submit'}
+                Submit
               </Button>
             ) : (
-              // ✅ Step biasa untuk single → Next
               <Button
                 variant="contained"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveStep((prev) => prev + 1);
-                }}
+                onClick={handleNext}
+                endIcon={<IconArrowRight width={18} />}
               >
-                Next
+                {t('next')}
               </Button>
             )}
           </Box>
         </Box>
       </form>
+      <PurposeVisitDialog
+        open={selfOnlyOpen}
+        onClose={handleCloseSelfOnly}
+        visitorIndex={selfOnlyVisitorIdx}
+        selfForms={selfForms}
+        renderDetailRows={renderDetailRows}
+        onChangeField={(idx: number, fieldKey: string, value: any) => {
+          setDataVisitor((prev) => {
+            const next = [...prev];
+            if (next[selfOnlyVisitorIdx] !== undefined) {
+              next[selfOnlyVisitorIdx].single_page[idx] = {
+                ...next[selfOnlyVisitorIdx].single_page[idx],
+                [fieldKey]: value,
+              };
+            }
 
-      {/* Visitor Card */}
-      <Dialog
-        open={nextDialogOpen}
-        onClose={handleCloseGrantDialog}
-        fullWidth
-        maxWidth="md"
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: 3, // sudut lebih rounded
-            boxShadow: '0 8px 24px rgba(0,0,0,0.08)', // bayangan halus
-          },
+            return next;
+          });
         }}
-      >
-        {/* Header */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{
-            px: 3,
-            py: 2,
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
-        >
-          <DialogTitle sx={{ m: 0, p: 0, fontWeight: 600, fontSize: '1.25rem' }}>
-            Grant Visitor
-          </DialogTitle>
-          <Box display="flex" gap={1}>
-            <MuiButton
-              color="secondary"
-              variant="outlined"
-              onClick={handleCloseGrantDialog}
-              sx={{
-                textTransform: 'none',
-                borderRadius: 2,
-              }}
-            >
-              Cancel
-            </MuiButton>
-            <MuiButton
-              color="primary"
-              variant="contained"
-              onClick={() => setAccessDialogOpen(true)}
-              sx={{
-                textTransform: 'none',
-                borderRadius: 2,
-                boxShadow: '0 4px 8px rgba(99,102,241,0.3)',
-              }}
-            >
-              Grant
-            </MuiButton>
-          </Box>
-        </Box>
-
-        {/* Content */}
-        <DialogContent
-          dividers
-          sx={{
-            p: 1,
-            backgroundColor: 'background.default',
-          }}
-        >
-          <Box
-            sx={{
-              mt: 0,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              overflow: 'hidden',
-            }}
-          >
-            <DynamicTable
-              key={tableKey}
-              data={filteredRows.map(
-                ({ trx_visitor_id, assigned_card_number, assigned_card_remarks, ...rest }) => rest,
-              )}
-              isHaveChecked={true}
-              isHaveSearch={true}
-              isHaveHeaderTitle={false}
-              // titleHeader="Invitation"
-              isHaveCard={true}
-              selectedRows={selectedInvitations}
-              onCheckedChange={handleSelectInvitation}
-              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-              onChooseCard={handleOpenChooseCard}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      {/* Choose Card  */}
-      <Dialog open={openChooseCardDialog} onClose={handleCloseChooseCard} fullWidth maxWidth="lg">
-        <DialogTitle>Choose Card</DialogTitle>
-        {/* closeicon */}
-        <IconButton
-          aria-label="close"
-          onClick={handleCloseChooseCard}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-
-        <DialogContent dividers>
-          {/* Search */}
-          <Box mb={2}>
-            <TextField
-              fullWidth
-              size="small"
-              label=""
-              placeholder="Search card"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={20} /> {/* ikon tabler */}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-
-          {/* Select All */}
-          <Box mb={2}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={
-                    availableVisibleCards.length > 0 &&
-                    availableVisibleCards.every((c) => selectedCards.includes(c.card_number))
-                  }
-                  indeterminate={
-                    availableVisibleCards.some((c) => selectedCards.includes(c.card_number)) &&
-                    !availableVisibleCards.every((c) => selectedCards.includes(c.card_number))
-                  }
-                  onChange={handleSelectAll}
-                />
-              }
-              label="Select All"
-            />
-          </Box>
-
-          <Grid container spacing={2}>
-            {filteredCards.map((card) => {
-              const holderRowId = assignedByCard.get(String(card.card_number));
-              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId)); // 🔑 hanya lock jika milik orang lain
-              const isAssignedInThisSelection =
-                !!holderRowId && selectedIdSet.has(String(holderRowId));
-              const isChosen = selectedCards.includes(card.card_number);
-
-              // KUNCI HANYA JIKA milik visitor lain
-              const isLocked = isUsedByOther;
-
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                  <Paper
-                    role="button"
-                    tabIndex={isLocked ? -1 : 0}
-                    aria-disabled={isLocked}
-                    aria-pressed={isChosen ? 'true' : 'false'}
-                    onClick={() => !isLocked && handleToggleCard(card.card_number)} // selected => boleh toggle
-                    onKeyDown={(e) => {
-                      if (isLocked) return;
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleToggleCard(card.card_number);
-                      }
-                    }}
-                    sx={(theme) => ({
-                      p: 2,
-                      borderRadius: 2,
-                      position: 'relative',
-                      height: 280,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      textAlign: 'center',
-
-                      // base look
-                      border: '1px solid',
-                      borderColor: isChosen ? 'primary.main' : 'divider',
-                      boxShadow: isChosen ? theme.shadows[10] : theme.shadows[4],
-                      backgroundColor: isChosen ? 'primary.50' : 'background.paper',
-
-                      // visual disabled utk Used saja
-                      cursor: isLocked ? 'not-allowed' : 'pointer',
-                      pointerEvents: isLocked ? 'none' : 'auto', // ✅ kartu “used by THIS selection” tetap bisa diklik
-                      opacity: isUsedByOther ? 0.4 : 1,
-                      filter: isUsedByOther ? 'grayscale(0.8) brightness(0.7)' : 'none',
-                      '::after': isUsedByOther
-                        ? {
-                            content: '""',
-                            position: 'absolute',
-                            inset: 0,
-                            borderRadius: 'inherit',
-                            pointerEvents: 'none',
-                            backgroundImage:
-                              'repeating-linear-gradient(45deg, rgba(255,0,0,0.2), rgba(255,0,0,0.2) 2px, transparent 2px, transparent 4px)',
-                          }
-                        : {},
-
-                      // hover/active/focus hanya jika tidak locked
-                      transformOrigin: 'center',
-                      transition: theme.transitions.create(
-                        ['transform', 'box-shadow', 'border-color', 'background-color', 'filter'],
-                        {
-                          duration: theme.transitions.duration.shorter,
-                          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-                        },
-                      ),
-                      '::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        background:
-                          'linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 40%)',
-                        opacity: 0,
-                        pointerEvents: 'none',
-                        transition: 'opacity 200ms ease',
-                      },
-                      ...(!isLocked && {
-                        '&:hover': {
-                          transform: 'translateY(-3px)',
-                          boxShadow: theme.shadows[8],
-                          borderColor: 'primary.main',
-                          '::before': { opacity: 1 },
-                        },
-                        '&:active': {
-                          transform: 'translateY(-1px) scale(0.995)',
-                          boxShadow: theme.shadows[4],
-                        },
-                        '&:focus-visible': {
-                          outline: '2px solid',
-                          outlineColor: theme.palette.primary.main,
-                          outlineOffset: 2,
-                        },
-                      }),
-                    })}
-                  >
-                    {/* konten */}
-                    <Box flexGrow={1} display="flex" flexDirection="column" justifyContent="center">
-                      <Typography variant="body1" mt={1}>
-                        {card.card_number}
-                      </Typography>
-                      <Typography variant="h1">{card.remarks}</Typography>
-                      <Typography variant="body1" mt={1}>
-                        {card.card_mac}
-                      </Typography>
-                    </Box>
-
-                    <Typography variant="body1" mt={1}>
-                      {card.name}
-                    </Typography>
-
-                    {/* checkbox: disable hanya saat Used */}
-                    <FormControlLabel
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      control={
-                        <Checkbox
-                          disabled={isUsedByOther} // ✅ hanya disable jika milik orang lain
-                          checked={isChosen}
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onChange={() => handleToggleCard(card.card_number)}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-
-                    {/* chip status */}
-                    {isUsedByOther && (
-                      <Chip
-                        size="small"
-                        icon={<LockOutlinedIcon fontSize="small" />}
-                        label="Used"
-                        sx={{ position: 'absolute', top: 8, right: 8, opacity: 0.9 }}
-                      />
-                    )}
-                    {isAssignedInThisSelection && (
-                      <Chip
-                        size="small"
-                        color="warning"
-                        variant="outlined"
-                        label="Assigned (this)"
-                        sx={{ position: 'absolute', top: 8, right: 8 }}
-                      />
-                    )}
-                  </Paper>
-                </Grid>
-              );
-            })}
-          </Grid>
-
-          <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-            <Box display={'flex'} gap={2}>
-              <Typography variant="body2">
-                Cards chosen: {selectedCards.length} / {availableCount}
-              </Typography>
-              <Typography variant="body2">|</Typography>
-              <Typography variant="body2">
-                Invitations available: {selectedInvitations.length} (max cards you can choose)
-              </Typography>
-            </Box>
-
-            <Box display="flex" gap={1}>
-              <Button onClick={handleCloseChooseCard} color="secondary">
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                disabled={selectedCards.length === 0}
-                onClick={handleConfirmChooseCards}
-              >
-                Choose
-              </Button>
-            </Box>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      {/* Access Dialog */}
-      <Dialog
-        open={accessDialogOpen}
-        onClose={() => setAccessDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Give Access Visitor</DialogTitle>
-        {/* close icon */}
-        <IconButton
-          aria-label="close"
-          onClick={() => setAccessDialogOpen(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-        {/* close icon */}
-
-        <DialogContent dividers>
-          <Stack spacing={3} flexDirection="column">
-            {/* 1. Single */}
-            {!isGroup && (
-              <Box>
-                <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  Single Access
-                </Typography>
-                <Box display="flex" flexDirection="column">
-                  {accessData.map((a) => (
-                    <FormControlLabel
-                      key={`single-${a.access_control_id}`}
-                      control={
-                        <Checkbox
-                          checked={checkedItems.includes(a.access_control_id)}
-                          onChange={() => handleToggle(a.access_control_id)}
-                        />
-                      }
-                      label={a.name}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* 2. Group only */}
-            {isGroup && !hasSelfOnly(dataVisitor) && (
-              <Box>
-                <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  Group Access
-                </Typography>
-                <Box display="flex" flexDirection="column">
-                  {accessData.map((a) => (
-                    <FormControlLabel
-                      key={`group-${a.access_control_id}`}
-                      control={
-                        <Checkbox
-                          checked={checkedGroupItems.includes(a.access_control_id)}
-                          onChange={() => handleToggleGroup(a.access_control_id)}
-                        />
-                      }
-                      label={a.name}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-          </Stack>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle1" fontWeight={600}>
-              Grant {getCheckedCount()} Access
-            </Typography>
-            <Button
-              variant="contained"
-              color="success"
-              disabled={checkedItems.length === 0 || loading}
-              onClick={handleAccessSubmit}
-              size="medium"
-            >
-              {loading ? 'Loading...' : 'Submit'}
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: (theme) => theme.zIndex.modal + 1,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+        onSave={() => {
+          handleSaveSelfOnly();
+          toast('Purpose Visit saved', 'success');
+        }}
+      />
+      <GlobalBackdropLoading open={loading} />
       <Portal>
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: 2000 }}
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            severity={snackbar.severity} // ← beda warna/ikon sesuai severity
-            sx={{ width: '100%' }}
+            severity={snackbar.severity}
+            sx={{
+              width: '100%',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+            }}
             variant="filled"
           >
             {snackbar.message}
           </Alert>
         </Snackbar>
       </Portal>
-    </PageContainer>
-  );
-};
-
-const CameraUpload: React.FC<{
-  value?: string;
-  onChange: (url: string) => void;
-}> = ({ value, onChange }) => {
-  const [open, setOpen] = React.useState(false);
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
-  const [screenshot, setScreenshot] = React.useState<string | null>(null);
-  const [removing, setRemoving] = React.useState(false);
-  const webcamRef = React.useRef<Webcam>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const clearLocal = () => {
-    setScreenshot(null);
-    setPreviewUrl(null);
-    onChange('');
-  };
-
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-    try {
-      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
-      return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
-    } catch (e) {
-      console.error('Upload failed:', e);
-      return null;
-    }
-  };
-
-  const handleCapture = async () => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-    const blob = await fetch(imageSrc).then((r) => r.blob());
-    const cdnUrl = await uploadFileToCDN(blob);
-    if (!cdnUrl) return;
-    setScreenshot(imageSrc);
-    setPreviewUrl(imageSrc);
-    onChange(cdnUrl);
-  };
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const cdnUrl = await uploadFileToCDN(file);
-
-    if (!cdnUrl) return;
-    setPreviewUrl(URL.createObjectURL(file));
-    onChange(cdnUrl);
-  };
-
-  // ⛔ Hapus file di CDN: DELETE ke URL file (http://host/pathcdn/visitor/xxx.png)
-  const handleRemove = async () => {
-    if (!value) {
-      // cuma bersihkan local state kalau belum ada URL CDN
-      clearLocal();
-      return;
-    }
-    try {
-      setRemoving(true);
-      // await axios.delete(value); // <--- sesuai API kamu
-      await axiosInstance2.delete(`/cdn${value}`);
-      console.log('✅ Berhasil hapus file CDN:', value);
-      clearLocal();
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  return (
-    <Box>
-      <Box
-        sx={{
-          borderRadius: 2,
-          p: 2,
-          textAlign: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
-        <MuiButton size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
-          Camera
-        </MuiButton>
-        {previewUrl && ( // <-- tombol Remove hanya muncul jika ada foto
-          <MuiButton
-            size="small"
-            color="error"
-            variant="outlined"
-            onClick={handleRemove}
-            startIcon={<IconTrash />}
-            disabled={removing}
-          >
-            {removing ? 'Removing...' : 'Remove'}
-          </MuiButton>
-        )}
-        <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
-      </Box>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <Box sx={{ p: 3 }}>
-          <Box>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
-            {/* close button */}
-            <IconButton
-              onClick={() => setOpen(false)}
-              size="small"
-              sx={{ position: 'absolute', top: 10, right: 10 }}
-            >
-              <IconX />
-            </IconButton>
-          </Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: 'environment' }}
-                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              {screenshot ? (
-                <img
-                  src={screenshot}
-                  alt="Captured"
-                  style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    border: '2px dashed #ccc',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 240,
-                  }}
-                >
-                  <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                </Box>
-              )}
-            </Grid>
-          </Grid>
-          <Divider sx={{ my: 2 }} />
-          <Box textAlign="right">
-            <MuiButton color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
-              Clear
-            </MuiButton>
-            <MuiButton variant="contained" onClick={handleCapture}>
-              Take Photo
-            </MuiButton>
-            <MuiButton sx={{ ml: 1 }} onClick={() => setOpen(false)}>
-              Submit
-            </MuiButton>
-          </Box>
-        </Box>
-      </Dialog>
     </Box>
   );
 };

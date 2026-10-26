@@ -489,7 +489,7 @@ const Menuitems = [
                 id: uniqueId(),
                 title: 'Boxed Login',
                 icon: IconPoint,
-                href: '/auth/login2',
+                href: '/auth/login',
               },
             ],
           },

@@ -1,0 +1,239 @@
+import { Avatar } from '@mui/material';
+import { debounce } from 'lodash';
+import React, { useMemo } from 'react';
+import AsyncSelect from 'react-select/async';
+import {
+  getAllEmployee,
+  getListVisitor,
+  getListVisitorPagination,
+  getVisitorEmployee,
+  getVisitorInvitation,
+} from 'src/customs/api/admin';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { components } from 'react-select';
+import { IconSearch } from '@tabler/icons-react';
+import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
+type Visitor = {
+  id: string;
+  visitor_status: string;
+  visitor_identity_id: string;
+  name: string;
+  email: string;
+  // organization: string;
+  organization: any;
+  Organization?: {
+    name: string;
+    [key: string]: any;
+  };
+  gender: string;
+  identity_id: string;
+  phone: string;
+  identity_image?: string;
+  selfie_image?: string;
+  nda?: string;
+};
+
+type OptionType = {
+  label: string;
+  value: string;
+  data: Visitor & { faceimage: string; is_blacklist?: boolean };
+};
+
+type Props = {
+  onSelect: (visitor: Visitor & { faceimage: string }) => void;
+  isEmployee?: boolean;
+};
+
+const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
+  const BASE_URL = axiosInstance2.defaults.baseURL;
+
+  const [selectedOption, setSelectedOption] = React.useState<OptionType | null>(null);
+
+  const getFaceImage = (item: any) => {
+    const faceImage =
+      item.selfie_image ||
+      item.face_image ||
+      item.faceimage ||
+      item.employee?.faceimage ||
+      item.employee?.face_image ||
+      '';
+
+    if (!faceImage) return '';
+
+    // Kalau sudah full URL
+    if (faceImage.startsWith('http')) {
+      return faceImage;
+    }
+
+    return `${BASE_URL}/cdn${faceImage}`;
+  };
+
+  const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
+    // if (inputValue.length < 3) return [];
+
+    try {
+      let list: any[] = [];
+
+      if (isEmployee) {
+        // const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee();
+        list = res?.collection ?? [];
+      } else {
+        // const res = await getListVisitorPagination(
+        //   0, // start
+        //   10, // length
+        //   'desc', // sortDir
+        //   'created_at', // sort_column
+        //   inputValue.trim(), // keyword
+        // );
+
+        const res = await getInvitationVisitor();
+
+        list = res?.collection ?? [];
+      }
+
+      if (!inputValue || inputValue.length < 3) {
+        return list.slice(0, 10).map((item) => {
+          const faceimage = getFaceImage(item);
+
+          return {
+            label: item.name || '(No Name)',
+            value: item.id,
+            isDisabled: item.is_blacklist === true,
+            data: {
+              ...item,
+              faceimage,
+            },
+          };
+        });
+      }
+
+      const keyword = inputValue.toLowerCase();
+
+      const filtered = list.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(keyword) ||
+          item.email?.toLowerCase().includes(keyword) ||
+          item.phone?.toLowerCase().includes(keyword),
+      );
+
+      return filtered.map((item) => {
+        const faceimage = getFaceImage(item);
+
+        return {
+          label: item.name || '(No Name)',
+          value: item.id,
+          isDisabled: item.is_blacklist === true,
+          data: {
+            ...item,
+            faceimage,
+          },
+        };
+      });
+    } catch (err) {
+      return [];
+    }
+  };
+
+  const debouncedLoadOptions = useMemo(
+    () =>
+      debounce((inputValue: string, callback: (options: OptionType[]) => void) => {
+        loadOptions(inputValue).then(callback);
+      }, 500),
+    [],
+  );
+
+  const formatOptionLabel = ({ data }: OptionType) => {
+    const imageUrl = data.faceimage || '';
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          borderBottom: '1px solid #eaeaea',
+          overflow: 'hidden',
+        }}
+      >
+        <Avatar
+          src={imageUrl}
+          alt={data.name || 'Profile'}
+          style={{
+            width: 40,
+            height: 40,
+            // borderRadius: '50%',
+            objectFit: 'cover',
+            backgroundColor: '#f0f0f0',
+          }}
+        />
+        <div>
+          <div style={{ fontWeight: 600 }}>
+            {data.name ?? ''}
+
+            {data.is_blacklist && (
+              <span
+                style={{
+                  marginLeft: 8,
+                  color: 'white',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  backgroundColor: 'rgba(255, 0, 0, 1)',
+                  padding: '4px 4px',
+                  borderRadius: 1,
+                }}
+              >
+                Blacklist
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 12 }}>{data.email ?? ''}</div>
+          <div style={{ fontSize: 12 }}>{data.phone ?? ''}</div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <AsyncSelect
+      cacheOptions
+      defaultOptions={true}
+      loadOptions={debouncedLoadOptions}
+      components={{
+        Control: CustomControl,
+      }}
+      isOptionDisabled={(option) => option.data?.is_blacklist === true}
+      onChange={(option) => {
+        setSelectedOption(option as any | null);
+        onSelect(option ? (option as any).data : null);
+      }}
+      value={selectedOption}
+      placeholder={isEmployee ? 'Search Employee' : 'Search Visitor'}
+      noOptionsMessage={() => (isEmployee ? 'No employee found' : 'No visitor found')}
+      formatOptionLabel={formatOptionLabel}
+      isClearable
+      menuPortalTarget={document.body}
+      styles={{
+        menuPortal: (base) => ({
+          ...base,
+          zIndex: 1300,
+        }),
+      }}
+    />
+  );
+};
+
+const CustomControl = (props: any) => (
+  <components.Control {...props}>
+    <IconSearch
+      size={18}
+      style={{
+        marginLeft: 12,
+        color: '#9e9e9e',
+      }}
+    />
+    {props.children}
+  </components.Control>
+);
+
+export default VisitorSelect;

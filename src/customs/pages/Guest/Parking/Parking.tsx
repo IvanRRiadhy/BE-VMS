@@ -1,176 +1,116 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  Skeleton,
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  RadioGroup,
-  Autocomplete,
-  Divider,
-  IconButton,
-} from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, Card, CardContent, Typography, Button, Stack, Divider } from '@mui/material';
+import { IconCar, IconMail, IconHistory, IconShield, IconShieldCheck } from '@tabler/icons-react';
+import { useNavigate } from 'react-router';
 import PageContainer from 'src/components/container/PageContainer';
-import TopCard from 'src/customs/components/cards/TopCard';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { IconCar, IconHistory, IconMail, IconX } from '@tabler/icons-react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
-// import FilterMoreContent from './FilterMoreContent';
-// import FilterMoreContent from './FilterMoreContent';
-// import FilterMoreContent from './Invitation/FilterMoreContent';
+
 const Parking = () => {
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [isDataReady, setIsDataReady] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [edittingId, setEdittingId] = useState<string | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const cards = [
-    {
-      title: 'Total Parking',
-      subTitle: '0',
-      subTitleSetting: 10,
-      icon: IconCar,
-      color: 'none',
-    },
-    // {
-    //   title: 'Confirmed',
-    //   subTitle: '0',
-    //   subTitleSetting: 10,
-    //   icon: IconHistory,
-    //   color: 'none',
-    // },
-    // {
-    //   title: 'No Reaction',
-    //   subTitle: '0',
-    //   subTitleSetting: 10,
-    //   icon: IconHistory,
-    //   color: 'none',
-    // },
-    // {
-    //   title: 'Decline',
-    //   subTitle: '0',
-    //   subTitleSetting: 10,
-    //   icon: IconHistory,
-    //   color: 'none',
-    // },
-  ];
-  const [tableData, setTableData] = useState<[]>([]);
-  const [agenda, setAgenda] = useState('');
+  const navigate = useNavigate();
 
-  const tableDataVisitor = [
-    {
-      id: 1,
-      name: 'Tommy',
-      registered_site: 'Gedung HQ',
-      status: 'deny',
-      check_time: 'Mon, 14 Jul 2025 09:00 AM',
-    },
-    {
-      id: 2,
-      name: 'Budi',
-      registered_site: 'Aula Lantai 3',
-      status: 'checkin',
-      check_time: 'Mon, 14 Jul 2025 09:00 AM',
-    },
-  ];
+  // useEffect(() => {
+  //   const isAuthorized = localStorage.getItem('parking');
 
-  const handleAdd = () => {
-    setOpenDialog(true);
+  //   if (isAuthorized === 'true') {
+  //     window.location.href = 'http://localhost:5000/dashboard';
+  //   }
+  // }, []);
+
+  const handleAuthorize = () => {
+    const isAuthorized = localStorage.getItem('parking');
+
+    if (isAuthorized === 'true') {
+      window.location.href = 'http://localhost:5000/dashboard';
+      return;
+    }
+    localStorage.setItem('parking', 'true');
+    window.location.href = 'http://localhost:5000/auth/authorize';
   };
-
-  const [filters, setFilters] = useState<any>({
-    visit_start: '',
-    visit_end: '',
-    site_space: '',
-  });
-
-  const handleApplyFilter = () => {
-    setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const agendaOptions = [
-    'Meeting Tim A',
-    'Presentasi Proyek',
-    'Training Karyawan',
-    'Rapat Bulanan',
-  ];
 
   return (
-    <>
-      <PageContainer title="Evacuate" description="Report Page">
-        <Box>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
-              <DynamicTable
-                overflowX={'auto'}
-                data={tableDataVisitor}
-                isHavePagination={true}
-                selectedRows={selectedRows}
-                // defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                // onPaginationChange={(page, rowsPerPage) => {
-                //   setPage(page);
-                //   setRowsPerPage(rowsPerPage);
-                // }}
-                isHaveChecked={true}
-                isHaveAction={false}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveFilterMore={true}
-                isHaveHeader={false}
-                isHavePdf={true}
-                // filterMoreContent={
-                //   <FilterMoreContent
-                //     filters={filters}
-                //     setFilters={setFilters}
-                //     onApplyFilter={handleApplyFilter}
-                //   />
-                // }
-                // onCheckedChange={(selected) => setSelectedRows(selected)}
-                // onEdit={(row) => {
-                //   handleEdit(row.id);
-                //   setEdittingId(row.id);
-                // }}
-                // onDelete={(row) => handleDelete(row.id)}
-                // onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                // onAddData={() => {
-                //   handleAdd();
-                // }}
-              />
-              {/* // ) : (
-              //   <Card sx={{ width: '100%' }}>
-              //     <Skeleton />
-              //     <Skeleton animation="wave" />
-              //     <Skeleton animation={false} />
-              //   </Card>
-              // )} */}
-            </Grid>
-          </Grid>
-        </Box>
-      </PageContainer>
-    </>
+    <PageContainer title="Parking">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'grey.100',
+          p: 2,
+        }}
+      >
+        <Card
+          sx={{
+            width: '100%',
+            maxWidth: 600,
+            minHeight: 420,
+            borderRadius: 3,
+            boxShadow: 6,
+          }}
+        >
+          <CardContent sx={{ p: 4 }}>
+            <Box display="flex" justifyContent="center" mb={2}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                }}
+              >
+                <IconCar size={32} />
+              </Box>
+            </Box>
+            <Typography variant="h4" fontWeight={600} textAlign="center">
+              Parking Access Request
+            </Typography>
+            <Typography variant="body1" color="text.secondary" textAlign="center" mt={1}>
+              This application is requesting permission to access your parking data.
+            </Typography>
+
+            <Divider sx={{ my: 3 }} />
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <IconMail size={20} />
+                <Typography variant="body1">View your registered vehicle information</Typography>
+              </Stack>
+
+              <Stack direction="row" spacing={2} alignItems="center">
+                <IconHistory size={20} />
+                <Typography variant="body1">Access parking history and logs</Typography>
+              </Stack>
+
+              <Stack direction="row" spacing={2} alignItems="center">
+                <IconCar size={20} />
+                <Typography variant="body1">Create and manage parking access</Typography>
+              </Stack>
+            </Stack>
+
+            <Divider sx={{ my: 3 }} />
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate('/guest/dashboard')}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<IconShieldCheck />}
+                onClick={handleAuthorize}
+              >
+                Authorize
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
+    </PageContainer>
   );
 };
 

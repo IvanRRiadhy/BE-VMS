@@ -10,6 +10,7 @@ export type Item = {
   short_name: string;
   long_display_text: string;
   field_type: number;
+  remarks: string;
   multiple_option_fields: multiOptField[];
   id: string;
 };
@@ -58,6 +59,7 @@ export const MultiOptFieldSchema = z.object({
 export const CreateCustomFieldRequestSchema = z.object({
   short_name: z.string().default(''),
   long_display_text: z.string().default(''),
+  remarks: z.string().default(''),
   field_type: z.number().default(0),
   multiple_option_fields: z.array(MultiOptFieldSchema).default([]),
 });
@@ -75,6 +77,7 @@ export interface CreateCustomFieldResponse {
 //UPDATE
 export interface UpdateCustomFieldRequest {
   short_name: string;
+  remarks: string;
   long_display_text: string;
   field_type: number;
   multiple_option_fields: multiOptField[];

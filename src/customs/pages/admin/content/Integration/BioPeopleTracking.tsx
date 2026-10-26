@@ -1,0 +1,764 @@
+import { useEffect, useState, useRef, useMemo, act } from 'react';
+import {
+  Box,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  DialogActions,
+  Switch,
+  FormControlLabel,
+  Portal,
+  Button,
+  Grid2 as Grid,
+  Backdrop,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  IconButton,
+  Autocomplete,
+  MenuItem,
+} from '@mui/material';
+import PageContainer from 'src/components/container/PageContainer';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { IconRectangle, IconRefresh } from '@tabler/icons-react';
+import { Item } from 'src/customs/api/models/Admin/Integration';
+import {
+  getAllSite,
+  getAllVisitorType,
+  getCardAccessTracking,
+  getCardAccessTrackingById,
+  getFloorPlanMaskedAreaById,
+  syncTrackingBleIntegration,
+  updateCardAccessTracking,
+} from 'src/customs/api/admin';
+import CloseIcon from '@mui/icons-material/Close';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
+
+const BioPeopleTracking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [listData, setListData] = useState<any[]>([]);
+  const [detailData, setDetailData] = useState<any | null>(null);
+  const [orgOptions, setOrgOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [visitoTypeOptions, setVisitorTypeOptions] = useState<Array<{ id: string; label: string }>>(
+    [],
+  );
+  const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [cardAccessForm, setCardAccessForm] = useState<any>(null);
+  const { t } = useTranslation();
+  const [syncMsg, setSyncMsg] = useState<{
+    open: boolean;
+    text: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    text: '',
+    severity: 'success',
+  });
+
+  const [editDialogType, setEditDialogType] = useState<'Card Access' | null>(null);
+  const [selectedType, setSelectedType] = useState('card_access');
+  const [editingRow, setEditingRow] = useState<Item | null>(null);
+  const headerMap: Record<string, string> = {
+    card_access: 'Card Access',
+  };
+
+  const TYPE_MAP: Record<string, 'Card Access'> = {
+    card_access: 'Card Access',
+  };
+
+  const handleTrackingBleSyncIntegration = async () => {
+    if (!id) {
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const res = await syncTrackingBleIntegration(id as string);
+
+      if (res.status !== 'success') {
+        setSyncing(false);
+
+        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
+        } else {
+          showSwal('error', res.msg || 'Failed to synchronize. Please try again later.');
+        }
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await loadTotals();
+      await fetchListByType(selectedType);
+
+      setSyncing(false);
+
+      showSwal('success', res.msg || 'Successfully synchronized.');
+    } catch (e: any) {
+      setSyncing(false);
+      showSwal('error', e?.msg || e?.message || 'Failed to synchronize. Please try again later.');
+    }
+  };
+
+  const [totals, setTotals] = useState<{ [key: string]: number }>({
+    organization: 0,
+    district: 0,
+    department: 0,
+    member: 0,
+    card: 0,
+    visitor: 0,
+    trx_visitor: 0,
+    visitor_blacklist: 0,
+    building: 0,
+    floor: 0,
+    floor_plan: 0,
+    floor_plan_masked_area: 0,
+    card_access: 0,
+    cctv: 0,
+    alarm: 0,
+    alarm_warning: 0,
+    access_control: 0,
+    brand: 0,
+    access_cctv: 0,
+    ble_reader: 0,
+    tracking_transaction: 0,
+    alarm_record: 0,
+  });
+
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Card Access',
+        subTitle: String(totals.card_access),
+        subTitleSetting: 0,
+        icon: IconRectangle,
+        color: 'none',
+      },
+      {
+        title: 'Sync Data',
+        icon: IconRefresh,
+        onIconClick: handleTrackingBleSyncIntegration,
+        type: 'action',
+      },
+    ],
+    [totals],
+  );
+
+  const getCount = (res: any) => {
+    if (!res) return 0;
+
+    if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
+    if (Array.isArray(res?.collection)) return res.collection.length;
+
+    if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
+    if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
+
+    if (typeof res?.total === 'number') return res.total;
+    if (typeof res?.count === 'number') return res.count;
+
+    return 0;
+  };
+
+  const loadTotals = async () => {
+    if (!id) return;
+
+    const settled = await Promise.allSettled([getCardAccessTracking(id as string)]);
+
+    const countOf = (i: number) =>
+      settled[i].status === 'fulfilled'
+        ? getCount((settled[i] as PromiseFulfilledResult<any>).value)
+        : 0;
+
+    setTotals({
+      card_access: countOf(0),
+    });
+  };
+
+  useEffect(() => {
+    loadTotals();
+  }, [id]);
+
+  const fetchListByType = async (type: string) => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      if (type === 'card_access') {
+        const [res, resAllSite, resVisitorType] = await Promise.all([
+          getCardAccessTracking(id as string),
+          getAllSite(),
+          getAllVisitorType(),
+        ]);
+
+        const visitorTypeOptions = (resVisitorType.collection ?? []).map((item: any) => ({
+          id: String(item.id).toUpperCase(),
+          label: item.name ?? '',
+        }));
+
+        setVisitorTypeOptions(visitorTypeOptions);
+
+        const rows = res.collection.map((item: any) => ({
+          id: item.id,
+          trx_card_access_id: item.trk_card_access_id,
+          name: item.name,
+          access_scope: item.accessScope,
+          remarks: item.remarks,
+
+          site:
+            resAllSite.collection.find(
+              (site: any) => String(site.id).toUpperCase() === String(item.site_id).toUpperCase(),
+            )?.name ?? item.site_id,
+
+          visitor_type:
+            visitorTypeOptions.find(
+              (visitorType: any) =>
+                String(visitorType.id).toUpperCase() === String(item.visitor_type_id).toUpperCase(),
+            )?.label ?? item.visitor_type_id,
+
+          active: item.active ?? false,
+        }));
+
+        setListData(rows ?? []);
+      }
+    } catch (e) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListByType(selectedType);
+  }, [selectedType, id]);
+
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
+  const handleEditBatch = () => {
+    if (!selectedRows.length) {
+      setSyncMsg({ open: true, text: 'Pilih minimal satu baris.', severity: 'error' });
+      return;
+    }
+    setIsBatchEdit(true);
+    setEditingRow(null);
+    setDetailData(null);
+  };
+
+  const [enabled, setEnabled] = useState({
+    site_id: true,
+    visitor_type_id: true,
+  });
+
+  const handleEditRow = async (row: any) => {
+    if (!id) return;
+
+    setIsBatchEdit(false);
+    setEnabled({
+      site_id: true,
+      visitor_type_id: true,
+    });
+
+    setEditingRow(row);
+    setEditDialogType(TYPE_MAP[selectedType] ?? null);
+    try {
+      if (selectedType === 'floor_plan_masked_area') {
+        const res = await getFloorPlanMaskedAreaById(id as string, String(row.id));
+        setDetailData(res.collection ?? row);
+      } else if (selectedType === 'card_access') {
+        const res = await getCardAccessTrackingById(id as string, String(row.id));
+        setDetailData(res.collection ?? row);
+      } else {
+        setDetailData(row);
+      }
+    } catch (e) {
+      setDetailData(row);
+    }
+  };
+
+  useEffect(() => {
+    if (!editingRow) return;
+
+    let type: typeof editDialogType = null;
+    if (selectedType === 'card_access') type = 'Card Access';
+
+    setEditDialogType(type);
+  }, [selectedType, editingRow]);
+
+  const handleCloseDialog = () => {
+    setEditDialogType(null);
+    setEditingRow(null);
+    setDetailData(null);
+
+    setIsBatchEdit(false);
+    setEnabled({
+      site_id: true,
+      visitor_type_id: true,
+    });
+  };
+
+  useEffect(() => {
+    if (!editDialogType) {
+      setCardAccessForm(null);
+      return;
+    }
+
+    if (!detailData) return;
+
+    if (editDialogType === 'Card Access') {
+      setCardAccessForm({
+        id: detailData.id ?? '',
+        name: detailData.name ?? '',
+        accessScope: detailData.accessScope ?? '',
+        remarks: detailData.remarks ?? '',
+        integration_id: detailData.integration_id ?? '',
+        site_id: (detailData.site_id ?? '').toUpperCase() ?? '',
+        visitor_type_id: (detailData.visitor_type_id ?? '').toUpperCase() ?? '',
+        access_tracking_type: detailData.access_tracking_type ?? '',
+        active: detailData.active ?? '',
+      });
+    } else {
+      setCardAccessForm(null);
+    }
+  }, [editDialogType, detailData]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOptions = async () => {
+      try {
+        if (editDialogType === 'Card Access') {
+          const res = await getAllSite();
+          const resVisitorType = await getAllVisitorType();
+          if (cancelled) return;
+
+          const items =
+            (res.collection ?? []).map((o: any) => ({
+              id: String(o.id).toUpperCase(),
+              label: o.name ?? '',
+            })) || [];
+
+          const itemsVisitorType = (resVisitorType.collection ?? []).map((o: any) => ({
+            id: String(o.id).toUpperCase(),
+            label: o.name ?? '',
+          }));
+
+          setOrgOptions(items);
+          setVisitorTypeOptions(itemsVisitorType);
+        } else {
+        }
+      } catch (e) {
+        console.error('Load options error:', e);
+      }
+    };
+
+    loadOptions();
+
+    return () => {};
+  }, [editDialogType]);
+
+  const omitEmpty = <T extends Record<string, any>>(obj: T) =>
+    Object.fromEntries(
+      Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined),
+    );
+
+  const accessType = cardAccessForm?.access_tracking_type;
+
+  const handleSaveCardAccess = async () => {
+    if (!id) return;
+
+    try {
+      setSaving(true);
+
+      if (!isBatchEdit) {
+        const areaId = String(cardAccessForm?.id ?? detailData?.id ?? '');
+
+        if (!areaId) {
+          showSwal('error', 'ID Floor Plan Masked Area not found.');
+          return;
+        }
+
+        const payload = omitEmpty({
+          access_tracking_type: accessType || undefined,
+
+          site_id: accessType === 'Site' ? cardAccessForm.site_id || null : null,
+
+          visitor_type_id:
+            accessType === 'VisitorType' ? cardAccessForm.visitor_type_id || null : null,
+
+          active: cardAccessForm.active,
+        });
+
+        await updateCardAccessTracking(areaId, payload);
+
+        setListData((prev) => {
+          const updated = prev.map((item) =>
+            String(item.id) === areaId ? { ...item, ...payload } : item,
+          );
+          return [...updated];
+        });
+
+        await new Promise((res) => setTimeout(res, 300));
+
+        handleCloseDialog();
+        await fetchListByType(selectedType);
+        await new Promise((res) => setTimeout(res, 300));
+
+        showSwal('success', 'Card Access updated successfully');
+
+        return;
+      }
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to update Card Access');
+    } finally {
+      setTimeout(() => setSaving(false), 400);
+    }
+  };
+
+  const isSiteAccess = cardAccessForm?.access_tracking_type === 'Site';
+  const isVisitorTypeAccess = cardAccessForm?.access_tracking_type === 'VisitorType';
+
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/admin/manage/integration');
+  };
+
+  const handleCopy = async (row: any) => {
+    try {
+      const value = row?.trx_card_access_id;
+
+      if (!value) {
+        showSwal('error', 'ID not found');
+        return;
+      }
+
+      await navigator.clipboard.writeText(String(value));
+
+      showSwal('success', 'Successfully copied ID');
+    } catch (error) {
+      showSwal('error', 'Failed to copy ID');
+    }
+  };
+
+  const handleBooleanSwitchChange = async (rowId: string, field: string, value: boolean) => {
+    const previousData = [...listData];
+
+    // Optimistic update
+    setListData((prevData) =>
+      prevData.map((item) =>
+        String(item.id).toLowerCase() === String(rowId).toLowerCase()
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
+
+    try {
+      const payload = {
+        [field]: value,
+      };
+
+      await updateCardAccessTracking(String(rowId), payload);
+
+      showSwal('success', t('updatedSuccess', { name: 'Card Access' }));
+    } catch (e: any) {
+      // Rollback
+      setListData(previousData);
+
+      showSwal(
+        'error',
+        e?.response?.data?.msg || e?.response?.data?.message || 'Failed to update status.',
+      );
+    }
+  };
+
+  return (
+    <>
+      <PageContainer
+        title="Bio People Tracking Integration"
+        description="Manage BioPeople Tracking Integration"
+      >
+        <Box>
+          <Grid container spacing={3} flexWrap={'wrap'}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
+            </Grid>
+
+            <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
+              <Grid size={{ xs: 12, lg: 12 }}>
+                <DynamicTable
+                  loading={loading}
+                  isHavePagination
+                  rowsPerPageOptions={[10, 50, 100]}
+                  overflowX={'auto'}
+                  data={listData}
+                  selectedRows={selectedRows}
+                  isHaveChecked={true}
+                  isHaveAction={false}
+                  isSelectedType={selectedType !== 'badge_status'}
+                  isHaveActionOnlyEdit={true}
+                  isHaveSearch={false}
+                  isDataVerified={false}
+                  isHaveFilter={false}
+                  isHaveBack={true}
+                  onBack={handleBack}
+                  isTitleIntegration={`${integrationName || 'Bio People Tracking'}`}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={false}
+                  isHaveBooleanSwitch={true}
+                  onBooleanSwitchChange={handleBooleanSwitchChange}
+                  onBatchEdit={handleEditBatch}
+                  isHaveHeader={true}
+                  headerContent={{
+                    items: Object.keys(headerMap).map((key) => ({
+                      name: key,
+                      label: headerMap[key],
+                    })),
+                  }}
+                  defaultSelectedHeaderItem="card_access"
+                  onHeaderItemClick={(item) => {
+                    setSelectedType(item.name);
+                  }}
+                  onCheckedChange={(selected) => {
+                    setSelectedRows(selected);
+                  }}
+                  onEdit={handleEditRow}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  isCopy={true}
+                  onCopy={(row) => {
+                    handleCopy(row);
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+      </PageContainer>
+      {/* Card Access */}
+      <Dialog
+        open={editDialogType === 'Card Access'}
+        fullWidth
+        maxWidth="md"
+        onClose={handleCloseDialog}
+        transitionDuration={0}
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          Edit Card Access
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseDialog}
+            disabled={saving}
+            sx={{ color: (t) => t.palette.grey[500] }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2 }}>
+          {!cardAccessForm ? (
+            <Box sx={{ py: 2 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <CustomFormLabel htmlFor="access_tracking_type" sx={{ mt: 0 }}>
+                  Access Type
+                </CustomFormLabel>
+                <CustomSelect
+                  id="access_tracking_type"
+                  fullWidth
+                  value={cardAccessForm?.access_tracking_type ?? ''}
+                  onChange={(e: any) =>
+                    setCardAccessForm((p: any) => ({
+                      ...p,
+                      access_tracking_type: e.target.value,
+                      site_id: e.target.value === 'Site' ? p.site_id : '',
+                      visitor_type_id: e.target.value === 'VisitorType' ? p.visitor_type_id : '',
+                    }))
+                  }
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value="Site">Site</MenuItem>
+                  <MenuItem value="VisitorType">Visitor Type</MenuItem>
+                </CustomSelect>
+              </Box>
+              <Box>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <CustomFormLabel htmlFor="site_id" sx={{ mt: 0 }}>
+                    Site
+                  </CustomFormLabel>
+
+                  {isBatchEdit && (
+                    <FormControlLabel
+                      sx={{ m: 0 }}
+                      control={
+                        <Switch
+                          size="small"
+                          checked={enabled.site_id}
+                          onChange={(e) => setEnabled((p) => ({ ...p, site_id: e.target.checked }))}
+                        />
+                      }
+                      label=""
+                    />
+                  )}
+                </Box>
+
+                <Autocomplete
+                  fullWidth
+                  autoHighlight
+                  // disablePortal={true}
+                  options={orgOptions}
+                  value={
+                    orgOptions.find((o) => o.id === String(cardAccessForm.site_id ?? '')) || null
+                  }
+                  onChange={(_, newVal) =>
+                    setCardAccessForm((p: any) => ({
+                      ...p,
+                      site_id: newVal ? newVal.id : '',
+                    }))
+                  }
+                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                  renderInput={(params) => <CustomTextField {...params} size="small" />}
+                  disabled={saving || !isSiteAccess || (isBatchEdit && !enabled.site_id)}
+                />
+              </Box>
+              <Box>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <CustomFormLabel htmlFor="visitor_type_id" sx={{ mt: 0 }}>
+                    Visitor Type
+                  </CustomFormLabel>
+
+                  {isBatchEdit && (
+                    <FormControlLabel
+                      sx={{ m: 0 }}
+                      control={
+                        <Switch
+                          size="small"
+                          checked={enabled.visitor_type_id}
+                          onChange={(e) =>
+                            setEnabled((p) => ({ ...p, visitor_type_id: e.target.checked }))
+                          }
+                        />
+                      }
+                      label=""
+                    />
+                  )}
+                </Box>
+
+                <Autocomplete
+                  fullWidth
+                  autoHighlight
+                  // disablePortal
+                  options={visitoTypeOptions}
+                  value={
+                    visitoTypeOptions.find(
+                      (o) => o.id === String(cardAccessForm.visitor_type_id ?? ''),
+                    ) || null
+                  }
+                  onChange={(_, newVal) =>
+                    setCardAccessForm((p: any) => ({
+                      ...p,
+                      visitor_type_id: newVal ? newVal.id : '',
+                    }))
+                  }
+                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                  disabled={
+                    saving || !isVisitorTypeAccess || (isBatchEdit && !enabled.visitor_type_id)
+                  }
+                  renderInput={(params) => <CustomTextField {...params} size="small" />}
+                />
+              </Box>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
+                <Switch
+                  checked={Boolean(cardAccessForm?.active)}
+                  onChange={(e) =>
+                    setCardAccessForm((prev: any) => ({
+                      ...prev,
+                      active: e.target.checked,
+                    }))
+                  }
+                  color="primary"
+                />
+              </Box>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
+                <CustomTextField value={cardAccessForm.name ?? ''} fullWidth disabled />
+              </Box>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Access Scope</CustomFormLabel>
+                <CustomTextField value={cardAccessForm.accessScope ?? ''} fullWidth disabled />
+              </Box>
+
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Remarks</CustomFormLabel>
+                <CustomTextField value={cardAccessForm.remarks ?? ''} fullWidth disabled />
+              </Box>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Integration ID</CustomFormLabel>
+                <CustomTextField value={cardAccessForm.integration_id ?? ''} fullWidth disabled />
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <Divider />
+        <DialogActions>
+          <Button onClick={handleCloseDialog} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!cardAccessForm || saving}
+            onClick={handleSaveCardAccess}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Portal>
+        <Snackbar
+          open={syncMsg.open}
+          autoHideDuration={3000}
+          onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 99999 }} // ⬅️ di atas modal & backdrop apa pun
+        >
+          <Alert
+            onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}
+            severity={syncMsg.severity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {syncMsg.text}
+          </Alert>
+        </Snackbar>
+      </Portal>
+
+      <GlobalBackdropLoading open={syncing || saving} />
+    </>
+  );
+};
+
+export default BioPeopleTracking;

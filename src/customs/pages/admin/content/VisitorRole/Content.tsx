@@ -1,0 +1,142 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { IconBrandMedium, IconUser, IconUserFilled } from '@tabler/icons-react';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
+import {
+  useVisitorRole,
+  useVisitorRolePagination,
+} from 'src/hooks/VisitorRole/useVisitorRolePagination';
+import { useVisitorRoleMutation } from 'src/hooks/VisitorRole/useVisitorRoleMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+const Content = () => {
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const sortDir = 'desc';
+  const { t } = useTranslation();
+  // const { data: visitorRole, isLoading } = useVisitorRolePagination({
+  //   page,
+  //   rowsPerPage,
+  //   sortDir,
+  //   search,
+  // });
+
+  const { data: visitorRole, isLoading } = useVisitorRole();
+
+  const { updateMutation } = useVisitorRoleMutation();
+  const tableData = visitorRole?.collection ?? [];
+  const filteredTableData = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+
+    if (!keyword) return tableData;
+
+    return tableData.filter((item: any) => {
+      return (
+        item.name?.toLowerCase().includes(keyword) || item.role?.toLowerCase().includes(keyword)
+      );
+    });
+  }, [tableData, search]);
+  const totalRecords = tableData.length;
+  const totalFilteredRecords = visitorRole?.RecordsFiltered ?? 0;
+
+  const cards = useMemo(
+    () => [
+      {
+        title: t('totalVisitorRole'),
+        subTitle: String(totalRecords),
+        icon: IconUserFilled,
+        color: 'none',
+      },
+    ],
+    [t, totalRecords],
+  );
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
+  const handleActiveToggle = async (row: any, checked: boolean) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: row.id,
+        data: {
+          name: row.name,
+          role: row.role,
+          active: checked,
+        },
+      });
+
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Role' }));
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error?.response?.data?.message || t('failedToUpdate', { name: 'Visitor Role' }),
+      );
+    }
+  };
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Visitor Role" description="Visitor Role page">
+        <Box>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <DynamicTable
+                loading={isLoading}
+                overflowX={'auto'}
+                data={filteredTableData}
+                selectedRows={selectedRows}
+                isHaveChecked={true}
+                isHaveSearch={true}
+                isNoActionTableHead
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                defaultRowsPerPage={rowsPerPage}
+                searchPlaceholder="Search Visitor Role"
+                // rowsPerPageOptions={[10, 50, 100]}
+                // totalCount={totalRecords}
+                // currentPage={page}
+                // onPaginationChange={(page, rowsPerPage) => {
+                //   setPage(page);
+                //   setRowsPerPage(rowsPerPage);
+                // }}
+                // isHavePagination={true}
+                isHaveFilterDuration={false}
+                isHaveHeader={false}
+                onCheckedChange={(selected) => setSelectedRows(selected)}
+                searchKeyword={search}
+                onSearch={handleSearch}
+                isHaveActive={true}
+                onActiveToggle={handleActiveToggle}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+      <GlobalBackdropLoading open={updateMutation.isPending} />
+    </PageContainer>
+  );
+};
+
+export default Content;

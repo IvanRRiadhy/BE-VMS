@@ -1,4 +1,4 @@
-// src/constants/GroupRoleId.ts
+
 export const GroupRoleId = {
   Visitor: 'C3F106B6-6B6E-4E36-953C-B82CD4D9A0C4',
   OperatorAdmin: 'C3F106B6-6B6E-4E36-953C-B82CD4D9A0C3',

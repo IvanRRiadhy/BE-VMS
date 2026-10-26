@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Checkbox,
   Table,
-  TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Button,
   Box,
   Select,
@@ -19,48 +17,42 @@ import {
   Tooltip,
   Skeleton,
   Fab,
-  InputAdornment,
   Drawer,
   Tab,
   Tabs,
   TablePagination,
-  IconButton,
-  Switch,
+  Breadcrumbs,
+  Menu,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
-import { RichHtmlCell } from './RichHtmlCell';
 import { Stack } from '@mui/system';
 import {
-  IconEye,
-  IconEyeOff,
-  IconFileText,
-  IconLogin2,
-  IconLogout2,
-  IconPencil,
+  IconArrowLeft,
+  IconFileExport,
+  IconFileSpreadsheet,
+  IconFileTypePdf,
+  IconFilter,
+  IconLink,
   IconPlus,
-  IconSettings,
-  IconTrash,
+  IconPrinter,
 } from '@tabler/icons-react';
-import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
+import { AddCircle, ArrowLeft, CalendarMonth, ChecklistOutlined } from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import Calendar from '../calendar/Calendar';
-import {
-  IconAdjustmentsHorizontal,
-  IconUserFilled,
-  IconCheck,
-  IconX,
-  IconStarFilled,
-} from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
+import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+import { TableBodyContent } from './TableBody';
+import SearchToolbar from './components/SearchToolbar';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers';
 
-import backgroundnodata from '../../../assets/images/backgrounds/bg_nodata.svg';
-import { axiosInstance2 } from 'src/customs/api/interceptor';
-import moment from 'moment';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
-
-type HeaderItem = { name: string };
+type HeaderItem = {
+  name: string;
+  children?: { id: string; name: string }[];
+};
 
 type HeaderContent = {
   title?: string;
@@ -76,6 +68,8 @@ type DynamicTableProps<
   stickyHeader?: boolean;
   data: T[];
   selectedRows?: T[];
+  searchKeyword?: string | undefined;
+  searchPlaceholder?: string;
   setSelectedRows?: React.Dispatch<React.SetStateAction<T[]>>;
   selectedRef?: React.MutableRefObject<T[]>;
   isHaveGender?: boolean;
@@ -83,30 +77,85 @@ type DynamicTableProps<
   isHaveAction?: boolean;
   isHaveAccess?: boolean;
   isHaveActionOnlyEdit?: boolean;
+  borderRadius?: any;
+  // isHaveExportPdf?: boolean;
+  currentPage?: number;
+  isHaveBack?: boolean;
+  addDataText?: any;
+  onBack?: any;
+  isTitleIntegration?: any;
+  isHaveExportCsv?: boolean;
+  isHaveAssignTracking?: boolean;
+  onAssignTracking?: any;
+  isHaveExportExcel?: boolean;
+  isHaveRole?: boolean;
+  triggerCheckAll?: boolean;
+  isHavePrint?: boolean;
+  isHaveConnection?: boolean;
+  isHaveActive?: boolean;
+  onActiveToggle?: any;
+  onQuickAccessToggle?: any;
+  onCheckConnection?: any;
+  isStickyColumns?: any;
+  onExportPdf?: () => void;
+  onExportCsv?: () => void;
+  onActionAccess?: (row: T, action: 'grant' | 'revoke' | 'block') => void;
+  onExportExcel?: () => void;
+  onPrint?: () => void;
+  isHaveBlacklist?: boolean;
+  onBlacklist?: (row: T) => void;
+  filterDataOptions?: {
+    label: string;
+    value: string;
+  }[];
+
+  filterDataValue?: string;
+
+  onFilterDataChange?: (value: string) => void;
   isHaveVisitor?: boolean;
+  isButtonRegisteredSite?: boolean;
+  isCopy?: boolean;
+  isButtonGiveAccess?: boolean;
+  onQrCode?: (row: T) => void;
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
   isHaveSettingOperator?: boolean;
+  isCopyLink?: boolean;
+  isDetailLink?: boolean;
   hasFetched?: boolean;
+  isSiteSpaceName?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
+  isHaveDuplicate?: boolean;
+  isHaveDataImage?: boolean;
+  isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
+  isHaveQrCode?: boolean;
+  isButtonSiteAccess?: boolean;
   isHaveImportExcel?: boolean;
+  isTreeSiteType?: boolean;
   isHaveFilterDuration?: boolean;
   isActionVisitor?: boolean;
+  setCurrentId?: any;
   onAccept?: (row: T) => void;
   onDenied?: (row: T) => void;
   isHaveAddData?: boolean;
   height?: number | string;
   isHaveHeader?: boolean;
   isHaveEmployee?: boolean;
+  isBlacklistAction?: boolean;
   isHaveVerified?: boolean;
+  isButtonEnabled?: boolean;
+  isButtonDisabled?: boolean;
   isHaveImage?: boolean;
+  isHavePermission?: boolean;
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
   isNoActionTableHead?: boolean;
   isHaveBooleanSwitch?: boolean;
+  isHaveViewAll?: boolean;
+  onHaveViewAll?: any;
   isHavePdf?: boolean;
   isHaveCard?: boolean;
   isDataVerified?: boolean;
@@ -115,13 +164,21 @@ type DynamicTableProps<
   titleHeader?: string;
   isHavePassword?: boolean;
   isSiteSpaceType?: boolean;
+  isHaveViewAndAction?: boolean;
   isHavePeriod?: boolean;
   defaultSelectedHeaderItem?: string;
+  isActionListVisitor?: boolean;
+  breadcrumbItems?: any[];
+  isHaveAssign?: boolean;
+  isHaveUnAssign?: boolean;
+  onAssign?: any;
+  onUnAssign?: (row: T) => void;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
   isHaveApproval?: boolean;
   isHaveIntegration?: boolean;
+  isHaveActionRevoke?: boolean;
   isSelectedType?: boolean;
   htmlFields?: string[];
   htmlClampLines?: number;
@@ -129,13 +186,26 @@ type DynamicTableProps<
   htmlMaxWidth?: number | string;
   onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
+  onSearch?: any;
   isVip?: (row: T) => boolean;
   isHaveArrival?: boolean;
   isActionEmployee?: boolean;
   totalCount?: number;
   isHaveFilterMore?: boolean;
+  isCurrentUsed?: boolean;
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
+  isOperatorSetting?: boolean;
+  isHaveDataQuickAccess?: boolean;
+  onDetailQuickAccess?: (row: T) => void;
+  isBlacklistPage?: boolean;
+  onNavigatePage?: any;
+  onDuplicate?: (row: T) => void;
+  selectedHeaderItem?: string;
+  isHaveFilterData?: boolean;
+  onCopy?: (row: T) => void;
+  onCopyLink?: (row: T) => void;
+  onDetailLink?: (row: T) => void;
   onSettingOperator?: (row: T) => void;
   onAccessAction?: (row: any, action: 'grant' | 'revoke' | 'block' | 'unblock') => void;
   onFileClick?: (row: T) => void;
@@ -144,121 +214,218 @@ type DynamicTableProps<
   onImportExcel?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onHeaderItemClick?: (item: HeaderItem) => void;
   onCheckedChange?: (selected: T[]) => void;
+  onIsButtonEnabled?: (row: T) => void;
+  onIsButtonDisabled?: (row: T) => void;
   onEdit?: (row: T) => void;
+  onPermission?: (row: T) => void;
   onBatchEdit?: (row: T[]) => void;
   onDelete?: (row: T) => void;
   onBatchDelete?: (row: T[]) => void;
+  isHaveAddEmpty?: boolean;
   onSearchKeywordChange?: (keyword: string) => void;
   onFilterByColumn?: (column: { column: string }) => void;
   onFilterCalenderChange?: (ranges: any) => void;
+  onSiteAccess?: (row: T) => void;
+  onRegisteredSite?: (row: T) => void;
+  onGiveAccess?: (row: T) => void;
   onAddData?: (add: boolean) => void;
   onPaginationChange?: (page: number, rowsPerPage: number) => void;
   onBooleanSwitchChange?: (row: any, field: string, value: boolean) => void;
+  isHaveSecret?: boolean;
+  visibleSecrets?: any;
+  loadingSecrets?: any;
+  onRevealSecret?: any;
+  onHideSecret?: any;
+  onAddEmpty?: any;
+  isHaveGenerateApiKey?: boolean;
+  onGenerateApiKey?: (row: T) => void;
 };
 
-export function DynamicTable<
+function DynamicTableBase<
   T extends { id: string | number; status?: any; early_access?: any; visitor_give_access?: any },
->({
-  minWidth = 'auto',
-  stickyHeader = false,
-  data,
-  selectedRows,
-  setSelectedRows,
-  isHaveChecked = false,
-  isHaveAction = false,
-  isHaveActionOnlyEdit = false,
-  isSelectedType = false,
-  isHaveVisitor = false,
-  isActionVisitor = false,
-  isHaveSearch = false,
-  isHaveFilter = false,
-  isHaveExportPdf = false,
-  isHaveExportXlf = false,
-  isHaveImportExcel = false,
-  isHaveFilterDuration = false,
-  isActionEmployee = false,
-  height,
-  isHaveGender = false,
-  isHaveVip = false,
-  isHaveAddData = false,
-  isHaveHeader = false,
-  isHaveBooleanSwitch = false,
-  isHaveVerified = false,
-  isHaveView = false,
-  isHaveAccess = false,
-  isHaveEmployee = false,
-  isHaveCard = false,
-  isHaveImage,
-  isHaveSettingOperator = false,
-  isHaveObjectData,
-  isHaveHeaderTitle = false,
-  titleHeader,
-  headerContent,
-  hasFetched = false,
-  onAccept,
-  isNoActionTableHead = false,
-  onDenied,
-  isHaveApproval = false,
-  defaultSelectedHeaderItem,
-  isHavePassword = false,
-  isHavePagination,
-  isHavePdf,
-  isSiteSpaceType = false,
-  isHaveIntegration,
-  onNameClick,
-  isDataVerified = false,
-  htmlFields = [],
-  htmlClampLines,
-  isHaveArrival = false,
-  htmlMaxWidth,
-  rowsPerPageOptions,
-  defaultRowsPerPage,
-  totalCount,
-  isHavePeriod = false,
-  loading = false,
-  isVip,
-  isHaveFilterMore = false,
-  filterMoreContent,
-  sortColumns,
-  onAccessAction,
-  onFileClick,
-  onChooseCard,
-  onEmployeeClick,
-  onImportExcel,
-  onHeaderItemClick,
-  onCheckedChange,
-  onEdit,
-  onSettingOperator,
-  onView,
-  onBatchEdit,
-  onDelete,
-  onBatchDelete,
-  onSearchKeywordChange,
-  onFilterByColumn,
-  onFilterCalenderChange,
-  onAddData,
-  onPaginationChange,
-  onBooleanSwitchChange,
-}: DynamicTableProps<T>) {
+>(props: DynamicTableProps<T>) {
+  const {
+    minWidth = 'auto',
+    stickyHeader = false,
+    data,
+    selectedRows,
+    setSelectedRows,
+    searchKeyword,
+    searchPlaceholder,
+    isHaveBack,
+    onBack,
+    isHaveChecked = false,
+    isHaveAction = false,
+    isHaveActionOnlyEdit = false,
+    isSelectedType = false,
+    triggerCheckAll = false,
+    isHaveFilterData = false,
+    borderRadius,
+    isHaveVisitor = false,
+    isHaveDuplicate = false,
+    isActionVisitor = false,
+    isHaveSearch = false,
+    isHaveConnection = false,
+    isHaveFilter = false,
+    isHaveExportCsv = false,
+    isHaveActive,
+    onActiveToggle,
+    isHaveExportExcel = false,
+    isHaveViewAll = false,
+    isStickyColumns = [],
+    isTitleIntegration,
+    onHaveViewAll,
+    isHavePrint = false,
+    currentPage = 0,
+    isHaveExportPdf = false,
+    filterDataOptions = [],
+    filterDataValue = '',
+    onFilterDataChange,
+    addDataText,
+    isHaveExportXlf = false,
+    isHaveImportExcel = false,
+    isHaveQrCode,
+    isHaveRole = false,
+    isHaveFilterDuration = false,
+    isActionEmployee = false,
+    isButtonSiteAccess = false,
+    height,
+    isHaveGender = false,
+    isHaveBlacklist = false,
+    isHaveAddEmpty,
+    isButtonRegisteredSite = false,
+    isButtonGiveAccess = false,
+    isCopy = false,
+    isAccessControlType,
+    isHaveVip = false,
+    isHaveAddData = false,
+    onCopy,
+    isHaveHeader = false,
+    isHaveBooleanSwitch = false,
+    isHavePermission = false,
+    isHaveDataImage = false,
+    isHaveAssignTracking,
+    onAssignTracking,
+    isHaveActionRevoke,
+    breadcrumbItems,
+    isOperatorSetting = false,
+    isBlacklistPage = false,
+    isActionListVisitor = false,
+    isHaveVerified = false,
+    onQrCode,
+    isHaveDataQuickAccess,
+    onAddEmpty,
+    onDetailQuickAccess,
+    isHaveView = false,
+    isHaveAccess = false,
+    isCopyLink = false,
+    isDetailLink = false,
+    selectedHeaderItem,
+    isCurrentUsed = false,
+    isButtonDisabled = false,
+    isButtonEnabled = false,
+    isHaveAssign,
+    isHaveUnAssign,
+    onAssign,
+    onUnAssign,
+    onQuickAccessToggle,
+    isHaveEmployee = false,
+    isHaveViewAndAction = false,
+    isHaveCard = false,
+    isHaveImage,
+    onSearch,
+    isHaveSettingOperator = false,
+    isHaveObjectData,
+    isHaveHeaderTitle = false,
+    titleHeader,
+    headerContent,
+    hasFetched = false,
+    onAccept,
+    isSiteSpaceName,
+    isNoActionTableHead = false,
+    onDenied,
+    onActionAccess,
+    onBlacklist,
+    isHaveApproval = false,
+    defaultSelectedHeaderItem,
+    isHavePassword = false,
+    isHavePagination,
+    isHavePdf,
+    isSiteSpaceType = false,
+    isBlacklistAction,
+    isHaveIntegration,
+    onNameClick,
+    isDataVerified = false,
+    htmlFields = [],
+    htmlClampLines,
+    isHaveArrival = false,
+    htmlMaxWidth,
+    rowsPerPageOptions,
+    defaultRowsPerPage,
+    totalCount,
+    isHavePeriod = false,
+    loading = false,
+    isVip,
+    isHaveFilterMore = false,
+    isTreeSiteType,
+    filterMoreContent,
+    sortColumns,
+    onCheckConnection,
+    onPrint,
+    onExportCsv,
+    onExportExcel,
+    onExportPdf,
+    onAccessAction,
+    onNavigatePage,
+    onFileClick,
+    onChooseCard,
+    onEmployeeClick,
+    onImportExcel,
+    onHeaderItemClick,
+    onCheckedChange,
+    onEdit,
+    onRegisteredSite,
+    onCopyLink,
+    onDetailLink,
+    onIsButtonEnabled,
+    onIsButtonDisabled,
+    onGiveAccess,
+    onSettingOperator,
+    onSiteAccess,
+    onView,
+    onBatchEdit,
+    onPermission,
+    setCurrentId,
+    onDelete,
+    onDuplicate,
+    onBatchDelete,
+    onSearchKeywordChange,
+    onFilterByColumn,
+    onFilterCalenderChange,
+    onAddData,
+    onPaginationChange,
+    onBooleanSwitchChange,
+
+    isHaveSecret,
+    visibleSecrets,
+    loadingSecrets,
+    onRevealSecret,
+    onHideSecret,
+    isHaveGenerateApiKey,
+    onGenerateApiKey,
+  } = props;
   const [checkedIds, setCheckedIds] = useState<Array<T['id']>>([]);
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [selectedHeaderItem, setSelectedHeaderItem] = useState<string | null>(
-    defaultSelectedHeaderItem ?? null,
+  const [selectedHeader, setSelectedHeader] = useState(
+    selectedHeaderItem || defaultSelectedHeaderItem,
   );
   const [showDrawer, setShowDrawer] = useState(false);
-
-  const BASE_URL = axiosInstance2.defaults.baseURL + '/cdn';
-
+  const { t } = useTranslation();
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
   // Paginaton state.
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage || 10);
-
-  // if (!data || data.length === 0) {
-  //   return <div>Tidak ada data</div>;
-  // }
 
   const hiddenColumns = [
     'id',
@@ -267,22 +434,44 @@ export function DynamicTable<
     'can_block',
     'visitor_give_access',
     'access_control_id',
+    'registered_site',
+    'uid',
+    'is_email_verified',
+    'url',
+    'shorten_url',
+    'vehicle_id',
+    'employee_id',
+    'ticket_id',
+    'employee_linked',
+    'is_blacklist',
+    'selfie image',
+    'selfie_image',
+    'trx_card_access_id',
   ];
 
+  const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);
+
+  const fallbackColumns = React.useMemo(() => {
+    if (data.length > 0) {
+      return Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k));
+    }
+
+    const expectedColCount = 5;
+    return Array.from({ length: expectedColCount }, (_, i) => ``);
+  }, [data, hiddenColumns]);
+
   const columns =
-    data.length > 0
-      ? (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
+    loading || data.length === 0
+      ? fallbackColumns
+      : (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
           keyof T,
           string
-        >[])
-      : [];
+        >[]);
 
   const columnss =
     sortColumns && sortColumns.length > 0
       ? columns.filter((col) => sortColumns.includes(col))
       : columns;
-
-  // const columns = Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[];
 
   const handleCheckAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const currentPageIds = paginatedData.map((row) => row.id);
@@ -299,6 +488,13 @@ export function DynamicTable<
     setCheckedIds(newChecked);
     onCheckedChange?.(data.filter((row) => newChecked.includes(row.id)));
   };
+  useEffect(() => {
+    if (triggerCheckAll) {
+      handleCheckAll({
+        target: { checked: true },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [triggerCheckAll]);
 
   const handleCheckRow = (id: string, checked: boolean) => {
     const newChecked = checked
@@ -308,8 +504,9 @@ export function DynamicTable<
     setCheckedIds(newChecked);
     onCheckedChange?.(data.filter((row) => newChecked.includes(row.id)));
   };
+
   const handleSearch = () => {
-    onSearchKeywordChange?.(searchKeyword);
+    onSearch?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -326,12 +523,19 @@ export function DynamicTable<
     onFilterByColumn?.({ column: value });
   };
 
-  const onChangeFilterCalender = (ranges: any) => {
+  const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
     onFilterCalenderChange?.(ranges);
+    setShowDrawer(false);
   };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
+
+    // updateQuery({
+    //   page: newPage,
+    //   length: rowsPerPage,
+    // });
+
     onPaginationChange?.(newPage, rowsPerPage);
   };
 
@@ -339,66 +543,75 @@ export function DynamicTable<
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
+    //  updateQuery({
+    //    page: 0,
+    //    length: newRowsPerPage,
+    //  });
+
     onPaginationChange?.(0, newRowsPerPage);
   };
 
-  const paginatedData = isHavePagination ? data : data;
+  const paginatedData = useMemo(() => {
+    return data;
+  }, [data]);
 
   const toTitleCase = (text: string) => {
     return text
       .replace(/_/g, ' ') // ganti underscore jadi spasi
-      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // kapital di setiap kata
+      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1));
   };
 
-  const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
+  const imageFields = ['faceimage', 'photo', 'avatar', 'image', 'selfie image', 'selfie_image'];
   const objectFields = ['multiple_option_fields'];
+  const [openRow, setOpenRow] = useState<number | null>(null);
 
-  const GENDER_MAP: Record<string, string> = {
-    '0': 'Female',
-    '1': 'Male',
-    '2': 'Prefer not to say',
+  const toggleRow = (id: number) => {
+    setOpenRow((prev) => (prev === id ? null : id));
   };
 
-  const SITE_MAP: Record<number, string> = {
-    0: 'Site',
-    1: 'Building',
-    2: 'Floor',
-    3: 'Room',
-  };
+  // const CHECKBOX_COL_WIDTH = 40;
+  // const ACTION_COL_WIDTH = 105;
+  // const INDEX_COL_WIDTH = 10;
+  // const DATA_COL_WIDTH = 180;
+  // const STICKY_DATA_COUNT = 2;
 
-  const CARD_STATUS: Record<number, string> = {
-    0: 'Not Found',
-    1: 'Active',
-    2: 'Lost',
-    3: 'Broken',
-    4: 'Not Return',
-  };
-
-  const DOCUMENT_TYPE: Record<number, string> = {
-    0: 'Card',
-    1: 'Document',
-    2: 'Face',
-  };
-
-  // 1) Tetapkan lebar kolom yang konsisten
   const CHECKBOX_COL_WIDTH = 40;
-  const ACTION_COL_WIDTH = 105; // sesuaikan dgn 2 tombol icon + gap
-  const INDEX_COL_WIDTH = 56; // kolom nomor
+  const ACTION_COL_WIDTH = 105;
+  const INDEX_COL_WIDTH = 56;
   const DATA_COL_WIDTH = 180;
-  const STICKY_DATA_COUNT = 2;
+  const STICKY_DATA_COUNT = 1;
 
-  // 2) Helper: base offset kiri sebelum kolom data
   const getLeftBase = () =>
     (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
     (isActionVisitor ? ACTION_COL_WIDTH : 0) +
     INDEX_COL_WIDTH;
 
-  // 3) Helper: posisi kiri untuk kolom data sticky ke-i
-  const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
-
-  // 4) Helper: apakah kolom data (ke-i) harus sticky
   const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
-  // end -----------
+
+  const isStickyColumnAtIndex = (i: number) => {
+    return isStickyVisitorCol(i) || isStickyColumns.includes(columns[i]);
+  };
+
+  const getStickyLeft = (i: number) => {
+    let left = getLeftBase();
+
+    for (let index = 0; index < i; index++) {
+      if (isStickyColumnAtIndex(index)) {
+        left += DATA_COL_WIDTH;
+      }
+    }
+
+    return left;
+  };
+
+  // const getLeftBase = () =>
+  //   (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+  //   (isActionVisitor ? ACTION_COL_WIDTH : 0) +
+  //   INDEX_COL_WIDTH;
+
+  // const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
+
+  // const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
   const headerMap: Record<string, string> = {
     companies: 'Companies',
     badge_type: 'Badge Type',
@@ -408,6 +621,7 @@ export function DynamicTable<
     access_control: 'Access Control',
     organizations: 'Organization',
     departments: 'Department',
+    card_access: 'Card Access',
     access_cctv: 'Access CCTV',
     districts: 'District',
     members: 'Member',
@@ -418,22 +632,20 @@ export function DynamicTable<
     brand: 'Brand',
     floor: 'Floor',
     floor_plan_masked_area: 'Floor Plan Masked Area',
-    // floor_plan_device: 'Floor Plan Device',
     visitor_type: 'Visitor Type',
     building: 'Building',
     ble_reader: 'Ble Reader',
     alarm_record: 'Alarm Record',
     alarm_warning: 'Alarm Warning',
     tracking_transaction: 'Tracking Transaction',
+    Checkin: 'Check In',
+    Checkout: 'Check Out',
   };
 
-  const [showPassword, setShowPassword] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string | number, boolean>>({});
-
   const togglePassword = (id: string | number) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
   const tooltipLabels: Record<string, { true: string; false: string }> = {
     is_primary: {
       true: 'Primary',
@@ -471,120 +683,17 @@ export function DynamicTable<
       true: 'Active',
       false: 'Inactive',
     },
+    link_status: {
+      true: 'Active',
+      false: 'Inactive',
+    },
   };
-
-  // const isOperator = (groupId?: string) =>
-  //   !!groupId &&
-  //   [GroupRoleId.OperatorAdmin, GroupRoleId.OperatorVMS].some(
-  //     (id) => id === groupId.toUpperCase(),
-  //   );
-
-  const formatDate = (date?: string) => {
-    if (!date) return '-'; // fallback kalau kosong
-    return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
-  };
-
-  // const getAccessActions = (row: any) => {
-  //   const { visitor_give_access, can_grant, can_revoke, can_block } = row;
-
-  //   // kalau semua false → tampil tombol disabled
-  //   const allDisabled = !can_grant && !can_revoke && !can_block;
-  //   console.log(allDisabled);
-
-  //   switch (visitor_give_access) {
-  //     case 1: // Grant
-  //       return (
-  //         <Box display="flex" gap={1}>
-  //           <Button
-  //             variant="contained"
-  //             color="error"
-  //             size="small"
-  //             disabled={!can_revoke || allDisabled}
-  //             onClick={() => onAccessAction?.(row, 'revoke')}
-  //           >
-  //             Revoke
-  //           </Button>
-  //           <Button
-  //             variant="contained"
-  //             sx={{ backgroundColor: '#000' }}
-  //             size="small"
-  //             disabled={!can_block || allDisabled}
-  //             onClick={() => onAccessAction?.(row, 'block')}
-  //           >
-  //             Block
-  //           </Button>
-  //         </Box>
-  //       );
-
-  //     case 2: // Revoke
-  //       return (
-  //         //  <Button
-  //         //    variant="contained"
-  //         //    color="primary"
-  //         //    size="small"
-  //         //    disabled={!can_grant || allDisabled}
-  //         //    onClick={() => onAccessAction?.(row, 'grant')}
-  //         //  >
-  //         //    Grant
-  //         //  </Button>
-  //         <></>
-  //       );
-
-  //     case 3: // Block
-  //       return (
-  //         // <Button
-  //         //   variant="contained"
-  //         //   sx={{ backgroundColor: '#8B0000' }}
-  //         //   size="small"
-  //         //   disabled={allDisabled}
-  //         //   onClick={() => onAccessAction?.(row, 'unblock')}
-  //         // >
-  //         //   Unblock
-  //         // </Button>
-  //         <></>
-  //       );
-
-  //     case 4: // Block
-  //       return (
-  //         <Button
-  //           variant="contained"
-  //           sx={{ backgroundColor: '#000' }}
-  //           size="small"
-  //           disabled={allDisabled}
-  //           onClick={() => onAccessAction?.(row, 'block')}
-  //         >
-  //           Block
-  //         </Button>
-  //       );
-
-  //     default: // No Action
-  //       return (
-  //         <Button
-  //           variant="contained"
-  //           color="primary"
-  //           size="small"
-  //           disabled={!can_grant || allDisabled}
-  //           onClick={() => onAccessAction?.(row, 'grant')}
-  //         >
-  //           Grant
-  //         </Button>
-  //       );
-  //   }
-  // };
 
   const getAccessActions = (row: any) => {
-    const {
-      visitor_give_access,
-      can_grant,
-      can_revoke,
-      can_block,
-      early_access, // ✅ tambahkan ini (pastikan datanya ada di row)
-    } = row;
+    const { visitor_give_access, can_grant, can_revoke, can_block, early_access } = row;
 
     const allDisabled = !can_grant && !can_revoke && !can_block;
 
-    // 🟠 1️⃣ Jika early_access true → hanya bisa Revoke & Block
-    // 🟠 1️⃣ Kondisi khusus: early_access === true
     if (early_access === true) {
       switch (visitor_give_access) {
         case 0:
@@ -635,17 +744,15 @@ export function DynamicTable<
             </Box>
           );
 
-        case 2: // Revoke → tidak tampil tombol
-        case 3: // Block → tidak tampil tombol
+        case 2:
+        case 3:
           return <></>;
 
         default:
-          // selain Grant (misal belum di-grant) → tidak bisa apa-apa
           return <></>;
       }
     }
 
-    // 🟢 2️⃣ Normal behavior jika bukan early_access
     switch (visitor_give_access) {
       case 1: // Grant
         return (
@@ -704,11 +811,29 @@ export function DynamicTable<
         );
     }
   };
+
+  useEffect(() => {
+    if (selectedHeaderItem) {
+      setSelectedHeader(selectedHeaderItem);
+    }
+  }, [selectedHeaderItem]);
+
+  const selectedTabIndex = Math.max(
+    0,
+    headerContent?.items.findIndex((item) => item.name === selectedHeaderItem) ?? 0,
+  );
+
+  const [roleMenuAnchor, setRoleMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const [activeRole, setActiveRole] = useState<HeaderItem | null>(null);
+
+  const [selectedSubRole, setSelectedSubRole] = useState('All');
+
   return (
     <>
       {/* HEADER */}
       {isHaveHeader && headerContent && (
-        <Box marginBottom={4}>
+        <Box marginBottom={2}>
           <BlankCard>
             <CardContent sx={{ overflow: 'visible' }}>
               <Grid2 container size={{ xs: 12, sm: 12 }}>
@@ -719,18 +844,20 @@ export function DynamicTable<
                   justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
                 >
                   <Stack direction="column" sx={{ width: '100%' }}>
-                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle2" fontWeight={600}>
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
-
-                    {/* HAPUS Box overflowX, biarkan scroller Tabs yang kerja */}
                     <Tabs
-                      value={headerContent.items.findIndex(
-                        (item) => item.name === selectedHeaderItem,
-                      )}
+                      value={headerContent.items.findIndex((item) => item.name === selectedHeader)}
+                      // onChange={(_e, newValue) => {
+                      //   const selectedItem = headerContent.items[newValue];
+                      //   // setSelectedHeaderItem(selectedItem.name);
+                      //   onHeaderItemClick?.(selectedItem);
+                      // }}
                       onChange={(_e, newValue) => {
                         const selectedItem = headerContent.items[newValue];
-                        setSelectedHeaderItem(selectedItem.name);
+
+                        setSelectedHeader(selectedItem.name);
                         onHeaderItemClick?.(selectedItem);
                       }}
                       variant="scrollable"
@@ -751,11 +878,11 @@ export function DynamicTable<
                           gap: 0.5,
                         },
                         '& .MuiTab-root': {
-                          minWidth: 'auto', // penting biar tab tidak “kaku” 72px+
-                          whiteSpace: 'nowrap', // biar label tidak turun baris
+                          minWidth: 'auto',
+                          whiteSpace: 'nowrap',
                           minHeight: 20,
                           textTransform: 'none',
-                          fontSize: '0.6rem',
+                          fontSize: '0.8rem',
                           px: 1.5,
                           // mt: { xs: 1, sm: 2 },
                           borderRadius: '999px',
@@ -793,231 +920,527 @@ export function DynamicTable<
         </Box>
       )}
 
+      {isHaveRole && headerContent && (
+        <Box marginBottom={2}>
+          <BlankCard>
+            <CardContent sx={{ overflow: 'visible' }}>
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
+                  {headerContent.title}
+                </Typography>
+
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  gap={1}
+                  sx={{
+                    width: '100%',
+                    overflowX: 'auto',
+                    pb: 0.5,
+                  }}
+                >
+                  {headerContent.items.map((item) => {
+                    const isDropdown = Boolean(item.children?.length);
+                    const isSelected = selectedHeader === item.name;
+
+                    return (
+                      <Button
+                        key={item.name}
+                        variant="outlined"
+                        disableRipple
+                        onClick={(event) => {
+                          if (isDropdown) {
+                            setActiveRole(item);
+                            setRoleMenuAnchor(event.currentTarget);
+                            return;
+                          }
+
+                          setSelectedHeader(item.name);
+                          setSelectedSubRole('All');
+
+                          // Kirim item, termasuk name dan id jika tersedia
+                          onHeaderItemClick?.(item);
+                        }}
+                        endIcon={isDropdown ? <ArrowDropDownIcon /> : undefined}
+                        sx={{
+                          flexShrink: 0,
+                          minWidth: 'auto',
+                          whiteSpace: 'nowrap',
+                          minHeight: 30,
+                          textTransform: 'none',
+                          fontSize: '0.8rem',
+                          px: 1.5,
+                          py: 1,
+                          borderRadius: '999px',
+                          borderColor: 'primary.main',
+                          color: isSelected ? '#fff' : 'primary.main',
+                          backgroundColor: isSelected ? 'primary.main' : 'transparent',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            // backgroundColor: isSelected ? 'primary.dark' : 'action.hover',
+                          },
+                        }}
+                      >
+                        {headerMap[item.name] ||
+                          item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                      </Button>
+                    );
+                  })}
+                </Stack>
+
+                <Menu
+                  anchorEl={roleMenuAnchor}
+                  open={Boolean(roleMenuAnchor)}
+                  onClose={() => {
+                    setRoleMenuAnchor(null);
+                    setActiveRole(null);
+                  }}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                  }}
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        minWidth: 180,
+                        maxHeight: 320,
+                      },
+                    },
+                  }}
+                >
+                  {activeRole?.children?.map((child) => (
+                    <MenuItem
+                      key={child.id}
+                      selected={selectedSubRole === child.name}
+                      onClick={() => {
+                        setSelectedHeader(activeRole.name);
+                        setSelectedSubRole(child.name);
+
+                        // Kirim nama role yang dipilih ke halaman pemanggil.
+                        onHeaderItemClick?.(child);
+
+                        setRoleMenuAnchor(null);
+                        setActiveRole(null);
+                      }}
+                    >
+                      {child.name}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </Stack>
+            </CardContent>
+          </BlankCard>
+        </Box>
+      )}
+
       {/*  TABLE */}
-      <BlankCard sx={{ height: { height } }}>
-        <CardContent sx={{ height: { height } }}>
+      {/* <BlankCard sx={{ height: { height } }} borderRadius={borderRadius}>
+        <CardContent sx={{ height: { height } }}> */}
+      <BlankCard
+        sx={{
+          height: height ?? '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+        borderRadius={borderRadius}
+      >
+        <CardContent
+          sx={{
+            height: height ?? '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            boxSizing: 'border-box',
+          }}
+        >
           <Grid2 container sx={{ marginBottom: 0.1 }}>
-            {/* ROW 1 */}
+            {isSiteSpaceName && (
+              <Grid2
+                size={{ xs: 12 }}
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                flexWrap={'wrap'}
+                sx={{
+                  mb: 2,
+                  gap: { xs: 1.5, md: 0 },
+                }}
+              >
+                <Breadcrumbs aria-label="breadcrumb">
+                  {breadcrumbItems?.map((item, index) => {
+                    const isLast = index === breadcrumbItems.length - 1;
+                    return isLast ? (
+                      <Typography
+                        key={item.id}
+                        sx={{ color: 'primary.main', fontSize: '17px', fontWeight: 'semibold' }}
+                      >
+                        {item.name}
+                      </Typography>
+                    ) : (
+                      <Link
+                        key={item.id}
+                        to={`/admin/manage/site-space/${item.id}`}
+                        onClick={() => setCurrentId(item.id)}
+                      >
+                        <Typography sx={{ color: 'primary.main', fontSize: '16px' }}>
+                          {item.name}
+                        </Typography>
+                      </Link>
+                    );
+                  })}
+                </Breadcrumbs>
+              </Grid2>
+            )}
+            {isHaveBack && (
+              <Box display="flex" alignItems={'center'} gap={2} mb={1}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<IconArrowLeft />}
+                  onClick={() => onBack?.()}
+                  sx={{ mb: 0 }}
+                >
+                  {t('back')}
+                </Button>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: 1.5,
+                  }}
+                >
+                  {isTitleIntegration}
+                </Typography>
+              </Box>
+            )}
             <Grid2
               size={{ xs: 12 }}
               display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              flexWrap={'wrap'}
+              // alignItems="center"
+              flexDirection={{ xs: 'column', sm: 'row', xl: 'row' }}
+              flexWrap="wrap"
               sx={{
-                mb: 3,
-                gap: { xs: 1.5, md: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
+                mb: 1,
+                gap: 1,
               }}
+              width="100%"
             >
-              {/* SEARCH MENU */}
-              <Stack direction="row" spacing={2}>
-                {isHaveSearch && (
-                  <Grid2
-                    container
-                    spacing={0.5}
-                    // size={{ xs: 12 }}
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    flexWrap={'wrap'}
-                  >
-                    <Grid2 size={{ xs: 10, lg: 10 }}>
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        sx={{
-                          height: 36,
-                          width: {
-                            xs: '100%', // mobile tetap penuh
-                            sm: '320px', // layar medium ke atas dibatasi 320px
-                          },
-                          // width: '300px',
-                        }}
-                        InputProps={{
-                          sx: {
-                            height: 36,
-                          },
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Search fontSize="small" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Grid2>
-                    <Grid2 size={{ xs: 2, lg: 2 }}>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        onClick={
-                          handleSearch // panggil fungsi kamu
-                        }
-                        sx={{
-                          height: 36,
-                          width: '100%',
-                          fontSize: '0.7rem',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
-                          Search
-                        </Typography>
-                      </Button>
-                    </Grid2>
-                  </Grid2>
-                )}
-                {isHaveHeaderTitle && (
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: '',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {titleHeader}
-                  </Typography>
-                )}
-              </Stack>
-
-              {/* EXPORT AND IMPORT AND FILTER DURATION BUTTON */}
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap={'wrap'} gap={0.5}>
-                {isHaveExportPdf && (
-                  <Button
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<AddCircle />}
-                    color="error"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export pdf
-                    </Typography>
-                  </Button>
-                )}
-                {isHaveImportExcel && onImportExcel && (
-                  <>
-                    <input
-                      type="file"
-                      accept=".xlsx, .xls, .csv"
-                      id="upload-excel"
-                      style={{ display: 'none' }}
-                      onChange={onImportExcel}
+              <Box sx={{ display: 'flex', flex: 1, minWidth: 0, alignItems: 'center' }}>
+                <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+                  {isHaveSearch && (
+                    <SearchToolbar
+                      value={searchKeyword}
+                      searchPlaceholder={searchPlaceholder}
+                      t={t}
+                      onSearch={onSearch}
+                      onKeyDown={handleKeyDown}
+                      onNavigatePage={onNavigatePage}
+                      isOperatorSetting={isOperatorSetting}
+                      isBlacklistPage={isBlacklistPage}
                     />
-                    <label htmlFor="upload-excel">
-                      <Button
-                        component="span"
-                        size="medium"
-                        variant="contained"
-                        startIcon={<InsertDriveFile sx={{ color: 'white' }} />}
-                        color="success"
-                        sx={{ height: 36 }}
-                      >
-                        <Typography variant="caption" fontSize={'0.7rem'}>
-                          Import XLS
-                        </Typography>
-                      </Button>
-                    </label>
-                  </>
-                )}
-
-                {isHaveExportXlf && (
-                  <Button
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<AddCircle />}
-                    color="secondary"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Export xls
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilterMore && (
-                  <Button
-                    onClick={() => setShowDrawerFilterMore(true)}
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<IconAdjustmentsHorizontal />}
-                    color="info"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      Filter more
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilterDuration && (
-                  <Button
-                    onClick={() => setShowDrawer(true)}
-                    size="medium"
-                    variant="outlined"
-                    startIcon={<CalendarMonth />}
-                    color="info"
-                    sx={{ height: 36 }}
-                  >
-                    <Typography variant="caption" fontSize={'0.7rem'}>
-                      By duration
-                    </Typography>
-                  </Button>
-                )}
-
-                {isHaveFilter && columnss.length > 0 && (
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <Select
-                      displayEmpty
-                      value={selectedColumn}
-                      onChange={(e) => handleColumnChange(e.target.value)}
+                  )}
+                  {isHaveHeaderTitle && (
+                    <Typography
+                      variant="h6"
                       sx={{
-                        height: 36,
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '0.7rem',
-                      }}
-                      MenuProps={{
-                        PaperProps: {
-                          sx: { fontSize: '0.7rem' },
-                        },
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        color: '',
+                        textTransform: 'capitalize',
                       }}
                     >
-                      <MenuItem value="">
-                        <Typography fontSize={'0.7rem'} variant="caption">
-                          Sort by column
-                        </Typography>
-                      </MenuItem>
-                      {columnss.map((col) => (
-                        <MenuItem key={col} value={col}>
-                          <Typography fontSize={'0.7rem'} variant="caption">
-                            {toTitleCase(col)}
+                      {titleHeader}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  flexWrap: 'wrap',
+                  justifyContent: {
+                    xs: 'flex-start',
+                    md: 'flex-end',
+                  },
+                }}
+              >
+                <Stack direction="row" spacing={0.5} alignItems="center" flexWrap={'wrap'} gap={0}>
+                  {isHaveFilterData && filterDataOptions.length > 0 && (
+                    <Box>
+                      <CustomSelect
+                        size="small"
+                        value={filterDataValue}
+                        onChange={(e: any) => {
+                          onFilterDataChange?.(e.target.value);
+                        }}
+                        displayEmpty
+                        sx={{
+                          minWidth: 130,
+                          height: 36,
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Typography fontSize="0.8rem" variant="caption">
+                            All Status
                           </Typography>
                         </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
 
-                {isHaveAddData && (
-                  <Tooltip title="Add Data">
-                    <Fab
-                      size="small"
+                        {filterDataOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            <Typography fontSize="0.7rem" variant="caption">
+                              {option.label}
+                            </Typography>
+                          </MenuItem>
+                        ))}
+                      </CustomSelect>
+                    </Box>
+                  )}
+                  {/* view all */}
+                  {isHaveViewAll && (
+                    <Box>
+                      <Typography
+                        variant="body1"
+                        color="primary"
+                        sx={{
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          },
+                        }}
+                        onClick={onHaveViewAll}
+                      >
+                        {t('viewAll')}
+                      </Typography>
+                    </Box>
+                  )}
+                  {/* PRINT */}
+                  {isHavePrint && onPrint && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconPrinter size={16} />}
                       color="primary"
-                      sx={{ height: 36, width: 40 }}
-                      onClick={handleAddData}
+                      sx={{ height: 36 }}
+                      onClick={onPrint}
                     >
-                      <IconPlus width={16} height={16} />
-                    </Fab>
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        {t('print')}
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT PDF */}
+                  {isHaveExportPdf && onExportPdf && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileTypePdf size={16} />}
+                      color="error"
+                      sx={{ height: 36 }}
+                      onClick={onExportPdf}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export PDF
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT CSV */}
+                  {isHaveExportCsv && onExportCsv && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileSpreadsheet size={16} />}
+                      color="success"
+                      sx={{ height: 36 }}
+                      onClick={onExportCsv}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export CSV
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {/* EXPORT EXCEL */}
+                  {isHaveExportExcel && onExportExcel && (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      startIcon={<IconFileExport size={16} />}
+                      color="success"
+                      sx={{ height: 36 }}
+                      onClick={onExportExcel}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export Excel
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveImportExcel && onImportExcel && (
+                    <>
+                      <input
+                        type="file"
+                        accept=".xlsx, .xls, .csv"
+                        id="upload-excel"
+                        style={{ display: 'none' }}
+                        onChange={onImportExcel}
+                      />
+                      <label htmlFor="upload-excel">
+                        <Button
+                          component="span"
+                          size="medium"
+                          variant="contained"
+                          startIcon={<InsertDriveFile sx={{ color: 'white' }} />}
+                          color="success"
+                          sx={{ height: 36 }}
+                        >
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Import XLS
+                          </Typography>
+                        </Button>
+                      </label>
+                    </>
+                  )}
+
+                  {isHaveExportXlf && (
+                    <Button
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<AddCircle />}
+                      color="secondary"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Export xls
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilterMore && (
+                    <Button
+                      onClick={() => setShowDrawerFilterMore(true)}
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<IconFilter />}
+                      color="primary"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        Filter
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilterDuration && (
+                    <Button
+                      onClick={() => setShowDrawer(true)}
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<CalendarMonth />}
+                      color="info"
+                      sx={{ height: 36 }}
+                    >
+                      <Typography variant="caption" fontSize={'0.7rem'}>
+                        By duration
+                      </Typography>
+                    </Button>
+                  )}
+
+                  {isHaveFilter && columnss.length > 0 && (
+                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                      <Select
+                        displayEmpty
+                        value={selectedColumn}
+                        onChange={(e) => handleColumnChange(e.target.value)}
+                        sx={{
+                          height: 36,
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '0.7rem',
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { fontSize: '0.7rem' },
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Typography fontSize={'0.7rem'} variant="caption">
+                            Sort by column
+                          </Typography>
+                        </MenuItem>
+                        {columnss.map((col) => (
+                          <MenuItem key={col} value={col}>
+                            <Typography fontSize={'0.7rem'} variant="caption">
+                              {toTitleCase(col)}
+                            </Typography>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+
+                  {isHaveConnection && (
+                    <Tooltip title={t('checkConnection')}>
+                      <Button
+                        startIcon={<IconLink />}
+                        variant="contained"
+                        onClick={onCheckConnection}
+                      >
+                        {t('checkConnection')}
+                      </Button>
+                    </Tooltip>
+                  )}
+
+                  {/* {isHaveAssign && (
+                  <Tooltip title="Assign Employee">
+                    <Button
+                      onClick={() => onAssign?.(true)}
+                      disableRipple
+                      variant="contained"
+                      sx={{
+                        color: 'white',
+                        // width: 28,
+                        // height: 28,
+                        // p: 0.5,
+                        // borderRadius: '50%',
+                      }}
+                    >
+                      Assign
+                    </Button>
                   </Tooltip>
-                )}
-              </Stack>
+                )} */}
+
+                  {isHaveAddData && (
+                    <Tooltip title="Add Data" arrow>
+                      <Fab
+                        size="small"
+                        color="primary"
+                        sx={{ height: 36, width: 40 }}
+                        onClick={handleAddData}
+                      >
+                        <IconPlus width={16} height={16} />
+                      </Fab>
+                    </Tooltip>
+                  )}
+                </Stack>
+              </Box>
             </Grid2>
             {checkedIds.length > 0 && (
               <Grid2
@@ -1037,18 +1460,18 @@ export function DynamicTable<
                   </Typography>
                 </Box>
 
-                {/* View */}
-
-                {/* Tombol Edit (batch edit hanya jika perlu) */}
-                {!isHaveCard || isNoActionTableHead == false ? (
+                {!isNoActionTableHead ? (
                   <Box display="flex" alignItems="center" gap={3} pr={2.5}>
-                    <EditIconOutline
-                      sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                      onClick={() => {
-                        if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
-                        onBatchEdit?.(selectedRows);
-                      }}
-                    />
+                    {onBatchEdit && (
+                      <EditIconOutline
+                        sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+
+                          onBatchEdit(selectedRows);
+                        }}
+                      />
+                    )}
 
                     <DeleteOutlineOutlinedIcon
                       sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
@@ -1056,8 +1479,6 @@ export function DynamicTable<
                         if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
 
                         const confirmed = await onBatchDelete?.(selectedRows);
-
-                        // Jika berhasil (misalnya return true), reset selection
                         if (confirmed) {
                           setCheckedIds([]);
                           if (setSelectedRows) {
@@ -1067,21 +1488,27 @@ export function DynamicTable<
                       }}
                     />
                   </Box>
-                ) : // <Button
-                //   size="small"
-                //   color="primary"
-                //   variant="contained"
-                //   onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                //   // disabled={selectedInvitations.length === 0}
-                // >
-                //   Choose Card
-                // </Button>
-                null}
+                ) : null}
               </Grid2>
             )}
           </Grid2>
-          <TableContainer>
-            {paginatedData.length === 0 ? (
+          {/* <TableContainer
+            sx={{
+              overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
+              overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
+              width: '100%',
+            }}
+          > */}
+          <TableContainer
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
+              overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
+              width: '100%',
+            }}
+          >
+            {paginatedData.length === 0 && !loading ? (
               <Table>
                 <TableHead>
                   <TableRow
@@ -1094,12 +1521,9 @@ export function DynamicTable<
                   >
                     <TableCell
                       colSpan={
-                        columns.length +
-                        (isHaveChecked ? 1 : 0) + // checkbox
-                        1 + // NO
-                        (isHaveAction ? 1 : 0) // action
+                        columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
                       }
-                      sx={{ padding: 0 }} // hilangkan padding agar Box bekerja optimal
+                      sx={{ padding: 0, borderBottom: 'none !important' }}
                     >
                       <Box
                         height={150}
@@ -1111,10 +1535,21 @@ export function DynamicTable<
                         sx={{
                           fontSize: '0.9rem',
                           color: 'text.secondary',
+                          gap: 1,
                         }}
                       >
                         <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
-                        <Typography variant="body1">No Data available</Typography>
+                        <Typography variant="body1">{t('noDataAvailable')}</Typography>
+                        {isHaveAddEmpty && (
+                          <Button
+                            variant="contained"
+                            sx={{ mt: '5px' }}
+                            onClick={onAddEmpty}
+                            startIcon={<IconPlus />}
+                          >
+                            {addDataText}
+                          </Button>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -1123,27 +1558,78 @@ export function DynamicTable<
             ) : (
               <Table
                 aria-label="simple table"
-                sx={{ minWidth, whiteSpace: 'nowrap' }}
+                sx={{
+                  width: '100%',
+                  // tableLayout: 'fixed',
+                  minWidth: `${columns.length * DATA_COL_WIDTH + CHECKBOX_COL_WIDTH + INDEX_COL_WIDTH + ACTION_COL_WIDTH}px`,
+                }}
                 stickyHeader={stickyHeader}
               >
                 <TableHead>
                   <TableRow>
                     {isHaveChecked && (
                       <TableCell
-                        padding="checkbox"
-                        sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 2,
+                          // background: 'white',
+                          bgcolor: 'background.paper',
+                          width: 40,
+                          padding: 0,
+                          textAlign: 'center',
+                        }}
                       >
-                        <Checkbox
-                          checked={
-                            paginatedData.length > 0 &&
-                            paginatedData.every((row) => checkedIds.includes(row.id))
-                          }
-                          indeterminate={
-                            paginatedData.some((row) => checkedIds.includes(row.id)) &&
-                            !paginatedData.every((row) => checkedIds.includes(row.id))
-                          }
-                          onChange={handleCheckAll}
-                        />
+                        {loading ? (
+                          <Skeleton
+                            variant="rectangular"
+                            width={20}
+                            height={20}
+                            animation="wave"
+                            sx={{ marginLeft: '16px' }}
+                          />
+                        ) : (
+                          paginatedData.length > 0 && (
+                            <Checkbox
+                              checked={
+                                paginatedData.length > 0 &&
+                                paginatedData.every((r) => checkedIds.includes(r.id))
+                              }
+                              indeterminate={
+                                paginatedData.some((r) => checkedIds.includes(r.id)) &&
+                                !paginatedData.every((r) => checkedIds.includes(r.id))
+                              }
+                              onChange={handleCheckAll}
+                            />
+                          )
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isTreeSiteType && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 2,
+                          // background: 'white',
+                          bgcolor: 'background.paper',
+                          width: 40,
+                          padding: 0,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton
+                            variant="rectangular"
+                            width={20}
+                            height={20}
+                            animation="wave"
+                            sx={{ marginLeft: '16px' }}
+                          />
+                        ) : (
+                          <></>
+                        )}
                       </TableCell>
                     )}
                     {isHaveAction && isActionVisitor && (
@@ -1152,143 +1638,249 @@ export function DynamicTable<
                           position: 'sticky',
                           left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
                           zIndex: 4,
-                          background: 'white',
+                          // background: 'white',
+                          bgcolor: 'background.paper',
                           minWidth: ACTION_COL_WIDTH,
                           maxWidth: ACTION_COL_WIDTH,
+                          textAlign: 'center',
                         }}
                       >
-                        Action
+                        {loading ? (
+                          <Skeleton variant="text" width="50%" height={18} animation="wave" />
+                        ) : (
+                          paginatedData.length > 0 && 'Action'
+                        )}
                       </TableCell>
                     )}
 
+                    {/* {paginatedData.length > 0 && ( */}
                     <TableCell
                       sx={{
-                        position: 'sticky',
+                        position: { xs: 'static', lg: 'sticky' },
                         left:
                           (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
                           (isActionVisitor ? ACTION_COL_WIDTH : 0),
                         zIndex: 4,
-                        background: 'white',
+                        // background: 'white',
+                        bgcolor: 'background.paper',
                         minWidth: INDEX_COL_WIDTH,
                         maxWidth: INDEX_COL_WIDTH,
-                        // marginRight: '10px',
+                        fontSize: '0.8rem !important',
                       }}
                     >
-                      #
+                      {loading ? (
+                        <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                      ) : paginatedData.length > 0 ? (
+                        'No'
+                      ) : (
+                        ''
+                      )}
                     </TableCell>
-                    {columns.map((col, idx) => {
-                      const makeSticky = isStickyVisitorCol(idx);
-
-                      // custom label
-                      let label: string = col;
+                    {/* )} */}
+                    {columns.map((colName, idx) => {
+                      const makeSticky = isStickyVisitorCol(idx) || isStickyColumn(colName);
+                      const isEarlyAccess = colName === 'early_access';
+                      let label: string = colName;
                       if (label.startsWith('is_')) {
-                        label = label.replace(/^is_/, ''); // hapus "is_"
+                        label = label.replace(/^is_/, '');
                       }
+                      const columnWidth = colName === 'type' ? 90 : undefined;
 
                       const pretty = label
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, (c) => c.toUpperCase());
-
                       return (
                         <TableCell
-                          key={col}
+                          key={`col-${idx}`}
                           sx={{
-                            ...(makeSticky && {
-                              position: {
-                                xs: 'static', // default kecil
-                                lg: makeSticky ? 'sticky' : 'static', // sticky hanya di lg
-                              },
-                              left: {
-                                xs: 'auto',
-                                lg: makeSticky ? getStickyLeft(idx) : 'auto',
-                              },
-                              zIndex: {
-                                xs: 'auto',
-                                lg: makeSticky ? 4 : 'auto',
-                              },
-                              background: 'white',
-                              minWidth: DATA_COL_WIDTH,
-                              maxWidth: DATA_COL_WIDTH,
+                            ...(columnWidth && {
+                              width: `${columnWidth}px`,
+                              minWidth: `${columnWidth}px`,
+                              maxWidth: `${columnWidth}px`,
                             }),
-                            // 💡 Tambahkan kondisi text align khusus untuk kolom tertentu
-                            // ...(col.includes('Early Access') && {
-                            //   textAlign: 'center !important',
-                            // }),
+                            ...(makeSticky && {
+                              position: { xs: 'static', lg: 'sticky' },
+                              left: { xs: 'auto', lg: getStickyLeft(idx) },
+                              zIndex: { xs: 'auto', lg: 4 },
+                            }),
+                            // background: 'white',
+                            bgcolor: 'background.paper',
+                            // minWidth: DATA_COL_WIDTH,
+                            // maxWidth: DATA_COL_WIDTH,
+                            fontSize: '0.85rem !important',
+                            // ...(isEarlyAccess && { textAlign: 'center' }),
                           }}
                         >
-                          {pretty}
+                          {loading ? (
+                            <Skeleton
+                              variant="text"
+                              width={`${40 + Math.random() * 40}%`}
+                              height={18}
+                              animation="wave"
+                            />
+                          ) : (
+                            // colName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+                            pretty
+                          )}
                         </TableCell>
                       );
                     })}
+
                     {isHaveAction && !isActionVisitor && (
                       <TableCell
                         sx={{
                           position: 'sticky',
                           right: 0,
                           bgcolor: 'background.paper',
-                          zIndex: 4, // header > body
-                          p: 0,
-                          verticalAlign: 'middle',
+                          zIndex: 4,
                           textAlign: 'center',
+                          fontSize: '0.85rem !important',
                         }}
                       >
-                        Action
+                        {loading ? (
+                          <Skeleton
+                            variant="text"
+                            width="50"
+                            height={18}
+                            animation="wave"
+                            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                          />
+                        ) : (
+                          paginatedData.length > 0 && 'Action'
+                        )}
                       </TableCell>
                     )}
 
                     {isHaveActionOnlyEdit && (
                       <TableCell
-                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
                       >
-                        Action
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
                       </TableCell>
                     )}
+
+                    {isHaveActionRevoke && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isHaveDataQuickAccess && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isCopyLink && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isButtonRegisteredSite && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isButtonEnabled && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
                     {isHaveArrival && (
                       <TableCell
                         sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
                       >
-                        <Button variant="contained">Arrival</Button>
+                        {loading ? (
+                          <Skeleton variant="rectangular" width={80} height={30} animation="wave" />
+                        ) : (
+                          paginatedData.length > 0 && <Button variant="contained">Arrival</Button>
+                        )}
                       </TableCell>
                     )}
-                    {/* 
-                    {isHaveApproval && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                          zIndex: 2,
-                          background: 'white',
-                          minWidth: ACTION_COL_WIDTH,
-                          maxWidth: ACTION_COL_WIDTH,
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )} */}
 
-                    {/* {isHaveAccess && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                          zIndex: 2,
-                          background: 'white',
-                          minWidth: ACTION_COL_WIDTH,
-                          maxWidth: ACTION_COL_WIDTH,
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )} */}
-
+                    {/* ✅ Choose Card button */}
                     {isHaveCard && (
-                      <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
+                      <TableCell
+                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                      >
                         <Button
                           size="small"
                           color="primary"
                           variant="contained"
-                          onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                          // disabled={selectedInvitations.length === 0}
+                          onClick={() => onChooseCard?.()}
                         >
                           Choose Card
                         </Button>
@@ -1297,903 +1889,125 @@ export function DynamicTable<
                   </TableRow>
                 </TableHead>
 
-                <TableBody>
-                  {loading ? (
-                    // 1. SKELETON MODE
-                    [...Array(rowsPerPage)].map((_, idx) => (
-                      <TableRow key={`skeleton-${idx}`}>
-                        <TableCell
-                          colSpan={
-                            columns.length + (isHaveChecked ? 1 : 0) + (isHaveAction ? 1 : 0) + 1
-                          }
-                        >
-                          <Skeleton height={20} />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : paginatedData.length === 0 ? (
-                    // 2. NO DATA MODE
-                    <TableRow>
-                      <TableCell
-                        colSpan={
-                          columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
-                        }
-                      >
-                        <Box
-                          height={200}
-                          width="100%"
-                          display="flex"
-                          justifyContent="center"
-                          alignItems="center"
-                          flexDirection="column"
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          <img src={backgroundnodata} alt="No Data" height="120" />
-                          <Typography variant="body1">No Data Available</Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedData.map((row: any, index) => (
-                      <TableRow key={row.id}>
-                        {isHaveChecked && (
-                          <TableCell
-                            padding="checkbox"
-                            sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
-                          >
-                            <Checkbox
-                              checked={checkedIds.includes(row.id)}
-                              onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
-                            />
-                          </TableCell>
-                        )}
-
-                        {isHaveAction && isActionVisitor && (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                              zIndex: 3,
-                              background: 'white',
-                              minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
-                              maxWidth: ACTION_COL_WIDTH,
-                            }}
-                          >
-                            <Box display="flex" alignItems="center" gap={0.3}>
-                              {/* Detail Visitor */}
-                              <Tooltip title="Detail Visitor">
-                                <IconButton
-                                  onClick={() => onView?.(row)}
-                                  disableRipple
-                                  sx={{
-                                    color: 'white',
-                                    backgroundColor: 'gray !important',
-                                    width: 28,
-                                    height: 28,
-                                    padding: 0.5,
-                                    borderRadius: '50%',
-                                    '&:hover': {
-                                      backgroundColor: 'success.dark',
-                                      color: 'white',
-                                    },
-                                  }}
-                                >
-                                  <RemoveRedEyeIcon width={18} height={18} />
-                                </IconButton>
-                              </Tooltip>
-                              {isActionEmployee == false && (
-                                <>
-                                  {/* Tombol Checkin */}
-                                  <Tooltip title="Check In">
-                                    <IconButton
-                                      onClick={() => onEdit?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: '#13DEB9 !important',
-                                        width: 28,
-                                        height: 28,
-                                        padding: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'success.dark',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconLogin2 width={18} height={18} />
-                                    </IconButton>
-                                  </Tooltip>
-
-                                  {/* Tombol Checkout */}
-                                  <Tooltip title="Check Out">
-                                    <IconButton
-                                      onClick={() => onDelete?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: 'error.main',
-                                        width: 28,
-                                        height: 28,
-                                        padding: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'error.dark',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconLogout2 width={18} height={18} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </>
-                              )}
-
-                              {/* Ikon VIP */}
-                              {/* {isHaveVip &&
-                              (row.is_vip ? (
-                                <Tooltip title="VIP">
-                                  <IconStarFilled color="gold" />
-                                </Tooltip>
-                              ) : // <Tooltip title="Not VIP">
-                              //   <IconStarFilled color="lightgray" />
-                              // </Tooltip>
-                              null)} */}
-
-                              {/* {isHaveVip && isVip?.(row) && (
-                              <Tooltip title="VIP">
-                                <IconStarFilled color="gold" />
-                              </Tooltip>
-                            )} */}
-                            </Box>
-                          </TableCell>
-                        )}
-
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            left:
-                              (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
-                              (isActionVisitor ? ACTION_COL_WIDTH : 0),
-                            zIndex: 3,
-                            background: 'white',
-                            minWidth: INDEX_COL_WIDTH,
-                            maxWidth: INDEX_COL_WIDTH,
-                          }}
-                        >
-                          {index + 1 + page * rowsPerPage}
-                        </TableCell>
-
-                        {columns.map((col, idx) => {
-                          const makeSticky = isStickyVisitorCol(idx);
-
-                          return (
-                            <TableCell
-                              key={col}
-                              sx={{
-                                ...(makeSticky && {
-                                  position: { xs: 'static', lg: 'sticky' },
-                                  left: getStickyLeft(idx),
-                                  zIndex: 3, // body < header
-                                  background: 'white',
-                                  minWidth: DATA_COL_WIDTH,
-                                  maxWidth: DATA_COL_WIDTH,
-                                }),
-                              }}
-                            >
-                              {isHaveVip && col === 'is_vip' ? (
-                                row[col] ? (
-                                  <Tooltip title="VIP">
-                                    <IconStarFilled color="gold" />
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip title="Not VIP">
-                                    <IconStarFilled color="lightgray" />
-                                  </Tooltip>
-                                )
-                              ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
-                                <RichHtmlCell
-                                  html={String(row[col] ?? '')}
-                                  lines={htmlClampLines}
-                                  maxWidth={htmlMaxWidth}
-                                />
-                              ) : col === 'card_status' ? (
-                                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : col === 'document_type' ? (
-                                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : col === 'status' && isHaveApproval ? (
-                                row[col] === 'Accept' ? (
-                                  <Typography
-                                    sx={{
-                                      color: 'success.main',
-                                      fontWeight: 400,
-                                      backgroundColor: 'success.light',
-                                      textAlign: 'center',
-                                      padding: 0.5,
-                                      borderRadius: '8px',
-                                    }}
-                                    variant="body2"
-                                  >
-                                    Accept
-                                  </Typography>
-                                ) : row[col] === 'Deny' ? (
-                                  <Typography
-                                    sx={{
-                                      color: 'error.main',
-                                      fontWeight: 400,
-                                      backgroundColor: 'error.light',
-                                      textAlign: 'center',
-                                      padding: 0.5,
-                                      borderRadius: '8px',
-                                    }}
-                                    variant="body2"
-                                  >
-                                    Deny
-                                  </Typography>
-                                ) : (
-                                  <>
-                                    <Typography
-                                      sx={{
-                                        color: '#fff',
-                                        fontWeight: 400,
-                                        backgroundColor: 'grey',
-                                        textAlign: 'center',
-                                        padding: 0.5,
-                                        borderRadius: '8px',
-                                      }}
-                                      variant="body2"
-                                    >
-                                      Pending
-                                    </Typography>
-                                  </>
-                                )
-                              ) : (isHavePeriod && col === 'visitor_period_start') ||
-                                col === 'visitor_period_end' ? (
-                                <>
-                                  {formatDate(row[col] as string)}
-                                  <br />
-                                </>
-                              ) : isHaveEmployee && col === 'host' ? (
-                                <Tooltip title="View Host">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => onEmployeeClick?.(row)} // kirim seluruh row
-                                    sx={{
-                                      borderRadius: '50%',
-                                      width: 30,
-                                      height: 30,
-                                      backgroundColor: (theme) => theme.palette.grey[100],
-                                    }}
-                                  >
-                                    <IconUserFilled />
-                                  </IconButton>
-                                </Tooltip>
-                              ) : col === 'employee' ? (
-                                <>
-                                  {/* <Tooltip title="You are the host">
-                                    <IconStarFilled
-                                      color="gold"
-                                      size={16}
-                                      style={{ color: 'gold' }}
-                                    />
-                                  </Tooltip> */}
-                                  {row.employee && (
-                                    <Tooltip title="You are the host">
-                                      <IconStarFilled
-                                        color="gold"
-                                        size={24}
-                                        style={{ color: 'gold' }}
-                                      />
-                                    </Tooltip>
-                                  )}
-                                </>
-                              ) : isHaveGender && col === 'gender' ? (
-                                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
-                              ) : isSiteSpaceType && col === 'type' ? (
-                                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : isHaveImage &&
-                                imageFields.includes(col) &&
-                                typeof row[col] === 'string' ? (
-                                <img
-                                  src={(() => {
-                                    const value = row[col];
-                                    if (!value) return '';
-                                    if (value.startsWith('data:image')) return value;
-                                    if (value.startsWith('http')) return value;
-                                    return `${BASE_URL}${value}`;
-                                  })()}
-                                  alt="employee"
-                                  style={{
-                                    width: 55,
-                                    height: 55,
-                                    // borderRadius: '50%',
-                                    objectFit: 'cover',
-                                  }}
-                                />
-                              ) : (isDataVerified && col === 'secure') ||
-                                col === 'can_upload' ||
-                                col === 'can_signed' ||
-                                col === 'can_declined' ||
-                                col === 'is_primary' ||
-                                col === 'is_employee_used' ||
-                                col === 'is_multi_site' ||
-                                col === 'is_used' ||
-                                col === 'early_access' ? (
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  justifyContent="center"
-                                  width="100%"
-                                >
-                                  <Tooltip
-                                    title={
-                                      row[col]
-                                        ? tooltipLabels[col]?.true ?? 'Verified'
-                                        : tooltipLabels[col]?.false ?? 'Not Verified'
-                                    }
-                                  >
-                                    <Box
-                                      sx={(theme) => ({
-                                        backgroundColor: row[col]
-                                          ? theme.palette.success.main
-                                          : theme.palette.error.main,
-                                        borderRadius: '50%',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        p: '2px',
-                                      })}
-                                    >
-                                      {row[col] ? (
-                                        <IconCheck color="white" size={16} />
-                                      ) : (
-                                        <IconX color="white" size={16} />
-                                      )}
-                                    </Box>
-                                  </Tooltip>
-                                </Box>
-                              ) : isHavePdf && col === 'file' ? (
-                                <Tooltip title="View File">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => onFileClick?.(row)} // kirim seluruh row
-                                    sx={{
-                                      borderRadius: '50%',
-                                      width: 30,
-                                      height: 30,
-                                      backgroundColor: (theme) => theme.palette.grey[100],
-                                    }}
-                                  >
-                                    <IconFileText />
-                                  </IconButton>
-                                </Tooltip>
-                              ) : col === 'email' ? (
-                                <Box
-                                  display="inline-flex"
-                                  alignItems="center"
-                                  justifyContent="start"
-                                  textAlign={'left'}
-                                  gap={0.5}
-                                  width="100%"
-                                >
-                                  <span>{(row[col] as React.ReactNode) ?? '-'}</span>
-
-                                  {isHaveVerified &&
-                                    (row[col] == 'is_email_verified' ? (
-                                      <Tooltip title="Email Verified">
-                                        <Box
-                                          sx={{
-                                            backgroundColor: 'green',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconCheck color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip title="Email Not Verified">
-                                        <Box
-                                          sx={{
-                                            backgroundColor: 'red',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconX color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ))}
-                                </Box>
-                              ) : col === 'password' ? (
-                                <Box
-                                  display="inline-flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                  justifyContent={'center'}
-                                  width="100%"
-                                >
-                                  {isHavePassword ? (
-                                    visiblePasswords[row.id] ? (
-                                      <>
-                                        <span>{String(row[col] ?? '-')}</span>
-                                        <Tooltip title="Hide Password">
-                                          <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              togglePassword(row.id);
-                                            }}
-                                          >
-                                            <IconEyeOff size={18} />
-                                          </IconButton>
-                                        </Tooltip>
-                                      </>
-                                    ) : (
-                                      <Tooltip title="Show Password">
-                                        <IconButton
-                                          size="small"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            togglePassword(row.id);
-                                          }}
-                                          sx={{
-                                            bgcolor: 'grey.200', // background
-                                            '&:hover': {
-                                              bgcolor: 'grey.300', // background saat hover
-                                            },
-                                            borderRadius: '50%', // biar bulat
-                                            p: 0.5, // padding supaya icon nggak terlalu mepet
-                                          }}
-                                        >
-                                          <IconEye size={18} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )
-                                  ) : (
-                                    // Jika fitur password tidak diaktifkan, tampilkan masked statis
-                                    '••••••••'
-                                  )}
-                                </Box>
-                              ) : isHaveCard && col === 'card' ? (
-                                row[col] ? (
-                                  <>{row[col]}</>
-                                ) : (
-                                  <>-</>
-                                )
-                              ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  width={'100%'}
-                                  justifyContent={'center'}
-                                >
-                                  <Switch
-                                    checked={row[col] as boolean}
-                                    onChange={(_, checked) =>
-                                      onBooleanSwitchChange?.(row.id, col, checked)
-                                    }
-                                    color="primary"
-                                    size="small"
-                                  />
-                                </Box>
-                              ) : isHaveObjectData &&
-                                objectFields?.includes(col) &&
-                                typeof row[col] === 'object' &&
-                                row[col] !== null ? (
-                                Array.isArray(row[col]) ? (
-                                  row[col].map((item: any) => item.name).join(', ')
-                                ) : (
-                                  (row[col] as { name?: string }).name ?? '-'
-                                )
-                              ) : (
-                                <>
-                                  {isHaveIntegration && col === 'name' && onNameClick ? (
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => {
-                                        // e.stopPropagation();
-                                        onNameClick?.(row);
-                                      }}
-                                      sx={{
-                                        p: 1,
-                                        minWidth: 0,
-                                        textTransform: 'none',
-                                        fontSize: '0.875rem',
-                                        textDecoration: 'underline',
-                                      }}
-                                      // target="_blank"
-                                    >
-                                      {String(row[col] ?? '-')}
-                                    </Button>
-                                  ) : (
-                                    String(row[col] ?? '-')
-                                  )}
-
-                                  {/* {isHaveVerified &&
-                                    col === 'email' &&
-                                    (col == 'is_email_verified' ? (
-                                      <Tooltip title="Email Verified">
-                                        <Box
-                                          sx={{
-                                            // mt: '25px',
-                                            backgroundColor: 'green',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginLeft: '5px',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconCheck color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip title="Email Not Verified">
-                                        <Box
-                                          sx={{
-                                            // mt: '25px',
-                                            backgroundColor: 'red',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginLeft: '5px',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconX color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ))} */}
-                                </>
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                        {isHaveCard && (
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary"></Typography>
-                          </TableCell>
-                        )}
-
-                        {/* {isHaveApproval && (row as any)?.status == null ? (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              right: 0,
-                              bgcolor: 'background.paper',
-                              zIndex: 2,
-                              p: 0,
-                              verticalAlign: 'middle',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 1,
-                                px: 1.5,
-                                py: 1.25,
-                                height: '100%',
-                              }}
-                            >
-                   
-                              <Tooltip title="Accept">
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  size="small"
-                                  sx={{ minWidth: 64, textTransform: 'none' }}
-                                  onClick={() => onAccept?.(row)}
-                                >
-                                  Accept
-                                </Button>
-                              </Tooltip>
-
-                              <Tooltip title="Deny">
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  size="small"
-                                  sx={{ minWidth: 64, textTransform: 'none' }}
-                                  onClick={() => onDenied?.(row)}
-                                >
-                                  Denied
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        ) : (
-                          <TableCell></TableCell>
-                          // null
-                        )} */}
-
-                        {/* {isHaveAccess && (
-                          <TableCell>
-                            
-                          </TableCell>
-                        )} */}
-
-                        {isHaveAction && !isActionVisitor && (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              right: 0,
-                              bgcolor: 'background.paper',
-                              zIndex: 2,
-                              p: 0,
-                              verticalAlign: 'middle',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 1,
-                                px: 1.5,
-                                py: 1.25,
-                                height: '100%',
-                              }}
-                            >
-                              {/* ✅ Accept / Denied */}
-                              {/* {isHaveApproval && (row as any)?.is_action == null ? (
-                                <>
-                                  <Tooltip title="Accept Invitation">
-                                    <Button
-                                      variant="contained"
-                                      color="primary"
-                                      size="small"
-                                      sx={{ minWidth: 64, textTransform: 'none' }}
-                                      onClick={() => onAccept?.(row)}
-                                    >
-                                      Accept
-                                    </Button>
-                                  </Tooltip>
-                                  <Tooltip title="Deny Invitation">
-                                    <Button
-                                      variant="contained"
-                                      color="error"
-                                      size="small"
-                                      sx={{ minWidth: 64, textTransform: 'none' }}
-                                      onClick={() => onDenied?.(row)}
-                                    >
-                                      Denied
-                                    </Button>
-                                  </Tooltip>
-                                </>
-                              ) : null} */}
-                              {/* 👁 Detail */}
-                              {isHaveApproval ? (
-                                (row as any)?.status == null ? (
-                                  <TableCell
-                                    sx={{
-                                      position: 'sticky',
-                                      right: 0,
-                                      bgcolor: 'background.paper',
-                                      zIndex: 2,
-                                      p: 0,
-                                      verticalAlign: 'middle',
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 1,
-                                        px: 1.5,
-                                        py: 1.25,
-                                        height: '100%',
-                                      }}
-                                    >
-                                      {/* ✅ Accept / Denied */}
-                                      <Tooltip title="Accept">
-                                        <Button
-                                          variant="contained"
-                                          color="primary"
-                                          size="small"
-                                          sx={{ minWidth: 64, textTransform: 'none' }}
-                                          onClick={() => onAccept?.(row)}
-                                        >
-                                          Accept
-                                        </Button>
-                                      </Tooltip>
-
-                                      <Tooltip title="Deny">
-                                        <Button
-                                          variant="contained"
-                                          color="error"
-                                          size="small"
-                                          sx={{ minWidth: 64, textTransform: 'none' }}
-                                          onClick={() => onDenied?.(row)}
-                                        >
-                                          Denied
-                                        </Button>
-                                      </Tooltip>
-                                    </Box>
-                                  </TableCell>
-                                ) : (
-                                  <TableCell
-                                    sx={{
-                                      position: 'sticky',
-                                      right: 0,
-                                      bgcolor: 'background.paper',
-                                      zIndex: 2,
-                                      p: 0,
-                                      verticalAlign: 'middle',
-                                    }}
-                                  >
-                                    -
-                                  </TableCell>
-                                )
-                              ) : isHaveAccess ? (
-                                <TableCell
-                                  sx={{
-                                    position: 'sticky',
-                                    right: 0,
-                                    bgcolor: 'background.paper',
-                                    zIndex: 2,
-                                    p: 0,
-                                    verticalAlign: '',
-                                    textAlign: 'center',
-                                    display: 'flex',
-                                    alignItems: 'flex-start',
-                                  }}
-                                >
-                                  {getAccessActions(row)}
-                                </TableCell>
-                              ) : isHaveView ? (
-                                <Tooltip title="View Invitation">
-                                  <IconButton
-                                    onClick={() => onView?.(row)}
-                                    disableRipple
-                                    sx={{
-                                      color: 'white',
-                                      backgroundColor: 'gray !important',
-                                      width: 28,
-                                      height: 28,
-                                      padding: 0.5,
-                                      borderRadius: '50%',
-                                      '&:hover': {
-                                        backgroundColor: 'success.dark',
-                                        color: 'white',
-                                      },
-                                    }}
-                                  >
-                                    <RemoveRedEyeIcon width={18} height={18} />
-                                  </IconButton>
-                                </Tooltip>
-                              ) : (
-                                <Box display="flex" gap={0.5}>
-                                  {/* ✏️ Edit */}
-                                  {/* {isHaveSettingOperator && isOperator(row.group_id) && ( */}
-                                  {isHaveSettingOperator &&
-                                    (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
-                                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
-                                      <Tooltip title="Setting">
-                                        <IconButton
-                                          onClick={() => onSettingOperator?.(row)}
-                                          disableRipple
-                                          sx={{
-                                            color: 'white',
-                                            backgroundColor: '#000',
-                                            width: 28,
-                                            height: 28,
-                                            p: 0.5,
-                                            borderRadius: '50%',
-                                            '&:hover': { backgroundColor: '#000', color: 'white' },
-                                          }}
-                                        >
-                                          <IconSettings width={14} height={14} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )}
-                                  <Tooltip title="Edit">
-                                    <IconButton
-                                      onClick={() => onEdit?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: '#FA896B',
-                                        width: 28,
-                                        height: 28,
-                                        p: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                                      }}
-                                    >
-                                      <IconPencil width={14} height={14} />
-                                    </IconButton>
-                                  </Tooltip>
-
-                                  {/* 🗑 Delete */}
-                                  <Tooltip title="Delete">
-                                    <IconButton
-                                      onClick={() => onDelete?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: 'error.main',
-                                        width: 28,
-                                        height: 28,
-                                        p: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconTrash width={14} height={14} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              )}
-                            </Box>
-                          </TableCell>
-                        )}
-
-                        {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              right: 0,
-                              background: 'white',
-                              zIndex: 2,
-                              display: 'flex',
-                              gap: 1,
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Box display="flex" alignItems="end">
-                              {/* Tombol Edit (Primary, Kecil) */}
-                              <Tooltip title="Edit">
-                                <IconButton
-                                  onClick={() => onEdit?.(row)}
-                                  disableRipple
-                                  sx={{
-                                    color: 'white',
-                                    backgroundColor: '#FA896B',
-
-                                    width: 28,
-                                    height: 28,
-                                    padding: 0.5,
-                                    borderRadius: '50%',
-                                  }}
-                                >
-                                  <IconPencil width={14} height={14} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
+                <TableBodyContent
+                  loading={loading}
+                  rowsPerPage={rowsPerPage}
+                  isHaveChecked={isHaveChecked}
+                  isHaveAction={isHaveAction}
+                  isActionVisitor={isActionVisitor}
+                  paginatedData={paginatedData}
+                  columns={columns}
+                  checkedIds={checkedIds}
+                  handleCheckRow={handleCheckRow}
+                  isTreeSiteType={isTreeSiteType}
+                  toggleRow={toggleRow}
+                  isHaveAssignTracking={isHaveAssignTracking}
+                  onAssignTracking={onAssignTracking}
+                  openRow={openRow}
+                  page={currentPage}
+                  isHaveDataImage={isHaveDataImage}
+                  isActionEmployee={isActionEmployee}
+                  isHaveBlacklist={isHaveBlacklist}
+                  isHaveVip={isHaveVip}
+                  htmlFields={htmlFields}
+                  htmlClampLines={htmlClampLines}
+                  htmlMaxWidth={htmlMaxWidth}
+                  isAccessControlType={isAccessControlType}
+                  isHavePeriod={isHavePeriod}
+                  isHaveEmployee={isHaveEmployee}
+                  isHaveGender={isHaveGender}
+                  isSiteSpaceType={isSiteSpaceType}
+                  isHaveImage={isHaveImage}
+                  imageFields={imageFields}
+                  isCopy={isCopy}
+                  isDataVerified={isDataVerified}
+                  tooltipLabels={tooltipLabels}
+                  isHavePdf={isHavePdf}
+                  isHaveDataQuickAccess={isHaveDataQuickAccess}
+                  onDetailQuickAccess={onDetailQuickAccess}
+                  onFileClick={onFileClick}
+                  isHaveActive={isHaveActive}
+                  onActiveToggle={onActiveToggle}
+                  onQuickAccessToggle={onQuickAccessToggle}
+                  isHaveVerified={isHaveVerified}
+                  visiblePasswords={visiblePasswords}
+                  onQrCode={onQrCode}
+                  togglePassword={togglePassword}
+                  isStickyColumns={isStickyColumns}
+                  isHavePassword={isHavePassword}
+                  isHaveAssign={isHaveAssign}
+                  isHaveUnAssign={isHaveUnAssign}
+                  onAssign={onAssign}
+                  onUnAssign={onUnAssign}
+                  isHaveCard={isHaveCard}
+                  isHaveBooleanSwitch={isHaveBooleanSwitch}
+                  onBooleanSwitchChange={onBooleanSwitchChange}
+                  isHaveAddEmpty={isHaveAddEmpty}
+                  isHaveObjectData={isHaveObjectData}
+                  objectFields={objectFields}
+                  isHaveIntegration={isHaveIntegration}
+                  onNameClick={onNameClick}
+                  isHaveApproval={isHaveApproval}
+                  onAccept={onAccept}
+                  onDenied={onDenied}
+                  isHaveAccess={isHaveAccess}
+                  getAccessActions={getAccessActions}
+                  isHaveView={isHaveView}
+                  isCurrentUsed={isCurrentUsed}
+                  onView={onView}
+                  onCopy={onCopy}
+                  onEdit={onEdit}
+                  isHaveQrCode={isHaveQrCode}
+                  isHavePermission={isHavePermission}
+                  onPermission={onPermission}
+                  isHaveViewAndAction={isHaveViewAndAction}
+                  isBlacklistAction={isBlacklistAction}
+                  onBlacklist={onBlacklist}
+                  isActionListVisitor={isActionListVisitor}
+                  isHaveSettingOperator={isHaveSettingOperator}
+                  onSettingOperator={onSettingOperator}
+                  isHaveActionRevoke={isHaveActionRevoke}
+                  onActionAccess={onActionAccess}
+                  isHaveActionOnlyEdit={isHaveActionOnlyEdit}
+                  isSelectedType={isSelectedType}
+                  isButtonGiveAccess={isButtonGiveAccess}
+                  isButtonRegisteredSite={isButtonRegisteredSite}
+                  isButtonSiteAccess={isButtonSiteAccess}
+                  onGiveAccess={onGiveAccess}
+                  onRegisteredSite={onRegisteredSite}
+                  onEmployeeClick={onEmployeeClick}
+                  onSiteAccess={onSiteAccess}
+                  isCopyLink={isCopyLink}
+                  onCopyLink={onCopyLink}
+                  onDetailLink={onDetailLink}
+                  isButtonEnabled={isButtonEnabled}
+                  isButtonDisabled={isButtonDisabled}
+                  onIsButtonDisabled={onIsButtonDisabled}
+                  isHaveVisitor={isHaveVisitor}
+                  onDelete={onDelete}
+                  isHaveDuplicate={isHaveDuplicate}
+                  onDuplicate={onDuplicate}
+                  isHaveSecret={isHaveSecret}
+                  visibleSecrets={visibleSecrets}
+                  loadingSecrets={loadingSecrets}
+                  onRevealSecret={onRevealSecret}
+                  onHideSecret={onHideSecret}
+                  isHaveGenerateApiKey={isHaveGenerateApiKey}
+                  onGenerateApiKey={onGenerateApiKey}
+                />
               </Table>
             )}
           </TableContainer>
           {isHavePagination && (
             <TablePagination
-              rowsPerPageOptions={rowsPerPageOptions}
+              // rowsPerPageOptions={rowsPerPageOptions}
+              rowsPerPageOptions={rowsPerPageOptions?.map((opt) =>
+                opt === -1 ? { label: 'All', value: -1 } : opt,
+              )}
               component="div"
               count={totalCount ?? data.length}
               rowsPerPage={rowsPerPage}
-              page={page}
+              page={currentPage}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
               sx={{ overflow: 'hidden' }}
@@ -2201,23 +2015,45 @@ export function DynamicTable<
           )}
         </CardContent>
       </BlankCard>
-      {/* DRAWER CALENDER RANGE FILTER */}
       <Drawer anchor="right" open={showDrawer} onClose={() => setShowDrawer(false)}>
-        <Calendar onChange={onChangeFilterCalender} />
+        <Calendar onChange={onApplyFilterCalender} />
       </Drawer>
 
-      <Drawer
+      {/* <Drawer
         anchor="right"
         PaperProps={{
           sx: {
-            width: '30vw',
+            width: { xs: '60vw', sm: '40vw' },
           },
         }}
         open={showDrawerFilterMore}
         onClose={() => setShowDrawerFilterMore(false)}
       >
         {filterMoreContent}
+      </Drawer> */}
+      <Drawer
+        anchor="right"
+        PaperProps={{
+          sx: {
+            width: { xs: '60vw', sm: '40vw' },
+          },
+        }}
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+      >
+        {React.isValidElement(filterMoreContent)
+          ? React.cloneElement(
+              filterMoreContent as React.ReactElement<{
+                onClose?: () => void;
+              }>,
+              {
+                onClose: () => setShowDrawerFilterMore(false),
+              },
+            )
+          : filterMoreContent}
       </Drawer>
     </>
   );
 }
+
+export const DynamicTable = React.memo(DynamicTableBase) as typeof DynamicTableBase;

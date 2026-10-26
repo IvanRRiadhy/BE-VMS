@@ -1,54 +1,46 @@
 // import { Navigate, Outlet } from 'react-router';
 // import { useAuth } from './AuthProvider';
-
-// export const ProtectedRoute = ({ requireType }: { requireType: 'admin' | 'guest' }) => {
-//   const { isAuthenticated, authType, loading } = useAuth();
-
-//   if (loading) return <div>Loading...</div>; // bisa ganti spinner
-
-//   // belum login
-//   if (!isAuthenticated) {
-//     return <Navigate to="/" replace />;
-//   }
-
-//   // sudah login tapi salah type
-//   if (authType !== requireType) {
-//     return <Navigate to={authType === 'admin' ? '/admin/dashboard' : '/guest/dashboard'} replace />;
-//   }
-
-//   return <Outlet />;
-// };
-
-// src/customs/contexts/ProtectedRoute.tsx
-// import { Navigate, Outlet } from 'react-router';
-// import { useAuth } from './AuthProvider';
 // import { useSession } from './SessionContext';
+// import { CircularProgress } from '@mui/material';
+// import { useProfile } from 'src/hooks/Profile/useProfile';
 
 // interface ProtectedRouteProps {
-//   requireType?: 'admin' | 'guest';
-//   allowedGroups?: string[];
+//   allowedRoles?: string[];
 // }
 
-// export const ProtectedRoute = ({ requireType, allowedGroups }: ProtectedRouteProps) => {
-//   const { isAuthenticated, authType, loading } = useAuth();
-//   const { groupId } = useSession();
+// export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+//   const { isAuthenticated, loading } = useAuth();
+//   const {
+//     data: profile,
+//     isLoading: profileLoading,
+//   } = useProfile();
 
-//   if (loading) return <div>Loading...</div>;
+//   if (loading || profileLoading)
+//     return (
+//       <div
+//         style={{
+//           position: 'fixed',
+//           inset: 0,
+//           display: 'flex',
+//           alignItems: 'center',
+//           justifyContent: 'center',
+//           backgroundColor: 'rgba(255,255,255,0.7)',
+//           zIndex: 9999,
+//         }}
+//       >
+//         <CircularProgress color="primary"/>
+//       </div>
+//     );
 
-//   // belum login
-//   if (!isAuthenticated) return <Navigate to="/" replace />;
+//   if (!isAuthenticated) return <Navigate to="/auth/login" replace />;
 
-//   // kalau ada requireType, cek authType dulu
-//   // if (requireType && authType !== requireType) {
-//   //   return <Navigate to={authType === 'admin' ? '/admin/dashboard' : '/guest/dashboard'} replace />;
-//   // }
+//   if (allowedRoles && allowedRoles.length > 0) {
+//     const normalizedRole = profile?.group_name.toUpperCase();
+//     const allowedNormalized = allowedRoles.map((r) => r.toUpperCase());
 
-//   // kalau ada allowedGroups, cek group_id
-//   if (allowedGroups && allowedGroups.length > 0) {
-//     const normalizedGroup = groupId?.toLowerCase() ?? '';
-//     const allowedNormalized = allowedGroups.map((g) => g.toLowerCase());
-//     if (!allowedNormalized.includes(normalizedGroup)) {
-//       console.warn('🚫 Unauthorized group', { normalizedGroup, allowedNormalized });
+//     const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
+
+//     if (!isAllowed) {
 //       return <Navigate to="/unauthorized" replace />;
 //     }
 //   }
@@ -56,43 +48,171 @@
 //   return <Outlet />;
 // };
 
-import { Navigate, Outlet } from 'react-router';
+// import { Navigate, Outlet } from 'react-router-dom';
+// import { useAuth } from './AuthProvider';
+// import { CircularProgress } from '@mui/material';
+
+// interface ProtectedRouteProps {
+//   allowedRoles?: string[];
+// }
+
+// export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+//   const { isAuthenticated, loading, user } = useAuth();
+
+//   if (loading) {
+//     return (
+//       <div
+//         style={{
+//           position: 'fixed',
+//           inset: 0,
+//           display: 'flex',
+//           alignItems: 'center',
+//           justifyContent: 'center',
+//           backgroundColor: 'rgba(255,255,255,0.7)',
+//           zIndex: 9999,
+//         }}
+//       >
+//         <CircularProgress color="primary" />
+//       </div>
+//     );
+//   }
+
+//   if (!isAuthenticated) {
+//     return <Navigate to="/auth/login" replace />;
+//   }
+
+//   if (allowedRoles && allowedRoles.length > 0) {
+//     const normalizedRole = user?.group_name?.toUpperCase();
+
+//     const allowedNormalized = allowedRoles.map((role) => role.toUpperCase());
+
+//     const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
+
+//     if (!isAllowed) {
+//       return <Navigate to="/unauthorized" replace />;
+//     }
+//   }
+
+//   return <Outlet />;
+// };
+
+import { Navigate, Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from './AuthProvider';
-import { useSession } from './SessionContext';
-import { CircularProgress } from '@mui/material';
-import image from 'src/assets/images/logos/BI_Logo.png';
-import { width } from '@mui/system';
+import { Box, CircularProgress } from '@mui/material';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 
 interface ProtectedRouteProps {
-  allowedGroups?: string[];
+  allowedRoles?: string[];
 }
 
-export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading } = useAuth();
-  const { groupId } = useSession();
+export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { loading: authLoading, setAuthenticated, logout } = useAuth();
 
-  if (loading)
+  const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
+
+  useEffect(() => {
+    if (profile) {
+      setAuthenticated(profile);
+    }
+
+    if (profileError) {
+      logout();
+    }
+  }, [profile, profileError, setAuthenticated, logout]);
+
+  const loading = authLoading || profileLoading;
+
+  if (loading) {
     return (
-      <div>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          zIndex: 9999,
+        }}
+      >
         <CircularProgress color="primary" />
-        {/* <img src={image} style={{ width: 50, height: 50 }} /> */}
       </div>
     );
+  }
 
-  // 🔒 Belum login
-  if (!isAuthenticated) return <Navigate to="/" replace />;
+  // Tidak punya session
+  if (profileError || !profile) {
+    return <Navigate to="/auth/login" replace />;
+  }
 
-  // ✅ Cek grup jika diset
-  if (allowedGroups && allowedGroups.length > 0) {
-    const normalizedGroup = groupId?.toUpperCase();
-    const allowedNormalized = allowedGroups.map((g) => g.toUpperCase());
-    const isAllowed = normalizedGroup && allowedNormalized.includes(normalizedGroup);
+  // Profile berhasil ditemukan
+  const currentUser = profile;
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const normalizedRole = currentUser.group_name?.toUpperCase();
+
+    const allowedNormalized = allowedRoles.map((role) => role.toUpperCase());
+
+    const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
 
     if (!isAllowed) {
-      console.warn('🚫 Unauthorized group', { normalizedGroup, allowedNormalized });
       return <Navigate to="/unauthorized" replace />;
     }
   }
 
+  return <Outlet />;
+};
+
+const getDashboardPath = (groupName?: string) => {
+  switch (groupName) {
+    case 'Admin':
+      return '/admin/dashboard';
+
+    case 'Manager':
+      return '/manager/dashboard';
+
+    case 'Employee':
+      return '/employee/dashboard';
+
+    case 'OperatorVMS':
+      return '/operator/view';
+
+    case 'OperatorAdmin':
+      return '/operator-admin/dashboard';
+
+    case 'Visitor':
+      return '/guest/dashboard';
+
+    default:
+      return '/';
+  }
+};
+
+export const PublicOnlyRoute = () => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Sudah login → jangan boleh masuk halaman login
+  if (isAuthenticated) {
+    return <Navigate to={getDashboardPath(user?.group_name)} replace />;
+  }
+
+  // Belum login → tampilkan halaman login
   return <Outlet />;
 };

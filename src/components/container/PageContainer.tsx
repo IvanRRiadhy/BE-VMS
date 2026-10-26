@@ -3,21 +3,26 @@
 import React from 'react';
 
 import { Helmet } from 'react-helmet';
+import Footer from 'src/customs/pages/Operator/Components/Footer';
 
 type Props = {
   description?: string;
-  children: any | any[]
+  children: any | any[];
   title?: string;
 };
 
-const PageContainer = ({ title, description, children }: Props) => (
-  <div>
-    <Helmet>
-      <title>{title}</title>
-      <meta name="description" content={description} />
-    </Helmet>
-    {children}
-  </div>
-);
+const PageContainer = ({ title, description, children }: Props) => {
+  return (
+    <div>
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+      </Helmet>
+
+      {children}
+   
+    </div>
+  );
+};
 
 export default PageContainer;

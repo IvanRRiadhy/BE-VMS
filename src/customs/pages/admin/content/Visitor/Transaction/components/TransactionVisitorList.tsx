@@ -1,0 +1,246 @@
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { ContentCopy } from '@mui/icons-material';
+import {
+  IconCalendarEvent,
+  IconCalendarTime,
+  IconFilterFilled,
+  IconSearch,
+} from '@tabler/icons-react';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { IconPlus } from '@tabler/icons-react';
+import { Stack } from '@mui/system';
+
+interface TransactionVisitorListProps {
+  mdUp: boolean;
+  secdrawerWidth: number;
+  loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+
+  profile: any;
+
+  searchAgenda: string;
+  setSearchAgenda: (value: string) => void;
+  setShowDrawerFilterMore: (value: boolean) => void;
+
+  filteredVisitors: any[];
+  selectedGroup: any;
+  setSelectedGroup: (group: any) => void;
+  setSelectedGroupId: (id: string) => void;
+
+  handleDuplicate: (group: any) => void;
+  handleCancel: (id: string) => void;
+  fetchNextPage?: any;
+  handleAdd?: any;
+}
+
+const TransactionVisitorList = ({
+  mdUp,
+  secdrawerWidth,
+  loading,
+  loadingMore,
+  hasMore,
+  profile,
+  searchAgenda,
+  setSearchAgenda,
+  setShowDrawerFilterMore,
+  filteredVisitors,
+  selectedGroup,
+  setSelectedGroup,
+  setSelectedGroupId,
+  handleDuplicate,
+  handleCancel,
+  fetchNextPage,
+  handleAdd,
+}: TransactionVisitorListProps) => {
+  return (
+    <Box
+      sx={{
+        width: mdUp ? secdrawerWidth : '100%',
+        borderRight: '1px solid #eee',
+        p: 2,
+        pt: 2,
+        overflow: 'auto',
+        height: { xs: '100%', md: '80vh' },
+      }}
+    >
+      <Typography variant="h5" mb={2}>
+        Transaction Visitor
+      </Typography>
+
+      <CustomTextField
+        fullWidth
+        size="small"
+        placeholder="Search Transaction"
+        value={searchAgenda}
+        onChange={(e) => setSearchAgenda(e.target.value)}
+        sx={{ mb: 2 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconSearch fontSize="small" color="#9e9e9e" size={18} />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+                <IconFilterFilled size={18} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <Box>
+        {loading ? (
+          Array.from({ length: 10 }).map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                backgroundColor: '#f5f5f5',
+                borderRadius: 2,
+                p: 1.5,
+                mb: 1,
+              }}
+            >
+              <Skeleton variant="text" width="60%" height={24} />
+              <Skeleton variant="text" width="40%" height={20} />
+            </Box>
+          ))
+        ) : (
+          <>
+            {filteredVisitors.map((group: any) => (
+              <Box
+                key={group.id}
+                sx={{
+                  backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#fff',
+                  border: '1px solid',
+                  borderColor: selectedGroup?.id === group.id ? '#90caf9' : '#e0e7ef',
+                  borderLeft: selectedGroup?.id === group.id ? '4px solid #1976d2' : '',
+                  borderRadius: 2,
+                  p: 1.5,
+                  cursor: 'pointer',
+                  mb: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f9ff',
+                  },
+                }}
+                onClick={() => {
+                  setSelectedGroup(group);
+                  setSelectedGroupId(group.id);
+                }}
+              >
+                <Typography fontWeight="bold" variant="h6">
+                  {group.agenda}
+                </Typography>
+
+                <Box display="flex" justifyContent="space-between" mt={0.5} alignItems={'center'}>
+                  <Typography>{group.visitor_type}</Typography>
+                  <Typography>{group.host_name}</Typography>
+                </Box>
+
+                <Stack spacing={0.75} sx={{ mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarEvent size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      Start: {group.visitor_period_start}
+                    </Typography>
+                  </Stack>
+
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <IconCalendarTime size={18} color="#1976d2" stroke={1.8} />
+                    <Typography variant="body1" color="text.secondary">
+                      End: {group.visitor_period_end}
+                    </Typography>
+                  </Stack>
+                </Stack>
+                {group.transaction_status !== 'Canceled' &&
+                  group.transaction_status !== 'Expired' && (
+                    <Box
+                      display="flex"
+                      justifyContent="flex-end"
+                      alignItems="center"
+                      gap={1}
+                      mt={1}
+                    >
+                      {/* {group.remarks === 'PraRegister' && ( */}
+                      <Tooltip title="Add" arrow>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdd(group);
+                          }}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: 'primary.dark',
+                            },
+                          }}
+                        >
+                          <IconPlus size={20} />
+                        </IconButton>
+                      </Tooltip>
+                      {/* )} */}
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          backgroundColor: 'gray',
+                          color: 'white',
+                        }}
+                        startIcon={<ContentCopy />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicate(group);
+                        }}
+                      >
+                        Duplicate
+                      </Button>
+
+                      {group.invited_by === profile?.user_id && (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancel(group.id);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+              </Box>
+            ))}
+
+            {hasMore && (
+              <Box display="flex" justifyContent="center" mt={2}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  disabled={loadingMore}
+                  onClick={() => fetchNextPage()}
+                >
+                  {loadingMore ? <CircularProgress size={18} /> : 'Load More'}
+                </Button>
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+export default TransactionVisitorList;

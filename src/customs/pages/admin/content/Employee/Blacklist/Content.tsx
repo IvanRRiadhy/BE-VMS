@@ -1,0 +1,134 @@
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import Container from 'src/components/container/PageContainer';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { Item } from 'src/customs/api/models/Admin/Employee';
+import { IconUsers } from '@tabler/icons-react';
+
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useTranslation } from 'react-i18next';
+import { useEmployeeBlacklistPagination } from 'src/hooks/Employee/useEmployeeBlacklistPagination';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+
+type EmployeesTableRow = {
+  id: string;
+  name: string;
+  faceimage?: string;
+  organization_id?: string;
+  department_id?: string;
+  district_id?: string;
+};
+
+const Content = () => {
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const { t } = useTranslation();
+  const employeeBlacklistQuery = useEmployeeBlacklistPagination({
+    page,
+    rowsPerPage,
+    sortDir,
+    sort_column: 'created_at',
+    search,
+  });
+
+  const tableData = useMemo<Item[]>(() => {
+    return employeeBlacklistQuery.data?.collection ?? [];
+  }, [employeeBlacklistQuery.data]);
+
+  const totalRecords = employeeBlacklistQuery.data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = employeeBlacklistQuery.data?.RecordsFiltered ?? 0;
+  const loading = employeeBlacklistQuery.isPending;
+  const tableRowEmployee = useMemo(() => {
+    const collection = employeeBlacklistQuery.data?.collection ?? [];
+
+    return collection.map((item: any) => ({
+      id: item.id,
+      name: item.employee?.name ?? '-',
+      phone: item.employee?.phone ?? '-',
+      email: item.employee?.email ?? '-',
+      gender: item.employee?.gender ?? '-',
+      faceimage: item.employee?.faceimage ?? '',
+      reason: item.reason ?? '-',
+      approved: item.approved_by_name ?? '-',
+      blacklist_at: formatDateTime(item.blacklist_at) ?? '-',
+      status: item.employee.status_employee ?? '-',
+    }));
+  }, [employeeBlacklistQuery.data]);
+  const cards = [
+    {
+      title: t('total_blacklist'),
+      icon: IconUsers,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Blacklist Employee" description="this is Employee page">
+        <Box>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableRowEmployee}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                isHaveChecked={true}
+                isNoActionTableHead
+                isHaveAction={false}
+                isHaveSearch={true}
+                isHaveImage={true}
+                searchPlaceholder="Search Blacklist Employee"
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                onCheckedChange={(selected) => {
+                  const fullSelectedItems = tableData.filter((item) =>
+                    selected.some((row: EmployeesTableRow) => row.id === item.id),
+                  );
+                  setSelectedRows(fullSelectedItems);
+                }}
+                searchKeyword={search}
+                onSearch={handleSearch}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+    </PageContainer>
+  );
+};
+
+export default Content;

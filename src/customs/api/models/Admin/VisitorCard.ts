@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export type Item = {
@@ -143,8 +142,8 @@ export const UpdateVisitorCardRequestSchema = z.object({
   card_number: z.string().optional(),
   card_mac: z.string().optional(),
   card_barcode: z.string().optional(),
-  is_employee_used: z.boolean().optional(),
-  employee_id: z.string().optional(),
+  is_employee_used: z.boolean(),
+  employee_id: z.string(),
   employee_name: z.string().optional(),
   is_multi_site: z.boolean().optional(),
   registered_site: z.string().nullable().optional(),
@@ -158,6 +157,32 @@ export const UpdateVisitorCardRequestSchema = z.object({
   site_name: z.string().nullable().optional(),
 });
 
+export type UpdateVisitorCard = z.infer<typeof UpdateVisitorCardRequestSchema>;
+
+export const UpdateVisitorCardBatchSchema = UpdateVisitorCardRequestSchema.partial().superRefine(
+  (data: any, ctx: any) => {
+    // 🔹 employee
+    if (data.is_employee_used === true && !data.employee_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Employee is required',
+        path: ['employee_id'],
+      });
+    }
+
+    // 🔹 site
+    if (data.is_multi_site === false && !data.registered_site) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Site is required',
+        path: ['registered_site'],
+      });
+    }
+  },
+);
+
+export type UpdateBatchCardSchema = z.infer<typeof UpdateVisitorCardBatchSchema>;
+
 // export type UpdateVisitorCardRequest = z.infer<typeof UpdateVisitorCardRequestSchema>;
 export interface UpdateVisitorCardRequest {
   remarks?: string;
@@ -166,11 +191,11 @@ export interface UpdateVisitorCardRequest {
   card_number?: string;
   card_mac?: string;
   card_barcode?: string;
-  is_employee_used: boolean;
+  is_employee_used: boolean | null;
   employee_id: string;
   employee_name?: string;
   is_multi_site: boolean;
-  registered_site: string;
+  registered_site: string | null;
   is_used?: boolean;
   card_status?: number;
   checkin_at?: string;

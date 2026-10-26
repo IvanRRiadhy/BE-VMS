@@ -1,308 +1,597 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React, { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router';
-import Loadable from '../layouts/full/shared/loadable/Loadable';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import Loadable from 'src/layouts/full/shared/loadable/Loadable';
+import { ProtectedRoute, PublicOnlyRoute } from 'src/customs/contexts/ProtectedRoute';
+import AuthRedirector from './AuthRedirector';
+import path from 'path';
+import Security from 'src/customs/pages/Operator/Security/Security';
+// import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
+// import Register from 'src/views/authentication/auth/Register';
+// import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
+// import ExpiredPage from 'src/views/authentication/auth/ExpiredPage';
+// import LimitedInvitation from 'src/views/authentication/auth/LimitedInvitation';
+// import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
+// import View from 'src/customs/pages/Operator/View';
+
+// import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
+
+const StaffLayout = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/StaffLayout')),
+);
+const Register = Loadable(lazy(() => import('src/views/authentication/auth/Register')));
+const ForgotPassword = Loadable(lazy(() => import('src/views/authentication/auth/ForgotPassword')));
+const ExpiredPage = Loadable(lazy(() => import('src/views/authentication/auth/ExpiredPage')));
+const LimitedInvitation = Loadable(
+  lazy(() => import('src/views/authentication/auth/LimitedInvitation')),
+);
+const SuccessPage = Loadable(
+  lazy(() => import('src/customs/pages/Guest/SelfPraregistration/components/SuccessPage')),
+);
 
 /* ***Layouts**** */
-const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
-const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
-
-/* ****Pages***** */
-const ModernDash = Loadable(lazy(() => import('../views/dashboard/Modern')));
-const EcommerceDash = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
-
-/* ****Apps***** */
-// const Blog = Loadable(lazy(() => import('../views/apps/blog/Blog')));
-// const BlogDetail = Loadable(lazy(() => import('../views/apps/blog/BlogPost')));
-const Contacts = Loadable(lazy(() => import('../views/apps/contacts/Contacts')));
-const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
-const Notes = Loadable(lazy(() => import('../views/apps/notes/Notes')));
-const Tickets = Loadable(lazy(() => import('../views/apps/tickets/Tickets')));
-const Ecommerce = Loadable(lazy(() => import('../views/apps/eCommerce/Ecommerce')));
-const EcommerceDetail = Loadable(lazy(() => import('../views/apps/eCommerce/EcommerceDetail')));
-const EcommerceAddProduct = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceAddProduct')),
+const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/layout/GuestLayout')));
+const EmployeeLayout = Loadable(
+  lazy(() => import('src/customs/pages/Employee/layout/EmployeeLayout')),
 );
-const EcommerceEditProduct = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceEditProduct')),
+const OperatorLayout = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorLayout')));
+const ManagerLayout = Loadable(
+  lazy(() => import('src/customs/pages/Manager/layout/ManagerLayout')),
 );
-const EcomProductList = Loadable(lazy(() => import('../views/apps/eCommerce/EcomProductList')));
-const EcomProductCheckout = Loadable(
-  lazy(() => import('../views/apps/eCommerce/EcommerceCheckout')),
+const BlankLayout = Loadable(lazy(() => import('src/layouts/blank/BlankLayout')));
+
+/* Auth Pages */
+const Login = Loadable(lazy(() => import('src/views/authentication/auth/Login')));
+const UnauthorizedPage = Loadable(
+  lazy(() => import('src/customs/components/page/UnauthorizedPage')),
 );
-const Calendar = Loadable(lazy(() => import('../views/apps/calendar/BigCalendar')));
-const UserProfile = Loadable(lazy(() => import('../views/apps/user-profile/UserProfile')));
-const Followers = Loadable(lazy(() => import('../views/apps/user-profile/Followers')));
-const Friends = Loadable(lazy(() => import('../views/apps/user-profile/Friends')));
-const Gallery = Loadable(lazy(() => import('../views/apps/user-profile/Gallery')));
-const Email = Loadable(lazy(() => import('../views/apps/email/Email')));
-const InvoiceList = Loadable(lazy(() => import('../views/apps/invoice/List')));
-const InvoiceCreate = Loadable(lazy(() => import('../views/apps/invoice/Create')));
-const InvoiceDetail = Loadable(lazy(() => import('../views/apps/invoice/Detail')));
-const InvoiceEdit = Loadable(lazy(() => import('../views/apps/invoice/Edit')));
-const Kanban = Loadable(lazy(() => import('../views/apps/kanban/Kanban')));
-
-// ui components
-const MuiAlert = Loadable(lazy(() => import('../views/ui-components/MuiAlert')));
-const MuiAccordion = Loadable(lazy(() => import('../views/ui-components/MuiAccordion')));
-const MuiAvatar = Loadable(lazy(() => import('../views/ui-components/MuiAvatar')));
-const MuiChip = Loadable(lazy(() => import('../views/ui-components/MuiChip')));
-const MuiDialog = Loadable(lazy(() => import('../views/ui-components/MuiDialog')));
-const MuiList = Loadable(lazy(() => import('../views/ui-components/MuiList')));
-const MuiPopover = Loadable(lazy(() => import('../views/ui-components/MuiPopover')));
-const MuiRating = Loadable(lazy(() => import('../views/ui-components/MuiRating')));
-const MuiTabs = Loadable(lazy(() => import('../views/ui-components/MuiTabs')));
-const MuiTooltip = Loadable(lazy(() => import('../views/ui-components/MuiTooltip')));
-const MuiTransferList = Loadable(lazy(() => import('../views/ui-components/MuiTransferList')));
-const MuiTypography = Loadable(lazy(() => import('../views/ui-components/MuiTypography')));
-
-// form elements
-const MuiAutoComplete = Loadable(
-  lazy(() => import('../views/forms/form-elements/MuiAutoComplete')),
-);
-const MuiButton = Loadable(lazy(() => import('../views/forms/form-elements/MuiButton')));
-const MuiCheckbox = Loadable(lazy(() => import('../views/forms/form-elements/MuiCheckbox')));
-const MuiRadio = Loadable(lazy(() => import('../views/forms/form-elements/MuiRadio')));
-const MuiSlider = Loadable(lazy(() => import('../views/forms/form-elements/MuiSlider')));
-const MuiDateTime = Loadable(lazy(() => import('../views/forms/form-elements/MuiDateTime')));
-const MuiSwitch = Loadable(lazy(() => import('../views/forms/form-elements/MuiSwitch')));
-
-// forms
-const FormLayouts = Loadable(lazy(() => import('../views/forms/FormLayouts')));
-const FormCustom = Loadable(lazy(() => import('../views/forms/FormCustom')));
-const FormHorizontal = Loadable(lazy(() => import('../views/forms/FormHorizontal')));
-const FormVertical = Loadable(lazy(() => import('../views/forms/FormVertical')));
-const FormWizard = Loadable(lazy(() => import('../views/forms/FormWizard')));
-const FormValidation = Loadable(lazy(() => import('../views/forms/FormValidation')));
-const TiptapEditor = Loadable(lazy(() => import('../views/forms/from-tiptap/TiptapEditor')));
-
-// pages
-const RollbaseCASL = Loadable(lazy(() => import('../views/pages/rollbaseCASL/RollbaseCASL')));
-const Faq = Loadable(lazy(() => import('../views/pages/faq/Faq')));
-const Pricing = Loadable(lazy(() => import('../views/pages/pricing/Pricing')));
-const AccountSetting = Loadable(
-  lazy(() => import('../views/pages/account-setting/AccountSetting')),
+const NotFoundPage = Loadable(lazy(() => import('src/views/authentication/NotFoundPage')));
+const GuestInformation = Loadable(
+  lazy(() => import('src/views/authentication/guest/GuestInformation')),
 );
 
-// charts
-const AreaChart = Loadable(lazy(() => import('../views/charts/AreaChart')));
-const CandlestickChart = Loadable(lazy(() => import('../views/charts/CandlestickChart')));
-const ColumnChart = Loadable(lazy(() => import('../views/charts/ColumnChart')));
-const DoughnutChart = Loadable(lazy(() => import('../views/charts/DoughnutChart')));
-const GredientChart = Loadable(lazy(() => import('../views/charts/GredientChart')));
-const RadialbarChart = Loadable(lazy(() => import('../views/charts/RadialbarChart')));
-const LineChart = Loadable(lazy(() => import('../views/charts/LineChart')));
-
-// tables
-const BasicTable = Loadable(lazy(() => import('../views/tables/BasicTable')));
-const EnhanceTable = Loadable(lazy(() => import('../views/tables/EnhanceTable')));
-const PaginationTable = Loadable(lazy(() => import('../views/tables/PaginationTable')));
-const FixedHeaderTable = Loadable(lazy(() => import('../views/tables/FixedHeaderTable')));
-const CollapsibleTable = Loadable(lazy(() => import('../views/tables/CollapsibleTable')));
-const SearchTable = Loadable(lazy(() => import('../views/tables/SearchTable')));
-
-//react tables
-const ReactBasicTable = Loadable(lazy(() => import('../views/react-tables/basic/page')));
-const ReactColumnVisibilityTable = Loadable(
-  lazy(() => import('../views/react-tables/columnvisibility/page')),
+const SelfPraregistration = Loadable(
+  lazy(() => import('src/customs/pages/Guest/SelfPraregistration/Content')),
 );
-const ReactDenseTable = Loadable(lazy(() => import('../views/react-tables/dense/page')));
-const ReactDragDropTable = Loadable(lazy(() => import('../views/react-tables/drag-drop/page')));
-const ReactEditableTable = Loadable(lazy(() => import('../views/react-tables/editable/page')));
-const ReactEmptyTable = Loadable(lazy(() => import('../views/react-tables/empty/page')));
-const ReactExpandingTable = Loadable(lazy(() => import('../views/react-tables/expanding/page')));
-const ReactFilterTable = Loadable(lazy(() => import('../views/react-tables/filtering/page')));
-const ReactPaginationTable = Loadable(lazy(() => import('../views/react-tables/pagination/page')));
-const ReactRowSelectionTable = Loadable(
-  lazy(() => import('../views/react-tables/row-selection/page')),
+const WaitingPage = Loadable(lazy(() => import('src/customs/components/page/WaitingPage')));
+const DetailProfile = Loadable(
+  lazy(() => import('src/layouts/full/vertical/header/DetailProfile')),
 );
-const ReactSortingTable = Loadable(lazy(() => import('../views/react-tables/sorting/page')));
-const ReactStickyTable = Loadable(lazy(() => import('../views/react-tables/sticky/page')));
+//
 
-//mui charts
-const BarCharts = Loadable(lazy(() => import('../views/muicharts/barcharts/page')));
-const GaugeCharts = Loadable(lazy(() => import('../views/muicharts/gaugecharts/page')));
-const AreaCharts = Loadable(lazy(() => import('../views/muicharts/linecharts/area/page')));
-const LineCharts = Loadable(lazy(() => import('../views/muicharts/linecharts/line/page')));
-const PieCharts = Loadable(lazy(() => import('../views/muicharts/piecharts/page')));
-const ScatterCharts = Loadable(lazy(() => import('../views/muicharts/scattercharts/page')));
-const SparklineCharts = Loadable(lazy(() => import('../views/muicharts/sparklinecharts/page')));
-
-//mui charts
-const SimpletreeCustomization = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-customization/page')));
-const SimpletreeExpansion = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-expansion/page')));
-const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-focus/page')));
-const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
-const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
-
-// widget
-const WidgetCards = Loadable(lazy(() => import('../views/widgets/cards/WidgetCards')));
-const WidgetBanners = Loadable(lazy(() => import('../views/widgets/banners/WidgetBanners')));
-const WidgetCharts = Loadable(lazy(() => import('../views/widgets/charts/WidgetCharts')));
-
-// authentication
-const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
-const Login2 = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
-const Register = Loadable(lazy(() => import('../views/authentication/auth1/Register')));
-const Register2 = Loadable(lazy(() => import('../views/authentication/auth2/Register2')));
-const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
-const ForgotPassword2 = Loadable(
-  lazy(() => import('../views/authentication/auth2/ForgotPassword2')),
+/* Guest Pages */
+const DashboardLayout = Loadable(lazy(() => import('src/customs/pages/Guest/Dashboard/Dashboard')));
+// const PageAcces = Loadable(lazy(() => import('src/customs/pages/Guest/PageAcces')));
+const Invitation = Loadable(lazy(() => import('src/customs/pages/Guest/Invitation/Invitation')));
+const History = Loadable(lazy(() => import('src/customs/pages/Guest/History/History')));
+const Report = Loadable(lazy(() => import('src/customs/pages/Guest/Report/Report')));
+const Approval = Loadable(lazy(() => import('src/customs/pages/Guest/Approval/Approval')));
+const Parking = Loadable(lazy(() => import('src/customs/pages/Guest/Parking/Parking')));
+const AlarmPage = Loadable(lazy(() => import('src/customs/pages/Guest/Alarm/AlarmPage')));
+const Evacuate = Loadable(lazy(() => import('src/customs/pages/Guest/Evacuate/Evacuate')));
+const Visitor = Loadable(lazy(() => import('src/customs/pages/Guest/Visitor/Visitor')));
+const NotificationGuest = Loadable(
+  lazy(() => import('src/customs/pages/Guest/Notification/Content')),
 );
-const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
-const TwoSteps2 = Loadable(lazy(() => import('../views/authentication/auth2/TwoSteps2')));
-const Error = Loadable(lazy(() => import('../views/authentication/Error')));
-const Maintenance = Loadable(lazy(() => import('../views/authentication/Maintenance')));
 
-// landingpage
-const Landingpage = Loadable(lazy(() => import('../views/pages/landingpage/Landingpage')));
+/* Admin Pages */
+const Dashboard = Loadable(lazy(() => import('src/customs/pages/admin/content/Dashboard/Content')));
+const ManageVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Trx/Content')),
+);
+const ManageTransactionVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Transaction/Content')),
+);
+const ManageBlacklistVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Blacklist/Content')),
+);
 
-// front end pages
-const Homepage = Loadable(lazy(() => import('../views/pages/frontend-pages/Homepage')));
-const About = Loadable(lazy(() => import('../views/pages/frontend-pages/About')));
-const Contact = Loadable(lazy(() => import('../views/pages/frontend-pages/Contact')));
-const Portfolio = Loadable(lazy(() => import('../views/pages/frontend-pages/Portfolio')));
-const PagePricing = Loadable(lazy(() => import('../views/pages/frontend-pages/Pricing')));
-const BlogPage = Loadable(lazy(() => import('../views/pages/frontend-pages/Blog')));
-const BlogPost = Loadable(lazy(() => import('../views/pages/frontend-pages/BlogPost')));
+const ManageShareLinkVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/ShareLink/Content')),
+);
 
+const ManageListVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/List/Content')),
+);
+const ManageCompanyAndDepartment = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/CompanyDepartment/Content')),
+);
+const ManageEmployee = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Employee/Content')),
+);
 
+const ManageBlacklistEmployee = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Employee/Blacklist/Content')),
+);
+
+const ManageVip = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Enrollment/Vip/Content')),
+);
+
+const ManageVendor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Enrollment/Vendor/Content')),
+);
+
+const ManageSiteSpace = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/SiteSpace/Content')),
+);
+const ManageVisitorCard = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Card/Content')),
+);
+// const ManageDeviceKiosk = Loadable(lazy(() => import('src/customs/pages/admin/ManageDeviceKiosk')));
+
+const ManageDocument = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Document/Content')),
+);
+const ManageApprove = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Approve/content')),
+);
+const ManageBrand = Loadable(lazy(() => import('src/customs/pages/admin/content/Brand/Content')));
+// const SettingUser = Loadable(
+//   lazy(() => import('src/customs/pages/admin/content/content_setting_user/Content')),
+// );
+// const FormAddUser = Loadable(
+//   lazy(() => import('src/customs/pages/admin/content/content_setting_user/FormAddUser')),
+// );
+const ManageVisitorRole = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/VisitorRole/Content')),
+);
+const ManageVisitorProviders = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/VisitorProvider/Content')),
+);
+const ManageVisitorType = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/VisitorType/Content')),
+);
+const ManageIntegration = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/Content')),
+);
+const ManageEventLogs = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/EventLogs/Content')),
+);
+const ManageEventSubscriptions = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/EventSubscriptions/Content')),
+);
+const ManageIntegrationDetail = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Integration/ManageIntegrationDetail')),
+);
+const ManageAccessControl = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/AccessControl/Content')),
+);
+const ManageCustomField = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/CustomField/Content')),
+);
+const ManageSettingSmtp = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/SettingSmtp/Content')),
+);
+// const ManageGroupCardAccess = Loadable(
+//   lazy(() => import('src/customs/pages/admin/ManageGroupCardAccess')),
+// );
+const ManageTimezone = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Timezone/Context')),
+);
+const ManageSettingVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Settings/Content')),
+);
+const ManageDelivery = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Staff/Content')),
+);
+const ManageDeliveryScheduler = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/Content')),
+);
+const ManageDeliveryVisit = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Visit/Content')),
+);
+const ManageDetailScheduler = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/DetailSchduler')),
+);
+const ManageUser = Loadable(lazy(() => import('src/customs/pages/admin/content/User/Content')));
+const ManageUserGroup = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/User/UserGroup/Content')),
+);
+const ManageReportTransaction = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/TransactionLog/Content')),
+);
+const ManageReportInvestigate = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Investigate/Content')),
+);
+const ManageReportInvitation = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/InvitationLog/Content')),
+);
+
+const ManageReportApproval = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Approval/Content')),
+);
+
+const ManageReportOperatorActivityLog = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/OperatorActivityLog/Content')),
+);
+const ManagePrintBadge = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
+);
+const ManageEvacuate = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
+);
+
+const ManageAdminNotification = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Notification/Content')),
+);
+
+/* ****EMPLOYEE PAGES**** */
+const DashboardEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Dashboard/Dashboard')),
+);
+const ApprovalEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Approval/Approval')),
+);
+const InvitationEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Invitation/Invitation')),
+);
+const ShareLinkEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/ShareLink/Content')),
+);
+const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking/Parking')));
+const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report/Report')));
+const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History/History')));
+const ProfileEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Profile/DetailProfile')),
+);
+const NotificationEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Notification/Content')),
+);
+/* Operator Pages* */
+const DashboardOperator = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Dashboard/Dashboard')),
+);
+const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
+
+const TransactionOperatorLog = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Report/TranasctionLog/Content')),
+);
+const ApprovalOperator = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Report/Approval/Content')),
+);
+const OperatorActivityLog = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Report/OperatorActivityLog/Content')),
+);
+const MonitoringDashboard = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Monitoring/Content')),
+);
+
+const OperatorNotification = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Notification/Content')),
+);
+
+/* Manager Pages*/
+const DashboardManager = Loadable(
+  lazy(() => import('src/customs/pages/Manager/Dashboard/Dashboard')),
+);
+const ApprovalManager = Loadable(lazy(() => import('src/customs/pages/Manager/Approval/Approval')));
+const ParkingManager = Loadable(lazy(() => import('src/customs/pages/Manager/Parking/Parking')));
+const VisitorManager = Loadable(lazy(() => import('src/customs/pages/Manager/Visitor/Visitor')));
+const HistoryManager = Loadable(lazy(() => import('src/customs/pages/Manager/History/History')));
+const ReportManager = Loadable(lazy(() => import('src/customs/pages/Manager/Report/Report')));
+const NotificationManager = Loadable(
+  lazy(() => import('src/customs/pages/Manager/Notification/Content')),
+);
+
+/* Delivery Staff Pages*/
+const DashboardStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Dashboard')),
+);
+const ScheduleInvitation = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Schedule-Invitation/Content')),
+);
+const ParkingStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Parking/Content')),
+);
+const ReportStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Report/Content')),
+);
+const HistoryStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/History/Content')),
+);
+
+const NotificationStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Notification/Content')),
+);
+
+// Monitoring
+const Monitoring = Loadable(lazy(() => import('src/customs/pages/Monitoring/Content')));
+//
+const MonitoringAdmin = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Monitoring/Content')),
+);
 
 const Router = [
   {
-    path: '/',
-    element: <FullLayout />,
+    element: <AuthRedirector />,
     children: [
-      { path: '/', element: <Navigate to="/dashboards/modern" /> },
-      { path: '/dashboards/modern', exact: true, element: <ModernDash /> },
-      { path: '/dashboards/ecommerce', exact: true, element: <EcommerceDash /> },
-      { path: '/apps/contacts', element: <Contacts /> },
-      // { path: '/apps/blog/posts', element: <Blog /> },
-      // { path: '/frontend-pages/blog/detail/:id', element: <BlogDetail /> },
-      { path: '/apps/chats', element: <Chats /> },
-      { path: '/apps/email', element: <Email /> },
-      { path: '/apps/notes', element: <Notes /> },
-      { path: '/apps/tickets', element: <Tickets /> },
-      { path: '/apps/ecommerce/shop', element: <Ecommerce /> },
-      { path: '/apps/ecommerce/eco-product-list', element: <EcomProductList /> },
-      { path: '/apps/ecommerce/eco-checkout', element: <EcomProductCheckout /> },
-      { path: '/apps/ecommerce/add-product', element: <EcommerceAddProduct /> },
-      { path: '/apps/ecommerce/edit-product', element: <EcommerceEditProduct /> },
-      { path: '/apps/ecommerce/detail/:id', element: <EcommerceDetail /> },
-      { path: '/apps/followers', element: <Followers /> },
-      { path: '/apps/friends', element: <Friends /> },
-      { path: '/apps/gallery', element: <Gallery /> },
-      { path: '/apps/kanban', element: <Kanban /> },
-      { path: '/apps/invoice/list', element: <InvoiceList /> },
-      { path: '/apps/invoice/create', element: <InvoiceCreate /> },
-      { path: '/apps/invoice/detail/:id', element: <InvoiceDetail /> },
-      { path: '/apps/invoice/edit/:id', element: <InvoiceEdit /> },
-      { path: '/user-profile', element: <UserProfile /> },
-      { path: '/apps/calendar', element: <Calendar /> },
-      { path: '/ui-components/alert', element: <MuiAlert /> },
-      { path: '/ui-components/accordion', element: <MuiAccordion /> },
-      { path: '/ui-components/avatar', element: <MuiAvatar /> },
-      { path: '/ui-components/chip', element: <MuiChip /> },
-      { path: '/ui-components/dialog', element: <MuiDialog /> },
-      { path: '/ui-components/list', element: <MuiList /> },
-      { path: '/ui-components/popover', element: <MuiPopover /> },
-      { path: '/ui-components/rating', element: <MuiRating /> },
-      { path: '/ui-components/tabs', element: <MuiTabs /> },
-      { path: '/ui-components/tooltip', element: <MuiTooltip /> },
-      { path: '/ui-components/transfer-list', element: <MuiTransferList /> },
-      { path: '/ui-components/typography', element: <MuiTypography /> },
-      { path: '/pages/casl', element: <RollbaseCASL /> },
-      { path: '/pages/pricing', element: <Pricing /> },
-      { path: '/pages/faq', element: <Faq /> },
-      { path: '/pages/account-settings', element: <AccountSetting /> },
-      { path: '/tables/basic', element: <BasicTable /> },
-      { path: '/tables/enhanced', element: <EnhanceTable /> },
-      { path: '/tables/pagination', element: <PaginationTable /> },
-      { path: '/tables/fixed-header', element: <FixedHeaderTable /> },
-      { path: '/tables/collapsible', element: <CollapsibleTable /> },
-      { path: '/tables/search', element: <SearchTable /> },
-      { path: '/forms/form-elements/autocomplete', element: <MuiAutoComplete /> },
-      { path: '/forms/form-elements/button', element: <MuiButton /> },
-      { path: '/forms/form-elements/checkbox', element: <MuiCheckbox /> },
-      { path: '/forms/form-elements/radio', element: <MuiRadio /> },
-      { path: '/forms/form-elements/slider', element: <MuiSlider /> },
-      { path: '/forms/form-elements/date-time', element: <MuiDateTime /> },
-      { path: '/forms/form-elements/switch', element: <MuiSwitch /> },
-      { path: '/forms/form-elements/switch', element: <MuiSwitch /> },
-      { path: '/forms/form-layouts', element: <FormLayouts /> },
-      { path: '/forms/form-custom', element: <FormCustom /> },
-      { path: '/forms/form-wizard', element: <FormWizard /> },
-      { path: '/forms/form-validation', element: <FormValidation /> },
-      { path: '/forms/form-horizontal', element: <FormHorizontal /> },
-      { path: '/forms/form-vertical', element: <FormVertical /> },
-      { path: '/forms/form-tiptap', element: <TiptapEditor /> },
-      { path: '/charts/area-chart', element: <AreaChart /> },
-      { path: '/charts/line-chart', element: <LineChart /> },
-      { path: '/charts/gredient-chart', element: <GredientChart /> },
-      { path: '/charts/candlestick-chart', element: <CandlestickChart /> },
-      { path: '/charts/column-chart', element: <ColumnChart /> },
-      { path: '/charts/doughnut-pie-chart', element: <DoughnutChart /> },
-      { path: '/charts/radialbar-chart', element: <RadialbarChart /> },
-      { path: '/widgets/cards', element: <WidgetCards /> },
-      { path: '/widgets/banners', element: <WidgetBanners /> },
-      { path: '/widgets/charts', element: <WidgetCharts /> },
-      { path: '/react-tables/basic', element: <ReactBasicTable /> },
-      { path: '/react-tables/column-visiblity', element: <ReactColumnVisibilityTable /> },
-      { path: '/react-tables/drag-drop', element: <ReactDragDropTable /> },
-      { path: '/react-tables/dense', element: <ReactDenseTable /> },
-      { path: '/react-tables/editable', element: <ReactEditableTable /> },
-      { path: '/react-tables/empty', element: <ReactEmptyTable /> },
-      { path: '/react-tables/expanding', element: <ReactExpandingTable /> },
-      { path: '/react-tables/filter', element: <ReactFilterTable /> },
-      { path: '/react-tables/pagination', element: <ReactPaginationTable /> },
-      { path: '/react-tables/row-selection', element: <ReactRowSelectionTable /> },
-      { path: '/react-tables/sorting', element: <ReactSortingTable /> },
-      { path: '/react-tables/sticky', element: <ReactStickyTable /> },
+      {
+        path: '/',
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/auth/login" replace />,
+          },
+          {
+            element: <BlankLayout />,
+            children: [
+              {
+                element: <PublicOnlyRoute />,
+                children: [
+                  {
+                    path: '/auth/login',
+                    element: <Login />,
+                  },
+                ],
+              },
 
-      { path: '/muicharts/barcharts', element: <BarCharts /> },
-      { path: '/muicharts/gaugecharts', element: <GaugeCharts /> },
-      { path: '/muicharts/linecharts/area', element: <AreaCharts /> },
-      { path: '/muicharts/linecharts/line', element: <LineCharts /> },
-      { path: '/muicharts/piecharts', element: <PieCharts /> },
-      { path: '/muicharts/scattercharts', element: <ScatterCharts /> },
-      { path: '/muicharts/sparklinecharts', element: <SparklineCharts /> },
+              { path: '/auth/login', element: <Login /> },
+              { path: '/auth/register', element: <Register /> },
+              { path: '/auth/expired', element: <ExpiredPage /> },
+              { path: '/auth/limited', element: <LimitedInvitation /> },
+              { path: '/auth/forgot-password', element: <ForgotPassword /> },
+              { path: '/unauthorized', element: <UnauthorizedPage /> },
+              { path: '/portal/information', element: <GuestInformation /> },
+              { path: '/invitation-share', element: <SelfPraregistration /> },
+              { path: '/invitation-share/success', element: <SuccessPage /> },
+              { path: '/portal/waiting', element: <WaitingPage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
+          },
+        ],
+      },
 
-      { path: '/mui-trees/simpletree/simpletree-customization', element: <SimpletreeCustomization /> },
-      { path: '/mui-trees/simpletree/simpletree-expansion', element: <SimpletreeExpansion /> },
-      { path: '/mui-trees/simpletree/simpletree-focus', element: <SimpletreeFocus /> },
-      { path: '/mui-trees/simpletree/simpletree-items', element: <SimpletreeItems /> },
-      { path: '/mui-trees/simpletree/simpletree-selection', element: <SimpletreeSelection /> },
+      // Operator Admin
+      // {
+      //   element: <ProtectedRoute allowedRoles={['OperatorAdmin']} />,
+      //   children: [
+      //     { path: '/operator-admin/dashboard', element: <Dashboard /> },
+      //     { path: '/operator-admin/visitor/list-visitor', element: <ManageListVisitor /> },
+      //     { path: '/operator-admin/visitor/live-visitor', element: <ManageVisitor /> },
+      //     {
+      //       path: '/operator-admin/visitor/transaction-visitor',
+      //       element: <ManageTransactionVisitor />,
+      //     },
+      //     {
+      //       path: '/operator-admin/visitor/blacklist-visitor',
+      //       element: <ManageBlacklistVisitor />,
+      //     },
+      //     {
+      //       path: '/operator-admin/manage/companys-deparments',
+      //       element: <ManageCompanyAndDepartment />,
+      //     },
+      //     { path: '/operator-admin/manage/employees', element: <ManageEmployee /> },
+      //     { path: '/operator-admin/manage/vip', element: <ManageVip /> },
+      //     { path: '/operator-admin/manage/vendor', element: <ManageVendor /> },
+      //     { path: '/operator-admin/manage/delivery', element: <ManageDelivery /> },
+      //     { path: '/operator-admin/manage/delivery/staff', element: <ManageDelivery /> },
+      //     { path: '/operator-admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
+      //     {
+      //       path: '/operator-admin/visitor/scheduler/detail/:id',
+      //       element: <ManageDetailScheduler />,
+      //     },
+      //     { path: '/operator-admin/manage/delivery/visit', element: <ManageDeliveryVisit /> },
+      //     {
+      //       path: '/operator-admin/manage/site-space/*',
+      //       element: <ManageSiteSpace />,
+      //     },
+      //     { path: '/operator-admin/manage/card', element: <ManageVisitorCard /> },
+      //     { path: '/operator-admin/manage/time-access', element: <ManageTimezone /> },
+      //     { path: '/operator-admin/manage/visitor-type', element: <ManageVisitorType /> },
+      //     { path: '/operator-admin/manage/document', element: <ManageDocument /> },
+      //     { path: '/operator-admin/manage/brand', element: <ManageBrand /> },
+      //     { path: '/operator-admin/manage/integration', element: <ManageIntegration /> },
+      //     { path: '/operator-admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
+      //     { path: '/operator-admin/manage/access-control', element: <ManageAccessControl /> },
+      //     { path: '/operator-admin/manage/custom-field', element: <ManageCustomField /> },
+      //     { path: '/operator-admin/manage/zone', element: <ManageZone /> },
+      //     { path: '/operator-admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
+      //     { path: '/operator-admin/settings', element: <ManageSettingVisitor /> },
+      //     { path: '/operator-admin/users', element: <ManageUser /> },
+      //     { path: '/operator-admin/users-group', element: <ManageUserGroup /> },
+      //     { path: '/operator-admin/report/transaction-log', element: <ManageReportTransaction /> },
+      //     { path: '/operator-admin/report/approval-workflow', element: <ManageReportApproval /> },
+      //     {
+      //       path: '/operator-admin/report/operator-activity-log',
+      //       element: <ManageReportOperatorActivityLog />,
+      //     },
+      //     { path: '/profile', element: <DetailProfile /> },
+      //     { path: '/operator-admin/print-badge', element: <ManagePrintBadge /> },
+      //     { path: '/operator-admin/evacuate', element: <ManageEvacuate /> },
+      //     { path: '/operator-admin/notification', element: <ManageAdminNotification /> },
+      //   ],
+      // },
 
-      { path: '*', element: <Navigate to="/auth/404" /> },
-    ],
-  },
-  {
-    path: '/',
-    element: <BlankLayout />,
-    children: [
-      { path: '/auth/404', element: <Error /> },
-      { path: '/auth/login', element: <Login /> },
-      { path: '/auth/login2', element: <Login2 /> },
-      { path: '/auth/register', element: <Register /> },
-      { path: '/auth/register2', element: <Register2 /> },
-      { path: '/auth/forgot-password', element: <ForgotPassword /> },
-      { path: '/auth/forgot-password2', element: <ForgotPassword2 /> },
-      { path: '/auth/two-steps', element: <TwoSteps /> },
-      { path: '/auth/two-steps2', element: <TwoSteps2 /> },
-      { path: '/auth/maintenance', element: <Maintenance /> },
-      { path: '/landingpage', element: <Landingpage /> },
-      { path: '/frontend-pages/homepage', element: <Homepage /> },
-      { path: '/frontend-pages/about', element: <About /> },
-      { path: '/frontend-pages/contact', element: <Contact /> },
-      { path: '/frontend-pages/portfolio', element: <Portfolio /> },
-      { path: '/frontend-pages/pricing', element: <PagePricing /> },
-      { path: '/frontend-pages/blog', element: <BlogPage /> },
-      { path: '/frontend-pages/blog/detail/:id', element: <BlogPost /> },
-      { path: '*', element: <Navigate to="/auth/404" /> },
+      // ✅ Guest routes (Protected)
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: '/guest',
+            element: <GuestLayout />,
+            children: [
+              { index: true, element: <DashboardLayout /> },
+              { path: 'dashboard', element: <DashboardLayout /> },
+              // { path: 'access-page', element: <PageAcces /> },
+              // { path: 'invitation', element: <Invitation /> },
+              // { path: 'history', element: <History /> },
+              // { path: 'report', element: <Report /> },
+              // { path: 'approval', element: <Approval /> },
+              // { path: 'parking', element: <Parking /> },
+              // { path: 'alarm', element: <AlarmPage /> },
+              // { path: 'evacuate', element: <Evacuate /> },
+              // { path: 'visitor', element: <Visitor /> },
+              // { path: 'profile', element: <DetailProfile /> },
+              // { path: 'notification', element: <NotificationGuest /> },
+            ],
+          },
+          {
+            path: '/parking',
+            element: <Parking />,
+          },
+        ],
+      },
+
+      // ✅ Admin routes
+      {
+        element: <ProtectedRoute allowedRoles={['Admin', 'OperatorAdmin']} />,
+        children: [
+          { path: '/admin/dashboard', element: <Dashboard /> },
+          { path: '/admin/monitoring', element: <MonitoringAdmin /> },
+          // Visitor
+          { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
+          { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
+          { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
+          { path: '/admin/visitor/blacklist-visitor', element: <ManageBlacklistVisitor /> },
+          { path: '/admin/visitor/share-link', element: <ManageShareLinkVisitor /> },
+          { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
+          { path: '/admin/manage/employees', element: <ManageEmployee /> },
+          { path: '/admin/manage/blacklist-employees', element: <ManageBlacklistEmployee /> },
+          { path: '/admin/manage/vip', element: <ManageVip /> },
+          { path: '/admin/manage/vendor', element: <ManageVendor /> },
+          { path: '/admin/manage/delivery', element: <ManageDelivery /> },
+          { path: '/admin/manage/delivery/staff', element: <ManageDelivery /> },
+          { path: '/admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
+          { path: '/admin/profile', element: <DetailProfile /> },
+          {
+            path: '/admin/visitor/scheduler/detail/:id',
+            element: <ManageDetailScheduler />,
+          },
+          { path: '/admin/manage/delivery/visit', element: <ManageDeliveryVisit /> },
+          {
+            path: '/admin/manage/site-space/*',
+            element: <ManageSiteSpace />,
+          },
+          { path: '/admin/manage/card', element: <ManageVisitorCard /> },
+          { path: '/admin/manage/time-access', element: <ManageTimezone /> },
+          { path: '/admin/manage/visitor-type', element: <ManageVisitorType /> },
+          { path: '/admin/manage/document', element: <ManageDocument /> },
+          { path: '/admin/approval-workflow', element: <ManageApprove /> },
+          { path: '/admin/manage/brand', element: <ManageBrand /> },
+          { path: '/admin/manage/integration', element: <ManageIntegration /> },
+          { path: '/admin/manage/integration/event-logs', element: <ManageEventLogs /> },
+          {
+            path: '/admin/manage/integration/event-subscription',
+            element: <ManageEventSubscriptions />,
+          },
+          { path: '/admin/manage/visitor-role', element: <ManageVisitorRole /> },
+          { path: '/admin/manage/visitor-providers', element: <ManageVisitorProviders /> },
+          { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
+          { path: '/admin/manage/access-control', element: <ManageAccessControl /> },
+          { path: '/admin/manage/custom-field', element: <ManageCustomField /> },
+          { path: '/admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
+          { path: '/admin/settings', element: <ManageSettingVisitor /> },
+          { path: '/admin/users', element: <ManageUser /> },
+          { path: '/admin/users-group', element: <ManageUserGroup /> },
+          { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
+          { path: '/admin/report/investigate', element: <ManageReportInvestigate /> },
+          { path: '/admin/report/invitation', element: <ManageReportInvitation /> },
+          { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
+          {
+            path: '/admin/report/operator-activity-log',
+            element: <ManageReportOperatorActivityLog />,
+          },
+          { path: '/profile', element: <DetailProfile /> },
+          { path: '/admin/print-badge', element: <ManagePrintBadge /> },
+          { path: '/admin/evacuate', element: <ManageEvacuate /> },
+          { path: '/admin/notification', element: <ManageAdminNotification /> },
+        ],
+      },
+
+      // ✅ Employee
+      {
+        element: <ProtectedRoute allowedRoles={['Employee']} />,
+        children: [
+          {
+            path: '/employee',
+            element: <EmployeeLayout />,
+            children: [
+              { index: true, element: <DashboardEmployee /> },
+              { path: 'dashboard', element: <DashboardEmployee /> },
+              { path: 'approval', element: <ApprovalEmployee /> },
+              { path: 'my-invitation', element: <InvitationEmployee /> },
+              { path: 'share-link', element: <ShareLinkEmployee /> },
+              { path: 'parking', element: <ParkingEmployee /> },
+              { path: 'report', element: <ReportEmployee /> },
+              { path: 'history', element: <HistoryEmployee /> },
+              { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <NotificationEmployee /> },
+            ],
+          },
+          {
+            path: '/delivery-staff',
+            element: <StaffLayout />,
+            children: [
+              { index: true, element: <DashboardStaff /> },
+              { path: 'dashboard', element: <DashboardStaff /> },
+              { path: 'schedule-invitation', element: <ScheduleInvitation /> },
+              { path: 'parking', element: <ParkingStaff /> },
+              { path: 'report', element: <ReportStaff /> },
+              { path: 'history', element: <HistoryStaff /> },
+              { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <NotificationStaff /> },
+            ],
+          },
+        ],
+      },
+
+      // ✅ Operator
+      {
+        element: <ProtectedRoute allowedRoles={['OperatorVMS']} />,
+        children: [
+          {
+            path: '/operator',
+            element: <OperatorLayout />,
+            children: [
+              { index: true, element: <DashboardOperator /> },
+              { path: 'dashboard', element: <DashboardOperator /> },
+              { path: 'view', element: <OperatorView /> },
+              { path: 'security', element: <Security /> },
+              // { path: 'visitor', element: <ManageVisitorOperator /> },
+              // { path: 'transaction-log', element: <TransactionOperatorLog /> },
+              // { path: 'approval-workflow', element: <ApprovalOperator /> },
+              // { path: 'operator-activity-log', element: <OperatorActivityLog /> },
+              // { path: 'monitorings', element: <MonitoringDashboard /> },
+              // { path: 'profile', element: <DetailProfile /> },
+              // { path: 'notification', element: <OperatorNotification /> },
+            ],
+          },
+          { path: 'monitoring', element: <Monitoring /> },
+        ],
+      },
+
+      // ✅ Manager
+      {
+        element: <ProtectedRoute allowedRoles={['Manager']} />,
+        children: [
+          {
+            path: '/manager',
+            element: <ManagerLayout />,
+            children: [
+              { index: true, element: <DashboardManager /> },
+              { path: 'dashboard', element: <DashboardManager /> },
+              { path: 'approval', element: <ApprovalManager /> },
+              { path: 'parking', element: <ParkingManager /> },
+              { path: 'visitor', element: <VisitorManager /> },
+              { path: 'history', element: <HistoryManager /> },
+              { path: 'report', element: <ReportManager /> },
+              { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <NotificationManager /> },
+            ],
+          },
+        ],
+      },
+
+      // ✅ Redirect unknown routes
+      {
+        path: '*',
+        element: <Navigate to="/auth/404" replace />,
+      },
     ],
   },
 ];
-const router = createBrowserRouter(Router);
 
+const router = createBrowserRouter(Router);
 export default router;

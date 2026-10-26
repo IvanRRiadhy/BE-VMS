@@ -15,7 +15,7 @@ export interface GroupAccess {
 
 export interface LoginResponseCollection {
   organization_id: string;
-  group_id: string;
+  user_group_id: string;
   email: string;
   username: string;
   fullname: string;
@@ -23,11 +23,13 @@ export interface LoginResponseCollection {
   access: string;
   token: string;
   employee_id: string;
+  role_access: string;
   distributor_id: string;
-  menu: any[]; // Ubah `any` ke tipe yang lebih spesifik jika tahu struktur menu
+  menu: any[];
   groupAccess: GroupAccess[];
   id: string;
   status: number;
+  type?: number;
 }
 
 export interface LoginResponse {
@@ -113,6 +115,7 @@ export interface RefreshTokenResponse {
   msg: string;
   collection: {
     token: string;
+    role_access: string;
   };
 }
 

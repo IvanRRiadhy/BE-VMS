@@ -1,0 +1,46 @@
+import { useQuery } from '@tanstack/react-query';
+import { getListVisitorPagination } from 'src/customs/api/admin';
+
+interface VisitorFilters {
+  organization_id: string;
+  department_id: string;
+  district_id: string;
+  is_employee: string;
+  gender: string;
+  is_email_verified: string;
+  is_blacklist: boolean | null;
+}
+
+interface Props {
+  page: number;
+  rowsPerPage: number;
+  sortDir: string;
+  sort_column?: string;
+  search: string;
+  filters: VisitorFilters;
+}
+
+export const useListVisitorPagination = ({
+  page,
+  rowsPerPage,
+  sortDir,
+  sort_column,
+  search,
+  filters,
+}: Props) => {
+  return useQuery({
+    queryKey: ['list-visitor', page, rowsPerPage, sortDir, sort_column, search, filters],
+
+    queryFn: () =>
+      getListVisitorPagination(
+        page * rowsPerPage,
+        rowsPerPage,
+        sortDir,
+        sort_column,
+        search,
+        filters,
+      ),
+
+    placeholderData: (previousData) => previousData,
+  });
+};

@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import Chart from 'react-apexcharts';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTopVisitors } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
+
+const Chart = lazy(() => import('react-apexcharts'));
+
 const TopVisitor = () => {
-  const { token } = useSession();
   const { t } = useTranslation();
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const theme = useSelector((state: any) => state.customizer.themeMode);
+
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) return;
+   
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
+        const res = await getTopVisitors( start, end);
 
-        const res = await getTopVisitors(
-          token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
-        );
-
-        const sliced = res.collection.slice(0, 10);
+        const sliced = res.collection.slice(0, 5);
         setLabels(sliced.map((item: any) => item.name));
         setValues(sliced.map((item: any) => item.count));
       } catch (error) {
@@ -38,36 +32,37 @@ const TopVisitor = () => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [ start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {
       type: 'bar',
       toolbar: { show: false },
       animations: { enabled: true },
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
     },
     plotOptions: {
       bar: {
-        borderRadius: 8, // 🎯 rounded top
-        borderRadiusApplication: 'end', // hanya bagian atas yang rounded
+        borderRadius: 8,
+        borderRadiusApplication: 'end',
         columnWidth: '50%',
         distributed: false,
-        // endingShape: 'rounded',
+        dataLabels: {
+          position: 'top', // penting
+        },
       },
     },
     dataLabels: {
-      enabled: false,
+      enabled: true,
+      offsetY: -30, // supaya naik ke atas bar
+      style: {
+        fontFamily: 'Plus Jakarta Sans, sans-serif',
+        fontSize: '13px',
+        fontWeight: 600,
+        colors: ['#374151'],
+      },
+      formatter: (val: number) => `(${val})`,
     },
-    // xaxis: {
-    //   categories: labels,
-    //   axisBorder: { show: true },
-    //   axisTicks: { show: false },
-    //   labels: {
-    //     show: true,
-    //     rotate: 0,
-    //     style: { colors: '#6b7280', fontSize: '14px' },
-    //   },
-    // },
     xaxis: {
       categories: labels,
       axisBorder: { show: true },
@@ -77,37 +72,44 @@ const TopVisitor = () => {
         rotate: 0,
         style: {
           colors: '#000',
-          fontSize: '12px',
+          fontSize: '13px',
         },
-        formatter: (value: string) => {
-          // 🧠 Potong label jadi 2 baris jika terlalu panjang
-          if (value.length > 5) {
-            const words = value.split(' ');
-            if (words.length > 1) {
-              // gabungkan kata jadi 2 baris
-              const half = Math.ceil(words.length / 2);
-              return words.slice(0, half).join(' ') + '\n' + words.slice(half).join(' ');
-            } else {
-              // potong berdasarkan panjang karakter
-              return value.slice(0, 5) + '\n' + value.slice(12);
-            }
-          }
-          return value;
+        formatter: (value: any) => {
+          if (value === null || value === undefined) return '';
+
+          const str = String(value);
+
+          const maxLength = 16;
+
+          if (str.length <= maxLength) return str;
+
+          const firstLine = str.substring(0, 7);
+          const secondLine = str.substring(7, 16);
+
+          return `${firstLine}\n${secondLine}...`;
         },
       },
     },
     yaxis: {
+      min: 0,
+      max: Math.max(...values) + 1,
       labels: {
         style: { colors: '#6b7280', fontSize: '14px' },
+        formatter: (val) => Math.round(val).toString(),
       },
     },
     grid: {
       borderColor: '#e5e7eb',
       strokeDashArray: 4,
     },
-    colors: ['#3b82f6'], // 💙 biru seperti permintaanmu
+    colors: [theme === 'dark' ? '#055499' : '#05367a'],
     tooltip: {
-      theme: 'light',
+      theme: theme === 'dark' ? 'dark' : 'light',
+      x: {
+        formatter: function (_: any, opts: any) {
+          return labels[opts.dataPointIndex];
+        },
+      },
     },
   };
 
@@ -120,19 +122,22 @@ const TopVisitor = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('top_visitor')}
-      </Typography>
       <Box
         sx={{
           // py: 2,
-          borderRadius: 3,
+          borderRadius: 1,
           bgcolor: 'background.paper',
           boxShadow: 3,
           p: 2,
+          height: 420,
         }}
       >
-        <Chart options={options} series={series} type="bar" height={350} />
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+          {t('top_visitor')}
+        </Typography>
+        <Suspense fallback={<Box sx={{ height: 350 }} />}>
+          <Chart options={options} series={series} type="bar" height={350} />
+        </Suspense>
       </Box>
     </>
   );

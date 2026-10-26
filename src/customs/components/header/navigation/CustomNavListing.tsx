@@ -14,6 +14,8 @@ export interface ItemDataCustomNavListing {
   chip?: string;
   chipColor?: string;
   children?: ItemDataCustomNavListing[];
+  backgroundColor?: string;
+  color?: string;
 }
 
 interface CustomNavListingProps {
@@ -30,8 +32,9 @@ const CustomNavListing: React.FC<CustomNavListingProps> = ({ itemData }) => {
 
   return (
     <Box>
-      <List sx={{ p: 0, display: 'flex', gap: '3px', zIndex: '100' }}>
-        {itemData.map((item) => {
+      <List sx={{ p: 0, display: 'flex', gap: '3px', zIndex: '100', alignItems: 'center' }}>
+        {itemData.map((item, index) => {
+          const isLast = index === itemData.length - 1;
           if (item.children) {
             return (
               <NavCollapse
@@ -54,6 +57,7 @@ const CustomNavListing: React.FC<CustomNavListingProps> = ({ itemData }) => {
                 onClick={() => {
                   // Implement your navigation logic here
                 }}
+                isLast={isLast}
               />
             );
           }

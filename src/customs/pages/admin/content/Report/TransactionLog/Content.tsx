@@ -1,0 +1,1518 @@
+import { useEffect, useState } from 'react';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import {
+  Autocomplete,
+  Backdrop,
+  Button,
+  Card,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  Grid2 as Grid,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Portal,
+  Skeleton,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { Box } from '@mui/system';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconDeviceFloppy,
+  IconInfoCircle,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarRight,
+  IconLayoutSidebarRightCollapse,
+  IconPencil,
+  IconReport,
+  IconSearch,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { Snackbar, Alert } from '@mui/material';
+import { Tabs, Tab } from '@mui/material';
+
+import {
+  generateReport,
+  getAllSite,
+  getAllVisitor,
+  getVisitorEmployee,
+} from 'src/customs/api/admin';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import {
+  createReportVisitorTransaction,
+  deleteReportVisitorTransaction,
+  generateReportVisitorById,
+  getReportVisitorTransactionById,
+  getReportVisitorTransactionDt,
+  updateReportVisitorTransaction,
+} from 'src/customs/api/Admin/Report';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import axiosInstance from 'src/customs/api/interceptor';
+import { useSites } from 'src/hooks/Sites/useSites';
+import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
+import { useListVisitor } from 'src/hooks/Visitor/useListVisitor';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
+import { getConfig } from 'src/config';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+
+const Content = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    start_date: null,
+    end_date: null,
+    time_report: 'all',
+    sites: [] as string[],
+    hosts: [] as string[],
+    visitor_id: null as string | null,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
+    is_preregister_done: false,
+    visitor_statuss: [] as string[],
+    previous: false,
+  });
+
+  const visitorStatusOptions = [
+    { id: 'Preregis', label: 'Preregis' },
+    { id: 'Checkin', label: 'Checkin' },
+    { id: 'Checkout', label: 'Checkout' },
+    { id: 'Block', label: 'Block' },
+    { id: 'Unblock', label: 'Unblock' },
+  ];
+
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [summary, setSummary] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(7);
+  const [sortDir, setSortDir] = useState('desc');
+  const [savedReports, setSavedReports] = useState<any[]>([]);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [debouncedKeyword, setDebouncedSearch] = useState('');
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [searchVisitor, setSearchVisitor] = useState('');
+  const [reports, setReports] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const { t } = useTranslation();
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const [loading, setLoading] = useState(false);
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
+
+  const showSnackbar = (
+    message: string,
+    severity: 'success' | 'error' | 'info' | 'warning' = 'success',
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const { data: siteOptions = [] } = useSites();
+  const { allVisitorEmployee } = useVisitorEmployees();
+  const { data: visitorOptions = [] } = useListVisitor();
+
+  const getSiteNames = (ids: string[]) => {
+    if (!ids || !siteOptions?.length) return '-';
+    return ids
+      .map((id) => {
+        const site = siteOptions?.find((site) => site.id.toUpperCase() === id.toUpperCase());
+        return site?.name;
+      })
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  const getHostNames = (ids: string[]) => {
+    if (!ids || !allVisitorEmployee.length) return '-';
+    return ids
+      .map((id) => {
+        const host = allVisitorEmployee.find((e) => e.id.toUpperCase() === id.toUpperCase());
+        return host?.name;
+      })
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchKeyword);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchKeyword]);
+
+  const fetchReports = async (reset = false) => {
+    if (loadingReports) return;
+
+    setLoadingReports(true);
+
+    try {
+      const start = reset ? 0 : reports.length;
+
+      const res = await getReportVisitorTransactionDt({
+        start,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        search: debouncedKeyword || '',
+      });
+
+      const newData = res.collection || [];
+
+      setReports((prev) => (reset ? newData : [...prev, ...newData]));
+
+      if (newData.length < rowsPerPage) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  useEffect(() => {
+    setHasMore(true);
+    fetchReports(true);
+  }, [debouncedKeyword, sortDir]);
+
+  const refreshReportList = async () => {
+    const start = page * rowsPerPage;
+    const res = await getReportVisitorTransactionDt({
+      start,
+      length: rowsPerPage,
+      sort_dir: sortDir,
+      search: searchKeyword || '',
+    });
+    setSavedReports(res.collection);
+  };
+
+  const [reportData, setReportData] = useState<any[]>([]);
+
+  const isFormDataEmpty = (f: any) => {
+    return (
+      !f.start_date &&
+      !f.end_date &&
+      f.time_report === 'all' &&
+      f.sites?.length === 0 &&
+      f.hosts?.length === 0 &&
+      !f.visitor_id &&
+      f.visitor_statuss?.length === 0 &&
+      f.is_preregister_done === false &&
+      f.previous === false
+    );
+  };
+
+  const handlePostReport = async (rep?: any) => {
+    try {
+      if (!rep) {
+        setSelectedReport(null);
+      }
+
+      if (isFormDataEmpty(formData)) {
+        showSwal('error', 'Please select at least one filter.');
+        return;
+      }
+
+      setLoading(true);
+
+      if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
+        showSwal('error', 'Please select start and end date for CustomDate report');
+        setLoading(false);
+        return;
+      }
+      
+      const res = rep ? await generateReportVisitorById(rep) : await generateReport(formData);
+
+      const rowsSummary = res.collection?.summary?.map((item: any) => ({
+        id: item.id,
+        date: item.date,
+        month: item.month,
+        invited: item.invited,
+        checkin: item.checkin,
+        checkout: item.checkout,
+        block: item.block,
+        active: item.activeOnSite,
+        average_duration: item.average_duration ?? 0,
+      }));
+
+      setSummary(rowsSummary);
+
+      const rows =
+        res.collection?.data?.map((item: any) => ({
+          id: item.id,
+          visitor_type: item.visitor_type_name,
+          name: item.visitor_name,
+          email: item.visitor_email,
+          organization: item.visitor_organization_name,
+          // gender: item.visitor.gender,
+          phone: item.visitor_phone,
+          visitor_status: item.visitor_status,
+          // is_vip: item.visitor.is_vip,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          host: item.host_name ?? '-',
+          vehicle_type: item.vehicle_type ?? '-',
+          vehicle_plate_number: item.vehicle_plate_number ?? '-',
+          checkin_at: formatDateTime(item.checkin_at),
+          checkout_at: formatDateTime(item.checkout_at),
+        })) ?? [];
+
+      setReportData(rows);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg ?? 'Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportColumns = [
+    { key: 'visitor_type', label: 'Visitor Type' },
+    { key: 'name', label: 'Visitor Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'organization', label: 'Organization' },
+    { key: 'phone', label: 'Phone Number' },
+    {
+      key: 'visitor_period_start',
+      label: 'Start Period',
+      format: (value: any) => formatDateTime(value),
+    },
+    {
+      key: 'visitor_period_end',
+      label: 'End Period',
+      // format: (value: any) => formatDateTime(value),
+    },
+    { key: 'host', label: 'Host' },
+    { key: 'vehicle_type', label: 'Vehicle Type' },
+    { key: 'vehicle_plate_number', label: 'Vehicle Plate Number' },
+    {
+      key: 'checkin_at',
+      label: 'Check In',
+      format: (value: any) => formatDateTime(value),
+    },
+    {
+      key: 'checkout_at',
+      label: 'Check Out',
+      format: (value: any) => formatDateTime(value),
+    },
+  ];
+
+  const getExportData = (data: any[]) => {
+    return data.map((row) =>
+      Object.fromEntries(
+        exportColumns.map(({ key, label, format }) => [
+          label,
+          format ? format(row[key]) : (row[key] ?? '-'),
+        ]),
+      ),
+    );
+  };
+
+  const getExportDataExcel = (
+    data: any[],
+    columns: {
+      key: string;
+      label: string;
+      format?: (value: any) => any;
+    }[],
+  ) => {
+    return data.map((row) =>
+      Object.fromEntries(
+        columns.map(({ key, label, format }) => [
+          label,
+          format ? format(row[key]) : (row[key] ?? '-'),
+        ]),
+      ),
+    );
+  };
+
+  const summaryExportColumns = [
+    { key: 'date', label: 'Date' },
+    { key: 'month', label: 'Month' },
+    { key: 'invited', label: 'Invited' },
+    { key: 'checkin', label: 'Check In' },
+    { key: 'checkout', label: 'Check Out' },
+    { key: 'block', label: 'Block' },
+    { key: 'active', label: 'Active On Site' },
+    { key: 'average_duration', label: 'Average Duration' },
+  ];
+
+  const exportToExcel = () => {
+    if (!summary?.length && !reportData?.length) {
+      showSwal('error', 'No report data available.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const workbook = XLSX.utils.book_new();
+
+      // =========================
+      // SUMMARY SHEET
+      // =========================
+
+      if (summary?.length) {
+        const summaryData = getExportDataExcel(summary, summaryExportColumns);
+
+        const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
+
+        XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
+      }
+
+      // =========================
+      // DATA SHEET
+      // =========================
+
+      if (reportData?.length) {
+        const data = getExportDataExcel(reportData, exportColumns);
+
+        const dataWorksheet = XLSX.utils.json_to_sheet(data);
+
+        XLSX.utils.book_append_sheet(workbook, dataWorksheet, 'Data');
+      }
+
+      // =========================
+      // DOWNLOAD
+      // =========================
+
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      const dateStr = `${day}-${month}-${year}`;
+
+      XLSX.writeFile(workbook, `visitor-report-${dateStr}.xlsx`);
+
+      showSwal('success', 'Successfully exported report.');
+    } catch (err) {
+      console.error('Error exporting report:', err);
+
+      showSwal('error', 'Failed to export report.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    const exportData = getExportData(reportData);
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `report-${Date.now()}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
+
+  const getReportPeriodLabel = () => {
+    if (formData.time_report === 'CustomDate') {
+      if (formData.start_date && formData.end_date) {
+        return `Period: ${formData.start_date} - ${formData.end_date}`;
+      }
+
+      return 'Period: Custom Date';
+    }
+
+    const periodLabels: Record<string, string> = {
+      all: 'All Period',
+      Daily: 'Daily',
+      Weekly: 'Weekly',
+      Monthly: 'Monthly',
+      Yearly: 'Yearly',
+    };
+
+    return `Period: ${periodLabels[formData.time_report] ?? formData.time_report}`;
+  };
+
+  const exportToPDF = () => {
+    if (!reportData?.length) return;
+    setLoading(true);
+    try {
+      const doc = new jsPDF('l', 'mm', 'a4');
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      doc.addImage(logoUrl, 'PNG', 14, 10, 18, 18);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('BANK INDONESIA', 36, 15);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('Visitor Management System', 36, 20);
+
+      const now = new Date();
+      const generatedAt = formatDateTime(now.toISOString());
+
+      doc.setFontSize(8);
+      doc.text(`Generated: ${generatedAt}`, pageWidth - 14, 15, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('VISITOR REPORT', 14, 36);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Visitor Transaction Report', 14, 42);
+
+      doc.setFontSize(8);
+      doc.text(getReportPeriodLabel(), 14, 47);
+
+      doc.text(`Total Visitors: ${reportData.length}`, pageWidth - 14, 36, { align: 'right' });
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 53, pageWidth - 14, 53);
+
+      const tableColumn = exportColumns.map((column) => column.label);
+
+      const tableRows = reportData.map((row) =>
+        exportColumns.map(({ key, format }) => (format ? format(row[key]) : (row[key] ?? '-'))),
+      );
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+
+        startY: 56,
+
+        margin: {
+          left: 14,
+          right: 14,
+        },
+
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2.5,
+          valign: 'middle',
+          textColor: [45, 45, 45],
+        },
+
+        headStyles: {
+          fillColor: [33, 119, 181],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 7.5,
+          halign: 'left',
+        },
+
+        alternateRowStyles: {
+          fillColor: [248, 249, 250],
+        },
+
+        theme: 'grid',
+
+        didDrawPage: () => {
+          // =========================
+          // FOOTER
+          // =========================
+
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'normal');
+
+          doc.setTextColor(120, 120, 120);
+
+          doc.text('Bank Indonesia • Visitor Management System', 14, pageHeight - 8);
+
+          doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - 14, pageHeight - 8, {
+            align: 'right',
+          });
+        },
+      });
+
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      const dateStr = `${day}-${month}-${year}`;
+
+      doc.save(`report-${dateStr}.pdf`);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const printReport = () => {
+    const printWindow = window.open('', '_blank') as unknown as Window & { document: Document };
+
+    if (!printWindow) {
+      console.error('Failed to open print window');
+      return;
+    }
+
+    const tableHtml = document.getElementById('print-report-area')?.innerHTML;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Visitor Report</title>
+      </head>
+      <body>
+        ${tableHtml || ''}
+      </body>
+    </html>
+  `);
+    printWindow.document.close();
+
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+
+  const handleConfirmSaveReport = async () => {
+    setLoading(true);
+    try {
+      await createReportVisitorTransaction(formData);
+      await refreshReportList();
+      await new Promise((res) => setTimeout(res, 600));
+
+      showSnackbar('Successfully saved report', 'success');
+      handleResetForm();
+    } catch (err) {
+      showSwal('error', 'Failed to save report.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      start_date: null,
+      end_date: null,
+      time_report: '',
+      sites: [],
+      hosts: [],
+      visitor_id: '',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
+      is_preregister_done: false,
+      visitor_statuss: [],
+      previous: false,
+    });
+
+    setEditingId(null);
+    setReportData([]);
+    setSummary([]);
+    setSelectedReport(null);
+  };
+
+  const handleEditReport = async (rep: any) => {
+    const res = await getReportVisitorTransactionById(rep.id);
+    const d = res.collection;
+
+    setFormData({
+      name: d.name || null,
+      description: d.description || null,
+      start_date: d.start_date || null,
+      end_date: d.end_date || null,
+      time_report: d.time_report || 'all',
+      visitor_id: d.visitor_id || null,
+      timezone: d.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      is_preregister_done: d.is_preregister_done || false,
+      previous: d.previous || false,
+
+      visitor_statuss: d.visitor_statuss || [],
+      sites: d.sites || [],
+      hosts: d.hosts || [],
+    });
+
+    setSelectedReport(rep);
+    setEditingId(rep.id);
+  };
+  const [loadingView, setLoadingView] = useState(false);
+
+  const handleViewReport = async (rep: any) => {
+    setLoadingView(true);
+
+    try {
+      const res = await getReportVisitorTransactionById(rep.id);
+      const d = res.collection;
+
+      setFormData({
+        name: d.name,
+        description: d.description,
+        start_date: d.start_date,
+        end_date: d.end_date,
+        time_report: d.time_report || 'all',
+        visitor_id: d.visitor_id,
+        timezone: d.timezone,
+        is_preregister_done: d.is_preregister_done,
+        previous: d.previous,
+        visitor_statuss: d.visitor_statuss,
+        sites: d.sites,
+        hosts: d.hosts,
+      });
+
+      setSelectedReport(rep);
+      setEditingId(null);
+    } finally {
+      setLoadingView(false);
+    }
+  };
+
+  const handleUpdateReport = async () => {
+    if (!selectedReport) return;
+
+    setLoading(true);
+
+    try {
+      await updateReportVisitorTransaction(selectedReport.id, formData);
+      // await refreshReportList();
+      await fetchReports(true);
+      setEditingId(null);
+      setTimeout(() => {
+        showSwal('success', 'Successfully updated report.');
+      }, 600);
+    } catch (err) {
+      showSwal('error', 'Failed to update report.');
+    } finally {
+      setTimeout(() => setLoading(false), 500);
+    }
+  };
+
+  const isHavePreview = !!selectedReport?.id || summary.length > 0 || reportData.length > 0;
+
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await showConfirmDelete(t('confirmDelete', { name: 'Report' }));
+
+    if (!isConfirmed) return;
+
+    if (isConfirmed) {
+      setLoading(true);
+      try {
+        await deleteReportVisitorTransaction(id);
+        await fetchReports(true);
+
+        showSwal('success', 'Successfully deleted report.');
+      } catch (err) {
+        showSwal('error', 'Failed to delete report.');
+      } finally {
+        setTimeout(() => setLoading(false), 500);
+      }
+    }
+  };
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Report" description="This is Content Report page">
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            width: '100%',
+            alignItems: 'stretch',
+          }}
+        >
+          {/* SIDEBAR */}
+          <Box
+            sx={{
+              width: {
+                xs: '100%',
+                md: isFilterCollapsed ? '48px' : '25%',
+                xl: isFilterCollapsed ? '48px' : '16.666%',
+              },
+              flexShrink: 0,
+              transition: 'width 300ms ease',
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: 'white',
+                p: isFilterCollapsed ? 1 : 2,
+                height: '100%',
+              }}
+            >
+              {/* HEADER + BUTTON */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isFilterCollapsed ? 'center' : 'space-between',
+                  mb: 1,
+                }}
+              >
+                {!isFilterCollapsed && <Typography variant="h5">Transaction Log Report</Typography>}
+
+                <Tooltip title={isFilterCollapsed ? 'Show Sidebar' : 'Hide Sidebar'} arrow>
+                  <IconButton size="small" onClick={() => setIsFilterCollapsed((prev) => !prev)}>
+                    {isFilterCollapsed ? (
+                      <IconLayoutSidebarRightCollapse />
+                    ) : (
+                      <IconLayoutSidebarLeftCollapse />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              {!isFilterCollapsed && (
+                <>
+                  <Divider sx={{ mb: 2 }} />
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Report Name</CustomFormLabel>
+                      <TextField
+                        fullWidth
+                        value={formData.name}
+                        onChange={(e) => handleChange('name', e.target.value)}
+                        placeholder="Enter Report Name"
+                        InputLabelProps={{ shrink: true }}
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Description</CustomFormLabel>
+                      <TextField
+                        fullWidth
+                        value={formData.description}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        placeholder="Description"
+                        InputLabelProps={{ shrink: true }}
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Period</CustomFormLabel>
+                      <CustomSelect
+                        fullWidth
+                        value={formData.time_report}
+                        onChange={(e: any) => handleChange('time_report', e.target.value)}
+                        sx={{ mt: 0.5 }}
+                      >
+                        <MenuItem value="all">Select Period</MenuItem>
+                        <MenuItem value="Daily">Daily</MenuItem>
+                        <MenuItem value="Weekly">Weekly</MenuItem>
+                        <MenuItem value="Monthly">Monthly</MenuItem>
+                        <MenuItem value="Yearly">Yearly</MenuItem>
+                        <MenuItem value="CustomDate">Custom Date</MenuItem>
+                      </CustomSelect>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>
+                          Start Date
+                        </CustomFormLabel>
+
+                        <Tooltip title='Select "Custom Date" to enable this field.' arrow>
+                          <IconInfoCircle
+                            style={{ color: '#9e9e9e', fontSize: 16, cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+                      <TextField
+                        type="date"
+                        fullWidth
+                        value={formData.start_date || ''}
+                        onChange={(e) => handleChange('start_date', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          mt: 0.5,
+
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#fff !important',
+                          },
+
+                          '& .MuiOutlinedInput-root.Mui-disabled': {
+                            backgroundColor: '#f5f5f5 !important',
+                          },
+
+                          '& .MuiOutlinedInput-input.Mui-disabled': {
+                            WebkitTextFillColor: '#9e9e9e !important',
+                            color: '#9e9e9e !important',
+                          },
+                        }}
+                        disabled={formData.time_report !== 'CustomDate'}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
+
+                        <Tooltip title='Select "Custom Date" to enable this field.' arrow>
+                          <IconInfoCircle
+                            style={{ color: '#9e9e9e', fontSize: 16, cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+                      <TextField
+                        type="date"
+                        fullWidth
+                        value={formData.end_date || ''}
+                        onChange={(e) => handleChange('end_date', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          mt: 0.5,
+
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: '#fff !important',
+                          },
+
+                          '& .MuiOutlinedInput-root.Mui-disabled': {
+                            backgroundColor: '#f5f5f5 !important',
+                          },
+
+                          '& .MuiOutlinedInput-input.Mui-disabled': {
+                            WebkitTextFillColor: '#9e9e9e !important',
+                            color: '#9e9e9e !important',
+                          },
+                        }}
+                        disabled={formData.time_report !== 'CustomDate'}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor</CustomFormLabel>
+                      <Autocomplete
+                        size="small"
+                        options={visitorOptions}
+                        getOptionLabel={(option) =>
+                          typeof option === 'string' ? option : option.name
+                        }
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        inputValue={searchVisitor}
+                        onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
+                        filterOptions={(opts, state) => {
+                          const term = (state.inputValue || '').toLowerCase();
+                          // if (term.length < 3) return [];
+                          return opts.filter((opt) =>
+                            (opt.name || '').toLowerCase().includes(term),
+                          );
+                        }}
+                        noOptionsText={
+                          searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'
+                        }
+                        value={
+                          visitorOptions.find((x: any) => x.id === formData.visitor_id) || null
+                        }
+                        onChange={(_, val) => handleChange('visitor_id', val ? val.id : null)}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Search Visitor" fullWidth />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>
+                        Visitor Status
+                      </CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        size="small"
+                        options={visitorStatusOptions}
+                        getOptionLabel={(option) => option.label}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        value={visitorStatusOptions.filter((opt) =>
+                          formData.visitor_statuss?.includes(opt.id),
+                        )}
+                        onChange={(_, values) =>
+                          handleChange(
+                            'visitor_statuss',
+                            values.map((v) => v.id),
+                          )
+                        }
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              label={option.label}
+                              size="small"
+                              {...getTagProps({ index })}
+                              key={option.id}
+                            />
+                          ))
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Visitor Status" fullWidth />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        options={siteOptions}
+                        value={siteOptions.filter((x) =>
+                          formData.sites
+                            .map((id) => id.toString().toUpperCase())
+                            .includes(x.id.toString().toUpperCase()),
+                        )}
+                        getOptionLabel={(option) => option.name}
+                        onChange={(e, val) =>
+                          handleChange(
+                            'sites',
+                            val.map((v) => v.id),
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Sites" />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
+                      <Autocomplete
+                        multiple
+                        options={allVisitorEmployee}
+                        value={allVisitorEmployee.filter((x) => formData.hosts.includes(x.id))}
+                        getOptionLabel={(option) => option.name}
+                        onChange={(e, val) =>
+                          handleChange(
+                            'hosts',
+                            val.map((v) => v.id),
+                          )
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} placeholder="Select Host" />
+                        )}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 8, lg: 6 }}>
+                      <FormGroup>
+                        <FormControlLabel
+                          label="Previous"
+                          control={
+                            <Checkbox
+                              checked={formData.previous}
+                              onChange={(e) => handleChange('previous', e.target.checked)}
+                            />
+                          }
+                        />
+                      </FormGroup>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, xl: 6 }}>
+                      <FormGroup>
+                        <FormControlLabel
+                          label="Preregister Done"
+                          control={
+                            <Checkbox
+                              checked={formData.is_preregister_done}
+                              onChange={(e) =>
+                                handleChange('is_preregister_done', e.target.checked)
+                              }
+                            />
+                          }
+                        />
+                      </FormGroup>
+                    </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 12 }} mt={2}>
+                    <Box
+                      sx={{ display: 'flex', gap: 1, mt: 0.5 }}
+                      flexDirection="column"
+                      justifyContent="space-between"
+                      flexWrap={'wrap'}
+                    >
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePostReport(null);
+                        }}
+                        startIcon={<IconReport size={20} />}
+                        disabled={loading}
+                        sx={{ fontSize: 12 }}
+                        size="medium"
+                      >
+                        {loading ? <CircularProgress size={18} /> : 'Generate Report'}
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        color="success"
+                        // onClick={handleOpenSaveDialog}
+                        onClick={handleConfirmSaveReport}
+                        startIcon={<IconDeviceFloppy size={20} />}
+                        disabled={loading}
+                        sx={{
+                          fontSize: 12,
+                          minWidth: 150,
+                          backgroundColor: 'success',
+                          '&.Mui-disabled': {
+                            backgroundColor: 'success.main',
+                            color: '#fff',
+                            opacity: 0.7,
+                          },
+                        }}
+                        size="medium"
+                      >
+                        Save Generate
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={handleResetForm}
+                        startIcon={<IconTrash size={20} />}
+                        size="medium"
+                        loading={loading}
+                        sx={{
+                          fontSize: 12,
+                          minWidth: 150,
+                          borderColor: '#d32f2f',
+                          color: '#d32f2f',
+                          '&.Mui-disabled': {
+                            borderColor: '#d32f2f',
+                            color: '#d32f2f',
+                            opacity: 0.5,
+                          },
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </Box>
+                  </Grid>
+                </>
+              )}
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Box sx={{ backgroundColor: 'white', p: 3 }}>
+              <Typography variant="h5" gutterBottom mb={2}>
+                Report Result
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Grid container spacing={2} gap={2}>
+                <Grid size={{ xs: 12, xl: 2.5 }}>
+                  <FormControl sx={{ width: '100%' }}>
+                    <CustomTextField
+                      fullWidth
+                      size="medium"
+                      value={searchKeyword}
+                      onChange={(e) => setSearchKeyword(e.target.value)}
+                      placeholder="Search  Report Name"
+                      sx={{ mb: 1, width: '100%' }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <IconSearch fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </FormControl>
+                  {loadingReports ? (
+                    [...Array(7)].map((_, i) => (
+                      <Card key={i} sx={{ p: 2, mb: 2 }}>
+                        <Skeleton width="60%" height={30} />
+                        <Skeleton height={20} />
+                        <Skeleton height={20} width="80%" />
+                      </Card>
+                    ))
+                  ) : reports.length === 0 ? (
+                    <Typography variant="h6" color="text.secondary" align="center" mt={5}>
+                      Report not found.
+                    </Typography>
+                  ) : (
+                    <>
+                      {reports.map((rep) => (
+                        <Card
+                          key={rep.id}
+                          sx={{
+                            p: 2,
+                            minHeight: 100,
+                            mb: 2,
+                            cursor: 'pointer',
+                            border:
+                              selectedReport?.id === rep.id
+                                ? '2px solid #1976d2'
+                                : '1px solid #ddd',
+                            backgroundColor:
+                              selectedReport?.id === rep.id
+                                ? 'rgba(25, 118, 210, 0.08)'
+                                : 'inherit',
+                            '&:hover': {
+                              border: '2px solid #1976d2',
+                              backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                              transition: 'all 0.3s ease-in-out',
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                          onClick={() => handleViewReport(rep)}
+                        >
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Typography variant="h6">{rep.name}</Typography>
+                            <Typography variant="body1"> {getHostNames(rep.hosts)}</Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mt: 1,
+                            }}
+                          >
+                            <Typography variant="body1" color="text.secondary">
+                              {rep.time_report === 'CustomDate' && rep.start_date && rep.end_date
+                                ? `${rep.start_date} - ${rep.end_date}`
+                                : ''}
+                            </Typography>
+                            <Typography variant="body1"> {getSiteNames(rep.sites)}</Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              justifyContent: 'flex-end',
+                              gap: 0.5,
+                            }}
+                          >
+                            <Tooltip title="Generate Report" arrow>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                sx={{ mt: 2, me: 1 }}
+                                // disabled={loading}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePostReport(rep.id);
+                                }}
+                              >
+                                <IconReport size={20} />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip title="Edit Report" arrow>
+                              <Button
+                                variant="contained"
+                                color="secondary"
+                                sx={{ mt: 2, backgroundColor: '#FA896B' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditReport(rep);
+                                }}
+                              >
+                                {/* Edit */}
+                                <IconPencil size={20} />
+                              </Button>
+                            </Tooltip>
+                            {editingId === rep?.id && (
+                              <Tooltip title="Update Report" arrow>
+                                <Button
+                                  variant="contained"
+                                  color="warning"
+                                  startIcon={<IconDeviceFloppy size={20} />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateReport();
+                                  }}
+                                  disabled={loading}
+                                  sx={{ mt: 2, me: 1 }}
+                                >
+                                  Update
+                                </Button>
+                              </Tooltip>
+                            )}
+                            <Tooltip title="Delete Report" arrow>
+                              <Button
+                                variant="contained"
+                                color="error"
+                                size="small"
+                                sx={{ mt: 2 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(rep.id);
+                                }}
+                              >
+                                {/* Edit */}
+                                <IconTrash size={20} />
+                              </Button>
+                            </Tooltip>
+                          </Box>
+                        </Card>
+                      ))}
+                      {hasMore && (
+                        <Box textAlign="center" mt={2}>
+                          <Button
+                            onClick={() => fetchReports(false)}
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                          >
+                            {loadingReports || loadingMore ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              'Load More'
+                            )}
+                          </Button>
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </Grid>
+
+                <Grid
+                  sx={{
+                    display: { xs: 'none', md: 'block' },
+                    borderRight: '1px solid #e0e0e0',
+                    height: 'auto',
+                    mx: 0.5,
+                    flexGrow: 0.5,
+                  }}
+                  size={{ xs: 12, xl: 0.1 }}
+                />
+
+                <Grid size={{ xs: 12, xl: 9 }} flexGrow={1}>
+                  {isHavePreview ? (
+                    <>
+                      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
+                          <Tab label="Summary" />
+                          <Tab label="Table Report" />
+                        </Tabs>
+                      </Box>
+                      {activeTab === 0 && (
+                        <Box>
+                          {summary ? (
+                            <DynamicTable
+                              data={summary}
+                              isHaveHeaderTitle={true}
+                              titleHeader="Summary"
+                              isHaveExportCsv={false}
+                              onExportCsv={exportToCSV}
+                              isHaveExportExcel={true}
+                              onExportExcel={exportToExcel}
+                              isHaveExportPdf={true}
+                              onExportPdf={exportToPDF}
+                            />
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              No summary data available.
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+
+                      {/* 🔹 TAB 2 - TABLE */}
+                      {activeTab === 1 && (
+                        <Box>
+                          <div id="print-report-area">
+                            <DynamicTable
+                              data={reportData}
+                              isHaveSearch={false}
+                              isHavePagination={false}
+                              isHaveHeaderTitle={true}
+                              titleHeader="Report"
+                              isHavePeriod
+                              // onSearchKeywordChange={(val) => {
+                              //   setSearchReport(val);
+                              //   handlePostReport(selectedReport?.id, val);
+                              // }}
+                              isHaveExportCsv={false}
+                              isHaveExportExcel={true}
+                              // isHavePrint={true}
+                              isHaveVip={true}
+                              isHaveExportPdf={true}
+                              onExportCsv={exportToCSV}
+                              onExportExcel={exportToExcel}
+                              onExportPdf={exportToPDF}
+                              onPrint={printReport}
+                            />
+                          </div>
+                        </Box>
+                      )}
+                    </>
+                  ) : (
+                    <Card
+                      sx={{
+                        p: 3,
+                        minHeight: '90vh',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 'none !important',
+                      }}
+                    >
+                      <Typography variant="h5" color="text.secondary">
+                        Select a report from the left to preview details.
+                      </Typography>
+                    </Card>
+                  )}
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+        </Box>
+
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          fullWidth
+          maxWidth="xl"
+          PaperProps={{
+            sx: {
+              width: '90vw',
+              maxWidth: 'none',
+            },
+          }}
+        >
+          <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+            Transaction Log Report
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              position: 'absolute',
+              top: 15,
+              right: 15,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+          <DialogContent dividers>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
+                <Tab label="Summary" />
+                <Tab label="Table Report" />
+              </Tabs>
+            </Box>
+            {activeTab === 0 && (
+              <Box>
+                {summary ? (
+                  <DynamicTable
+                    data={summary}
+                    isHaveHeaderTitle={true}
+                    titleHeader="Summary"
+                    isHaveExportCsv={true}
+                    onExportCsv={exportToCSV}
+                    isHaveExportExcel={true}
+                    onExportExcel={exportToExcel}
+                    isHaveExportPdf={true}
+                    onExportPdf={exportToPDF}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No summary data available.
+                  </Typography>
+                )}
+              </Box>
+            )}
+            {activeTab === 1 && (
+              <Box>
+                <div id="print-report-area">
+                  <DynamicTable
+                    data={reportData}
+                    isHaveSearch={true}
+                    isHavePagination={false}
+                    isHavePeriod
+                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                    isHaveExportCsv={true}
+                    isHaveExportExcel={true}
+                    // isHavePrint={true}
+                    isHaveVip={true}
+                    isHaveExportPdf={true}
+                    onExportCsv={exportToCSV}
+                    onExportExcel={exportToExcel}
+                    onExportPdf={exportToPDF}
+                    onPrint={printReport}
+                  />
+                </div>
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity as any}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+        <GlobalBackdropLoading open={loading} />
+      </Container>
+    </PageContainer>
+  );
+};
+
+export default Content;

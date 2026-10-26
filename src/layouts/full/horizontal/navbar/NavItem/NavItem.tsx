@@ -31,9 +31,10 @@ interface ItemType {
   hideMenu: any;
   level?: number | any;
   pathDirect: string;
+  isLast?: boolean;
 }
 
-const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
+const NavItem = ({ item, level, pathDirect, onClick, isLast }: ItemType) => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const Icon = item.icon;
   const theme = useTheme();
@@ -43,13 +44,17 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
   const ListItemStyled2 = styled(ListItemButton)(() => ({
     padding: '5px 10px',
     gap: '10px',
+    // display: 'flex',
     borderRadius: `${customizer.borderRadius}px`,
     marginBottom: level > 1 ? '3px' : '0px',
     color:
       level > 1 && pathDirect === item.href
         ? `${theme.palette.primary.main}!important`
         : theme.palette.text.secondary,
-
+    borderBottom: level > 1 && !isLast ? '1px solid rgba(0,0,0,0.10) !important' : 'none',
+    // '&:last-child': {
+    //   borderBottom: 'none !important',
+    // },
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
     },
@@ -83,12 +88,42 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
         {...listItemProps}
         disabled={item.disabled}
         selected={pathDirect === item.href}
-        onClick={onClick}
+        sx={{
+          zIndex: '10000',
+
+          ...(item.backgroundColor && {
+            backgroundColor: item.backgroundColor,
+            color: item.color || '#fff',
+
+            '& .MuiListItemIcon-root': {
+              color: item.color || '#fff',
+            },
+
+            '&:hover': {
+              backgroundColor: item.backgroundColor,
+              opacity: 0.9,
+            },
+
+            '&.Mui-selected': {
+              backgroundColor: item.backgroundColor,
+              color: item.color || '#fff',
+
+              '& .MuiListItemIcon-root': {
+                color: item.color || '#fff',
+              },
+
+              '&:hover': {
+                backgroundColor: item.backgroundColor,
+              },
+            },
+          }),
+        }}
       >
         <ListItemIcon
           sx={{
             minWidth: 'auto',
             p: '3px 0',
+            display: 'flex',
             color: 'inherit',
           }}
         >

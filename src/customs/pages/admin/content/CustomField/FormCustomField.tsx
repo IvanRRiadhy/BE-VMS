@@ -1,0 +1,381 @@
+import {
+  Grid2 as Grid,
+  Typography,
+  CircularProgress,
+  Paper,
+  Button,
+  MenuItem,
+  Divider,
+  TableContainer,
+  TableHead,
+  Table,
+  TableRow,
+  TableCell,
+  TableBody,
+} from '@mui/material';
+import { Box } from '@mui/system';
+import React, { useEffect, useState } from 'react';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import {
+  CreateCustomFieldRequest,
+  CreateCustomFieldRequestSchema,
+  FieldType,
+  multiOptField,
+} from 'src/customs/api/models/Admin/CustomField';
+import { createCustomField, updateCustomField } from 'src/customs/api/admin';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import useCustomFieldMutation from 'src/hooks/CustomField/useCustomFieldMutation';
+import { useVehicle } from 'src/hooks/Setting/useVehicle';
+import { useIdentityType } from 'src/hooks/Setting/useIdentityType';
+
+interface FormCustomFieldProps {
+  formData: any;
+  setFormData: React.Dispatch<React.SetStateAction<CreateCustomFieldRequest>>;
+  editingId?: string;
+  onSuccess?: () => void;
+}
+
+const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCustomFieldProps) => {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
+  const { createMutation, updateMutation } = useCustomFieldMutation();
+  const [multiOptionList, setMultiOptionList] = useState<multiOptField[]>(
+    formData.multiple_option_fields,
+  );
+  const [newMultiOption, setNewMultiOption] = useState<multiOptField>({
+    value: '',
+    name: '',
+    id: '',
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>,
+  ) => {
+    const name = (e.target as HTMLInputElement).name || (e.target as HTMLInputElement).id;
+    const value = (e.target as HTMLInputElement).value;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  function formatEnumLabel(label: string) {
+    return label
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  }
+  const handleOnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+    try {
+      const data: CreateCustomFieldRequest = {
+        ...formData,
+        multiple_option_fields: multiOptionList,
+      };
+      const parsedData = CreateCustomFieldRequestSchema.parse(data);
+      if (editingId) {
+        await updateMutation.mutateAsync({
+          id: editingId,
+          payload: parsedData,
+        });
+      } else {
+        await createMutation.mutateAsync(parsedData);
+      }
+      onSuccess?.();
+    } catch (err: any) {
+      if (err?.errors) {
+        setErrors(err.errors);
+      }
+      showSwal('error', err.response.data.msg ?? 'Failed to create custom field.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const { data: vehicle = [], isLoading: isVehicleLoading } = useVehicle();
+  const { data: identityType = [], isLoading: isIdentityTypeLoading } = useIdentityType();
+
+  return (
+    <>
+      <form onSubmit={handleOnSubmit}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid
+            size={{
+              xs: 12,
+              md: formData.field_type <= 2 ? 6 : 4,
+              lg: formData.field_type <= 2 ? 6 : 4,
+            }}
+          >
+            <Paper sx={{ p: 1 }}>
+              <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                Custom Field Details
+              </Typography>
+              <CustomFormLabel htmlFor="custom_field_name">Custom Field Name</CustomFormLabel>
+              <CustomTextField
+                id="short_name"
+                value={formData.short_name}
+                onChange={handleChange}
+                error={!!errors.short_name}
+                helperText={errors.short_name || ''}
+                fullWidth
+                required
+              />
+              <CustomFormLabel htmlFor="display_text">Display Text</CustomFormLabel>
+              <CustomTextField
+                id="long_display_text"
+                value={formData.long_display_text}
+                onChange={handleChange}
+                error={!!errors.long_display_text}
+                helperText={errors.long_display_text || ''}
+                fullWidth
+                required
+              />
+              <CustomFormLabel htmlFor="remarks">Remarks</CustomFormLabel>
+              <CustomTextField
+                id="remarks"
+                value={formData.remarks}
+                onChange={handleChange}
+                error={!!errors.emarks}
+                helperText={errors.remarks || ''}
+                fullWidth
+                required
+              />
+            </Paper>
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              md: formData.field_type <= 2 ? 6 : 8,
+              lg: formData.field_type <= 2 ? 6 : 8,
+            }}
+          >
+            <Paper sx={{ p: 0 }}>
+              <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                Custom Field's Input
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: formData.field_type <= 2 ? 12 : 4.5,
+                    lg: formData.field_type <= 2 ? 12 : 4.5,
+                  }}
+                >
+                  <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
+                  <CustomSelect
+                    id="field_type"
+                    name="field_type"
+                    value={formData.field_type}
+                    onChange={handleChange}
+                    error={!!errors.field_type}
+                    helperText={errors.field_type || ''}
+                    fullWidth
+                    required
+                  >
+                    {Object.entries(FieldType)
+                      .filter(([k]) => isNaN(Number(k)))
+                      .map(([key, value]) => (
+                        <MenuItem key={value} value={value}>
+                          {formatEnumLabel(key)}
+                        </MenuItem>
+                      ))}
+                  </CustomSelect>
+                  {formData.field_type >= 3 && (
+                    <>
+                      <Divider sx={{ my: 5 }} textAlign="left">
+                        Multi Option Field
+                      </Divider>
+                      <CustomFormLabel htmlFor="field-name">Field Name</CustomFormLabel>
+                      {formData.remarks === 'vehicle_id' ? (
+                        <CustomSelect
+                          id="vehicle-id"
+                          value={newMultiOption.id}
+                          onChange={(e: any) => {
+                            const selected = vehicle.find(
+                              (item: any) => item.id === e.target.value,
+                            );
+
+                            setNewMultiOption({
+                              id: selected?.id ?? '',
+                              name: selected?.name ?? '',
+                              value: selected?.value ?? '',
+                            });
+                          }}
+                          fullWidth
+                          disabled={isVehicleLoading}
+                        >
+                          {vehicle.map((item: any) => (
+                            <MenuItem key={item.id} value={item.id}>
+                              {item.name}
+                            </MenuItem>
+                          ))}
+                        </CustomSelect>
+                      ) : formData.remarks === 'identity_type' ? (
+                        <CustomSelect
+                          id="identity-type"
+                          value={newMultiOption.id}
+                          onChange={(e: any) => {
+                            const selected = identityType.find(
+                              (item: any) => item.id === e.target.value,
+                            );
+
+                            setNewMultiOption({
+                              id: selected?.id ?? '',
+                              name: selected?.name ?? '',
+                              value: selected?.id ?? '',
+                            });
+                          }}
+                          fullWidth
+                          disabled={isIdentityTypeLoading}
+                        >
+                          {identityType.map((item: any) => (
+                            <MenuItem key={item.id} value={item.id}>
+                              {item.name}
+                            </MenuItem>
+                          ))}
+                        </CustomSelect>
+                      ) : (
+                        <>
+                          <CustomTextField
+                            id="name"
+                            value={newMultiOption.name}
+                            onChange={(e: any) => {
+                              setNewMultiOption({
+                                ...newMultiOption,
+                                name: e.target.value,
+                              });
+                            }}
+                            error={!!errors.long_display_text}
+                            helperText={errors.long_display_text || ''}
+                            fullWidth
+                          />
+                          <CustomFormLabel htmlFor="field-value">Field Value</CustomFormLabel>
+                          <CustomTextField
+                            id="value"
+                            value={newMultiOption.value}
+                            onChange={(e: any) => {
+                              setNewMultiOption({
+                                ...newMultiOption,
+                                value: e.target.value,
+                              });
+                              handleChange(e);
+                            }}
+                            error={!!errors.long_display_text}
+                            helperText={errors.long_display_text || ''}
+                            fullWidth
+                          />
+                        </>
+                      )}
+
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ my: 3 }}
+                        disabled={!newMultiOption.name}
+                        onClick={() => {
+                          // setMultiOptionList((prev) => [...prev, { ...newMultiOption, id: '' }]);
+                          setMultiOptionList((prev) => [...prev, newMultiOption]);
+                          setNewMultiOption({ name: '', value: '', id: '' });
+                        }}
+                      >
+                        Add Multi-Option Field
+                      </Button>
+                    </>
+                  )}
+                </Grid>
+                {formData.field_type >= 3 && (
+                  <Grid
+                    size={{
+                      xs: 12,
+                      md: 7.5,
+                      lg: 7.5,
+                    }}
+                  >
+                    <TableContainer
+                      component={Box}
+                      sx={{ maxHeight: '300px', overflow: 'auto', mt: 1 }}
+                    >
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Field Name</TableCell>
+                            <TableCell>Value</TableCell>
+                            <TableCell align="right"></TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {multiOptionList.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} align="center" sx={{ color: '#888' }}>
+                                No Multi-Option Field added
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            multiOptionList.map((mult, index) => {
+                              return (
+                                <TableRow key={index}>
+                                  <TableCell> {mult.name}</TableCell>
+                                  <TableCell>
+                                    {' '}
+                                    {formData.remarks === 'vehicle_id' ? mult.id : mult.value}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Button
+                                      color="error"
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        minWidth: 28,
+                                        width: 28,
+                                        height: 28,
+                                        p: 0,
+                                        fontSize: '1rem',
+                                        lineHeight: 1,
+                                        bgcolor: '#fff5f5',
+                                        borderColor: '#ffcdd2',
+                                        '&:hover': { bgcolor: '#ffcdd2' },
+                                      }}
+                                      onClick={() =>
+                                        setMultiOptionList((prev) =>
+                                          prev.filter((item, i) => i !== index),
+                                        )
+                                      }
+                                    >
+                                      ×
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
+            Submit
+          </Button>
+        </Box>
+      </form>
+      <GlobalBackdropLoading open={loading} />
+    </>
+  );
+};
+
+export default FormCustomField;

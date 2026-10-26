@@ -79,7 +79,8 @@ export type GetAllOrganizationById = {
 export const CreateOrganizationSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
-  host: z.string().default(''),
+  host: z.string().default('').nullable().optional(),
+  is_internal: z.boolean().optional(),
 });
 
 export type CreateOrganizationRequest = z.infer<typeof CreateOrganizationSchema>;
@@ -87,7 +88,8 @@ export type CreateOrganizationRequest = z.infer<typeof CreateOrganizationSchema>
 export const CreateOrganizationSubmitSchema = CreateOrganizationSchema.extend({
   code: z.string().trim().min(1, 'Code is required'),
   name: z.string().trim().min(1, 'Name is required'),
-  host: z.string().trim().min(1, 'Head of organization is required'),
+  host: z.string().optional().default('').nullable(),
+  is_internal: z.boolean().optional(),
 });
 
 export type CreateOrganizationSubmitRequest = z.infer<typeof CreateOrganizationSubmitSchema>;

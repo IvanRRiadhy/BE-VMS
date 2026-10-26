@@ -1,0 +1,9 @@
+{
+  "API_BASE_URL": "https://be-vms.app.bio-experience.com",
+  "API_URL": "https://be-vms.app.bio-experience.com/api",
+  "WS_URL": "ws://localhost:3001/ws",
+  "LOGO_URL": "/assets/images/BI_Logo.png",
+  "LOGIN_LOGO_URL": "/assets/images/bi_pic.png",
+  "API_ID": "be-vms",
+  "ENABLE_CAPTCHA": false
+}

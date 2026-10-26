@@ -1,5 +1,4 @@
-// src/customs/components/operator/SearchVisitorDialog.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,28 +9,40 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
-import { IconSearch, IconX } from '@tabler/icons-react';
+import { IconSearch, IconTrash, IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { getInvitationCode } from 'src/customs/api/operator';
+import { searchVisitor } from 'src/customs/api/operator';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSearch: (result: any) => void;
+  container: any;
 }
 
-const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
-  const { token } = useSession();
+const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, container }) => {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [plateNumber, setPlateNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!open) {
+      setName('');
+      setCode('');
+      setPlateNumber('');
+      setErrorMsg('');
+    }
+  }, [open]);
+
   const handleSearch = async () => {
-    if (!code.trim()) {
-      setErrorMsg('Please enter a visitor code.');
+    if (!code.trim() && !name.trim() && !plateNumber.trim()) {
+      setErrorMsg('Please enter at least one search field.');
       return;
     }
 
@@ -39,18 +50,21 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
     setLoading(true);
 
     try {
-      const res = await getInvitationCode(token as string, code.trim());
+      const res = await searchVisitor( {
+        code: code.trim(),
+        name: name.trim(),
+        vehicle_plate_number: plateNumber.trim(),
+      });
+
       const data = res.collection?.data ?? [];
-      console.log('data', data);
 
       if (data.length === 0) {
-        setErrorMsg('Visitor code not found.');
+        setErrorMsg('No visitor found with the given criteria.');
       } else {
         onSearch(data);
         onClose();
       }
     } catch (error) {
-      console.error('Error fetching visitor:', error);
       setErrorMsg('Failed to fetch visitor.');
     } finally {
       setLoading(false);
@@ -70,38 +84,33 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      // bisa aktifkan kalau mau di atas, bukan tengah
+      container={container ?? undefined}
       PaperProps={{
-        sx: {
-          position: 'absolute',
-          top: '15%',
-          left: '50%',
-          transform: 'translate(-50%, 0)',
-        },
+        sx: (theme) => ({
+          position: 'relative',
+          [theme.breakpoints.up('xl')]: {
+            position: 'absolute',
+            top: '15%',
+            left: '50%',
+            transform: 'translate(-50%, 0)',
+          },
+        }),
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconSearch size={20} stroke={1.5} />
-        Search Visitor
+        {t('searchVisitor')}
       </DialogTitle>
 
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: '10px',
-          top: '10px',
-        }}
-      >
+      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
         <IconX />
       </IconButton>
 
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" gap={1.5}>
-          {/* Input nama */}
           <Box>
             <CustomFormLabel htmlFor="name" sx={{ mt: 0, mb: 0.5 }}>
-              Name
+              {t('name')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -113,10 +122,9 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
             />
           </Box>
 
-          {/* Input kode undangan */}
           <Box>
             <CustomFormLabel htmlFor="code" sx={{ mt: 0, mb: 0.5 }}>
-              Code
+              {t('code')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -128,10 +136,9 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
             />
           </Box>
 
-          {/* Input plat kendaraan */}
           <Box>
             <CustomFormLabel htmlFor="plate" sx={{ mt: 0, mb: 0.5 }}>
-              Vehicle Plate Number
+              {t('vehiclePlateNumber')}
             </CustomFormLabel>
             <TextField
               fullWidth
@@ -145,9 +152,8 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
 
           {errorMsg && <Box sx={{ color: 'error.main', fontSize: 14 }}>{errorMsg}</Box>}
 
-          {/* Tombol aksi */}
-          <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
-            <Button variant="outlined" onClick={handleClear}>
+          <Box display="flex" justifyContent="flex-end" gap={0.5} mt={1}>
+            <Button variant="contained" color="error" onClick={handleClear} startIcon={<IconX />}>
               Clear
             </Button>
 
@@ -155,9 +161,9 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
               variant="contained"
               onClick={handleSearch}
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+              startIcon={loading ? <CircularProgress size={18} color="primary" /> : <IconSearch />}
             >
-              {loading ? 'Searching...' : 'Search'}
+              {loading ? 'Searching...' : t('search')}
             </Button>
           </Box>
         </Box>

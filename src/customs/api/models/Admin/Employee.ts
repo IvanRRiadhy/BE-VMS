@@ -1,3 +1,4 @@
+import { verify } from 'crypto';
 import { z } from 'zod';
 
 //TYPE
@@ -6,7 +7,9 @@ export type Item = {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
+  type: string;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
   name: string;
   phone: string;
   email: string;
@@ -15,9 +18,8 @@ export type Item = {
   upload_fr: number;
   qr_code: string;
   faceimage: string;
-  // access_area: string;
-  // access_area_special: string;
-  birth_date: string; // ISO date format, e.g. "2025-06-16"
+  identity_type: string;
+  birth_date: string;
   join_date: string;
   exit_date: string;
   is_head: boolean;
@@ -28,10 +30,12 @@ export type Item = {
   district_id: string;
   status_employee: number;
   is_email_verify: boolean;
+  vendor_code: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relation: string;
   id: string;
 };
-
-//GET
 
 export type GetAllEmployeeResponse = {
   status: string;
@@ -65,7 +69,9 @@ export const CreateEmployeeRequestSchema = z.object({
   identity_id: z.string().default(''),
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
-  type: z.number().default(0),
+  type: z.string().default(''),
+  vehicle_plate_number: z.string().nullable().optional(),
+  vehicle_type: z.string().nullable().optional(),
   name: z.string().default(''),
   phone: z.string().default(''),
   email: z.string().default(''),
@@ -73,25 +79,29 @@ export const CreateEmployeeRequestSchema = z.object({
   address: z.string().default(''),
   upload_fr: z.number().default(0),
   qr_code: z.string().default(''),
-  faceimage: z.string().default(''),
-  // access_area: z.string().default(''),
-  // access_area_special: z.string().default(''),
+  faceimage: z.string().nullable().optional(),
+  identity_type: z.string().default(''),
   birth_date: z.string().default(''),
   join_date: z.string().default(''),
-  exit_date: z.string().default(''),
+  exit_date: z.string().nullable().optional(),
   is_head: z.boolean().default(false),
   head_employee_1: z.string().default(''),
   head_employee_2: z.string().default(''),
   organization_id: z.string().default(''),
   department_id: z.string().default(''),
+
   district_id: z.string().default(''),
-  // status_employee: z.number().default(-1),
+  vendor_code: z.string().nullable().optional(),
+  emergency_contact_name: z.string().nullable().optional(),
+  emergency_contact_phone: z.string().nullable().optional(),
+  emergency_contact_relation: z.string().nullable().optional(),
 });
 
 export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;
 
 export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   name: z.string().trim().min(1, 'Employee name is required'),
+  identity_type: z.string().trim().min(1, 'Identity Type is required'),
   identity_id: z.string().trim().min(1, 'Identity ID is required'),
   person_id: z.string().trim().min(1, 'Person ID is required'),
   email: z.string().trim().min(1, 'Email is required'),
@@ -99,13 +109,20 @@ export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   gender: z.coerce
     .number({ required_error: 'Gender is required' })
     .refine((v) => v === 0 || v === 1, { message: 'Gender is required' }),
-  department_id: z.string().trim().min(1, 'Department is required'),
-  district_id: z.string().trim().min(1, 'District is required'),
+  // department_id: z.string().trim().min(1, 'Department is required'),
+  // district_id: z.string().trim().min(1, 'District is required'),
   birth_date: z.string().trim().min(1, 'Birth date is required'),
   join_date: z.string().trim().min(1, 'Join date is required'),
-  exit_date: z.string().trim().min(1, 'Exit date is required'),
+  vendor_code: z.string().nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (['Vendor', 'Contractor'].includes(data.type || '') && !data.vendor_code?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['vendor_code'],
+      message: 'Vendor Code is required',
+    });
+  }
 });
-
 export interface CreateEmployeeResponse {
   status: string;
   status_code: number;
@@ -120,13 +137,17 @@ export interface UpdateEmployeeRequest {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
+  type: string;
   name: string;
   phone: string;
   email: string;
   gender: number;
   address: string;
   upload_fr: number;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
+  // faceimage: string;
+  identity_type: string;
   qr_code: string;
   // access_area: string;
   // access_area_special: string;
@@ -140,6 +161,10 @@ export interface UpdateEmployeeRequest {
   department_id: string;
   district_id: string | null;
   is_email_verify: boolean;
+  vendor_code: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relation: string;
 }
 
 export interface UpdateEmployeeResponse {

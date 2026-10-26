@@ -1,285 +1,281 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button,
   Grid2 as Grid,
-  Typography,
-  Card,
-  CardContent,
-  Divider,
-  TextField,
-  InputAdornment,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
-  List,
-  ListItem,
-  ListItemText,
-  CardActions,
-  Avatar,
-  Tabs,
-  Tab,
-  CardHeader,
-  Checkbox,
-  CircularProgress,
-  FormControlLabel,
-  Paper,
-  Snackbar,
-  Portal,
-  Alert,
-  Backdrop,
-  MenuItem,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
-  Stepper,
-  Step,
-  StepLabel,
-  TableContainer,
-  TableHead,
-  DialogActions,
   AlertColor,
-  FormGroup,
-  Autocomplete,
-  FormControl,
-  RadioGroup,
-  Radio,
-  Chip,
+  Portal,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import { Box, useMediaQuery, useTheme, width } from '@mui/system';
+import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
-import {
-  IconArrowsMaximize,
-  IconBan,
-  IconBrandGmail,
-  IconBuildingSkyscraper,
-  IconCalendarEvent,
-  IconCalendarTime,
-  IconCar,
-  IconCards,
-  IconCheck,
-  IconCheckupList,
-  IconClock,
-  IconCreditCard,
-  IconForbid2,
-  IconGenderMale,
-  IconHistory,
-  IconHome,
-  IconKey,
-  IconLicense,
-  IconLogin2,
-  IconLogout,
-  IconMapPin,
-  IconNumbers,
-  IconPhone,
-  IconQrcode,
-  IconSearch,
-  IconSend,
-  IconTicket,
-  IconTimeDuration0,
-  IconTrash,
-  IconUser,
-  IconUserCheck,
-  IconUsersGroup,
-  IconX,
-} from '@tabler/icons-react';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+import infoPic from 'src/assets/images/backgrounds/info_pic.png';
+import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import QRCode from 'react-qr-code';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
 import {
   createGiveAccessOperator,
   createGrandAccessOperator,
   createInvitationActionOperator,
   createMultipleGrantAccess,
   createMultipleInvitationActionOperator,
+  createOperatorBlacklist,
   createSubmitCompletePraMultiple,
   extendPeriodOperator,
   getAvailableCardOperator,
   getInvitationCode,
   getInvitationOperatorRelated,
-  getPermissionOperator,
 } from 'src/customs/api/operator';
-import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import LprImage from '../../../assets/images/products/pic_lpr.png';
-import FRImage from '../../../assets/images/products/pic_fr.png';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+import frImage from 'src/assets/images/products/pic_fr.webp';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { Check } from '@mui/icons-material';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
-import { FormVisitor, SectionPageVisitor } from 'src/customs/api/models/Admin/Visitor';
-// import CameraUpload from 'src/customs/components/camera/CameraUpload';
-import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import {
+  CreateVisitorRequest,
+  CreateVisitorRequestSchema,
+  FormVisitor,
+} from 'src/customs/api/models/Admin/Visitor';
+import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import HistoryDialog from './Dialog/HistoryDialog';
-import { getVisitorEmployee, updateExtend } from 'src/customs/api/admin';
-import Webcam from 'react-webcam';
-import FormDialogInvitation from '../Employee/FormDialogInvitation';
-import FormDialogPraregist from './Dialog/FormDialogPraregist';
-import CameraUpload from './Components/CameraUpload';
-import { id, is } from 'date-fns/locale';
+import { showReasonDialog, showSwal } from 'src/customs/components/alerts/alerts';
+import FormWizardAddVisitor from 'src/customs/pages/Operator/Invitation/FormWizardAddVisitor';
+import FormWizardAddInvitation from 'src/customs/pages/Operator/Invitation/FormWizardAddInvitation';
+import ScanQrVisitorDialog from 'src/customs/pages/Operator/Dialog/ScanQrVisitorDialog';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import InfoDialog from 'src/customs/pages/Operator/Dialog/InfoDialog';
+import ExtendVisitDialog from 'src/customs/pages/Operator/Dialog/ExtendVisitDialog';
+import { useTranslation } from 'react-i18next';
+import BlacklistVisitorDialog from 'src/customs/pages/Operator/Dialog/BlacklistVisitorDialog';
+import ListVisitorDialog from 'src/customs/pages/Operator/Dialog/ListVisitorDialog';
+import TriggeredAccessDialog from 'src/customs/pages/Operator/Dialog/TriggeredAccessDialog';
+import DetailVisitingPurpose from 'src/customs/pages/Operator/Dialog/DetailVisitingPurpose';
+import SwipeCardDialog from 'src/customs/pages/Operator/Dialog/SwipeCardDialog';
+import SwipeAccessDialog from 'src/customs/pages/Operator/Dialog/SwipeAccessDialog';
+import { useDebounce } from 'src/hooks/useDebounce';
+import PrintDialog from 'src/customs/pages/Operator/Dialog/PrintDialog';
+import PrintDialogBulk from 'src/customs/pages/Operator/Dialog/PrintDialogBluk';
+import { returnCard } from 'src/customs/api/Admin/SwapCard';
+import SwipeCardNoCodeDialog from 'src/customs/pages/Operator/Dialog/SwipeCardNoCodeDialog';
+import VisitorSearchInput from 'src/customs/pages/Operator/Components/VisitorSearchInput';
+import OperatorToolbar from 'src/customs/pages/Operator/Components/OperatorToolbar';
+import VisitorImage from 'src/customs/pages/Operator/Components/VisitorImage';
+import ReturnCardDialog from 'src/customs/pages/Operator/Dialog/ReturnCardDialog';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import ParkingDialog from 'src/customs/pages/Operator/Dialog/ParkingDialog';
+import ActionPanelCard from 'src/customs/pages/Operator/Components/ActionPanelCard';
+import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
+import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
+import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
+import { usePermission } from 'src/hooks/UserGroup/usePermission';
+import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
+import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
+import VisitorListCard from 'src/customs/pages/Operator/Dialog/VisitorListCard';
+import usePrintBadgeConfig from 'src/hooks/PrintBadge/usePrintBadge';
+import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
+import useDataPermission from 'src/hooks/Operator/useDataPermission';
+import usePermissionOperator from 'src/hooks/Operator/usePermissionOperator';
+import useAvailableCardOperator from 'src/hooks/Operator/useAvailableCardOperator';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
+import useRegisteredSiteOperator from 'src/hooks/Operator/useRegisteredSiteOperator';
+import useInvitationHost from 'src/hooks/Invitation/useInvitationHost';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
+import VisitorInformation from './Components/VisitorInformation';
+import HostInformation from './Components/HostInformation';
+import ConfirmUnsavedDialog from '../admin/components/ConfirmUnsavedDialog';
+import { getConfig } from 'src/config';
+import { Joyride, STATUS } from 'react-joyride';
+import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
+import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
+import { useQueryClient } from '@tanstack/react-query';
+import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
+import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import EditVisitorDialog from './Dialog/EditVisitorDialog';
+import InvitationQrCard from './Components/InvitationQrCard';
+import InvitationQrDialog from './Dialog/InvitationQrDialog';
+
+type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
+type Row = {
+  id: string;
+  visitor?: string;
+  card: string | React.ReactNode | null;
+  trx_visitor_id?: string | null;
+  assigned_card_number?: string | null;
+  assigned_card_remarks?: string | null;
+};
+
+type CardActionType = 'Swipe' | 'Give';
+
 const OperatorView = () => {
   const theme = useTheme();
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const secdrawerWidth = 320;
-  const { token } = useSession();
-
-  // 🔔 Dummy data Alarm dan History
-  const alarms = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    title: `Alarm #${i + 1}`,
-    message: `Beacon ${100 + i} memasuki area terlarang.`,
-    time: `2025-10-21 ${10 + i}:00`,
-    type: i % 2 === 0 ? 'Critical' : 'Warning',
-  }));
-
-  const histories = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    title: `Event #${i + 1}`,
-    message: `Beacon ${200 + i} keluar dari area ${i % 3 === 0 ? 'A1' : 'B2'}.`,
-    time: `2025-10-21 ${8 + i}:15`,
-  }));
-
+  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
+  const { t } = useTranslation();
+  const dataImage = [infoPic];
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
-  const [qrValue, setQrValue] = useState('');
-  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false);
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
+  const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scannerKey, setScannerKey] = useState(0);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState('');
-  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
-  const [openDetailSearching, setOpenDetailSearching] = useState(false);
+  const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
-  const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [selectedCurrentCards, setSelectedCurrentCards] = useState<Record<string, string>>({});
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedVisitorNumber, setSelectedVisitorNumber] = useState<string | null>(null);
   const [scannedVisitorNumber, setScannedVisitorNumber] = useState<string | null>(null);
   const [selectMultiple, setSelectMultiple] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState('');
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
-  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
-  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [previews, setPreviews] = useState<Record<string, string | null>>({});
-  const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+  const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
+  const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [openAccessData, setOpenAccessData] = useState(false);
   const [accessData, setAccessData] = useState<any[]>([]);
-  const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-  const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
+  const [openFillForm, setOpenFillForm] = useState(false);
+  const [fillFormData, setFillFormData] = useState<any[]>([]);
+  const [fillFormActiveStep, setFillFormActiveStep] = useState(-1);
+  const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
+  const [openDialogInfo, setOpenDialogInfo] = useState(false);
+  const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
+  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+  const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
+  const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
+  const [actionButton, setActionButton] = useState<any | null>(null);
+  const [visitorCards, setVisitorCards] = useState<any[]>([]);
+  const [returnCardNumber, setReturnCardNumber] = useState('');
+  const [openListVisitor, setOpenListVisitor] = useState(false);
+  const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
+  const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
+  const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedKeyword = useDebounce(searchKeyword, 300);
+  const [focusTarget, setFocusTarget] = useState<'old' | 'new' | null>(null);
+  const oldCardRef = useRef<HTMLInputElement | null>(null);
+  const newCardRef = useRef<HTMLInputElement | null>(null);
+  const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
+  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
+  const [invitationDetail, setInvitationDetail] = useState<any>([]);
+  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
+  const [applyToAll, setApplyToAll] = useState(false);
+  const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
+  const [openBulkPrint, setOpenBulkPrint] = useState(false);
+  const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
+  const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
+  const handleOpenListVisitor = () => setOpenListVisitor(true);
+  const handleOpenVehicle = () => setOpenVehicle(true);
+  const handleCloseListVisitor = () => setOpenListVisitor(false);
+  const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
+  const [isSwitchingVisitor, setIsSwitchingVisitor] = useState(false);
+  const [wsPayload, setWsPayload] = useState<any>(null);
+  const wsImageQueueRef = useRef<string[]>([]);
+  const wsOcrQueueRef = useRef<string[]>([]);
+  const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
+  const [tick, forceTick] = useState(0);
+  // const socketRef = useRef<WebSocket | null>(null);
+  const [resetStep, setResetStep] = useState(0);
+  const [openAccessIssuance, setAccessIssuance] = useState(false);
+  const [openReturnCard, setOpenReturnCard] = useState(false);
+  const [openParking, setOpenParking] = useState(false);
+  const [openVehicle, setOpenVehicle] = useState(false);
+  const [totalCountVisitor, setTotalCountVisitor] = useState(0);
+  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(
+    CreateVisitorRequestSchema.parse({}),
+  );
+  const [swipePayload, setSwipePayload] = useState<any[]>([]);
+  const parkingData = [
+    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
+    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
+  ];
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [typeVisitor, setTypeVisitor] = useState('live');
+  const { sitesOperator } = useInvitationSite();
+  const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
+    useRegisteredSiteOperator();
+  const { printData } = usePrintBadgeConfig();
+  const { permission, loading: loadingPermission } = useDataPermission();
+  const { permissionAccess } = usePermissionOperator();
+  const { availableCards, setAvailableCards } = useAvailableCardOperator();
+  const { visitorType } = useInvitationVisitorType();
+  const { employee } = useInvitationHost();
+  const [searchHost, setSearchHost] = useState<any>('');
+  const debounceSearch = useDebounce(searchHost, 400);
+  const [openMore, setOpenMore] = useState(false);
+  const handleOpenMore = () => setOpenMore(true);
+  const [vtLoading, setVTLoading] = useState(false);
+const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
 
-  const handleExtend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
 
-    if (!selectedMinutes) return;
-    if (!selectedVisitors || selectedVisitors.length === 0) {
-      setSnackbarMsg('No visitor selected.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
-      return;
-    }
+  const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
+    useInvitationVisitorEmployee({
+      search: debounceSearch,
+      start: 0,
+      length: 10,
+    });
+  const permissionHook = usePermission(permission);
 
+  const toggleFullscreen = async () => {
     try {
-      setLoadingAccess(true);
-      const payload = {
-        id: selectedVisitors[0], // ambil visitor ID pertama (atau kirim satu per satu)
-        period: selectedMinutes,
-        apply_to_all: applyToAll, // state checkbox “Apply to another visitor”
-      };
-
-      console.log('📤 Sending extend payload:', payload);
-
-      await extendPeriodOperator(token as string, payload);
-
-      // ✅ update UI lokal
-      setRelatedVisitors((prev) =>
-        prev.map((v) =>
-          selectedVisitors.includes(v.id)
-            ? {
-                ...v,
-                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-              }
-            : v,
-        ),
-      );
-
-      setInvitationCode((prev) =>
-        prev.map((item) =>
-          selectedVisitors.includes(item.id)
-            ? {
-                ...item,
-                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-              }
-            : item,
-        ),
-      );
-
-      setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes`);
-      setSnackbarType('success');
-      setSnackbarOpen(true);
-      setOpenExtendVisit(false);
-      setSelectedMinutes(null);
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
     } catch (error) {
-      console.error('❌ Error extending visit:', error);
-      setSnackbarMsg('Failed to extend visit.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
-    } finally {
-      setTimeout(() => setLoadingAccess(false), 600);
+      console.error(error);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const res = await getVisitorEmployee(token as string);
-      setAllVisitorEmployee(res?.collection ?? []);
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
     };
-    fetchData();
-  }, [token]);
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
@@ -302,86 +298,409 @@ const OperatorView = () => {
       visitor_status: string;
       block_by: string;
       is_block: boolean;
+      nda: string;
+      invited_by: string;
+      is_host: boolean;
+      visitor_id: string;
+      is_vehicle_arrived: boolean;
+      vehicle_captured: string;
+      parking_slot: string;
+      parking_area_name: string;
     }[]
   >([]);
-  // Tambahkan di atas (bersama useState lain)
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+    if (registerSiteOperator) {
+      localStorage.setItem('selectedSite', registerSiteOperator);
+    } else {
+      localStorage.removeItem('selectedSite');
+    }
+  }, [registerSiteOperator]);
 
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
 
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
+
+  const sendToScanner = (payload: any) => {
+    socketRef.current?.send(JSON.stringify(payload));
+  };
+
+  const currentUsedCardsByVisitor = useMemo(() => {
+    return relatedVisitors
+      .filter((v) => selectedVisitors.includes(v.id))
+      .map((visitor) => {
+        const currentCards = (visitor.card ?? []).filter((c: any) => c.current_used === true);
+
+        return {
+          visitorId: visitor.id,
+          visitorName: visitor.name,
+          cards: currentCards,
+        };
+      });
+  }, [relatedVisitors, selectedVisitors]);
+
+  const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    if (!payloads.length) return;
+
+    setLoadingAccess(true);
 
     try {
-      const response = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      setOpenSwipeDialog(false);
+      setOpenChooseCardDialog(false);
+
+      await createMultipleGrantAccess({
+        data: payloads,
       });
 
-      const fileUrl = response.data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
+      resetSwipeStates();
 
-      if (!fileUrl) return null;
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
 
-      // Tambahkan protokol jika belum ada
-      return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      return null;
+      setLoadingAccess(false);
+
+      requestAnimationFrame(() => {
+        showSwal('success', 'Cards swapped successfully!');
+      });
+    } catch (err: any) {
+      setLoadingAccess(false);
+
+      requestAnimationFrame(() => {
+        showSwal(
+          'error',
+          Array.isArray(err?.response?.data?.collection)
+            ? err.response.data.collection.join('\n')
+            : err?.response?.data?.collection || 'Failed to swap cards',
+        );
+      });
     }
   };
 
-  const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setAnswerFile: (url: string) => void,
-    trackKey?: string,
+  const resetSwipeStates = () => {
+    setSelectedCards([]);
+    setSwipePayload([]);
+    setCurrentVisitorIndex(0);
+    setSelectedCurrentCards({});
+    setSearchTerm('');
+    setCurrentAccessVisitor(null);
+  };
+
+  const handleSwipeCardSubmit = async (
+    value: string,
+    type: string,
+    visitor: any,
+    isLastVisitor: boolean,
+    visitorIndex: number,
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      // const selectedCardNumber = selectedCards[visitorIndex];
+      // const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
 
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
-    if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      const visitorSelectedCards = Array.isArray(selectedCards[visitorIndex])
+        ? selectedCards[visitorIndex]
+        : selectedCards;
+      const currentUsed = (visitor?.card ?? []).find((c: any) => c.current_used === true);
+
+      const currentUsedCardNumber = String(currentUsed?.card_number || '').trim();
+
+      const newCardNumber = selectedCards[visitorIndex];
+
+      if (!newCardNumber) {
+        showSwal('error', 'New card not found');
+        return;
+      }
+
+      const selectedCard = filteredCards.find(
+        (c) => String(c.card_number).trim() === String(newCardNumber).trim(),
+      );
+
+      if (!selectedCard) {
+        showSwal('error', 'Card not found');
+        return;
+      }
+
+      const hasSwappedCard = visitor?.card?.some((c: any) => c.is_swapcard);
+
+      const payload = {
+        card_number: selectedCard.card_number,
+        trx_visitor_id: visitor.id,
+        description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator}`,
+        // swap_card_from_card: value,
+        swap_card_from_card: currentUsedCardNumber,
+        swap_type: type,
+        swap_card_from_site_id: registerSiteOperator,
+        is_swapcard: true,
+        registered_site_id: registerSiteOperator,
+      };
+
+      // setSwipePayload((prev) => [...prev, payload]);
+
+      if (!hasSwappedCard) {
+        const newPayload = [...swipePayload, payload];
+
+        setSwipePayload(newPayload);
+
+        if (!isLastVisitor) {
+          return;
+        }
+        await handleSubmitBatchSwipe(newPayload);
+        setAvailableCards((prev) =>
+          prev.map((card) => {
+            const assigned = newPayload.find(
+              (p) => String(p.card_number) === String(card.card_number),
+            );
+
+            if (assigned) {
+              return {
+                ...card,
+                current_used: true,
+              };
+            }
+
+            return card;
+          }),
+        );
+        setSwipePayload([]);
+        return;
+      } else {
+        // setSwipePayload([payload]);
+        // setCurrentAccessVisitor(visitor);
+        // setOpenSwipeAccess(true);
+        const newPayload = [...swipePayload, payload];
+
+        setSwipePayload(newPayload);
+
+        if (!isLastVisitor) {
+          return;
+        }
+        // console.log('payload', JSON.stringify(newPayload, null, 2));
+        await handleSubmitBatchSwipe(newPayload);
+        setAvailableCards((prev) =>
+          prev.map((card) => {
+            const assigned = newPayload.find(
+              (p) => String(p.card_number) === String(card.card_number),
+            );
+
+            if (assigned) {
+              return {
+                ...card,
+                current_used: true,
+              };
+            }
+
+            return card;
+          }),
+        );
+
+        setSwipePayload([]);
+      }
+      setOpenSwipeDialog(false);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
     }
-
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
-    e.target.value = '';
   };
 
-  const toggleFullscreen = () => {
-    const elem = containerRef.current;
+  const handleSwipeCardSubmitNoCode = async ({
+    oldCardData,
+    newCardData,
+    actionType,
+  }: {
+    oldCardData: any;
+    newCardData: any;
+    actionType: CardActionType;
+  }) => {
+    try {
+      setLoadingAccess(true);
 
-    if (!elem) return;
+      const isSwap = actionType === 'Swipe';
 
-    if (!isFullscreen) {
-      // masuk fullscreen
-      if (elem.requestFullscreen) elem.requestFullscreen();
-      else if ((elem as any).webkitRequestFullscreen) (elem as any).webkitRequestFullscreen();
-      else if ((elem as any).msRequestFullscreen) (elem as any).msRequestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      // keluar fullscreen
-      if (document.exitFullscreen) document.exitFullscreen();
-      else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
-      else if ((document as any).msExitFullscreen) (document as any).msExitFullscreen();
-      setIsFullscreen(false);
+      const payload: any = {
+        card_number: newCardData.card_number,
+        description:
+          'Give card number ' + newCardData.card_number + ' from ' + registerSiteOperator,
+        // swap_card_from_card: oldCardData.card_number,
+        swap_card_from_site_id: registerSiteOperator,
+        swap_type: isSwap ? 'CardAccess' : 'Other',
+        is_swapcard: isSwap,
+        registered_site_id: registerSiteOperator,
+      };
+
+      if (isSwap) {
+        payload.swap_card_from_card = oldCardData.card_number;
+        payload.swap_card_from_site_id = registerSiteOperator;
+      }
+
+      await createGrandAccessOperator(payload);
+
+      showSwal(
+        'success',
+        `${actionType === 'Swipe' ? 'Card swapped' : 'Card given'} successfully!`,
+      );
+      setOpenSwipeDialogNoInvitation(false);
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.msg;
+      showSwal('error', backendMsg || 'Failed to swipe card');
+    } finally {
+      setLoadingAccess(false);
     }
+  };
+  const [selectedPurpose, setSelectedPurpose] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const handleOpenSwipeDialog = () => {
+    const hasSwappedBefore = visitorCards.some((c) => c.is_swapcard === true);
+
+    if (hasSwappedBefore) {
+      setOpenSwipeDialog(true);
+    } else {
+      setOpenSwipeDialog(true);
+    }
+  };
+
+  const handleCloseSwipeDialogNoInvitation = () => {
+    setActionButton('');
+    setOpenSwipeDialogNoInvitation(false);
+  };
+
+  const handleCloseSwipeDialog = () => {
+    setOpenSwipeDialog(false);
+  };
+
+  const handleOpenDetailVistingPurpose = (item: any) => {
+    setSelectedPurpose({
+      id: item.originalData?.id ?? item.id,
+      name: item.name,
+    });
+    setOpenDetailVistingPurpose(true);
+  };
+
+  function getColorByName(name: string) {
+    let hash = 0;
+
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash % 360);
+
+    return `hsl(${hue}, 70%, 55%)`;
+  }
+
+  const handleExtend = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedMinutes) return;
+    if (!selectedVisitors || selectedVisitors.length === 0) {
+      toast('Please select visitor first.', 'info');
+      return;
+    }
+
+    try {
+      setLoadingAccess(true);
+      const payload = {
+        id: selectedVisitors[0],
+        period: selectedMinutes,
+        apply_to_all: applyToAll,
+      };
+
+      await extendPeriodOperator(payload);
+
+      setRelatedVisitors((prev) =>
+        prev.map((v) =>
+          selectedVisitors.includes(v.id)
+            ? {
+                ...v,
+                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+              }
+            : v,
+        ),
+      );
+
+      setInvitationCode((prev) =>
+        prev.map((item) =>
+          selectedVisitors.includes(item.id)
+            ? {
+                ...item,
+                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+              }
+            : item,
+        ),
+      );
+
+      showSwal('success', `Visit extended by ${selectedMinutes} minutes`);
+      setOpenExtendVisit(false);
+      setSelectedMinutes(null);
+    } catch (error: any) {
+      let msg = 'Failed to extend visit.';
+
+      if (error.response && error.response.data) {
+        msg = error.response.data.msg || error.response.data.message || msg;
+        status = error.response.data.status;
+      }
+      // toast(msg, 'error');
+      showSwal('error', msg || 'Failed to extend visit.');
+    } finally {
+      setTimeout(() => setLoadingAccess(false), 600);
+    }
+  };
+
+  const handleSuccess = async () => {
+    setFormDataAddVisitor((prev: any) => ({
+      ...prev,
+      registered_site: '',
+    }));
+    handleCloseDialog();
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ['upcoming-visitors'],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      }),
+    ]);
+  };
+
+  // useEffect(() => {
+  //   if (containerRef.current) {
+  //     setDialogContainer(containerRef.current);
+  //   }
+  // }, [containerRef]);
+
+  const handleInvitationCreated = (invitationCode: string) => {
+    handleSubmitQRCode(invitationCode);
+  };
+
+  const handleCloseDialog = () => {
+    setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
+    setResetStep((prev) => prev + 1);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setOpenDialogIndex(null);
+    setActionButton('');
+    setWizardKey((k) => k + 1);
+    setIsFormDirty(false);
+  };
+
+  const handleRequestClose = () => {
+    if (isFormDirty) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    handleCloseDialog();
   };
 
   const handleCloseScanQR = () => {
@@ -394,198 +713,255 @@ const OperatorView = () => {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
     } catch {}
-
+    setCurrentAction(null);
+    setActionButton(null);
     setTorchOn(false);
-    setFacingMode('environment');
-    setQrMode('manual');
-    setHasDecoded(false);
-    setQrValue('');
     setOpenDialogIndex(null);
   };
-  useEffect(() => {}, [token]);
-
-  const resetSelections = () => {
-    // setSelectedInvitations([]);
-    setSelectedCards([]);
-    // setTableKey((k) => k + 1); // ← paksa remount DynamicTable
-  };
-
-  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
 
   const handleCloseChooseCard = () => {
+    resetSwipeStates();
     setOpenChooseCardDialog(false);
-    resetSelections();
   };
 
+  // const handleChooseCard = async () => {
+  //   if (!selectedVisitors.length) {
+  //     toast('Please select a visitor first.', 'info');
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoadingAccess(true);
+  //     await fetchAvailableCards();
+  //     setSelectedCards([]);
+
+  //     const visitor = relatedVisitors.find(
+  //       (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
+  //     );
+
+  //     setVisitorCards(visitor?.card ?? []);
+  //     setOpenChooseCardDialog(true);
+  //   } catch (error) {
+  //     showSwal('error', 'Failed to choose card');
+  //   } finally {
+  //     setTimeout(() => setLoadingAccess(false), 200);
+  //   }
+  // };
+
   const handleChooseCard = async () => {
-    if (!invitationCode.length) {
-      setSnackbarMsg('No visitor data found. Please scan QR first.');
-      setSnackbarType('info');
-      setSnackbarOpen(true);
+    if (!selectedVisitors.length) {
+      toast('Please select a visitor first.', 'info');
       return;
     }
 
+    const visitor = relatedVisitors.find(
+      (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
+    );
+
+    // Buka dialog terlebih dahulu
+    setVisitorCards(visitor?.card ?? []);
+    setSelectedCards([]);
+    setSearchTerm('');
+    setOpenChooseCardDialog(true);
+
+    // Baru jalankan API
     try {
-      setLoadingAccess(true); // ⏳ Mulai loading
-
-      // const invitationId = invitationCode?.[0]?.id;
-      // if (invitationId) {
-      //   await fetchRelatedVisitorsByInvitationId(invitationId);
-      // }
-
-      // Pastikan daftar kartu dikosongkan (opsional)
-      setSelectedCards([]);
-
-      setOpenChooseCardDialog(true); // 🔓 Buka modal setelah data selesai diambil
+      setIsLoadingCards(true);
+      await fetchAvailableCards();
     } catch (error) {
-      console.error('❌ Gagal mengambil data visitor:', error);
-      setSnackbarMsg('Failed to fetch visitor data. Please try again.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      showSwal('error', 'Failed to choose card');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 200); // ✅ Hentikan loading setelah sedikit jeda
+      setIsLoadingCards(false);
     }
   };
 
   useEffect(() => {
-    // Pastikan socket hanya dibuat sekali
-    const socket = new WebSocket('ws://localhost:16574/ws');
+    if (!openSwipeDialogNoInvitation) return;
 
-    socket.onopen = () => {
-      console.log('✅ WebSocket connected');
-    };
+    if (focusTarget === 'old') {
+      oldCardRef.current?.focus();
+    }
 
-    socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
-    };
-
-    socket.onmessage = (event) => {
-      try {
-        // Parse JSON
-        const msg = JSON.parse(event.data);
-        console.log('💬 Console client:', msg);
-
-        // Cek tipe data dari server
-        if (msg?.type === 'serial' && msg?.message) {
-          const value = msg.message.toString().trim();
-          console.log('📩 QR Value from socket:', value);
-
-          // 🔥 Update ke state qrValue
-          setQrValue(value);
-          setLoadingAccess(true);
-          // 🔥 Panggil handler QR langsung
-          handleSubmitQRCode(value);
-
-          // 🔥 Langsung buka detail QR dialog
-          // setOpenDetailQRCode(true);
-        }
-      } catch (err) {
-        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-      } finally {
-        setTimeout(() => setLoadingAccess(false), 600);
-      }
-    };
-
-    socket.onclose = () => {
-      console.warn('🔌 WebSocket disconnected');
-    };
-
-    // cleanup saat komponen unmount
-    return () => {
-      socket.close();
-    };
-  }, [token]);
+    if (focusTarget === 'new') {
+      newCardRef.current?.focus();
+    }
+  }, [focusTarget, openSwipeDialogNoInvitation]);
 
   useEffect(() => {
-    const fetchDataPermission = async () => {
-      try {
-        const res = await getPermissionOperator(token as string);
-        setPermissionAccess(res?.collection ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchDataPermission();
-  }, [token]);
+    if (openSwipeDialogNoInvitation) {
+      setFocusTarget('old');
+    }
+  }, [openSwipeDialogNoInvitation]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAvailableCardOperator(token as string);
-        setAvailableCards(res?.collection ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchData();
-  }, [token]);
+  const findCard = (cardNumber: string) =>
+    availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
   const fetchAvailableCards = async () => {
-    const res = await getAvailableCardOperator(token as string);
+    const res = await getAvailableCardOperator();
     setAvailableCards(res.collection);
   };
 
-  const filteredCards = availableCards.filter((card) =>
-    [card.remarks, card.card_number, card.card_mac]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  );
-
-  // const handleToggleCard = (cardNumber: string) => {
-  //   setSelectedCards((prev) => {
-  //     const normalized = String(cardNumber);
-
-  //     // 🔵 SINGLE MODE → hanya satu yang aktif
-  //     if (prev.includes(normalized)) {
-  //       return [];
-  //     }
-  //     return [normalized];
-  //   });
-  // };
-
   const handleToggleCard = (cardNumber: string) => {
-    setSelectedCards((prev) => {
-      const normalized = String(cardNumber);
-      const maxCards = selectedVisitors.length || 1;
+    const normalized = String(cardNumber);
 
-      // Jika sudah dipilih → hapus dari array
+    setSelectedCards((prev) => {
       if (prev.includes(normalized)) {
         return prev.filter((c) => c !== normalized);
       }
 
-      // Jika sudah mencapai batas maksimal
-      if (prev.length >= maxCards) {
-        setSnackbarMsg(`You can only select up to ${maxCards} card${maxCards > 1 ? 's' : ''}.`);
-        setSnackbarType('info');
-        setSnackbarOpen(true);
-        return prev; // tidak menambahkan kartu baru
+      const maxSelection = selectMultiple ? selectedVisitors.length : 1;
+
+      if (maxSelection === 1) {
+        return [normalized];
       }
 
-      // Jika masih bisa → tambahkan
+      if (prev.length >= maxSelection) {
+        toast(`You can only select up to ${maxSelection} cards.`, 'info');
+
+        return prev;
+      }
+
       return [...prev, normalized];
     });
   };
 
+  const handleEnableEditing = () => {
+    const confirmed = Swal.fire({
+      title: 'Enable Editing',
+      text: 'Are you sure you want to enable editing? ',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      showCloseButton: true,
+    });
+  };
+
+  const handleOpenAction = (value: string) => {
+    const hasInvitation = invitationCode.length > 0 && relatedVisitors.length > 0;
+    if (value === 'card') {
+      if (!hasInvitation) {
+        setOpenSwipeDialogNoInvitation(true);
+      } else {
+        // setOpenChooseCardDialog(true);
+        handleChooseCard();
+      }
+      return;
+    }
+
+    if (value === 'enable' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
+      handleEnableEditing();
+      return;
+    }
+
+    // if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+    //   setOpenAccessData(true);
+    //   return;
+    // }
+
+    if (value === 'extend' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
+      setOpenExtendVisit(true);
+      return;
+    }
+    if (value === 'open' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
+      setOpenTriggeredAccess(true);
+      return;
+    }
+    if (value === 'return' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
+      setOpenReturnCard(true);
+      return;
+    }
+    if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setActionButton('');
+      setAccessIssuance(true);
+      return;
+    }
+
+    if (value === 'parking') {
+      if (!hasInvitation) {
+        setOpenParking(true);
+      } else {
+        setOpenParking(true);
+      }
+      setActionButton('');
+      return;
+    }
+    setActionButton(value);
+    setOpenDialogIndex(1);
+  };
+
+  const handleActionClick = async (action: 'Checkin' | 'Checkout') => {
+    setCurrentAction(action);
+
+    if (invitationCode.length > 0 || relatedVisitors.length > 0) {
+      setSelectedVisitors([selectedVisitorId ?? invitationCode?.[0]?.id]);
+      await handleConfirmStatus(action);
+      setCurrentAction(null);
+      return;
+    }
+
+    setOpenDialogIndex(1);
+  };
+
+  const handleActionBlacklist = async () => {
+    const selectedVisitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
+
+    const visitorId = selectedVisitor?.visitor_id ?? invitationCode?.[0]?.visitor_id;
+
+    if (!visitorId) {
+      setOpenDialogIndex(1);
+      return;
+    }
+
+    await handleBlacklistStatus(visitorId);
+  };
+
+  const [invitationId, setInvitationId] = useState<string | null>(null);
+
   const handleSubmitQRCode = async (value: string) => {
     try {
-      const res = await getInvitationCode(token as string, value);
+      setLoadingAccess(true);
+      const res = await getInvitationCode(value);
       const data = res.collection?.data ?? [];
 
-      if (data.length === 0) {
-        setSnackbarMsg('Your code does not exist.');
-        setSnackbarType('error');
-        setSnackbarOpen(true);
-        return;
-      }
       const invitation = data[0];
+      setInvitationId(invitation.id);
       const invitationId = invitation.id;
 
-      await fetchRelatedVisitorsByInvitationId(invitationId);
       setInvitationCode(data);
-      setVisitorStatus(data[0]?.visitor_status ?? null);
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
+
+      setSelectedVisitors([]);
+
+      await fetchRelatedVisitorsByInvitationId(invitationId);
+      const freshVisitors = await getInvitationOperatorRelated(invitationId);
+      const scannedNumber = data[0]?.visitor_number;
+
+      const matchedIds = freshVisitors.collection
+        ?.filter((v: any) => v.visitor_number === scannedNumber)
+        .map((v: any) => v.id?.toLowerCase())
+        .filter(Boolean);
+
+      setSelectedVisitors(matchedIds ?? []);
+
+      setInvitationCode((prev) =>
+        prev.map((inv) => {
+          if (inv.id?.toLowerCase() !== invitationId.toLowerCase()) return inv;
+          const matchedVisitor = relatedVisitors.find(
+            (v) => v.id?.toLowerCase() === invitationId.toLowerCase(),
+          );
+          return matchedVisitor ? { ...inv, card: matchedVisitor.card ?? [] } : inv;
+        }),
+      );
+
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
 
       const filteredAccess = accessList.filter((a: any) =>
@@ -604,102 +980,163 @@ const OperatorView = () => {
           can_grant: perm?.can_grant ?? false,
           can_revoke: perm?.can_revoke ?? false,
           can_block: perm?.can_block ?? false,
-          disabled: !perm,
+          // disabled: !perm,
         };
       });
 
-      console.log('🧩 mergedAccess:', mergedAccess);
       setAccessData(mergedAccess);
-      // if (invitation?.id) {
-      //   setSelectedVisitors((prev) => {
-      //     if (!prev.includes(invitation.id)) {
-      //       const updated = [...prev, invitation.id];
-      //       return updated;
-      //     }
-      //     return prev;
-      //   });
-      // }
-      handleCloseScanQR();
 
-      setSnackbarMsg('Code scanned successfully.');
-      setSnackbarType('success');
-      setSnackbarOpen(true);
+      if (currentAction) {
+        setSelectedVisitors([invitationId]);
+        await handleConfirmStatus(currentAction);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      }
+
+      if (actionButton == 'extend') {
+        setSelectedVisitors([invitationId]);
+        setOpenExtendVisit(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'card') {
+        setSelectedVisitors([invitationId]);
+        // handleChooseCard();
+        setOpenChooseCardDialog(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'access') {
+        setSelectedVisitors([invitationId]);
+        // setOpenAccessData(true);
+        setAccessIssuance(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'open') {
+        setSelectedVisitors([invitationId]);
+        setOpenTriggeredAccess(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      }
+      handleCloseScanQR();
+      setTypeVisitor('related');
+      setRelatedPage(0);
+      const matched = freshVisitors.collection.find((v: any) => v.visitor_number === scannedNumber);
+
+      if (matched) {
+        setSelectedVisitorId(matched.id);
+        setSelectedVisitorNumber(matched.visitor_number);
+        setSelectedVisitors([matched.id]);
+      }
     } catch (e) {
-      console.error('Error fetching invitation code:', e);
-      setSnackbarMsg('Your code does not exist.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      showSwal('error', t('codeNotExist'), 3000);
+    } finally {
+      setLoadingAccess(false);
     }
   };
 
   useEffect(() => {
     if (!relatedVisitors.length) return;
 
-    // Pastikan hanya ID yang masih ada di data baru yang tetap dipilih
-    setSelectedVisitors((prevSelected) =>
-      prevSelected.filter((id) => relatedVisitors.some((v) => v.id === id)),
-    );
+    const validIds = new Set(relatedVisitors.map((v) => v.id));
+
+    setSelectedVisitors((prev) => prev.filter((id) => validIds.has(id)));
   }, [relatedVisitors]);
 
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
-    const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
+    const relatedRes = await getInvitationOperatorRelated(invitationId);
     const relatedData = relatedRes.collection ?? [];
+
+    const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
+    setTotalCountVisitor(totalCountVisitor);
 
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
-      name: v.visitor?.name ?? '-',
+      visitor_id: v.visitor_id ?? '-',
+      name: v.visitor_name ?? '-',
       selfie_image: v.selfie_image ?? '-',
       identity_image: v.identity_image ?? '-',
       visitor_period_start: v.visitor_period_start ?? '-',
       visitor_period_end: v.visitor_period_end ?? '-',
       agenda: v.agenda ?? '-',
       is_driving: v.is_driving ?? '-',
-      organization: v.visitor?.organization ?? '-',
+      organization: v.visitor_organization_name ?? '-',
       extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
-      email: v.visitor?.email ?? '-',
-      phone: v.visitor?.phone ?? '-',
-      gender: v.visitor?.gender ?? '-',
-      address: v.visitor?.address ?? '-',
+      visitor_type_name: v.visitor_type_name ?? '-',
+      email: v.visitor_email ?? '-',
+      phone: v.visitor_phone ?? '-',
+      gender: v.visitor_gender ?? '-',
+      address: v.visitor_address ?? '-',
+      invitation_code: v.invitation_code ?? '-',
       visitor_status: v.visitor_status ?? '-',
-      // card: (v.card ?? []).map((c: any) => c.card_number),
+      visitor_identity_id: v.visitor_identity_id ?? '-',
+      visitor_code: v.visitor_code ?? '-',
+      vehicle_plate_number: v.vehicle_plate_number ?? '-',
+      vehicle_type: v.vehicle_type ?? '-',
+      is_group: v.is_group ?? false,
+      group_code: v.visitor_group_code ?? '-',
+      group_name: v.group_name ?? '-',
       card: v.card ?? [],
+      parking: v.parking ?? [],
+      host_name: v.host_name ?? '-',
+      site_place_name: v.site_place_name ?? '-',
       is_praregister_done: v.is_praregister_done ?? false,
       access: v.access ?? [],
       block_by: v.block_by ?? null,
       is_block: v.is_block ?? false,
+      invited_by_name: v.invited_by_name ?? '-',
+      visitor_role: v.visitor_role ?? '-',
+      checkout_at: v.checkout_at ?? null,
+      checkin_at: v.checkin_at ?? null,
+      is_host: v.is_host ?? false,
+      is_vehicle_arrived: v.is_vehicle_arrived ?? false,
+      vehicle_captured: v.vehicle_captured ?? null,
     }));
-
     setInvitationCode((prev) =>
       prev.map((inv) => {
-        const updatedVisitor = mappedVisitors.find((v: any) => v.id === inv.id);
+        const updatedVisitor = mappedVisitors.find(
+          (v: any) =>
+            v.id?.toLowerCase() === inv.id?.toLowerCase() ||
+            v.visitor_number === inv.visitor_number,
+        );
+
         if (!updatedVisitor) return inv;
 
         return {
           ...inv,
-          // 🔹 tambahkan update image agar UI langsung berubah
+
+          // data visitor terbaru dari API
+          visitor_status: updatedVisitor.visitor_status,
+          is_block: updatedVisitor.is_block,
+          block_by: updatedVisitor.block_by,
+
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          // 🔹 update field status lainnya juga
-          // is_praregister_done: updatedVisitor.is_praregister_done,
-          // visitor_status: updatedVisitor.visitor_status,
-          // block_by: updatedVisitor.block_by,
-          // is_block: updatedVisitor.is_block,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+
+          visitor: {
+            ...inv.visitor,
+            visitor_status: updatedVisitor.visitor_status,
+            is_block: updatedVisitor.is_block,
+            block_by: updatedVisitor.block_by,
+          },
         };
       }),
     );
 
     setRelatedVisitors(mappedVisitors);
-    console.log('related visitor', mappedVisitors);
 
-    // 🔹 Gabungkan semua access dari semua visitor
     const allAccess = relatedData.flatMap((v: any) =>
       (v.access ?? []).map((a: any) => ({
         id: a.id ?? '-',
-        trx_visitor_id: (a.trx_visitor_id || v.id)?.toLowerCase(), // ✅ pastikan lowercase
+        trx_visitor_id: (a.trx_visitor_id || v.id)?.toLowerCase(),
         access_control_id: a.access_control_id?.toLowerCase(),
         access_control_name: a.access_control_name ?? '-',
         visitor_give_access: a.visitor_give_access ?? 0,
@@ -707,59 +1144,24 @@ const OperatorView = () => {
       })),
     );
 
-    console.log('🧩 allAccessData from related visitors:', allAccess);
     setAllAccessData(allAccess);
-
-    // console.log(
-    //   '🧾 Full allAccessData (debug):',
-    //   allAccess.map((a: any) => ({
-    //     trx_visitor_id: a.trx_visitor_id,
-    //     access_control_id: a.access_control_id,
-    //     access_control_name: a.access_control_name,
-    //     visitor_give_access: a.visitor_give_access,
-    //   })),
-    // );
-
-    // Set visitor pertama sebagai default
-    if (relatedData.length > 0) {
-      const firstVisitorId = relatedData[0].id?.toLowerCase();
-      setSelectedVisitors([firstVisitorId]);
-    }
   };
-
-  // const formatDateTime = (dateStr?: string) => {
-  //   if (!dateStr) return '-';
-  //   return (
-  //     moment
-  //       .utc(dateStr) // data asal UTC
-  //       .tz('Asia/Jakarta') // ubah ke zona waktu Jakarta
-  //       .format('DD MMM YYYY, HH:mm') + ' WIB'
-  //   );
-  // };
 
   const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
     if (!dateStr) return '-';
 
     const baseTime = moment.utc(dateStr);
 
-    // Tambahkan menit hanya kalau ada extend
     if (extendMinutes && extendMinutes > 0) {
       baseTime.add(extendMinutes, 'minutes');
     }
 
-    return baseTime
-      .tz(moment.tz.guess()) // ✅ ubah ke zona waktu lokal user
-      .format('DD MMM YYYY, HH:mm');
+    return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
   };
 
-  type Row = {
-    id: string;
-    visitor?: string;
-    card: string | React.ReactNode | null;
-    trx_visitor_id?: string | null;
-    assigned_card_number?: string | null;
-    assigned_card_remarks?: string | null;
-  };
+  const visitorsForSwipe = useMemo(() => {
+    return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
+  }, [relatedVisitors, selectedVisitors]);
 
   const [rows, setRows] = useState<Row[]>([]);
 
@@ -780,7 +1182,6 @@ const OperatorView = () => {
     const ids = flat
       .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
       .filter((n) => Number.isFinite(n) && n > 0);
-    // dedupe
     return Array.from(new Set(ids));
   };
 
@@ -788,218 +1189,391 @@ const OperatorView = () => {
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
+  const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
+
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const filteredCards = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase();
+    if (!term) return availableCards;
+
+    return availableCards.filter((card) =>
+      `${card.remarks ?? ''} ${card.card_number ?? ''} ${card.card_mac ?? ''}`
+        .toLowerCase()
+        .includes(term),
+    );
+  }, [availableCards, debouncedSearch]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const t = setTimeout(() => {
+      oldCardRef.current?.focus();
+    }, 100);
+
+    return () => clearTimeout(t);
+  }, [open]);
+
   const availableVisibleCards = useMemo(() => {
     return filteredCards.filter((c) => {
       const holder = assignedByCard.get(String(c.card_number));
-      // singkirkan hanya jika dipegang orang lain
       return !(holder && !selectedIdSet.has(String(holder)));
     });
   }, [filteredCards, assignedByCard, selectedIdSet]);
 
+  const visibleIds = availableVisibleCards.map((c) => String(c.card_number));
   const availableCount = availableVisibleCards.length;
+  const selectedVisibleCount = visibleIds.filter((id) => selectedCards.includes(id)).length;
+  const cappedCount = Math.min(visibleIds.length, capacity);
+  const isChecked = cappedCount > 0 && selectedVisibleCount === cappedCount;
+  const isIndeterminate = selectedVisibleCount > 0 && selectedVisibleCount < cappedCount;
+
+  const handleSelectAll = () => {
+    const maxSelection = selectMultiple ? selectedVisitors.length : 1;
+
+    if (isChecked) {
+      setSelectedCards([]);
+      return;
+    }
+
+    const selectableCards = filteredCards
+      .filter((card) => card.current_used !== true && card.is_used !== true)
+      .slice(0, maxSelection)
+      .map((card) => String(card.card_number));
+
+    setSelectedCards(selectableCards);
+  };
+
+  const pairVisitorsWithCards = (visitorIds: string[], cards: (string | number)[]) => {
+    return visitorIds.map((visitorId, idx) => ({
+      visitorId,
+      cardNumber: cards[idx],
+    }));
+  };
 
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
-        setSnackbarMsg('Please choose at least one card.');
-        setSnackbarType('info');
-        setSnackbarOpen(true);
-        return;
-      }
-
-      if (!selectedVisitors.length) {
-        setSnackbarMsg('No visitor selected.');
-        setSnackbarType('info');
-        setSnackbarOpen(true);
+        toast(t('mustChooseOneCard'), 'info');
         return;
       }
 
       setLoadingAccess(true);
 
-      const alreadyHasCard: string[] = [];
-      const successAssigned: string[] = [];
-      let response: any = null;
+      const visitorIds =
+        selectedVisitors.length > 0 ? selectedVisitors : [invitationCode?.[0]?.id].filter(Boolean);
 
-      if (selectedVisitors.length > 1) {
-        // 🧩 Multiple visitor (batch)
-        const dataPayload: { card_number: string; trx_visitor_id: string }[] = [];
-        const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
-
-        for (let i = 0; i < pairCount; i++) {
-          const visitorId = selectedVisitors[i];
-          const cardNumber = selectedCards[i];
-          const visitor = relatedVisitors.find(
-            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-          );
-          if (!visitor) continue;
-
-          if (visitor.card && visitor.card.length > 0) {
-            alreadyHasCard.push(visitor.name || visitorId);
-            continue;
-          }
-
-          dataPayload.push({ card_number: String(cardNumber), trx_visitor_id: visitorId });
-          successAssigned.push(visitor.name || visitorId);
-        }
-
-        if (dataPayload.length === 0) {
-          setSnackbarMsg('All selected visitors already have a card.');
-          setSnackbarType('info');
-          setSnackbarOpen(true);
-          setLoadingAccess(false);
-          return;
-        }
-
-        response = await createMultipleGrantAccess(token as string, { data: dataPayload });
-      } else {
-        // 🧍 Single visitor
-        for (const visitorId of selectedVisitors) {
-          const visitor = relatedVisitors.find(
-            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-          );
-          if (!visitor) continue;
-
-          if (visitor.card && visitor.card.length > 0) {
-            alreadyHasCard.push(visitor.name || visitorId);
-            continue;
-          }
-
-          for (const cardNumber of selectedCards) {
-            // await createGrandAccessOperator(token as string, {
-            //   card_number: String(cardNumber),
-            //   trx_visitor_id: visitorId,
-            // });
-            const payload = {
-              card_number: String(cardNumber),
-              trx_visitor_id: visitorId,
-            };
-
-            console.log('Grant Access', JSON.stringify(payload, null, 2));
-
-            response = await createGrandAccessOperator(token as string, payload);
-          }
-
-          successAssigned.push(visitor.name || visitorId);
-        }
+      if (!visitorIds.length) {
+        showSwal('info', 'No visitor found to assign card.');
+        return;
       }
 
-      // 🔁 Refresh visitors setelah semua selesai
+      const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
+
+      const payloads = pairs
+        .map(({ visitorId, cardNumber }) => {
+          const visitor = relatedVisitors.find(
+            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+          );
+
+          if (!visitor) return null;
+
+          const currentUsed: any = (visitor.card ?? []).find((c: any) => c.current_used === true);
+
+          return {
+            card_number: String(cardNumber),
+            trx_visitor_id: visitorId,
+            description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
+            swap_card_from_card: currentUsed?.card_number ?? null,
+            swap_card_from_card_id: currentUsed?.id ?? null,
+            swap_card_from_site_id: registerSiteOperator,
+            // is_swapcard: !!currentUsed,
+            is_swapcard: false,
+            swap_type: currentUsed ? 'Other' : null,
+            visitorName: visitor.name || visitorId,
+            registered_site_id: registerSiteOperator,
+          };
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== null);
+
+      if (!payloads.length) {
+        showSwal('error', 'No valid visitor to assign card.');
+        return;
+      }
+      if (payloads.length > 1) {
+        await createMultipleGrantAccess({
+          data: payloads.map(({ visitorName, ...p }) => p),
+        });
+      } else {
+        const { visitorName = '', ...payload } = payloads[0] as {
+          visitorName?: string;
+        } & (typeof payloads)[0];
+
+        await createGrandAccessOperator(payload);
+      }
+
+      setVisitorCards((prev) =>
+        prev.map((card) => {
+          const assigned = payloads.find(
+            (p: any) => String(p.card_number) === String(card.card_number),
+          );
+
+          if (assigned) {
+            return {
+              ...card,
+              current_used: true,
+            };
+          }
+
+          return {
+            ...card,
+            current_used: false,
+          };
+        }),
+      );
+      const message = payloads
+        .map((p: any) => `• ${p.visitorName}\n  Card: ${p.card_number}`)
+        .join('\n');
+
+      setInvitationCode((prev) =>
+        prev.map((inv) => {
+          const match = payloads.find(
+            (p: any) => p.trx_visitor_id.toLowerCase() === inv.id?.toLowerCase(),
+          );
+          if (!match) return inv;
+
+          return {
+            ...inv,
+            card: [{ ...(inv.card?.[0] || {}), card_number: match.card_number }],
+          };
+        }),
+      );
+      resetSwipeStates();
+      handleCloseChooseCard();
+
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      await fetchAvailableCards();
-
-      if (response?.collection && response.collection.length > 0) {
-        const messages = response.collection.map((item: any) => item.message).join(', ');
-        setSnackbarMsg(`⚠️ ${messages}`);
-        setSnackbarType('error');
-        setSnackbarOpen(true);
-        setLoadingAccess(false);
-        return;
-      }
-
-      // const uniqueAssigned = Array.from(new Set(successAssigned));
-      // const uniqueSkipped = Array.from(new Set(alreadyHasCard));
-
-      // // 🧾 Pesan akhir
-      // let message = '';
-      // if (uniqueAssigned.length > 0) {
-      //   message += `Successfully Assigned ${selectedCards.length} card to:\n`;
-      //   message += uniqueAssigned.map((v) => `- ${v}`).join('\n');
-      // }
-
-      // if (uniqueSkipped.length > 0) {
-      //   message +=
-      //     (message ? '\n\n' : '') +
-      //     `Skipped (already has a card):\n` +
-      //     uniqueSkipped.map((v) => `- ${v}`).join('\n');
-      // }
-
-      // setSnackbarMsg(message || 'No card assigned.');
-      // setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
-      // setSnackbarOpen(true);
-
-      // handleCloseChooseCard();
-      const uniqueAssigned = Array.from(new Set(successAssigned));
-      const uniqueSkipped = Array.from(new Set(alreadyHasCard));
-
-      // 🧾 Build final message
-      let message = '';
-
-      if (uniqueAssigned.length > 0) {
-        message += `✅ Successfully assigned ${uniqueAssigned.length} card(s):\n`;
-        message += selectedVisitors
-          .map((visitorId, idx) => {
-            const visitor = relatedVisitors.find(
-              (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-            );
-            const cardNumber = selectedCards[idx] || '-';
-            if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
-              return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
-            }
-            return null;
-          })
-          .filter(Boolean)
-          .join('\n');
-      }
-
-      if (uniqueSkipped.length > 0) {
-        message +=
-          (message ? '\n\n' : '') +
-          `⚠️ Some visitors were skipped because they already have an assigned card:\n` +
-          uniqueSkipped.map((v) => `• ${v}`).join('\n');
-      }
-
-      // If no success or skipped, show generic
-      if (!message) {
-        message = 'No cards were assigned.';
-      }
-
-      // Show Snackbar
-      setSnackbarMsg(message);
-      setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
-      setSnackbarOpen(true);
-
-      handleCloseChooseCard();
-    } catch (err) {
-      console.error('Assign card error:', err);
-      setSnackbarMsg('Failed to assign card(s).');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      showSwal('success', `Successfully assigned card: \n${message}`);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 600);
+      setLoadingAccess(false);
     }
   };
-  const handleClearAll = () => {
-    // Reset input & search
-    setQrValue('');
-    setSearch('');
-    setQrMode('manual');
-    setHasDecoded(false);
 
-    // Reset hasil visitor
+  const handleClearAll = () => {
     setInvitationCode([]);
     setRelatedVisitors([]);
+    setSelectedVisitors([]); // clear selected Live/Related Visitor
 
-    // Reset dialog & tab
     setOpen(false);
     setOpenDialogIndex(null);
-    setOpenDetailSearching(false);
-    setTabValue(0);
-
-    // Reset kamera & torch
-    setFacingMode('environment');
     setTorchOn(false);
+    setActionButton('');
 
-    // Kalau kamu pakai redux:
-    // dispatch(resetVisitorState());
+    setTotalCountVisitor(0);
 
-    console.log('✅ All data cleared!');
+    // Reset Live Visitor filter
+    setVisitorStatusFilter('all');
+    setVisitorStartDate('');
+    setVisitorEndDate('');
+
+    // Reset Live Visitor pagination
+    setLivePage(0);
+    setRelatedPage(0);
+
+    // Kalau search juga ingin ikut clear
+    setSearchKeyword('');
   };
 
+  const handleBlacklistStatus = async (id: string) => {
+    try {
+      const reason = await showReasonDialog('Blacklist Visitor', t('blacklistReason'));
+
+      if (!reason) return;
+
+      const payload = {
+        visitor_id: id,
+        action: 'blacklist',
+        reason,
+      };
+      await createOperatorBlacklist(payload);
+
+      showSwal('success', t('successBlacklist'));
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to blacklist visitor.');
+    }
+  };
+
+  // const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
+  //   const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+  //   const actionLabelMap: Record<string, string> = {
+  //     Checkin: 'check in',
+  //     Checkout: 'check out',
+  //     Block: 'block this visitor',
+  //     Unblock: 'unblock this visitor',
+  //   };
+
+  //   let reason = '';
+
+  //   try {
+  //     if (action === 'Block' || action === 'Unblock') {
+  //       const { value: inputReason } = await Swal.fire({
+  //         // imageUrl: '/assets/images/BI_Logo.png',
+  //         icon: 'warning',
+  //         imageWidth: 80,
+  //         imageHeight: 80,
+  //         imageAlt: 'Logo',
+  //         target: containerRef.current,
+  //         title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+  //         text:
+  //           action === 'Block'
+  //             ? 'Please provide a reason for blocking this visitor:'
+  //             : 'Please provide a reason for unblocking this visitor:',
+  //         input: 'text',
+  //         inputPlaceholder: 'Enter reason...',
+  //         inputAttributes: { maxlength: '200' },
+  //         showCloseButton: true,
+  //         showCancelButton: true,
+  //         confirmButtonText: 'Yes',
+  //         confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#16a34a' : '#16a34a',
+  //         cancelButtonText: 'Cancel',
+  //         reverseButtons: true,
+  //         customClass: {
+  //           title: 'swal2-title-custom',
+  //           popup: 'swal-popup-custom',
+  //           closeButton: 'swal-close-red',
+  //         },
+  //         inputValidator: (value) => {
+  //           if (!value || value.trim().length < 3) {
+  //             return 'Reason must be at least 3 characters long.';
+  //           }
+  //           return null;
+  //         },
+  //       });
+
+  //       if (!inputReason) return;
+  //       reason = inputReason.trim();
+  //     } else {
+  //       const confirm = await Swal.fire({
+  //         title: `Do you want to ${actionLabelMap[action]}?`,
+  //         // imageUrl: '/assets/images/BI_Logo.png',
+  //         icon: 'success',
+  //         imageWidth: 80,
+  //         imageHeight: 80,
+  //         imageAlt: 'Logo',
+  //         showCancelButton: true,
+  //         confirmButtonText: 'Yes',
+  //         cancelButtonText: 'Cancel',
+  //         showCloseButton: true,
+  //         target: containerRef.current,
+  //         confirmButtonColor: '#4caf50',
+  //         reverseButtons: true,
+  //         customClass: {
+  //           title: 'swal2-title-custom',
+  //           popup: 'swal-popup-custom',
+  //           closeButton: 'swal-close-red',
+  //         },
+  //       });
+
+  //       if (!confirm.isConfirmed) return;
+  //     }
+
+  //     setLoadingAccess(true);
+
+  //     const payload: any = { action };
+
+  //     if (reason) {
+  //       payload.reason = reason;
+  //     }
+
+  //     await createInvitationActionOperator(id!, payload);
+  //     await queryClient.invalidateQueries({
+  //       queryKey: ['upcoming-purpose'],
+  //     });
+  //     const currentVisitor =
+  //       relatedVisitors?.find((v: any) => v.id === selectedVisitorId) || invitationCode?.[0];
+
+  //     // Block / Unblock TIDAK mengubah visitor_status
+  //     const newStatus =
+  //       action === 'Block' || action === 'Unblock' ? currentVisitor?.visitor_status : action;
+
+  //     const newIsBlock =
+  //       action === 'Block'
+  //         ? true
+  //         : action === 'Unblock'
+  //           ? false
+  //           : (currentVisitor?.is_block ?? false);
+
+  //     setRelatedVisitors((prev) =>
+  //       prev.map((v) =>
+  //         v.id === selectedVisitorId
+  //           ? {
+  //               ...v,
+  //               visitor_status: newStatus,
+  //               is_block: newIsBlock,
+  //             }
+  //           : v,
+  //       ),
+  //     );
+
+  //     setInvitationCode((prev) => {
+  //       if (!prev.length) return prev;
+
+  //       const updated = {
+  //         ...prev[0],
+  //         visitor_status: newStatus,
+  //         is_block: newIsBlock,
+
+  //         visitor: {
+  //           ...prev[0].visitor,
+  //           visitor_status: newStatus,
+  //           is_block: newIsBlock,
+  //         },
+  //       };
+
+  //       return [updated];
+  //     });
+  //     setSelectedVisitors((prev) => {
+  //       if (!selectedVisitorId) return prev;
+  //       if (!prev.includes(selectedVisitorId)) {
+  //         return [...prev, selectedVisitorId];
+  //       }
+  //       return prev;
+  //     });
+
+  //     const invitationId = invitationCode?.[0]?.id;
+  //     if (invitationId) {
+  //       const previousSelected = [...selectedVisitors];
+  //       const previousSelectedId = selectedVisitorId;
+
+  //       await new Promise((r) => setTimeout(r, 600));
+  //       await fetchRelatedVisitorsByInvitationId(invitationId);
+
+  //       setSelectedVisitors(previousSelected);
+  //       setSelectedVisitorId(previousSelectedId);
+  //     }
+  //     showSwal('success', `${action} successfully.`);
+  //   } catch (e: any) {
+  //     const message =
+  //       e?.response?.data?.msg ??
+  //       e?.response?.data?.message ??
+  //       e?.message ??
+  //       'Failed to update visitor status.';
+
+  //     showSwal('error', message);
+  //   } finally {
+  //     setLoadingAccess(false);
+  //   }
+  // };
+
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
+    // const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+    const id = selectedVisitorId ?? selectedVisitors[0] ?? invitationCode?.[0]?.id;
+
     const actionLabelMap: Record<string, string> = {
       Checkin: 'check in',
       Checkout: 'check out',
@@ -1007,192 +1581,314 @@ const OperatorView = () => {
       Unblock: 'unblock this visitor',
     };
 
+    const successActionLabel: Record<string, string> = {
+      Checkin: 'Check In',
+      Checkout: 'Check Out',
+      Block: 'Block',
+      Unblock: 'Unblock',
+    };
+
     let reason = '';
+    if (action === 'Checkin' || action === 'Checkout') {
+      const visitor = relatedVisitors.find((v) => v.id?.toLowerCase() === id?.toLowerCase());
+
+      const isPraRegisterDone =
+        visitor?.is_praregister_done ?? invitationCode?.[0]?.is_praregister_done;
+
+      const visitorStatus = visitor?.visitor_status ?? invitationCode?.[0]?.visitor_status;
+
+      // Pra Register belum selesai
+      if (!isPraRegisterDone) {
+        showSwal('info', 'Visitor must complete Pra Register before Check in/Check out.', 3000);
+        return false;
+      }
+
+      // Belum Checkin → tidak boleh Checkout
+      if (action === 'Checkout' && visitorStatus !== 'Checkin') {
+        showSwal('info', 'Visitor must Check in first before Check out.', 3000);
+        return false;
+      }
+
+      // Sudah Checkin → tidak boleh Checkin lagi
+      if (action === 'Checkin' && visitorStatus === 'Checkin') {
+        showSwal('info', 'Visitor is already Check In.', 3000);
+        return false;
+      }
+
+      // Sudah Checkout → tidak boleh Checkin/Checkout lagi
+      if (visitorStatus === 'Checkout') {
+        showSwal('info', 'Visitor has already Check Out.', 3000);
+        return false;
+      }
+    }
 
     try {
-      // 🔹 Ask reason for Block/Unblock
+      // =========================================================
+      // CONFIRM BLOCK / UNBLOCK
+      // =========================================================
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
+          icon: 'info',
+          imageWidth: 80,
+          imageHeight: 80,
+          imageAlt: 'Logo',
+          target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
           text:
             action === 'Block'
               ? 'Please provide a reason for blocking this visitor:'
               : 'Please provide a reason for unblocking this visitor:',
+
           input: 'text',
           inputPlaceholder: 'Enter reason...',
-          inputAttributes: { maxlength: '200' },
+          inputAttributes: {
+            maxlength: '200',
+          },
+
+          showCloseButton: true,
           showCancelButton: true,
-          confirmButtonText: action,
-          confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#000' : '#000',
+
+          confirmButtonText: 'Yes',
+          confirmButtonColor: '#16a34a',
+
           cancelButtonText: 'Cancel',
+          reverseButtons: true,
+
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
+            closeButton: 'swal-close-red',
           },
+
           inputValidator: (value) => {
             if (!value || value.trim().length < 3) {
               return 'Reason must be at least 3 characters long.';
             }
+
             return null;
           },
         });
 
-        if (!inputReason) return;
+        if (!inputReason) {
+          return;
+        }
+
         reason = inputReason.trim();
-      } else {
-        // 🔹 Normal confirm dialog
+      }
+
+      // if (action === 'Block' || action === 'Unblock') {
+      //   const reasonOptions =
+      //     action === 'Block'
+      //       ? [
+      //           'Security Violation',
+      //           'Unauthorized Access',
+      //           'Policy Violation',
+      //           'Suspicious Activity',
+      //           'Visitor Requested',
+      //           'Others',
+      //         ]
+      //       : [
+      //           'Issue Resolved',
+      //           'Access Restored',
+      //           'Approved by Management',
+      //           'Visitor Request',
+      //           'Others',
+      //         ];
+      //   const { value: formValue } = await Swal.fire({
+      //     icon: 'info',
+      //     target: containerRef.current,
+      //     title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
+      //     html: ` <select id="swal-reason-select" class="swal2-select" style="width: 80%; margin: 15px auto;" > <option value="">Select reason</option> ${reasonOptions
+      //       .map((option) => `<option value="${option}">${option}</option>`)
+      //       .join(
+      //         '',
+      //       )} </select> <textarea id="swal-reason-other" class="swal2-textarea" placeholder="Enter reason..." maxlength="200" style="display:none; width:80%; margin:10px auto;" ></textarea> `,
+      //     showCloseButton: true,
+      //     showCancelButton: true,
+      //     confirmButtonText: action === 'Block' ? 'Yes' : 'Yes',
+      //     confirmButtonColor: '#16a34a',
+      //     cancelButtonText: 'Cancel',
+      //     reverseButtons: true,
+      //     customClass: {
+      //       title: 'swal2-title-custom',
+      //       popup: 'swal-popup-custom',
+      //       closeButton: 'swal-close-red',
+      //     },
+      //     didOpen: () => {
+      //       const select = document.getElementById(
+      //         'swal-reason-select',
+      //       ) as HTMLSelectElement | null;
+      //       const textarea = document.getElementById(
+      //         'swal-reason-other',
+      //       ) as HTMLTextAreaElement | null;
+      //       select?.addEventListener('change', () => {
+      //         if (!textarea) return;
+      //         textarea.style.display = select.value === 'Others' ? 'block' : 'none';
+      //         if (select.value !== 'Others') {
+      //           textarea.value = '';
+      //         }
+      //       });
+      //     },
+      //     preConfirm: () => {
+      //       const select = document.getElementById(
+      //         'swal-reason-select',
+      //       ) as HTMLSelectElement | null;
+      //       const textarea = document.getElementById(
+      //         'swal-reason-other',
+      //       ) as HTMLTextAreaElement | null;
+      //       const selectedReason = select?.value ?? '';
+      //       if (!selectedReason) {
+      //         Swal.showValidationMessage('Please select a reason.');
+      //         return false;
+      //       }
+      //       if (selectedReason === 'Others') {
+      //         const customReason = textarea?.value.trim() ?? '';
+      //         if (!customReason) {
+      //           Swal.showValidationMessage('Please enter a reason.');
+      //           return false;
+      //         }
+      //         if (customReason.length < 3) {
+      //           Swal.showValidationMessage('Reason must be at least 3 characters long.');
+      //           return false;
+      //         }
+      //         return customReason;
+      //       }
+      //       return selectedReason;
+      //     },
+      //   });
+      //   if (!formValue) {
+      //     return;
+      //   }
+      //   reason = formValue;
+      // }
+
+      // =========================================================
+      // CONFIRM CHECKIN / CHECKOUT
+      // =========================================================
+      else {
         const confirm = await Swal.fire({
           title: `Do you want to ${actionLabelMap[action]}?`,
-          icon: 'question',
+
+          icon: 'success',
+
+          imageWidth: 80,
+          imageHeight: 80,
+          imageAlt: 'Logo',
+
           showCancelButton: true,
+          showCloseButton: true,
+
           confirmButtonText: 'Yes',
-          cancelButtonText: 'Cancel',
           confirmButtonColor: '#4caf50',
+
+          cancelButtonText: 'Cancel',
+          reverseButtons: true,
+
+          target: containerRef.current,
+
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
+            closeButton: 'swal-close-red',
           },
         });
 
-        if (!confirm.isConfirmed) return;
+        if (!confirm.isConfirmed) {
+          return;
+        }
       }
-
       setLoadingAccess(true);
-
-      // 🔥 API call
-      const res = await createInvitationActionOperator(token as string, selectedVisitorId!, {
+      const payload: any = {
         action,
-        reason,
-      });
+      };
 
-      console.log('✅ Action Response:', res);
-
-      // 🔹 Update local data immediately (for instant UI)
-      // setRelatedVisitors((prev) =>
-      //   prev.map((v) => (v.id === selectedVisitorId ? { ...v, visitor_status: action } : v)),
-      // );
-
-      setRelatedVisitors((prev) =>
-        prev.map((v) =>
-          v.id === selectedVisitorId
-            ? {
-                ...v,
-                visitor_status: action,
-                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
-              }
-            : v,
-        ),
-      );
-
-      setInvitationCode((prev) => {
-        if (!prev.length) return prev;
-        const updated = {
-          ...prev[0],
-          visitor_status: action,
-          is_block: action === 'Block' ? true : action === 'Unblock' ? false : prev[0].is_block,
-          visitor: {
-            ...prev[0].visitor,
-            visitor_status: action,
-            is_block:
-              action === 'Block' ? true : action === 'Unblock' ? false : prev[0].visitor?.is_block,
-          },
-        };
-        return [JSON.parse(JSON.stringify(updated))];
-      });
-
-      setVisitorStatus(action);
-
-      // 🔹 Refetch background sync (after small delay)
-      const invitationId = invitationCode?.[0]?.id;
-      if (invitationId) {
-        await new Promise((r) => setTimeout(r, 1000)); // tunggu 1 detik
-        await fetchRelatedVisitorsByInvitationId(invitationId);
+      if (reason) {
+        payload.reason = reason;
       }
-      setSnackbarMsg(`${action} successfully.`);
-      setSnackbarType('success');
-      setSnackbarOpen(true);
-    } catch (e) {
-      console.error('❌ Error createInvitationActionOperator:', e);
-      setSnackbarMsg(`Failed to ${action}.`);
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      await createInvitationActionOperator(id!, payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      });
+
+      // =========================================================
+      // REFETCH VISITOR FROM API
+      // =========================================================
+      const invitationId = invitationCode?.[0]?.id;
+
+      if (invitationId) {
+        const previousSelected = [...selectedVisitors];
+        const previousSelectedId = selectedVisitorId;
+
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+
+        // Restore selection after refresh
+        setSelectedVisitors(previousSelected);
+        setSelectedVisitorId(previousSelectedId);
+      }
+
+      // =========================================================
+      // SUCCESS
+      // =========================================================
+      showSwal('success', `Successfully ${successActionLabel[action] ?? action}`);
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.msg ??
+        e?.response?.data?.message ??
+        e?.message ??
+        'Failed to update visitor status.';
+
+      showSwal('error', message);
     } finally {
-      setTimeout(() => {
-        setLoadingAccess(false);
-      }, 600);
+      setLoadingAccess(false);
     }
   };
-
   const formsOf = (section: any) =>
     Array.isArray(section?.['visit_form']) ? section['visit_form'] : [];
-  const handleRemoveFileForField = async (
-    currentUrl: string,
-    setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
-  ) => {
-    try {
-      setRemoving((s) => ({ ...s, [inputId]: true }));
-      if (currentUrl) {
-        await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
-      }
-
-      setAnswerFile('');
-      setPreviews((p) => ({ ...p, [inputId]: null }));
-      setUploadNames((n) => {
-        const { [inputId]: _, ...rest } = n;
-        return rest;
-      });
-      const el = document.getElementById(inputId) as HTMLInputElement | null;
-      if (el) el.value = '';
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving((s) => ({ ...s, [inputId]: false }));
-    }
-  };
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
-  }>({ open: false, message: '', severity: 'info' });
-
-  // 3) helper supaya snackbar pasti muncul walau pesannya sama
-  const toast = (message: string, severity: AlertColor = 'info') => {
-    setSnackbar((s) => ({ ...s, open: false }));
-    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
-  };
-
-  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
 
   const handleSelectRelatedVisitor = (visitor: any) => {
-    // 🟢 Update visitor aktif yang ditampilkan
+    if (selectMultiple) {
+      setSelectedVisitors((prev) =>
+        prev.includes(visitor.id) ? prev.filter((id) => id !== visitor.id) : [...prev, visitor.id],
+      );
+      return;
+    }
+    setSelectedVisitors([visitor.id]);
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
-    console.log('selected id ', selectedVisitorId);
+    setSelectedCards([]);
 
-    // 🔄 Update invitationCode agar tab info & visit ikut berubah
-    setInvitationCode([
-      {
-        ...invitationCode[0],
-        visitor: {
-          ...invitationCode[0]?.visitor, // simpan semua field lama
-          ...visitor, // timpa field yang ada di related visitor
+    setInvitationCode((prev) => {
+      if (!prev?.length) return prev;
+
+      return [
+        {
+          ...prev[0],
+          visitor_name: visitor.name,
+          visitor_email: visitor.email,
+          visitor_phone: visitor.phone,
+          visitor_gender: visitor.gender,
+          visitor_identity_id: visitor.visitor_identity_id,
+          visitor_organization_name: visitor.organization,
+          visitor_role: visitor.visitor_role,
+          visitor_type_name: visitor.visitor_type_name,
+          visitor: {
+            ...prev[0].visitor,
+            ...visitor,
+          },
+          visitor_number: visitor.visitor_number,
+          visitor_period_start: visitor.visitor_period_start,
+          visitor_period_end: visitor.visitor_period_end,
+          agenda: visitor.agenda,
+          selfie_image: visitor.selfie_image,
+          identity_image: visitor.identity_image,
+          card: visitor.card ?? [],
+          visitor_status: visitor.visitor_status,
+          block_by: visitor.block_by,
+          is_block: visitor.is_block,
         },
-        visitor_number: visitor.visitor_number,
-        visitor_period_start: visitor.visitor_period_start,
-        visitor_period_end: visitor.visitor_period_end,
-        agenda: visitor.agenda,
-        selfie_image: visitor.selfie_image || null,
-        identity_image: visitor.identity_image || null,
-        card: visitor.card ?? [],
-        visitor_status: visitor.visitor_status ?? '-',
-        block_by: visitor.block_by ?? null,
-        is_block: visitor.is_block ?? false,
-      },
-    ]);
-
-    setVisitorStatus(visitor.visitor_status ?? '-');
+      ];
+    });
   };
 
   const handleApplyBulkAction = async () => {
@@ -1204,7 +1900,6 @@ const OperatorView = () => {
       return;
     }
 
-    // 🟩 Fill Form → buka dialog Stepper
     if (bulkAction === 'fill_form') {
       const validToFill = selectedData.filter(
         (v) => !v.is_praregister_done && v.visitor_status === 'Preregis',
@@ -1216,19 +1911,14 @@ const OperatorView = () => {
       }
 
       setLoadingAccess(true);
-
       handleOpenFillFormDialog(validToFill.map((v) => v.id));
-
-      setTimeout(() => {
-        setLoadingAccess(false);
-      }, 600);
+      setLoadingAccess(false);
       return;
     }
 
     const validActions = ['checkin', 'checkout', 'block', 'unblock'];
     if (!validActions.includes(bulkAction)) return;
 
-    // 🧠 Filter visitor yang betul-betul dikirim ke API
     const validForApi = selectedData.filter((v) => {
       const status = v.visitor_status?.toLowerCase();
       switch (bulkAction) {
@@ -1244,7 +1934,6 @@ const OperatorView = () => {
       }
     });
 
-    // 🔸 Ambil reason jika Block/Unblock
     let reason = '';
     if (bulkAction === 'block' || bulkAction === 'unblock') {
       const { value: inputReason } = await Swal.fire({
@@ -1257,8 +1946,10 @@ const OperatorView = () => {
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCancelButton: true,
+        target: containerRef.current,
+        reverseButtons: true,
         confirmButtonText: bulkAction === 'block' ? 'Block' : 'Unblock',
-        confirmButtonColor: bulkAction === 'block' ? '#000' : '#4caf50',
+        confirmButtonColor: bulkAction === 'block' ? '#000' : '#000',
         cancelButtonText: 'Cancel',
         inputValidator: (value) => {
           if (!value || value.trim().length < 3) {
@@ -1279,67 +1970,28 @@ const OperatorView = () => {
         reason,
       })),
     };
-
+    // console.log('payload', payload)
     try {
       setLoadingAccess(true);
 
       if (validForApi.length > 0) {
-        await createMultipleInvitationActionOperator(token as string, payload);
+        await createMultipleInvitationActionOperator(payload);
       }
-
-      // 🔄 Update state lokal (optimistic)
-      setRelatedVisitors((prev) =>
-        prev.map((v) => {
-          const valid = validForApi.some((vv) => vv.id === v.id);
-          if (valid) {
-            let newStatus = v.visitor_status;
-            if (bulkAction === 'checkin') newStatus = 'Checkin';
-            else if (bulkAction === 'checkout') newStatus = 'Checkout';
-            else if (bulkAction === 'block') newStatus = 'Block';
-            else if (bulkAction === 'unblock') newStatus = 'Unblock';
-
-            return { ...v, visitor_status: newStatus, is_praregister_done: true };
-          }
-          return v;
-        }),
-      );
-      //  setInvitationCode((prev) => {
-      //    if (!prev.length) return prev;
-
-      //    const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
-      //    const updated = validForApi.find((v) => v.id === currentVisitorId);
-      //    if (!updated) return prev;
-
-      //    let newStatus = updated.visitor_status;
-      //    if (bulkAction === 'checkin') newStatus = 'Checkin';
-      //    else if (bulkAction === 'checkout') newStatus = 'Checkout';
-      //    else if (bulkAction === 'block') newStatus = 'Block';
-      //    else if (bulkAction === 'unblock') newStatus = 'Unblock';
-
-      //    return [
-      //      {
-      //        ...prev[0],
-      //        visitor_status: newStatus,
-      //        visitor: { ...prev[0].visitor, visitor_status: newStatus },
-      //      },
-      //    ];
-      //  });
-
       setInvitationCode((prev) => {
         if (!prev.length) return prev;
 
         const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
-        const updated = validForApi.find((v) => v.id === currentVisitorId);
-        if (!updated) return prev;
 
-        // 🔹 Tentukan status baru
-        let newStatus = updated.visitor_status;
+        const isAffected = validForApi.some((v) => v.id === currentVisitorId);
+        if (!isAffected) return prev;
+
+        let newStatus = prev[0].visitor_status;
+
         if (bulkAction === 'checkin') newStatus = 'Checkin';
         else if (bulkAction === 'checkout') newStatus = 'Checkout';
         else if (bulkAction === 'block') newStatus = 'Block';
-        else if (bulkAction === 'unblock') newStatus = 'Unblock';
+        else if (bulkAction === 'unblock') newStatus = 'Preregis';
 
-        // 🔹 Tentukan nilai is_block baru
         let newIsBlock = prev[0]?.is_block ?? null;
         if (bulkAction === 'block') newIsBlock = 1;
         else if (bulkAction === 'unblock') newIsBlock = null;
@@ -1358,62 +2010,52 @@ const OperatorView = () => {
         ];
       });
 
-      // 🧾 Buat pesan hasil akhir per visitor
       const resultMessages = selectedData.map((v) => {
         const status = v.visitor_status;
         const done = v.is_praregister_done;
 
         switch (bulkAction) {
           case 'checkin':
-            if (!done)
-              return `⚠️ ${v.name} belum melakukan pra-registrasi, isi form terlebih dahulu.`;
-            if (status === 'Checkin') return `✅ ${v.name} sudah Check In sebelumnya.`;
-            if (status === 'Preregis') return `✅ ${v.name} berhasil Check In.`;
-            return `⚠️ ${v.name} tidak bisa Checkin karena status telah ${status}.`;
+            if (!done) return `${v.name} doesn't do preregistration, please do it first.`;
+            if (status === 'Checkin') return `${v.name} already Check in before.`;
+            if (status === 'Preregis') return ` ${v.name} successfully Check In.`;
+            return `${v.name} cannot  Checkin because status is ${status}.`;
 
           case 'checkout':
-            if (status === 'Checkin') return `✅ ${v.name} berhasil Check Out.`;
+            if (status === 'Checkin') return ` ${v.name} successfully Check Out.`;
             if (status === 'Preregis')
-              return `⚠️ ${v.name} belum melakukan pra-registrasi, isi form terlebih dahulu.`;
-            if (status === 'Checkout') return `✅ ${v.name} sudah Check Out sebelumnya.`;
-            return `⚠️ ${v.name} belum Check In, jadi tidak bisa Check Out.`;
+              return `${v.name} haven't completed pre-registration yet. Please fill out the form first.`;
+            if (status === 'Checkout') return ` ${v.name} already Check Out before.`;
+            return `${v.name}  cannot Checkin because status is ${status}. `;
 
           case 'block':
-            return `✅ ${v.name} berhasil diblokir.`;
+            return ` ${v.name} successfully block.`;
 
           case 'unblock':
-            return `✅ ${v.name} berhasil di-unblock.`;
+            return `${v.name} successfully unblock.`;
 
           default:
-            return `${v.name} dilewati.`;
+            return `${v.name} skip.`;
         }
       });
 
-      // 🔔 Tampilkan semua pesan sekaligus di snackbar
-      setSnackbarMsg(resultMessages.join('\n'));
-      setSnackbarType('info');
-      setSnackbarOpen(true);
-
-      // Reset
+      const invitationId = invitationCode?.[0]?.id;
+      if (invitationId) {
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+        await queryClient.invalidateQueries({ queryKey: ['upcoming-visitors'] });
+        await queryClient.invalidateQueries({ queryKey: ['upcoming-purpose'] });
+      }
       setSelectedVisitors([]);
       setBulkAction('');
 
-      // Refetch background
-      const invitationId = invitationCode?.[0]?.id;
-      if (invitationId) {
-        setTimeout(async () => {
-          await fetchRelatedVisitorsByInvitationId(invitationId);
-        }, 500);
-      }
+      showSwal('success', resultMessages.join('\n'));
     } catch (error: any) {
-      console.error('❌ Multiple Action Failed:', error);
-      toast('Gagal melakukan aksi massal. Coba lagi.', 'error');
+      showSwal('error', error?.message || 'Failed to perform multiple action.');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 600);
+      setLoadingAccess(false);
     }
   };
 
-  // 🧩 Ambil data visitor terpilih
   const selectedData =
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
@@ -1423,7 +2065,6 @@ const OperatorView = () => {
           ),
         ].filter(Boolean);
 
-  // 🧠 Mapping aksi berdasarkan visitor_status
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
     Checkout: ['block'],
@@ -1431,39 +2072,21 @@ const OperatorView = () => {
     Unblock: ['block'],
   };
 
-  // 🧩 Ambil semua status unik
-  const statuses = new Set(selectedData.map((v: any) => v.visitor_status));
-
-  // 🟩 Cek kondisi praregister
-  const hasPreregis = selectedData.some((v: any) => v.visitor_status === 'Preregis');
-  const preregTrue = selectedData.some((v: any) => v.is_praregister_done === true);
-  const preregFalse = selectedData.some((v: any) => v.is_praregister_done === false);
-
-  // 🧮 Set hasil aksi
   let actions = new Set<string>();
 
-  // ===================================================
-  // 🧩 1️⃣ SINGLE SELECTION
-  // ===================================================
   if (selectedData.length === 1) {
     const v = selectedData[0];
-    // console.log('tes', v);
 
-    // Jika visitor belum pra-register → tampilkan Fill Form
     if (v?.visitor_status === 'Preregis' && !v?.is_praregister_done) {
       actions.add('fill_form');
     }
 
-    // Tambahkan aksi berdasarkan status
     (statusActions[v?.visitor_status as string] || []).forEach((a: any) => actions.add(a));
 
-    // Untuk Preregis yang sudah pra-register → tambahkan checkin dan block
     if (v?.visitor_status === 'Preregis' && v?.is_praregister_done) {
       actions.add('checkin');
       actions.add('block');
     }
-
-    // const isBlocked = !!(v?.is_block || v?.block_by);
     const isBlocked = !!v?.is_block;
 
     if (v?.visitor_status === 'Checkin' && isBlocked) {
@@ -1476,27 +2099,7 @@ const OperatorView = () => {
       actions.add('unblock');
       actions.delete('block');
     }
-  }
-
-  // ===================================================
-  // 🧩 2️⃣ MULTIPLE SELECTION
-  // ===================================================
-  else if (selectedData.length > 1) {
-    // // 🔸 Jika ada Preregis yang belum pra-register
-    // if (hasPreregis && preregFalse) {
-    //   actions.add('fill_form');
-    // }
-
-    // // 🔸 Jika ada yang sudah pra-register (boleh checkin/block)
-    // if (hasPreregis && preregTrue) {
-    //   actions.add('checkin');
-    //   actions.add('block');
-    // }
-
-    // // 🔸 Gabungkan semua kemungkinan aksi lain (Checkin, Block, dsb.)
-    // for (const status of statuses) {
-    //   (statusActions[status] || []).forEach((a) => actions.add(a));
-    // }
+  } else if (selectedData.length > 1) {
     const baseStatusActions: Record<string, string[]> = {
       Checkin: ['checkout', 'block'],
       Checkout: ['block'],
@@ -1516,23 +2119,14 @@ const OperatorView = () => {
       return baseStatusActions[status as string] || [];
     });
 
-    // 🔹 Ambil semua action (union)
     const union = Array.from(new Set(actionArrays.flat()));
 
-    // 🔹 Tambahkan hasil union ke set actions
     union.forEach((a) => actions.add(a));
   }
-
-  // ===================================================
-  // 🧩 3️⃣ Fallback (tidak ada aksi valid)
-  // ===================================================
   if (actions.size === 0) {
-    actions.add('fill_form'); // minimal fallback
+    actions.add('fill_form');
   }
 
-  // ===================================================
-  // 🏷️ Dropdown Display Map
-  // ===================================================
   const labelMap: Record<string, string> = {
     fill_form: 'Fill Form',
     checkin: 'Check In',
@@ -1540,98 +2134,34 @@ const OperatorView = () => {
     block: 'Block',
     unblock: 'Unblock',
   };
+  const isHost = selectedData[0]?.is_host;
 
-  // 🧾 Siapkan untuk dropdown
-  const availableActions = [...actions].map((a) => ({
-    label: labelMap[a] || a,
-    value: a,
-  }));
-
-  // ============================================================
-  // 🧩 State & handler
-  // ============================================================
-  const [openFillForm, setOpenFillForm] = useState(false);
-  const [fillFormData, setFillFormData] = useState<any[]>([]);
-  const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
-  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
-  const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
-
-  const sanitizeRemarks = (r?: string | null) => {
-    const v = (r ?? '').trim().toLowerCase();
-    return v === 'indentity_id' ? 'identity_id' : v;
-  };
-
-  const REQUIRED_VI = ['name', 'email', 'organization'] as const;
-  const hasVIFields = (s?: any) => {
-    const r = new Set(
-      formsOf(s)
-        .map((f: any) => sanitizeRemarks(f?.remarks))
-        .filter(Boolean),
-    );
-    return REQUIRED_VI.every((x) => r.has(x));
-  };
-  const pickVisitorInfoSingle = (sections: any[] = []) =>
-    sections.find((s) => !s?.is_document && !s?.can_multiple_used && hasVIFields(s));
-
-  const pickPurposeVisit = (sections: any[] = []) =>
-    sections.find(
-      (s) =>
-        !s?.is_document &&
-        formsOf(s).some((f: any) =>
-          ['host', 'agenda', 'site_place', 'visitor_period_start', 'visitor_period_end'].includes(
-            sanitizeRemarks(f?.remarks),
-          ),
-        ),
-    );
-
-  const cloneForms = (forms?: any[]) =>
-    Array.isArray(forms)
-      ? forms.map((f, idx) => ({
-          ...f,
-          sort: f.sort ?? idx,
-          foreign_id: asStr(f.foreign_id),
-          answer_text: '',
-          answer_datetime: '',
-          answer_file: '',
-          multiple_option_fields: Array.isArray(f.multiple_option_fields)
-            ? f.multiple_option_fields.map((opt: any) =>
-                typeof opt === 'object' ? { ...opt } : opt,
-              )
-            : [],
-        }))
-      : [];
-
-  const handleUploadMethodChange = (ukey: string, v: string) => {
-    setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
-  };
+  const availableActions = [...actions]
+    .filter((a) => !(isHost && a === 'fill_form'))
+    .map((a) => ({
+      label: labelMap[a] || a,
+      value: a,
+    }));
 
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
-    // Cek apakah data datang dari API (punya `form`)
     const hasForm = list.some((s) => Array.isArray(s.form));
 
     if (hasForm) {
-      // Pisahkan dokumen dan non-dokumen
       const nonDocSections = list.filter((s) => !s.is_document);
       const docSections = list.filter((s) => s.is_document);
 
-      // Ambil sumber Visitor Info, Parking, dan Purpose Visit
       const visitorInfoSrc = nonDocSections.find((s) =>
         s.name.toLowerCase().includes('visitor information'),
       );
-      const parkingSrc = nonDocSections.find((s) =>
-        s.name.toLowerCase().includes('parking/vehicle'),
-      );
+      const parkingSrc = nonDocSections.find((s) => s.name.toLowerCase().includes('vehicle'));
       const purposeVisitSrc = nonDocSections.find((s) =>
         s.name.toLowerCase().includes('purpose visit'),
       );
 
-      // Gabungkan form dokumen
       const docForms = docSections.flatMap((d) => d.form || []);
 
-      // Utility untuk buat section
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
@@ -1641,7 +2171,7 @@ const OperatorView = () => {
           : [];
 
         return {
-          id: src?.id ?? crypto.randomUUID(),
+          id: src?.id ?? generateUUIDv4(),
           name,
           is_document: false,
           can_multiple_used: allowMultiple,
@@ -1649,7 +2179,6 @@ const OperatorView = () => {
         };
       };
 
-      // 🔹 Gabungkan Visitor Info + Parking + Dokumen jadi 1 group
       const visitorCombinedForms = [
         ...(visitorInfoSrc?.form || []),
         ...(parkingSrc?.form || []),
@@ -1657,20 +2186,17 @@ const OperatorView = () => {
       ].map((f: any, i: number) => ({ ...f, sort: f.sort ?? i }));
 
       const visitorGroupSection = {
-        id: visitorInfoSrc?.id ?? crypto.randomUUID(),
+        id: visitorInfoSrc?.id ?? generateUUIDv4(),
         name: 'Visitor Information (Group)',
         is_document: false,
         can_multiple_used: true,
         visit_form: visitorCombinedForms,
       };
 
-      // 🔹 Purpose Visit tetap terpisah
       const purposeVisitSection = makeSection(purposeVisitSrc, 'Purpose Visit', false, false);
-
       return [visitorGroupSection, purposeVisitSection];
     }
 
-    // fallback jika bukan data dari API (misal dari template visitor_type)
     return [
       {
         Id: 'visitor_info_group',
@@ -1691,113 +2217,15 @@ const OperatorView = () => {
     ];
   };
 
-  const DOC_REMARKS = new Set(['selfie_image', 'identity_image', 'nda']);
-
-  const asStr = (v: any) => (v == null ? '' : String(v));
-
-  const sameField = (a: any, b: any) =>
-    (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
-    (a?.remarks &&
-      b?.remarks &&
-      String(a.remarks).toLowerCase() === String(b.remarks).toLowerCase());
-
-  const pickAns = (f: any) => {
-    const o: any = {};
-    if (f?.answer_text) o.answer_text = f.answer_text;
-    if (f?.answer_datetime) o.answer_datetime = f.answer_datetime;
-    if (f?.answer_file) o.answer_file = f.answer_file;
-    return o;
-  };
-
-  const isPurposeVisit = (section: any) => {
-    if (section?.is_document) return false;
-    const forms = formsOf(section);
-    const PV = new Set([
-      'host',
-      'agenda',
-      'site_place',
-      'visitor_period_start',
-      'visitor_period_end',
-    ]);
-    return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
-  };
-
-  const cloneFormWithEmptyAnswers = (f: any, idx: number) => ({
-    ...f,
-    sort: f.sort ?? idx,
-    remarks: sanitizeRemarks(f.remarks),
-    foreign_id: asStr(f.foreign_id),
-    answer_text: '',
-    answer_datetime: '',
-    answer_file: '',
-    multiple_option_fields: Array.isArray(f.multiple_option_fields)
-      ? f.multiple_option_fields.map((opt: any) => (typeof opt === 'object' ? { ...opt } : opt))
-      : [],
-  });
-
-  const buildGroupedPages = (sections: any[] = []) => {
-    const single_page: any[] = [];
-    const batch_page: Record<string, any> = {};
-
-    sections.forEach((section) => {
-      const forms = formsOf(section);
-
-      // Purpose Visit → single_page
-      if (isPurposeVisit(section)) {
-        if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
-          forms.forEach((f: any, idx: number) => {
-            const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
-            single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
-          });
-        }
-        // kalau self_only = true → biarkan kosong di groupedPages
-        return;
-      }
-
-      // Non-document → batch_page (template kolom)
-      if (!section?.is_document) {
-        forms.forEach((f: any, idx: number) => {
-          const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
-          const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
-          const secForeign = (section as any)?.foreign_id ?? (section as any)?.foreignId ?? null;
-          const formForeign = (f as any)?.foreign_id ?? (f as any)?.foreignId ?? null;
-          const formCustom = (f as any)?.custom_field_id ?? (f as any)?.customFieldId ?? null;
-
-          const resolvedForeign = formForeign ?? secForeign ?? formCustom ?? formId ?? null;
-
-          batch_page[idx] = {
-            ...cloneFormWithEmptyAnswers(f, idx),
-            foreign_id: asStr(resolvedForeign),
-          };
-        });
-      }
-    });
-
-    return {
-      single_page,
-      batch_page,
-      // batch_rows: [{}], // ← siapkan 1 baris default
-    };
-  };
-
-  const [invitationDetail, setInvitationDetail] = useState<any>([]);
-
-  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
-
-  const [applyToAll, setApplyToAll] = useState(false);
-
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setApplyToAll(checked);
-    console.log('✅ Apply to another visitor:', checked);
   };
 
   const handleOpenFillFormDialog = async (visitors: any[] | string) => {
     try {
       let visitorList: any[] = [];
 
-      // 🔧 Normalize input jadi object[]
       if (typeof visitors === 'string') {
         const v = relatedVisitors.find((x) => x.id === visitors);
         if (v) visitorList = [v];
@@ -1816,30 +2244,21 @@ const OperatorView = () => {
         return;
       }
 
-      // 🔹 Ambil detail form untuk semua visitor
-      const results = await Promise.all(
-        visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
-      );
-
-      // 🔹 Ambil template dari visitor pertama (untuk definisi global)
+      const results = await Promise.all(visitorList.map((v) => getDetailInvitationForm(v.id)));
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
 
-      // 🔹 Build Group Sections berdasarkan template pertama
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
-      setFillFormActiveStep(0);
-      setFillFormGroupedPages(buildGroupedPages(baseSections));
+      setFillFormActiveStep(-1);
 
-      // 🔹 Buat data form per visitor berdasarkan hasilnya sendiri
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
         const qPages = res?.collection?.question_page ?? [];
 
-        // Gunakan buildGroupSections untuk masing-masing visitor
         const builtSections = buildGroupSections(qPages);
         const wrappedSections = builtSections.map((section) => ({
           ...section,
@@ -1852,12 +2271,19 @@ const OperatorView = () => {
           question_page: structuredClone(wrappedSections),
         };
       });
-
+      // console.log("visitorGroupList", visitorGroupList);
       setFillFormDataVisitor(visitorGroupList);
+
       setOpenFillForm(true);
-    } catch (error) {
-      console.error('Failed to open fill form:', error);
-      toast('Failed to load form', 'error');
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.msg ??
+        e?.response?.data?.message ??
+        e?.message ??
+        e?.msg ??
+        'Failed to load forms';
+
+      showSwal('error', message);
     }
   };
 
@@ -1870,13 +2296,13 @@ const OperatorView = () => {
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -1903,718 +2329,16 @@ const OperatorView = () => {
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
-  const renderFieldInput = (
-    field: FormVisitor,
-    index: number,
-    onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void,
-    onDelete?: (index: number) => void,
-    opts?: { showLabel?: boolean; uniqueKey?: string },
-  ) => {
-    const showLabel = opts?.showLabel ?? true;
-
-    const renderInput = () => {
-      // const [uploadMethod, setUploadMethod] = React.useState('file'); // default file upload
-      const key = opts?.uniqueKey ?? String(index);
-      switch (field.field_type) {
-        case 0: // Text
-          return (
-            <TextField
-              size="small"
-              value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder=""
-              fullWidth
-              sx={{ minWidth: 160, maxWidth: '100%' }}
-            />
-          );
-
-        case 1: // Number
-          return (
-            <TextField
-              type="number"
-              size="small"
-              value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder="Enter number"
-              fullWidth
-            />
-          );
-
-        case 2: // Email
-          return (
-            <TextField
-              type="email"
-              size="small"
-              value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder=""
-              fullWidth
-              sx={{ minWidth: 160, maxWidth: '100%' }}
-            />
-          );
-
-        case 3: {
-          let options: { value: string; name: string }[] = [];
-
-          // 🔹 Ambil value default dari payload form detail
-          const hostName = invitationDetail?.collection?.host_name ?? '';
-          const hostId = invitationDetail?.collection?.host ?? '';
-          const sitePlaceName = invitationDetail?.collection?.site_place_name ?? '';
-          const sitePlaceId = invitationDetail?.collection?.site_place ?? '';
-
-          switch (field.remarks) {
-            case 'host':
-              // gunakan value dari API langsung
-              options = [{ value: hostId, name: hostName }];
-              break;
-
-            case 'employee':
-              options = allVisitorEmployee.map((emp: any) => ({
-                value: emp.id,
-                name: emp.name,
-              }));
-              break;
-
-            case 'site_place':
-              // gunakan value dari API langsung
-              options = [{ value: sitePlaceId, name: sitePlaceName }];
-              break;
-
-            default:
-              options = (field.multiple_option_fields || []).map((opt: any) =>
-                typeof opt === 'object' ? opt : { value: opt, name: opt },
-              );
-              break;
-          }
-
-          // 🔹 Gunakan uniqueKey biar gak tabrakan antar visitor group
-          const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
-          const inputVal = inputValues[uniqueKey as any] || '';
-
-          // 🔒 Disabled khusus untuk purpose visit
-          const isDisabled =
-            field.remarks === 'host' ||
-            field.remarks === 'site_place' ||
-            field.remarks === 'employee';
-
-          return (
-            <Autocomplete
-              size="small"
-              // disabled={isDisabled} // ✅ Disabled biar readonly
-              freeSolo
-              options={options}
-              getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
-              inputValue={inputVal}
-              onInputChange={(_, newInputValue) =>
-                setInputValues((prev) => ({ ...prev, [uniqueKey]: newInputValue }))
-              }
-              filterOptions={(opts, state) => {
-                const term = (state.inputValue || '').toLowerCase();
-                if (term.length < 3) return [];
-                return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
-              }}
-              noOptionsText={
-                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
-              }
-              value={
-                options.find(
-                  (opt: { value: string; name: string }) =>
-                    opt.value?.toLowerCase?.() === field.answer_text?.toLowerCase?.(),
-                ) || null
-              }
-              onChange={(_, newValue) =>
-                onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Ketik minimal 3 karakter"
-                  fullWidth
-                  sx={{ minWidth: 160 }}
-                />
-              )}
-            />
-          );
-        }
-
-        case 4: // Date
-          return (
-            <TextField
-              type="date"
-              size="small"
-              value={field.answer_datetime}
-              onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-              fullWidth
-            />
-          );
-
-        case 5: // Radio
-          if (field.remarks === 'gender') {
-            const options = [
-              { value: '1', name: 'Male' },
-              { value: '0', name: 'Female' },
-              { value: '2', name: 'Prefer not to say' },
-            ];
-
-            const value = field.answer_text != null ? String(field.answer_text) : '';
-
-            return (
-              <TextField
-                select
-                size="small"
-                fullWidth
-                sx={{ width: 160 }}
-                value={value}
-                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              >
-                {options.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }
-          if (field.remarks === 'vehicle_type') {
-            const options = [
-              { value: 'car', label: 'Car' },
-              { value: 'bus', label: 'Bus' },
-              { value: 'motor', label: 'Motor' },
-              { value: 'bicycle', label: 'Bicycle' },
-              { value: 'truck', label: 'Truck' },
-              { value: 'private_car', label: 'Private Car' },
-              { value: 'other', label: 'Other' },
-            ];
-
-            // gunakan string kosong jika belum ada nilai
-            const currentValue = field.answer_text ?? '';
-
-            return (
-              <TextField
-                select
-                size="small"
-                fullWidth
-                value={currentValue} // ✅ wajib ada agar bisa memilih
-                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                sx={{ minWidth: 160 }}
-              >
-                <MenuItem value="" disabled>
-                  Select Vehicle Type
-                </MenuItem>
-                {options.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }
-
-          if (field.remarks === 'is_driving') {
-            const options = [
-              { value: 'true', label: 'Yes' },
-              { value: 'false', label: 'No' },
-            ];
-
-            const currentValue = field.answer_text ?? ''; // kosong jika belum ada jawaban
-
-            return (
-              <FormControl component="fieldset" sx={{ width: '100%' }}>
-                <RadioGroup
-                  value={currentValue}
-                  onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                  row
-                  sx={{ minWidth: 130 }}
-                >
-                  {options.map((opt) => (
-                    <FormControlLabel
-                      key={opt.value}
-                      value={opt.value}
-                      control={<Radio size="small" />}
-                      label={opt.label}
-                    />
-                  ))}
-                </RadioGroup>
-              </FormControl>
-            );
-          }
-
-          return (
-            <TextField
-              select
-              size="small"
-              value={field.answer_text || ''}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              fullWidth
-            >
-              {field.multiple_option_fields?.map((opt: any) => (
-                <MenuItem key={opt.id} value={opt.value}>
-                  {opt.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          );
-
-        case 6:
-          if (field.remarks === 'is_employee') {
-            const options = Array.isArray(field.multiple_option_fields)
-              ? field.multiple_option_fields.map((opt) => ({
-                  value: String(opt.value).toLowerCase(),
-                  name: opt.name,
-                }))
-              : [
-                  { value: 'true', name: 'Yes' },
-                  { value: 'false', name: 'No' },
-                ];
-
-            const currentValue = String(field.answer_text).toLowerCase();
-
-            return (
-              <Box display="flex" alignItems="center" gap={2}>
-                {options.map((opt) => (
-                  <FormControlLabel
-                    key={opt.value}
-                    control={
-                      <Checkbox
-                        checked={currentValue === opt.value}
-                        onChange={() => onChange(index, 'answer_text', opt.value)}
-                      />
-                    }
-                    label={opt.name}
-                  />
-                ))}
-              </Box>
-            );
-          }
-
-          // fallback default (checkbox tunggal)
-          return (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={Boolean(field.answer_text)}
-                  onChange={(e) => onChange(index, 'answer_text', e.target.checked)}
-                />
-              }
-              label=""
-            />
-          );
-
-        // fallback default checkbox single
-
-        case 8: // Time
-          return (
-            <TextField
-              type="time"
-              size="small"
-              value={field.answer_datetime}
-              onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-              fullWidth
-            />
-          );
-
-        case 9: //Datetimepicker
-          return (
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-              <DateTimePicker
-                value={field.answer_datetime ? dayjs(field.answer_datetime) : null}
-                ampm={false}
-                onChange={(newValue) => {
-                  if (newValue) {
-                    const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
-                    onChange(index, 'answer_datetime', utc);
-                  }
-                }}
-                format="ddd, DD - MMM - YYYY, HH:mm"
-                viewRenderers={{
-                  hours: renderTimeViewClock,
-                  minutes: renderTimeViewClock,
-                  seconds: renderTimeViewClock,
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                  },
-                }}
-              />
-            </LocalizationProvider>
-          );
-
-        case 10: // Camera
-          if (field.remarks === 'selfie_image') {
-            return (
-              <CameraUpload
-                value={field.answer_file}
-                onChange={(url) => onChange(index, 'answer_file', url)}
-              />
-            );
-          }
-          return (
-            <CameraUpload
-              value={field.answer_file}
-              onChange={(url) => onChange(index, 'answer_file', url)}
-            />
-          );
-
-        case 11: {
-          // File upload (PDF / NDA)
-          // const inputId = `pdf-${opts?.uniqueKey ?? index}`;
-          const key = opts?.uniqueKey ?? String(index);
-          const fileUrl = (field as any).answer_file as string | undefined;
-          return (
-            <Box>
-              <label htmlFor={key}>
-                <Box
-                  sx={{
-                    border: '2px dashed #90caf9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    borderRadius: 2,
-                    p: 0.5,
-                    textAlign: 'center',
-                    backgroundColor: '#f5faff',
-                    cursor: 'pointer',
-                    width: '100%',
-                    minWidth: 160,
-                  }}
-                >
-                  <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                  <Typography variant="subtitle1">Upload File</Typography>
-                </Box>
-              </label>
-
-              <input
-                id={key}
-                type="file"
-                accept="*"
-                hidden
-                // onChange={handlePDFUploadFor(index, onChange)
-                onChange={(e) =>
-                  handleFileChangeForField(
-                    e as React.ChangeEvent<HTMLInputElement>,
-                    (url) => onChange(index, 'answer_file', url),
-                    key,
-                  )
-                }
-              />
-
-              {fileUrl && (
-                <Box mt={1} display="flex" alignItems="center" gap={1}>
-                  <Typography variant="caption" noWrap>
-                    {/* {fileUrl.split('/').pop()} */}
-                    {uploadNames[key] ?? ''}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() =>
-                      handleRemoveFileForField(
-                        (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), // kosongkan state
-                        key, // reset <input id=key>
-                      )
-                    }
-                  >
-                    <IconX size={16} />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-          );
-        }
-
-        case 12: {
-          const key = opts?.uniqueKey ?? String(index);
-          return (
-            <Box
-              display="flex"
-              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }} // ⬅️ stack on mobile
-              alignItems={{ xs: 'stretch', md: 'center' }}
-              justifyContent="space-between"
-              gap={1.5}
-              width="100%" // ⬅️ let it adapt instead of fixed width
-              sx={{ maxWidth: 400 }}
-            >
-              <TextField
-                select
-                size="small"
-                value={uploadMethods[key] || 'file'}
-                onChange={(e) => handleUploadMethodChange(key, e.target.value)}
-                fullWidth
-                sx={{
-                  width: { xs: '100%', md: '200px' }, // full on mobile
-                }}
-              >
-                <MenuItem value="file">Choose File</MenuItem>
-                <MenuItem value="camera">Take Photo</MenuItem>
-              </TextField>
-
-              {(uploadMethods[key] || 'file') === 'camera' ? (
-                <CameraUpload
-                  value={field.answer_file}
-                  onChange={(url) => onChange(index, 'answer_file', url)}
-                />
-              ) : (
-                <Box sx={{ width: { xs: '100%', md: '200px' } }}>
-                  <label htmlFor={key}>
-                    <Box
-                      sx={{
-                        border: '2px dashed #90caf9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1.5,
-                        borderRadius: 2,
-                        p: 0.5,
-                        textAlign: 'center',
-                        backgroundColor: '#f5faff',
-                        cursor: 'pointer',
-                        width: '100%',
-                        transition: '0.2s',
-                        '&:hover': { backgroundColor: '#e3f2fd' },
-                      }}
-                    >
-                      <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
-                        Upload File
-                      </Typography>
-                    </Box>
-                  </label>
-
-                  <input
-                    id={key}
-                    type="file"
-                    accept="*"
-                    hidden
-                    onChange={(e) =>
-                      handleFileChangeForField(
-                        e as React.ChangeEvent<HTMLInputElement>,
-                        (url) => onChange(index, 'answer_file', url),
-                        key,
-                      )
-                    }
-                  />
-
-                  {!!(field as any).answer_file && (
-                    <Box
-                      mt={0.5}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
-                      >
-                        {uploadNames[key] ?? ''}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        disabled={!!removing[key]}
-                        onClick={() =>
-                          handleRemoveFileForField(
-                            (field as any).answer_file,
-                            (url) => onChange(index, 'answer_file', url),
-                            key,
-                          )
-                        }
-                      >
-                        <IconX size={16} />
-                      </IconButton>
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </Box>
-          );
-        }
-        default:
-          return (
-            <TextField
-              size="small"
-              value={field.long_display_text}
-              onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
-              placeholder="Enter value"
-              fullWidth
-            />
-          );
-      }
-    };
-
-    return (
-      <Box sx={{ overflow: 'auto', width: '100%' }}>
-        {showLabel && (
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            {field.long_display_text}
-          </Typography>
-        )}
-        {renderInput()}
-      </Box>
-    );
-  };
-
-  // const handleSubmitPramultiple = async () => {
-  //   try {
-  //     // if (!invitationDetail || !fillFormDataVisitor.length) {
-  //     //   toast('Form belum lengkap', 'warning');
-  //     //   return;
-  //     // }
-
-  //     // if (!questionPageTemplate.length) {
-  //     //   toast('Template question_page belum dimuat', 'error');
-  //     //   return;
-  //     // }
-
-  //     if(loadingAccess) return;
-  //     setLoadingAccess(true);
-
-  //     const tzFromApi =
-  //       invitationDetail.collection?.tz ||
-  //       invitationDetail.collection?.site_place_data?.timezone ||
-  //       'Asia/Jakarta';
-
-  //     const visitorType =
-  //       invitationDetail.collection?.visitor_type ||
-  //       invitationDetail.collection?.visitor_type_data?.id;
-  //     const siteId =
-  //       invitationDetail.collection?.site_place || invitationDetail.collection?.site_place_data?.id;
-  //     const isGroup = invitationDetail.collection?.is_group ?? true;
-
-  //     // 🟢 Ambil visitor yang dipilih
-  //     const selected = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
-
-  //     // 🔁 Bangun ulang setiap visitor berdasarkan index-nya di fillFormDataVisitor
-  //     const dataList = selected.map((visitor, gIdx) => {
-  //       const visitorGroup = fillFormDataVisitor[gIdx];
-  //       const visitorSections = visitorGroup?.question_page ?? [];
-
-  //       return {
-  //         trx_visitor_id: visitor.id,
-  //         visitor_type: visitorType,
-  //         type_registered: 1,
-  //         is_group: isGroup,
-  //         tz: tzFromApi,
-  //         // registered_site: siteId,
-  //         registered_site: '',
-  //         data_visitor: [
-  //           {
-  //             question_page: questionPageTemplate.map((templateSection: any) => ({
-  //               id: templateSection.id,
-  //               sort: templateSection.sort ?? 0,
-  //               name: templateSection.name,
-  //               status: 0,
-  //               is_document: !!templateSection.is_document,
-  //               can_multiple_used: !!templateSection.can_multiple_used,
-  //               self_only: templateSection.self_only ?? false,
-  //               foreign_id: templateSection.foreign_id ?? '',
-  //               form: (templateSection.form || []).map((templateField: any, fIdx: number) => {
-  //                 const remark = templateField.remarks?.toLowerCase();
-  //                 let answer_text: string | null = null;
-  //                 let answer_datetime: string | null = null;
-  //                 let answer_file: string | null = null;
-
-  //                 for (const groupSection of visitorSections) {
-  //                   const foundField = groupSection.form.find(
-  //                     (f: any) => f.remarks?.toLowerCase() === remark,
-  //                   );
-  //                   if (foundField) {
-  //                     answer_text = foundField.answer_text ?? null;
-  //                     answer_datetime = foundField.answer_datetime ?? null;
-
-  //                     if (foundField.field_type >= 10) {
-  //                       answer_file =
-  //                         foundField.answer_file ??
-  //                         foundField.answer_text ??
-  //                         foundField.answer_datetime ??
-  //                         null;
-  //                     }
-
-  //                     if (
-  //                       ['nda', 'selfie_image', 'identity_image'].includes(
-  //                         foundField.remarks?.toLowerCase(),
-  //                       )
-  //                     ) {
-  //                       answer_file =
-  //                         foundField.answer_file ??
-  //                         foundField.answer_text ??
-  //                         foundField.answer_datetime ??
-  //                         null;
-  //                     }
-
-  //                     break;
-  //                   }
-  //                 }
-
-  //                 return {
-  //                   sort: templateField.sort ?? fIdx,
-  //                   short_name: templateField.short_name,
-  //                   long_display_text: templateField.long_display_text,
-  //                   field_type: templateField.field_type,
-  //                   is_primary: !!templateField.is_primary,
-  //                   is_enable: !!templateField.is_enable,
-  //                   mandatory: !!templateField.mandatory,
-  //                   remarks: templateField.remarks,
-  //                   // custom_field_id: templateField.custom_field_id,
-  //                   // multiple_option_fields: templateField.multiple_option_fields || [],
-  //                   visitor_form_type: 1,
-  //                   answer_text,
-  //                   answer_datetime,
-  //                   answer_file,
-  //                 };
-  //               }),
-  //             })),
-  //           },
-  //         ],
-  //       };
-  //     });
-
-  //     const payload = { list_group: dataList };
-  //     console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-
-  //     const result = await createSubmitCompletePraMultiple(token as string, payload);
-  //     toast('Successfully submit praregister', 'success');
-  //     console.log('✅ Submit success:', result);
-  //     setOpenFillForm(false);
-  //   } catch (error) {
-  //     console.error('❌ Submit error:', error);
-  //     toast('Submit gagal', 'error');
-  //   }finally{
-  //     setTimeout(() => {
-  //       setLoadingAccess(false);
-  //     }, 500);
-  //   }
-  // };
-
-  const [selectedAccessIds, setSelectedAccessIds] = useState<string[]>([]);
-
-  // useEffect(() => {
-  //   console.table(
-  //     accessData.map((a) => ({
-  //       name: a.access_control_name,
-  //       status: a.visitor_give_access,
-  //       early: a.early_access,
-  //       allowed: getAllowedActions(a.visitor_give_access, a.early_access),
-  //     })),
-  //   );
-  // }, [accessData]);
-
-  // fungsi dasar (seperti sebelumnya)
   const getAllowedActions = (status: number, earlyAccess: boolean) => {
     if (earlyAccess) {
       switch (status) {
         case 0:
-          return ['Revoke', 'Block']; // early access belum grant
+          return ['Revoke', 'Block'];
         case 1:
-          return []; // granted — tetap bisa revoke/block
+          return [];
         case 2:
         case 3:
-          return []; // revoked/blocked — tidak bisa apa-apa
+          return [];
         default:
           return [];
       }
@@ -2639,7 +2363,7 @@ const OperatorView = () => {
       (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
     );
 
-    if (!perm) return []; // operator tidak punya izin sama sekali di access ini
+    if (!perm) return [];
 
     const actions: string[] = [];
     if (perm.can_grant) actions.push('Grant');
@@ -2649,41 +2373,14 @@ const OperatorView = () => {
     return actions;
   };
 
-  // 🔹 Ambil allowed actions untuk satu access ID hanya untuk visitor yang dipilih
-  // const getAllowedActionsForAccessId = (
-  //   accessId: string,
-  //   selectedVisitorIds: string[],
-  //   allAccessData: any[],
-
-  // ) => {
-  //   const records = allAccessData.filter(
-  //     (a) =>
-  //       a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
-  //       selectedVisitorIds.some(
-  //         (v) =>
-  //           v.toLowerCase() === a.trx_visitor_id?.toLowerCase() ||
-  //           v.toLowerCase() === a.trxVisitorId?.toLowerCase(),
-  //       ),
-  //   );
-
-  //   if (!records.length) return [];
-
-  //   const perVisitorActions = records.map((r) =>
-  //     getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
-  //   );
-
-  //   return perVisitorActions.reduce(
-  //     (acc, cur) => acc.filter((x) => cur.includes(x)),
-  //     perVisitorActions[0] || [],
-  //   );
-  // };
-
   const getAllowedActionsForAccessId = (
     accessId: string,
     selectedVisitorIds: string[],
     allAccessData: any[],
     permissionAccess: any[],
   ) => {
+    if (!accessId) return [];
+
     const records = allAccessData.filter(
       (a) =>
         a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
@@ -2700,16 +2397,13 @@ const OperatorView = () => {
       getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
     );
 
-    // hasil intersection semua visitor
     const commonActions = perVisitorActions.reduce(
       (acc, cur) => acc.filter((x) => cur.includes(x)),
       perVisitorActions[0] || [],
     );
 
-    // 🔹 Batasi lagi berdasarkan permission operator
     const permissionActions = getAllowedActionsByPermission(accessId, permissionAccess);
 
-    // ✅ ambil irisan antar dua array
     return commonActions.filter((action) => permissionActions.includes(action));
   };
 
@@ -2731,61 +2425,9 @@ const OperatorView = () => {
     );
   };
 
-  const allowedActions = useMemo(() => {
-    if (!selectedAccessIds.length || !selectedVisitors.length) return [];
+  const queryClient = useQueryClient();
 
-    // 🟢 Jika lebih dari satu visitor → batasi juga oleh permission
-    if (selectedVisitors.length > 1) {
-      const allActions = ['Grant', 'Revoke', 'Block'];
-
-      // Batasi berdasar permission operator
-      const permissionActions = selectedAccessIds.flatMap((id) =>
-        getAllowedActionsByPermission(id, permissionAccess),
-      );
-
-      // ambil irisan semua permission
-      const commonPermissionActions = allActions.filter((a) =>
-        permissionActions.every((perm) => perm.includes(a)),
-      );
-
-      return commonPermissionActions;
-    }
-
-    // 🔹 Kalau hanya satu visitor → hitung normal
-    return getAllowedActionsForMultiple(
-      selectedAccessIds,
-      selectedVisitors,
-      accessData,
-      permissionAccess,
-    );
-  }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
-
-  // const getAllowedActionsForMultiple = (selectedIds: string[], selectedVisitorIds: string[]) => {
-  //   if (!selectedIds.length || !selectedVisitorIds.length) return [];
-
-  //   const actionsList = selectedIds.map((id) =>
-  //     getAllowedActionsForAccessId(id, selectedVisitorIds, accessData),
-  //   );
-
-  //   return actionsList.reduce(
-  //     (acc, curr) => acc.filter((x) => curr.includes(x)),
-  //     actionsList[0] || [],
-  //   );
-  // };
-
-  // const allowedActions = useMemo(() => {
-  //   // Kalau belum pilih apa pun
-  //   if (!selectedAccessIds.length || !selectedVisitors.length) return [];
-
-  //   // 🟢 Jika lebih dari satu visitor → tampilkan semua action
-  //   if (selectedVisitors.length > 1) {
-  //     return ['Grant', 'Revoke', 'Block'];
-  //   }
-
-  //   // 🔹 Kalau hanya satu visitor → hitung normal
-  //   return getAllowedActionsForMultiple(selectedAccessIds, selectedVisitors);
-  // }, [selectedAccessIds, selectedVisitors, accessData]);
-
+  // Multiple
   const handleSubmitPramultiple = async () => {
     try {
       if (loadingAccess) return;
@@ -2803,10 +2445,8 @@ const OperatorView = () => {
         invitationDetail.collection?.site_place || invitationDetail.collection?.site_place_data?.id;
       const isGroup = invitationDetail.collection?.is_group ?? true;
 
-      // 🟢 Ambil visitor yang dipilih
       const selected = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
 
-      // 🔁 Bangun ulang setiap visitor berdasarkan index-nya di fillFormDataVisitor
       const dataList = selected.map((visitor, gIdx) => {
         const visitorGroup = fillFormDataVisitor[gIdx];
         const visitorSections = visitorGroup?.question_page ?? [];
@@ -2817,7 +2457,10 @@ const OperatorView = () => {
           type_registered: 1,
           is_group: isGroup,
           tz: tzFromApi,
-          registered_site: '',
+          registered_site_id: registerSiteOperator,
+          flow: 'SubmitPraRegister',
+          is_self_registered: isSelfGroup === true,
+          filled_by_relationship: 'Operator',
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -2867,7 +2510,7 @@ const OperatorView = () => {
                     }
                   }
 
-                  return {
+                  const fieldPayload: any = {
                     sort: templateField.sort ?? fIdx,
                     short_name: templateField.short_name,
                     long_display_text: templateField.long_display_text,
@@ -2877,10 +2520,17 @@ const OperatorView = () => {
                     mandatory: !!templateField.mandatory,
                     remarks: templateField.remarks,
                     visitor_form_type: 1,
-                    answer_text,
-                    answer_datetime,
-                    answer_file,
                   };
+
+                  if ([10, 11, 12].includes(templateField.field_type)) {
+                    fieldPayload.answer_file = answer_file ?? null;
+                  } else if (templateField.field_type === 9) {
+                    fieldPayload.answer_datetime = answer_datetime ?? null;
+                  } else {
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                  }
+
+                  return fieldPayload;
                 }),
               })),
             },
@@ -2889,18 +2539,9 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-
-      // 🔵 Submit ke API
-      const result = await createSubmitCompletePraMultiple(token as string, payload);
-      toast('Successfully submit praregister', 'success');
-      console.log('✅ Submit success:', result);
-
-      setSnackbarMsg('Successfully submit praregister');
-      setSnackbarType('success');
-      setSnackbarOpen(true);
-
-      // 🟩 Update lokal biar langsung terlihat (UX cepat)
+      // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      await createSubmitCompletePraMultiple(payload);
+      showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
         prev.map((v) =>
           selectedVisitors.includes(v.id)
@@ -2913,19 +2554,23 @@ const OperatorView = () => {
         ),
       );
 
-      // 🟦 Ambil ulang data dari server agar 100% sinkron
+      setOpenFillForm(false);
+
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        console.log('🔄 Refetching visitors for invitation:', invitationId);
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
-
-      setOpenFillForm(false);
-      // setSelectedVisitors([]);
-      // setSelectMultiple(false);
-    } catch (error) {
-      console.error('❌ Submit error:', error);
-      toast('Submit gagal', 'error');
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-visitors'],
+      });
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error.response.data.collection || error.response.data.message || 'Failed to Pra Register!',
+      );
     } finally {
       setTimeout(() => {
         setLoadingAccess(false);
@@ -2933,214 +2578,10 @@ const OperatorView = () => {
     }
   };
 
-  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-
   const handleView = async (id: string) => {
     setSelectedInvitationId(id);
     setOpenDialogInvitation(true);
   };
-
-  // const handleAccessAction = async (
-  //   row: any,
-  //   action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
-  // ): Promise<void> => {
-  //   return new Promise(async (resolve) => {
-  //     const actionMap = { no_action: 0, grant: 1, revoke: 2, block: 3, unblock: 4 };
-  //     const accessControlId = row?.access_control_id || row?.id;
-  //     const actionCode = actionMap[action];
-
-  //     // 🧩 VALIDASI MULTI-VISITOR
-  //     const validateMultiVisitorAccess = (
-  //       accessId: string,
-  //       selectedVisitorIds: string[],
-  //       allAccessData: any[],
-  //       action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-  //     ) => {
-  //       const validVisitors: string[] = [];
-  //       const invalidVisitors: string[] = [];
-  //       const actionText = action.toUpperCase();
-
-  //       selectedVisitorIds.forEach((visitorId) => {
-  //         const record = allAccessData.find(
-  //           (a) =>
-  //             (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
-  //               a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()) &&
-  //             a.access_control_id?.toLowerCase() === accessId.toLowerCase(),
-  //         );
-
-  //         console.log('🔍 Checking visitor', visitorId, {
-  //           foundRecord: !!record,
-  //           record,
-  //           expectedAccessId: accessId,
-  //         });
-
-  //         if (!record) {
-  //           invalidVisitors.push(`${visitorId} (no record found)`);
-  //           return;
-  //         }
-
-  //         const { visitor_give_access, access_control_name, early_access } = record;
-
-  //         // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali no_action/unblock
-  //         if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'no_action') {
-  //           invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
-  //           return;
-  //         }
-
-  //         // 🚫 early_access = true → tidak bisa GRANT
-  //         if (early_access && action === 'grant') {
-  //           invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
-  //           return;
-  //         }
-
-  //         // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
-  //         if (
-  //           (action === 'revoke' || action === 'block') &&
-  //           visitor_give_access === 0 &&
-  //           !early_access
-  //         ) {
-  //           invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
-  //           return;
-  //         }
-
-  //         // 🚫 Sudah grant → tidak bisa grant lagi
-  //         if (action === 'grant' && visitor_give_access === 1) {
-  //           invalidVisitors.push(`${access_control_name} (already granted)`);
-  //           return;
-  //         }
-
-  //         // ✅ Kalau semua lolos → valid
-  //         validVisitors.push(visitorId);
-  //       });
-
-  //       return {
-  //         validVisitors,
-  //         invalidVisitors,
-  //         message:
-  //           invalidVisitors.length > 0
-  //             ? `⚠️ Some visitors cannot perform ${actionText}:\n${invalidVisitors.join('\n')}`
-  //             : null,
-  //       };
-  //     };
-
-  //     try {
-  //       setLoadingAccess(true);
-
-  //       // ✅ Jalankan validasi sebelum kirim ke backend
-  //       const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
-  //         accessControlId,
-  //         selectedVisitors,
-  //         accessData,
-  //         action,
-  //       );
-
-  //       // 🚫 Semua invalid → batalkan aksi
-  //       if (!validVisitors.length) {
-  //         setSnackbarMsg(message || 'No valid visitors to process.');
-  //         setSnackbarType('error');
-  //         setSnackbarOpen(true);
-  //         resolve();
-  //         return;
-  //       }
-
-  //       // ⚠️ Campuran valid + invalid → tampilkan warning tapi lanjut
-  //       if (invalidVisitors.length) {
-  //         setSnackbarMsg(
-  //           '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-  //         );
-  //         setSnackbarType('info');
-  //         setSnackbarOpen(true);
-  //       }
-
-  //       // 📨 Kirim hanya visitor yang valid
-  //       const payload = {
-  //         data_access: validVisitors.map((visitorId) => ({
-  //           access_control_id: accessControlId,
-  //           trx_visitor_id: visitorId,
-  //           action: actionCode,
-  //         })),
-  //       };
-
-  //       const res = await createGiveAccessOperator(token as string, payload);
-  //       console.log('✅ Access Action Response:', JSON.stringify(res, null, 2));
-
-  //       const backendMsg =
-  //         res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
-
-  //       setSnackbarMsg(`✅ ${backendMsg}`);
-  //       setSnackbarType('success');
-  //       setSnackbarOpen(true);
-
-  //       // 🟢 Update accessData di state agar langsung sinkron
-  //       setAccessData((prev) =>
-  //         prev.map((a) =>
-  //           validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
-  //             ? { ...a, visitor_give_access: actionCode }
-  //             : a,
-  //         ),
-  //       );
-
-  //       resolve();
-  //     } catch (err: any) {
-  //       console.error('❌ Access Action Error:', err);
-  //       const backendMsg =
-  //         err?.response?.data?.collection?.[0] ||
-  //         err?.response?.data?.msg ||
-  //         err?.response?.data?.message ||
-  //         err?.response?.data?.error ||
-  //         err?.message ||
-  //         'Unknown error occurred.';
-
-  //       setSnackbarMsg(`${backendMsg}`);
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       resolve(); // biar loop lanjut
-  //     } finally {
-  //       setTimeout(() => setLoadingAccess(false), 600);
-  //     }
-  //   });
-  // };
-
-  // ✅ GABUNGKAN MULTI VISITOR ACCESS DENGAN TEMPLATE DATA PERTAMA
-  useEffect(() => {
-    if (!selectedVisitors.length) {
-      setAccessData([]);
-      return;
-    }
-
-    // Ambil semua access milik visitor terpilih (case-insensitive)
-    const filtered = allAccessData.filter((a) =>
-      selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
-    );
-
-    // 🔹 Gabungkan access berdasarkan access_control_id, tapi simpan semua visitor-nya
-    const mergedAccess = Object.values(
-      filtered.reduce((acc: any, curr: any) => {
-        const key = curr.access_control_id;
-        if (!acc[key]) {
-          acc[key] = {
-            ...curr,
-            visitors: [curr.trx_visitor_id],
-          };
-        } else {
-          acc[key].visitors.push(curr.trx_visitor_id);
-
-          // Ambil visitor_give_access dengan prioritas tertinggi (block > revoke > grant > none)
-          acc[key].visitor_give_access = Math.max(
-            acc[key].visitor_give_access ?? 0,
-            curr.visitor_give_access ?? 0,
-          );
-
-          // Jika salah satu early_access = true, tandai true
-          acc[key].early_access = acc[key].early_access || curr.early_access;
-        }
-        return acc;
-      }, {}),
-    );
-
-    console.log('🎯 Merged accessData (multi visitor-aware):', mergedAccess);
-    setAccessData(mergedAccess);
-  }, [selectedVisitors, allAccessData]);
 
   const validateMultiVisitorAccess = (
     accessId: string,
@@ -3182,7 +2623,6 @@ const OperatorView = () => {
 
       const { visitor_give_access, access_control_name, early_access } = record;
 
-      // 🚫 Sudah revoke/block → skip
       if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
         invalidVisitors.push({
           visitorId,
@@ -3193,7 +2633,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 early_access → tidak bisa grant
       if (early_access && action === 'grant') {
         invalidVisitors.push({
           visitorId,
@@ -3204,7 +2643,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 belum grant → tidak bisa revoke/block (kecuali early_access)
       if (
         (action === 'revoke' || action === 'block') &&
         visitor_give_access === 0 &&
@@ -3219,7 +2657,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 sudah grant → tidak bisa grant lagi
       if (action === 'grant' && visitor_give_access === 1) {
         invalidVisitors.push({
           visitorId,
@@ -3230,7 +2667,6 @@ const OperatorView = () => {
         return;
       }
 
-      // ✅ Valid
       validVisitors.push({
         visitorId,
         name: visitorName,
@@ -3238,15 +2674,14 @@ const OperatorView = () => {
       });
     });
 
-    // 💬 Format pesan simple tapi informatif
     const lines: string[] = [];
 
     validVisitors.forEach((v) => {
-      lines.push(`✅ ${v.name} (${v.accessName}): ${actionText}`);
+      lines.push(`${v.name} (${v.accessName}): ${actionText}`);
     });
 
     invalidVisitors.forEach((v) => {
-      lines.push(`⚠️ ${v.name} (${v.accessName}): Skipped (${v.reason})`);
+      lines.push(`${v.name} (${v.accessName}): Skipped (${v.reason})`);
     });
 
     return {
@@ -3256,7 +2691,6 @@ const OperatorView = () => {
     };
   };
 
-  // ✅ HANDLE ACTION DENGAN VALIDASI MULTI VISITOR
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -3266,85 +2700,9 @@ const OperatorView = () => {
       const accessControlId = row?.access_control_id || row?.id;
       const actionCode = actionMap[action];
 
-      // 🧩 VALIDASI MULTI-VISITOR
-      // const validateMultiVisitorAccess = (
-      //   accessId: string,
-      //   visitorIds: string[],
-      //   allAccessData: any[],
-      //   action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-      // ) => {
-      //   const validVisitors: string[] = [];
-      //   const invalidVisitors: string[] = [];
-      //   const actionText = action.toUpperCase();
-
-      //   visitorIds.forEach((visitorId) => {
-      //     const record = allAccessData.find(
-      //       (a) =>
-      //         a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
-      //         (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
-      //           a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()),
-      //     );
-
-      //     console.log('🔍 Checking visitor', visitorId, {
-      //       foundRecord: !!record,
-      //       record,
-      //       expectedAccessId: accessId,
-      //     });
-
-      //     if (!record) {
-      //       invalidVisitors.push(`${visitorId} (no record found)`);
-      //       return;
-      //     }
-
-      //     const { visitor_give_access, access_control_name, early_access } = record;
-
-      //     // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali unblock
-      //     if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
-      //       invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
-      //       return;
-      //     }
-
-      //     // 🚫 early_access = true → tidak bisa GRANT
-      //     if (early_access && action === 'grant') {
-      //       invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
-      //       return;
-      //     }
-
-      //     // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
-      //     if (
-      //       (action === 'revoke' || action === 'block') &&
-      //       visitor_give_access === 0 &&
-      //       !early_access
-      //     ) {
-      //       invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
-      //       return;
-      //     }
-
-      //     // 🚫 Sudah grant → tidak bisa grant lagi
-      //     if (action === 'grant' && visitor_give_access === 1) {
-      //       invalidVisitors.push(`${access_control_name} (already granted)`);
-      //       return;
-      //     }
-
-      //     // ✅ Lolos semua kondisi → valid
-      //     validVisitors.push(visitorId);
-      //   });
-
-      //   return {
-      //     validVisitors,
-      //     invalidVisitors,
-      //     message:
-      //       invalidVisitors.length > 0
-      //         ? `${invalidVisitors.join('\n')}`
-      //         : null,
-      //   };
-      // };
-
       try {
         setLoadingAccess(true);
 
-        // ✅ Visitor yang relevan diambil dari row.visitors (bukan hanya selectedVisitors)
-        // const targetVisitors = row.visitors ?? selectedVisitors;
         const targetVisitors = allAccessData
           .filter(
             (a) =>
@@ -3353,9 +2711,6 @@ const OperatorView = () => {
           )
           .map((a) => a.trx_visitor_id?.toLowerCase());
 
-        console.log(targetVisitors);
-
-        // Jalankan validasi
         const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
           accessControlId,
           targetVisitors,
@@ -3364,37 +2719,18 @@ const OperatorView = () => {
           action,
         );
 
-        // if (message) {
-        //   setSnackbarMsg(message);
-        //   setSnackbarType(
-        //     validVisitors.length && invalidVisitors.length
-        //       ? 'info'
-        //       : validVisitors.length
-        //       ? 'success'
-        //       : 'error',
-        //   );
-        //   setSnackbarOpen(true);
-        // }
-
-        // ❌ Semua invalid → stop
         if (!validVisitors.length) {
-          setSnackbarMsg(message || 'No valid visitors to process.');
-          setSnackbarType('error');
-          setSnackbarOpen(true);
+          toast(message || 'No valid visitors to process.', 'error');
           resolve();
           return;
         }
 
-        // ⚠️ Campuran valid + invalid → tampilkan peringatan tapi lanjut
         if (invalidVisitors.length) {
-          setSnackbarMsg(
-            '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-          );
-          setSnackbarType('info');
-          setSnackbarOpen(true);
+          toast('Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'), 'info');
+          resolve();
+          return;
         }
 
-        // 📨 Payload hanya untuk valid visitors
         const payload = {
           data_access: validVisitors.map((visitorId) => ({
             access_control_id: accessControlId,
@@ -3403,19 +2739,15 @@ const OperatorView = () => {
           })),
         };
 
-        console.log('📦 Final Payload:', payload);
+        // console.log('Final Payload:', payload);
 
-        const res = await createGiveAccessOperator(token as string, payload);
-        console.log('✅ Access Action Response:', JSON.stringify(res, null, 2));
-
+        const res = await createGiveAccessOperator(payload);
+        // console.log('Access Action Response:', JSON.stringify(res, null, 2));
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
 
-        setSnackbarMsg(`✅ ${backendMsg}`);
-        setSnackbarType('success');
-        setSnackbarOpen(true);
+        showSwal('success', backendMsg);
 
-        // 🟢 Update accessData agar sinkron di UI
         setAccessData((prev) =>
           prev.map((a) =>
             validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
@@ -3434,18 +2766,13 @@ const OperatorView = () => {
 
         resolve();
       } catch (err: any) {
-        console.error('❌ Access Action Error:', err);
         const backendMsg =
           err?.response?.data?.collection?.[0] ||
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          'Unknown error occurred.';
+          'Failed to execute action.';
 
-        setSnackbarMsg(`${backendMsg}`);
-        setSnackbarType('error');
-        setSnackbarOpen(true);
+        showSwal('error', backendMsg);
         resolve();
       } finally {
         setTimeout(() => setLoadingAccess(false), 600);
@@ -3453,243 +2780,478 @@ const OperatorView = () => {
     });
   };
 
-  const activeVisitor =
-    relatedVisitors.find((v) => v.id === selectedVisitorId) || invitationCode[0];
+  const activeVisitor = useMemo(() => {
+    if (selectedVisitorId) {
+      return relatedVisitors.find((v) => v.id === selectedVisitorId);
+    }
 
-  const activeSelfie =
-    activeVisitor?.selfie_image &&
-    activeVisitor?.selfie_image !== '-' &&
-    activeVisitor?.selfie_image !== ''
-      ? `${BASE_URL}/cdn${activeVisitor.selfie_image}`
-      : null;
+    return relatedVisitors?.[0] ?? null;
+  }, [selectedVisitorId, relatedVisitors]);
 
-  const activeKTP =
-    activeVisitor?.identity_image &&
-    activeVisitor?.identity_image !== '-' &&
-    activeVisitor?.identity_image !== ''
-      ? `${BASE_URL}/cdn${activeVisitor.identity_image}`
-      : null;
+  const getCdnUrl = (path?: string) => {
+    if (!path || path === '-' || path.trim() === '') return null;
+
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+    return `${axiosInstance2.defaults.baseURL}/cdn${cleanPath}`;
+  };
+
+  const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
+  const activeKTP = getCdnUrl(activeVisitor?.identity_image);
+  const activeCaptureVehicle = getCdnUrl(activeVisitor?.vehicle_captured);
+  const activeBarcode = getCdnUrl(activeVisitor?.nda);
+
+  const handlePrint = () => {
+    setOpenPreviewPrint(true);
+  };
+
+  const selectedBulkVisitors = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
+
+  const handlePrintClick = () => {
+    if (selectedVisitors.length === 1) {
+      setOpenPreviewPrint(true);
+    } else if (selectedVisitors.length > 1) {
+      setOpenBulkPrint(true);
+    }
+  };
+
+  const handleSubmitReturnCard = async () => {
+    try {
+      if (!returnCardNumber.trim()) {
+        showSwal('warning', t('card.inputCardNumber'));
+        return;
+      }
+
+      setLoadingAccess(true);
+
+      const cardNumber = returnCardNumber.trim();
+
+      const payload = {
+        card_number: cardNumber,
+        registered_site_id: registerSiteOperator,
+      };
+
+      await returnCard(payload);
+
+      const message = `Successfully returned card\n  Card: ${cardNumber}`;
+
+      showSwal('success', message);
+
+      setOpenReturnCard(false);
+      setReturnCardNumber('');
+
+      const invitationId = invitationCode?.[0]?.id;
+      if (invitationId) {
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+      }
+
+      await fetchAvailableCards();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.msg ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to return card';
+
+      const cleanMessage = message.replace(/^Failed Message:\s*/i, '');
+
+      showSwal('error', cleanMessage);
+    } finally {
+      setLoadingAccess(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+
+      if (e.ctrlKey && e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        handleOpenScanQR();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const [currentVisitorIndex, setCurrentVisitorIndex] = useState(0);
+
+  const handleCloseSwipeAccess = () => {
+    resetSwipeStates();
+    setOpenChooseCardDialog(false);
+  };
+
+  const sortDir = 'desc';
+
+  type VisitorStatusFilter = 'all' | 'checkout' | 'block' | 'expired';
+
+  const [visitorStatusFilter, setVisitorStatusFilter] = useState<VisitorStatusFilter>('all');
+
+  const [livePage, setLivePage] = useState(0);
+  const [liveRowsPerPage, setLiveRowsPerPage] = useState(10);
+  const [liveSearch, setLiveSearch] = useState('');
+  const [visitorStartDate, setVisitorStartDate] = useState('');
+  const [visitorEndDate, setVisitorEndDate] = useState('');
+
+  const liveVisitorQuery = useUpcomingVisitors({
+    page: livePage,
+    rowsPerPage: liveRowsPerPage,
+    sortDir,
+    search: liveSearch,
+    allVisitorType: true,
+    ...(visitorStartDate && {
+      startDate: visitorStartDate,
+    }),
+
+    ...(visitorEndDate && {
+      endDate: visitorEndDate,
+    }),
+    ...(visitorStatusFilter !== 'all' && {
+      showCheckout: visitorStatusFilter === 'checkout',
+      showBlock: visitorStatusFilter === 'block',
+      showExpired: visitorStatusFilter === 'expired',
+    }),
+  });
+  const upcomingPurposeQuery = useUpcomingPurpose();
+
+  const [purposePage, setPurposePage] = useState(0);
+  const [purposeRowsPerPage, setPurposeRowsPerPage] = useState(10);
+  const [purposeSearch, setPurposeSearch] = useState('');
+
+  const purposeVisitorQuery = useUpcomingVisitors({
+    page: purposePage,
+    rowsPerPage: purposeRowsPerPage,
+    sortDir,
+    search: purposeSearch,
+    visitorType: selectedPurpose?.id,
+  });
+
+  // Live Visitor
+  const upcomingVisitors = liveVisitorQuery.data?.collection ?? [];
+  const liveRecordsTotal = liveVisitorQuery.data?.recordsTotal ?? 0;
+  const liveRecordsFiltered = liveVisitorQuery.data?.recordsFiltered ?? 0;
+
+  // Detail Purpose
+  const upcomingPurposeVisitors = purposeVisitorQuery.data?.collection ?? [];
+  const loadingPurposeVisitor = purposeVisitorQuery.isLoading || purposeVisitorQuery.isFetching;
+  const purposeRecordsTotal = purposeVisitorQuery.data?.recordsTotal ?? 0;
+  const purposeRecordsFiltered = purposeVisitorQuery.data?.recordsFiltered ?? 0;
+
+  // Card Purpose
+  const upcomingPurpose = upcomingPurposeQuery.data ?? [];
+  // const upcomingPurpose = upcomingPurposeQuery.data ?? [];
+
+  const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
+
+  const filteredVisitors = useMemo(() => {
+    const keyword = debouncedKeyword.trim().toLowerCase();
+
+    if (!keyword) return visitorsSource;
+
+    return visitorsSource.filter((v: any) => {
+      const fields =
+        typeVisitor === 'related'
+          ? [v.name, v.organization, v.host]
+          : [
+              v.name,
+              v.organization,
+              v.host,
+              v.invitation_code,
+              v.agenda,
+              v.vehicle_plate_number,
+              v.vehicle_type,
+              v.visitor_status,
+            ];
+
+      return fields.filter(Boolean).some((field) => String(field).toLowerCase().includes(keyword));
+    });
+  }, [visitorsSource, debouncedKeyword, typeVisitor]);
+
+  const totalVisitors = typeVisitor === 'related' ? totalCountVisitor : upcomingVisitors.length;
+
+  const currentUsedCard = useMemo(() => {
+    if (!Array.isArray(visitorCards)) return null;
+
+    return (
+      visitorCards.find((card) => card.card_type !== 'Barcode' && card.current_used === true) ??
+      null
+    );
+  }, [visitorCards]);
+
+  const swipeDialogInitialValues = useMemo(() => {
+    if (currentUsedCard) {
+      return {
+        documentType: 'CardAccess' as DocumentType,
+        value: currentUsedCard.card_number ?? '',
+        isDocumentTypeLocked: true,
+      };
+    }
+    return {
+      documentType: undefined,
+      value: '',
+      isDocumentTypeLocked: false,
+    };
+  }, [currentUsedCard]);
+
+  const scanLockRef = useRef(false);
+  const lastScanRef = useRef('');
+
+  const bulkPrintingRef = useRef(false);
+  const { WS_URL } = getConfig();
+
+  const handleBarcodeScan = async (value: string) => {
+    if (!value) return;
+
+    if (scanLockRef.current) return;
+    if (lastScanRef.current === value) return;
+
+    scanLockRef.current = true;
+    lastScanRef.current = value;
+
+    try {
+      await handleSubmitQRCode(value);
+    } finally {
+      setTimeout(() => {
+        scanLockRef.current = false;
+        lastScanRef.current = '';
+      }, 2000);
+    }
+  };
+
+  const { socket: socketRef, isOnline: isWebSocketOnline } = useWebSocket({
+    url: WS_URL,
+
+    onBarcodeScan: handleBarcodeScan,
+
+    onOcrResult: (data) => {
+      wsOcrQueueRef.current.push(data);
+      forceTick((v) => v + 1);
+    },
+
+    onImageStream: (data) => {
+      wsImageQueueRef.current.push(data);
+      forceTick((v) => v + 1);
+    },
+
+    onPrintResult: (result) => {
+      if (bulkPrintingRef.current) {
+        return;
+      }
+
+      if (result.success) {
+        showSwal('success', 'Printed successfully');
+      } else {
+        showSwal('error', result.message || 'Print failed');
+      }
+    },
+  });
+
+  const sendWs = (payload: any) => {
+    const socket = socketRef.current;
+
+    if (!socket) {
+      console.warn('WS socket belum tersedia');
+      return false;
+    }
+
+    if (socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    socket.send(JSON.stringify(payload));
+
+    return true;
+  };
+
+  const handleSelectLiveVisitor = async (visitor: any) => {
+    if (selectedVisitorId === visitor.id) return;
+
+    setIsSwitchingVisitor(true);
+
+    try {
+      setRelatedPage(0);
+      setActionButton('');
+      setAccessIssuance(false);
+      setSelectedVisitors([visitor.id]);
+
+      await handleSubmitQRCode(visitor.invitation_code);
+    } finally {
+      setIsSwitchingVisitor(false);
+    }
+  };
+
+  const [runTour, setRunTour] = useState(false);
+  const handleJoyrideCallback = (data: any) => {
+    const { status } = data;
+
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setRunTour(false);
+    }
+  };
+  const handleOpenInfo = () => {
+    setRunTour(false);
+
+    requestAnimationFrame(() => {
+      setRunTour(true);
+    });
+  };
+
+  const tourSteps = useMemo(
+    () => [
+      {
+        target: '#tour-search',
+        content: t('tour.search'),
+      },
+      {
+        target: '#tour-visitor-info',
+        content: t('tour.visitorInfo'),
+      },
+      {
+        target: '#tour-visitor-detail',
+        content: t('tour.visitorDetail'),
+      },
+      {
+        target: '#tour-action-panel',
+        content: t('tour.actionPanel'),
+      },
+      {
+        target: '#tour-visitor-list',
+        content: t('tour.visitorList'),
+      },
+      {
+        target: '#tour-select-multiple',
+        content: t('tour.selectMultiple'),
+      },
+      {
+        target: '#tour-host-info',
+        content: t('tour.hostInfo'),
+      },
+      {
+        target: '#tour-occupancy',
+        content: t('tour.occupancy'),
+      },
+      {
+        target: '#tour-identity-image',
+        content: t('tour.identityImage'),
+      },
+      {
+        target: '#tour-alert',
+        content: t('tour.alert'),
+      },
+    ],
+    [t],
+  );
+
+  const [relatedPage, setRelatedPage] = useState(0);
+  const [relatedRowsPerPage, setRelatedRowsPerPage] = useState(10);
+  const handleRefreshVisitorList = async () => {
+    try {
+      if (typeVisitor === 'live') {
+        await liveVisitorQuery.refetch();
+        await upcomingPurposeQuery.refetch();
+        return;
+      }
+
+      if (typeVisitor === 'related' && invitationCode?.[0]?.id) {
+        await fetchRelatedVisitorsByInvitationId(invitationCode[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to refresh visitor list:', error);
+    }
+  };
+
+  const { setToolbar } = useOperatorToolbar();
+
+  useEffect(() => {
+    setToolbar(
+      <OperatorToolbar
+        registeredSite={registeredSite}
+        selectedSite={registerSiteOperator}
+        onChangeSite={setRegisterSiteOperator}
+        onClear={handleClearAll}
+        onOpenList={handleOpenListVisitor}
+        onOpenBlacklist={handleOpenBlacklistVisitor}
+        onOpenInfo={handleOpenInfo}
+        onOpenVehicle={handleOpenVehicle}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        containerRef={containerRef as any}
+      />,
+    );
+
+    return () => {
+      setToolbar(null);
+    };
+  }, [registeredSite, registerSiteOperator, isFullscreen]);
+
+  const [openEnableEdit, setOpenEnableEdit] = useState(false);
+
+  const handleOpenEnableEdit = () => setOpenEnableEdit(true);
+
+  const [openDetailQrCode, setOpenDetailQrCode] = useState(false);
+
+  const handleOpenDetailQrCode = () => setOpenDetailQrCode(true);
 
   return (
-    <PageContainer
-      title={!isFullscreen ? 'Operator View' : undefined}
-      description={!isFullscreen ? 'Alarm and History Monitor' : undefined}
-    >
+    <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
         ref={containerRef}
         sx={{
           display: 'flex',
-          // flexDirection: mdUp ? 'row' : 'column',
-          flexDirection: { xs: 'column', md: 'row' },
-          backgroundColor: '#fff',
-          height: isFullscreen ? '100vh' : '100%', // ✅ kalau fullscreen pakai 100vh
+          flexDirection: { xs: 'column', xl: 'row' },
+          minHeight: 'calc(100vh - 70px)',
+          height: isFullscreen ? (isMobile ? '100%' : '100vh') : '100%',
           width: '100%',
-          // overflow: 'hidden',
           position: 'relative',
         }}
       >
-        {/* LEFT SIDEBAR */}
-        {/* <Box
-          sx={{
-            width: { xs: '100%', md: secdrawerWidth },
-            minWidth: { md: secdrawerWidth },
-            maxWidth: { md: secdrawerWidth },
-            flexShrink: 0,
-            p: 2,
-            borderRight: { md: '1px solid #eee' },
-            borderTop: { xs: '1px solid #eee', md: 'none' },
-            order: { xs: 2, md: 0 },
-            backgroundColor: '#fff',
-
-            overflowY: { md: 'auto', xs: 'visible' },
-            maxHeight: { md: '100%', xs: 'unset' },
-          }}
-        >
-          <Typography variant="h6" mb={1}>
-            🔔 Alarm
-          </Typography>
-          <Divider sx={{ mb: 1 }} />
-          <Box display="flex" flexDirection="column" gap={1}>
-            {alarms.map((alarm) => (
-              <Card
-                key={alarm.id}
-                sx={{
-                  borderLeft: `4px solid ${alarm.type === 'Critical' ? '#FF3B3B' : '#FFC107'}`,
-                  boxShadow: 'none',
-                  borderRadius: 2,
-                  paddingBottom: 0,
-                }}
-              >
-                <CardContent sx={{ p: 0, pb: '0 !important' }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {alarm.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {alarm.message}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    display="block"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {alarm.time}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-
-          <Typography variant="h6" mt={3} mb={1}>
-            🕒 History
-          </Typography>
-          <Divider sx={{ mb: 1 }} />
-          <Box display="flex" flexDirection="column" gap={1}>
-            {histories.map((history) => (
-              <Card
-                key={history.id}
-                sx={{
-                  borderLeft: '4px solid #5D87FF',
-                  boxShadow: 'none',
-                  borderRadius: 2,
-                  paddingBottom: 0,
-                }}
-              >
-                <CardContent sx={{ p: 0, pb: '0 !important' }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {history.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {history.message}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    display="block"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {history.time}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Box> */}
-
-        {/* RIGHT CONTENT */}
         <Box
-          flexGrow={1}
-          p={3}
           sx={{
-            // overflow: 'hidden',
-            // height: '100vh',
+            flex: 1,
             display: 'flex',
-            flexDirection: 'column',
+            // flexDirection: 'column',
+            minHeight: 0,
+            width: '100%',
+            // height: '100%',
           }}
         >
-          <Grid container spacing={2} alignItems="center" mb={2}>
-            <Grid size={{ sm: 6, md: 9 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Search Visitor"
-                value={''}
-                onClick={() => setOpenSearch(true)}
-                //   onChange={(e) => setSearch(e.target.value)}
-                //   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconButton
-                        onClick={() => setOpen(true)}
-                        edge="start"
-                        color="inherit"
-                        sx={{}}
-                      >
-                        <IconSearch size={20} />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+          {/* <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
+            <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
+              <VisitorSearchInput
+                onOpenSearch={() => setOpenSearch(true)}
+                onClear={handleClearAll}
+                containerRef={containerRef as any}
               />
             </Grid>
-            <Grid size={{ md: 3 }}>
-              <Box
-                display="flex"
-                gap={1}
-                alignItems="center"
-                flexWrap={'wrap'}
-                justifyContent={'flex-start'}
-              >
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<IconX size={18} />}
-                  onClick={handleClearAll}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.2,
-                  }}
-                >
-                  Clear
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="info"
-                  startIcon={<IconHistory size={18} />}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.2,
-                  }}
-                >
-                  History
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconQrcode size={18} />}
-                  onClick={handleOpenScanQR}
-                  sx={{
-                    textTransform: 'none',
-
-                    fontWeight: 600,
-                    px: 2.5,
-                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                    zIndex: 999,
-                  }}
-                >
-                  Scan
-                </Button>
-                <IconButton
-                  onClick={toggleFullscreen}
-                  sx={{
-                    backgroundColor: '#5D87FF',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: 36,
-                    height: 36,
-                    '&:hover': { backgroundColor: '#4B6EE2' },
-                  }}
-                >
-                  <IconArrowsMaximize
-                    size={20}
-                    style={{
-                      transform: isFullscreen ? 'rotate(45deg)' : 'none', // efek visual toggle
-                      transition: 'transform 0.3s ease',
-                    }}
-                  />
-                </IconButton>
-              </Box>
+            <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
+              <OperatorToolbar
+                registeredSite={registeredSite}
+                selectedSite={registerSiteOperator}
+                onChangeSite={setRegisterSiteOperator}
+                onClear={handleClearAll}
+                onOpenList={handleOpenListVisitor}
+                onOpenBlacklist={handleOpenBlacklistVisitor}
+                // onOpenInfo={() => setOpenDialogInfo(true)}
+                onOpenInfo={handleOpenInfo}
+                onOpenVehicle={handleOpenVehicle}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={toggleFullscreen}
+                containerRef={containerRef as any}
+              />
             </Grid>
-          </Grid>
+          </Grid> */}
 
-          <Grid container spacing={2} alignItems="stretch">
+          <Grid
+            container
+            spacing={1}
+            alignItems="stretch"
+            sx={{
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
             <Grid
               container
               spacing={2}
@@ -3697,2059 +3259,577 @@ const OperatorView = () => {
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'stretch',
-                height: '100%',
+                flexWrap: 'wrap',
               }}
             >
-              {/* <Grid size={{ xs: 12, lg: 2 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: 3,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '90%',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <Avatar alt="Natacha" src={''} sx={{ width: 100, height: 100 }} />
-                    <Typography variant="h6" mt={2} sx={{ fontWeight: 600 }}>
-                      Nata
-                    </Typography>
-                    <Box></Box>
-                  </CardContent>
-                </Card>
-              </Grid> */}
-              {/* 🧩 Card FR */}
-              <Grid size={{ xs: 12, lg: 4.5 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: 3,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '90%',
-                    }}
-                  >
-                    <img src={FRImage} alt="FR" style={{ width: 400, height: 350 }} />
-                  </CardContent>
-                  <CardActions
-                    sx={{
-                      justifyContent: 'center',
-                      borderTop: '1px solid #eee',
-                      py: 1,
-                      backgroundColor: '#f9f9f9',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                      {invitationCode[0]?.visitor?.name ||
-                        'No visitor data found. Please scan QR first.'}
-                    </Typography>
-                  </CardActions>
-                </Card>
-              </Grid>
-
-              {/* 🧩 Card LPR */}
-              <Grid size={{ xs: 12, lg: 4.5 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%', // ✅ samakan tinggi
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: 3,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '90%',
-                    }}
-                  >
-                    <img src={LprImage} alt="LPR" style={{ width: 400, height: 350 }} />
-                  </CardContent>
-                  <CardActions
-                    sx={{
-                      justifyContent: 'center',
-                      borderTop: '1px solid #eee',
-                      py: 1,
-                      backgroundColor: '#f9f9f9',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                      {invitationCode[0]?.vehicle_plate_number ||
-                        'No visitor data found. Please scan QR first.'}
-                    </Typography>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 12, lg: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center', // ⬅️ vertikal tengah
-                    alignItems: 'center', // ⬅️ horizontal tengah
-                    p: 2,
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      flexGrow: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      pb: '0 !important',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minHeight: 220, // tinggi tetap untuk menjaga layout stabil
-                        mb: 2,
-                      }}
-                    >
-                      {invitationCode[0]?.visitor_number ? (
-                        <QRCode
-                          size={200}
-                          value={invitationCode[0].visitor_number}
-                          viewBox="0 0 256 256"
-                          style={{
-                            boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            background: 'white',
-                          }}
-                        />
-                      ) : (
-                        <Box textAlign="center" color="text.secondary">
-                          <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
-                          <Typography variant="body1" fontWeight={500}>
-                            No QR Available
-                          </Typography>
-                          <Typography variant="body2" color="text.disabled">
-                            Scan a visitor to show QR code
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                    <Box mt={2}>
-                      <Typography variant="h6" fontWeight="bold" mb={1}>
-                        Number
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" mb={1}>
-                        {invitationCode[0]?.number || '-'}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" fontWeight="bold" mb={1}>
-                        Invitation Code
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" mb={1}>
-                        {invitationCode[0]?.invitation_code || '-'}
-                      </Typography>
-                    </Box>
-                    <Divider sx={{ my: 2 }} />
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      mt="auto"
-                    >
-                      <Typography variant="h6" fontWeight="bold">
-                        Status
-                      </Typography>
-                      <Box
-                        component="span"
-                        sx={{
-                          backgroundColor: '#4CAF50',
-                          color: 'white',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: '12px',
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Match
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-            {/* 🧩 Card QR Code (kanan) */}
-          </Grid>
-
-          <Grid container spacing={2} mt={3} sx={{ flexGrow: 1, height: '100%' }}>
-            <Grid
-              size={{ xs: 12, lg: 4.5 }}
-              sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 1, borderRadius: 2 }}
-            >
-              <Card sx={{ boxShadow: 'none', p: 1, height: '100%' }}>
-                <CardContent sx={{ boxShadow: 'none', p: 0 }}>
-                  {/* Tabs */}
-                  <Tabs
-                    value={tabValue}
-                    onChange={(e, newVal) => setTabValue(newVal)}
-                    variant="fullWidth"
-                  >
-                    <Tab label="Info" />
-                    <Tab label="Visit Information" />
-                    <Tab label="Purpose Visit" />
-                  </Tabs>
-
-                  {/* Tab Panels */}
-                  {tabValue === 0 && (
-                    <Box sx={{ mt: 2 }}>
-                      {/* Grid Info Visitor */}
-                      <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
-                        {/* Email */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconBrandGmail />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.email || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Phone */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconPhone />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.phone || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Address */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconHome />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.address || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Gender */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconGenderMale />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor?.gender || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Organization */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconBuildingSkyscraper />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Organization
-                              </CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.organization || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            flexWrap={'wrap'}
-                            // alignItems={'center'}
-                          >
-                            <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
-                              <IconCards />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
-                              </Box>
-                            </Box>
-                            <Box>
-                              {!invitationCode || invitationCode.length === 0 ? (
-                                <></>
-                              ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
-                                // ✅ Sudah punya kartu → tampilkan nomor
-                                invitationCode[0].card[0]?.card_number?.trim() ? (
-                                  <Box>
-                                    <Typography sx={{ fontWeight: 600 }}>
-                                      {invitationCode[0].card[0].card_number}
-                                    </Typography>
-
-                                    {invitationCode[0]?.tracking_ble?.length > 0 &&
-                                      invitationCode[0].tracking_ble[0]?.visitor_give_access ===
-                                        0 && (
-                                        <Button
-                                          sx={{ mt: 1 }}
-                                          variant="contained"
-                                          color="primary"
-                                          startIcon={<IconSend width={18} />}
-                                        >
-                                          Send Tracking
-                                        </Button>
-                                      )}
-                                  </Box>
-                                ) : (
-                                  <></>
-                                )
-                              ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
-                                // ✅ Tampilkan tombol "Choose Card" hanya kalau sudah Checkin
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  onClick={handleChooseCard}
-                                  sx={{ mt: 0.5 }}
-                                >
-                                  Choose Card
-                                </Button>
-                              ) : (
-                                // 🚫 Status lain (Preregis, Queue, dsb) → tidak tampilkan apa-apa
-                                <></>
-                              )}
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-
-                  {tabValue === 1 && (
-                    <Box sx={{ mt: 2 }}>
-                      <Grid container rowSpacing={4} columnSpacing={2}>
-                        {/* Group Code */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUsersGroup />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Code</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.group_code || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Group Name */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUser />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Name</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.group_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Visitor Number */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconNumbers />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Visitor Number
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor_number || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Invitation Code */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconTicket />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Invitation Code
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.invitation_code || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Visitor Status */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCheckupList />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Visitor Status
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Vehicle Type */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCar />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Vehicle Type
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.vehicle_type || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Vehicle Plate No. */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconLicense />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Vehicle Plate No.
-                              </CustomFormLabel>
-                              <Typography>
-                                {invitationCode[0]?.vehicle_plate_number || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-
-                  {tabValue === 2 && (
-                    <Box sx={{ mt: 2 }}>
-                      <Grid container rowSpacing={4} columnSpacing={2}>
-                        {/* Agenda */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarEvent />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Agenda</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.agenda || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* PIC Host */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUserCheck />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>PIC Host</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.host_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Period Start */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarTime />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period Start</CustomFormLabel>
-                              {formatDateTime(invitationCode[0]?.visitor_period_start) ?? '-'}
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Period End */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarEvent />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period End</CustomFormLabel>
-                              <Typography>
-                                {formatDateTime(
-                                  invitationCode[0]?.visitor_period_end,
-                                  invitationCode[0]?.extend_visitor_period,
-                                )}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Registered Site */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconMapPin />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
-                                Registered Site
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.site_place_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-                </CardContent>
-                {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                  <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
-                    {(() => {
-                      const selectedVisitor = relatedVisitors.find(
-                        (v) => v.visitor_number === selectedVisitorNumber,
-                      );
-                      if (
-                        selectedVisitor?.is_praregister_done == null ||
-                        selectedVisitor?.is_praregister_done === false
-                      ) {
-                        return (
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => handleView(selectedVisitorId!)}
-                          >
-                            Fill Form
-                          </Button>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {(() => {
-                      // const status = visitorStatus ?? invitationCode[0]?.visitor_status;
-                      // const status = visitorStatus;
-                      // const status = invitationCode[0]?.visitor_status;
-                      // console.log(status);
-                      // const blockby = invitationCode[0]?.block_by ?? null;
-                      // console.log(blockby);
-                      //  const blockby = invitationCode[0]?.block_by ?? null;
-
-                      // const isBlocked = !!blockby;
-                      const data = invitationCode[0];
-                      const status = data?.visitor_status;
-                      const isBlocked = !!data?.is_block;
-                      const blockBy = data?.block_by ?? null;
-
-                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
-                        return (
-                          <>
-                            <Button
-                              variant="contained"
-                              color="success"
-                              onClick={() => handleConfirmStatus('Checkin')}
-                              startIcon={<IconLogin2 />}
-                            >
-                              Check In
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </>
-                        );
-                      }
-
-                      if (status === 'Checkin' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              color="error"
-                              onClick={() => handleConfirmStatus('Checkout')}
-                              startIcon={<IconLogout />}
-                            >
-                              Check Out
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      if (status === 'Checkout' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      if (isBlocked) {
-                        return (
-                          <Button
-                            variant="contained"
-                            sx={{
-                              backgroundColor: '#f44336',
-                              '&:hover': { backgroundColor: '#d32f2f' },
-                            }}
-                            onClick={() => handleConfirmStatus('Unblock')}
-                            startIcon={<IconBan />}
-                          >
-                            Unblock
-                          </Button>
-                          // <></>
-                        );
-                      }
-
-                      // if (!isBlocked) {
-                      //   return (
-                      //     <Box display="flex" gap={1}>
-                      //       {/* <Button
-                      //         variant="contained"
-                      //         color="error"
-                      //         onClick={() => handleConfirmStatus('Checkout')}
-                      //         startIcon={<IconLogout />}
-                      //       >
-                      //         Check Out
-                      //       </Button> */}
-                      //       <Button
-                      //         variant="contained"
-                      //         sx={{ backgroundColor: '#000' }}
-                      //         onClick={() => handleConfirmStatus('Block')}
-                      //         startIcon={<IconForbid2 />}
-                      //       >
-                      //         Block
-                      //       </Button>
-                      //     </Box>
-                      //   );
-                      // }
-
-                      return null;
-                    })()}
-                  </CardActions>
-                )}
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Card
+              <Grid
+                size={{ xs: 12, lg: 4.5 }}
                 sx={{
-                  flex: 1,
-                  height: '100%',
+                  borderRadius: '15px',
+                  // backgroundColor: '#fff',
+                  gap: 1,
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  overflow: 'auto',
                 }}
               >
-                <Box display="flex" justifyContent="space-between">
-                  <CardHeader title="Related Visitors" sx={{ p: 0 }} />
-                  <FormControlLabel
-                    value="end"
-                    control={
-                      <Checkbox
-                        checked={selectMultiple}
-                        onChange={(e) => {
-                          setSelectMultiple(e.target.checked);
-                          setSelectedVisitors([]); // reset selected
-                        }}
-                      />
-                    }
-                    label="Select Multiple"
-                    labelPlacement="end"
-                  />
-                </Box>
-                <Divider sx={{ mt: 1 }} />
-                <CardContent
-                  sx={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    p: 0,
-                    pb: '0 !important',
-                    display: 'flex',
-                    flexDirection: 'column',
+                <VisitorInformation
+                  faceImage={activeSelfie}
+                  LprImage={frImage}
+                  todayVisitingPurpose={upcomingPurpose}
+                  invitationCode={invitationCode}
+                  isFullscreen={isFullscreen}
+                  lgUp={lgUp}
+                  openMore={openMore}
+                  setOpenMore={setOpenMore}
+                  handleOpenMore={handleOpenMore}
+                  handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                  getColorByName={getColorByName}
+                  backgroundnodata={backgroundnodata}
+                  t={t}
+                  handleOpenEnableEdit={handleOpenEnableEdit}
+                  handleOpenQrCode={handleOpenDetailQrCode}
+                />
+
+                <VisitorDetailCard
+                  invitationCode={invitationCode}
+                  activeVisitor={activeVisitor}
+                  relatedVisitors={relatedVisitors}
+                  selectedVisitorNumber={selectedVisitorNumber}
+                  permissionHook={permissionHook}
+                  containerRef={containerRef}
+                  handleChooseCard={handleChooseCard}
+                  handleConfirmStatus={handleConfirmStatus}
+                  handleView={handleView}
+                />
+              </Grid>
+
+              <Grid
+                size={{ xs: 12, lg: 4.5 }}
+                sx={{
+                  borderRadius: '15px',
+                  // backgroundColor: '#fff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  minHeight: 0,
+                  // height: '100%',
+                }}
+              >
+                <ActionPanelCard
+                  loading={loadingPermission}
+                  permission={permissionHook}
+                  isFullscreen={isFullscreen}
+                  handleOpenScanQR={handleOpenScanQR}
+                  handleActionClick={handleActionClick as any}
+                  handleOpenAction={handleOpenAction}
+                  handlePrint={handlePrint}
+                  handleActionBlacklist={handleActionBlacklist as any}
+                  setOpenPreRegistration={setOpenPreRegistration}
+                  setOpenInvitationVisitor={setOpenInvitationVisitor}
+                  setOpenReturnCard={setOpenReturnCard}
+                  setAccessIssuance={setAccessIssuance}
+                />
+                <VisitorListCard
+                  isFullscreen={isFullscreen}
+                  onClear={handleClearAll}
+                  typeVisitor={typeVisitor}
+                  anchorEl={anchorEl}
+                  searchKeyword={searchKeyword}
+                  selectMultiple={selectMultiple}
+                  bulkAction={bulkAction}
+                  isWebSocketOnline={isWebSocketOnline}
+                  selectedVisitors={selectedVisitors}
+                  scannedVisitorNumber={scannedVisitorNumber}
+                  totalVisitors={totalVisitors}
+                  filteredVisitors={filteredVisitors}
+                  relatedVisitors={relatedVisitors}
+                  invitationCode={invitationCode}
+                  availableActions={availableActions}
+                  lgUp={lgUp}
+                  onRefresh={handleRefreshVisitorList}
+                  theme={theme}
+                  permissionHook={permissionHook}
+                  containerRef={containerRef}
+                  CustomTextField={CustomTextField}
+                  getCdnUrl={getCdnUrl as (path?: string) => string}
+                  formatDateTime={formatDateTime}
+                  setAnchorEl={setAnchorEl}
+                  setTypeVisitor={
+                    setTypeVisitor as React.Dispatch<
+                      React.SetStateAction<'related' | 'live' | 'today-activity'>
+                    >
+                  }
+                  setSearchKeyword={setSearchKeyword}
+                  setSelectMultiple={setSelectMultiple}
+                  setSelectedVisitors={setSelectedVisitors}
+                  setBulkAction={setBulkAction}
+                  setOpenExtendVisit={setOpenExtendVisit}
+                  handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                  handleSelectLiveVisitor={handleSelectLiveVisitor}
+                  handleApplyBulkAction={handleApplyBulkAction}
+                  handleChooseCard={handleChooseCard}
+                  handlePrintClick={handlePrintClick}
+                  page={livePage}
+                  rowsPerPage={liveRowsPerPage}
+                  // totalCount={liveRecordsFiltered}
+                  totalCount={liveRecordsFiltered}
+                  setPage={setLivePage}
+                  liveCount={liveRecordsFiltered}
+                  relatedCount={totalCountVisitor}
+                  livePagination={{
+                    page: livePage,
+                    rowsPerPage: liveRowsPerPage,
+                    totalCount: liveRecordsFiltered ?? 0,
+                    setPage: setLivePage,
+                    setRowsPerPage: setLiveRowsPerPage,
+                    refetch: liveVisitorQuery.refetch,
                   }}
-                >
-                  {relatedVisitors.map((visitor, index) => {
-                    const isDriving = visitor.is_driving === true;
-                    const isScanned =
-                      visitor.visitor_number &&
-                      scannedVisitorNumber &&
-                      visitor.visitor_number === scannedVisitorNumber;
-                    const isSelected = visitor.visitor_number === selectedVisitorNumber;
+                  relatedPagination={{
+                    page: relatedPage,
+                    rowsPerPage: relatedRowsPerPage,
+                    totalCount: totalCountVisitor,
+                    setPage: setRelatedPage,
+                    setRowsPerPage: setRelatedRowsPerPage,
+                  }}
+                  visitorStatusFilter={visitorStatusFilter}
+                  setVisitorStatusFilter={setVisitorStatusFilter}
+                  visitorStartDate={visitorStartDate}
+                  visitorEndDate={visitorEndDate}
+                  setVisitorStartDate={setVisitorStartDate}
+                  setVisitorEndDate={setVisitorEndDate}
+                  isSwitchingVisitor={isSwitchingVisitor}
+                />
+              </Grid>
 
-                    return (
-                      <React.Fragment key={visitor.id || index}>
-                        <ListItem
-                          sx={{
-                            px: 1,
-                            py: 1.5,
-                            borderBottom: index !== relatedVisitors.length - 1 ? 'none' : 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            transition: 'background 0.2s ease',
-
-                            '&:hover': {
-                              backgroundColor: 'rgba(93,135,255,0.08)',
-                            },
-                          }}
-                          onClick={() => handleSelectRelatedVisitor(visitor)}
-                        >
-                          {/* Avatar + Info */}
-                          <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar
-                              src={`${BASE_URL}/cdn${visitor.selfie_image}`}
-                              alt={visitor.name}
-                              sx={{ width: 45, height: 45 }}
-                            />
-                            <Box>
-                              <Typography variant="h6" fontWeight="bold">
-                                {visitor.name || '-'}
-                              </Typography>
-                              <Typography variant="body1" color="text.secondary">
-                                {visitor.organization || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          {/* Checkbox + status */}
-                          <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
-                            <Box display="flex" gap={1} flexDirection={'column'}>
-                              {isDriving && (
-                                <Box
-                                  sx={{
-                                    backgroundColor: '#4CAF50',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    borderRadius: '6px',
-                                    px: 1,
-                                    py: 0.25,
-                                    fontSize: '0.75rem',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  P
-                                </Box>
-                              )}
-
-                              {isScanned && (
-                                <Box
-                                  sx={{
-                                    backgroundColor: '#1976D2',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    borderRadius: '6px',
-                                    px: 1,
-                                    py: 0.25,
-                                    fontSize: '0.75rem',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  S
-                                </Box>
-                              )}
-                            </Box>
-                            {/* <Checkbox
-                              checked={selectedVisitors.includes(visitor.id)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-
-                                if (selectMultiple) {
-                                  if (isChecked) {
-                                    setSelectedVisitors((prev) => [...prev, visitor.id]);
-                                    console.log('selected ', selectedVisitors);
-                                  } else {
-                                    setSelectedVisitors((prev) =>
-                                      prev.filter((id) => id !== visitor.id),
-                                    );
-                                  }
-                                } else {
-                                  if (isChecked) {
-                                    setSelectedVisitors([visitor.id]);
-                                    console.log('selected ', selectedVisitors);
-                                    handleSelectRelatedVisitor(visitor);
-                                  } else {
-                                    setSelectedVisitors([]);
-                                  }
-                                }
-                              }}
-                            /> */}
-                            <Checkbox
-                              checked={selectedVisitors.includes(visitor.id)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-
-                                setSelectedVisitors((prev) => {
-                                  if (selectMultiple) {
-                                    if (isChecked) {
-                                      const updated = Array.from(new Set([...prev, visitor.id]));
-                                      console.log('✅ Added visitor ID:', visitor.id);
-                                      console.log('🧾 Updated visitors (after add):', updated);
-                                      return updated;
-                                    } else {
-                                      const updated = prev.filter((id) => id !== visitor.id);
-                                      console.log('❌ Removed visitor ID:', visitor.id);
-                                      console.log('🧾 Updated visitors (after remove):', updated);
-                                      return updated;
-                                    }
-                                  } else {
-                                    if (isChecked) {
-                                      console.log('🎯 Single visitor selected:', visitor.id);
-                                      handleSelectRelatedVisitor(visitor);
-                                      return [visitor.id];
-                                    } else {
-                                      console.log('🚫 Unselected single visitor:', visitor.id);
-                                      return [];
-                                    }
-                                  }
-                                });
-                              }}
-                            />
-                          </Box>
-                        </ListItem>
-
-                        {/* Info bawah */}
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            mt: 1,
-                            px: 1,
-                            gap: 0.5,
-                            // borderBottom: '1px solid #eee',
-                          }}
-                        >
-                          <Typography variant="body1" fontWeight="medium" sx={{ lineHeight: 1.3 }}>
-                            {visitor.agenda || '-'}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.2 }}
-                          >
-                            {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
-                              visitor.visitor_period_end,
-                              visitor.extend_visitor_period,
-                            )}`}
-                          </Typography>
-                        </Box>
-                        <Divider sx={{ my: 1 }} />
-                      </React.Fragment>
-                    );
-                  })}
-                </CardContent>
-                <CardActions>
-                  <Divider />
-                  <Box
-                    display={'flex'}
-                    gap={2}
-                    width={'100%'}
-                    sx={{ mt: 2, justifyContent: 'space-between' }}
-                    flexWrap={'wrap'}
-                  >
-                    <Box display="flex" gap={1}>
-                      <CustomSelect
-                        sx={{ width: '150px' }}
-                        value={bulkAction}
-                        onChange={(e: any) => setBulkAction(e.target.value)}
-                      >
-                        {availableActions.map((action) => (
-                          <MenuItem key={action.value} value={action.value}>
-                            {action.label}
-                          </MenuItem>
-                        ))}
-                      </CustomSelect>
-
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{ width: '100px' }}
-                        disabled={!bulkAction || selectedVisitors.length === 0}
-                        onClick={handleApplyBulkAction}
-                      >
-                        Apply
-                      </Button>
-                    </Box>
-                    {invitationCode.length > 0 && (
-                      <Box
-                        display={'flex'}
-                        gap={0.5}
-                        alignItems={'center'}
-                        justifyContent={'flex-end'}
-                      >
-                        <Button
-                          variant="contained"
-                          onClick={() => setOpenExtendVisit(true)}
-                          startIcon={<IconClock size={18} />}
-                          color="secondary"
-                        >
-                          Extend
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={handleChooseCard}
-                          startIcon={<IconCreditCard size={18} />}
-                        >
-                          Card
-                        </Button>
-
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => setOpenAccessData(true)}
-                          startIcon={<IconKey size={18} />}
-                        >
-                          Access
-                        </Button>
-                      </Box>
-                    )}
-                  </Box>
-                </CardActions>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-              <Grid container direction="column" spacing={2} sx={{ height: '100%', flexGrow: 1 }}>
-                <Grid sx={{ flex: 1, display: 'flex' }}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                      maxHeight: '100%',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flex: 1,
-                        p: 0,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        pb: '0 ! important',
-                      }}
-                    >
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
-                      {/* {invitationCode[0]?.selfie_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
-                          alt="Face Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          // onError={(e) => {
-                          //   // kalau gagal load (404, rusak, dsb)
-                          //   e.currentTarget.style.display = 'none';
-                          // }}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )} */}
-
-                      {activeSelfie ? (
-                        <img
-                          src={activeSelfie}
-                          alt="Face Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid sx={{ flex: 1, display: 'flex' }}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                      maxHeight: '100%',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flex: 1,
-                        p: 0,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        pb: '0 ! important',
-                      }}
-                    >
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
-                      {/* {invitationCode[0]?.identity_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
-                          alt="Faceimage"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                        />
-                      ) : null} */}
-                      {/* {invitationCode[0]?.identity_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
-                          alt="KTP Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          // onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No KTP Image
-                        </Box>
-                      )} */}
-                      {activeKTP ? (
-                        <img
-                          src={activeKTP}
-                          alt="Identity Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
+              {/* Side Right QR Code */}
+              <Grid
+                size={{ xs: 12, lg: 3 }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                  minWidth: 0,
+                }}
+              >
+                <HostInformation invitationCode={invitationCode} isFullscreen={isFullscreen} />
+                <VisitorImage
+                  faceImage={activeSelfie}
+                  identityImage={activeKTP}
+                  captureVehicle={activeCaptureVehicle}
+                  isFullscreen={isFullscreen}
+                  openMore={openMore}
+                  setOpenMore={setOpenMore}
+                  handleOpenMore={handleOpenMore}
+                  handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                  getColorByName={getColorByName}
+                  todayVisitingPurpose={upcomingPurpose}
+                  // recordsFiltered={liveRecordsFiltered}
+                  recordsFiltered={liveRecordsFiltered}
+                />
               </Grid>
             </Grid>
           </Grid>
         </Box>
-      </Box>
 
-      <SearchVisitorDialog
-        open={openSearch}
-        onClose={() => setOpenSearch(false)}
-        onSearch={(data) => {
-          setVisitorData(data);
-          setOpenDetail(true); // langsung buka detail
-        }}
-      />
+        {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}
+        <InvitationQrDialog
+          open={openDetailQrCode}
+          onClose={() => setOpenDetailQrCode(false)}
+          activeVisitor={activeVisitor}
+        />
 
-      {/* Dialog Detail */}
-      <DetailVisitorDialog
-        open={openDetail}
-        onClose={() => setOpenDetail(false)}
-        visitorData={visitorData}
-      />
-
-      {/* Scan QR Visitor */}
-      <Dialog fullWidth maxWidth="sm" open={openDialogIndex === 1} onClose={handleCloseScanQR}>
-        <DialogTitle display="flex">
-          Scan QR Visitor
-          <IconButton
-            aria-label="close"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-            onClick={handleCloseScanQR}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-
-        <DialogContent>
-          {/* Toggle mode */}
-          <Box display="flex" gap={1} mb={2}>
-            <Button
-              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
-              onClick={() => setQrMode('manual')}
-              size="small"
-            >
-              Manual
-            </Button>
-            <Button
-              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
-              onClick={() => {
-                setHasDecoded(false);
-                setQrMode('scan');
-              }}
-              size="small"
-            >
-              Scan Kamera
-            </Button>
-          </Box>
-
-          {/* MODE: MANUAL */}
-          {qrMode === 'manual' && (
-            <>
-              <TextField
-                fullWidth
-                label=""
-                variant="outlined"
-                placeholder="Enter your code"
-                size="small"
-                value={qrValue}
-                onChange={(e) => setQrValue(e.target.value)}
-              />
-              <Box mt={2} display="flex" justifyContent="flex-end">
-                <Box mt={2} display="flex" justifyContent="flex-end">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={async () => {
-                      try {
-                        setIsSubmitting(true);
-                        await handleSubmitQRCode(qrValue);
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }}
-                    disabled={!qrValue || isSubmitting} // 🔒 disable kalau kosong atau sedang loading
-                    startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
-                  >
-                    {isSubmitting ? 'Submit...' : 'Submit'}
-                  </Button>
-                </Box>
-              </Box>
-            </>
-          )}
-
-          {/* MODE: SCAN */}
-          {qrMode === 'scan' && (
-            <>
-              <Box
-                ref={scanContainerRef}
-                sx={{
-                  position: 'relative',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  bgcolor: 'black',
-                  aspectRatio: '3 / 4', // proporsional untuk mobile
-                }}
-              >
-                <Scanner
-                  key={scannerKey}
-                  constraints={{ facingMode }}
-                  onScan={async (result: any) => {
-                    if (!result) return;
-                    if (hasDecoded) return;
-
-                    console.log('📸 QR scan raw result:', result);
-                    setHasDecoded(true);
-
-                    let value = '';
-                    if (typeof result === 'string') value = result;
-                    else if (Array.isArray(result)) value = result[0]?.rawValue || '';
-                    else if (typeof result === 'object')
-                      value = result.rawValue || JSON.stringify(result);
-
-                    console.log('✅ Extracted QR value:', value);
-                    setQrValue(value);
-
-                    try {
-                      setIsSubmitting(true);
-                      await handleSubmitQRCode(value); // ✅ panggil langsung
-                      // setOpenDetailQRCode(true); // tampilkan hasil di dialog
-                      setOpenDialogIndex(null);
-                    } catch (err) {
-                      console.error('❌ Error saat submit QR:', err);
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  onError={(error: any) => {
-                    console.error('❌ QR Scanner error:', error?.message || error);
-                  }}
-                  styles={{
-                    container: { width: '100%', height: '100%' },
-                    video: {
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      border: 'none !important',
-                    },
-                  }}
-                />
-                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-                  <Box
-                    sx={{
-                      // ukuran kotak scan (responsif)
-                      '--scanSize': { xs: '70vw', sm: '370px' },
-
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: 'var(--scanSize)',
-                      height: 'var(--scanSize)',
-                      transform: 'translate(-50%, -50%)',
-
-                      // ini yang bikin area luar gelap, tengah tetap terang
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
-                      borderRadius: 2, // 0 jika mau siku
-                      outline: '2px solid rgba(255,255,255,0.18)',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        '& .corner': {
-                          position: 'absolute',
-                          width: 50,
-                          height: 50,
-                          border: '3px solid #00e5ff',
-                        },
-                        '& .tl': { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
-                        '& .tr': { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
-                        '& .bl': { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
-                        '& .br': { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
-                      }}
-                    >
-                      <Box className="corner tl" />
-                      <Box className="corner tr" />
-                      <Box className="corner bl" />
-                      <Box className="corner br" />
-                    </Box>
-
-                    {/* Laser animasi (bergerak di dalam kotak) */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 10,
-                        right: 10,
-                        height: 2,
-                        top: 0,
-                        background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
-                        animation: 'scanLine 2s linear infinite',
-                        '@keyframes scanLine': {
-                          '0%': { transform: 'translateY(0)' },
-                          '100%': { transform: 'translateY(calc(var(--scanSize) - 2px))' },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-                {/* Kontrol: Flip & Torch */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Button
-                    onClick={() =>
-                      setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))
-                    }
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={<FlipCameraAndroidIcon fontSize="small" />}
-                  >
-                    Flip
-                  </Button>
-
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const video = scanContainerRef.current?.querySelector(
-                          'video',
-                        ) as HTMLVideoElement | null;
-                        const stream = video?.srcObject as MediaStream | null;
-                        const track = stream?.getVideoTracks()?.[0];
-                        const caps = track?.getCapabilities?.() as any;
-                        if (track && caps?.torch) {
-                          await track.applyConstraints({
-                            advanced: [{ torch: !torchOn }] as any,
-                          });
-                          setTorchOn((t) => !t);
-                        } else {
-                          console.log('Torch not supported on this device.');
-                        }
-                      } catch (e) {
-                        console.log('Torch toggle error:', e);
-                      }
-                    }}
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={
-                      torchOn ? <FlashOnIcon fontSize="small" /> : <FlashOffIcon fontSize="small" />
-                    }
-                  >
-                    Torch
-                  </Button>
-                </Box>
-              </Box>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Choose Card */}
-      <Dialog
-        open={openChooseCardDialog}
-        onClose={() => setOpenChooseCardDialog(false)}
-        fullWidth
-        maxWidth="lg"
-      >
-        <DialogTitle>Choose Card</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenChooseCardDialog(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
+        {/* Dialog Edit */}
+        <EditVisitorDialog
+          open={openEnableEdit}
+          onClose={() => setOpenEnableEdit(false)}
+          visitor={invitationCode?.[0]}
+          onSubmit={(data) => {
+            console.log('Edit visitor:', data);
           }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {/* Search */}
-          <Box mb={2}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search card"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={20} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
+        />
 
-          {/* Grid list of cards */}
-          <Grid container spacing={2}>
-            {filteredCards.map((card) => {
-              const isChosen = selectedCards.includes(card.card_number);
-              const isLimitReached =
-                selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                  <Paper
-                    onClick={() => {
-                      handleToggleCard(card.card_number);
-                    }}
-                    sx={(theme) => ({
-                      p: 2,
-                      borderRadius: 2,
-                      position: 'relative',
-                      height: 280,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: isChosen ? theme.palette.primary.main : 'divider',
-                      boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                      backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
-                      transition: theme.transitions.create(
-                        ['transform', 'box-shadow', 'border-color', 'background-color'],
-                        {
-                          duration: theme.transitions.duration.shorter,
-                        },
-                      ),
-                      '&:hover': {
-                        transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                        boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
-                      },
-                    })}
-                  >
-                    {/* Konten kartu */}
-                    <Box
-                      flexGrow={1}
-                      display="flex"
-                      flexDirection="column"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      {/* <Typography variant="body1" fontWeight={600}>
-                        {card.card_number}
-                      </Typography>
-                      <Typography variant="h1" color="text.secondary">
-                        {card.remarks || '-'}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        {card.card_mac || '-'}
-                      </Typography> */}
-                      <Typography variant="h1" color="text.secondary" mt={2}>
-                        {card.remarks || '-'}
-                      </Typography>
-                      {/* Baris untuk CARD */}
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        mt={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          Card
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          {card.card_number || '-'}
-                        </Typography>
-                      </Box>
-
-                      {/* Baris untuk BLE */}
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        flexWrap={'wrap'}
-                        gap={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          BLE
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {card.card_mac || '-'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Typography variant="body1">{card.name}</Typography>
-
-                    {/* Checkbox */}
-                    <FormControlLabel
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      control={
-                        <Checkbox
-                          checked={isChosen}
-                          disabled={!isChosen}
-                          onChange={() => handleToggleCard(card.card_number)}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Paper>
-                </Grid>
-              );
-            })}
-          </Grid>
-
-          {/* Footer */}
-          <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" flexDirection="column" gap={0.5}>
-              {/* <Typography variant="body2">
-                        Selected Card: {selectedCards.length > 0 ? selectedCards[0] : '-'}
-                      </Typography> */}
-              <Typography variant="body2">
-                Cards chosen: {selectedCards.length} / {availableCount}
-              </Typography>
-            </Box>
-
-            <Box display="flex" gap={1}>
-              <Button onClick={handleCloseChooseCard} color="secondary">
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                disabled={selectedCards.length === 0}
-                onClick={handleConfirmChooseCards}
-              >
-                Choose
-              </Button>
-            </Box>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      {/* Fill Form */}
-      <Dialog
-        open={openFillForm}
-        onClose={() => setOpenFillForm(false)}
-        fullWidth
-        maxWidth={false} // penting agar tidak dibatasi ukuran default MUI
-        PaperProps={{
-          sx: {
-            width: '100vw', // bisa ubah jadi 100vw kalau mau full
-            // maxWidth: '1900px', // misal lebih besar dari xl
-          },
-        }}
-      >
-        <DialogTitle sx={{ pb: 1, fontWeight: 600 }}>Fill Pre-Registration Form</DialogTitle>
-        <IconButton
-          aria-label="close"
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
+        {/* Print */}
+        <PrintDialogBulk
+          open={openBulkPrint}
+          onClose={() => setOpenBulkPrint(false)}
+          visitors={selectedBulkVisitors}
+          printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
           }}
-          onClick={() => setOpenFillForm(false)}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {fillFormData.length > 0 && (
-            <>
-              <Stepper activeStep={fillFormActiveStep} alternativeLabel sx={{ mb: 3 }}>
-                {fillFormData.map((s, i) => (
-                  <Step key={i}>
-                    <StepLabel
-                      onClick={() => setFillFormActiveStep(i)}
-                      sx={{
-                        '& .MuiStepLabel-label': {
-                          fontSize: '0.9rem !important', // ubah ukuran di sini, misal 16px = 1rem
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        },
-                      }}
-                    >
-                      {s.name}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              <Box>
-                {(() => {
-                  const section = fillFormData[fillFormActiveStep];
-                  if (!section) return null;
-
-                  const sectionType = getSectionType(section);
-                  if (sectionType === 'visitor_information_group') {
-                    // ✅ langsung reuse potongan yang kamu pakai untuk render Visitor Info Group
-                    return (
-                      <Grid>
-                        <Box>
-                          <TableContainer component={Paper} sx={{ mb: 1 }}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  {(
-                                    fillFormDataVisitor[0]?.question_page?.[fillFormActiveStep]
-                                      ?.visit_form ||
-                                    formsOf(section) ||
-                                    []
-                                  ).map((f: any, i: any) => (
-                                    <TableCell key={i}>
-                                      <Typography variant="subtitle2" fontWeight={600}>
-                                        {f.long_display_text}
-                                      </Typography>
-                                    </TableCell>
-                                  ))}
-                                  {/* <TableCell align="right">Actions</TableCell> */}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {fillFormDataVisitor.length > 0 ? (
-                                  fillFormDataVisitor.map((group, gIdx) => {
-                                    const page =
-                                      group.question_page?.[fillFormActiveStep] ?? section;
-                                    if (!page) return null;
-                                    return (
-                                      <TableRow key={gIdx}>
-                                        {page.form?.map((field: any, fIdx: number) => (
-                                          <TableCell key={fIdx}>
-                                            {renderFieldInput(
-                                              field,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setFillFormDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = fillFormActiveStep;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: false,
-                                                uniqueKey: `${fillFormActiveStep}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </TableCell>
-                                        ))}
-                                      </TableRow>
-                                    );
-                                  })
-                                ) : (
-                                  <TableRow>
-                                    <TableCell colSpan={12} align="center">
-                                      No visitor data. Click “Add New” to start.
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        </Box>
-                      </Grid>
-                    );
-                  } else if (sectionType === 'purpose_visit') {
-                    const mergedVisitForm = formsOf(section);
-                    return (
-                      <Grid container spacing={2} sx={{ px: 1 }}>
-                        {mergedVisitForm.map((f: any, idx: number) => (
-                          <Grid size={{ xs: 12 }} key={idx}>
-                            <Box display="flex" flexDirection="column" gap={0.5}>
-                              <Typography variant="subtitle2" fontWeight={600}>
-                                {f.long_display_text}
-                              </Typography>
-
-                              {/* Semua input jadi disabled */}
-                              <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                                {renderFieldInput(
-                                  f,
-                                  idx,
-                                  () => {}, // disable onChange
-                                  undefined,
-                                  { showLabel: false, uniqueKey: `${fillFormActiveStep}:${idx}` },
-                                )}
-                              </Box>
-                            </Box>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    );
-                  }
-
-                  return null;
-                })()}
-              </Box>
-            </>
-          )}
-        </DialogContent>
-
-        <DialogActions style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={() => setFillFormActiveStep((p) => Math.max(p - 1, 0))}
-            disabled={fillFormActiveStep === 0}
-          >
-            Back
-          </Button>
-          {fillFormActiveStep < fillFormData.length - 1 ? (
-            <Button variant="contained" onClick={() => setFillFormActiveStep((p) => p + 1)}>
-              Next
-            </Button>
-          ) : (
-            <Button variant="contained" color="primary" onClick={handleSubmitPramultiple}>
-              Submit
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
-
-      {/* Praregister */}
-      <Dialog
-        open={openDialogInvitation}
-        onClose={() => setOpenDialogInvitation(false)}
-        fullWidth
-        maxWidth="xl"
-      >
-        <DialogTitle>Praregister</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDialogInvitation(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
+        />
+        <PrintDialog
+          open={openPreviewPrint}
+          onClose={() => setOpenPreviewPrint(false)}
+          invitationData={invitationCode[0]}
+          printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
           }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {selectedInvitationId ? ( // ✅ pakai ID dari row yang di-klik
-            <FormDialogPraregist
-              id={selectedInvitationId ?? invitationCode?.[0]?.id}
-              onClose={() => setOpenDialogInvitation(false)}
-              onSubmitted={async (formId?: string) => {
-                setOpenDialogInvitation(false);
-                // await fetchRelatedVisitorsByInvitationId(invitationCode[0]?.id);
-                const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
-                if (!targetId) {
-                  console.warn('⚠️ No valid invitation ID found to fetch');
-                  return;
-                }
-
-                await fetchRelatedVisitorsByInvitationId(targetId);
-              }}
-              onSubmitting={setSubmitting}
-            />
-          ) : (
-            <Typography variant="body2" textAlign="center" color="text.secondary">
-              No invitation selected.
-            </Typography>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Access */}
-      <Dialog
-        open={openAccessData}
-        onClose={() => setOpenAccessData(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Access</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenAccessData(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-
-            color: (theme) => theme.palette.grey[500],
+        />
+        {/* Detail Purpose */}
+        <DetailVisitingPurpose
+          loading={loadingPurposeVisitor}
+          open={openDetailVisitingPurpose}
+          onClose={() => setOpenDetailVistingPurpose(false)}
+          data={upcomingPurposeVisitors}
+          purposeName={selectedPurpose}
+          page={purposePage}
+          setPage={setPurposePage}
+          totalCount={purposeRecordsFiltered}
+          rowsPerPage={purposeRowsPerPage}
+          setRowsPerPage={setPurposeRowsPerPage}
+          searchKeyword={purposeSearch}
+          setSearchKeyword={setPurposeSearch}
+        />
+        {/* Search Visitor */}
+        <SearchVisitorDialog
+          open={openSearch}
+          onClose={() => setOpenSearch(false)}
+          onSearch={(data) => {
+            setVisitorData(data);
+            setOpenDetail(true);
           }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {/* <AccessDataTable visitorId={selectedVisitorIdForAccessData} /> */}
-          <DynamicTable
-            data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-            isHaveChecked={true}
-            isHaveHeaderTitle={true}
-            titleHeader="Access"
-            overflowX="auto"
-            isHaveAccess={true}
-            onAccessAction={handleAccessAction}
-            onCheckedChange={(checkedRows) => {
-              const ids = checkedRows.map((r) => r.access_control_id);
-              setSelectedAccessIds(ids);
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <CustomSelect
-              sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
-              value={selectedActionAccess}
-              onChange={(e: any) => setSelectedActionAccess(e.target.value)}
-              displayEmpty
-              disabled={!selectedAccessIds.length}
-            >
-              <MenuItem value="">Select Action</MenuItem>
-              <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
-                Grant
-              </MenuItem>
-              <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
-                Revoke
-              </MenuItem>
-              <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
-                Block
-              </MenuItem>
-            </CustomSelect>
-
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={async () => {
-                if (!selectedAccessIds.length || !selectedActionAccess) {
-                  setSnackbarMsg('Please select rows and an action first.');
-                  setSnackbarType('info');
-                  setSnackbarOpen(true);
-                  return;
-                }
-
-                // 🚨 validasi tambahan: pastikan aksi masih diizinkan
-                if (
-                  !allowedActions.includes(
-                    selectedActionAccess.charAt(0).toUpperCase() + selectedActionAccess.slice(1),
-                  )
-                ) {
-                  setSnackbarMsg(
-                    `Action "${selectedActionAccess}" is not allowed for selected access.`,
-                  );
-                  setSnackbarType('info');
-                  setSnackbarOpen(true);
-                  return;
-                }
-
-                console.log('🧾 Selected Access IDs:', selectedAccessIds);
-
-                for (const id of selectedAccessIds) {
-                  const row = accessData.find(
-                    (r) =>
-                      r.access_control_id?.toLowerCase() === id.toLowerCase() &&
-                      selectedVisitors.some(
-                        (v) =>
-                          v.toLowerCase() === r.trx_visitor_id?.toLowerCase() ||
-                          v.toLowerCase() === r.trxVisitorId?.toLowerCase(),
-                      ),
-                  );
-
-                  if (!row) {
-                    continue;
-                  }
-
-                  await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
-                }
-                setSelectedActionAccess('');
-              }}
-              sx={{ mb: 0, mt: 2 }}
-              disabled={!selectedActionAccess || allowedActions.length === 0}
-            >
-              Apply
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Extend Visi */}
-      <Dialog
-        open={openExtendVisit}
-        onClose={() => setOpenExtendVisit(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Extend Visit</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenExtendVisit(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
+          container={containerRef.current}
+        />
+        {/* Dialog Detail */}
+        <DetailVisitorDialog
+          open={openDetail}
+          onClose={() => setOpenDetail(false)}
+          visitorData={visitorData}
+          container={containerRef.current ?? undefined}
+        />
+        {/* Scan QR Visitor */}
+        <ScanQrVisitorDialog
+          open={openDialogIndex === 1}
+          onClose={handleCloseScanQR}
+          handleSubmitQRCode={handleSubmitQRCode}
+          container={containerRef.current ?? undefined}
+          onOpenInvitation={() => {
+            handleCloseScanQR();
+            setOpenInvitationVisitor(true);
           }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <form onSubmit={handleExtend}>
-            <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
-              {durationOptions.map((minutes) => (
-                <Chip
-                  key={minutes}
-                  label={`${minutes} min`}
-                  clickable
-                  color={selectedMinutes === minutes ? 'primary' : 'default'}
-                  onClick={() => setSelectedMinutes(minutes)}
-                  sx={{
-                    fontWeight: selectedMinutes === minutes ? 600 : 400,
-                    px: 1.5,
-                  }}
-                />
-              ))}
-            </Box>
-            <FormControlLabel
-              control={<Checkbox checked={applyToAll} onChange={handleApplyToAllChange} />}
-              label={
-                <Typography variant="body2" color="text.secondary">
-                  Apply to another visitor
-                </Typography>
-              }
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{ mt: 2 }}
-              fullWidth
-              disabled={!selectedMinutes}
-            >
-              Extend
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+        />
+        <BlacklistVisitorDialog open={openBlacklistVisitor} onClose={handleCloseBlacklistVisitor} />
+        {/* List Visitor */}
+        <ListVisitorDialog
+          open={openListVisitor}
+          onClose={handleCloseListVisitor}
+          upcomingVisitors={upcomingVisitors}
+        />
+        {/* Open */}
+        <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
 
-      <Portal>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={8000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            top: 20,
-            left: 0,
-            right: 0,
-            margin: '0 auto',
-            maxWidth: 500,
-            '& .MuiPaper-root': {
-              minWidth: 420,
-              maxWidth: 600,
-              fontSize: '1rem',
-              whiteSpace: 'pre-line', // 🟢 ini penting banget
-              lineHeight: 1.5,
-              p: 2.5,
-              borderRadius: 2,
+        {/* Dialog Swipe No Code */}
+        <SwipeCardNoCodeDialog
+          open={openSwipeDialogNoInvitation}
+          onClose={handleCloseSwipeDialogNoInvitation}
+          findCard={findCard}
+          showSwal={showSwal}
+          setSnackbar={setSnackbar}
+          onSubmit={handleSwipeCardSubmitNoCode}
+        />
+
+        <ChooseCardDialog
+          open={openChooseCardDialog}
+          onClose={() => {
+            setOpenChooseCardDialog(false);
+            setSearchTerm('');
+          }}
+          cards={availableCards}
+          containerRef={containerRef}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          isChecked={isChecked}
+          isIndeterminate={isIndeterminate}
+          handleSelectAll={handleSelectAll}
+          capacity={capacity}
+          currentUsedCards={currentUsedCardsByVisitor}
+          selectedCards={selectedCards}
+          handleToggleCard={handleToggleCard}
+          filteredCards={filteredCards}
+          selectedVisitors={selectedVisitors}
+          availableCount={availableCount}
+          handleOpenSwipeDialog={handleOpenSwipeDialog}
+          handleConfirmChooseCards={handleConfirmChooseCards}
+          setAccessIssuance={setAccessIssuance}
+          // setSelectedCurrentCards={setSelectedCurrentCards}
+          isLoadingCards={isLoadingCards}
+        />
+
+        {/* Dialog Swipe Card */}
+        <SwipeCardDialog
+          open={openSwipeDialog}
+          onClose={handleCloseSwipeDialog}
+          onSubmit={handleSwipeCardSubmit}
+          invitationId={invitationId}
+          visitors={visitorsForSwipe}
+          loading={setLoadingAccess}
+          currentVisitorIndex={currentVisitorIndex}
+          setCurrentVisitorIndex={setCurrentVisitorIndex}
+          initialValues={swipeDialogInitialValues}
+        />
+
+        {/* Dialog Swipe Access */}
+        <SwipeAccessDialog
+          open={openSwipeAccess}
+          onClose={handleCloseSwipeAccess}
+          data={sitesOperator}
+          payload={swipePayload}
+          invitationId={invitationId as string}
+          visitor={currentAccessVisitor}
+          setLoadingAccess={setLoadingAccess}
+          onSuccessRefresh={() => fetchRelatedVisitorsByInvitationId(invitationId as string)}
+        />
+
+        {/* Dialog QR Access Issuance */}
+        <GrantAccessDialog
+          open={openAccessIssuance}
+          onClose={() => {
+            setAccessIssuance(false);
+            setActionButton('');
+          }}
+          invitationCode={invitationCode}
+          selectedCards={selectedCards}
+          handleToggleCard={handleToggleCard}
+          formatDateTime={formatDateTime}
+          accessData={accessData}
+        />
+
+        {/* Fill Form Pra regist Multiple*/}
+        <FillPraregistrationGroup
+          open={openFillForm}
+          onClose={() => setOpenFillForm(false)}
+          containerRef={containerRef}
+          fillFormData={fillFormData}
+          fillFormActiveStep={fillFormActiveStep}
+          setFillFormActiveStep={setFillFormActiveStep}
+          fillFormDataVisitor={fillFormDataVisitor}
+          setFillFormDataVisitor={setFillFormDataVisitor}
+          loadingAccess={loadingAccess}
+          handleSubmitPramultiple={handleSubmitPramultiple}
+          // renderFieldInput={renderFieldInput}
+          invitationDetail={invitationDetail}
+          allVisitorEmployee={allVisitorEmployee}
+          getSectionType={getSectionType}
+          formsOf={formsOf}
+          isSelfGroup={isSelfGroup}
+          setIsSelfGroup={setIsSelfGroup}
+        />
+
+        {/* Submit Praregister */}
+        <FillPraregistrationSingle
+          open={openDialogInvitation}
+          onClose={() => setOpenDialogInvitation(false)}
+          loadingAccess={loadingAccess}
+          selectedInvitationId={selectedInvitationId ?? invitationCode?.[0]?.id}
+          invitationCode={invitationCode}
+          containerRef={containerRef.current}
+          fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+          registeredSite={registerSiteOperator}
+        />
+
+        {/* Extend Visit */}
+        <ExtendVisitDialog
+          open={openExtendVisit}
+          onClose={() => setOpenExtendVisit(false)}
+          container={containerRef.current}
+          durationOptions={durationOptions}
+          selectedMinutes={selectedMinutes}
+          setSelectedMinutes={setSelectedMinutes}
+          applyToAll={applyToAll}
+          onApplyToAllChange={handleApplyToAllChange}
+          onSubmit={handleExtend}
+        />
+
+        {/* Create Invitation */}
+        <Dialog
+          fullWidth
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: '100vw',
             },
           }}
+          open={openInvitationVisitor}
+          onClose={handleRequestClose}
+          container={containerRef.current ?? undefined}
         >
-          <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={snackbarType}
-            variant="filled"
-            sx={{ width: '100%', fontSize: '16px', whiteSpace: 'pre-line' }}
-          >
-            {snackbarMsg}
-          </Alert>
-        </Snackbar>
-      </Portal>
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            margin: '0 auto',
-            color: 'primary',
+          <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+            {t('add')} Invitation Visitor
+            <IconButton aria-label="close" onClick={handleRequestClose}>
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <FormWizardAddVisitor
+              formData={formDataAddVisitor}
+              setFormData={setFormDataAddVisitor}
+              onSuccess={handleSuccess}
+              containerRef={containerRef}
+              resetStep={resetStep}
+              onInvitationCreated={handleInvitationCreated}
+              ws={{
+                imageQueue: wsImageQueueRef,
+                ocrQueue: wsOcrQueueRef,
+                send: sendToScanner,
+              }}
+              setWsPayload={setWsPayload}
+              registeredSite={registerSiteOperator}
+              forceTick={tick}
+              visitorType={visitorType}
+              sites={sitesOperator}
+              employee={employee}
+              allVisitorEmployee={allVisitorEmployee}
+              vtLoading={vtLoading}
+              enableInvitationTypeStep={true}
+              search={setSearchHost}
+              isLoadingEmployee={isLoadingEmployee}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Pra Registration */}
+        <Dialog
+          fullWidth
+          // maxWidth="xl"
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: '100vw',
+            },
           }}
-          open={loadingAccess}
+          open={openPreRegistration}
+          onClose={handleRequestClose}
+          container={containerRef.current ?? undefined}
         >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+          <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+            {t('add')} Pra Registration
+            <IconButton aria-label="close" onClick={handleRequestClose}>
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ paddingTop: '0px' }} dividers>
+            <br />
+            <FormWizardAddInvitation
+              key={wizardKey}
+              formData={formDataAddVisitor}
+              setFormData={setFormDataAddVisitor}
+              onSuccess={handleSuccess}
+              containerRef={containerRef ?? null}
+              visitorType={visitorType}
+              sites={sitesOperator}
+              registeredSite={registerSiteOperator}
+              employee={employee}
+              allVisitorEmployee={allVisitorEmployee}
+              vtLoading={vtLoading}
+              enableInvitationTypeStep={false}
+              search={setSearchHost}
+              isLoadingEmployee={isLoadingEmployee}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <ParkingDialog
+          open={openParking}
+          onClose={() => {
+            setActionButton('');
+            setOpenParking(false);
+          }}
+          data={parkingData}
+        />
+
+        <InfoDialog
+          open={openDialogInfo}
+          onClose={() => setOpenDialogInfo(false)}
+          data={dataImage}
+          container={containerRef ?? null}
+        />
+
+        <ReturnCardDialog
+          open={openReturnCard}
+          value={returnCardNumber}
+          loading={loadingAccess}
+          onClose={() => {
+            setOpenReturnCard(false);
+            setReturnCardNumber('');
+          }}
+          onChange={setReturnCardNumber}
+          onSubmit={handleSubmitReturnCard}
+        />
+
+        <ConfirmUnsavedDialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onDiscard={() => {
+            setConfirmDialogOpen(false);
+            setIsFormDirty(false);
+            handleCloseDialog();
+          }}
+        />
+
+        <Portal>
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3000}
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            sx={{ zIndex: 999999 }}
+          >
+            <Alert
+              onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+              variant="filled"
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Portal>
+        <GlobalBackdropLoading open={loadingAccess} />
+        <Joyride
+          run={runTour}
+          onEvent={handleJoyrideCallback}
+          continuous={true}
+          options={{
+            buttons: ['skip', 'back', 'close', 'primary'],
+            showProgress: true,
+            overlayClickAction: 'close',
+          }}
+          scrollToFirstStep={true}
+          steps={tourSteps}
+          styles={{
+            tooltip: {
+              borderRadius: 16,
+              padding: 26,
+              boxShadow: '0 20px 60px rgba(0,0,0,.25)',
+            },
+            tooltipTitle: {
+              fontSize: 24,
+              fontWeight: 700,
+            },
+            tooltipContent: {
+              fontSize: 16,
+              lineHeight: 1.6,
+            },
+            beaconWrapper: {
+              accentColor: '#2563EB',
+            },
+            buttonSkip: {
+              color: '#6B7280',
+            },
+            buttonBack: {
+              color: '#6B7280',
+            },
+          }}
+        />
+      </Box>
     </PageContainer>
   );
 };

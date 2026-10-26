@@ -1,3 +1,4 @@
+import { flow } from 'lodash';
 import { z } from 'zod';
 
 export type Item = {
@@ -71,9 +72,11 @@ const formVisitorSchema = z.object({
   custom_field_id: z.string().optional().default(''),
   multiple_option_fields: z.array(z.any()).optional().default([]),
   visitor_form_type: z.number().optional(),
-  answer_text: z.string().optional(),
+  // answer_text: z.string().optional(),
+  answer_text: z.string().nullable().optional(),
   answer_datetime: z.string().datetime().optional(), // atau nullable().optional() jika butuh null
-  answer_file: z.string().optional(),
+  // answer_file: z.string().optional(),
+  answer_file: z.string().nullable().optional(),
 });
 
 export type FormVisitor = z.infer<typeof formVisitorSchema>;
@@ -100,15 +103,14 @@ export const visitorItemSchema = z.object({
 export const ListGroupItemSchema = z.object({
   visitor_type: z.string().default(''),
   type_registered: z.number().default(0).optional(),
-  is_group: z.boolean().default(false).optional(),
+  // is_group: z.boolean().default(false).optional(),
+  is_group: z.boolean().nullable().optional(),
   tz: z.string().default('').optional(),
   registered_site: z.string().default('').optional(),
   group_code: z.string().default('').optional(),
   group_name: z.string().default('').optional(),
   data_visitor: z.array(visitorItemSchema).default([]),
 });
-
-
 
 // export const CreateGroupVisitorRequestSchema = z.object({
 //   list_group: z.array(ListGroupItemSchema),
@@ -133,6 +135,7 @@ export const CreateSingleVisitorRequestSchema = z.object({
   tz: z.string(),
   registered_site: z.string().optional(),
   data_visitor: z.array(visitorItemSchema),
+  flow: z.string().optional(),
 });
 export type CreateSingleVisitorRequest = z.infer<typeof CreateSingleVisitorRequestSchema>;
 
@@ -145,9 +148,19 @@ export type CreateSingleVisitorRequest = z.infer<typeof CreateSingleVisitorReque
 export const CreateVisitorRequestSchema = z.object({
   visitor_type: z.string().optional(),
   type_registered: z.number().optional().default(0),
-  is_group: z.boolean().default(false).optional(),
+  // is_group: z.boolean().default(false).optional(),
+  is_group: z.boolean().nullable().optional(),
   tz: z.string().optional(),
   registered_site: z.string().optional(),
+  flow: z.string().optional(),
+  visitor_role: z.string().optional(),
+  registered_site_id: z.string().optional(),
+  is_self_registered: z.boolean().optional(),
+  transaction_visitor_id: z.string().optional(),
+  filled_by_name: z.string().optional(),
+  filled_by_email: z.string().optional(),
+  filled_by_phone: z.string().optional(),
+  filled_by_relationship: z.string().optional(),
   data_visitor: z.array(visitorItemSchema).optional(),
 });
 
@@ -156,14 +169,23 @@ export const CreateGroupVisitorRequestSchema = z.object({
   list_group: z.array(
     z.object({
       visitor_type: z.string().optional(),
-      is_group: z.boolean().optional().default(false),
+      // is_group: z.boolean().optional().default(false),
+      is_group: z.boolean().nullable().optional(),
       type_registered: z.number().optional().default(0),
       tz: z.string().optional(),
-      registered_site: z.string().optional(),
+      // registered_site: z.string().optional(),
+      registered_site: z.string().nullable().optional(),
       group_code: z.string().optional(),
       group_name: z.string().optional(),
+      is_self_registered: z.boolean().optional(),
+      filled_by_name: z.string().optional(),
+      filled_by_email: z.string().optional(),
+      filled_by_phone: z.string().optional(),
+      filled_by_relationship: z.string().optional(),
+      transaction_visitor_id: z.string().optional(),
       data_visitor: z.array(visitorItemSchema),
-    })
+      flow: z.string().optional(),
+    }),
   ),
 });
 
@@ -270,6 +292,7 @@ export interface CreateVisitorCollection {
   available_cards: any[];
   registered_site: any;
   visitors: VisitorTrx[];
+  site_lists: any[];
   site_place_data: SitePlaceData;
   host_data: HostData;
   visitor_type_data: VisitorTypeData;

@@ -1,0 +1,1139 @@
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { Box, Grid2 as Grid, Portal, Snackbar, Alert } from '@mui/material';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import type { AlertColor } from '@mui/material/Alert';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import iconAdd from 'src/assets/images/svgs/add-circle.svg';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { CreateVisitorRequestSchema } from 'src/customs/api/models/Admin/Visitor';
+import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
+import FilterMoreContent from './FilterMoreContent';
+import { IconUsers, IconBolt, IconLink, IconUserPlus } from '@tabler/icons-react';
+import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
+import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
+import { getInvitationCode } from 'src/customs/api/operator';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { useNavigate } from 'react-router';
+import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
+import QrScannerDialog from './components/Dialog/QrScannerDialog';
+import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
+import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
+import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
+import ShareLinkDialog from './components/Dialog/ShareLinkDialog';
+import { useRegisteredSite } from 'src/hooks/Sites/useRegisteredSite';
+import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
+import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
+import { useSites } from 'src/hooks/Sites/useSites';
+import InvitationVisitorDialog from './components/Dialog/InvitationVisitorDialog';
+import PreRegistrationDialog from './components/Dialog/PreRegistrationDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { QuickAccessDialog } from './components/Dialog/QuickAccessDialog';
+import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useTranslation } from 'react-i18next';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
+import { useVisitorPagination } from 'src/hooks/Visitor/useVisitorPagination';
+import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
+import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
+import VisitorQrCodeDialog from './components/Dialog/VisitorQrCodeDialog';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
+dayjs.locale('id');
+import 'dayjs/locale/id';
+import { getConfig } from 'src/config';
+
+const Content = () => {
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [edittingId, setEdittingId] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<[]>([]);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [visitorData, setVisitorData] = useState<any[]>([]);
+  const defaultFormData = useMemo(() => CreateVisitorRequestSchema.parse({}), []);
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState(defaultFormData);
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorAdmin';
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: '', severity: 'info' });
+
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+
+  const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
+  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
+  const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
+  const [openPreRegistration, setOpenPreRegistration] = useState(false);
+  const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
+  const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [employeeError, setEmployeeError] = useState<string | null>(null);
+  const [employeeDetail, setEmployeeDetail] = useState<any>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
+  const [visitorLoading, setVisitorLoading] = useState(false);
+  const [visitorError, setVisitorError] = useState<string | null>(null);
+  const [visitorDetail, setVisitorDetail] = useState<any>(null);
+  const navigate = useNavigate();
+  const [selectedShareLink, setSelectedShareLink] = useState(null);
+  const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  const [qrValue, setQrValue] = useState('');
+  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
+  const [hasDecoded, setHasDecoded] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [torchOn, setTorchOn] = useState(false);
+  const scanContainerRef = useRef<HTMLDivElement | null>(null);
+  const [wizardKey, setWizardKey] = useState(0);
+  const [vtLoading, setVTLoading] = useState(false);
+  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
+  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite();
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const config = getConfig();
+  const logoUrl = config.LOGO_URL || Logo;
+  const { t } = useTranslation();
+  const { visitorType } = useVisitorType();
+  const { data: sites } = useSites();
+  // const [hostSearch, setHostSearch] = useState('');
+  // const debouncedSearch = useDebounce(hostSearch, 400);
+  const [hostSearch, setHostSearch] = useState('');
+
+  const debouncedSearch = hostSearch ? useDebounce(hostSearch, 400) : '';
+  const { data: allVisitorEmployee = [], isLoading: isLoadingVisitorEmployee } =
+    useInvitationVisitorEmployee({
+      search: debouncedSearch,
+      start: 0,
+      length: 10,
+    });
+  const [openQrDialog, setOpenQrDialog] = useState(false);
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination({
+    'search[value]': debouncedSearch,
+    sortDir: 'desc',
+  });
+
+  const employeeData = data?.collection ?? [];
+  const { createMutation, deleteMutation, sendEmailMutation } = useShareLinkMutation();
+  const isGenerating =
+    createMutation.isPending || sendEmailMutation.isPending || deleteMutation.isPending;
+
+  const resetRegisteredFlow = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor(defaultFormData);
+  };
+
+  const handleEmployeeClick = async (employeeId: string) => {
+    setOpenEmployeeDialog(true);
+    setEmployeeLoading(true);
+    setEmployeeError(null);
+    setEmployeeDetail(null);
+
+    try {
+      const res = await getEmployeeById(employeeId);
+      setEmployeeDetail(res?.collection ?? null);
+    } catch (err: any) {
+      setEmployeeError(err?.message || 'Failed to fetch employee details.');
+    } finally {
+      setEmployeeLoading(false);
+    }
+  };
+
+  const handleCloseEmployeeDialog = () => {
+    setOpenEmployeeDialog(false);
+    setEmployeeDetail(null);
+    setEmployeeError(null);
+  };
+
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const { data: allVisitorData, isLoading } = useVisitorPagination({
+    page,
+    rowsPerPage,
+    search,
+    filters: appliedFilters,
+  });
+
+  const processedData = useMemo(() => {
+    if (!allVisitorData) return [];
+    return (allVisitorData?.collection ?? [])
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          name: item.visitor_name || '-',
+          visitor_type: item.visitor_type_name || '-',
+          // citizenship_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          // organization: item.visitor_organization_name || '-',
+          // invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          host_name: item.host_name ?? '-',
+          is_vip: item.is_vip,
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, host_name, ...rest }: any) => rest);
+  }, [allVisitorData]);
+
+  const visitorDataAll = useMemo(
+    () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
+    [processedData],
+  );
+
+  // const { data: quickAccessResult } = useQuickAccessPagination({
+  //   page: quickPage,
+  //   rowsPerPage: quickRowsPerPage,
+  //   search: quickSearch,
+  //   enabled: openQuickAccess,
+  // });
+
+  // const processedQuickAccessData = useMemo(() => {
+  //   if (!quickAccessResult?.collection) return [];
+
+  //   return quickAccessResult.collection
+  //     .map((item: any) => {
+  //       const isExpired =
+  //         item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+  //       return {
+  //         id: item.id,
+  //         // visitor_type: item.visitor_type_name || '-',
+  //         name: item.visitor_name || '-',
+  //         // identity_id: item.visitor_identity_id || '-',
+  //         email: item.visitor_email || '-',
+  //         organization: item.visitor_organization_name || '-',
+  //         receiver_name: item.receiver_name || '-',
+  //         // invitation_code: item.invitation_code || '-',
+  //         phone: item.visitor_phone || '-',
+  //         visitor_period_start: item.visitor_period_start || '-',
+  //         visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //         invitation_created_at: item.invitation_created_at,
+  //         host: item.host ?? '-',
+  //         visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+  //       };
+  //     })
+  //     .sort((a: any, b: any) => {
+  //       const dateA = a.invitation_created_at ?? a.visitor_period_start;
+  //       const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+  //       return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+  //     })
+  //     .map(({ invitation_created_at, ...rest }: any) => rest);
+  // }, [quickAccessResult]);
+
+  const visitorTableData = {
+    data: visitorDataAll,
+    // dataQuickAccess: processedQuickAccessData ?? [],
+    RecordsFiltered: allVisitorData?.RecordsFiltered ?? 0,
+    RecordsTotal: allVisitorData?.RecordsTotal ?? 0,
+  };
+
+  const totalRecords = allVisitorData?.RecordsTotal ?? 0;
+  const totalFilteredRecords = allVisitorData?.RecordsFiltered ?? 0;
+
+  const cards = [
+    {
+      title: t('totalVisitor'),
+      icon: IconUsers,
+      subTitle: `${totalFilteredRecords}`,
+      color: 'none',
+    },
+    // {
+    //   title: 'Scan QR ' + t('navigation.visitor'),
+    //   icon: IconQrcode,
+    //   subTitle: iconScanQR,
+    //   subTitleSetting: 'image',
+    //   color: 'none',
+    // },
+    ...(!isOperatorAdmin
+      ? [
+          {
+            title: t('add') + ' Invitation',
+            icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          // {
+          //   title: t('add') + ' Pre Registration',
+          //   icon: IconUserPlus,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
+          // {
+          //   title: t('shareLink'),
+          //   icon: IconLink,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
+          // {
+          //   title: t('quickAccess'),
+          //   icon: IconBolt,
+          //   subTitle: iconAdd,
+          //   subTitleSetting: 'image',
+          //   color: 'none',
+          // },
+        ]
+      : []),
+  ];
+
+  const closeVisitorDialog = useCallback(() => {
+    setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setSelectedSite(null);
+    resetRegisteredFlow();
+  }, []);
+
+  const handleAdd = () => {
+    setEdittingId('');
+    setFormDataAddVisitor(defaultFormData);
+    setSelectedSite(null);
+  };
+
+  const handleSuccess = () => {
+    setWizardKey((k) => k + 1);
+    setSelectedSite(null);
+    setFormDataAddVisitor((prev: any) => ({
+      ...prev,
+      registered_site: '',
+    }));
+    setFormDataAddVisitor(defaultFormData);
+    closeVisitorDialog();
+  };
+
+  const openDiscardForCloseAdd = () => {
+    setConfirmDialogOpen(true);
+  };
+
+  const handleCancelDiscard = () => {
+    setConfirmDialogOpen(false);
+    // setPendingEditId(null);
+  };
+
+  const resetFormData = () => {
+    setFormDataAddVisitor(defaultFormData);
+    setEdittingId('');
+  };
+
+  const confirmDiscardAndClose = () => {
+    resetFormData();
+    setWizardKey((k) => k + 1);
+    setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setFormDataAddVisitor(defaultFormData);
+    setConfirmDialogOpen(false);
+    closeVisitorDialog();
+  };
+
+  const handleView = async (id: string) => {
+    setOpenVisitorDialog(true);
+    setVisitorLoading(true);
+    setVisitorError(null);
+    setVisitorDetail(null);
+
+    try {
+      const res = await getVisitorById(id);
+      setVisitorDetail(res?.collection ?? res ?? null);
+    } catch (err: any) {
+      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
+    } finally {
+      setVisitorLoading(false);
+    }
+  };
+
+  const handleQrCode = async (id: string) => {
+    try {
+      const res = await getVisitorById(id);
+
+      const detail: any = res?.collection ?? res ?? null;
+
+      const isExpired =
+        detail?.visitor_period_end && dayjs(detail.visitor_period_end).isBefore(dayjs(), 'day');
+
+      setVisitorDetail({
+        ...detail,
+        visitor_status: isExpired ? 'Expired' : detail?.visitor_status || '-',
+      });
+
+      setOpenQrDialog(true);
+    } catch (err: any) {
+      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
+    }
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedFilters({
+      ...filters,
+    });
+
+    if (page !== 0) {
+      setPage(0);
+    }
+  };
+  const handleSubmitQRCode = async (value: string) => {
+    try {
+      setLoading(true);
+      const res = await getInvitationCode(value);
+      const data = res.collection?.data ?? [];
+
+      setVisitorData(data);
+      setOpenDetail(true);
+      closeVisitorDialog();
+      if (data.length === 0) {
+        showSwal('error', 'Your code does not exist.', 3000);
+        return;
+      }
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to fetch visitor data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetFilter = () => {
+    const empty = {
+      visitor_status: '',
+      visitor_type: '',
+      visitor_role: '',
+      host_id: '',
+      site_id: '',
+      is_block: '',
+      transaction_status: '',
+      emergency_situation: '',
+      start_date: '',
+      end_date: '',
+    };
+
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    // setSelectedType('All');
+    setPage(0);
+  };
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
+
+      if (!confirm.isConfirmed) return;
+
+      await deleteMutation.mutateAsync(id);
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
+    }
+  };
+
+  const handleOpenInviteDialog = async (row: any) => {
+    const res = await getShareLinkById(row.id);
+    setSelectedShareLink(res.collection);
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.shorten_url || row.url);
+    setExpiredAt(row.expired_at);
+    setOpenInviteViaLinkEmail(true);
+  };
+
+  const handleCopyLink = async (link: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textArea = document.createElement('textarea');
+
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        const copied = document.execCommand('copy');
+
+        document.body.removeChild(textArea);
+
+        if (!copied) {
+          throw new Error('Failed to copy');
+        }
+      }
+
+      showSwal('success', 'Link copied to clipboard.');
+    } catch (error) {
+      console.error('Copy link failed:', error);
+      showSwal('error', 'Failed to copy link.');
+    }
+  };
+
+  const handleDetailLink = (link: string) => {
+    setOpenDetailLink(true);
+  };
+
+  const handleAddShareLink = () => {
+    setOpenCreateLink(true);
+  };
+
+  const getExpireText = () => {
+    if (!expiredAt) return '';
+
+    const cleanDate = expiredAt.replace(/\.\d+/, '') + 'Z';
+    const expireDate = new Date(cleanDate);
+
+    if (isNaN(expireDate.getTime())) return '';
+
+    const now = new Date();
+    const diffMs = expireDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return 'Expired';
+
+    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ${hours} hour${hours !== 1 ? 's' : ''} left`;
+    }
+
+    return `${hours} hour${hours !== 1 ? 's' : ''} left`;
+  };
+
+  const handleSendInvitation = async (emails: string[]) => {
+    const validEmails = emails.filter((email: any) => email?.trim() !== '');
+
+    if (!validEmails.length || !selectedShareLinkId) {
+      showSwal('error', t('pleaseSendAtleastOneEmail'));
+      return;
+    }
+
+    try {
+      await sendEmailMutation.mutateAsync({
+        id: selectedShareLinkId,
+        payload: {
+          emails: validEmails,
+        },
+      });
+      showSwal('success', t('successSendInvitation'));
+    } catch (error: any) {
+      showSwal('error', error?.response.data.msg || 'Failed to send invitation');
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      await createMutation.mutateAsync(payload);
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err: any) {
+      showSwal('error', err?.response.data.message || 'Failed to create share link');
+    }
+  };
+
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+      // await createShareLink(finalPayload);
+      await createMutation.mutateAsync(finalPayload);
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+      showSwal('success', t('successSendShareLink'));
+    } catch (err: any) {
+      showSwal('error', err?.response.data.message || 'Failed to send share link');
+    }
+  };
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+  const handleQuickSearch = useCallback((keyword: string) => {
+    setQuickPage(0);
+    setQuickSearch(keyword);
+  }, []);
+
+  const handleSelectSite = (site: any) => {
+    setFormDataAddVisitor((prev) => ({
+      ...prev,
+      registered_site: site.id,
+    }));
+
+    setOpenDialogIndex(null);
+
+    if (flowTarget === 'invitation') {
+      setOpenInvitationVisitor(true);
+    } else if (flowTarget === 'preReg') {
+      setOpenPreRegistration(true);
+    }
+  };
+
+  const { createMutation: createQuickAccess } = useQuickAccessMutation();
+
+  const handleCreateQuickAccess = async (payload: any) => {
+    try {
+      await createQuickAccess.mutateAsync(payload);
+      showSwal('success', 'Quick access created successfully');
+      setOpenQuickAccess(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
+
+      throw error;
+    }
+  };
+
+  const handleExportPdf = () => {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const generatedAt = dayjs().format('DD MMMM YYYY HH:mm:ss');
+
+    doc.addImage(logoUrl, 'PNG', 14, 10, 18, 18);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+
+    doc.text('BANK INDONESIA', 36, 17);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    doc.text('Visitor Management System', 36, 22);
+
+    doc.setFontSize(8);
+
+    doc.text(`Generated : ${generatedAt}`, pageWidth - 14, 17, { align: 'right' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+
+    doc.text('VISITOR REPORT', 14, 37);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+
+    doc.text('Visitor Transaction Report', 14, 43);
+
+    doc.setDrawColor(220, 220, 220);
+    doc.line(14, 48, pageWidth - 14, 48);
+
+    autoTable(doc, {
+      startY: 52,
+      margin: {
+        left: 14,
+        right: 14,
+      },
+
+      tableWidth: 269,
+
+      head: [
+        [
+          'No',
+          'Visitor Type',
+          'Name',
+          'Email',
+          'Organization',
+          'Phone',
+          'Host',
+          'Start Period',
+          'End Period',
+          'Status',
+        ],
+      ],
+
+      body: (allVisitorData?.collection ?? []).map((item: any, index: number) => [
+        index + 1,
+        item.visitor_type_name ?? '-',
+        item.visitor_name ?? '-',
+        item.visitor_email ?? '-',
+        item.visitor_organization_name ?? '-',
+        item.visitor_phone ?? '-',
+        item.host_name ?? '-',
+        formatDateTime(item.visitor_period_start),
+        formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+        item.visitor_status ?? '-',
+      ]),
+
+      theme: 'grid',
+
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+        valign: 'middle',
+        textColor: [45, 45, 45],
+        lineColor: [220, 220, 220],
+        lineWidth: 0.2,
+        overflow: 'linebreak',
+      },
+
+      headStyles: {
+        fillColor: [33, 119, 181],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 7.5,
+      },
+
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+
+      columnStyles: {
+        0: { cellWidth: 10 }, // No
+        1: { cellWidth: 25 }, // Visitor Type
+        2: { cellWidth: 30 }, // Name
+        3: { cellWidth: 32 }, // Email
+        4: { cellWidth: 35 }, // Organization
+        5: { cellWidth: 25 }, // Phone
+        6: { cellWidth: 30 }, // Host
+        7: { cellWidth: 27 }, // Period Start
+        8: { cellWidth: 27 }, // Period End
+        9: { cellWidth: 28 }, // Status
+      },
+
+      didDrawPage: (data) => {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+
+        doc.text('Bank Indonesia • Visitor Management System', 14, pageHeight - 8);
+
+        doc.text(`Page ${data.pageNumber}`, pageWidth - 14, pageHeight - 8, {
+          align: 'right',
+        });
+      },
+    });
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+
+    const dateStr = `${day}-${month}-${year}`;
+
+    doc.save(`Visitor-Report-${dateStr}.pdf`);
+  };
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Live Visitor" description="this is live visitor page">
+        <Box>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard
+                cardMarginBottom={1}
+                items={cards}
+                onImageClick={(_, index) => {
+                  if (index === 1) {
+                    setFlowTarget('invitation');
+                    setOpenDialogIndex(2);
+                  } else if (index === 2) {
+                    setOpenQuickAccess(true);
+                  } else {
+                    setOpenDialogIndex(index);
+                  }
+                }}
+                size={{ xs: 12, lg: 3 }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <DynamicTable
+                loading={isLoading}
+                isHavePagination={true}
+                overflowX={'auto'}
+                minWidth={2400}
+                stickyHeader={true}
+                currentPage={page}
+                data={visitorTableData?.data || []}
+                totalCount={totalFilteredRecords}
+                isNoActionTableHead={true}
+                selectedRows={selectedRows}
+                rowsPerPageOptions={[10, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveImage={true}
+                isHaveSearch={true}
+                isHaveExportPdf={true}
+                onExportPdf={handleExportPdf}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveVip={true}
+                isHavePeriod={true}
+                isHaveHeader={true}
+                isHaveGender={true}
+                isHaveVisitor={true}
+                isActionVisitor={true}
+                isActionEmployee={true}
+                searchPlaceholder="Search Visitor"
+                stickyVisitorCount={2}
+                isBlacklistPage={true}
+                onNavigatePage={() => {
+                  navigate('/admin/visitor/blacklist-visitor');
+                }}
+                isHaveEmployee={true}
+                onEmployeeClick={(row: any) => {
+                  handleEmployeeClick(row.host as string);
+                }}
+                isHaveVerified={false}
+                headerContent={{
+                  title: '',
+                  subTitle: 'Monitoring Data Visitor',
+                  items: [
+                    { name: 'All' },
+                    { name: 'Preregis' },
+                    { name: 'Checkin' },
+                    { name: 'Checkout' },
+                    { name: 'Block' },
+                    // { name: 'Denied' },
+                    { name: 'Waiting' },
+                    { name: 'Canceled' },
+                  ],
+                }}
+                onHeaderItemClick={(item) => {
+                  if (
+                    item.name === 'All' ||
+                    item.name === 'Checkin' ||
+                    item.name === 'Checkout' ||
+                    item.name === 'Preregis' ||
+                    // item.name === 'Denied' ||
+                    item.name === 'Block' ||
+                    item.name === 'Waiting' ||
+                    item.name === 'Canceled'
+                  ) {
+                    // setSelectedType(item.name);
+                    setPage(0);
+                    setAppliedFilters((prev: any) => ({
+                      ...prev,
+                      status: item.name === 'All' ? 0 : item.name,
+                    }));
+                  }
+                }}
+                defaultSelectedHeaderItem="All"
+                onView={(row) => {
+                  handleView(row.id);
+                }}
+                isHaveQrCode={true}
+                onQrCode={(row) => {
+                  handleQrCode(row.id);
+                }}
+                searchKeyword={search}
+                onSearch={handleSearch}
+                onFilterCalenderChange={(ranges) => {
+                  if (ranges.startDate && ranges.endDate) {
+                    setStartDate(ranges.startDate.toISOString());
+                    setEndDate(ranges.endDate.toISOString());
+                    setPage(0);
+                  }
+                }}
+                onAddData={handleAdd}
+                isHaveFilterMore={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                    onResetFilter={handleResetFilter}
+                    onClose={() => {}}
+                  />
+                }
+                isHaveAddEmpty={true}
+                addDataText={t('add') + ' Invitation'}
+                onAddEmpty={() => {
+                  setFlowTarget('invitation');
+                  setOpenDialogIndex(2);
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+
+      <InvitationVisitorDialog
+        open={openInvitationVisitor}
+        handleCloseDialog={closeVisitorDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employeeData}
+        search={setHostSearch}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        isLoadingEmployee={isLoadingEmployee}
+      />
+
+      <PreRegistrationDialog
+        open={openPreRegistration}
+        handleCloseDialog={closeVisitorDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employeeData}
+        search={setHostSearch}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+        isLoadingEmployee={isLoadingEmployee}
+      />
+
+      <EmployeeDetailDialog
+        open={openEmployeeDialog}
+        onClose={handleCloseEmployeeDialog}
+        employeeDetail={employeeDetail}
+        employeeLoading={employeeLoading}
+        employeeError={employeeError}
+      />
+
+      <RegisteredSiteDialog
+        open={openDialogIndex === 2}
+        siteData={siteData}
+        selectedSite={selectedSite}
+        setSelectedSite={(nv) => {
+          setSelectedSite(nv);
+          setFormDataAddVisitor((prev) => ({
+            ...prev,
+            registered_site: nv?.id || '',
+          }));
+        }}
+        isFormChanged={isFormChanged}
+        onDiscard={openDiscardForCloseAdd}
+        onClose={closeVisitorDialog}
+        toast={toast as any}
+        onSubmit={handleSelectSite}
+      />
+
+      <QrScannerDialog
+        open={openDialogIndex === 1}
+        onClose={closeVisitorDialog}
+        qrMode={qrMode}
+        setQrMode={setQrMode}
+        qrValue={qrValue}
+        setQrValue={setQrValue}
+        loading={loading}
+        onSubmit={handleSubmitQRCode}
+        scanContainerRef={scanContainerRef as any}
+        facingMode={facingMode}
+        setFacingMode={setFacingMode}
+        torchOn={torchOn}
+        setTorchOn={setTorchOn}
+        hasDecoded={hasDecoded}
+        setHasDecoded={setHasDecoded}
+      />
+
+      <VisitorDetailDialog
+        open={openVisitorDialog}
+        loading={visitorLoading}
+        error={visitorError}
+        detail={visitorDetail}
+        onClose={() => setOpenVisitorDialog(false)}
+      />
+
+      <DetailVisitorDialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        visitorData={visitorData}
+      />
+
+      {/* <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        visitorTableData={visitorTableData.dataQuickAccess}
+        handleEmployeeClick={handleEmployeeClick}
+        onSubmit={handleCreateQuickAccess}
+        page={quickPage}
+        setPage={setQuickPage}
+        setRowsPerPage={setQuickRowsPerPage}
+        searchKeyword={quickSearch}
+        onSearch={handleQuickSearch}
+        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
+      /> */}
+
+      <ShareLinkDialog
+        open={openDetailShareLink}
+        onClose={() => setOpenDetailShareLink(false)}
+        onCopyLink={(row) => handleOpenInviteDialog(row)}
+        onDetailLink={handleDetailLink}
+        onDelete={handleDeleteLink}
+        onAddData={handleAddShareLink}
+      />
+
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        expiredAt={expiredAt}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
+        loading={isGenerating}
+      />
+
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={handleCreateLink}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+        loading={isGenerating}
+      />
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={handleSendEmail}
+        loading={isGenerating}
+      />
+
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={[]}
+      />
+
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelDiscard}
+        onDiscard={confirmDiscardAndClose}
+      />
+      <VisitorQrCodeDialog
+        open={openQrDialog}
+        onClose={() => setOpenQrDialog(false)}
+        visitorDetail={visitorDetail}
+      />
+
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: 99999 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <GlobalBackdropLoading open={isGenerating} />
+    </PageContainer>
+  );
+};
+
+export default Content;

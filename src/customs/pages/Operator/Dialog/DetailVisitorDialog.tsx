@@ -43,9 +43,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   visitorData: any[];
+  container?: HTMLElement | null;
 }
 
-const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) => {
+const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, container }) => {
   const [tabValue, setTabValue] = useState(0);
   const formatDateTime = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -57,81 +58,15 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
     );
   };
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
-      <DialogTitle>Detail Visitor</DialogTitle>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={container}>
+      <DialogTitle>Detail Visitor Information</DialogTitle>
       <IconButton sx={{ position: 'absolute', right: '10px', top: '10px' }} onClick={onClose}>
         <IconX />
       </IconButton>
-      {/* <DialogContent dividers>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 5.8 }}>
-            <Typography variant="h5" fontWeight="medium">
-              Identity Information
-            </Typography>
-            <Grid container spacing={2} mt={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                {' '}
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Name</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.visitor.name || '-'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.visitor_name || '-'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.address || '-'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                {' '}
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.visitor_name || '-'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                {' '}
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.visitor_name || '-'}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                {' '}
-                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Organization</CustomFormLabel>
-                <Typography variant="body1" fontWeight="medium">
-                  {visitorData[0]?.visitor_name || '-'}
-                </Typography>
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid
-            sx={{
-              display: { xs: 'none', md: 'flex' }, // hanya muncul di layar besar
-              alignItems: 'stretch',
-              justifyContent: 'center',
-            }}
-          >
-            <Divider orientation="vertical" flexItem />
-          </Grid>
-          <Grid size={{ xs: 12, md: 5.8 }}>
-            <Typography variant="h5" fontWeight="medium" mb={2}>
-              History
-            </Typography>
-            <DynamicTable data={[]} isHaveSearch={true} />
-          </Grid>
-        </Grid>
-      </DialogContent> */}
 
       <DialogContent dividers>
         <Grid container spacing={2} alignItems={'stretch'} height={'100%'}>
-          <Grid size={{ xs: 12, xl: 5 }}>
+          <Grid size={{ xs: 12 }}>
             <Box>
               {/* Foto Visitor */}
               <Box
@@ -200,7 +135,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.email || '-'}
+                            {visitorData[0]?.visitor_phone || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -219,7 +154,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.phone || '-'}
+                            {visitorData[0]?.visitor_phone || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -230,7 +165,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconHome />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visitor Type</CustomFormLabel>
                           <Typography
                             sx={{
                               wordBreak: 'break-word',
@@ -238,7 +173,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.address || '-'}
+                            {visitorData[0]?.visitor_type_name || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -249,8 +184,8 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconGenderMale />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                          <Typography>{visitorData[0]?.visitor?.gender || '-'}</Typography>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Id</CustomFormLabel>
+                          <Typography>{visitorData[0]?.visitor_identity_id || '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>
@@ -268,7 +203,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.organization || '-'}
+                            {visitorData[0]?.visitor_organization_name || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -281,7 +216,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
 
-                          <Typography>{visitorData[0]?.card[0]?.card_number}</Typography>
+                          <Typography>{visitorData[0]?.card[0]?.card_number ?? '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>
@@ -342,8 +277,19 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                         <IconCheckupList />
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                            <Typography>{visitorData[0]?.visitor_status || '-'}</Typography> Visitor
-                            Status
+                            Visitor Status
+                            <Typography>{visitorData[0]?.visitor_status || '-'}</Typography>
+                          </CustomFormLabel>
+                        </Box>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={2} alignItems="flex-start">
+                        <IconCheckupList />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                            Invited By
+                            <Typography>{visitorData[0]?.invited_by_name || '-'}</Typography>
                           </CustomFormLabel>
                         </Box>
                       </Box>
@@ -366,7 +312,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                         <IconLicense />
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                            Vehicle Plate No.
+                            License Plate Number
                           </CustomFormLabel>
                           <Typography>{visitorData[0]?.vehicle_plate_number || '-'}</Typography>
                         </Box>
@@ -432,7 +378,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconMapPin />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Registered Site</CustomFormLabel>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Site</CustomFormLabel>
                           <Typography>{visitorData[0]?.site_place_name || '-'}</Typography>
                         </Box>
                       </Box>
@@ -442,7 +388,6 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
               )}
             </Box>
           </Grid>
-
           <Grid
             display={{ xs: 'none', md: 'flex' }}
             justifyContent="center"
@@ -450,35 +395,6 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
             sx={{ px: 1 }}
           >
             <Divider orientation="vertical" flexItem />
-          </Grid>
-          <Grid
-            size={{ xs: 12, xl: 6 }}
-            display="flex"
-            justifyContent="center"
-            // alignItems="center"
-            sx={{ textAlign: 'center' }}
-          >
-            <Box sx={{ width: '100%' }}>
-              <DynamicTable
-                data={[]}
-                isHaveSearch={false}
-                isHaveHeaderTitle={true}
-                titleHeader="History"
-              />
-              {/* <DynamicTable
-                data={accessData}
-                isHaveHeaderTitle={true}
-                titleHeader="Access"
-                isNoActionTableHead={true}
-                isHavePagination={false}
-                overflowX="auto"
-                isHaveApproval={false}
-                isHaveAction={true}
-                isHaveAccess={true}
-                isHaveChecked={true}
-                onAccessAction={handleAccessAction}
-              /> */}
-            </Box>
           </Grid>
         </Grid>
       </DialogContent>

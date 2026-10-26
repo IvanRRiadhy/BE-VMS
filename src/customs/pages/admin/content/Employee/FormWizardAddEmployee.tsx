@@ -1,0 +1,1936 @@
+import { z, ZodObject, ZodEffects } from 'zod';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Box,
+  Stepper,
+  Step,
+  Button,
+  MenuItem,
+  FormHelperText,
+  FormControl,
+  FormControlLabel,
+  Grid2,
+  Typography,
+  Autocomplete,
+  Paper,
+  Dialog,
+  Divider,
+  Switch,
+  Checkbox,
+  StepButton,
+  LinearProgress,
+  IconButton,
+  AlertColor,
+  Snackbar,
+  Portal,
+  Alert,
+  Tooltip,
+  DialogTitle,
+  DialogContent,
+} from '@mui/material';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
+import Webcam from 'react-webcam';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+import imageCompression from 'browser-image-compression';
+import {
+  CreateEmployeeRequest,
+  CreateEmployeeRequestSchema,
+  CreateEmployeeSubmitSchema,
+} from 'src/customs/api/models/Admin/Employee';
+import { Item } from 'src/customs/api/models/Admin/Employee';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+const steps = ['Personal Info', 'Work Details', 'Access & Emergency', 'Other Details', 'Photo'];
+import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { useEmployeeMutation } from 'src/hooks/Employee/useEmployeeMutation';
+import { useEmployeeDetail } from 'src/hooks/Employee/useEmployeeDetail';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconCamera,
+  IconDeviceFloppy,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { useVisitorCardPagination } from 'src/hooks/Card/useVisitorCard';
+import { useDebounce } from 'src/hooks/useDebounce';
+import type { CreateVisitorCardRequest } from 'src/customs/api/models/Admin/VisitorCard';
+import FormWizardAddVisitorCard from '../Card/FormWizardAddVisitorCard';
+type EnabledFields = {
+  organization_id: boolean;
+  department_id: boolean;
+  district_id: boolean;
+  // access_area: boolean;
+  // access_area_special: boolean;
+  gender: boolean;
+};
+
+interface FormEmployeeProps {
+  formData: CreateEmployeeRequest;
+  setFormData: React.Dispatch<React.SetStateAction<CreateEmployeeRequest>>;
+  edittingId?: string | null;
+  onSuccess?: () => void;
+  isBatchEdit?: boolean;
+  selectedRows?: Item[];
+  enabledFields?: EnabledFields;
+  setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  organizations?: any;
+  department?: any;
+  districts?: any;
+}
+
+const BASE_URL = axiosInstance2.defaults.baseURL;
+
+const FormWizardAddEmployee = ({
+  formData,
+  setFormData,
+  edittingId,
+  onSuccess,
+  isBatchEdit,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
+  organizations,
+  department,
+  districts,
+}: FormEmployeeProps) => {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
+  const [alertMessage, setAlertMessage] = useState<string>(
+    'Complete the following data properly and correctly',
+  );
+  const [activeStep, setActiveStep] = useState(0);
+  const [skipped, setSkipped] = useState(new Set<number>());
+  const isStepSkipped = (step: number) => skipped.has(step);
+  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [openCamera, setOpenCamera] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const webcamRef = useRef<Webcam>(null);
+  const [removing, setRemoving] = useState(false);
+  const [openAddCard, setOpenAddCard] = useState(false);
+  const initialCardFormData: any = {};
+  const [cardFormData, setCardFormData] = useState<CreateVisitorCardRequest>(initialCardFormData);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
+  const { create, update, uploadImage, isPending } = useEmployeeMutation();
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+  }>({ open: false, message: '', severity: 'info' });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+  const loading = isPending;
+  const clearLocal = () => {
+    setSiteImageFile(null);
+    setPreviewUrl(null);
+    setScreenshot(null);
+    setLocalForm((prev) => ({ ...prev, faceimage: '' }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemove = async (e?: React.MouseEvent) => {
+    e?.stopPropagation?.();
+    if (removing) return;
+
+    const serverPath =
+      localForm.faceimage &&
+      !localForm.faceimage.startsWith('data:') &&
+      !/^https?:\/\//i.test(localForm.faceimage)
+        ? localForm.faceimage
+        : null;
+
+    try {
+      setRemoving(true);
+      if (serverPath) {
+        const rel = serverPath.startsWith('/') ? serverPath : `/${serverPath}`;
+        const deletePath = rel.startsWith('/cdn/') ? rel : `/cdn${rel}`;
+        await axiosInstance2.delete(deletePath);
+        toast('Succesfully deleted file', 'success');
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+    } finally {
+      clearLocal();
+      setRemoving(false);
+    }
+  };
+
+  const handleClear = () => {
+    setScreenshot(null);
+    setPreviewUrl(null);
+
+    setLocalForm((prev) => ({
+      ...prev,
+      faceimage: '',
+    }));
+
+    setSiteImageFile(null);
+  };
+
+  const handleCapture = async () => {
+    if (!webcamRef.current) return;
+
+    const imageSrc = webcamRef.current.getScreenshot();
+
+    if (!imageSrc) {
+      console.log('Failed to capture photo');
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+
+      const compressedBlob = await compressImage(blob);
+
+      const file = new File([compressedBlob], 'webcam.jpg', {
+        type: compressedBlob.type || 'image/jpeg',
+        lastModified: Date.now(),
+      });
+
+      setSiteImageFile(file);
+      setScreenshot(imageSrc);
+      setPreviewUrl(URL.createObjectURL(file));
+    } catch (error) {
+      showSwal('error', 'Failed to process camera image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const { data: employee } = useEmployeeDetail({
+    id: edittingId,
+    enabled: !!edittingId,
+  });
+
+  useEffect(() => {
+    if (!employee) return;
+
+    const normalizedGender =
+      typeof employee.gender === 'string'
+        ? employee.gender === 'Female'
+          ? 0
+          : 1
+        : Number(employee.gender ?? 0);
+
+    setFormData((prev) => ({
+      ...prev,
+      ...employee,
+      gender: normalizedGender,
+      organization_id: String(employee.organization_id ?? ''),
+      department_id: String(employee.department_id ?? ''),
+      district_id: String(employee.district_id ?? ''),
+    }));
+  }, [employee]);
+
+  const pick = (obj: Record<string, any>, keys: readonly string[]) => {
+    const out: Record<string, any> = {};
+    keys.forEach((k) => {
+      if (k in obj) out[k] = obj[k];
+    });
+    return out;
+  };
+
+  const scrollToField = (key: string) => {
+    const el = document.getElementById(key);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  function unwrapZodObject(schema: any): ZodObject<any> | null {
+    if (schema instanceof z.ZodObject) {
+      return schema;
+    }
+    if (schema instanceof z.ZodEffects) {
+      const inner = (schema as ZodEffects<any>)._def.schema;
+      if (inner instanceof z.ZodObject) {
+        return inner;
+      }
+    }
+    return null;
+  }
+
+  const validateStep = (step: number): boolean => {
+    const schema = getStepSchema(step);
+    if (!schema) return true;
+
+    const fields = stepFieldMap[step] ?? [];
+    let payload = pick(localForm, fields as any);
+
+    if (isBatchEdit) {
+      const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
+      if (enabledKeys.length === 0) return true;
+
+      payload = pick(localForm, enabledKeys as any);
+
+      const baseSchema = unwrapZodObject(schema);
+      if (baseSchema) {
+        const shape: Record<string, true> = {};
+        enabledKeys.forEach((k) => (shape[k as string] = true));
+
+        const partialSchema = baseSchema.pick(shape);
+
+        const res = partialSchema.safeParse(payload);
+
+        if (!res.success) {
+          const em = toErrorMap(res.error.issues);
+          setErrors((prev) => ({ ...prev, ...em }));
+          setAlertType('error');
+          setAlertMessage('Please fix the highlighted fields on this step.');
+
+          const firstKey = Object.keys(em)[0];
+          if (firstKey) scrollToField(firstKey);
+          return false;
+        }
+      }
+
+      return true;
+    }
+    // if (step === 1) {
+    //   (payload as any).district_id = String((payload as any).district_id ?? '');
+    //   (payload as any).organization_id = String((payload as any).organization_id ?? '');
+    //   (payload as any).department_id = String((payload as any).department_id ?? '');
+    // }
+
+    const res = schema.safeParse(payload);
+
+    if (res.success) return true;
+
+    const em = toErrorMap(res.error.issues);
+    setErrors((prev) => ({ ...prev, ...em }));
+    setAlertType('error');
+    setAlertMessage('Please fix the highlighted fields on this step.');
+
+    const firstKey = Object.keys(em)[0];
+    if (firstKey) scrollToField(firstKey);
+
+    return false;
+  };
+
+  const handleChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | React.ChangeEvent<{ name?: string; value: unknown }>,
+  ) => {
+    const { id, name, value } = e.target as any;
+    const key = (name || id) as string;
+    setLocalForm((prev) => ({
+      ...prev,
+      [name || id]: value,
+    }));
+    // setIsFormChanged?.(true);
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
+  };
+
+  useEffect(() => {
+    if (!isBatchEdit) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      organization_id: '',
+      department_id: '',
+      district_id: '',
+      gender: 0,
+    }));
+
+    setEnabledFields?.({
+      organization_id: false,
+      department_id: false,
+      district_id: false,
+      gender: false,
+    });
+  }, [isBatchEdit]);
+
+  const resetEnabledFields = () => {
+    setFormData((prev) => ({
+      ...prev,
+      gender: 0,
+      department_id: '',
+      district_id: '',
+      organization_id: '',
+    }));
+    setEnabledFields({
+      organization_id: false,
+      department_id: false,
+      district_id: false,
+      gender: false,
+    });
+  };
+
+  // const handleNext = () => {
+  //   if (!validateStep(activeStep)) return;
+
+  //   let newSkipped = skipped;
+  //   if (isStepSkipped(activeStep)) {
+  //     newSkipped = new Set(newSkipped.values());
+  //     newSkipped.delete(activeStep);
+  //   }
+  //   setActiveStep((prev) => prev + 1);
+  //   setSkipped(newSkipped);
+
+  //   setAlertType('info');
+  //   setAlertMessage('Complete the following data properly and correctly');
+  // };
+
+  const handleNext = () => {
+    if (!validateStep(activeStep)) return;
+
+    let newSkipped = skipped;
+
+    if (isStepSkipped(activeStep)) {
+      newSkipped = new Set(newSkipped.values());
+      newSkipped.delete(activeStep);
+    }
+
+    setActiveStep((prev) => prev + 1);
+    setSkipped(newSkipped);
+
+    setAlertType('info');
+    setAlertMessage('Complete the following data properly and correctly');
+  };
+
+  const handleBack = () => setActiveStep((prev) => prev - 1);
+  const handleReset = () => setActiveStep(0);
+
+  const toErrorMap = (issues: z.ZodIssue[]) => {
+    const out: Record<string, string> = {};
+    for (const i of issues) {
+      const key = (i.path.join('.') || '').toString();
+      if (key) out[key] = i.message;
+    }
+    return out;
+  };
+
+  const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
+    ...v,
+    organization_id: String(v.organization_id ?? ''),
+    department_id: String(v.department_id ?? ''),
+    district_id: String(v.district_id ?? ''),
+    type: String(v.type ?? 'Permanent'),
+  });
+
+  // const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
+
+  const handleOnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setErrors({});
+
+    try {
+      if (isBatchEdit && selectedRows.length > 0) {
+        const enabledKeys = Object.keys(enabledFields ?? {}).filter(
+          (k) => (enabledFields as any)[k] === true,
+        ) as (keyof CreateEmployeeRequest)[];
+
+        if (enabledKeys.length === 0) {
+          showSwal('error', 'Please enable at least one field to update.');
+          return;
+        }
+
+        const payload = pick(localForm, enabledKeys);
+        // console.log("payload", payload);
+        const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
+        const partialSchema = baseSchema?.pick(
+          Object.fromEntries(enabledKeys.map((k) => [k, true])),
+        );
+
+        const res = partialSchema?.safeParse(payload);
+        // console.log('res', res);
+        if (res && !res.success) {
+          const em = toErrorMap(res.error.issues);
+          setErrors(em);
+          showSwal('error', 'Please complete the required fields.');
+          const firstKey = Object.keys(em)[0];
+          if (firstKey) scrollToField(firstKey);
+
+          return;
+        }
+
+        for (const row of selectedRows) {
+          await update.mutateAsync({
+            id: row.id,
+
+            data: {
+              ...row,
+              ...payload,
+            },
+          });
+        }
+
+        showSwal('success', 'Batch update successfully!');
+        resetEnabledFields();
+        onSuccess?.();
+        return;
+      }
+
+      const mergedFormData = normalizeForSubmit({
+        ...localForm,
+        exit_date: localForm.exit_date || null,
+        type: String(localForm.type ?? 'Permanent'),
+        gender:
+          typeof localForm.gender === 'string'
+            ? localForm.gender === 'Female'
+              ? 0
+              : 1
+            : Number(localForm.gender ?? 0),
+      });
+
+      const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
+
+      if (!result.success) {
+        const em = toErrorMap(result.error.issues);
+        setErrors(em);
+        showSwal('error', 'Please complete the required fields.');
+        const firstKey = Object.keys(em)[0];
+        if (firstKey) {
+          const el = document.getElementById(firstKey);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      const data = result.data;
+      const rawFaceImage = localForm.faceimage;
+      const rawFileImage = siteImageFile;
+
+      const hasNewImage = Boolean(rawFileImage);
+      if (edittingId) {
+        const { faceimage: _drop, ...withoutImage } = data;
+        if (hasNewImage) {
+          await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
+        }
+        const editData: any = {
+          ...withoutImage,
+          type: String(data.type ?? ''),
+          qr_code: localForm.card_number,
+          is_email_verify: false,
+          exit_date: data.exit_date || null,
+          faceimage: localForm.faceimage,
+        };
+        await update.mutateAsync({
+          id: edittingId,
+          data: editData,
+        });
+        // console.log('editData', editData);
+
+        showSwal('success', t('updatedSuccess', { name: 'Employee' }));
+      } else {
+        // const created = await createEmployee(data, token as string);
+        const created = await create.mutateAsync({
+          data,
+        });
+        const employeeId = created?.collection.employee_id;
+        if (hasNewImage) {
+          await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
+        }
+        showSwal('success', t('createSuccess', { name: 'Employee' }));
+        setFormData(CreateEmployeeRequestSchema.parse({}));
+      }
+
+      onSuccess?.();
+    } catch (err: any) {
+      if (err?.errors) {
+        setErrors(err.errors);
+      }
+      const message =
+        err?.response?.data?.msg ??
+        err?.response?.data?.message ??
+        err?.message ??
+        err?.msg ??
+        'Failed to submit. Please try again.';
+
+      showSwal('error', message);
+    }
+  };
+
+  // const handleFileUploads = async (
+  //   employeeId: string,
+  //   fileFromInput?: File | null,
+  //   faceImage?: string | null,
+  // ) => {
+  //   const tasks: Promise<any>[] = [];
+
+  //   try {
+  //     setIsUploadingImage(true);
+
+  //     if (fileFromInput instanceof File) {
+  //       tasks.push(
+  //         uploadImage.mutateAsync({
+  //           employeeId,
+  //           file: fileFromInput,
+  //         }),
+  //       );
+  //     }
+
+  //     if (faceImage) {
+  //       const blob = await fetch(faceImage).then((res) => res.blob());
+  //       const file = new File([blob], 'webcam.jpg', {
+  //         type: 'image/jpeg',
+  //       });
+
+  //       tasks.push(
+  //         uploadImage.mutateAsync({
+  //           employeeId,
+  //           file,
+  //         }),
+  //       );
+  //     }
+
+  //     if (tasks.length === 0) return;
+
+  //     await Promise.all(tasks);
+  //   } finally {
+  //     setIsUploadingImage(false);
+  //   }
+  // };
+
+  const handleFileUploads = async (
+    employeeId: string,
+    fileFromInput?: File | null,
+    faceImage?: string | null,
+  ) => {
+    try {
+      setIsUploadingImage(true);
+
+      let file: File | null = null;
+
+      // 1. File dari upload input
+      if (fileFromInput instanceof File) {
+        file = fileFromInput;
+      }
+
+      // 2. File dari camera
+      else if (faceImage && typeof faceImage === 'string' && /^data:image\//i.test(faceImage)) {
+        const blob = await fetch(faceImage).then((res) => res.blob());
+
+        file = new File([blob], 'webcam.jpg', {
+          type: 'image/jpeg',
+        });
+      }
+
+      if (!file) {
+        return;
+      }
+
+      const response = await uploadImage.mutateAsync({
+        employeeId,
+        file,
+      });
+
+      // toast('Photo uploaded successfully', 'success');
+
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 5,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    try {
+      setIsUploadingImage(true);
+
+      setPreviewUrl(null);
+      setSiteImageFile(null);
+
+      const compressedBlob = await compressImage(selectedFile);
+
+      // if (compressedBlob.size > 5 * 1024 * 1024) {
+      //   // showSwal('info', t('maxFileSize'));
+      //   toast(t('maxFileSize'), 'info');
+      //   return;
+      // }
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
+
+      const compressedFile = new File([compressedBlob], selectedFile.name, {
+        type: compressedBlob.type || selectedFile.type,
+        lastModified: Date.now(),
+      });
+
+      setSiteImageFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to process image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const [localForm, setLocalForm] = useState(formData);
+
+  const previousEditingId = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (edittingId && edittingId !== previousEditingId.current) {
+      previousEditingId.current = edittingId;
+      setLocalForm(formData);
+    }
+  }, [edittingId, formData]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFormData(localForm);
+    }, 200);
+
+    return () => clearTimeout(handler);
+  }, [localForm, setFormData]);
+
+  useEffect(() => {
+    if (siteImageFile) return;
+
+    const v = localForm.faceimage?.toString() ?? '';
+    if (!v) {
+      setPreviewUrl(null);
+      return;
+    }
+    if (/^(data:image\/|blob:|https?:\/\/)/i.test(v)) {
+      setPreviewUrl(v);
+      return;
+    }
+
+    const rel = v.startsWith('/') ? v : `/${v}`;
+
+    const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
+
+    setPreviewUrl(url);
+  }, [localForm.faceimage, siteImageFile]);
+
+  const showVendorCode = localForm.type === 'Vendor' || localForm.type === 'Contractor';
+  const [cardSearch, setCardSearch] = useState('');
+  const debouncedCardSearch = useDebounce(cardSearch, 500);
+  const { data: visitorCardData, isLoading: isLoadingVisitorCards } = useVisitorCardPagination({
+    page: 0,
+    rowsPerPage: 25,
+    sortDir: 'desc',
+    search: debouncedCardSearch,
+    filters: {
+      type: 2,
+      card_status: 1,
+    },
+  });
+
+  const visitorCardOptions = (visitorCardData?.collection ?? []).map(
+    ({ card_number, card_mac }: { card_number: string; card_mac: string }) => ({
+      label: card_number,
+      value: card_number,
+      cardMac: card_mac,
+    }),
+  );
+
+  const currentCardNumber = String(localForm.card_number ?? '');
+  const currentCardMac = String(localForm.ble_card_number ?? '');
+
+  const cardOptions = [
+    ...visitorCardOptions.filter(
+      (option) => option.value.toLowerCase() !== currentCardNumber.toLowerCase(),
+    ),
+    ...(currentCardNumber
+      ? [
+          {
+            label: currentCardNumber,
+            value: currentCardNumber,
+            cardMac: currentCardMac,
+          },
+        ]
+      : []),
+  ];
+
+  const StepContent = (step: number) => {
+    switch (step) {
+      case 0:
+        return (
+          <Grid2 container spacing={1}>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name" required>
+                <Typography variant="caption">Employee Name</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="name"
+                value={localForm.name}
+                onChange={handleChange}
+                fullWidth
+                required
+                disabled={isBatchEdit}
+                variant="outlined"
+                error={Boolean(errors.name)}
+                helperText={errors.name}
+              />
+            </Grid2>
+            {/* Person ID */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="person_id" required>
+                <Typography variant="caption">Employee Identity Id</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="person_id"
+                value={localForm.person_id}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                required
+                disabled={isBatchEdit}
+                error={Boolean(errors.person_id)}
+                helperText={errors.person_id}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <FormControl fullWidth error={Boolean(errors.identity_type)}>
+                <CustomFormLabel sx={{ my: 1 }} htmlFor="identity_type" required>
+                  <Typography variant="caption">Identity Type</Typography>
+                </CustomFormLabel>
+
+                <CustomSelect
+                  id="identity_type"
+                  value={localForm.identity_type}
+                  onChange={(e: any) => {
+                    setLocalForm((prev) => ({
+                      ...prev,
+                      identity_type: e.target.value,
+                    }));
+                    //  setIsFormChanged?.(true);
+                    if (errors.identity_type) {
+                      setErrors((p) => ({ ...p, identity_type: '' }));
+                    }
+                  }}
+                  fullWidth
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value={'NIK'}>NIK</MenuItem>
+                  <MenuItem value={'KTP'}>KTP</MenuItem>
+                  <MenuItem value={'Passport'}>Passport</MenuItem>
+                  <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
+                  <MenuItem value={'CardAccess'}>Card Access</MenuItem>
+                  <MenuItem value={'Face'}>Face</MenuItem>
+                  <MenuItem value={'NDA'}>NDA</MenuItem>
+                  <MenuItem value={'Other'}>Other</MenuItem>
+                </CustomSelect>
+
+                <FormHelperText sx={{ marginLeft: '0 !important' }}>
+                  {errors.identity_type}
+                </FormHelperText>
+              </FormControl>
+            </Grid2>
+            {/* Identity ID */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="identity_id" required>
+                <Typography variant="caption">Citizenship ID (KTP/SIM/Pasport)</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="identity_id"
+                value={localForm.identity_id}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                required
+                disabled={isBatchEdit}
+                error={Boolean(errors.identity_id)}
+                helperText={errors.identity_id}
+              />
+            </Grid2>
+
+            {/* Type */}
+
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <FormControl fullWidth error={Boolean(errors.type)}>
+                <CustomFormLabel sx={{ my: 1 }} htmlFor="type" required>
+                  <Typography variant="caption">Type </Typography>
+                </CustomFormLabel>
+
+                <CustomSelect
+                  id="type"
+                  value={localForm.type}
+                  onChange={(e: any) => {
+                    const type = e.target.value;
+
+                    setLocalForm((prev) => ({
+                      ...prev,
+                      type,
+                      vendor_code:
+                        type === 'Vendor' || type === 'Contractor' ? prev.vendor_code : '',
+                    }));
+
+                    if (errors.type) {
+                      setErrors((p) => ({
+                        ...p,
+                        type: '',
+                        // vendor_code: '',
+                      }));
+                    }
+                  }}
+                  fullWidth
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value={'Permanent'}>Permanent</MenuItem>
+                  <MenuItem value={'Vendor'}>Vendor</MenuItem>
+                  <MenuItem value={'Delivery'}>Delivery</MenuItem>
+                  <MenuItem value={'Contractor'}>Contractor</MenuItem>
+                  <MenuItem value={'Internship'}>Internship</MenuItem>
+                  <MenuItem value={'Temporary'}>Temporary</MenuItem>
+                </CustomSelect>
+
+                <FormHelperText sx={{ marginLeft: '0 !important' }}>{errors.type}</FormHelperText>
+              </FormControl>
+            </Grid2>
+
+            {showVendorCode && (
+              <Grid2 size={{ xs: 12, sm: 12 }}>
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="vendor_code" required>
+                  <Typography variant="caption">Vendor Code</Typography>
+                </CustomFormLabel>
+                <CustomTextField
+                  id="vendor_code"
+                  value={localForm.vendor_code}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  disabled={isBatchEdit}
+                  error={Boolean(errors.vendor_code)}
+                  helperText={errors.vendor_code}
+                />
+              </Grid2>
+            )}
+
+            {/* Email */}
+            <Grid2 size={{ xs: 12, sm: 6 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="email" required>
+                <Typography variant="caption">Email</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="email"
+                value={localForm.email}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                required
+                disabled={isBatchEdit}
+                error={Boolean(errors.email)}
+                helperText={errors.email}
+              />
+            </Grid2>
+
+            {/* Gender */}
+            <Grid2
+              sx={{ paddingLeft: isMobile ? '0px !important' : '25px' }}
+              size={{ xs: 12, sm: 6 }}
+            >
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginTop: '0px' }}
+              >
+                <CustomFormLabel required sx={{ marginY: 1 }}>
+                  <Typography variant="caption" sx={{ marginLeft: '0px', marginTop: '0px' }}>
+                    Gender
+                  </Typography>
+                </CustomFormLabel>
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={enabledFields?.gender}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            gender: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                  />
+                )}
+              </Box>
+
+              <FormControl error={Boolean(errors.gender)} component="fieldset">
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+                  <FormControlLabel
+                    value="0"
+                    label="Female"
+                    control={
+                      <CustomRadio
+                        checked={localForm.gender === 0}
+                        onChange={() => {
+                          setLocalForm((prev) => ({ ...prev, gender: 0 }));
+                          if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
+                        }}
+                        disabled={isBatchEdit && !enabledFields?.gender}
+                      />
+                    }
+                  />
+                  <FormControlLabel
+                    value="1"
+                    label="Male"
+                    control={
+                      <CustomRadio
+                        checked={localForm.gender === 1}
+                        onChange={() => {
+                          setLocalForm((prev) => ({ ...prev, gender: 1 }));
+                          if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
+                        }}
+                        disabled={isBatchEdit && !enabledFields?.gender}
+                      />
+                    }
+                  />
+                </Box>
+                {errors.gender && (
+                  <FormHelperText error sx={{ mt: 0.5, marginLeft: '0' }}>
+                    {errors.gender}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid2>
+          </Grid2>
+        );
+
+      case 1:
+        return (
+          <Grid2 container spacing={1}>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="phone">
+                <Typography variant="caption">Employee Phone</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="phone"
+                value={localForm.phone}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="vehicle_type">
+                <Typography variant="caption">Vehicle Type</Typography>
+              </CustomFormLabel>
+              <CustomSelect
+                id="vehicle_type"
+                value={localForm.vehicle_type}
+                onChange={(e: any) => setLocalForm({ ...localForm, vehicle_type: e.target.value })}
+                fullWidth
+                disabled={isBatchEdit}
+              >
+                <MenuItem value="">Select Type</MenuItem>
+                <MenuItem value="Car">Car</MenuItem>
+                <MenuItem value="Bus">Bus</MenuItem>
+                <MenuItem value="Motor">Motor</MenuItem>
+                <MenuItem value="Truck">Truck</MenuItem>
+                <MenuItem value="Bicycle">Bicycle</MenuItem>
+                <MenuItem value="Private Car">Private Car</MenuItem>
+              </CustomSelect>
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="vehiclePlateNumber">
+                <Typography variant="caption">Vehicle Plate Number</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="vehiclePlateNumber"
+                value={localForm.vehicle_plate_number}
+                onChange={(e: any) =>
+                  setLocalForm({ ...localForm, vehicle_plate_number: e.target.value })
+                }
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+                placeholder="Enter vehicle plate number"
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 6, sm: 12 }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 0, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="organization_id" required>
+                  <Typography variant="caption">Employee Organization</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.organization_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            organization_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+              <Autocomplete
+                fullWidth
+                autoHighlight
+                disablePortal
+                options={organizations.map((o: any) => ({
+                  id: String(o.id),
+                  label: o.name ?? '',
+                }))}
+                value={(() => {
+                  const currentId = String(localForm.organization_id ?? '');
+                  return (
+                    organizations
+                      .map((o: any) => ({ id: String(o.id), label: o.name ?? '' }))
+                      .find((opt: any) => opt.id === currentId) || null
+                  );
+                })()}
+                onChange={(_, newVal) => {
+                  setLocalForm((prev) => ({
+                    ...prev,
+                    organization_id: newVal ? newVal.id : '',
+                  }));
+                  setErrors((prev) => ({ ...prev, organization_id: '' }));
+                }}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                disabled={isBatchEdit && !enabledFields?.organization_id}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    id="organization_id"
+                    placeholder="Search organization…"
+                    variant="outlined"
+                    error={Boolean(errors.organization_id)}
+                    helperText={errors.organization_id}
+                  />
+                )}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12, sm: 6 }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 0, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="district_id">
+                  <Typography variant="caption">Employee District</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.district_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            district_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+              <Autocomplete
+                fullWidth
+                autoHighlight
+                disablePortal
+                options={districts.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
+                value={(() => {
+                  const cur = String(localForm.district_id ?? '');
+                  return (
+                    districts
+                      .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
+                      .find((opt: any) => opt.id === cur) || null
+                  );
+                })()}
+                onChange={(_, newVal) => {
+                  setLocalForm((prev) => ({
+                    ...prev,
+                    district_id: newVal ? newVal.id : '',
+                  }));
+                  setErrors((prev) => ({ ...prev, district_id: '' }));
+                }}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                disabled={isBatchEdit && !enabledFields?.district_id}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    id="district_id"
+                    placeholder="Search district…"
+                    variant="outlined"
+                    error={Boolean(errors.district_id)}
+                    helperText={errors.district_id}
+                  />
+                )}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 6, sm: 6 }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 0, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="department_id">
+                  <Typography variant="caption">Employee Department</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.department_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            department_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+              <Autocomplete
+                fullWidth
+                autoHighlight
+                disablePortal
+                options={department.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
+                value={(() => {
+                  const cur = String(localForm.department_id ?? '');
+                  return (
+                    department
+                      .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
+                      .find((opt: any) => opt.id === cur) || null
+                  );
+                })()}
+                onChange={(_, newVal) => {
+                  setLocalForm((prev) => ({
+                    ...prev,
+                    department_id: newVal ? newVal.id : '',
+                  }));
+                  setErrors((prev) => ({ ...prev, department_id: '' }));
+                }}
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                disabled={isBatchEdit && !enabledFields?.department_id}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    id="department_id"
+                    placeholder="Search department…"
+                    variant="outlined"
+                    error={Boolean(errors.department_id)}
+                    helperText={errors.department_id}
+                  />
+                )}
+              />
+            </Grid2>
+          </Grid2>
+        );
+
+      case 2:
+        return (
+          <Grid2 container spacing={1}>
+            {/* Is Head */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={Boolean(localForm.is_head)}
+                    onChange={(e) => {
+                      setLocalForm((prev) => ({ ...prev, is_head: e.target.checked }));
+                      setErrors((prev) => ({ ...prev, is_head: '' }));
+                    }}
+                  />
+                }
+                label="Is Head Employee"
+                sx={{
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: '0.75rem',
+                  },
+                  marginTop: '10px',
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 6, sm: 6 }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
+                  <Typography variant="caption">Card Number</Typography>
+                </CustomFormLabel>
+                <IconButton
+                  size="small"
+                  onClick={() => setOpenAddCard(true)}
+                  sx={{
+                    bgcolor: '#055499',
+                    color: '#fff',
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    '&:hover': {
+                      bgcolor: '#044478',
+                    },
+                  }}
+                >
+                  <IconPlus size={16} />
+                </IconButton>
+              </Box>
+
+              <Autocomplete
+                fullWidth
+                options={cardOptions}
+                value={
+                  cardOptions.find(
+                    (option) => option.value.toLowerCase() === currentCardNumber.toLowerCase(),
+                  ) ?? null
+                }
+                loading={isLoadingVisitorCards}
+                filterOptions={(options) => options}
+                getOptionLabel={(option) => option.label ?? ''}
+                isOptionEqualToValue={(option, value) =>
+                  option.value.toLowerCase() === value.value.toLowerCase()
+                }
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') {
+                    setCardSearch(value);
+                  }
+                }}
+                onChange={(_, selected) => {
+                  setLocalForm((prev: any) => ({
+                    ...prev,
+                    card_number: selected?.value ?? '',
+                    ble_card_number: selected?.cardMac ?? '',
+                    qr_code: selected?.value ?? '',
+                  }));
+                }}
+                disabled={isBatchEdit}
+                renderInput={(params) => (
+                  <CustomTextField {...params} placeholder="Search Card Number" size="medium" />
+                )}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 6, sm: 6 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="ble_card_number">
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Typography variant="caption">Card Mac</Typography>
+
+                  <Tooltip title="MAC address of the selected BLE card" arrow placement="top">
+                    <IconButton size="small" sx={{ p: 0.25 }}>
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </CustomFormLabel>
+
+              <CustomTextField
+                id="ble_card_number"
+                value={currentCardMac}
+                fullWidth
+                variant="outlined"
+                size="medium"
+                disabled
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_name">
+                <Typography variant="caption">Emergency Contact Name</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_name"
+                value={localForm.emergency_contact_name}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_phone">
+                <Typography variant="caption">Emergency Contact Phone</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_phone"
+                value={localForm.emergency_contact_phone}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_relation">
+                <Typography variant="caption">Emergency Contact Relation</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_relation"
+                value={localForm.emergency_contact_relation}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+          </Grid2>
+        );
+
+      case 3:
+        return (
+          <Grid2 container spacing={1}>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="dob" required>
+                <Typography variant="caption">{t('dateOfBirth')}</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="birth_date"
+                type="date"
+                value={localForm.birth_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+                error={Boolean(errors.birth_date)}
+                helperText={errors.birth_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join" required>
+                <Typography variant="caption">{t('joinDate')}</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="join_date"
+                type="date"
+                value={localForm.join_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+                error={Boolean(errors.join_date)}
+                helperText={errors.join_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join">
+                <Typography variant="caption">{t('exitDate')}</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="exit_date"
+                type="date"
+                value={localForm.exit_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+                error={Boolean(errors.exit_date)}
+                helperText={errors.exit_date}
+                sx={{
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    display: 'none',
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="address">
+                <Typography variant="caption">{t('employeeAddress')}</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="address"
+                value={localForm.address}
+                onChange={handleChange}
+                multiline
+                rows={3}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+          </Grid2>
+        );
+
+      case 4:
+        return (
+          <Grid2 container spacing={1}>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <Paper sx={{ p: 3 }}>
+                <Box>
+                  <Box
+                    sx={{
+                      border: '2px dashed #90caf9',
+                      borderRadius: 2,
+                      padding: 4,
+                      textAlign: 'center',
+                      backgroundColor: '#f5faff',
+                      cursor: isBatchEdit || isUploadingImage ? 'not-allowed' : 'pointer',
+                      width: '100%',
+                      margin: '0 auto',
+                      pointerEvents: isBatchEdit || isUploadingImage ? 'none' : 'auto',
+                      opacity: isBatchEdit || isUploadingImage ? 0.5 : 1,
+                      transition: 'opacity 0.2s ease',
+                    }}
+                    onClick={() => {
+                      if (!isBatchEdit && !isUploadingImage) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                  >
+                    <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                    <Typography variant="h6" sx={{ mt: 1, mb: 1, fontWeight: 600 }}>
+                      Upload Photo
+                    </Typography>
+
+                    <Typography variant="body1" color="textSecondary">
+                      Drag and drop or tap to seleft file.
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mt: 0.5,
+                        flexWrap: 'wrap',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography variant="body1" color="textSecondary">
+                        Supports: JPG, JPEG, PNG, Up to:
+                        <span style={{ fontWeight: '700' }}>5 MB or </span>
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconCamera />
+                        <Typography
+                          variant="subtitle1"
+                          component="span"
+                          color="primary"
+                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                          onClick={(e: any) => {
+                            e.stopPropagation();
+                            if (!isUploadingImage) {
+                              setOpenCamera(true);
+                            }
+                          }}
+                        >
+                          Use Camera
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {isUploadingImage && (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          mt: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <LinearProgress
+                          sx={{
+                            width: 220,
+                            height: 6,
+                            borderRadius: 3,
+                          }}
+                        />
+
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                          Uploading file...
+                        </Typography>
+                      </Box>
+                    )}
+
+                    <Dialog
+                      open={openCamera}
+                      onClose={() => {
+                        if (!isUploadingImage) {
+                          setOpenCamera(false);
+                        }
+                      }}
+                      maxWidth="md"
+                      fullWidth
+                    >
+                      <Box sx={{ p: 3 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography variant="h6" mb={0}>
+                            Take Photo From Camera
+                          </Typography>
+                          <IconButton
+                            onClick={() => {
+                              if (!isUploadingImage) {
+                                setOpenCamera(false);
+                              }
+                            }}
+                          >
+                            <IconX />
+                          </IconButton>
+                        </Box>
+
+                        <Divider sx={{ my: 1 }} />
+
+                        <Grid2 container spacing={2}>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Webcam
+                              audio={false}
+                              ref={webcamRef}
+                              screenshotFormat="image/jpeg"
+                              videoConstraints={{
+                                width: { ideal: 1920 },
+                                height: { ideal: 1080 },
+                                facingMode: 'environment',
+                              }}
+                              style={{
+                                width: '100%',
+                                borderRadius: 8,
+                                border: '2px solid #ccc',
+                              }}
+                            />
+                          </Grid2>
+
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            {screenshot ? (
+                              <img
+                                src={screenshot}
+                                alt="Captured"
+                                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
+                              />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  border: '2px dashed #ccc',
+                                  borderRadius: 8,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minHeight: 240,
+                                }}
+                              >
+                                <Typography color="text.secondary">
+                                  No Photos Have Been Taken Yet
+                                </Typography>
+                              </Box>
+                            )}
+                          </Grid2>
+                        </Grid2>
+
+                        {isUploadingImage && (
+                          <Box
+                            sx={{
+                              mt: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <LinearProgress
+                              sx={{
+                                width: 220,
+                                height: 6,
+                                borderRadius: 3,
+                              }}
+                            />
+
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                              Uploading file...
+                            </Typography>
+                          </Box>
+                        )}
+                        <Divider sx={{ my: 2 }} />
+
+                        <Box
+                          sx={{
+                            textAlign: 'right',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: 1,
+                          }}
+                        >
+                          <Button
+                            disabled={isUploadingImage}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleClear();
+                            }}
+                            color="error"
+                            sx={{ mr: 0 }}
+                            startIcon={<IconTrash />}
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            disabled={isUploadingImage}
+                            variant="contained"
+                            startIcon={<IconCamera />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCapture();
+                            }}
+                          >
+                            Take Foto
+                          </Button>
+                          <Button
+                            disabled={isUploadingImage}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCamera(false);
+                            }}
+                            sx={{ ml: 1 }}
+                            startIcon={<IconDeviceFloppy />}
+                          >
+                            Submit
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Dialog>
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      disabled={isBatchEdit}
+                    />
+
+                    {previewUrl && (
+                      <Box
+                        mt={2}
+                        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                      >
+                        <Box
+                          sx={{
+                            width: { xs: '100%', sm: 400 },
+                            maxWidth: 400,
+                            aspectRatio: '16/9',
+                            // borderRadius: 12,
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                          }}
+                        >
+                          <img
+                            src={previewUrl}
+                            alt="preview"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              objectPosition: 'center',
+                              cursor: 'pointer',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </Box>
+
+                        <Button
+                          sx={{ mt: 1 }}
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          disabled={removing || isBatchEdit}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemove();
+                          }}
+                        >
+                          {removing ? 'Removing…' : 'Remove'}
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid2>
+          </Grid2>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <form onSubmit={handleOnSubmit}>
+      <Box width="100%">
+        {isMobile ? (
+          <>
+            <Box textAlign="center" mt={1}>
+              <Typography variant="h5">{steps[activeStep]}</Typography>
+            </Box>
+
+            <MobileStepper
+              variant="dots"
+              steps={steps.length}
+              position="static"
+              activeStep={activeStep}
+              nextButton={null}
+              backButton={null}
+              sx={{
+                justifyContent: 'center',
+                mt: 1,
+              }}
+            />
+          </>
+        ) : (
+          <Stepper activeStep={activeStep} nonLinear>
+            {steps.map((label, index) => (
+              <Step key={label}>
+                <StepButton
+                  onClick={() => {
+                    setActiveStep(index);
+                  }}
+                >
+                  {label}
+                </StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        )}
+        <>
+          <Box mt={1}>{StepContent(activeStep)}</Box>
+          <Divider sx={{ mt: 2 }} />
+          <Box display="flex" flexDirection="row" mt={2}>
+            <Button
+              // variant="outlined"
+              color="primary"
+              disabled={activeStep === 0 || loading}
+              onClick={handleBack}
+              sx={{ backgroundColor: '#edf3ff' }}
+              startIcon={<IconArrowLeft />}
+            >
+              {t('back')}
+            </Button>
+            <Box flex="1 1 auto" />
+            {activeStep !== steps.length - 1 ? (
+              <Button
+                onClick={handleNext}
+                variant="contained"
+                color="primary"
+                endIcon={<IconArrowRight />}
+              >
+                {t('next')}
+              </Button>
+            ) : (
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleOnSubmit}
+                disabled={loading || activeStep !== steps.length - 1}
+              >
+                Submit
+              </Button>
+            )}
+          </Box>
+        </>
+      </Box>
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{ zIndex: 2000 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <GlobalBackdropLoading open={loading} />
+      <Dialog open={openAddCard} onClose={() => setOpenAddCard(false)} fullWidth maxWidth="md">
+        <DialogTitle display="flex" alignItems="center" justifyContent="space-between">
+          Add Card
+          <IconButton onClick={() => setOpenAddCard(false)} size="small">
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <FormWizardAddVisitorCard
+            formData={cardFormData}
+            setFormData={setCardFormData}
+            // setEnabledFields={setCardEnabledFields}
+            onSuccess={() => {
+              setOpenAddCard(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </form>
+  );
+};
+
+export default FormWizardAddEmployee;

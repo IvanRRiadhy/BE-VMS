@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React from 'react';
-import { Avatar, IconButton, Menu, MenuItem, Typography, Stack } from '@mui/material';
+import { Avatar, IconButton, Menu, MenuItem, Typography, Stack, Box } from '@mui/material';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { setLanguage } from 'src/store/customizer/CustomizerSlice';
 import FlagEn from 'src/assets/images/flag/icon-flag-en.svg';
@@ -12,6 +12,7 @@ import FlagSa from 'src/assets/images/flag/icon-flag-sa.svg';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { AppState } from 'src/store/Store';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const Languages = [
   {
@@ -31,13 +32,17 @@ const Languages = [
   // },
 ];
 
-const Language = () => {
+interface LanguageProps {
+  colorTxt?: string;
+}
+
+const Language = ({ colorTxt }: LanguageProps) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const dispatch = useDispatch();
   const open = Boolean(anchorEl);
   const customizer = useSelector((state: AppState) => state.customizer);
   const currentLang =
-    Languages.find((_lang) => _lang.value === customizer.isLanguage) || Languages[1];
+    Languages.find((_lang) => _lang.value === customizer.isLanguage) || Languages[0];
   const { i18n } = useTranslation();
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget);
@@ -46,22 +51,107 @@ const Language = () => {
     setAnchorEl(null);
   };
   useEffect(() => {
-    i18n.changeLanguage(customizer.isLanguage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (i18n.language !== customizer.isLanguage) {
+      i18n.changeLanguage(customizer.isLanguage);
+    }
+  }, [customizer.isLanguage, i18n]);
+  // useEffect(() => {
+  //   const savedLang = localStorage.getItem('lang');
+
+  //   if (savedLang) {
+  //     dispatch(setLanguage(savedLang));
+  //   } else {
+  //     const browserLang = navigator.language.split('-')[0];
+
+  //     const supportedLang = Languages.find((l) => l.value === browserLang);
+
+  //     if (supportedLang) {
+  //       dispatch(setLanguage(browserLang));
+  //     }
+  //   }
+  // }, []);
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('lang');
+
+    if (savedLang && Languages.some((lang) => lang.value === savedLang)) {
+      dispatch(setLanguage(savedLang));
+    } else {
+      localStorage.setItem('lang', 'en');
+      dispatch(setLanguage('en'));
+    }
+  }, [dispatch]);
 
   return (
     <>
-      <IconButton
-        aria-label="more"
-        id="long-button"
-        aria-controls={open ? 'long-menu' : undefined}
-        aria-expanded={open ? 'true' : undefined}
-        aria-haspopup="true"
+      <Box
         onClick={handleClick}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.6,
+          px: 1.25,
+          py: 0.9,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          cursor: 'pointer',
+
+          // lebih fokus terlihat
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
+
+          transition: 'all 0.2s ease',
+
+          '&:hover': {
+            backgroundColor: colorTxt ? 'rgba(255,255,255,0.12)' : 'action.hover',
+            borderColor: colorTxt ? '#FFFFFF' : 'text.secondary',
+            boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
+
+            '& .language-label': {
+              color: colorTxt || 'text.primary',
+            },
+
+            '& .language-arrow': {
+              color: colorTxt || 'text.primary',
+            },
+          },
+
+          '&:focus-visible': {
+            outline: '2px solid #FFC247',
+            outlineOffset: 2,
+          },
+        }}
       >
-        <Avatar src={currentLang.icon} alt={currentLang.value} sx={{ width: 20, height: 20 }} />
-      </IconButton>
+        <Avatar
+          src={currentLang.icon}
+          alt={currentLang.value}
+          sx={{
+            width: 19,
+            height: 19,
+          }}
+        />
+
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            fontSize: 12,
+            textTransform: 'uppercase',
+            lineHeight: 1,
+            color: colorTxt || 'text.primary',
+          }}
+        >
+          {currentLang.value}
+        </Typography>
+
+        <KeyboardArrowDownIcon
+          sx={{
+            fontSize: 18,
+            ml: 0.1,
+            color: colorTxt || 'text.primary',
+          }}
+        />
+      </Box>
       <Menu
         id="long-menu"
         anchorEl={anchorEl}
@@ -77,7 +167,11 @@ const Language = () => {
           <MenuItem
             key={index}
             sx={{ py: 2, px: 3 }}
-            onClick={() => dispatch(setLanguage(option.value))}
+            onClick={() => {
+              localStorage.setItem('lang', option.value);
+              dispatch(setLanguage(option.value));
+              handleClose();
+            }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar src={option.icon} alt={option.icon} sx={{ width: 20, height: 20 }} />

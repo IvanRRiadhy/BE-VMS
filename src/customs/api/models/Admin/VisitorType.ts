@@ -50,6 +50,15 @@ export type SectionPageVisitorType = {
 export type VisitorTypeDocument = {
   document_id?: string;
   document_name?: string;
+  identity_type?: number;
+};
+
+export type VisitorRole = {
+  role?: string;
+  visitor_roles_id?: string;
+  active?: boolean;
+  is_default?: boolean;
+  visitor_type_id?: string;
 };
 
 export type Item = {
@@ -60,6 +69,7 @@ export type Item = {
   duration_visit: number;
   max_time_visit: number;
   can_parking: boolean;
+  can_track_cctv: boolean;
   can_access: boolean;
   add_to_menu: boolean;
   need_document: boolean;
@@ -67,7 +77,8 @@ export type Item = {
   direct_visit: boolean;
   period: number;
   can_notification_arrival: boolean;
-  can_track_ble: boolean | null;
+  is_quick_access?: boolean | null;
+  can_track_ble?: boolean | null;
   is_primary: boolean;
   is_enable: boolean;
   vip: boolean;
@@ -75,6 +86,11 @@ export type Item = {
   prefix: string;
   simple_period: boolean;
   site_visitor_types?: string | null;
+  visitor_roles: VisitorRole[];
+  pre_agenda: string;
+  pre_site_id: string;
+  pre_host_id: string;
+  visitor_category?: string | null;
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
 };
@@ -143,23 +159,53 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_parking: z.boolean().default(false),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
+  can_track_cctv: z.boolean().default(false),
   need_document: z.boolean().default(false),
   grace_time: z.number().default(0),
+  expiry_reminder_minutes: z.coerce.number().default(0),
   direct_visit: z.boolean().default(false),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().default(false),
   is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
-  can_track_ble: z.boolean().default(false),  
+  // can_track_ble: z.boolean().default(false).optional(),
+  can_track_ble: z.boolean().nullable().optional(),
+  is_multi_site: z.boolean().default(false),
   // prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
+  is_quick_access: z.boolean().nullable().optional().default(false),
+  visitor_category: z.string().optional().nullable(),
+  pre_agenda: z.string().default(''),
+  pre_site_id: z.string().default(''),
+  pre_host_id: z.string().default(''),
+  visitor_type_accesses: z
+    .array(
+      z.object({
+        id: z.string().optional(), // optional agar duplicate tidak perlu membawa id lama
+        access_control_id: z.string().default(''),
+        early_access: z.boolean().default(false),
+        sort: z.number().default(0),
+      }),
+    )
+    .default([]),
 
   // site_visitor_types: z.string().nullable().optional(),
-  // Nullable fields from your JSON
+  visitor_roles: z
+    .array(
+      z.object({
+        visitor_type_id: z.string().optional(),
+        role: z.string().optional(),
+        visitor_roles_id: z.string().optional(),
+        active: z.boolean().default(false).optional(),
+        is_default: z.boolean().default(false).optional(),
+      }),
+    )
+    .nullable()
+    .optional(),
   visitor_type_documents: z
-    .array(z.object({ document_id: z.string() }))
+    .array(z.object({ document_id: z.string(), identity_type: z.number() }))
     .nullable()
     .optional(),
 
@@ -182,29 +228,44 @@ export const updateVisitorTypeSchmea = z.object({
   name: z.string().default(''),
   description: z.string().default(''),
   show_in_form: z.boolean().default(false),
-  duration_visit: z.number().default(0),
-  max_time_visit: z.number().default(0),
+  duration_visit: z.string().default(''),
+  max_time_visit: z.string().default(''),
   can_parking: z.boolean().default(false),
-  can_track_ble: z.boolean().default(false),
+  can_track_ble: z.boolean().nullable().optional(),
+  can_track_cctv: z.boolean().nullable().optional(),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
   need_document: z.boolean().default(false),
-  grace_time: z.number().default(0),
+  grace_time: z.string().default(''),
   direct_visit: z.boolean().optional(),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().optional(),
   is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),
   vip: z.boolean().optional(),
+  is_multi_site: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
-  // prefix: z.string().default(''),
-
-  // Nullable fields from your JSON
-  // site_visitor_types: z.string().nullable().optional(),
-  // Nullable fields from your JSON
+  expiry_reminder_minutes: z.coerce.number().default(0),
+  is_quick_access: z.boolean().nullable().optional().default(false),
+  visitor_category: z.string().optional().nullable(),
+  pre_agenda: z.string().default(''),
+  pre_site_id: z.string().default(''),
+  pre_host_id: z.string().default(''),
+  visitor_roles: z
+    .array(
+      z.object({
+        visitor_type_id: z.string().optional(),
+        role: z.string().optional(),
+        visitor_roles_id: z.string().optional(),
+        active: z.boolean().default(false).optional(),
+        is_default: z.boolean().default(false).optional(),
+      }),
+    )
+    .nullable()
+    .optional(),
   visitor_type_documents: z
-    .array(z.object({ document_id: z.string().optional() }))
+    .array(z.object({ document_id: z.string().optional(), identity_type: z.number().optional() }))
     .nullable()
     .optional(),
   section_page_visitor_types: z.array(sectionPageVisitorTypeSchema).optional().default([]),

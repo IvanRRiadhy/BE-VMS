@@ -1,0 +1,23 @@
+export interface RuntimeConfig {
+  API_BASE_URL: string;
+  API_URL: string;
+  WS_URL: string;
+  LOGO_URL?: string;
+  LOGIN_LOGO_URL?: string;
+  API_ID: string;
+  ENABLE_CAPTCHA: boolean;
+}
+
+let runtimeConfig: RuntimeConfig | null = null;
+
+export async function loadRuntimeConfig(): Promise<void> {
+  const res = await fetch('/config.json');
+  runtimeConfig = (await res.json()) as RuntimeConfig;
+}
+
+export function getConfig(): RuntimeConfig {
+  if (!runtimeConfig) {
+    throw new Error('Runtime config has not been loaded yet.');
+  }
+  return runtimeConfig;
+}

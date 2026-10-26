@@ -1,0 +1,963 @@
+import {
+  Alert,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid2 as Grid,
+  IconButton,
+  Portal,
+  Snackbar,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { IconHourglass, IconUsers, IconX } from '@tabler/icons-react';
+import { useRef, useState } from 'react';
+import PageContainer from 'src/components/container/PageContainer';
+import TopCards from './TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { getVisitorTransactionByIds } from 'src/customs/api/admin';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import Swal from 'sweetalert2';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
+import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
+import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
+import { useNavigate } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { getApprovalTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
+import dayjs from 'dayjs';
+import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
+import { useActivities } from 'src/hooks/Dashboard/useActivity';
+import PendingInvitationDialog from '../Components/Dialog/PendingInvitationDialog';
+import { useTranslation } from 'react-i18next';
+import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
+import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
+import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
+import ApprovalVisitorGroupDialog from '../Components/Dialog/ApprovalVisitorGroupDialog';
+import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
+import { useQuickAccessMutation } from 'src/hooks/Visitor/useQuickAccesMutation';
+import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useApprovalMutation } from 'src/hooks/Approval/useApprovalMutation';
+import LastVisitsCard from '../../Operator/Dashboard/components/LastVisitData';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import VisitorInvitationActions from './components/VisitorInvitationActions';
+import TodayScheduleCard, { ScheduleStatus } from './components/TodayScheduleCard';
+import { useApproval } from 'src/hooks/Dashboard/useApproval';
+import {
+  getCurrentlyVisiting,
+  getDashboardSchedule,
+  getTodayVisitors,
+} from 'src/customs/api/Employee/Dashboard';
+
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const DashboardEmployee = () => {
+  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
+  const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
+  const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
+  const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
+  const [openAccess, setOpenAccess] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [sortDir, setSortDir] = useState('desc');
+  const dispatch = useDispatch();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [triggerCheckAll, setTriggerCheckAll] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
+  const { t } = useTranslation();
+  // const start = page * rowsPerPage;
+  const navigate = useNavigate();
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
+  const { createMutation: createQuickAccess } = useQuickAccessMutation();
+  // const { accessPass, loading: loadingAccessPass } = useAccessPass();
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+  const handleOpenInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(true);
+  };
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
+  const { data: profile } = useProfile();
+  const userId = profile?.id;
+  const handleCloseInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(false);
+  };
+
+  const handleOpenCreateLink = () => {
+    // setOpenInviteOrCreateLink(false);
+    // setOpenCreateLink(true);
+    setOpenInviteOrCreateLink(false);
+    setOpenShareLinkList(true);
+  };
+
+  const handleOpenAccess = () => {
+    setOpenAccess(true);
+  };
+
+  const handleCloseAccess = () => {
+    setOpenAccess(false);
+  };
+
+  const {
+    data,
+    isLoading: isLoadingShareLink,
+    isFetching,
+  } = useShareLinkPagination({
+    page,
+    rowsPerPage,
+    search: searchKeyword,
+    sortDir,
+  });
+
+  const shareLinkList = data?.collection ?? [];
+  const debouncedKeyword = useDebounce(searchKeyword, 500);
+
+  const [shareLinkDialogPage, setShareLinkDialogPage] = useState(0);
+  const [shareLinkDialogRowsPerPage, setShareLinkDialogRowsPerPage] = useState(10);
+
+  const { data: shareLinkDialogData, isLoading: isLoadingShareLinkDialog } = useShareLinkPagination(
+    {
+      page: shareLinkDialogPage,
+      rowsPerPage: shareLinkDialogRowsPerPage,
+      search: searchKeyword,
+      sortDir,
+    },
+  );
+
+  const shareLinkDialogList = shareLinkDialogData?.collection ?? [];
+  const totalFilteredRecords = shareLinkDialogData?.RecordsFiltered ?? 0;
+  const [approvalStatus, setApprovalStatus] = useState<string>('');
+
+  const {
+    data: approvalRes,
+    refetch: refetchApproval,
+    isFetching: loadingApproval,
+  } = useApproval({
+    page,
+    rowsPerPage,
+    keyword: debouncedKeyword,
+    sortDir,
+  });
+
+  const approvalData =
+    approvalRes?.collection?.map(
+      ({
+        entity_id,
+        visitor_type_name,
+        // agenda,
+        host_name,
+        // approval_actor_status,
+        // approval_workflow_type,
+        approval_status,
+        visitor_period_start,
+        visitor_period_end,
+        ticket_id,
+      }: any) => ({
+        id: entity_id,
+        visitor_type_name,
+        // agenda,
+        host_name,
+        // approval_actor_status,
+        // approval_workflow_type,
+        approval_status,
+        visitor_period_start,
+        visitor_period_end: formatDateTime(visitor_period_end),
+        ticket_id,
+      }),
+    ) || [];
+
+  const {
+    data: todayVisitorsRes,
+    isLoading: loadingTodayVisitors,
+    refetch: refetchTodayVisitors,
+  } = useQuery({
+    queryKey: ['today-visitors', startDate, endDate],
+    queryFn: () =>
+      getTodayVisitors({
+        today: 'true',
+        // today: 'false',
+        // startDate: formatLocalDate(startDate),
+        // endDate: formatLocalDate(endDate),
+        start: 0,
+        length: 5,
+        sortDir: 'desc',
+      }),
+  });
+
+  const {
+    data: currentlyVisitingRes,
+    isLoading: loadingCurrentlyVisiting,
+    refetch: refetchCurrentlyVisiting,
+  } = useQuery({
+    queryKey: ['currently-visiting', startDate, endDate],
+    queryFn: () =>
+      getCurrentlyVisiting({
+        today: 'true',
+        // startDate: formatLocalDate(startDate),
+        // endDate: formatLocalDate(endDate),
+        start: 0,
+        length: 5,
+        sort_dir: 'desc',
+      }),
+  });
+
+  const invitationMonitoringData =
+    todayVisitorsRes?.collection?.slice(0, 5).map((item: any) => ({
+      id: item.id,
+      name: item.visitor_name,
+      email: item.visitor_email,
+      visitor_period_start: item.visitor_period_start,
+      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+      host: item.host_name ?? '-',
+      site: item.site_place_name,
+      visitor_status: item.visitor_status,
+    })) ?? [];
+
+  const currentlyVisiting =
+    currentlyVisitingRes?.collection?.slice(0, 5).map((item: any) => ({
+      id: item.id,
+      name: item.visitor_name,
+      email: item.visitor_email,
+      visitor_period_start: item.visitor_period_start,
+      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+      host: item.host_name ?? '-',
+      site: item.site_place_name,
+      visitor_status: item.visitor_status,
+    })) ?? [];
+
+  const handleView = (row: any) => {
+    setSelectedInvitationId(row.id);
+    setOpenDialogInvitation(true);
+  };
+
+  const handleApproveMeetingHost = async (id: string) => {
+    try {
+      setIsGenerating(true);
+
+      const payload = {
+        list_trx_visitor_id: selectedRows.map((item: any) => item.id),
+      };
+      const response = await approveMeetingHostMutation.mutateAsync({
+        id,
+        payload: {
+          list_trx_visitor_id: selectedRows.map((item) => item.id),
+        },
+      });
+      const res = await handleActionApproval(id, 'Approve');
+
+      showSwal('success', response?.msg || 'Approve meeting host successfully.');
+      setSelectedRows([]);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+    try {
+      setIsGenerating(true);
+      if (action === 'Reject') {
+        const confirm = await Swal.fire({
+          title: 'Reject Approval?',
+          text: 'Do you want to reject this approval?',
+          icon: 'warning',
+          reverseButtons: true,
+          showCancelButton: true,
+          confirmButtonText: 'Reject',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#f44336',
+          customClass: {
+            title: 'swal2-title-custom',
+            htmlContainer: 'swal2-text-custom',
+          },
+        });
+
+        if (!confirm.isConfirmed) return;
+      }
+
+      // if (action === 'Approve') await approveTicket(id);
+      // if (action === 'Reject') await rejectTicket(id);
+      if (action === 'Approve') await approveMutation.mutateAsync(id);
+      if (action === 'Reject') await rejectMutation.mutateAsync(id);
+
+      showSwal(
+        'success',
+        `Data Approval ${action === 'Approve' ? 'approved' : 'denied'} successfully.`,
+      );
+
+      setOpenDialog(false);
+    } catch (error: any) {
+      setTimeout(() => setIsGenerating(false), 800);
+      showSwal('error', error.response.data.msg || 'Failed action approval.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleOpenInviteDialog = async (row: any) => {
+    const res = await getShareLinkById(row.id);
+    setSelectedShareLink(res.collection);
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.shorten_url || row.url);
+    setExpiredAt(row.expired_at);
+    setOpenInviteViaLinkEmail(true);
+  };
+
+  const handleCopyLink = async (link: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textArea = document.createElement('textarea');
+
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        const copied = document.execCommand('copy');
+
+        document.body.removeChild(textArea);
+
+        if (!copied) {
+          throw new Error('Failed to copy');
+        }
+      }
+
+      showSwal('success', 'Link copied to clipboard.');
+    } catch (error) {
+      showSwal('error', 'Failed to copy link.');
+    }
+  };
+
+  const handleDetailLink = (link: string) => {
+    // window.open(link, '_blank');
+    setOpenDetailLink(true);
+  };
+
+  const { deleteMutation, createMutation, sendEmailMutation } = useShareLinkMutation();
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await showSwal('confirm', t('confirmDelete', { name: 'Share Link' }));
+
+      if (!confirm.isConfirmed) return;
+      await deleteMutation.mutateAsync(id);
+      showSwal('success', t('deleteSuccess', { name: 'Share Link' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to delete share link');
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createMutation.mutateAsync(payload);
+      setOpenCreateLink(false);
+      showSwal('success', t('createSuccess', { name: 'Share Link' }));
+    } catch (err: any) {
+      showSwal('error', err.response.data.message ?? 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+      await createMutation.mutateAsync(finalPayload);
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+      showSwal('success', t('successSendShareLink'));
+    } catch (err: any) {
+      showSwal('error', err.response.data.message ?? 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!exportRef.current || isExporting) return;
+
+    try {
+      setIsExporting(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+      };
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleOpenApprovalDialog = async (row: any) => {
+    try {
+      setSelectedId(row.ticket_id);
+      setOpenDialog(true);
+      setGroupDetailLoading(true);
+
+      const res = await getVisitorTransactionByIds(row.id);
+
+      setGroupVisitors(res?.collection ?? []);
+      setTriggerCheckAll(true);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed load visitor detail.');
+    } finally {
+      setGroupDetailLoading(false);
+    }
+  };
+
+  const visitorTableData = groupVisitors.map((item: any) => ({
+    id: item.id,
+    agenda: item.agenda,
+    site_name: item.site_place_name,
+    name: item.visitor_name,
+    organization_name: item.visitor_organization_name,
+    identity_id: item.visitor_identity_id,
+    visitor_phone: item.visitor_phone,
+    email: item.visitor_email,
+    visitor_period_start: formatDateTime(item.visitor_period_start),
+    visitor_period_end: formatDateTime(item.visitor_period_end),
+  }));
+
+  const getExpireText = () => {
+    if (!expiredAt) return '';
+
+    const now = new Date();
+    const expireDate = new Date(expiredAt);
+
+    const diffMs = expireDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return '0';
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+    }
+
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  };
+
+  const handleSendInvitation = async (emails: any) => {
+    const validEmails = emails.filter((email: any) => email?.trim() !== '');
+
+    if (!validEmails.length || !selectedShareLinkId) {
+      showSwal('error', t('pleaseSendAtleastOneEmail'));
+      return;
+    }
+    try {
+      await sendEmailMutation.mutateAsync({
+        id: selectedShareLinkId,
+        payload: {
+          emails: validEmails,
+        },
+      });
+      showSwal('success', t('successSendInvitation'));
+    } catch (error: any) {
+      showSwal('error', error?.response.data.message || 'Failed to send invitation');
+    }
+  };
+
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const {
+    data: activities,
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchActivities,
+  } = useActivities({
+    start_date: formatLocalDate(startDate),
+    end_date: formatLocalDate(endDate),
+  });
+
+  const activites = activities?.activities ?? [];
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setTriggerCheckAll(false);
+  };
+
+  const [openShareLinkList, setOpenShareLinkList] = useState(false);
+
+  const handleAddShareLink = () => {
+    // setOpenShareLinkList(false);
+    setOpenCreateLink(true);
+  };
+
+  const CardItems = [
+    {
+      title: 'Pending Approval',
+      key: 'pending',
+      description: 'requests waiting for your approval',
+      icon: <IconHourglass size={30} />,
+    },
+    {
+      title: 'Active Visitors',
+      key: 'active',
+      description: 'visitors currently active',
+      icon: <IconUsers size={30} />,
+    },
+  ];
+
+  const mapScheduleStatus = (status?: string): any => {
+    switch (status) {
+      case 'Available':
+        return 'Available';
+
+      case 'Rejected':
+        return 'Rejected';
+
+      case 'Denied':
+        return 'Denied';
+
+      case 'Checkin':
+        return 'Check In';
+
+      case 'Preregis':
+        return 'Preregis';
+
+      case 'Checkout':
+        return 'Check Out';
+
+      case 'Cancelled':
+      case 'Canceled':
+        return 'Cancelled';
+
+      default:
+        return 'Upcoming';
+    }
+  };
+
+  const {
+    data: dashboardScheduleRes,
+    isLoading: loadingDashboardSchedule,
+    refetch: refetchDashboardSchedule,
+  } = useQuery({
+    queryKey: ['dashboard-schedule'],
+    queryFn: () =>
+      getDashboardSchedule({
+        today: true,
+      }),
+  });
+  const userTimezone = dayjs.tz.guess();
+
+  const todaySchedules: any[] =
+    dashboardScheduleRes?.collection?.map((item: any) => ({
+      id: item.id,
+      time: dayjs.utc(item.visitor_period_start).tz(userTimezone).format('HH:mm'),
+      timeEnd: dayjs.utc(item.visitor_period_end).tz(userTimezone).format('HH:mm'),
+      visitorName: item.list_visitor?.[0]?.visitor_name ?? '-',
+      company: item.host_organization_name ?? '-',
+      agenda: item.agenda ?? '-',
+      location: item.site_location ?? '-',
+      status: mapScheduleStatus(item.transaction_status),
+    })) ?? [];
+
+  return (
+    <PageContainer title="Dashboard" description="This is Employee Dashboard">
+      <DashboardEmployeeActionBar
+        startDate={startDate}
+        endDate={endDate}
+        profile={profile}
+        onDateChange={(startDate, endDate) => {
+          dispatch(
+            setDateRange({
+              startDate,
+              endDate,
+            }),
+          );
+        }}
+        onExport={handleExportPdf}
+        isExporting={isExporting}
+      />
+      <Grid
+        container
+        spacing={1.5}
+        sx={{ mt: 0, alignItems: 'stretch' }}
+        ref={exportRef}
+        rowGap={1.5}
+      >
+        <Grid
+          size={{ xs: 12, lg: 6 }}
+          sx={{
+            display: 'flex',
+            alignSelf: 'stretch',
+            minHeight: 0,
+          }}
+        >
+          <TopCards items={CardItems} />
+        </Grid>
+
+        <VisitorInvitationActions
+          onRegisterVisitor={handleOpenInviteOrCreateLink}
+          onGenerateLink={() => setOpenShareLinkList(true)}
+        />
+        <Grid container spacing={2} alignItems="stretch" width={'100%'}>
+          <Grid
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              display: 'flex',
+            }}
+          >
+            <DynamicTable
+              loading={loadingApproval}
+              height={'100%'}
+              overflowX="auto"
+              data={approvalData}
+              isNoActionTableHead
+              isHaveChecked={true}
+              isHaveAction={true}
+              isHaveViewAll={true}
+              isHaveFilterData={false}
+              filterDataValue={approvalStatus}
+              filterDataOptions={[
+                {
+                  label: 'Pending',
+                  value: 'Pending',
+                },
+                {
+                  label: 'Approved',
+                  value: 'Approved',
+                },
+                {
+                  label: 'Rejected',
+                  value: 'Rejected',
+                },
+                {
+                  label: 'Cancelled',
+                  value: 'Cancelled',
+                },
+              ]}
+              onFilterDataChange={(value) => {
+                setApprovalStatus(value);
+                setPage(0);
+              }}
+              // isHaveFilter={true}
+              onHaveViewAll={() => {
+                navigate('/employee/approval');
+              }}
+              isActionVisitor={false}
+              isHaveHeaderTitle
+              titleHeader="Pending Approval"
+              isHaveApproval={true}
+              onAccept={(row: any) => handleOpenApprovalDialog(row)}
+              onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
+              isHavePeriod={true}
+              defaultRowsPerPage={5}
+            />
+          </Grid>
+
+          <Grid
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              display: 'flex',
+              minWidth: 0,
+              minHeight: 0,
+            }}
+          >
+            <LastVisitsCard
+              activites={activites}
+              loading={isLoadingActivities}
+              loadingMore={isFetchingNextPage}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              onRefresh={() => refetchActivities()}
+              refreshing={isFetchingActivities && !isFetchingNextPage}
+            />
+          </Grid>
+        </Grid>
+
+        <Grid
+          container
+          spacing={2}
+          alignItems="stretch"
+          sx={{
+            width: '100%',
+            pb: 2,
+          }}
+        >
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
+            {/* <DynamicTable
+              loading={loadingCurrentlyVisiting}
+              data={currentlyVisiting}
+              height={'100%'}
+              isHavePagination={false}
+              overflowX="auto"
+              isHaveChecked={false}
+              defaultRowsPerPage={5}
+              isHaveHeaderTitle
+              isNoActionTableHead
+              isHavePeriod={true}
+              // onView={(row: any) => handleView(row)}
+              titleHeader="Currently Visiting"
+              // isHaveAddEmpty={true}
+              // addDataText="Create Invitation"
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/my-invitation');
+              }}
+            /> */}
+            <DynamicTable
+              loading={loadingTodayVisitors}
+              data={invitationMonitoringData}
+              height={'100%'}
+              isHavePagination={false}
+              overflowX="auto"
+              isHaveChecked={false}
+              isHaveHeaderTitle
+              isNoActionTableHead
+              isHavePeriod={true}
+              onView={(row: any) => handleView(row)}
+              titleHeader="Invitation Monitoring"
+              defaultRowsPerPage={5}
+              isHaveAddEmpty={true}
+              addDataText="Create Invitation"
+              onAddEmpty={() => navigate('/employee/my-invitation')}
+              isHaveViewAll={true}
+              onHaveViewAll={() => {
+                navigate('/employee/my-invitation');
+              }}
+            />
+          </Grid>
+          {/* Today Schedule */}
+          <Grid size={{ xs: 12, lg: 6 }} sx={{ display: 'flex' }}>
+            <TodayScheduleCard
+              schedules={todaySchedules}
+              onViewAll={() => {
+                navigate('/');
+              }}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+
+      <InviteOrCreateLinkDialog
+        open={openInviteOrCreateLink}
+        onClose={handleCloseInviteOrCreateLink}
+        onPreregister={() => navigate('/employee/invitation')}
+        onCreateLink={handleOpenCreateLink}
+      />
+
+      <PendingInvitationDialog
+        open={openAlertInvitation}
+        onClose={() => setOpenAlertInvitation(false)}
+        pendingInvitationCount={pendingInvitationCount}
+      />
+
+      <Dialog
+        open={openShareLinkList}
+        onClose={() => setOpenShareLinkList(false)}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          Share Link
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenShareLinkList(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <DynamicTable
+            loading={isLoadingShareLinkDialog}
+            data={shareLinkDialogList}
+            overflowX="auto"
+            isHaveChecked={true}
+            titleHeader="Link Share Visitor"
+            isHaveHeaderTitle={true}
+            isCopyLink={true}
+            isNoActionTableHead={true}
+            isHaveAddData={true}
+            isHavePagination
+            currentPage={shareLinkDialogPage}
+            totalCount={totalFilteredRecords}
+            isDetailLink={true}
+            defaultRowsPerPage={shareLinkDialogRowsPerPage}
+            rowsPerPageOptions={[10, 50, 100]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setShareLinkDialogPage(page);
+              setShareLinkDialogRowsPerPage(rowsPerPage);
+            }}
+            onCopyLink={(row: any) => handleOpenInviteDialog(row)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
+            onAddData={handleAddShareLink}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        expiredAt={expiredAt}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
+      />
+
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={handleCreateLink}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+      />
+
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={[]}
+      />
+
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={handleSendEmail}
+      />
+
+      <ApprovalVisitorGroupDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        loading={groupDetailLoading}
+        data={visitorTableData}
+        selectedRows={selectedRows}
+        setSelectedRows={setSelectedRows}
+        triggerCheckAll={triggerCheckAll}
+        selectedId={selectedId as string}
+        onReject={(id) => handleActionApproval(id, 'Reject')}
+        onApprove={handleApproveMeetingHost}
+        t={t}
+      />
+
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{
+            zIndex: 2,
+            position: 'fixed',
+          }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <GlobalBackdropLoading open={isGenerating || deleteMutation.isPending} />
+    </PageContainer>
+  );
+};
+
+export default DashboardEmployee;

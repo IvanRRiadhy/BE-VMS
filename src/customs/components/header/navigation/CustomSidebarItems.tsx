@@ -36,7 +36,7 @@ const CustomSidebarItems: React.FC<CustomSidebarItemsProps> = ({ itemData }) => 
 
   return (
     <Box sx={{ px: 3 }}>
-      <List sx={{ pt: 0 }} className="sidebarNav">
+      <List sx={{ pt: 2 }} className="sidebarNav">
         {itemData.map((item) => {
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;

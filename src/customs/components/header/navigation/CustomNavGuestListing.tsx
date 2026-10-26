@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Box, List, Theme, useMediaQuery } from '@mui/material';
 import { useSelector } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
@@ -11,6 +11,7 @@ export interface ItemDataCustomNavListing {
   title: string;
   icon: React.ElementType;
   href: string;
+  target?: string;
   chip?: string;
   chipColor?: string;
   children?: ItemDataCustomNavListing[];
@@ -25,8 +26,12 @@ const CustomNavGuestListing: React.FC<CustomNavListingProps> = ({ itemData }) =>
   const pathDirect = pathname;
   const pathWithoutLastPart = pathname.slice(0, pathname.lastIndexOf('/'));
   const customizer = useSelector((state: AppState) => state.customizer);
+  // const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  // const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
-  const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
+
+  const hideMenu = lgUp && customizer.isCollapse && !customizer.isSidebarHover;
+  const navigate = useNavigate();
 
   return (
     <Box>

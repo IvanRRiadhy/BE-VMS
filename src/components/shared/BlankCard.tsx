@@ -9,9 +9,10 @@ type Props = {
   className?: string;
   children: any | any[];
   sx?: any;
+  borderRadius?: any;
 };
 
-const BlankCard = ({ children, className, sx }: Props) => {
+const BlankCard = ({ children, className, sx, borderRadius }: Props) => {
   const customizer = useSelector((state: AppState) => state.customizer);
 
   const theme = useTheme();
@@ -20,7 +21,13 @@ const BlankCard = ({ children, className, sx }: Props) => {
   // 1px solid ${borderColor}
   return (
     <Card
-      sx={{ p: 0, border: !customizer.isCardShadow ? `` : 'none', position: 'relative', sx }}
+      sx={{
+        p: 0,
+        border: !customizer.isCardShadow ? `` : 'none',
+        position: 'relative',
+        sx,
+        borderRadius: borderRadius,
+      }}
       className={className}
       elevation={customizer.isCardShadow ? 9 : 0}
       variant={!customizer.isCardShadow ? 'outlined' : undefined}

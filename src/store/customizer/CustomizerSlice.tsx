@@ -15,6 +15,7 @@ interface StateType {
   isLanguage?: string;
   isCardShadow?: boolean;
   borderRadius?: number | any;
+  evacState?: 'idle' | 'running' | 'finished';
 }
 
 const initialState: StateType = {
@@ -32,6 +33,7 @@ const initialState: StateType = {
   isLanguage: 'en',
   isCardShadow: true,
   borderRadius: 7,
+  evacState: 'idle',
 };
 
 export const CustomizerSlice = createSlice({
@@ -69,6 +71,11 @@ export const CustomizerSlice = createSlice({
     toggleHorizontal: (state: StateType, action) => {
       state.isHorizontal = action.payload;
     },
+
+    setEvacuationState: (state: StateType, action) => {
+      state.evacState = action.payload;
+      localStorage.setItem('evacState', JSON.stringify(action.payload));
+    },
     setBorderRadius: (state: StateType, action) => {
       state.borderRadius = action.payload;
     },
@@ -87,6 +94,7 @@ export const {
   toggleHorizontal,
   setLanguage,
   setCardShadow,
+  setEvacuationState,
 } = CustomizerSlice.actions;
 
 export default CustomizerSlice.reducer;

@@ -3,43 +3,59 @@
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
 import ReactDOM from 'react-dom/client';
-import { store, persistor } from './store/Store';
+import { store } from './store/Store';
 import './utils/i18n';
-import './_mockApis';
 import { SessionProvider } from './customs/contexts/SessionContext';
-import { PersistGate } from 'redux-persist/integration/react';
-import { BrowserRouter } from 'react-router';
+// import { PersistGate } from 'redux-persist/integration/react';
 import { AuthProvider } from './customs/contexts/AuthProvider';
-import { App } from './App';
-// app.css
+import App from './App';
 import './App.css';
-import 'video.js/dist/video-js.css';
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Spinner from './views/spinner/Spinner';
+import { loadRuntimeConfig } from './config';
+import { initializeAxiosBaseURL } from './customs/api/interceptor';
 
-// 🧠 Buat 1 instance global QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // biar gak refetch tiap pindah tab
-      retry: 1, // jumlah retry kalau gagal
-      staleTime: 1000 * 60, // cache valid 1 menit
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 1,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: false,
     },
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}>
-      <SessionProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <App />
-            </QueryClientProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </SessionProvider>
-    </PersistGate>
-  </Provider>,
-);
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+
+loadRuntimeConfig()
+  .then(() => {
+    initializeAxiosBaseURL();
+    root.render(
+      <Provider store={store}>
+        {/* <PersistGate loading={<Spinner />}> */}
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider>
+            <AuthProvider>
+              <Suspense fallback={null}>
+                <App />
+              </Suspense>
+            </AuthProvider>
+          </SessionProvider>
+        </QueryClientProvider>
+        {/* </PersistGate> */}
+      </Provider>,
+    );
+  })
+  .catch((err) => {
+    root.render(
+      <div style={{ padding: 24 }}>
+        <h2>Configuration Error</h2>
+        <p>config.json not found or invalid.</p>
+      </div>,
+    );
+  });

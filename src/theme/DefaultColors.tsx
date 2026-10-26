@@ -2,7 +2,8 @@ const baselightTheme = {
   direction: 'ltr',
   palette: {
     primary: {
-      main: '#5D87FF',
+      // main: '#5D87FF',
+      main: '#055499',
       light: '#ECF2FF',
       dark: '#4570EA',
     },
@@ -59,7 +60,8 @@ const baselightTheme = {
     },
     divider: '#e5eaef',
     background: {
-      default: '#ffffff',
+      default: '#ebedefff',
+      // paper: '#ebedefff',
     },
   },
 };
@@ -68,7 +70,8 @@ const baseDarkTheme = {
   direction: 'ltr',
   palette: {
     primary: {
-      main: '#5D87FF',
+      // main: '#5D87FF',
+      main: '#055499',
       light: '#ECF2FF',
       dark: '#4570EA',
     },

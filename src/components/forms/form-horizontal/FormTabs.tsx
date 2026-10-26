@@ -12,7 +12,7 @@ import CustomSelect from '../theme-elements/CustomSelect';
 import CustomTextField from '../theme-elements/CustomTextField';
 import CustomOutlinedInput from '../theme-elements/CustomOutlinedInput';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 const countries = [
   {
@@ -41,21 +41,21 @@ const lang = [
 ];
 
 const FormTabs = () => {
-  const [value, setValue] = React.useState('1');
+  const [value, setValue] = useState('1');
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
   };
 
   //   country
-  const [country, setCountry] = React.useState('');
+  const [country, setCountry] = useState('');
 
   const handleChange2 = (event: any) => {
     setCountry(event.target.value);
   };
 
   //   language
-  const [language, setLanguage] = React.useState('en');
+  const [language, setLanguage] = useState('en');
 
   const handleChange3 = (event: any) => {
     setLanguage(event.target.value);
@@ -63,7 +63,7 @@ const FormTabs = () => {
 
   //   password
   //
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -73,7 +73,7 @@ const FormTabs = () => {
 
   //   confirm password
   //
-  const [showPassword2, setShowPassword2] = React.useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
 
   const handleClickShowPassword2 = () => setShowPassword2((show) => !show);
 

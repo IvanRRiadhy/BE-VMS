@@ -33,26 +33,45 @@ export type Tracking = {
   site_id: string;
   name: string;
   early_access: boolean;
-  trk_ble_floorplan_masked_area_id: string;
+  trk_ble_card_access_id: string;
 };
 
 export type Item = {
   id: string;
-  type: number;
+  type?: number | null;
   name: string;
   description: string | null;
   image: string | null;
   can_visited: boolean;
+  code?: string | null;
   need_approval: boolean;
-  type_approval: number;
+  need_invitation?: boolean | null;
+  can_swap?: boolean;
+  max_capacity?: number | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  is_active?: boolean | null;
+  address?: string | null;
+  // latitude?: number | null;
+  // longitude?: number | null;
+  open_time?: string | null;
+  close_time?: string | null;
+  // type: string;
+  // type_approval: string;
+  approval_workflow_id?: string | null;
   can_signout: boolean;
   auto_signout: boolean;
-  signout_time: string | null;
+  signout_time?: string | null;
   is_registered_point?: boolean;
-  timezone: string;
+  is_drop_point?: boolean | null;
+  timezone?: string | null;
   map_link: string;
   can_contactless_login: boolean;
   need_document: boolean;
+  parent?: string | null;
+  is_child?: boolean | null;
+  host?: string | null;
   access: Access[];
   parking: Parking[];
   tracking: Tracking[];
@@ -106,21 +125,31 @@ export type GetSiteByIdResponse = {
 
 //CREATE
 export const CreateSiteRequestSchema = z.object({
-  type: z.number().default(0),
+  type: z.coerce.number().default(0),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
+  can_swap: z.boolean().default(false),
+  code: z.string().nullable().optional(),
+  max_capacity: z.number().default(0),
   need_approval: z.boolean().default(false),
-  type_approval: z.number().default(0),
+  need_invitation: z.boolean().nullable().optional().default(false),
+  type_approval: z.string().nullable().optional(),
+  approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
-  signout_time: z.string().nullable().optional().default(''),
-  timezone: z.string().default(''),
+  signout_time: z.string().nullable().optional(),
+  is_active: z.boolean().nullable().optional(),
+  timezone: z.string().nullable().optional(),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
-  is_registered_point: z.boolean().default(false).optional().nullable(),
+  is_registered_point: z.boolean().default(false),
+  is_drop_point: z.boolean().optional().nullable(),
+  parent: z.string().nullable().optional(),
+  is_child: z.boolean().default(false),
+  host: z.string().nullable().optional(),
   access: z
     .array(
       z.object({
@@ -132,11 +161,15 @@ export const CreateSiteRequestSchema = z.object({
     )
     .nullable()
     .optional(),
+  close_time: z.string().nullable().optional(),
+  open_time: z.string().nullable().optional(),
+  // latitude: z.number().nullable().optional(),
+  // longitude: z.number().nullable().optional(),
+  address: z.string().nullable().optional(),
+  contact_name: z.string().nullable().optional(),
+  contact_email: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
 });
-
-// export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({
-//   id: z.string(),
-// });
 
 export const CreateSiteAccessSchema = z.object({
   sort: z.number().optional().default(0),
@@ -155,7 +188,7 @@ export const CreateSiteParkingSchema = z.object({
 export const CreateSiteTrackingSchema = z.object({
   sort: z.number().optional().default(0),
   site_id: z.string(),
-  trk_ble_floorplan_masked_area_id: z.string(),
+  trk_ble_card_access_id: z.string(),
   early_access: z.boolean().optional().default(false),
 });
 
@@ -168,10 +201,10 @@ export const UpdateSiteParkingSchema = z.object({
 });
 
 export const UpdateSiteTrackingSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   sort: z.number().optional().default(0),
-  site_id: z.string(),
-  trk_ble_floorplan_masked_area_id: z.string(),
+  site_id: z.string().optional(),
+  trk_ble_card_access_id: z.string().optional(),
   early_access: z.boolean().optional().default(false),
 });
 
@@ -238,21 +271,30 @@ export interface UploadImageSiteResponse {
 
 //UPDATE
 export const UpdateSiteRequestSchema = z.object({
-  type: z.number().default(0),
+  type: z.coerce.number().default(0),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
-  image: z.string().nullable().optional().default(''),
+  image: z.string().nullable().optional(),
   can_visited: z.boolean().default(false),
+  need_invitation: z.boolean().nullable().optional().default(false),
   need_approval: z.boolean().default(false),
-  type_approval: z.number().default(0),
+  can_swap: z.boolean().default(false),
+  code: z.string().nullable().optional(),
+  // type_approval: z.number().default(0),
+  is_active: z.boolean().nullable().optional(),
+  approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
+  is_drop_point: z.boolean().optional().nullable(),
   auto_signout: z.boolean().default(false),
-  signout_time: z.string().default(''),
-  timezone: z.string().default(''),
+  signout_time: z.string().nullable().optional(),
+  timezone: z.string().nullable().optional(),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false).optional().nullable(),
+  parent: z.string().nullable().optional().default(''),
+  is_child: z.boolean().default(false).optional().nullable(),
+  host: z.string().nullable().optional(),
   access: z
     .array(
       z.object({
@@ -264,6 +306,16 @@ export const UpdateSiteRequestSchema = z.object({
     )
     .nullable()
     .optional(),
+
+  max_capacity: z.number().default(0),
+  close_time: z.string().nullable().optional(),
+  open_time: z.string().nullable().optional(),
+  // latitude: z.number().nullable().optional(),
+  // longitude: z.number().nullable().optional(),
+  address: z.string().nullable().optional(),
+  contact_name: z.string().nullable().optional(),
+  contact_email: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
 });
 
 export type UpdateSiteRequest = z.infer<typeof UpdateSiteRequestSchema>;
@@ -284,11 +336,12 @@ export interface UpdateSitestRequest {
   image?: string;
   can_visited?: boolean;
   need_approval?: boolean;
-  type_approval?: number;
+  // type_approval?: number;
+  approval_workflow_id?: string;
   can_signout?: boolean;
   auto_signout?: boolean;
   signout_time?: string;
-  timezone?: string;
+  timezone?: string | null;
   map_link?: string;
   can_contactless_login?: boolean;
   need_document?: boolean;

@@ -1,0 +1,983 @@
+import {
+  Alert,
+  Backdrop,
+  Button,
+  Card,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Grid2 as Grid,
+  IconButton,
+  Portal,
+  Snackbar,
+  Typography,
+  Box,
+} from '@mui/material';
+import moment from 'moment-timezone';
+import {
+  IconBellRingingFilled,
+  IconCards,
+  IconCircleMinus,
+  IconLogin,
+  IconLogout,
+  IconX,
+} from '@tabler/icons-react';
+import React, { useEffect, useRef, useState } from 'react';
+import QRCode from 'react-qr-code';
+import PageContainer from 'src/components/container/PageContainer';
+import TopCards from '../Dashboard/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import Heatmap from '../Dashboard/Heatmap';
+import {
+  getActiveInvitation,
+  getOngoingInvitation,
+  openParkingBlocker,
+} from 'src/customs/api/visitor';
+import FormDialogInvitation from '../Dashboard/FormDialogInvitation';
+import { getAccessPass } from 'src/customs/api/admin';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import Swal from 'sweetalert2';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
+import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
+import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
+import { useNavigate } from 'react-router';
+import {
+  createShareLink,
+  deleteShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/Admin/ShareLink';
+import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  approveTicket,
+  getApprovalTicket,
+  rejectTicket,
+} from 'src/customs/api/Admin/ApprovalWorkflow';
+import { IconCalendar } from '@tabler/icons-react';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import Calendar from 'src/customs/components/calendar/Calendar';
+import { IconDownload } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
+import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
+
+const DashboardDeliveryStaff = () => {
+  const CardItems = [
+    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
+  ];
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+  const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
+  const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
+  const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
+  const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
+  const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
+  const [openAccess, setOpenAccess] = useState(false);
+  // const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [sortDir, setSortDir] = useState('desc');
+  const dispatch = useDispatch();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClose = () => setAnchorEl(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+  const start = page * rowsPerPage;
+  const navigate = useNavigate();
+
+  const handleOpenInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(true);
+  };
+
+  const handleCloseInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(false);
+  };
+
+  const handleOpenCreateLink = () => {
+    setOpenInviteOrCreateLink(false);
+    setOpenCreateLink(true);
+  };
+
+  const handleOpenAccess = () => {
+    setOpenAccess(true);
+  };
+
+  const handleCloseAccess = () => {
+    setOpenAccess(false);
+  };
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      const res = await getShareLinkByDt(start, rowsPerPage, searchKeyword, sortDir);
+
+      return res;
+    },
+
+    staleTime: 1000 * 60 * 1,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const shareLinkList =
+    data?.collection?.map((item: any) => ({
+      id: item.id,
+      agenda: item.agenda,
+      url: item.url,
+      current_usage: item.current_usage,
+      max_usage: item.max_usage,
+      expired_at: (() => {
+        const date = new Date(item.expired_at + 'Z');
+
+        const formattedDate = date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        });
+
+        const formattedTime = date
+          .toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+          .replace(':', '.');
+
+        return `${formattedDate}, ${formattedTime}`;
+      })(),
+      link_status: item.link_status,
+    })) || [];
+
+  useEffect(() => {
+    const fetchDataActiveInvtiation = async () => {
+      try {
+        const response = await getActiveInvitation();
+        let rows = response.collection.map((item: any) => ({
+          id: item.id,
+          name: item.visitor.name,
+          email: item.visitor.email,
+          organization: item.visitor.organization,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          host: item.host_name ?? '-',
+          // visitor_status: item.visitor_status,
+        }));
+        setActiveInvitation(rows || []);
+      } catch (error) {}
+    };
+
+    fetchDataActiveInvtiation();
+  }, []);
+
+  const {
+    data: approvalRes,
+    refetch: refetchApproval,
+    isFetching: loadingApproval,
+  } = useQuery({
+    queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      return await getApprovalTicket({
+        start,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        keyword: searchKeyword,
+      });
+    },
+  });
+
+  const approvalData =
+    approvalRes?.collection?.map(
+      ({
+        approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start,
+        visitor_period_end,
+      }: any) => ({
+        id: approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start: formatDateTime(visitor_period_start),
+        visitor_period_end: formatDateTime(visitor_period_end),
+      }),
+    ) || [];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getOngoingInvitation();
+        const data = res?.collection ?? [];
+
+        const filtered = data
+          .filter(
+            (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
+          )
+          .slice(0, 5);
+
+        const mapped = filtered.map((item: any) => ({
+          id: item.id,
+          name: item.visitor_name,
+          email: item.visitor_email,
+          organization: item.visitor_organization_name,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          host: item.host_name ?? '-',
+          site: item.site_place_name,
+          // visitor_status: item.visitor_status,
+        }));
+
+        setInvitationDetailVisitor(mapped);
+
+        const notDoneInvitations = data.filter(
+          (inv: any) => inv.is_praregister_done === null || inv.is_praregister_done === false,
+        );
+
+        if (notDoneInvitations.length > 0) {
+          setPendingInvitationCount(notDoneInvitations.length);
+          setOpenAlertInvitation(true);
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const resAccess = await getAccessPass();
+  //       setActiveAccessPass(resAccess);
+  //     } catch (e) {
+  //       console.error(e);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, []);
+
+  const { accessPass: activeAccessPass } = useAccessPass();
+
+  const handleView = (row: any) => {
+    setSelectedInvitationId(row.id);
+    setOpenDialogInvitation(true);
+  };
+
+  function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
+    const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    return `${startLocal} - ${endLocal}`;
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      const clone = printRef.current.cloneNode(true) as HTMLElement;
+
+      const logoEl = document.createElement('img');
+      logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
+      logoEl.style.width = '100px';
+      logoEl.style.height = '100px';
+      logoEl.style.display = 'block';
+      logoEl.style.margin = '0 auto';
+      clone.prepend(logoEl);
+
+      clone.querySelectorAll('.no-print').forEach((el) => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+
+      clone.remove();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const [isParkingLoading, setIsParkingLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+
+  const handleOpenParkingBlocker = async () => {
+    if (!activeAccessPass?.id) return;
+    setIsParkingLoading(true);
+    try {
+      await openParkingBlocker({ id: activeAccessPass.id });
+      showSwal('success', 'Parking blocker opened successfully.');
+    } catch (error: any) {
+      showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');
+    } finally {
+      setTimeout(() => setIsParkingLoading(false), 600);
+    }
+  };
+
+  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+    if (!id) return;
+
+    try {
+      const confirm = await Swal.fire({
+        title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
+        icon: 'question',
+        // imageUrl: BI_LOGO,
+        imageWidth: 100,
+        imageHeight: 100,
+        showCancelButton: true,
+        confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      setTimeout(() => setLoading(true), 800);
+
+      // await createApproval(token, { action }, id);
+      if (action === 'Approve') await approveTicket(id);
+      if (action === 'Reject') await rejectTicket(id);
+      setTimeout(() => {
+        showSwal(
+          'success',
+          `Data Approval ${action === 'Approve' ? 'approved' : 'rejected'} successfully.`,
+        );
+      }, 850);
+
+      setTimeout(() => setLoading(false), 200);
+
+      // setRefreshTrigger((prev) => prev + 1);
+      await refetchApproval();
+    } catch (error) {
+      console.error('Approval action error:', error);
+      setTimeout(() => setLoading(false), 800);
+      showSwal('error', 'Something went wrong while processing approval.');
+    }
+  };
+
+  const handleCopyLink = async (link: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textArea = document.createElement('textarea');
+
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        const copied = document.execCommand('copy');
+
+        document.body.removeChild(textArea);
+
+        if (!copied) {
+          throw new Error('Failed to copy');
+        }
+      }
+
+      showSwal('success', 'Link copied to clipboard.');
+    } catch (error) {
+      console.error('Copy link failed:', error);
+      showSwal('error', 'Failed to copy link.');
+    }
+  };
+
+  const handleDetailLink = (link: string) => {
+    // window.open(link, '_blank');
+    setOpenDetailLink(true);
+  };
+
+  const dataVisitor = [
+    {
+      id: 1,
+      name: 'Dedy',
+      agenda: 'Agenda 1',
+      visitor_type: 'Visitor',
+      destination: 'Gedung Sinergi',
+      visitor_period_start: '2023-04-01, 08:00',
+      visitor_period_end: '2023-04-01, 09:00',
+    },
+    {
+      id: 2,
+      name: 'Budi',
+      agenda: 'Agenda 2',
+      visitor_type: 'Visitor',
+      destination: 'Gedung Sinergi',
+      visitor_period_start: '2026-04-01, 10:00',
+      visitor_period_end: '2026-04-01, 11:00',
+    },
+  ];
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await Swal.fire({
+        title: 'Do you want to delete this link?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: '#4caf50',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      await deleteShareLink(id);
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+      showSwal('success', 'Successfully deleted link.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to delete link.');
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createShareLink(payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err) {
+      showSwal('error', 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+      await createShareLink(finalPayload);
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+
+      showSwal('success', t('successSendShareLink'));
+    } catch (err) {
+      showSwal('error', 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!exportRef.current || isExporting) return;
+
+    try {
+      setIsExporting(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <PageContainer title="Dashboard" description="This is Employee Dashboard">
+      <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
+        <Grid
+          size={{ xs: 12, lg: 12 }}
+          display="flex"
+          justifyContent="flex-end"
+          alignItems="center"
+          gap={2}
+          sx={{ mt: 0.5 }}
+        >
+          <Button
+            size="small"
+            sx={{
+              backgroundColor: 'white',
+              color: 'black',
+              border: '1px solid #d1d1d1',
+              ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
+            }}
+            startIcon={<IconCalendar size={18} />}
+            onClick={handleClick}
+          >
+            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
+          </Button>
+
+          <Button
+            size="small"
+            variant="contained"
+            color="error"
+            startIcon={<IconDownload />}
+            onClick={handleExportPdf}
+            disabled={isExporting}
+          >
+            {isExporting ? 'Exporting...' : 'Export '}
+          </Button>
+
+          <Drawer open={open} anchor="right" onClose={handleClose}>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" mb={1}>
+                Select Date Range
+              </Typography>
+              <Calendar
+                value={{ startDate, endDate }}
+                onChange={(selection: any) => {
+                  dispatch(
+                    setDateRange({
+                      startDate: selection.startDate,
+                      endDate: selection.endDate,
+                    }),
+                  );
+                  handleClose();
+                }}
+              />
+            </Box>
+          </Drawer>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} sx={{ mt: 0 }} ref={exportRef}>
+        <Grid size={{ xs: 12, lg: 9 }}>
+          <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
+        </Grid>
+
+        <Grid
+          size={{ xs: 12, lg: 3 }}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Card
+            sx={{
+              flex: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              gap: 1,
+            }}
+            onClick={handleOpenAccess}
+          >
+            {activeAccessPass ? (
+              <>
+                <Typography variant="h5">Access Pass</Typography>
+                <Box
+                  sx={{
+                    p: 1,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 2,
+                    boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number || ''}
+                    size={50}
+                    style={{
+                      height: 'auto',
+                      width: '160px',
+                    }}
+                  />
+                </Box>
+                <Typography variant="body1" fontWeight={'600'} color="primary">
+                  Tap to show detail
+                </Typography>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
+                <IconCards size={40} />
+                <Typography
+                  variant="body1"
+                  color="textSecondary"
+                  fontStyle="italic"
+                  textAlign="center"
+                  mt={1}
+                >
+                  No access pass found
+                </Typography>
+              </Box>
+            )}
+          </Card>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mt: 0.5 }}
+            onClick={handleOpenInviteOrCreateLink}
+          >
+            Invite
+          </Button>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <DynamicTable
+            loading={loadingApproval}
+            height={490}
+            overflowX="auto"
+            data={approvalData}
+            isHaveChecked={true}
+            isHaveAction={true}
+            isActionVisitor={false}
+            isHaveHeaderTitle
+            titleHeader="Approval"
+            isHaveApproval={true}
+            onAccept={(row: any) => handleActionApproval(row.id, 'Approve')}
+            onDenied={(row: any) => handleActionApproval(row.id, 'Reject')}
+            isHavePeriod={true}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <DynamicTable
+            loading={isFetching}
+            height={490}
+            overflowX="auto"
+            data={shareLinkList}
+            isHaveChecked={true}
+            titleHeader="Link Share Visitor"
+            isHaveHeaderTitle={true}
+            isCopyLink={true}
+            isNoActionTableHead={true}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
+            isDetailLink={true}
+            onCopyLink={(row: any) => handleCopyLink(row.url)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
+          <DynamicTable
+            data={invitationDetailVisitor}
+            height={430}
+            isHavePagination={false}
+            overflowX="auto"
+            isHaveChecked={false}
+            isHaveView={true}
+            isHaveAction={true}
+            isHaveHeaderTitle
+            isHavePeriod={true}
+            onView={(row: any) => handleView(row)}
+            titleHeader="Ongoing Invitation"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
+          <Heatmap />
+        </Grid>
+      </Grid>
+
+      {/* Dialog Praregist or Create link */}
+      <Dialog
+        open={openInviteOrCreateLink}
+        onClose={handleCloseInviteOrCreateLink}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Invite or Create Link
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseInviteOrCreateLink}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            flexDirection="column"
+            textAlign="center"
+            py={3}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mb: 2 }}
+              // onClick={() => setOpenDialogInvitation(true)}
+              onClick={() => {
+                navigate('/employee/invitation');
+              }}
+            >
+              Praregister
+            </Button>
+            <Button variant="outlined" color="primary" fullWidth onClick={handleOpenCreateLink}>
+              Share Link Invitation
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open Alert Invitation */}
+      <Dialog
+        open={openAlertInvitation}
+        onClose={() => setOpenAlertInvitation(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenAlertInvitation(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+
+        <DialogContent>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            flexDirection="column"
+            textAlign="center"
+            py={3}
+          >
+            <IconBellRingingFilled size={60} color="orange" />
+            <Typography variant="h5" mt={2} fontWeight={600}>
+              {pendingInvitationCount > 1
+                ? `${pendingInvitationCount} invitation must be completed`
+                : '1 invitation must be completed'}
+            </Typography>
+
+            <Typography variant="body1" color="text.secondary" mt={1}>
+              You must complete the invitation before it expires
+            </Typography>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={handleCreateLink}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+      />
+
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={dataVisitor}
+      />
+
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={handleSendEmail}
+      />
+      {/* Praregister */}
+      <Dialog
+        open={openDialogInvitation}
+        onClose={() => setOpenDialogInvitation(false)}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>Fill Praregister</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenDialogInvitation(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+        <DialogContent dividers>
+          {selectedInvitationId ? (
+            <FormDialogInvitation
+              id={selectedInvitationId}
+              onClose={() => setOpenDialogInvitation(false)}
+              onSubmitted={() => {
+                setOpenDialogInvitation(false);
+                setInvitationDetailVisitor([]);
+              }}
+              onSubmitting={setSubmitting}
+            />
+          ) : (
+            <Typography variant="body2" textAlign="center" color="text.secondary">
+              No invitation selected.
+            </Typography>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Active Pass */}
+      {activeAccessPass && (
+        <AccessPassDialog
+          open={openAccess}
+          onClose={handleCloseAccess}
+          data={activeAccessPass}
+          isGenerating={isGenerating}
+          isParkingLoading={isParkingLoading}
+          onDownload={handleDownloadPDF}
+          onOpenParking={handleOpenParkingBlocker}
+          formatVisitorPeriodLocal={formatVisitorPeriodLocal}
+          ref={printRef}
+        />
+      )}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{
+            zIndex: 2,
+            position: 'fixed',
+          }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <Portal>
+        <Backdrop
+          sx={{
+            zIndex: 99999,
+            position: 'fixed',
+            margin: '0 auto',
+            color: 'primary',
+          }}
+          open={isGenerating}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal>
+    </PageContainer>
+  );
+};
+
+export default DashboardDeliveryStaff;

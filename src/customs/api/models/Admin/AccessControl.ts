@@ -5,19 +5,18 @@ export type Item = {
   id: string;
   brand_id: string;
   brand_name: string;
-  type: number;
+  type: string;
   name: string;
   description: string;
   channel: string;
   door_id: string;
   raw: string;
   integration_id: string;
-  integration_name: string;
 };
 
 export enum AccessControlType {
-  Door = 0,
-  Gate = 1,
+  Access = 0,
+  Group = 1,
 }
 
 //GET
@@ -46,19 +45,19 @@ export type GetAccessControlByIdResponse = {
   title: string;
   msg: string;
   collection: Item | null;
-}
+};
 //CREATE
 export const CreateAccessControlRequestSchema = z.object({
-  brand_id: z.string().default(''),
-  brand_name: z.string().default(''),
-  type: z.number().default(-1),
-  name: z.string().default(''),
-  description: z.string().nullable().default(''),
-  channel: z.string().default(''),
-  door_id: z.string().default(''),
-  raw: z.string().default('{}'),
-  integration_id: z.string().default(''),
-  integration_name: z.string().default(''),
+  brand_id: z.string().nullable().optional(),
+  brand_name: z.string().nullable().optional(),
+  // type: z.number().default(-1),
+  type: z.string().default(''),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().nullable(),
+  channel: z.string(),
+  door_id: z.string(),
+  raw: z.string(),
+  integration_id: z.string().min(1, 'Integration is required'),
 });
 
 export type CreateAccessControlRequest = z.infer<typeof CreateAccessControlRequestSchema>;
@@ -80,29 +79,16 @@ export type DeleteAccessControlResponse<T = any> = {
   collection: T | null;
 };
 
-//UPDATE
-// export interface UpdateAccessControlRequest {
-//     brand_id: string;
-//     type: number;
-//     name: string;
-//     description: string;
-//     channel: string;
-//     door_id: string;
-//     raw: string;
-//     integration_id: string;
-// };
-
 export const UpdateAccessControlRequestSchema = z.object({
-  brand_id: z.string().default(''),
-  brand_name: z.string().default('').optional(),
-  type: z.number().default(0),
-  name: z.string().default(''),
-  description: z.string().default('').optional(),
-  channel: z.string().default(''),
-  door_id: z.string().default(''),
-  raw: z.string().default('{}'),
-  integration_id: z.string().default(''),
-  integration_name: z.string().default('').optional(),
+  brand_id: z.string().nullable().optional(),
+  brand_name: z.string().nullable().optional(),
+  type: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  channel: z.string(),
+  door_id: z.string(),
+  raw: z.string(),
+  integration_id: z.string(),
 });
 
 export type UpdateAccessControlRequest = z.infer<typeof UpdateAccessControlRequestSchema>;

@@ -1,0 +1,548 @@
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid2 as Grid,
+  IconButton,
+} from '@mui/material';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+
+import CloseIcon from '@mui/icons-material/Close';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import {
+  CreateDriverRequest,
+  CreateDriverRequestSchema,
+  Item,
+} from 'src/customs/api/models/Admin/Driver';
+import { IconUsers } from '@tabler/icons-react';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Staff/FilterMoreContent';
+import FormDriver from 'src/customs/pages/admin/content/Delivery/Staff/FormDriver';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useDriverPagination } from 'src/hooks/Staff/useStaffPagination';
+import { useStaffMutation } from 'src/hooks/Staff/useStaffMutation';
+
+export const DEFAULT_FILTERS: Filters = {
+  gender: -1,
+  organization: '',
+  department: '',
+  district: '',
+  joinStart: '',
+  exitEnd: '',
+  statusEmployee: -1,
+};
+
+type DriverTableRows = {
+  id: string;
+  name: string;
+  faceimage?: string;
+  organization_id?: string;
+  department_id?: string;
+  district_id?: string;
+};
+
+type EnableField = {
+  gender: boolean;
+  organization_id: boolean;
+  department_id: boolean;
+  district_id: boolean;
+};
+
+interface OptionItem {
+  id: string;
+  name: string;
+}
+
+interface Filters {
+  gender: number;
+  organization: string;
+  department: string;
+  district: string;
+  joinStart: string;
+  exitEnd: string;
+  statusEmployee: number;
+}
+
+const Content = () => {
+  // const [tableData, setTableData] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
+  // const [totalRecords, setTotalRecords] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState<string>('created_at');
+  const [edittingId, setEdittingId] = useState('');
+  // const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  // const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS);
+
+  const driverQuery = useDriverPagination({
+    page,
+    rowsPerPage,
+    sort_column: 'created_at',
+    sortDir,
+    search,
+    filters: appliedFilters,
+  });
+
+  const tableData = driverQuery.data?.collection ?? [];
+
+  const totalRecords = driverQuery.data?.RecordsTotal ?? 0;
+
+  const totalFilteredRecords = driverQuery.data?.RecordsFiltered ?? 0;
+
+  const loading = driverQuery.isLoading;
+
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Staff',
+        icon: IconUsers,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalRecords],
+  );
+
+  const tableRowEmployee = useMemo(() => {
+    return tableData.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      faceimage: item.faceimage,
+      organization: item.organization?.name ?? '-',
+      department: item.department?.name ?? '-',
+    }));
+  }, [tableData]);
+
+  const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(
+    CreateDriverRequestSchema.parse({}),
+  );
+
+  const [formDataDriver, setFormDataDriver] = useState<CreateDriverRequest>(
+    CreateDriverRequestSchema.parse({}),
+  );
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const isFormChanged = useMemo(() => {
+    return JSON.stringify(formDataDriver) !== JSON.stringify(initialFormData);
+  }, [formDataDriver]);
+
+  const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
+
+  const handleOpenDialog = () => setOpenFormAddEmployee(true);
+  const handleCloseDialog = () => {
+    setOpenFormAddEmployee(false);
+    setIsBatchEdit(false);
+    setIsEditing(false);
+  };
+
+  const handleAdd = useCallback(() => {
+    const freshForm = CreateDriverRequestSchema.parse({});
+
+    setEdittingId('');
+    setFormDataDriver(freshForm);
+    setInitialFormData(freshForm);
+    setPendingEditId(null);
+
+    handleOpenDialog();
+  }, []);
+
+  const handleEdit = (id: string) => {
+    const existingData = tableData.find((item) => String(item.id) === String(id));
+    if (!existingData) return;
+
+    const toNum = (
+      v: unknown,
+      map: Record<string, number> = {},
+      fallback: number | undefined = 0,
+    ) => {
+      if (v === '' || v == null) return fallback;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'boolean') return v ? 1 : 0;
+
+      if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+
+        if (t in map) return map[t];
+
+        const n = Number(t);
+        return Number.isFinite(n) ? n : fallback;
+      }
+
+      return fallback;
+    };
+
+    const coerceEmployee = (s: any) => ({
+      ...s,
+      gender: toNum(
+        s?.gender,
+        {
+          female: 0,
+          male: 1,
+          f: 0,
+          m: 1,
+          '0': 0,
+          '1': 1,
+        },
+        0,
+      ),
+
+      status_employee: toNum(
+        s?.status_employee,
+        {
+          active: 1,
+          'non active': 2,
+          nonactive: 2,
+          inactive: 2,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
+        0,
+      ),
+
+      organization_id: String(s?.organization_id ?? ''),
+      department_id: String(s?.department_id ?? ''),
+      district_id: String(s?.district_id ?? ''),
+    });
+
+    const parsedData = CreateDriverRequestSchema.parse(coerceEmployee(existingData));
+
+    if (openFormAddEmployee && isFormChanged) {
+      setPendingEditId(id);
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    setEdittingId(id);
+    setFormDataDriver(parsedData);
+    setInitialFormData(parsedData);
+    setOpenFormAddEmployee(true);
+    setIsEditing(true);
+  };
+
+  const handleConfirmEdit = () => {
+    setConfirmDialogOpen(false);
+
+    // pindah edit ke data lain
+    if (pendingEditId) {
+      const existingData = tableData.find((item) => String(item.id) === String(pendingEditId));
+
+      if (!existingData) return;
+
+      const toNum = (
+        v: unknown,
+        map: Record<string, number> = {},
+        fallback: number | undefined = 0,
+      ) => {
+        if (v === '' || v == null) return fallback;
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (typeof v === 'boolean') return v ? 1 : 0;
+
+        if (typeof v === 'string') {
+          const t = v.trim().toLowerCase();
+
+          if (t in map) return map[t];
+
+          const n = Number(t);
+          return Number.isFinite(n) ? n : fallback;
+        }
+
+        return fallback;
+      };
+
+      const coerceEmployee = (s: any) => ({
+        ...s,
+        gender: toNum(
+          s?.gender,
+          {
+            female: 0,
+            male: 1,
+            f: 0,
+            m: 1,
+            '0': 0,
+            '1': 1,
+          },
+          0,
+        ),
+
+        status_employee: toNum(
+          s?.status_employee,
+          {
+            active: 1,
+            'non active': 2,
+            nonactive: 2,
+            inactive: 2,
+            '0': 0,
+            '1': 1,
+            '2': 2,
+          },
+          0,
+        ),
+
+        organization_id: String(s?.organization_id ?? ''),
+        department_id: String(s?.department_id ?? ''),
+        district_id: String(s?.district_id ?? ''),
+      });
+
+      const parsedData = CreateDriverRequestSchema.parse(coerceEmployee(existingData));
+
+      setEdittingId(pendingEditId);
+      setFormDataDriver(parsedData);
+      setInitialFormData(parsedData);
+
+      setPendingEditId(null);
+      setOpenFormAddEmployee(true);
+      setIsEditing(true);
+
+      return;
+    }
+
+    // discard lalu tutup dialog
+    const empty = CreateDriverRequestSchema.parse({});
+
+    setEdittingId('');
+    setFormDataDriver(empty);
+    setInitialFormData(empty);
+
+    handleCloseDialog();
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEdittingId('');
+    setConfirmDialogOpen(false);
+    setPendingEditId(null);
+  };
+
+  const { deleteMutation: deleteStaff } = useStaffMutation();
+
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirmDelete('Are you sure to delete this delivery staff?');
+
+    if (confirmed) {
+      try {
+        // await deleteDriver(id);
+        await deleteStaff.mutateAsync(id);
+
+        showSwal('success', 'Successfully deleted delivery staff!');
+      } catch (error) {
+        showSwal('error', 'Failed to delete staff.');
+      }
+    }
+  };
+
+  const handleBatchDelete = async (rows: DriverTableRows[]) => {
+    if (rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
+
+    if (confirmed) {
+      try {
+        await Promise.all(rows.map((row) => deleteStaff.mutateAsync(row.id)));
+
+        setSelectedRows([]);
+        showSwal('success', `${rows.length} items have been deleted.`);
+        return true;
+      } catch (error: any) {
+        showSwal('error', error?.response?.data?.msg || 'Failed to delete some items.');
+        return false;
+      }
+    }
+  };
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilter = () => {
+    setPage(0);
+    setFilters(DEFAULT_FILTERS);
+    setAppliedFilters(DEFAULT_FILTERS);
+  };
+
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
+    gender: false,
+    organization_id: false,
+    department_id: false,
+    district_id: false,
+  });
+
+  const handleBatchEdit = (rows: any[]) => {
+    const selectedId = rows[0]?.id;
+    setEdittingId(selectedId);
+    setIsBatchEdit(true);
+    handleOpenDialog();
+  };
+
+  const handleSuccess = () => {
+    setInitialFormData((_) => formDataDriver);
+    setOpenFormAddEmployee(false);
+  };
+
+  const handleDialogClose = (_event?: object, reason?: string) => {
+    const isChanged = JSON.stringify(formDataDriver) !== JSON.stringify(initialFormData);
+
+    if ((reason === 'backdropClick' || reason === 'closeButton') && isChanged) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    if (isChanged) {
+      setConfirmDialogOpen(true);
+    } else {
+      setConfirmDialogOpen(false);
+      handleCloseDialog();
+    }
+  };
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Staff" description="this is Staff page">
+        <Box>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableRowEmployee}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHaveImage={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHavePagination={true}
+                searchPlaceholder="Search staff"
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveFilterMore={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                    onResetFilter={handleResetFilter}
+                  />
+                }
+                isHaveHeader={false}
+                onCheckedChange={(selected) => {
+                  const fullSelectedItems = tableData.filter((item) =>
+                    selected.some((row: DriverTableRows) => row.id === item.id),
+                  );
+                  setSelectedRows(fullSelectedItems);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                onBatchEdit={handleBatchEdit}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                searchKeyword={search}
+                onSearch={handleSearch}
+                onAddData={handleAdd}
+                isHaveAddEmpty={true}
+                addDataText="Add Employee"
+                onAddEmpty={handleAdd}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+      <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 2,
+          }}
+        >
+          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Delivery Staff
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog();
+              }
+            }}
+            sx={{
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <FormDriver
+            formData={formDataDriver}
+            setFormData={setFormDataDriver}
+            edittingId={edittingId}
+            onSuccess={handleSuccess}
+            isBatchEdit={isBatchEdit}
+            selectedRows={selectedRows}
+            enabledFields={enabledFields}
+            setEnabledFields={setEnabledFields}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
+    </PageContainer>
+  );
+};
+
+export default Content;

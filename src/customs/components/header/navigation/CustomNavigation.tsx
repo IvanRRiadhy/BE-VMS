@@ -4,8 +4,11 @@ import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import { AppState } from 'src/store/Store';
 import CustomNavListing, { ItemDataCustomNavListing } from './CustomNavListing';
 import CustomSidebarItems, { ItemDataCustomSidebarItems } from './CustomSidebarItems';
-import Logo from 'src/assets/images/logos/bi_logo.png';
-import { useState, useEffect } from 'react';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+// import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
+import CurrentTime from './CurrentTIme';
+import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
 
 interface CustomNavigationProps {
   itemDataCustomNavListing: ItemDataCustomNavListing[];
@@ -16,55 +19,36 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   itemDataCustomNavListing,
   itemDataCustomSidebarItems,
 }) => {
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const sm = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
+  const xlUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
+  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
-
-  const [currentTime, setCurrentTime] = useState<string>('');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      // Format: Sun, 12 Dec 2022 | 12:00 AM
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      };
-      setCurrentTime(now.toLocaleString('en-US', options));
-    };
-
-    updateTime(); // set waktu pertama kali
-    const interval = setInterval(updateTime, 1000); // update tiap detik
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (lgUp) {
+  const { data: profile } = useProfile();
+  const isOperatorAdmin = profile?.group_name === 'OperatorVMS';
+  const { toolbar } = useOperatorToolbar();
+  if (xl) {
     return (
       <Box
         sx={{
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
-          background: 'white',
+          bgcolor: 'background.paper',
           width: '100%',
-          px: 1.5,
-          py: 3,
+          px: xl ? '10px !important' : '5px !important',
+          py: 2,
           borderRadius: 0,
         }}
       >
-        {/* ------------------------------------------- */}
-        {/* NavListing on top for desktop (FULL WIDTH) */}
-        {/* ------------------------------------------- */}
-        <Box sx={{ px: 2 }} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+        <Box
+          sx={{ px: 1, zIndex: 9999, position: 'sticky', top: 0 }}
+          display={'flex'}
+          justifyContent={'space-between'}
+          alignItems={'center'}
+        >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          <Typography variant="body2" fontWeight={500}>
-            {currentTime}
-          </Typography>
+          <Box display={'flex'} alignItems={'center'} gap={1}>
+            {toolbar}
+            {xlUp && <CurrentTime />}
+          </Box>
         </Box>
       </Box>
     );

@@ -62,7 +62,6 @@ const PageGuestContainer: React.FC<CustomPageContainerProps> = ({
             />
           )}
 
-          {/* Ganti Feed ke Box */}
           <Box
             sx={{
               borderRadius: 0,
@@ -75,7 +74,7 @@ const PageGuestContainer: React.FC<CustomPageContainerProps> = ({
             }}
           >
             <Box sx={{ minHeight: 'calc(100vh - 170px)', background: '#F4F7FA' }}>
-              {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
+              {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}
             </Box>
           </Box>
         </PageWrapper>

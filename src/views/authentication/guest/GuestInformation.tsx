@@ -16,126 +16,243 @@ import {
   Alert,
   Divider,
   IconButton,
+  Container,
   Backdrop,
+  Tooltip,
+  Select,
+  MenuItem,
+  LinearProgress,
+  AlertColor,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PageContainer from 'src/components/container/PageContainer';
-import { IconError404, IconMan, IconTrash, IconWoman } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { AuthVisitor, SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
+import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
+import weekday from 'dayjs/plugin/weekday';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 import timezone from 'dayjs/plugin/timezone';
-import MuiButton from 'src/views/forms/form-elements/MuiButton';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconX } from '@tabler/icons-react';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { GroupRoleId } from '../../../constant/GroupRoleId';
-import Logo from 'src/assets/images/logos/bi_logo.png';
+import {
+  IconArrowRight,
+  IconGenderTransgender,
+  IconMan,
+  IconRefresh,
+  IconTrash,
+  IconWoman,
+  IconX,
+} from '@tabler/icons-react';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+// import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import { Snackbar } from '@mui/material';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { IconCamera } from '@tabler/icons-react';
+
+import { useTheme, useMediaQuery, MobileStepper } from '@mui/material';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import Footer from '../components/Footer';
+import { InfoOutlined, KeyboardArrowUp } from '@mui/icons-material';
+import { IconDeviceFloppy } from '@tabler/icons-react';
+import PreviewDialog from '../components/PreviewDialog';
+import imageCompression from 'browser-image-compression';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import Language from 'src/layouts/full/vertical/header/Language';
+import { useTranslation } from 'react-i18next';
+// import toast from 'src/customs/components/alerts/toast';
+import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { getConfig } from 'src/config';
 
 dayjs.extend(utc);
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
 dayjs.extend(timezone);
 
+dayjs.locale('id');
+
 const GuestInformationStepper = () => {
+  const config = getConfig();
+
+  const logoUrl = config.LOGO_URL || Logo;
+
   const [activeStep, setActiveStep] = useState(0);
-  // const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [invitationData, setInvitationData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [openCamera, setOpenCamera] = React.useState(false);
+  const [openCamera, setOpenCamera] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploadNames, setUploadNames] = React.useState<Record<string, string>>({});
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
+  const [openPreview, setOpenPreview] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
-    setSnackbar({ open: true, message, severity });
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [selfRegisterData, setSelfRegisterData] = useState<{
+    is_self_registered: boolean;
+    filled_by_relationship: string;
+  } | null>(null);
+
+  const [fillerData, setFillerData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
+
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
+  const validateFillerData = () => {
+    if (selfRegisterData?.is_self_registered) return true;
+
+    if (!fillerData.name || !fillerData.email || !fillerData.phone) {
+      showSwal('info', 'Please complete name, email, and phone information');
+      return false;
+    }
+
+    return true;
+  };
+
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.snackbar) {
+      setSnackbar(location.state.snackbar);
+
+      // bersihin state biar nggak muncul lagi
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
+
   const formatDateTime = (value: string | null) => {
     if (!value) return '-';
-    return dayjs(value).tz('Asia/Jakarta').format('DD MMMM YYYY HH:mm');
+
+    return dayjs.utc(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
   };
-  const { saveToken } = useSession();
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const code = searchParams.get('code') || ''; // ambil dari URL
-
+  const code = searchParams.get('code') || '';
+  const isEmpty = (val: any) => val === undefined || val === null || val === '';
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
 
-    section.form?.forEach((f: any) => {
-      if (
-        (f.remarks === 'vehicle_type' || f.remarks === 'vehicle_plate') &&
-        !formValues[f.remarks]
-      ) {
-        newErrors[f.remarks] = `${f.long_display_text} is required`;
+    const isDriving = formValues.is_driving === 'true';
+
+    section?.form?.forEach((f: any) => {
+      const value = formValues[f.remarks];
+
+      // Kalau tidak driving, vehicle tidak perlu divalidasi
+      if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
+        return;
+      }
+
+      if (f.mandatory && isEmpty(value)) {
+        newErrors[f.remarks] = `${f.long_display_text || f.remarks} is required`;
       }
     });
 
+    // Vehicle hanya divalidasi jika field vehicle memang
+    // ada di section yang sedang dibuka
+    const hasVehicleType = section?.form?.some((f: any) => f.remarks === 'vehicle_id');
+
+    const hasVehiclePlate = section?.form?.some((f: any) => f.remarks === 'vehicle_plate');
+
+    if (isDriving && hasVehicleType && isEmpty(formValues.vehicle_id)) {
+      newErrors.vehicle_id = 'Vehicle Type is required';
+    }
+
+    if (isDriving && hasVehiclePlate && isEmpty(formValues.vehicle_plate)) {
+      newErrors.vehicle_plate = 'Vehicle Plate Number is required';
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // true kalau valid
+
+    return Object.keys(newErrors).length === 0;
   };
-
-  const handlePDFUploadFor =
-    (remarks: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const path = await uploadFileToCDN(file);
-      if (path) {
-        setFormValues((prev) => ({ ...prev, [remarks]: path }));
-        setPreviews((prev) => ({ ...prev, [remarks]: URL.createObjectURL(file) }));
-        setUploadNames((prev) => ({ ...prev, [remarks]: file.name }));
-      }
-
-      e.target.value = ''; // reset
-    };
 
   useEffect(() => {
     const fetchData = async () => {
       if (!code) return;
 
-      // try {
-      // setLoading(true);
-      // panggil API visitor
       const res = await AuthVisitor({ code });
-      setInvitationData(res.collection);
-      console.log(res);
+      const token = res?.collection?.token;
 
-      // inisialisasi nilai form dari payload
+      if (token) {
+        // saveToken(token);
+
+        navigate('/guest/dashboard', {
+          replace: true,
+        });
+
+        return;
+      }
+      setInvitationData(res.collection);
+
       const initial: Record<string, any> = {};
-      res.collection.question_page.forEach((section: any) => {
-        section.form.forEach((f: any) => {
-          if (f.field_type === 9) {
+
+      const pages = res?.collection?.question_page ?? [];
+
+      pages.forEach((section: any) => {
+        const forms = section?.form ?? [];
+
+        forms.forEach((f: any) => {
+          if (!f) return;
+
+          if (f.remarks === 'is_driving') {
+            initial[f.remarks] = f.answer_text ?? 'false';
+          } else if (f.field_type === 9) {
             initial[f.remarks] = f.answer_datetime;
-          } else if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
+          } else if ([10, 11, 12].includes(f.field_type)) {
             initial[f.remarks] = f.answer_file;
           } else {
-            initial[f.remarks] = f.answer_text || '';
+            initial[f.remarks] = f.answer_text ?? null;
           }
         });
       });
+
       setFormValues(initial);
-      // } catch (err) {
-      //   console.error('Gagal load invitation', err);
-      // } finally {
-      //   setLoading(false);
-      // }
     };
 
     fetchData();
@@ -143,16 +260,23 @@ const GuestInformationStepper = () => {
 
   const handleChange = (remarks: string, value: any) => {
     setFormValues((prev) => ({ ...prev, [remarks]: value }));
+    setErrors((prev) => {
+      if (!prev[remarks]) return prev;
+      const { [remarks]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleNext = () => {
     const currentSection = formSections[activeStep];
-    if (!validateStep(currentSection)) return; // stop kalau ada error
+    if (!validateStep(currentSection)) return;
     setActiveStep((prev) => prev + 1);
   };
 
-  const handleBack = () => setActiveStep((prev) => prev - 1);
-  const handleReset = () => setActiveStep(0);
+  const handleBack = () => {
+    setErrors({});
+    setActiveStep((prev) => prev - 1);
+  };
 
   const CustomStepIcon = (props: any) => {
     const { icon, active } = props;
@@ -175,74 +299,38 @@ const GuestInformationStepper = () => {
     );
   };
 
-  // if (loading) {
-  //   return (
-  //     <Box
-  //       component="div"
-  //       sx={{
-  //         position: 'fixed',
-  //         top: '50%',
-  //         left: '50%',
-  //         display: 'flex',
-  //         flexDirection: 'column',
-  //         alignItems: 'center',
-  //         transform: 'translate(-50%, -50%)',
-  //         zIndex: 9999,
-  //       }}
-  //     >
-  //       <CircularProgress />
-  //       {/* <Typography mt={1}>Loading...</Typography> */}
-  //     </Box>
-  //   );
-  // }
-
   if (!invitationData) {
     return (
       <Box
         sx={{
-          height: '80vh',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          height: '100vh',
           justifyContent: 'center',
-          textAlign: 'center',
-          gap: 2,
+          alignItems: 'center',
         }}
       >
-        {/* <IconError404 color="error" style={{ fontSize: '5rem' }} />
-        <Typography variant="h5" color="error">
-          Data tidak ditemukan
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Kode yang kamu masukkan mungkin salah atau tidak ada.
-        </Typography>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Pastikan kode benar atau hubungi admin jika masalah berlanjut.
-        </Alert> */}
-        <CircularProgress />
+        <CircularProgress color="primary" />
       </Box>
     );
   }
 
-  // const formSections = invitationData.question_page.filter((q: any) => !q.is_document);
-  const formSections = invitationData.question_page;
+  const formSections = invitationData.question_page || [];
 
-  // const formSections = invitationData.question_page;
   const steps = formSections.map((q: any) => q.name);
 
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
+      setScreenshot(null);
       setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
@@ -250,6 +338,7 @@ const GuestInformationStepper = () => {
       });
       const el = document.getElementById(inputId) as HTMLInputElement | null;
       if (el) el.value = '';
+      toast(t('deleteSuccess', { name: 'File' }), 'success');
     } catch (e) {
       console.error('Delete failed:', e);
     } finally {
@@ -261,24 +350,22 @@ const GuestInformationStepper = () => {
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
+    // formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
+    formData.append('is_face', 'true');
 
     try {
       const response = await axiosInstance2.post('/cdn/upload', formData, {
-        // const response = await axios.post('http://localhost:8000/cdn/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       const fileUrl = response.data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
 
       if (!fileUrl) return null;
 
-      // Tambahkan protokol jika belum ada
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
     } catch (error) {
       console.error('Upload failed:', error);
@@ -286,40 +373,187 @@ const GuestInformationStepper = () => {
     }
   };
 
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
+  // const handleFileChangeForField = async (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setAnswerFile: (url: string) => void,
+  //   trackKey?: string,
+  //   fullscreenHandle?: any,
+  // ) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   if (trackKey) {
+  //     setUploadingFiles((prev) => ({
+  //       ...prev,
+  //       [trackKey]: true,
+  //     }));
+
+  //     setUploadNames((prev) => ({
+  //       ...prev,
+  //       [trackKey]: file.name,
+  //     }));
+
+  //     setPreviews((prev) => ({
+  //       ...prev,
+  //       [trackKey]: URL.createObjectURL(file),
+  //     }));
+  //   }
+
+  //   try {
+  //     const compressedFile = await compressImage(file);
+
+  //     if (compressedFile.size > 5 * 1024 * 1024) {
+  //       toast(t('maxFileSize'), 'info');
+  //       return;
+  //     }
+
+  //     const path = await uploadFileToCDN(compressedFile);
+
+  //     if (path) {
+  //       setAnswerFile(path);
+  //     }
+  //   } catch (error) {
+  //     console.error('Upload failed:', error);
+  //   } finally {
+  //     if (trackKey) {
+  //       setUploadingFiles((prev) => ({
+  //         ...prev,
+  //         [trackKey]: false,
+  //       }));
+  //     }
+
+  //     e.target.value = '';
+  //   }
+  // };
+
   const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    file: File | undefined,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
   ) => {
-    const file = e.target.files?.[0];
     if (!file) return;
 
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
-    if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (
+      !extension ||
+      !ALLOWED_EXTENSIONS.includes(extension) ||
+      !ALLOWED_MIME_TYPES.includes(file.type)
+    ) {
+      toast(t('invalidImageFormat'), 'error');
+      return;
     }
 
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
-    e.target.value = '';
-  };
+    if (file.size > MAX_FILE_SIZE) {
+      toast(t('maxFileSize'), 'info');
+      return;
+    }
 
+    if (trackKey) {
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
+
+      setUploadNames((prev) => ({
+        ...prev,
+        [trackKey]: file.name,
+      }));
+
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
+    }
+
+    try {
+      // Compression sementara disabled
+      const path = await uploadFileToCDN(file);
+
+      if (path) {
+        setAnswerFile(path);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast('Failed to upload file', 'error');
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
+  };
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
-
     if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+      setUploadingFiles((prev) => ({
+        ...prev,
+        [trackKey]: true,
+      }));
     }
-    setAnswerFile(path);
+
+    try {
+      setScreenshot(imageSrc);
+      const blob = await fetch(imageSrc).then((res) => res.blob());
+
+      const compressedBlob = await compressImage(
+        new File([blob], 'camera.jpg', {
+          type: 'image/jpeg',
+        }),
+      );
+
+      if (blob.size > 5 * 1024 * 1024) {
+        toast(t('maxFileSize'), 'info');
+        return;
+      }
+
+      const path = await uploadFileToCDN(blob);
+
+      if (!path) return;
+
+      if (trackKey) {
+        setPreviews((prev) => ({
+          ...prev,
+          [trackKey]: imageSrc,
+        }));
+
+        setUploadNames((prev) => ({
+          ...prev,
+          [trackKey]: 'camera.jpg',
+        }));
+      }
+
+      setAnswerFile(path);
+    } catch (error) {
+      console.error('Capture/upload failed:', error);
+    } finally {
+      if (trackKey) {
+        setUploadingFiles((prev) => ({
+          ...prev,
+          [trackKey]: false,
+        }));
+      }
+    }
   };
 
   const getFieldTypeByRemarks = (remarks: string): number | null => {
@@ -339,10 +573,10 @@ const GuestInformationStepper = () => {
     const key = f.remarks;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
-        {/* MAIN UPLOAD BOX */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -350,12 +584,17 @@ const GuestInformationStepper = () => {
             padding: 4,
             textAlign: 'center',
             backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
+            transition: 'opacity 0.2s ease',
           }}
-          onClick={() => setOpenCamera(true)}
+          onClick={() => {
+            if (!isUploading) {
+              setOpenCamera(true);
+            }
+          }}
         >
           <Box
             sx={{
@@ -376,6 +615,29 @@ const GuestInformationStepper = () => {
             >
               Use Camera
             </Typography>
+            {isUploading && (
+              <Box
+                sx={{
+                  width: '100%',
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
             {(previewSrc || shownName) && (
               <Box
                 mt={2}
@@ -391,8 +653,8 @@ const GuestInformationStepper = () => {
                       src={previewSrc}
                       alt="preview"
                       style={{
-                        width: 350,
-                        height: 220,
+                        width: lg ? 300 : 220,
+                        height: 200,
                         objectFit: 'cover',
                         borderRadius: 8,
                         boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
@@ -404,13 +666,14 @@ const GuestInformationStepper = () => {
                       variant="outlined"
                       sx={{ mt: 2, minWidth: 120 }}
                       startIcon={<IconTrash />}
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleRemoveFileForField(
                           f.answer_file,
                           (url) => handleChange(f.remarks, url),
                           key,
-                        )
-                      }
+                        );
+                      }}
                     >
                       Remove
                     </Button>
@@ -421,9 +684,12 @@ const GuestInformationStepper = () => {
           </Box>
         </Box>
 
-        {/* PREVIEW FOTO */}
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
 
-        {/* DIALOG KAMERA */}
         <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
           <Box sx={{ p: 3, position: 'relative' }}>
             <Box>
@@ -438,32 +704,56 @@ const GuestInformationStepper = () => {
               </IconButton>
             </Box>
 
+            <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              {/* CAMERA LIVE VIEW */}
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'user' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                />
+                <Box sx={{ position: 'relative' }}>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={{
+                      facingMode,
+                    }}
+                    style={{
+                      width: '100%',
+                      borderRadius: 8,
+                      height: '200px',
+                      objectFit: 'cover',
+                      border: '2px solid #ccc',
+                    }}
+                  />
+
+                  <IconButton
+                    onClick={() =>
+                      setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+                    }
+                    sx={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.7)',
+                      },
+                    }}
+                  >
+                    <IconRefresh />
+                  </IconButton>
+                </Box>
               </Grid>
 
-              {/* PREVIEW FOTO */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 {previewSrc ? (
                   <img
                     src={previewSrc}
                     alt="Captured"
                     style={{
-                      width: '100%',
+                      width: lg ? 350 : 220,
+                      height: 250,
+                      objectFit: 'cover',
                       borderRadius: 8,
-                      border: '2px solid #ccc',
                     }}
                   />
                 ) : (
@@ -485,12 +775,36 @@ const GuestInformationStepper = () => {
               </Grid>
             </Grid>
 
+            {isUploading && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearProgress
+                  sx={{
+                    width: '220px',
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Uploading file...
+                </Typography>
+              </Box>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
-            {/* ACTION BUTTONS */}
-            <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}>
               <Button
-                color="warning"
+                color="error"
+                disabled={isUploading}
+                startIcon={<IconTrash />}
                 sx={{ mr: 2 }}
                 onClick={() =>
                   handleRemoveFileForField(
@@ -504,11 +818,24 @@ const GuestInformationStepper = () => {
               </Button>
               <Button
                 variant="contained"
-                onClick={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
+                disabled={isUploading}
+                startIcon={
+                  isUploading ? <CircularProgress size={18} color="inherit" /> : <IconCamera />
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+
+                  handleCaptureForField((url) => handleChange(f.remarks, url), key);
+                }}
               >
-                Take Foto
+                {isUploading ? 'Uploading...' : 'Take Foto'}
               </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+              <Button
+                disabled={isUploading}
+                onClick={() => setOpenCamera(false)}
+                sx={{ ml: 2 }}
+                startIcon={<IconDeviceFloppy />}
+              >
                 Submit
               </Button>
             </Box>
@@ -525,7 +852,6 @@ const GuestInformationStepper = () => {
 
     return (
       <Box>
-        {/* Upload Box */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -544,23 +870,25 @@ const GuestInformationStepper = () => {
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>5 MB</span>
           </Typography>
 
           {/* Hidden input */}
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            accept="image/jpeg,image/png, image/jpg"
             hidden
             ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
+                e.target.files?.[0],
                 (url) => handleChange(f.remarks, url),
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
 
           {/* Preview Section */}
@@ -574,7 +902,6 @@ const GuestInformationStepper = () => {
               }}
             >
               {previewSrc ? (
-                // 📄 PDF / DOC Preview
                 previewSrc.endsWith('.pdf') || previewSrc.endsWith('.docx') ? (
                   <Box
                     sx={{
@@ -595,7 +922,6 @@ const GuestInformationStepper = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  // 🖼️ Image Preview
                   <img
                     src={previewSrc}
                     alt="preview"
@@ -609,13 +935,11 @@ const GuestInformationStepper = () => {
                   />
                 )
               ) : (
-                // No previewSrc, show filename only
                 <Typography variant="caption" noWrap>
                   {shownName}
                 </Typography>
               )}
 
-              {/* Remove button */}
               <Button
                 color="error"
                 size="small"
@@ -639,67 +963,147 @@ const GuestInformationStepper = () => {
     );
   };
 
-  const renderUploadWithCamera = (f: any, idx: number) => {
-    const key = f.remarks;
+  const renderUploadWithCamera = (f: any, idx: number, section: any) => {
+    // const key = f.remarks;
+    const key = `${section.name}_${f.remarks}`;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
+    const isUploading = !!uploadingFiles[key];
 
     return (
       <Box>
         <Box
           sx={{
-            border: '2px dashed #90caf9',
+            position: 'relative',
+            border: '2px dashed',
+            borderColor: isDragging ? 'primary.main' : '#90caf9',
             borderRadius: 2,
             padding: 4,
             textAlign: 'center',
-            backgroundColor: '#f5faff',
-            cursor: 'pointer',
+            backgroundColor: isDragging ? 'action.hover' : '#f5faff',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
             width: '100%',
-            pointerEvents: 'auto',
-            opacity: 1,
+            pointerEvents: isUploading ? 'none' : 'auto',
+            opacity: isUploading ? 0.6 : 1,
           }}
-          onClick={() => fileInputRefs.current[key]?.click()}
+          onClick={() => {
+            if (!isUploading) {
+              fileInputRefs.current[key]?.click();
+            }
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!isUploading) {
+              setIsDragging(true);
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setIsDragging(false);
+
+            if (isUploading) return;
+
+            handleFileChangeForField(
+              e.dataTransfer.files?.[0],
+              (url) => {
+                handleChange(f.remarks, url);
+
+                if (url) {
+                  setErrors((prev) => {
+                    const { [f.remarks]: _, ...rest } = prev;
+                    return rest;
+                  });
+                }
+              },
+              key,
+            );
+          }}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+          <Typography variant="h6" sx={{ mt: 1 }}>
             Upload File
           </Typography>
-
-          <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+          <Typography variant="body1" color="textSecondary" sx={{ my: 1 }}>
+            {t('dragDropOrTapToSelectFile')}
           </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1 }}>
+            <Typography variant="body1" color="textSecondary">
+              Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>5 MB or </span>
+            </Typography>
 
-          {/* 🔹 Tombol kamera tambahan */}
-          <Typography
-            variant="subtitle1"
-            component="span"
-            color="primary"
-            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenCamera(true);
-            }}
-          >
-            Use Camera
-          </Typography>
+            <Typography
+              variant="subtitle1"
+              component="span"
+              color="primary"
+              sx={{ fontWeight: 600, ml: 1, cursor: 'pointer', display: 'flex', gap: 1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenCamera(true);
+              }}
+            >
+              <IconCamera /> Use Camera
+            </Typography>
+          </Box>
 
-          {/* 🔹 Hidden input file */}
+          {isUploading && (
+            <Box
+              sx={{
+                width: '100%',
+                mt: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              <LinearProgress
+                sx={{
+                  width: '220px',
+                  height: 6,
+                  borderRadius: 3,
+                }}
+              />
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+                Uploading file...
+              </Typography>
+            </Box>
+          )}
+
           <input
             id={`file-${key}`}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/jpg"
             hidden
-            ref={(el: any) => (fileInputRefs.current[key] = el)}
-            onChange={(e) =>
+            ref={(el: HTMLInputElement | null) => {
+              fileInputRefs.current[key] = el;
+            }}
+            onChange={(e) => {
               handleFileChangeForField(
-                e as React.ChangeEvent<HTMLInputElement>,
-                (url) => handleChange(f.remarks, url),
+                e.target.files?.[0],
+                (url) => {
+                  handleChange(f.remarks, url);
+                },
                 key,
-              )
-            }
+              );
+
+              e.target.value = '';
+            }}
           />
 
-          {/* 🔹 Preview upload / foto */}
           {(previewSrc || shownName) && (
             <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {previewSrc ? (
@@ -708,7 +1112,7 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: 350,
+                      width: lg ? 350 : 220,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -721,13 +1125,14 @@ const GuestInformationStepper = () => {
                     size="small"
                     variant="outlined"
                     sx={{ mt: 2, minWidth: 120 }}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleRemoveFileForField(
                         f.answer_file,
                         (url) => handleChange(f.remarks, url),
                         key,
-                      )
-                    }
+                      );
+                    }}
                     startIcon={<IconTrash />}
                   >
                     Remove
@@ -742,142 +1147,414 @@ const GuestInformationStepper = () => {
           )}
         </Box>
 
-        {/* 🔹 Dialog kamera */}
-        <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
-          <Box sx={{ p: 3, position: 'relative' }}>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode: 'environment' }}
-                  style={{
-                    width: '100%',
-                    borderRadius: 8,
-                    border: '2px solid #ccc',
-                  }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                {previewSrc ? (
-                  <img
-                    src={previewSrc}
-                    alt="Captured"
-                    style={{
-                      width: '100%',
-                      borderRadius: 8,
-                      border: '2px solid #ccc',
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      border: '2px dashed #ccc',
-                      borderRadius: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minHeight: 240,
-                    }}
-                  >
-                    <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                  </Box>
-                )}
-              </Grid>
-            </Grid>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ textAlign: 'right' }}>
-              <Button
-                onClick={() =>
-                  handleRemoveFileForField(
-                    f.answer_file,
-                    (url) => handleChange(f.remarks, url),
-                    key,
-                  )
-                }
-                color="warning"
-                sx={{ mr: 2 }}
-              >
-                Clear Foto
-              </Button>
-              <Button
-                variant="contained"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCaptureForField((url) => handleChange(f.remarks, url), key);
-                }}
-              >
-                Take Foto
-              </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                Close
-              </Button>
-            </Box>
-          </Box>
-        </Dialog>
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
+        <CameraDialog
+          open={openCamera}
+          onClose={() => setOpenCamera(false)}
+          webcamRef={webcamRef as any}
+          screenshot={screenshot}
+          facingMode={facingMode}
+          isUploading={isUploading}
+          onSwitchCamera={() =>
+            setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))
+          }
+          onCapture={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
+          onClear={() =>
+            handleRemoveFileForField(
+              // value file yang sedang aktif
+              section.form?.find((field: any) => field.remarks === f.remarks)?.answer_file ?? '',
+              (url) => handleChange(f.remarks, url),
+              key,
+            )
+          }
+          onSubmit={() => {
+            setOpenCamera(false);
+            setScreenshot(null);
+          }}
+        />
       </Box>
     );
   };
 
-  const StepContent = (section: any) => (
-    <Box mt={3}>
-      <Grid container spacing={2}>
-        {section.form?.map((f: any, idx: number) => {
-          let displayValue = formValues[f.remarks] ?? '';
+  const StepContent = (section: any) => {
+    const isDriving = formValues['is_driving'] === 'true' || formValues['is_driving'] === true;
 
-          // Mapping field type berdasarkan remarks
-          const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
+    return (
+      <Box mt={1}>
+        <Grid container spacing={2}>
+          {section.form?.map((f: any, idx: number) => {
+            if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
+              return null;
+            }
+            const fieldKey = `${section.name}_${f.remarks}`;
+            let displayValue = formValues[f.remarks] ?? '';
+            const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
-          // Override host dan site_place
-          if (f.remarks === 'host') {
-            displayValue = invitationData.host_data?.name || displayValue;
-          } else if (f.remarks === 'site_place') {
-            displayValue = invitationData.site_place_data?.name || displayValue;
-          }
+            if (f.remarks === 'host') {
+              displayValue = invitationData.host_data?.name || displayValue;
+            } else if (f.remarks === 'site_place') {
+              displayValue = invitationData.site_place_name || displayValue;
+            } else if (f.remarks === 'visitor_role') {
+              const selectedRole = f.answer_text;
 
-          const gridSize = { xs: 12 };
+              displayValue =
+                invitationData?.visitor_type_data?.visitor_roles
+                  ?.filter(
+                    (x: any) => x.active && x.role?.toLowerCase() === selectedRole?.toLowerCase(),
+                  )
+                  ?.map((x: any) => x.role)
+                  ?.join(', ') ||
+                selectedRole ||
+                '';
+            }
+            if (!isDriving && ['vehicle_id', 'vehicle_plate'].includes(f.remarks)) {
+              return null;
+            }
 
-          return (
-            <Grid key={idx} size={gridSize}>
-              <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
+            const isVisitorPeriod = ['visitor_period_start', 'visitor_period_end'].includes(
+              f.remarks,
+            );
 
-              {/* 🔹 CASE A: file-based (selfie/nda/identity) */}
-              {(() => {
-                switch (type) {
-                  case 10:
-                    return renderCameraField(f, idx); // selfie_image
-                  case 11:
-                    return renderFileUploadField(f, idx); // nda
-                  case 12:
-                    return renderUploadWithCamera(f, idx); // identity_image
-                  default:
-                    return null;
-                }
-              })()}
+            const gridSize = isVisitorPeriod ? { xs: 12, md: 6 } : { xs: 12 };
 
-              {/* 🔹 CASE B: tanggal readonly */}
-              {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
-                <CustomTextField
-                  fullWidth
-                  value={formatDateTime(formValues[f.remarks])}
-                  InputProps={{ readOnly: true }}
-                  disabled
-                />
-              )}
+            return (
+              <Grid key={fieldKey} size={gridSize}>
+                {!['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                  <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                    {f.long_display_text || f.remarks}
+                  </CustomFormLabel>
+                )}
+                {(() => {
+                  switch (type) {
+                    case 10:
+                      // return renderCameraField(f, idx);
+                      return f.remarks === 'selfie_image'
+                        ? renderUploadWithCamera(f, idx, section)
+                        : renderCameraField(f, idx);
+                    case 11:
+                      return renderFileUploadField(f, idx);
+                    case 12:
+                      return renderUploadWithCamera(f, idx, section);
+                    default:
+                      return null;
+                  }
+                })()}
+                {/* {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                  <CustomTextField
+                    fullWidth
+                    value={formatDateTime(formValues[f.remarks])}
+                    InputProps={{ readOnly: true }}
+                    disabled
+                  />
+                )} */}
+                {/* 
+                {f.remarks === 'visitor_period_start' && (
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                      open={openStartPicker}
+                      onOpen={() => setOpenStartPicker(true)}
+                      onClose={() => setOpenStartPicker(false)}
+                      onChange={(newValue) => {
+                        if (newValue) {
+                          // const utc = newValue.utc().format();
+                          const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 
-              {/* 🔹 CASE C: readonly section Purpose Visit */}
-              {section.name === 'Purpose Visit' &&
-                !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                          handleChange(f.remarks, utcValue);
+
+                          // Jika start > end, kosongkan end
+                          if (
+                            formValues.visitor_period_end &&
+                            dayjs(formValues.visitor_period_end).isBefore(newValue)
+                          ) {
+                            handleChange('visitor_period_end', '');
+                          }
+                        } else {
+                          handleChange(f.remarks, '');
+                        }
+                      }}
+                      ampm={false}
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors[f.remarks],
+                          helperText: errors[f.remarks],
+                          onClick: () => {
+                            setOpenStartPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+
+                {f.remarks === 'visitor_period_end' && (
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                    <DateTimePicker
+                      open={openEndPicker}
+                      onOpen={() => setOpenEndPicker(true)}
+                      onClose={() => setOpenEndPicker(false)}
+                      value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                      onChange={(newValue) => {
+                        const utcValue = newValue
+                          ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                          : '';
+                        if (newValue) {
+                          handleChange(f.remarks, utcValue);
+                        } else {
+                          handleChange(f.remarks, '');
+                        }
+                      }}
+                      ampm={false}
+                      minDateTime={
+                        formValues.visitor_period_start
+                          ? dayjs(formValues.visitor_period_start)
+                          : undefined
+                      }
+                      format="dddd, DD MMMM YYYY, HH:mm"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors[f.remarks],
+                          helperText: errors[f.remarks],
+                          onClick: () => {
+                            setOpenEndPicker(true);
+                          },
+                          FormHelperTextProps: {
+                            sx: {
+                              ml: 0,
+                              mr: 0,
+                            },
+                          },
+                        },
+
+                        actionBar: {
+                          actions: ['today', 'clear', 'accept'],
+                          sx: {
+                            '& .MuiButtonBase-root:nth-of-type(1)': {
+                              color: 'secondary !important',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(2)': {
+                              backgroundColor: '#d32f2f !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                            '& .MuiButtonBase-root:nth-of-type(3)': {
+                              backgroundColor: '#055499 !important',
+                              color: 'white',
+                              marginLeft: '3px',
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )} */}
+                {f.remarks === 'visitor_period_start' && (
+                  <>
+                    <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                      {f.long_display_text || f.remarks}
+                    </CustomFormLabel>
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        disabled
+                        value={formValues[f.remarks] ? dayjs(formValues[f.remarks]) : null}
+                        open={openStartPicker}
+                        onOpen={() => setOpenStartPicker(true)}
+                        onClose={() => setOpenStartPicker(false)}
+                        onChange={(newValue) => {
+                          if (newValue) {
+                            const utcValue = newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+                            handleChange(f.remarks, utcValue);
+
+                            if (
+                              formValues.visitor_period_end &&
+                              dayjs(formValues.visitor_period_end).isBefore(newValue)
+                            ) {
+                              handleChange('visitor_period_end', '');
+                            }
+                          } else {
+                            handleChange(f.remarks, '');
+                          }
+                        }}
+                        ampm={false}
+                        format="dddd, DD MMMM YYYY, HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            error: !!errors[f.remarks],
+                            helperText: errors[f.remarks],
+                            onClick: () => {
+                              setOpenStartPicker(true);
+                            },
+                            sx: {
+                              '& .MuiInputBase-root.Mui-disabled': {
+                                backgroundColor: '#F5F5F5',
+                                color: '#757575',
+                              },
+                              '& .MuiInputBase-input.Mui-disabled': {
+                                WebkitTextFillColor: '#757575',
+                                color: '#757575',
+                              },
+                              '& .MuiInputLabel-root.Mui-disabled': {
+                                color: '#757575',
+                              },
+                              '& .MuiSvgIcon-root': {
+                                color: '#9E9E9E',
+                              },
+                            },
+                            FormHelperTextProps: {
+                              sx: {
+                                ml: 0,
+                                mr: 0,
+                              },
+                            },
+                          },
+
+                          actionBar: {
+                            actions: ['today', 'clear', 'accept'],
+                            sx: {
+                              '& .MuiButtonBase-root:nth-of-type(1)': {
+                                color: 'secondary !important',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(2)': {
+                                backgroundColor: '#d32f2f !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(3)': {
+                                backgroundColor: '#055499 !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </>
+                )}
+
+                {f.remarks === 'visitor_period_end' && (
+                  <>
+                    <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                      {f.long_display_text || f.remarks}
+                    </CustomFormLabel>
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        disabled
+                        open={openEndPicker}
+                        onOpen={() => setOpenEndPicker(true)}
+                        onClose={() => setOpenEndPicker(false)}
+                        value={
+                          formValues.visitor_period_end
+                            ? dayjs(formValues.visitor_period_end)
+                            : null
+                        }
+                        onChange={(newValue) => {
+                          const utcValue = newValue
+                            ? newValue.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                            : '';
+
+                          handleChange('visitor_period_end', utcValue);
+                        }}
+                        ampm={false}
+                        minDateTime={
+                          formValues.visitor_period_start
+                            ? dayjs(formValues.visitor_period_start)
+                            : undefined
+                        }
+                        format="dddd, DD MMMM YYYY, HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            error: !!errors.visitor_period_end,
+                            helperText: errors.visitor_period_end,
+                            onClick: () => {
+                              setOpenEndPicker(true);
+                            },
+                            sx: {
+                              '& .MuiInputBase-root.Mui-disabled': {
+                                backgroundColor: '#F5F5F5',
+                                color: '#757575',
+                              },
+                              '& .MuiInputBase-input.Mui-disabled': {
+                                WebkitTextFillColor: '#757575',
+                                color: '#757575',
+                              },
+                              '& .MuiInputLabel-root.Mui-disabled': {
+                                color: '#757575',
+                              },
+                              '& .MuiSvgIcon-root': {
+                                color: '#9E9E9E',
+                              },
+                            },
+                            FormHelperTextProps: {
+                              sx: {
+                                ml: 0,
+                                mr: 0,
+                              },
+                            },
+                          },
+                          actionBar: {
+                            actions: ['today', 'clear', 'accept'],
+                            sx: {
+                              '& .MuiButtonBase-root:nth-of-type(1)': {
+                                color: 'secondary !important',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(2)': {
+                                backgroundColor: '#d32f2f !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                              '& .MuiButtonBase-root:nth-of-type(3)': {
+                                backgroundColor: '#055499 !important',
+                                color: 'white',
+                                marginLeft: '3px',
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </>
+                )}
+
+                {f.remarks === 'visitor_period_end' && null}
+
+                {f.remarks === 'email' && (
                   <CustomTextField
                     fullWidth
                     value={displayValue}
@@ -885,156 +1562,240 @@ const GuestInformationStepper = () => {
                     disabled
                   />
                 )}
+                {section.name === 'Purpose Visit' &&
+                  !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                    <CustomTextField
+                      fullWidth
+                      value={displayValue}
+                      InputProps={{ readOnly: true }}
+                      disabled
+                    />
+                  )}
 
-              {/* 🔹 CASE D: vehicle_plate */}
-              {f.remarks === 'vehicle_plate' && (
-                <CustomTextField
-                  fullWidth
-                  value={displayValue}
-                  onChange={(e) => handleChange(f.remarks, e.target.value)}
-                  placeholder={f.long_display_text || f.remarks}
-                  error={!!errors[f.remarks]}
-                  helperText={errors[f.remarks]}
-                />
-              )}
+                {f.remarks === 'vehicle_plate' && (
+                  <CustomTextField
+                    fullWidth
+                    value={displayValue}
+                    onChange={(e) => handleChange(f.remarks, e.target.value)}
+                    placeholder={f.long_display_text || f.remarks}
+                    error={!!errors[f.remarks]}
+                    helperText={errors[f.remarks]}
+                  />
+                )}
 
-              {/* 🔹 CASE E: gender */}
-              {f.remarks === 'gender' && (
-                <ToggleButtonGroup
-                  id="gender"
-                  exclusive
-                  value={formValues[f.remarks] || ''}
-                  onChange={(_, val) => {
-                    if (val !== null) handleChange(f.remarks, val);
-                  }}
-                  sx={{
-                    '& .MuiToggleButton-root': {
-                      textTransform: 'none',
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    },
-                    '& .MuiToggleButton-root.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': { bgcolor: 'primary.dark' },
-                    },
-                  }}
-                >
-                  <ToggleButton value="1">
-                    <IconMan size={16} style={{ marginRight: 6 }} /> Male
-                  </ToggleButton>
-                  <ToggleButton value="2">
-                    <IconWoman size={16} style={{ marginRight: 6 }} /> Female
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
+                {f.remarks === 'gender' && (
+                  <>
+                    <ToggleButtonGroup
+                      id="gender"
+                      exclusive
+                      value={formValues[f.remarks] || ''}
+                      onChange={(_, val) => {
+                        if (val !== null) handleChange(f.remarks, val);
+                      }}
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          textTransform: 'none',
+                          px: 2,
+                          py: 1,
+                          bgcolor: 'transparent',
+                          color: 'text.primary',
+                          '&:hover': { bgcolor: 'action.hover' },
+                        },
+                        '& .MuiToggleButton-root.Mui-selected': {
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'primary.dark' },
+                        },
+                      }}
+                    >
+                      <ToggleButton value="1">
+                        <IconMan size={16} style={{ marginRight: 6 }} /> Male
+                      </ToggleButton>
+                      <ToggleButton value="0">
+                        <IconWoman size={16} style={{ marginRight: 6 }} /> Female
+                      </ToggleButton>
+                      <ToggleButton value="2">
+                        <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer not to
+                        say
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
+                  </>
+                )}
+                {f.remarks === 'is_driving' && (
+                  <FormControl component="fieldset">
+                    <RadioGroup
+                      value={formValues[f.remarks] ?? 'false'}
+                      onChange={(e) => {
+                        const value = e.target.value;
 
-              {/* 🔹 CASE F: is_driving */}
-              {f.remarks === 'is_driving' && (
-                <>
+                        handleChange('is_driving', value);
+
+                        // Kalau No, kosongkan vehicle
+                        if (value === 'false') {
+                          setFormValues((prev) => ({
+                            ...prev,
+                            is_driving: 'false',
+                            vehicle_id: '',
+                            vehicle_plate: '',
+                          }));
+
+                          setErrors((prev) => {
+                            const { vehicle_id, vehicle_plate, ...rest } = prev;
+                            return rest;
+                          });
+                        }
+                      }}
+                      sx={{
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                      }}
+                    >
+                      <FormControlLabel value="true" control={<Radio />} label="Yes" />
+
+                      <FormControlLabel value="false" control={<Radio />} label="No" />
+                    </RadioGroup>
+
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+
+                {f.remarks === 'vehicle_id' && (
                   <FormControl component="fieldset">
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
                       onChange={(e) => handleChange(f.remarks, e.target.value)}
                       sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                     >
-                      <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                      <FormControlLabel value="false" control={<Radio />} label="No" />
+                      {[
+                        { value: 'car', label: 'Car' },
+                        { value: 'bus', label: 'Bus' },
+                        { value: 'motor', label: 'Motor' },
+                        { value: 'bicycle', label: 'Bicycle' },
+                        // { value: 'truck', label: 'Truck' },
+                        // { value: 'private_car', label: 'Private Car' },
+                        // { value: 'other', label: 'Other' },
+                      ].map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          control={<Radio />}
+                          label={opt.label}
+                        />
+                      ))}
                     </RadioGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
                   </FormControl>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
-                </>
-              )}
-
-              {/* 🔹 CASE G: vehicle_type */}
-              {f.remarks === 'vehicle_type' && (
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    value={formValues[f.remarks] || ''}
-                    onChange={(e) => handleChange(f.remarks, e.target.value)}
-                    sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                  >
-                    {[
-                      { value: 'car', label: 'Car' },
-                      { value: 'bus', label: 'Bus' },
-                      { value: 'motor', label: 'Motor' },
-                      { value: 'bicycle', label: 'Bicycle' },
-                      { value: 'truck', label: 'Truck' },
-                      { value: 'private_car', label: 'Private Car' },
-                      { value: 'other', label: 'Other' },
-                    ].map((opt) => (
-                      <FormControlLabel
-                        key={opt.value}
-                        value={opt.value}
-                        control={
-                          <Radio
-                          // onClick={() => {
-                          //   // cek apakah radio yang sama diklik ulang
-                          //   if (formValues[f.remarks] === opt.value) {
-                          //     handleChange(f.remarks, '');
-                          //   } else {
-                          //     handleChange(f.remarks, opt.value);
-                          //   }
-                          // }}
-                          />
-                        }
-                        label={opt.label}
-                      />
-                    ))}
-                  </RadioGroup>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
-                </FormControl>
-              )}
-
-              {/* 🔹 CASE H: Default input */}
-              {![
-                'visitor_period_start',
-                'visitor_period_end',
-                'vehicle_plate',
-                'gender',
-                'is_driving',
-                'vehicle_type',
-              ].includes(f.remarks) &&
-                !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
-                section.name !== 'Purpose Visit' && (
-                  <CustomTextField
-                    fullWidth
-                    value={displayValue}
-                    onChange={(e) => handleChange(f.remarks, e.target.value)}
-                    placeholder={f.long_display_text || f.remarks}
-                  />
                 )}
-            </Grid>
-          );
-        })}
-      </Grid>
-    </Box>
-  );
+
+                {f.remarks === 'visitor_role' && (
+                  <FormControl fullWidth>
+                    <Select
+                      value={formValues[f.remarks] || ''}
+                      onChange={(e) => handleChange(f.remarks, e.target.value)}
+                      displayEmpty
+                    >
+                      {/* <MenuItem value="">Select Role</MenuItem> */}
+
+                      {invitationData?.visitor_type_data?.visitor_roles
+                        ?.filter((x: any) => x.active)
+                        ?.map((role: any) => (
+                          <MenuItem key={role.visitor_roles_id} value={role.role}>
+                            {role.role}
+                          </MenuItem>
+                        ))}
+                    </Select>
+
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+
+                {![
+                  'visitor_period_start',
+                  'visitor_period_end',
+                  'vehicle_plate',
+                  'gender',
+                  'email',
+                  'visitor_role',
+                  'is_driving',
+                  'vehicle_id',
+                ].includes(f.remarks) &&
+                  !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
+                  section.name !== 'Purpose Visit' && (
+                    <CustomTextField
+                      fullWidth
+                      value={displayValue}
+                      onChange={(e) => {
+                        let value = e.target.value;
+
+                        if ((f.remarks || '').toLowerCase() === 'phone') {
+                          value = value.replace(/\D/g, '');
+                        }
+
+                        handleChange(f.remarks, value);
+                      }}
+                      inputProps={
+                        (f.remarks || '').toLowerCase() === 'phone'
+                          ? {
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*',
+                            }
+                          : undefined
+                      }
+                      placeholder={
+                        'Enter your ' + (f.long_display_text?.toLowerCase() || f.remarks)
+                      }
+                      error={!!errors[f.remarks]}
+                      helperText={errors[f.remarks]}
+                    />
+                  )}
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+    );
+  };
 
   function transformToSubmitPayload(invitationData: any) {
     const { question_page = [], site_place_data, visitor_type, visitor_type_data } = invitationData;
 
     return {
-      visitor_type: visitor_type, // ← bisa pakai langsung dari API kalau mau
+      // trx_visitor_id : visitor_id,
+      trx_visitor_id: invitationData?.id,
+      visitor_type: visitor_type,
       type_registered: 0,
       is_group: false,
       tz: site_place_data?.timezone ?? 'Asia/Jakarta',
       registered_site: site_place_data?.id,
+      flow: 'SubmitPraregister',
+      is_self_registered: selfRegisterData?.is_self_registered ?? false,
+      ...(!selfRegisterData?.is_self_registered && {
+        filled_by_name: fillerData.name,
+        filled_by_email: fillerData.email,
+        filled_by_phone: fillerData.phone,
+      }),
+      filled_by_relationship: selfRegisterData?.is_self_registered ? 'Self' : 'Other',
       data_visitor: [
         {
           question_page: question_page.map((section: any) => {
-            // cari definisi section
             const sectionDef = visitor_type_data?.section_page_visitor_types?.find(
               (s: any) => s.Id.toLowerCase() === section.id.toLowerCase(),
             );
@@ -1047,13 +1808,19 @@ const GuestInformationStepper = () => {
               is_document: section.is_document,
               can_multiple_used: section.can_multiple_used,
               self_only: section.self_only ?? false,
-              foreign_id: section.foreign_id ?? '',
+              foreign_id: section.foreign_id ?? null,
               form: (section.form ?? []).map((f: any) => {
                 const fieldDef =
                   sectionDef?.visit_form?.find((vf: any) => vf.remarks === f.remarks) || {};
+                let value = formValues[f.remarks];
 
-                const value = formValues[f.remarks];
-
+                if (
+                  formValues.is_driving !== true &&
+                  formValues.is_driving !== 'true' &&
+                  ['vehicle_id', 'vehicle_plate'].includes(f.remarks)
+                ) {
+                  value = null;
+                }
                 const base = {
                   sort: f.sort,
                   short_name: f.short_name,
@@ -1069,16 +1836,24 @@ const GuestInformationStepper = () => {
                   visitor_form_type: 1,
                 };
 
-                if (!value) return base;
-
-                // per-tipe mapping
                 if (f.field_type === 9) {
-                  return { ...base, answer_datetime: value, answer_text: value }; // boleh double kalau backend butuh
+                  return {
+                    ...base,
+                    answer_datetime: value ?? null,
+                    answer_text: value ?? null,
+                  };
                 }
+
                 if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
-                  return { ...base, answer_file: value };
+                  return {
+                    ...base,
+                    answer_file: value ?? null,
+                  };
                 }
-                return { ...base, answer_text: value };
+                return {
+                  ...base,
+                  answer_text: value ?? null,
+                };
               }),
             };
           }),
@@ -1087,214 +1862,616 @@ const GuestInformationStepper = () => {
     };
   }
 
-  // const handleSubmit = async () => {
-  //   const currentSection = formSections[activeStep];
-  //   if (!validateStep(currentSection)) return;
-
-  //   try {
-  //     setSubmitting(true);
-
-  //     const payload = transformToSubmitPayload(invitationData);
-  //     console.log('Payload siap dikirim:', JSON.stringify(payload, null, 2));
-
-  //     const visitorId = invitationData?.id;
-  //     if (!visitorId) {
-  //       console.error('❌ Visitor ID tidak ditemukan di invitationData');
-  //       return;
-  //     }
-
-  //     // 1️⃣ Submit pra-form ke backend
-  //     const res = await SubmitPraForm(payload, visitorId);
-  //     console.log('Response submit:', JSON.stringify(res || {}, null, 2));
-
-  //     // 2️⃣ Ambil status terbaru via AuthVisitor (karena token dikirim di sini)
-  //     const authRes = await AuthVisitor({ code });
-  //     console.log('AuthVisitor result:', authRes);
-
-  //     // Pastikan tidak menimpa invitationData dengan res lama
-  //     if (authRes?.collection) {
-  //       setInvitationData(authRes.collection);
-  //     }
-
-  //     // 3️⃣ Cek apakah token tersedia dan status visitor sudah success
-  //     const token = authRes?.collection?.token;
-
-  //     if (token) {
-  //       console.log('✅ Token ditemukan & status success → login guest');
-
-  //       // Simpan token + role guest
-  //       saveToken(token, GroupRoleId.Visitor);
-  //       // sessionStorage.setItem('groupId', GroupRoleId.Visitor); // tambahan manual
-
-  //       // Redirect ke dashboard guest
-  //       navigate('/guest/dashboard');
-  //       return;
-  //     }
-  //   } catch (error) {
-  //     console.error('Error submit:', error);
-  //   } finally {
-  //     setTimeout(() => {
-  //       setSubmitting(false);
-  //     }, 500);
-  //   }
-  // };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
     const currentSection = formSections[activeStep];
     if (!validateStep(currentSection)) return;
-
+    // if (!validateFillerData()) return;
     try {
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      console.log('payload', JSON.stringify(payload, null, 2));
+      // console.log('payload', JSON.stringify(payload, null, 2));
       const visitorId = invitationData?.id;
       if (!visitorId) {
-        console.error('❌ Visitor ID tidak ditemukan di invitationData');
+        showSwal('error', 'Visitor ID not found');
         return;
       }
-
-      // 1️⃣ Kirim pra-form ke backend
-      const res = await SubmitPraForm(payload, visitorId);
-      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
-
-      // 2️⃣ Setelah submit, tunggu sejenak agar server proses statusnya
-      await new Promise((r) => setTimeout(r, 500)); // (opsional tapi smooth)
-
-      // 3️⃣ Ambil status terbaru & token
+      const res = await SubmitPraForm(payload);
+      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      await new Promise((r) => setTimeout(r, 500));
       const authRes = await AuthVisitor({ code });
+      // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
       const token = authRes?.collection?.token;
-      const status = authRes?.status || '';
+      const status = authRes.status;
 
-      if (status == 'process') {
-        navigate(`/portal/waiting`);
+      if (status === 'process') {
+        setSubmitting(false);
+        setOpenPreview(false);
+
+        navigate('/portal/waiting', { replace: true });
+        return;
       }
 
       if (token) {
-        // 4️⃣ Simpan token tanpa trigger reload
-        await saveToken(token, GroupRoleId.Visitor);
-        showSnackbar('Successfully Pra Register Visitor', 'success');
+        // await saveToken(token);
+        setOpenPreview(false);
+        showSwal('success', 'Successfully submitted visitor pre-registration.');
 
-        setTimeout(() => {
-          setSubmitting(false);
-        }, 200);
-
-        setTimeout(() => {
-          navigate('/guest/dashboard', { replace: true });
-        }, 700); // ⬅️ 0.7 detik cukup untuk efek “smooth”
-
+        navigate('/guest/dashboard', { replace: true });
+        localStorage.removeItem('visitor_ref_code');
         return;
       }
-      console.warn('Token tidak ditemukan setelah AuthVisitor.');
-    } catch (error) {
-      console.error('Error submit:', error);
+    } catch (error: any) {
+      setSubmitting(false);
+      showSwal('error', error.response.data.msg || 'Failed to Pra Register Visitor');
+    } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <PageContainer title="Information" description="Guest Info Stepper">
-      <Grid
-        container
-        justifyContent="center"
-        alignItems="center"
-        sx={{ height: '100vh', backgroundColor: '#f4f6f8' }}
-      >
-        <Grid size={{ xs: 11, sm: 8, lg: 10 }}>
-          <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
-            <Box
-              textAlign="center"
-              mb={3}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-            >
-              {/* <Logo /> */}
-              <img src={Logo} width={100} height={100} />
-              {code && (
-                <Typography variant="subtitle1" fontWeight={600} mt={2}>
-                  Invitation Code: {code}
-                </Typography>
-              )}
-            </Box>
-
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label: any, idx: number) => (
-                <Step key={idx}>
-                  <StepLabel
-                    StepIconComponent={CustomStepIcon}
-                    onClick={() => setActiveStep(idx)}
-                    sx={{
-                      cursor: 'pointer',
-                      '& .MuiStepLabel-label': {
-                        typography: 'body1',
-                        fontWeight: activeStep === idx ? 600 : 400,
-                      },
-                    }}
-                  >
-                    {label}
-                  </StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            {activeStep === steps.length ? (
-              <Box mt={3} textAlign="center">
-                <Typography variant="h6" color="success.main">
-                  Semua langkah selesai 🎉
-                </Typography>
-                <Button onClick={handleReset} sx={{ mt: 2 }} variant="contained" color="error">
-                  Reset
-                </Button>
-              </Box>
-            ) : (
-              <>
-                <Box mt={4}>{StepContent(formSections[activeStep])}</Box>
-
-                <Box display="flex" flexDirection="row" mt={4}>
-                  <Button disabled={activeStep === 0} onClick={handleBack}>
-                    Back
-                  </Button>
-                  <Box flex="1 1 auto" />
-                  {activeStep !== steps.length - 1 ? (
-                    <Button onClick={handleNext} variant="contained">
-                      Next
-                    </Button>
-                  ) : (
-                    <Button onClick={handleSubmit} variant="contained" color="primary">
-                      Submit
-                    </Button>
-                  )}
-                </Box>
-              </>
-            )}
-          </Card>
-        </Grid>
-      </Grid>
-      <Backdrop
-        open={submitting}
+    <PageContainer title="Guest Information" description="Guest Information">
+      <Box
         sx={{
-          zIndex: (theme) => theme.zIndex.modal + 1,
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: '#f4f6f8',
         }}
       >
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress color="inherit" />
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            sx={{ width: '100%' }}
+            // sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
+          >
+            <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
+              <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    mb: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Logo */}
+                  <img src={logoUrl} width={100} height={100} alt="Logo" />
+
+                  {/* Language */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                    }}
+                  >
+                    <Language />
+                  </Box>
+
+                  {code && (
+                    <Typography variant="h6" fontWeight={600} mt={2}>
+                      {t('invitationCode')}: {code}
+                    </Typography>
+                  )}
+                </Box>
+                {/* 
+                {selfRegisterData === null ? (
+                  <Card
+                    elevation={0}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 3,
+                      p: { xs: 3, md: 5 },
+                      textAlign: 'center',
+                      mb: 3,
+                      background:
+                        'linear-gradient(180deg, rgba(25,118,210,0.03) 0%, rgba(25,118,210,0.01) 100%)',
+                    }}
+                  >
+                    <Typography variant="h5" fontWeight={700} mb={1}>
+                      {t('questionInvitation')}
+                    </Typography>
+
+                    <Typography color="text.secondary" mb={4}>
+                      {t('subtitleQuestionInvitation')}
+                    </Typography>
+
+                    <Grid container spacing={3} justifyContent="center">
+        
+                      <Grid size={{ xs: 12, md: 5 }}>
+                        <Card
+                          elevation={0}
+                          onClick={() =>
+                            setSelfRegisterData({
+                              is_self_registered: true,
+                              filled_by_relationship: 'Self',
+                            })
+                          }
+                          sx={{
+                            p: 3,
+                            borderRadius: 3,
+                            border: '2px solid',
+                            borderColor: 'divider',
+                            cursor: 'pointer',
+                            transition: 'all .2s ease',
+                            height: '100%',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-3px)',
+                              boxShadow: 3,
+                            },
+                          }}
+                        >
+                          <Box display="flex" flexDirection="column" alignItems="center">
+                            <Box
+                              sx={{
+                                width: 70,
+                                height: 70,
+                                borderRadius: '50%',
+                                bgcolor: 'primary.light',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 2,
+                              }}
+                            >
+                              <IconMan size={36} color="#1976d2" />
+                            </Box>
+
+                            <Typography variant="h5" fontWeight={700}>
+                              {t('self')}
+                            </Typography>
+
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              mt={1}
+                              textAlign="center"
+                            >
+                              {t('filling_form_self')}
+                            </Typography>
+
+                            <Button fullWidth variant="contained" sx={{ mt: 3 }}>
+                              {t('continue_as_self')}
+                            </Button>
+                          </Box>
+                        </Card>
+                      </Grid>
+
+                
+                      <Grid size={{ xs: 12, md: 5 }}>
+                        <Card
+                          elevation={0}
+                          onClick={() =>
+                            setSelfRegisterData({
+                              is_self_registered: false,
+                              filled_by_relationship: 'Other',
+                            })
+                          }
+                          sx={{
+                            p: 3,
+                            borderRadius: 3,
+                            border: '2px solid',
+                            borderColor: 'divider',
+                            cursor: 'pointer',
+                            transition: 'all .2s ease',
+                            height: '100%',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-3px)',
+                              boxShadow: 3,
+                            },
+                          }}
+                        >
+                          <Box display="flex" flexDirection="column" alignItems="center">
+                            <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                        
+                              <Box
+                                sx={{
+                                  width: 70,
+                                  height: 70,
+                                  borderRadius: '50%',
+                                  bgcolor: 'primary.light',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  // mb: 2,
+                                }}
+                              >
+                                <IconMan size={36} color="#1976d2" />
+                              </Box>
+
+                              <IconArrowRight size={32} color="#1976d2" />
+
+            
+                              <Box
+                                sx={{
+                                  width: 70,
+                                  height: 70,
+                                  borderRadius: '50%',
+                                  bgcolor: 'primary.light',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  // mb: 2,
+                                }}
+                              >
+                                <IconMan size={36} color="#1976d2" />
+                              </Box>
+                            </Box>
+
+                            <Typography variant="h5" fontWeight={700}>
+                              {t('others')}
+                            </Typography>
+
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              mt={1}
+                              textAlign="center"
+                            >
+                              {t('filling_form_other')}
+                            </Typography>
+
+                            <Button fullWidth variant="outlined" sx={{ mt: 3 }}>
+                              {t('continue_as_others')}
+                            </Button>
+                          </Box>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Card>
+                ) : ( */}
+                <>
+                  {!isMobile && (
+                    <>
+                      <Stepper activeStep={activeStep} alternativeLabel>
+                        {steps.map((label: any, idx: number) => (
+                          <Step key={idx}>
+                            <StepLabel
+                              StepIconComponent={CustomStepIcon}
+                              onClick={() => setActiveStep(idx)}
+                              sx={{
+                                cursor: 'pointer',
+                                '& .MuiStepLabel-label': {
+                                  typography: 'body1',
+                                  fontWeight: activeStep === idx ? 600 : 400,
+                                },
+                              }}
+                            >
+                              {label}
+                            </StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </>
+                  )}
+
+                  {isMobile && (
+                    <Box
+                      sx={{
+                        mt: 1,
+                        mb: 1,
+                        px: 2,
+                        py: 1,
+                        width: 'fit-content',
+                        mx: 'auto',
+                        // bgcolor: 'primary.main',
+                        borderRadius: 2,
+                        color: 'primary',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="h5" fontWeight={600}>
+                        {steps[activeStep]}
+                      </Typography>
+                    </Box>
+                  )}
+                  {selfRegisterData?.is_self_registered === false && (
+                    <Card
+                      elevation={0}
+                      sx={{
+                        mt: 3,
+                        mb: 3,
+                        p: 3,
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        // backgroundColor: '#fafafa',
+                        background:
+                          'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight={700} mb={2}>
+                        {t('person_filling_this_form')}
+                      </Typography>
+
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_name')}
+                          </CustomFormLabel>
+
+                          <CustomTextField
+                            fullWidth
+                            placeholder="Input your name"
+                            value={fillerData.name}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_email')}
+                          </CustomFormLabel>
+
+                          <CustomTextField
+                            fullWidth
+                            type="email"
+                            placeholder="Input your email"
+                            value={fillerData.email}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                email: e.target.value,
+                              }))
+                            }
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <CustomFormLabel required sx={{ mt: 0 }}>
+                            {t('your_phone')}
+                          </CustomFormLabel>
+
+                          <CustomTextField
+                            fullWidth
+                            placeholder="Input your phone"
+                            value={fillerData.phone}
+                            onChange={(e: any) =>
+                              setFillerData((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                          />
+                        </Grid>
+                      </Grid>
+                    </Card>
+                  )}
+                  <Box mt={2}>
+                    {' '}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.5,
+                        p: 1.5,
+                        borderRadius: 2,
+                        bgcolor: '#EFF6FF',
+                        border: '1px solid',
+                        borderColor: '#BFDBFE',
+                        mt: 2,
+                      }}
+                    >
+                      <InfoOutlined
+                        sx={{
+                          color: '#2563EB',
+                          fontSize: 20,
+                          mt: 0.15,
+                        }}
+                      />
+
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          lineHeight: 1.5,
+                          color: '#475569',
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{
+                            fontWeight: 600,
+                            color: '#1E3A8A',
+                          }}
+                        >
+                          {t('required_fields')}{' '}
+                          <Box
+                            component="span"
+                            sx={{
+                              color: 'error.main',
+                              fontWeight: 700,
+                            }}
+                          >
+                            *
+                          </Box>
+                          <br />
+                        </Box>
+
+                        {t('required_field_note')}
+                      </Typography>
+                    </Box>
+                    {StepContent(formSections[activeStep])}
+                  </Box>
+
+                  {isMobile && (
+                    <Box sx={{ mt: 2 }}>
+                      {/* Mobile Navigation */}
+                      <MobileStepper
+                        variant="dots"
+                        steps={steps.length}
+                        position="static"
+                        activeStep={activeStep}
+                        sx={{
+                          backgroundColor: 'transparent',
+                          p: 0,
+                        }}
+                        nextButton={
+                          activeStep === steps.length - 1 ? (
+                            <Button
+                              size="medium"
+                              variant="contained"
+                              color="primary"
+                              onClick={() => setOpenPreview(true)}
+                            >
+                              Submit
+                            </Button>
+                          ) : (
+                            <Button
+                              size="medium"
+                              variant="contained"
+                              color="primary"
+                              onClick={handleNext}
+                            >
+                              {t('next')}
+                              <KeyboardArrowRight />
+                            </Button>
+                          )
+                        }
+                        backButton={
+                          <Button
+                            size="medium"
+                            onClick={() => {
+                              if (activeStep === 0) {
+                                setSelfRegisterData(null);
+                                return;
+                              }
+
+                              handleBack();
+                            }}
+                            disabled={activeStep === 0 && selfRegisterData === null}
+                          >
+                            <KeyboardArrowLeft />
+                            {t('back')}
+                          </Button>
+                        }
+                      />
+                    </Box>
+                  )}
+
+                  <>
+                    {!isMobile && (
+                      <>
+                        <Divider sx={{ my: 2 }} />
+                        <Box display="flex" flexDirection="row" mt={2}>
+                          <Button
+                            disabled={activeStep === 0 && selfRegisterData === null}
+                            onClick={() => {
+                              if (activeStep === 0) {
+                                setSelfRegisterData(null);
+                                return;
+                              }
+
+                              handleBack();
+                            }}
+                            startIcon={<KeyboardArrowLeft />}
+                          >
+                            {t('back')}
+                          </Button>
+                          <Box flex="1 1 auto" />
+                          {activeStep !== steps.length - 1 ? (
+                            <Button
+                              onClick={handleNext}
+                              variant="contained"
+                              endIcon={<KeyboardArrowRight />}
+                            >
+                              {t('next')}
+                            </Button>
+                          ) : (
+                            <Button
+                              // onClick={handleSubmit}
+                              onClick={() => setOpenPreview(true)}
+                              variant="contained"
+                              color="primary"
+                            >
+                              Submit
+                            </Button>
+                          )}
+                        </Box>
+                      </>
+                    )}
+                  </>
+                </>
+                {/* )} */}
+              </Card>
+            </Grid>
+          </Grid>
         </Box>
-      </Backdrop>
+        <Footer />
+      </Box>
+
+      <PreviewDialog
+        open={openPreview}
+        onClose={() => setOpenPreview(false)}
+        onConfirm={(e: any) => {
+          // setOpenPreview(false);
+          handleSubmit(e);
+        }}
+        invitationData={invitationData}
+        formValues={formValues}
+      />
+      <GlobalBackdropLoading open={submitting} />
+
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        autoHideDuration={3000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert
           severity={snackbar.severity as any}
           onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+            py: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
+      {showBackToTop && (
+        <Tooltip title="Back to Top" placement="left" arrow>
+          <Box
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: 'primary.main',
+              border: '2px solid #fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 9999,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
+            <KeyboardArrowUp sx={{ color: '#fff', fontSize: 30 }} />
+          </Box>
+        </Tooltip>
+      )}
     </PageContainer>
   );
 };
