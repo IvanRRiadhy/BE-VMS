@@ -7,6 +7,7 @@ import { ProtectedRoute, PublicOnlyRoute } from 'src/customs/contexts/ProtectedR
 import AuthRedirector from './AuthRedirector';
 import path from 'path';
 import Security from 'src/customs/pages/Operator/Security/Security';
+import RedirectNotFoundPage from 'src/views/authentication/RedirectNotFound';
 // import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
 // import Register from 'src/views/authentication/auth/Register';
 // import ForgotPassword from 'src/views/authentication/auth/ForgotPassword';
@@ -34,6 +35,9 @@ const SuccessPage = Loadable(
 const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/layout/GuestLayout')));
 const EmployeeLayout = Loadable(
   lazy(() => import('src/customs/pages/Employee/layout/EmployeeLayout')),
+);
+const SecurityMonitorLayout = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/layout/SecurityMonitorLayout')),
 );
 const OperatorLayout = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorLayout')));
 const ManagerLayout = Loadable(
@@ -303,6 +307,14 @@ const MonitoringAdmin = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Monitoring/Content')),
 );
 
+// Security Monitor
+const DashboardSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Dashboard/Content')),
+);
+const MonitoringSecurity = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Monitoring/Content')),
+);
+
 const Router = [
   {
     element: <AuthRedirector />,
@@ -337,6 +349,7 @@ const Router = [
               { path: '/invitation-share', element: <SelfPraregistration /> },
               { path: '/invitation-share/success', element: <SuccessPage /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
+              { path: '/not-found', element: <RedirectNotFoundPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },
@@ -432,9 +445,24 @@ const Router = [
             element: <Parking />,
           },
         ],
+      }, 
+      // Security Monitor/Admin
+      {
+        element: <ProtectedRoute allowedRoles={['SecurityMonitor', 'Admin']} />,
+        children: [
+          {
+            path: '/security-monitor',
+            element: <SecurityMonitorLayout />,
+            children: [
+              { index: true, element: <DashboardSecurityMonitor /> },
+              { path: 'dashboard', element: <DashboardSecurityMonitor /> },
+              { path: 'monitoring', element: <MonitoringSecurity /> },
+            ],
+          },
+        ],
       },
 
-      // ✅ Admin routes
+      // ✅ Super Admin routes
       {
         element: <ProtectedRoute allowedRoles={['Admin', 'OperatorAdmin']} />,
         children: [

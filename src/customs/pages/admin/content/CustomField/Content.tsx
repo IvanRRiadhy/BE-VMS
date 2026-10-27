@@ -12,9 +12,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { getCustomFieldById } from 'src/customs/api/admin';
 import {
   CreateCustomFieldRequest,
-  Item,
   multiOptField,
-  FieldType,
   CreateCustomFieldRequestSchema,
 } from 'src/customs/api/models/Admin/CustomField';
 import { IconSettings } from '@tabler/icons-react';

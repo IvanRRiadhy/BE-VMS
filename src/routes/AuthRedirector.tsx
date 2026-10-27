@@ -135,6 +135,10 @@ export default function AuthRedirector() {
         redirectPath = '/operator-admin/dashboard';
         break;
 
+      case 'SecurityMonitor':
+        redirectPath = '/security-monitor/dashboard';
+        break;
+
       case 'Visitor':
         redirectPath = '/guest/dashboard';
         break;

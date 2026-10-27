@@ -14,9 +14,10 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { createUserGroup, updateUserGroup } from 'src/customs/api/admin';
 
-
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import useUserGroupMutation from 'src/hooks/UserGroup/useUserGroupMutation';
+import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
+import { useTranslation } from 'react-i18next';
 interface FormWizardUserGroupProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -37,12 +38,20 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const RoleAccess = ['Admin', 'OperatorAdmin', 'OperatorVMS', 'Employee', 'Manager', 'Visitor'];
+  const RoleAccess = [
+    'Admin',
+    'OperatorAdmin',
+    'OperatorVMS',
+    'Employee',
+    'SecurityMonitor',
+    'Manager',
+    'Visitor',
+  ];
   const groupOptions = RoleAccess.map((role) => ({
     id: role,
     label: role.replace(/([a-z])([A-Z])/g, '$1 $2').trim(),
   }));
-
+  const { t } = useTranslation();
   const initialRef = useRef(formData);
 
   const isDirty = useMemo(() => {
@@ -53,10 +62,8 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     onDirtyChange?.(isDirty);
   }, [isDirty]);
 
-  const {
-    createMutation: createUserGroup,
-    updateMutation: updateUserGroup,
-  } = useUserGroupMutation();
+  const { createMutation: createUserGroup, updateMutation: updateUserGroup } =
+    useUserGroupMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -69,7 +76,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     setErrors({});
 
     try {
-
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -84,12 +90,17 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       } else {
         await createUserGroup.mutateAsync(payload);
       }
-      showSwal('success', edittingId ? 'User group successfully updated!' : 'User group successfully created!');
+      showSwal(
+        'success',
+        edittingId
+          ? t('updatedSuccess', { name: 'User Group' })
+          : t('createSuccess', { name: 'User Group' }),
+      );
 
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', 'Failed to create user group');
+      showSwal('error', err?.response.data.message || 'Failed to create user group');
     } finally {
       setLoading(false);
     }
@@ -120,7 +131,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
               placeholder="Enter your name"
               fullWidth
               // required
-              disabled={loading}
             />
           </Grid2>
 
@@ -181,7 +191,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
               multiline
               rows={3}
               placeholder="Enter your description"
-              disabled={loading}
             />
           </Grid2>
 
@@ -221,17 +230,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
           </Alert>
         </Snackbar>
       </Portal>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: (t) => 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <GlobalBackdropLoading open={loading} />
     </>
   );
 };

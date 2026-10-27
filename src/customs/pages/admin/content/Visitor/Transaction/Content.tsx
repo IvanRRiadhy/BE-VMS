@@ -7,13 +7,6 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
-  Typography,
-  InputAdornment,
-  IconButton,
-  FormControlLabel,
-  Divider,
-  Checkbox,
-  TextField,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -35,7 +28,11 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import { IconFilterFilled, IconSearch, IconUserPlus, IconUsers } from '@tabler/icons-react';
+import {
+  IconLink,
+  IconUserPlus,
+  IconUsers,
+} from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -65,11 +62,9 @@ import { useTransactionVisitorPagination } from 'src/hooks/Visitor/Transaction/u
 import { useTransactionVisitorMutation } from 'src/hooks/Visitor/Transaction/useTransactionMutation';
 import VisitorDetailPanel from 'src/customs/pages/Employee/Invitation/components/VisitorDetailPanel';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
 import VisitorFilterSidebar from './components/VisitorFilterSidebar';
 import VisitorDetailDialog from './components/VisitorDetailDialog';
+import ShareLink from './components/ShareLink';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -135,7 +130,6 @@ const Content = () => {
   const [isAddTransaction, setIsAddTransaction] = useState(false);
   const [searchAgenda, setSearchAgenda] = useState('');
   const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
-  const [tab, setTab] = useState<any>(0);
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
   const { data: siteData } = useRegisteredSite();
@@ -295,6 +289,13 @@ const Content = () => {
           {
             title: t('add') + ' Invitation',
             icon: IconUserPlus,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: t('shareLink'),
+            icon: IconLink,
             subTitle: iconAdd,
             subTitleSetting: 'image',
             color: 'none',
@@ -591,6 +592,8 @@ const Content = () => {
     setDetailDialogOpen(true);
   };
 
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -606,6 +609,8 @@ const Content = () => {
                 onImageClick={(_, index) => {
                   if (index === 1) {
                     handleAddInvitation();
+                  } else if (index === 2) {
+                    setOpenCreateLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
@@ -723,7 +728,6 @@ const Content = () => {
         // isAddTransaction={isAddTransaction}
       />
 
-      {/* Select Registered Site */}
       <RegisteredSiteDialog
         open={openDialogIndex === 2}
         siteData={siteData as any[]}
@@ -760,6 +764,8 @@ const Content = () => {
         hasDecoded={hasDecoded}
         setHasDecoded={setHasDecoded}
       />
+
+      <ShareLink open={openCreateLink} onClose={() => setOpenCreateLink(false)} />
 
       <DetailVisitorDialog
         open={openDetail}

@@ -205,10 +205,27 @@ const Login = () => {
     };
 
     try {
-      await login(
+      const loginResponse: any = await login(
         body,
         config.ENABLE_CAPTCHA ? captchaId : undefined,
         config.ENABLE_CAPTCHA ? captchaCode : undefined,
+      );
+
+      const user = loginResponse.collection;
+
+      const role = user.group_name ?? user.role_access;
+
+      setAuthenticated({
+        ...user,
+        group_name: role,
+      });
+
+      dispatch(
+        setUser({
+          fullname: user.fullname,
+          email: user.email,
+          id: user.user_id ?? user.id,
+        }),
       );
 
       const profile: any = await getProfile();
@@ -224,25 +241,29 @@ const Login = () => {
       );
 
       // Redirect berdasarkan group
-      switch (profile.collection.group_name) {
+      switch (role) {
         case 'OperatorVMS':
-          navigate('/operator/view');
+          navigate('/operator/view', { replace: true });
           break;
 
         case 'OperatorAdmin':
-          navigate('/operator-admin/dashboard');
+          navigate('/operator-admin/dashboard', { replace: true });
           break;
 
         case 'Manager':
-          navigate('/manager/dashboard');
+          navigate('/manager/dashboard', { replace: true });
           break;
 
         case 'Admin':
-          navigate('/admin/dashboard');
+          navigate('/admin/dashboard', { replace: true });
           break;
 
         case 'Employee':
-          navigate('/employee/dashboard');
+          navigate('/employee/dashboard', { replace: true });
+          break;
+
+        case 'SecurityMonitor':
+          navigate('/security-monitor/dashboard', { replace: true });
           break;
 
         default:

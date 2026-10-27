@@ -104,33 +104,33 @@ const Content = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getTodayPraregister(
-          dayjs(startDate).format('YYYY-MM-DD'),
-          dayjs(endDate).format('YYYY-MM-DD'),
-        );
-        const rows = response.collection
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.invitation_created_at).getTime() -
-              new Date(a.invitation_created_at).getTime(),
-          )
-          .slice(0, 5)
-          .map((item: any) => ({
-            id: item.id,
-            name: item.visitor_name,
-            host: item.host_name,
-            visit_start: formatDateTime(item.visitor_period_start),
-            visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          }));
-        setDataPraregist(rows || []);
-      } catch (error) {}
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await getTodayPraregister(
+  //         dayjs(startDate).format('YYYY-MM-DD'),
+  //         dayjs(endDate).format('YYYY-MM-DD'),
+  //       );
+  //       const rows = response.collection
+  //         .sort(
+  //           (a: any, b: any) =>
+  //             new Date(b.invitation_created_at).getTime() -
+  //             new Date(a.invitation_created_at).getTime(),
+  //         )
+  //         .slice(0, 5)
+  //         .map((item: any) => ({
+  //           id: item.id,
+  //           name: item.visitor_name,
+  //           host: item.host_name,
+  //           visit_start: formatDateTime(item.visitor_period_start),
+  //           visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //         }));
+  //       setDataPraregist(rows || []);
+  //     } catch (error) {}
+  //   };
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
 
   const { t } = useTranslation();
 

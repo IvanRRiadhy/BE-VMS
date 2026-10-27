@@ -755,7 +755,7 @@ const Content = () => {
                 onPermission={(row) => handlePermission(row)}
                 onBatchDelete={handleBatchDelete}
                 isHaveAddEmpty={true}
-                addDataText="Add User Group"
+                addDataText={t('add') + ' User Group'}
                 onAddEmpty={() => {
                   setOpenFormAddDocument(true);
                 }}

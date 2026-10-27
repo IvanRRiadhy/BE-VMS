@@ -99,7 +99,7 @@ export default function VisitorTypeDialog({
               gap: 2,
             }}
           >
-            <CircularProgress size={36} />
+            <CircularProgress size={36}  thickness={4}/>
           </Box>
         ) : (
           <FormVisitorType

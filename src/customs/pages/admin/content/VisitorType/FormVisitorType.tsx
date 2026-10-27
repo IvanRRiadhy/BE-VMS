@@ -1,12 +1,4 @@
-import {
-  Button,
-  IconButton,
-  Step,
-  StepLabel,
-  Stepper,
-  TextField,
-  Box,
-} from '@mui/material';
+import { Button, IconButton, Step, StepLabel, Stepper, TextField, Box } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   CreateVisitorTypeRequest,
@@ -92,7 +84,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const { documents } = useDocuments();
   const { customField } = useCustomField();
   const { analyticCctv } = useCameraAnalytics();
-  const { data: sites = [], isLoading } = useSites();
+
   const { createMutation, updateMutation } = useVisitorTypeMutation();
 
   const filteredVisitorRole = visitorRole?.filter(
@@ -260,7 +252,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         duration_visit: Number(localForm.duration_visit),
         max_time_visit: Number(localForm.max_time_visit),
         grace_time: Number(localForm.grace_time),
-        period: localForm.period == null  ? 0 : Number(localForm.period),
+        period: localForm.period == null ? 0 : Number(localForm.period),
         section_page_visitor_types: transformedSections,
         expiry_reminder_minutes: localForm.expiry_reminder_minutes
           ? Number(localForm.expiry_reminder_minutes)
@@ -627,32 +619,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     })),
   });
 
-  // const buildCreateAnalyticsPayloads = (visitorTypeId: string) => ({
-  //   data: selectedAnalytics.map((a: any, index: any) => ({
-  //     integration_id: a.integration_id,
-  //     visitor_type_id: visitorTypeId,
-  //     sort: index,
-  //   })),
-  // });
-
-  // const buildCreateAnalyticsPayload = (visitorTypeId: string) => ({
-  //   data: [
-  //     {
-  //       integration_id: selectedAnalytics.integration_id,
-  //       visitor_type_id: visitorTypeId,
-  //       sort: 0,
-  //     },
-  //   ],
-  // });
-
-  const buildCreateAnalyticsPayload = (visitorTypeId: string) => ({
-    data: selectedAnalytics.map((item, index) => ({
-      integration_id: item.id, // atau item.integration_id sesuai data
-      visitor_type_id: visitorTypeId,
-      sort: index,
-    })),
-  });
-
   return (
     <Box>
       <form onSubmit={handleOnSubmit}>
@@ -917,7 +883,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 setSelectedAccess={setSelectedAccess}
                 setSelectedAnalytics={setSelectedAnalytics}
                 setDeletedAccessIds={setDeletedAccessIds}
-                sites={sites}
               />
             </Box>
           </Box>

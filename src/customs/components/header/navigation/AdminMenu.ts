@@ -419,6 +419,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
             icon: IconUsers,
             href: '/admin/manage/employees',
           },
+          {
+            id: uniqueId(),
+            title: 'navigation.blacklist_employee',
+            icon: IconUsers,
+            href: '/admin/manage/blacklist-employees',
+          },
           // {
           //   id: uniqueId(),
           //   title: 'navigation.staff',
@@ -1268,6 +1274,50 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/employee/approval',
+  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.history',
+  //   icon: IconHistory,
+  //   chipColor: 'secondary',
+  //   href: '/employee/history',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/employee/notification',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Parking',
+  //   icon: IconCar,
+  //   chipColor: 'secondary',
+  //   href: '/employee/parking',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Report',
+  //   icon: IconReport,
+  //   chipColor: 'secondary',
+  //   href: '/employee/report',
+  // },
+];
+
+export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    href: '/security-monitor/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Monitoring',
+    icon: IconMail,
+    chipColor: 'secondary',
+    href: '/security-monitor/monitoring',
   },
   // {
   //   id: uniqueId(),

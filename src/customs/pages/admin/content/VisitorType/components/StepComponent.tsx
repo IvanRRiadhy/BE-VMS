@@ -38,6 +38,8 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
 import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import { useDebounce } from 'src/hooks/useDebounce';
+import { useTranslation } from 'react-i18next';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 interface StepContentProps {
   activeStep: number;
@@ -96,7 +98,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   setSelectedAccess,
   setSelectedAnalytics,
   visitorRole,
-  sites,
 }) => {
   const identityOptions = [
     { value: -1, label: '' },
@@ -116,6 +117,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     { id: 3, name: 'CIT', value: 'CIT' },
     { id: 4, name: 'DC Vendor', value: 'DCVendor' },
   ];
+
+  const { data: sites = [], isLoading } = useSites();
 
   useEffect(() => {
     if (!formData?.visitor_roles || visitorRole.length === 0) {
@@ -205,7 +208,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
       setHostInput(found.name ?? '');
     }
   }, [formData.pre_host_id, visitorEmployee]);
-  
+
   const hostOptions = useMemo(() => {
     const options = [...sortedVisitorEmployee];
 
@@ -220,6 +223,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
     return options;
   }, [sortedVisitorEmployee, selectedHost]);
+
+  const { t } = useTranslation();
 
   if (activeStep === 0) {
     return (
@@ -350,7 +355,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
                 <Box sx={{ p: 2 }}>
                   <Button onClick={handleAddDocument} color="primary" variant="contained">
-                    Add New
+                    {t('addNew')}
                   </Button>
                 </Box>
               </TableContainer>
@@ -471,7 +476,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
               <Box sx={{ p: 2 }}>
                 <Button variant="contained" onClick={handleAddAccess}>
-                  Add New
+                  {t('addNew')}
                 </Button>
               </Box>
             </TableContainer>
@@ -482,38 +487,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               <Typography variant="h6" sx={{ mb: 2, mt: 2 }}>
                 System Analytic
               </Typography>
-              {/* <Autocomplete
-                options={analyticCctv}
-                value={selectedAnalytics}
-                getOptionLabel={(option: any) => option.name ?? ''}
-                isOptionEqualToValue={(option, value) =>
-                  option.integration_id === value.integration_id
-                }
-                // onChange={(_, newValue) => {
-                //   if (!newValue) {
-                //     setSelectedAnalytics(null);
-                //     return;
-                //   }
-
-                //   setSelectedAnalytics({
-                //     id: undefined,
-                //     integration_id: newValue.integration_id,
-                //     name: newValue.name,
-                //   });
-                // }}
-                onChange={(_, newValue) => {
-                  if (!newValue) return;
-
-                  setSelectedAnalytics({
-                    id: undefined,
-                    integration_id: newValue.id,
-                    name: newValue.name,
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} placeholder="Select analytic system" />
-                )}
-              /> */}
               <Autocomplete
                 multiple
                 options={analyticCctv}
@@ -570,6 +543,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 </Tooltip>
               </Box>
               <Autocomplete
+                loading={isLoading}
                 options={sites}
                 value={selectedSite}
                 disablePortal

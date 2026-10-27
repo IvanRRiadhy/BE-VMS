@@ -227,6 +227,7 @@ export const getProfilePathByRole = (groupName?: string): string => {
   if (lower.includes('Manager')) return '/manager/profile';
   if (lower.includes('Employee')) return '/employee/profile';
   if (lower.includes('OperatorVMS')) return '/operator/profile';
+  if (lower.includes('SecurityMonitor')) return '/admin/profile';
   if (lower.includes('Visitor') || lower.includes('guest')) return '/guest/profile';
 
   return '/profile';

@@ -129,7 +129,7 @@ const VisitorFilterSidebar = ({ mdUp }: VisitorFilterSidebarProps) => {
       {/* Employee */}
       <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>
-          Employee
+          Satuan Kerja (Satker)
         </Typography>
 
         <TextField

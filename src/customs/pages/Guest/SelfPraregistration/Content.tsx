@@ -21,12 +21,10 @@ import { getConfig } from 'src/config';
 
 export default function InvitationShare() {
   const config = getConfig();
-
   const logoUrl = config.LOGO_URL || Logo;
   const [searchParams] = useSearchParams();
   const [error, setError] = useState(false);
   const navigate = useNavigate();
-
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [invitation, setInvitation] = useState<any>(null);
   const [code, setCode] = useState<string>('');
@@ -39,7 +37,8 @@ export default function InvitationShare() {
     const sig = searchParams.get('sig');
 
     if (!d || !code || !timestamp || !sig) {
-      setError(true);
+      // setError(true);
+      navigate('/not-found', { replace: true });
       return;
     }
 

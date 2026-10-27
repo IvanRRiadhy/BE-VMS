@@ -71,13 +71,6 @@ interface Filters {
   card_status: number;
 }
 
-const typeMap: Record<string, number> = {
-  'Non Access Card': 0,
-  RFID: 1,
-  'RFID Card': 1,
-  BLE: 2,
-};
-
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -539,7 +532,7 @@ const Content = () => {
 
       <Dialog open={openFormCreateVisitorCard} onClose={handleRequestClose} fullWidth maxWidth="md">
         <DialogTitle display={'flex'} alignItems={'center'} justifyContent={'space-between'}>
-          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Card
+          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} {t('navigation.card')}
           <IconButton
             aria-label="close"
             onClick={() => handleRequestClose(undefined, 'closeButton')}

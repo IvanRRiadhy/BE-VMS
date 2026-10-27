@@ -835,7 +835,7 @@ const Content = () => {
 
                   }
                 }}
-                size={{ xs: 12, lg: 3 }}
+                size={{ xs: 12, lg: 4 }}
               />
             </Grid>
             <Box

@@ -1,16 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  IconButton,
-} from '@mui/material';
+import { Box, Grid2 as Grid, IconButton } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import Container from 'src/components/container/PageContainer';
-import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
@@ -125,10 +120,6 @@ const Content = () => {
   const [formDataAddEmployee, setFormDataAddEmployee] = useState(
     CreateEmployeeRequestSchema.parse({}),
   );
-
-  const isFormChanged = useMemo(() => {
-    return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
-  }, [formDataAddEmployee]);
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
   const handleCloseDialog = () => {

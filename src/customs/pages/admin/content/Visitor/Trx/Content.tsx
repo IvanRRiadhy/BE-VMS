@@ -337,13 +337,13 @@ const Content = () => {
           //   subTitleSetting: 'image',
           //   color: 'none',
           // },
-          // {
-          //   title: t('shareLink'),
-          //   icon: IconLink,
-          //   subTitle: iconAdd,
-          //   subTitleSetting: 'image',
-          //   color: 'none',
-          // },
+          {
+            title: t('shareLink'),
+            icon: IconLink,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
           // {
           //   title: t('quickAccess'),
           //   icon: IconBolt,
@@ -823,12 +823,13 @@ const Content = () => {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
                   } else if (index === 2) {
-                    setOpenQuickAccess(true);
+                    // setOpenQuickAccess(true);
+                    setOpenDetailShareLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 3 }}
+                size={{ xs: 12, lg: 4 }}
               />
             </Grid>
 

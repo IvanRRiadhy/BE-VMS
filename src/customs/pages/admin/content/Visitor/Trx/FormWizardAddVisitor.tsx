@@ -31,9 +31,7 @@ import {
   useMediaQuery,
   MobileStepper,
   Tooltip,
-  Select,
   FormHelperText,
-  Avatar,
   LinearProgress,
 } from '@mui/material';
 import 'select2';
@@ -1393,7 +1391,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
               <>
-                <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
+                <FormControl error={!!errorMessage} sx={{ width: '170px' }}>
                   <RadioGroup
                     row
                     value={field.answer_text || 'false'}

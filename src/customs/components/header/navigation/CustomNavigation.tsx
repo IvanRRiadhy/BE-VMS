@@ -24,8 +24,8 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
-  const { data: profile } = useProfile();
-  const isOperatorAdmin = profile?.group_name === 'OperatorVMS';
+  // const { data: profile } = useProfile();
+  // const isOperatorAdmin = profile?.group_name === 'OperatorVMS';
   const { toolbar } = useOperatorToolbar();
   if (xl) {
     return (

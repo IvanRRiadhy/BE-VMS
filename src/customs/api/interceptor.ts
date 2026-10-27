@@ -30,6 +30,22 @@ export function initializeAxiosBaseURL() {
 
 let clearTokenCallback: (() => void) | null = null;
 
+export const setClearTokenCallback = (callback: () => void) => {
+  clearTokenCallback = callback;
+};
+
+let isHandling401 = false;
+
+const handleUnauthorized = () => {
+  if (isHandling401) return;
+
+  isHandling401 = true;
+
+  clearTokenCallback?.();
+
+  window.location.replace('/auth/login');
+};
+
 let isRefreshing = false;
 let refreshPromise: Promise<any> | null = null;
 
@@ -43,8 +59,6 @@ const doRefreshToken = async () => {
     });
   }
 };
-
-let isHandling401 = false;
 
 const responseInterceptor = (response: any) => response;
 const errorInterceptor = async (error: any) => {
@@ -80,6 +94,16 @@ const errorInterceptor = async (error: any) => {
   //     return axiosInstance(originalRequest);
   //   } catch (refreshError) {
   //     return Promise.reject(refreshError);
+  //   }
+  // }
+
+  // if (status === 401) {
+  //   const url = originalRequest?.url ?? '';
+
+  //   const isLoginRequest = url.includes('/_Auth/Login') || url.includes('/_Auth/RefreshToken');
+
+  //   if (!isLoginRequest) {
+  //     handleUnauthorized();
   //   }
   // }
 
