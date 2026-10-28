@@ -76,12 +76,13 @@ const Login = () => {
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const config = getConfig();
   const logoUrl = config.LOGO_URL || Logo;
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState('Admin');
   const [captchaId, setCaptchaId] = useState('');
   const [captchaImage, setCaptchaImage] = useState('');
   const [captchaCode, setCaptchaCode] = useState('');
   const [captchaError, setCaptchaError] = useState(false);
   const [captchaLoading, setCaptchaLoading] = useState(false);
+  const [employeeRole, setEmployeeRole] = useState('Admin');
   const generateCaptcha = async () => {
     try {
       setCaptchaLoading(true);
@@ -104,85 +105,6 @@ const Login = () => {
       generateCaptcha();
     }
   }, [config.ENABLE_CAPTCHA]);
-
-  // async function loginSubmit(e: FormEvent<HTMLFormElement>) {
-  //   e.preventDefault();
-  //   setError(false);
-  //   setLoading(true);
-
-  //   if (!captchaCode.trim()) {
-  //     setCaptchaError(true);
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   const body = { username, password };
-
-  //   try {
-  //     const response = await login(body, captchaId, captchaCode);
-
-  //     const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
-  //       response.collection;
-
-  //     // await saveToken(token);
-
-  //     dispatch(
-  //       setUser({
-  //         fullname,
-  //         email,
-  //         employee_id,
-  //         phone,
-  //         id,
-  //       }),
-  //     );
-
-  //     switch (role_access) {
-  //       case 'OperatorVMS':
-  //         navigate('/operator/view');
-  //         break;
-
-  //       // case 'Visitor':
-  //       //   navigate('/guest/dashboard');
-  //       //   break;
-
-  //       case 'OperatorAdmin':
-  //         navigate('/operator-admin/dashboard');
-  //         break;
-
-  //       case 'Manager':
-  //         navigate('/manager/dashboard');
-  //         break;
-
-  //       case 'Admin':
-  //         navigate('/admin/dashboard');
-  //         break;
-
-  //       case 'Employee':
-  //         if (type == 0) navigate('/delivery-staff/dashboard');
-  //         else navigate('/employee/dashboard');
-  //         break;
-
-  //       default:
-  //         navigate('/guest/dashboard');
-  //         break;
-  //     }
-  //   } catch (err: any) {
-  //     if (err.response?.status === 429) {
-  //       setError(true);
-  //       setSnackbarMsg('Too many login attempts. Please wait a moment and try again.');
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     if (err.response) {
-  //       setError(true);
-  //       await generateCaptcha();
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
 
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -209,6 +131,7 @@ const Login = () => {
         body,
         config.ENABLE_CAPTCHA ? captchaId : undefined,
         config.ENABLE_CAPTCHA ? captchaCode : undefined,
+        employeeRole,
       );
 
       const user = loginResponse.collection;
@@ -228,19 +151,6 @@ const Login = () => {
         }),
       );
 
-      const profile: any = await getProfile();
-
-      setAuthenticated(profile.collection);
-
-      dispatch(
-        setUser({
-          fullname: profile.collection.fullname,
-          email: profile.collection.email,
-          id: profile.collection.user_id,
-        }),
-      );
-
-      // Redirect berdasarkan group
       switch (role) {
         case 'OperatorVMS':
           navigate('/operator/view', { replace: true });
@@ -448,19 +358,19 @@ const Login = () => {
 
   useEffect(() => {
     if (codeFromUrl) {
-      setTab(1);
+      setTab('Admin');
     }
   }, [codeFromUrl]);
 
   const handleForgotPassword = () => {
-    setSnackbarMsg('Please contact your administrator.');
+    setSnackbarMsg(t('contactAdministrator'));
     setSnackbarType('success');
     setSnackbarOpen(true);
   };
 
   return (
     <>
-      {!isAuthenticated && (
+      {/* {!isAuthenticated && ( */}
         <PageContainer title="Login | Bank Indonesia" description="this is Login page">
           <Box
             sx={{
@@ -646,7 +556,7 @@ const Login = () => {
                       <FormControl fullWidth size="medium">
                         <Select
                           value={tab}
-                          onChange={(e) => setTab(e.target.value as number)}
+                          onChange={(e) => setTab(e.target.value)}
                           fullWidth
                           sx={{
                             minHeight: 55,
@@ -695,14 +605,16 @@ const Login = () => {
                             },
                           }}
                         >
-                          <MenuItem value={0}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                              <IconUser size={25} />
-                              <Typography variant="h6">User</Typography>
-                            </Box>
-                          </MenuItem>
+                          {['Admin', 'DLAF', 'DLDS', 'DPID', 'DPSS', 'DPU', 'DSDM'].map((role) => (
+                            <MenuItem key={role} value={role}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <IconUser size={25} />
+                                <Typography variant="h6">{role}</Typography>
+                              </Box>
+                            </MenuItem>
+                          ))}
 
-                          <MenuItem value={1}>
+                          <MenuItem value="Visitor">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                               <IconUserPlus size={25} />
                               <Typography variant="h6">Visitor</Typography>
@@ -714,7 +626,7 @@ const Login = () => {
 
                     <Box mt={0}>
                       {/* Login Form */}
-                      {tab === 0 && (
+                      {tab !== 'Visitor' && (
                         <form onSubmit={loginSubmit}>
                           {/* <Typography variant="h5" mb={0} mt={0} textAlign="center">
                       
@@ -1053,7 +965,7 @@ const Login = () => {
                     </Box>
 
                     {/* Guest Form */}
-                    {tab === 1 && (
+                    {tab === 'Visitor' && (
                       <form onSubmit={guestSubmit}>
                         {/* <Typography variant="h6" mb={1} textAlign="center" mt={1}>
                           Guest/Visitor
@@ -1163,128 +1075,6 @@ const Login = () => {
                       </form>
                     )}
 
-                    {tab === 2 && (
-                      <form onSubmit={loginSubmit}>
-                        <Typography variant="h6" mb={0} textAlign="center">
-                          Login or Register Guest
-                        </Typography>
-                        <Stack spacing={2}>
-                          <Box>
-                            <CustomFormLabel htmlFor="username" sx={{ marginTop: 0 }}>
-                              Username
-                            </CustomFormLabel>
-                            <CustomTextField
-                              id="username"
-                              variant="outlined"
-                              fullWidth
-                              value={username}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setUsername(e.target.value)
-                              }
-                            />
-                          </Box>
-                          <Box>
-                            <CustomFormLabel htmlFor="password" sx={{ marginTop: 0 }}>
-                              Password
-                            </CustomFormLabel>
-                            <CustomTextField
-                              id="password"
-                              type={showPassword ? 'text' : 'password'}
-                              variant="outlined"
-                              fullWidth
-                              value={password}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setPassword(e.target.value)
-                              }
-                              InputProps={{
-                                endAdornment: (
-                                  <InputAdornment position="end">
-                                    <IconButton
-                                      onClick={() => setShowPassword((prev) => !prev)}
-                                      edge="end"
-                                    >
-                                      {showPassword ? (
-                                        <IconEyeOff size={20} />
-                                      ) : (
-                                        <IconEye size={20} />
-                                      )}
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                              }}
-                            />
-                          </Box>
-
-                          <Typography
-                            onClick={handleForgotPassword}
-                            sx={{
-                              opacity: 0.6,
-                              cursor: 'pointer',
-                              mt: 1,
-                              fontSize: 14,
-                              '&:hover': {
-                                opacity: 1,
-                                textDecoration: 'underline',
-                              },
-                            }}
-                          >
-                            {/* Forgot Password? */}
-                            {t('forgotPassword')}
-                          </Typography>
-                        </Stack>
-
-                        <Box marginTop={1}>
-                          <Button
-                            color="primary"
-                            variant="contained"
-                            size="large"
-                            fullWidth
-                            type="submit"
-                            disabled={loading}
-                          >
-                            {loading ? (
-                              <>
-                                <CircularProgress sx={{ color: 'white' }} size={24} />
-                              </>
-                            ) : (
-                              'Login'
-                            )}
-                          </Button>
-                          <Divider sx={{ my: 1 }} />
-                          <Button
-                            color="primary"
-                            variant="outlined"
-                            size="large"
-                            fullWidth
-                            // type="submit"
-                            disabled={loading}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate('/auth/register');
-                            }}
-                          >
-                            {loading ? (
-                              <>
-                                {' '}
-                                <CircularProgress sx={{ color: 'white' }} size={24} />
-                              </>
-                            ) : (
-                              'Register'
-                            )}
-                          </Button>
-                        </Box>
-                        {error && tab === 2 && (
-                          <Typography
-                            sx={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}
-                            variant="subtitle1"
-                            color="error"
-                          >
-                            Username or Password is invalid
-                          </Typography>
-                        )}
-                      </form>
-                    )}
-
                     {/* <Divider /> */}
                     <Box display="flex" alignItems="center" justifyContent="center" marginTop={1.5}>
                       <Typography
@@ -1341,7 +1131,7 @@ const Login = () => {
           </Snackbar>
           <BackToTopButton />
         </PageContainer>
-      )}
+      {/* )} */}
     </>
   );
 };

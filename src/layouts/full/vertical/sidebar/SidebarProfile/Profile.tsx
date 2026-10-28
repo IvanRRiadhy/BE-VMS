@@ -21,7 +21,6 @@ export const Profile = () => {
       // Backend hapus HttpOnly cookies
       await revokeToken();
     } catch (error) {
-      console.error('Logout API failed:', error);
     } finally {
       // Clear state authentication React
       logout();

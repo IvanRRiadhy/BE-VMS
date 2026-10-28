@@ -4,7 +4,7 @@ import {
   KeyboardArrowUpOutlined,
   Security,
 } from '@mui/icons-material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
 import {
@@ -249,6 +249,42 @@ const Content = () => {
       color: 'none',
     },
   ];
+
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const minWidth = 240;
+      const maxWidth = 600;
+
+      setSidebarWidth(Math.min(maxWidth, Math.max(minWidth, e.clientX - 16)));
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
+
   return (
     <Container title="Transaction Visitor" description="this is transaction visitor page">
       <Box>
@@ -271,12 +307,14 @@ const Content = () => {
         >
           <Box
             sx={{
-              width: mdUp ? secdrawerWidth : '100%',
+              width: mdUp ? `${sidebarWidth}px` : '100%',
+              flexShrink: 0,
               borderRight: '1px solid #eee',
               p: 2,
               pt: 2,
               overflow: 'auto',
               height: { xs: '100%', md: '90vh' },
+              boxSizing: 'border-box',
             }}
           >
             <Typography variant="h5" mb={2}>
@@ -389,6 +427,37 @@ const Content = () => {
             </Box>
           </Box>
 
+          {mdUp && (
+            <Box
+              onMouseDown={handleMouseDown}
+              sx={{
+                width: '8px',
+                minWidth: '8px',
+                flexShrink: 0,
+                cursor: 'col-resize',
+                backgroundColor: isDragging ? '#1976d2' : '#e0e0e0',
+                position: 'relative',
+                zIndex: 10,
+                alignSelf: 'stretch',
+                marginLeft: '-1px',
+                marginRight: '-1px',
+                '&:hover': {
+                  backgroundColor: '#90caf9',
+                },
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: '50%',
+                  left: '2px',
+                  width: '4px',
+                  height: '40px',
+                  transform: 'translateY(-50%)',
+                  borderRadius: '4px',
+                  backgroundColor: isDragging ? '#1565c0' : '#757575',
+                },
+              }}
+            />
+          )}
           <Box
             flexGrow={1}
             p={2}

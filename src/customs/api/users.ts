@@ -12,11 +12,11 @@ import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
 import { getConfig } from 'src/config';
 
-
 export const login = async (
   body: LoginRequest,
   captchaId?: string,
   captchaAnswer?: string,
+  employeeRole?: string,
 ): Promise<any> => {
   try {
     const config = getConfig();
@@ -26,11 +26,15 @@ export const login = async (
     };
 
     if (config.ENABLE_CAPTCHA) {
-      headers['X-Captcha-Id'] = captchaId || '';
-      headers['X-Captcha-Answer'] = captchaAnswer || '';
+      headers['X-Captcha-Id'] = captchaId || ''; //id dari captcha id
+      headers['X-Captcha-Answer'] = captchaAnswer || ''; // answer dari captcha
+      headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
+      headers['X-Employee-Role'] = employeeRole || '';
     } else {
       headers['X-Bypass-Captcha'] =
         '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+      headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
+      headers['X-Employee-Role'] = employeeRole || '';
     }
 
     const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {

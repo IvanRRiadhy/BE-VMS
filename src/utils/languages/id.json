@@ -245,6 +245,7 @@
   "licensePlateNumber": "Nomor Plat Kendaraan",
   "choose_or_write_agenda_manually": "Pilih atau tulis agenda secara manual",
   "approval_workflow_rules": "Aturan Approval Workflow",
+  "contactAdministrator": "Silakan hubungi administrator sistem Anda untuk mendapatkan bantuan.",
   "approval_workflow_rules_description": "Ikuti aturan berikut saat mengatur alur persetujuan.",
   "approval_workflow_rule_1": "Setiap workflow harus memiliki minimal satu kondisi Final.",
   "approval_workflow_rule_2": "Hanya satu kondisi Final yang diperbolehkan dalam setiap workflow, kecuali beberapa kondisi Final dalam grup OR yang sama, yang dianggap sebagai satu kondisi Final.",
@@ -263,5 +264,6 @@
   "identity_id_invalid": "Nomor identitas harus terdiri dari 16 digit angka",
   "maxVisitorsDescription": "Masukkan jumlah maksimum pengunjung yang diizinkan.",
   "singleUseLinkDescription": "Aktifkan opsi ini agar tautan hanya dapat digunakan satu kali. Setelah digunakan pertama kali, tautan akan menjadi tidak aktif.",
-  "estimatedReturnTime": "Ini adalah perkiraan waktu kembali dan dapat berubah tergantung pada durasi kunjungan yang sebenarnya."
+  "estimatedReturnTime": "Ini adalah perkiraan waktu kembali dan dapat berubah tergantung pada durasi kunjungan yang sebenarnya.",
+  "too_many_login_attempts": "Terlalu banyak percobaan login. Silakan tunggu sebentar, lalu coba lagi."
 }
