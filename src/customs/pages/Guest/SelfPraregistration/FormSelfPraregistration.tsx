@@ -739,21 +739,21 @@ const FormSelfPraregistration = ({
 
           return;
         }
-        // if ((item.remarks || '').toLowerCase() === 'indentity_id') {
-        //   const identityId = String(item.answer_text ?? '').trim();
+        if ((item.remarks || '').toLowerCase() === 'indentity_id') {
+          const identityId = String(item.answer_text ?? '').trim();
 
-        //   if (!identityId) {
-        //     errors[key] = `${label} ${t('is_required')}`;
-        //     return;
-        //   }
+          if (!identityId) {
+            errors[key] = `${label} ${t('is_required')}`;
+            return;
+          }
 
-        //   if (!/^\d{16}$/.test(identityId)) {
-        //     errors[key] = t('identity_id_invalid');
-        //     return;
-        //   }
+          if (!/^\d{16}$/.test(identityId)) {
+            errors[key] = t('identity_id_invalid');
+            return;
+          }
 
-        //   return;
-        // }
+          return;
+        }
 
         if (isEmptyText) {
           errors[key] = `${label} ${t('is_required')}`;

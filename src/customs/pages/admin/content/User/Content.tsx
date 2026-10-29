@@ -21,7 +21,9 @@ import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import {
   assignEmployee,
+  createLinkAccountParking,
   createLinkAccountTracking,
+  getLinkAccountParking,
   getLinkAccountTracking,
   unassignAccount,
 } from 'src/customs/api/Admin/User';
@@ -32,6 +34,7 @@ import AssignTrackingDialog from './components/AssignTrackingDialog';
 import useUsers, { useUserPagination, useUserRole } from 'src/hooks/User/useUsers';
 import useUsersMutation from 'src/hooks/User/userUsersMutation';
 import { useTranslation } from 'react-i18next';
+import AssignParkingDialog from './components/AssignParkingDialog';
 
 const Content = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
@@ -47,6 +50,7 @@ const Content = () => {
   const [selectedAvailable, setSelectedAvailable] = useState<any | null>(null);
   const [selectedAssigned, setSelectedAssigned] = useState<any | null>(null);
   const [openAssignDialog, setOpenAssignDialog] = useState(false);
+  const [openAssignParkingDialog, setOpenAssignParkingDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const { t } = useTranslation();
@@ -85,6 +89,7 @@ const Content = () => {
       })),
     [users],
   );
+
 
   const totalRecords =
     users?.RecordsTotal ??
@@ -231,6 +236,31 @@ const Content = () => {
     setOpenAssignDialog(true);
   };
 
+  const handleAssignParking = async (row: any) => {
+    const res = await getLinkAccountParking(row.id);
+    setSelectedUser(row);
+
+    const assigned = res?.collection?.has_data || [];
+    const servers = res?.collection?.from_server || [];
+
+    const available = servers.flatMap((server: any) =>
+      server.accounts.map((acc: any) => ({
+        ...acc,
+        parkingSystemName: server.name,
+        parkingSystemId: server.id,
+      })),
+    );
+
+    const assignedFormatted = assigned.map((item: any) => ({
+      ...item,
+    }));
+
+    setAvailableAccounts(available);
+    setAssignedAccounts(assignedFormatted);
+
+    setOpenAssignDialog(true);
+  };
+
   const handleSubmitTracking = async () => {
     try {
       const payload = {
@@ -247,7 +277,7 @@ const Content = () => {
         })),
       };
 
-      const res = await createLinkAccountTracking(selectedUser.id, payload);
+      const res = await createLinkAccountParking(selectedUser.id, payload);
 
       showSwal('success', 'Tracking assigned successfully');
 
@@ -262,6 +292,41 @@ const Content = () => {
         error?.response?.data?.collection?.[0]?.message ||
           error?.response?.data?.msg ||
           'Failed to assign tracking',
+      );
+    }
+  };
+
+  const handleSubmitParking = async () => {
+    try {
+      const payload = {
+        link_type: 'Parking',
+        assign_datas: assignedAccounts.map((item) => ({
+          parking_account_id: item.parking_account_id,
+          parking_username: item.parking_username,
+          parking_integration_id: item.parking_integration_id,
+        })),
+        unassign_datas: availableAccounts.map((item) => ({
+          parking_account_id: item.id,
+          parking_username: item.username,
+          parking_integration_id: item.parkingSystemId,
+        })),
+      };
+
+      const res = await createLinkAccountTracking(selectedUser.id, payload);
+
+      showSwal('success', 'Successfully assigned parking');
+
+      setOpenAssignParkingDialog(false);
+
+      queryClient.invalidateQueries({
+        queryKey: ['users'],
+      });
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error?.response?.data?.collection?.[0]?.message ||
+          error?.response?.data?.msg ||
+          'Failed to assign parking',
       );
     }
   };
@@ -411,9 +476,12 @@ const Content = () => {
                 searchPlaceholder="Search User"
                 searchKeyword={search}
                 isHaveAssign={false}
+                totalCount={totalRecords}
                 isHaveUnAssign={true}
                 isHaveAssignTracking={true}
+                isHaveAssignParking={true}
                 onAssignTracking={handleAssignTracking}
+                onAssignParking={handleAssignParking}
                 onAssign={handleAssign}
                 defaultRowsPerPage={25}
                 rowsPerPageOptions={[25, 50, 100]}
@@ -443,9 +511,7 @@ const Content = () => {
                   setSelectedGroupId(item.name === 'All' ? undefined : item.id);
                   setPage(0);
                 }}
-                onAddEmpty={() => {
-                  handleAdd();
-                }}
+                onAddEmpty={handleAdd}
               />
             </Grid>
           </Grid>
@@ -476,6 +542,20 @@ const Content = () => {
         open={openAssignDialog}
         onClose={() => setOpenAssignDialog(false)}
         onSubmit={handleSubmitTracking}
+        availableAccounts={availableAccounts}
+        assignedAccounts={assignedAccounts}
+        selectedAvailable={selectedAvailable}
+        selectedAssigned={selectedAssigned}
+        setSelectedAvailable={setSelectedAvailable}
+        setSelectedAssigned={setSelectedAssigned}
+        moveToAssigned={moveToAssigned}
+        moveToUnassigned={moveToUnassigned}
+      />
+
+      <AssignParkingDialog
+        open={openAssignParkingDialog}
+        onClose={() => setOpenAssignParkingDialog(false)}
+        onSubmit={handleSubmitParking}
         availableAccounts={availableAccounts}
         assignedAccounts={assignedAccounts}
         selectedAvailable={selectedAvailable}

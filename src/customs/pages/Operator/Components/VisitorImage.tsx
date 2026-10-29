@@ -381,7 +381,7 @@ const VisitorImage = ({
                 variant="outlined"
                 sx={{
                   width: '100%',
-                  minHeight: 250,
+                  minHeight: '310px',
                   height: 'auto',
                   display: 'flex',
                   alignItems: 'center',

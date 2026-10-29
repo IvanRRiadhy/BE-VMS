@@ -81,87 +81,160 @@
 //   return <Outlet />;
 // }
 
+// import { useEffect } from 'react';
+// import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+
+// import { useAuth } from 'src/customs/contexts/AuthProvider';
+// import { CircularProgress } from '@mui/material';
+
+// export default function AuthRedirector() {
+//   const { loading: authLoading, isAuthenticated, user } = useAuth();
+
+//   const location = useLocation();
+//   const navigate = useNavigate();
+
+//   const roleAccess = user?.group_name;
+
+//   useEffect(() => {
+//     if (authLoading) {
+//       return;
+//     }
+
+//     // Belum login
+//     if (!isAuthenticated) {
+//       if (location.pathname === '/' || location.pathname === '/auth/login') {
+//         navigate('/auth/login', {
+//           replace: true,
+//         });
+//       }
+
+//       return;
+//     }
+
+//     // Sudah login
+//     let redirectPath = '/';
+
+//     switch (roleAccess) {
+//       case 'Admin':
+//         redirectPath = '/admin/dashboard';
+//         break;
+
+//       case 'Manager':
+//         redirectPath = '/manager/dashboard';
+//         break;
+
+//       case 'Employee':
+//         redirectPath = '/employee/dashboard';
+//         break;
+
+//       case 'OperatorVMS':
+//         redirectPath = '/operator/view';
+//         break;
+
+//       case 'OperatorAdmin':
+//         redirectPath = '/operator-admin/dashboard';
+//         break;
+
+//       case 'SecurityMonitor':
+//         redirectPath = '/security-monitor/dashboard';
+//         break;
+
+//       case 'Visitor':
+//         redirectPath = '/guest/dashboard';
+//         break;
+
+//       default:
+//         redirectPath = '/';
+//         break;
+//     }
+
+//     // Kalau user sudah login tetapi masih berada di halaman auth
+//     if (
+//       location.pathname === '/' ||
+//       location.pathname === '/auth/login' ||
+//       location.pathname === '/auth/register' ||
+//       location.pathname === '/auth/forgot-password'
+//     ) {
+//       navigate(redirectPath, {
+//         replace: true,
+//       });
+//     }
+//   }, [authLoading, isAuthenticated, user, roleAccess, location.pathname, navigate]);
+
+//   if (authLoading) {
+//     return (
+//       <div
+//         style={{
+//           display: 'flex',
+//           height: '100vh',
+//           justifyContent: 'center',
+//           alignItems: 'center',
+//         }}
+//       >
+//         <CircularProgress color="primary" size={40} thickness={4} />
+//       </div>
+//     );
+//   }
+
+//   return <Outlet />;
+// }
+
 import { useEffect } from 'react';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { CircularProgress } from '@mui/material';
 
-export default function AuthRedirector() {
-  const { loading: authLoading, isAuthenticated, user } = useAuth();
+const getDashboardPath = (groupName?: string) => {
+  switch (groupName) {
+    case 'Admin':
+      return '/admin/dashboard';
+    case 'Manager':
+      return '/manager/dashboard';
+    case 'Employee':
+      return '/employee/dashboard';
+    case 'OperatorVMS':
+      return '/operator/view';
+    case 'OperatorAdmin':
+      return '/admin/dashboard';
+    case 'SecurityMonitor':
+      return '/security-monitor/dashboard';
+    case 'Visitor':
+      return '/guest/dashboard';
+    default:
+      return null;
+  }
+};
 
+export default function AuthRedirector() {
+  const { loading, isAuthenticated, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const roleAccess = user?.group_name;
-
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    if (loading) return;
 
-    // Belum login
+    const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/forgot-password'];
+
+    const isPublicPath = publicPaths.includes(location.pathname);
+
     if (!isAuthenticated) {
-      if (location.pathname === '/' || location.pathname === '/auth/login') {
-        navigate('/auth/login', {
-          replace: true,
-        });
+      if (location.pathname === '/') {
+        navigate('/auth/login', { replace: true });
       }
-
       return;
     }
 
-    // Sudah login
-    let redirectPath = '/';
+    if (isAuthenticated && isPublicPath) {
+      const dashboardPath = getDashboardPath(user?.group_name);
 
-    switch (roleAccess) {
-      case 'Admin':
-        redirectPath = '/admin/dashboard';
-        break;
-
-      case 'Manager':
-        redirectPath = '/manager/dashboard';
-        break;
-
-      case 'Employee':
-        redirectPath = '/employee/dashboard';
-        break;
-
-      case 'OperatorVMS':
-        redirectPath = '/operator/view';
-        break;
-
-      case 'OperatorAdmin':
-        redirectPath = '/operator-admin/dashboard';
-        break;
-
-      case 'SecurityMonitor':
-        redirectPath = '/security-monitor/dashboard';
-        break;
-
-      case 'Visitor':
-        redirectPath = '/guest/dashboard';
-        break;
-
-      default:
-        redirectPath = '/';
-        break;
+      if (dashboardPath) {
+        navigate(dashboardPath, { replace: true });
+      }
     }
+  }, [loading, isAuthenticated, user?.group_name, location.pathname, navigate]);
 
-    // Kalau user sudah login tetapi masih berada di halaman auth
-    if (
-      location.pathname === '/' ||
-      location.pathname === '/auth/login' ||
-      location.pathname === '/auth/register' ||
-      location.pathname === '/auth/forgot-password'
-    ) {
-      navigate(redirectPath, {
-        replace: true,
-      });
-    }
-  }, [authLoading, isAuthenticated, user, roleAccess, location.pathname, navigate]);
-
-  if (authLoading) {
+  if (loading) {
     return (
       <div
         style={{

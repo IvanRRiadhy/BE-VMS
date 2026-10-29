@@ -32,13 +32,13 @@ const persistConfig = {
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false, // penting untuk redux-pe
+      serializableCheck: false, // penting untuk redux-persist
     }),
 });
-// export const persistor = persistStore(store);
+export const persistor = persistStore(store);
 
 export type AppState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;

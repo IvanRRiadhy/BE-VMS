@@ -24,11 +24,20 @@ import {
   DialogActions,
   useTheme,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Autocomplete,
 } from '@mui/material';
 import { AppDispatch, useDispatch } from 'src/store/Store';
 import { setEvacuationState } from 'src/store/customizer/CustomizerSlice';
 import { useMediaQuery } from '@mui/system';
 import { IconX } from '@tabler/icons-react';
+import { startEvacuate } from 'src/customs/api/Admin/Evacuate';
+import { useSites } from 'src/hooks/Sites/useSites';
+import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
 
 const STORAGE_KEY = 'evac-timer-state';
 
@@ -121,7 +130,22 @@ const evacuatedVisitors = [
     evacuatedArea: 'Assembly Point B',
     timestamp: '2025-07-27 08:50:58',
   },
-  // ... add more
+  {
+    id: 11,
+    name: 'John Doe',
+    cardNumber: '12567890',
+    faceUrl: 'https://randomuser.me/api/portraits/men/31.jpg',
+    evacuatedArea: 'Assembly Point A',
+    timestamp: '2025-07-27 08:51:32',
+  },
+  {
+    id: 12,
+    name: 'Ayu Putri',
+    cardNumber: '87893421',
+    faceUrl: 'https://randomuser.me/api/portraits/women/41.jpg',
+    evacuatedArea: 'Assembly Point B',
+    timestamp: '2025-07-27 08:50:58',
+  },
 ];
 
 const formatTime = (ms: number) => {
@@ -150,6 +174,7 @@ const TimerButton: React.FC = () => {
   const [ms, setMs] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [openConfirm, setOpenConfirm] = useState(false);
+  const { data: sites } = useSites();
 
   // Restore from localStorage
   useEffect(() => {
@@ -207,14 +232,14 @@ const TimerButton: React.FC = () => {
       dispatch(setEvacuationState('finished'));
     }
   };
-  const handleConfirmEvacuate = () => {
-    const now = Date.now();
-    setStartTime(now);
-    setMs(0);
-    setEvacState('running');
-    setOpenConfirm(false);
-    dispatch(setEvacuationState('running'));
-  };
+  // const handleConfirmEvacuate = () => {
+  //   const now = Date.now();
+  //   setStartTime(now);
+  //   setMs(0);
+  //   setEvacState('running');
+  //   setOpenConfirm(false);
+  //   dispatch(setEvacuationState('running'));
+  // };
   const handleCancelEvacuate = () => {
     setOpenConfirm(false);
   };
@@ -229,6 +254,63 @@ const TimerButton: React.FC = () => {
 
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
+  // const [evacuatedVisitors, setEvacuatedVisitors] = useState<any[]>([]);
+
+  const [evacuateForm, setEvacuateForm] = useState({
+    site_id: '',
+    emergency_type: '',
+    initial_notes: '',
+  });
+
+  const [loadingEvacuate, setLoadingEvacuate] = useState(false);
+
+  const handleEvacuateChange = (field: keyof typeof evacuateForm, value: string) => {
+    setEvacuateForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleConfirmEvacuate = async () => {
+    try {
+      setLoadingEvacuate(true);
+
+      const payload = {
+        site_id: evacuateForm.site_id,
+        emergency_type: evacuateForm.emergency_type,
+        initial_notes: evacuateForm.initial_notes,
+      };
+
+      await startEvacuate(payload);
+
+      const now = Date.now();
+
+      setStartTime(now);
+      setMs(0);
+      setEvacState('running');
+      dispatch(setEvacuationState('running'));
+
+      setOpenConfirm(false);
+
+      setEvacuateForm({
+        site_id: '',
+        emergency_type: '',
+        initial_notes: '',
+      });
+
+      // Jika diperlukan, tampilkan notifikasi sukses
+      // enqueueSnackbar('Evacuation alarm triggered successfully', {
+      //   variant: 'success',
+      // });
+    } catch (error) {
+      console.error('Failed to start evacuation:', error);
+
+      // Tampilkan notifikasi error jika menggunakan Snackbar
+    } finally {
+      setLoadingEvacuate(false);
+    }
+  };
 
   return (
     <>
@@ -262,7 +344,7 @@ const TimerButton: React.FC = () => {
         sx={{
           // minWidth: 340,
           maxWidth: lg ? '340' : '100%',
-          minHeight: '80vh',
+          minHeight: '100vh',
           // maxWidth: '100vh',
           overflow: 'hidden',
           p: 3,
@@ -275,7 +357,7 @@ const TimerButton: React.FC = () => {
           // mx: 2,
         }}
       >
-        <CardContent sx={{ width: '100%', textAlign: 'center' }}>
+        <CardContent sx={{ width: '100%', textAlign: 'center', pb: 0 }}>
           <Typography
             variant="h2"
             fontWeight={700}
@@ -299,8 +381,8 @@ const TimerButton: React.FC = () => {
             <Button
               onClick={handleButtonClick}
               sx={{
-                width: 120,
-                height: 120,
+                width: 150,
+                height: 150,
                 borderRadius: '50%',
                 fontSize: 25,
                 fontWeight: 700,
@@ -349,11 +431,15 @@ const TimerButton: React.FC = () => {
           </Stack>
         </CardContent>
         {/* Warning Dialog */}
+
+        {/* Warning Dialog */}
         <Dialog open={openConfirm} onClose={handleCancelEvacuate} fullWidth maxWidth="sm">
-          <DialogTitle>Start Evacuation?
+          <DialogTitle>
+            Start Evacuation?
             <IconButton
               aria-label="close"
               onClick={handleCancelEvacuate}
+              disabled={loadingEvacuate}
               sx={{
                 position: 'absolute',
                 right: 8,
@@ -361,23 +447,87 @@ const TimerButton: React.FC = () => {
                 color: (theme) => theme.palette.grey[500],
               }}
             >
-              <IconX/>
+              <IconX />
             </IconButton>
           </DialogTitle>
+
           <DialogContent dividers>
-            <Typography>
-              Are you sure to set <b>Evacuation</b> Alarm on?
-            </Typography>
+            <Stack spacing={2.5} sx={{ pt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Please provide the details below before starting the evacuation alarm.
+              </Typography>
+
+              {/* Site */}
+              <FormControl fullWidth required>
+                {/* <InputLabel id="evacuate-site-label">Site</InputLabel> */}
+                <Autocomplete
+                  options={sites ?? []}
+                  value={sites?.find((site) => site.id === evacuateForm.site_id) ?? null}
+                  getOptionLabel={(option) => option.name ?? ''}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onChange={(_, newValue) => handleEvacuateChange('site_id', newValue?.id ?? '')}
+                  renderInput={(params) => (
+                    <TextField {...params} label="" placeholder="Select site" required />
+                  )}
+                />
+                {/* <Autocomplete
+                  options={assemblyPoints?.collection ?? []}
+                  getOptionLabel={(option) => option.name ?? ''}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={(params) => <TextField {...params} label="Assembly Point" />}
+                /> */}
+              </FormControl>
+
+              {/* Emergency Type */}
+              <FormControl fullWidth>
+                <InputLabel id="evacuate-type-label">Emergency Type</InputLabel>
+                <Select
+                  labelId="evacuate-type-label"
+                  id="evacuate-type"
+                  value={evacuateForm.emergency_type}
+                  label="Emergency Type"
+                  onChange={(event) => handleEvacuateChange('emergency_type', event.target.value)}
+                >
+                  <MenuItem value="fire alarm">Fire Alarm</MenuItem>
+                  <MenuItem value="earthquake">Earthquake</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Initial Notes */}
+              <TextField
+                label="Initial Notes"
+                placeholder="Enter evacuation details or additional information..."
+                value={evacuateForm.initial_notes}
+                onChange={(event) => handleEvacuateChange('initial_notes', event.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+              />
+            </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCancelEvacuate} variant="outlined" color="error">
+
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={handleCancelEvacuate}
+              variant="outlined"
+              color="inherit"
+              disabled={loadingEvacuate}
+            >
               Cancel
             </Button>
-            <Button onClick={handleConfirmEvacuate} color="error" variant="contained">
-              Yes, Start Evacuation
+
+            <Button
+              onClick={handleConfirmEvacuate}
+              color="error"
+              variant="contained"
+              disabled={loadingEvacuate || !evacuateForm.site_id || !evacuateForm.emergency_type}
+            >
+              {loadingEvacuate ? 'Starting...' : 'Yes, Start Evacuation'}
             </Button>
           </DialogActions>
         </Dialog>
+
         <Box sx={{ mt: 2, width: '100%' }}>
           <List disablePadding sx={{ width: '100%', border: '1px solid #ccc', borderRadius: 2 }}>
             <Box sx={{ mt: 2, width: '100%' }}>
@@ -393,7 +543,7 @@ const TimerButton: React.FC = () => {
                 sx={{
                   boxShadow: 2,
                   borderRadius: 2,
-                  maxHeight: { xs: '100%', lg: '500px' },
+                  maxHeight: { xs: '100%', lg: '630px' },
                   overflow: 'auto',
                 }}
               >
@@ -457,6 +607,7 @@ const TimerButton: React.FC = () => {
           </List>
         </Box>
       </Card>
+      <GlobalBackdropLoading open={loadingEvacuate} />
     </>
   );
 };

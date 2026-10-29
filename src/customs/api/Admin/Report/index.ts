@@ -206,3 +206,15 @@ export const getInvestigateExport = async (payload: any) => {
 
   return response;
 };
+
+// get investigae log by id
+export const getInvestigateLogById = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/investigate/visitors/${id}/log`, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

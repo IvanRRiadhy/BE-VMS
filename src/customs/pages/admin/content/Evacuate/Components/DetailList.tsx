@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -159,12 +159,13 @@ const remainingVisitors = [
 const DetailList: React.FC = () => {
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  // const [remainingVisitors, setRemainingVisitors] = useState<any[]>([]);
 
   return (
     <Card
       sx={{
         maxWidth: lg ? '260' : '100%',
-        minHeight: '80vh',
+        minHeight: '100vh',
         p: 3,
         borderRadius: 4,
         boxShadow: 8,
@@ -210,7 +211,7 @@ const DetailList: React.FC = () => {
               Evacuated
             </Typography>
             <Typography variant="h1" fontWeight={800} color="success.main">
-              {Evacuated}
+              0
             </Typography>
           </Box>
           {/* Confirmed Evacuating */}
@@ -236,7 +237,7 @@ const DetailList: React.FC = () => {
               Confirmed Evacuating
             </Typography>
             <Typography variant="h1" fontWeight={800} color="warning.main">
-              {confirmedEvacuating}
+              {/* {confirmedEvacuating} */}0
             </Typography>
           </Box>
           {/* Not Confirmed */}
@@ -261,7 +262,7 @@ const DetailList: React.FC = () => {
               Not Confirmed
             </Typography>
             <Typography variant="h1" fontWeight={800} color="error.main">
-              {nonConfirmed}
+              {/* {nonConfirmed} */}0
             </Typography>
           </Box>
         </Stack>
@@ -283,7 +284,7 @@ const DetailList: React.FC = () => {
               sx={{
                 boxShadow: 2,
                 borderRadius: 2,
-                maxHeight: { xs: '100%', lg: '500px' },
+                maxHeight: { xs: '100%', lg: '630px' },
                 overflow: 'auto',
               }}
             >

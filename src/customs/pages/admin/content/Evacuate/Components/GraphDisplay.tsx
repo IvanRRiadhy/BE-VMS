@@ -15,9 +15,29 @@ import {
   FormControl,
   InputLabel,
   useTheme,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
-import { useMediaQuery } from '@mui/system';
+import { textAlign, useMediaQuery } from '@mui/system';
+import {
+  IconBuildingCommunity,
+  IconClock,
+  IconFlag,
+  IconHistory,
+  IconHome,
+  IconMapPin,
+  IconPlus,
+  IconUsers,
+  IconX,
+} from '@tabler/icons-react';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import AssemblyPointDialog from './AssemblyPointDialog';
+import HistoryEvacuateDialog from './HistoryEvacuateDialog';
 
 // Dummy data as before...
 const dataMap = {
@@ -226,13 +246,23 @@ const GraphDisplay: React.FC = () => {
   const theme = useTheme();
   const lg = useMediaQuery(theme.breakpoints.up('lg'));
 
+  const [openDialogAssemblyPoint, setOpenDialogAssemblyPoint] = useState(false);
+  const [openHistory, setOpenHistory] = useState(false);
+  const evacuationData = [
+    { name: 'Evacuated', value: 3, color: '#22C55E' },
+    { name: 'Confirmed', value: 0, color: '#F59E0B' },
+    { name: 'Remaining', value: 20, color: '#F04448' },
+  ];
+
+  const totalPeople = evacuationData.reduce((total, item) => total + item.value, 0);
+  const [selectedFloorplan, setSelectedFloorplan] = useState<string | null>(null);
   return (
     <Card
       sx={{
         maxWidth: lg ? '260' : '100%',
-        minHeight: '80vh',
+        minHeight: '100vh',
         // maxHeight: '80vh',
-        p: 2,
+        p: 1,
         borderRadius: 4,
         boxShadow: 8,
         display: 'flex',
@@ -243,329 +273,637 @@ const GraphDisplay: React.FC = () => {
       }}
     >
       <CardContent sx={{ width: '100%', textAlign: 'center', flex: 1 }}>
-        <Typography variant="h6" fontWeight={700} mb={3}>
-          Evacuation Statistics
-        </Typography>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+          height={'100%'}
+        >
+          <Typography variant="h6" fontWeight={700}>
+            Evacuation Statistics
+          </Typography>
+
+          <Box display="flex" gap={1}>
+            <Button
+              variant="contained"
+              startIcon={<IconPlus />}
+              onClick={() => setOpenDialogAssemblyPoint(true)}
+            >
+              Add Assembly Point
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<IconHistory />}
+              onClick={() => setOpenHistory(true)}
+            >
+              History
+            </Button>
+          </Box>
+        </Box>
         <Grid container spacing={2} alignItems="flex-start" sx={{ width: '100%', mb: 2 }}>
-          {/* Pie Chart - Top */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12 }}>
+            {/* Filter, Select, and Legend - Right */}
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* Kiri: Title */}
+                <Box sx={{ flex: 1, minWidth: 180 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: 16, textAlign: 'left' }}>
+                    Evacuation Overview
+                  </Typography>
+                  <Typography sx={{ fontSize: 12, color: 'text.secondary', textAlign: 'left' }}>
+                    Total people and their current evacuation status
+                  </Typography>
+                </Box>
+
+                {/* Kanan: Filters */}
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  flexWrap="wrap"
+                  useFlexGap
+                  sx={{ justifyContent: 'flex-end' }}
+                >
+                  {/* Building */}
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel id="building-label">Building</InputLabel>
+                    <Select
+                      labelId="building-label"
+                      value={selectedBuilding ?? ''}
+                      label="Building"
+                      onChange={(e) => {
+                        setSelectedBuilding(e.target.value || null);
+                        setSelectedFloor(null);
+                        setSelectedArea(null);
+                      }}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap.map((b) => (
+                        <MenuItem key={b.id} value={b.id}>
+                          {b.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {/* Floor */}
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel id="floor-label">Floor</InputLabel>
+                    <Select
+                      labelId="floor-label"
+                      value={selectedFloor ?? ''}
+                      label="Floor"
+                      onChange={(e) => {
+                        setSelectedFloor(e.target.value || null);
+                        setSelectedArea(null);
+                      }}
+                      disabled={!selectedBuilding}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap
+                        .find((b) => b.id === selectedBuilding)
+                        ?.floors.map((f) => (
+                          <MenuItem key={f.id} value={f.id}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+
+                  {/* Area */}
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel id="area-label">Area</InputLabel>
+                    <Select
+                      labelId="area-label"
+                      value={selectedArea ?? ''}
+                      label="Area"
+                      onChange={(e) => setSelectedArea(e.target.value || null)}
+                      disabled={!selectedFloor}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap
+                        .find((b) => b.id === selectedBuilding)
+                        ?.floors.find((f) => f.id === selectedFloor)
+                        ?.areas.map((a) => (
+                          <MenuItem key={a.id} value={a.id}>
+                            {a.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Box>
+            </Grid>
+            <Grid container spacing={2} alignItems="center">
+              {/* Donut Chart */}
+
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: 230,
+                    position: 'relative',
+                  }}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={evacuationData.filter((item) => item.value > 0)}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="68%"
+                        outerRadius="88%"
+                        paddingAngle={2}
+                        stroke="none"
+                      >
+                        {evacuationData
+                          .filter((item) => item.value > 0)
+                          .map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Center Total */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 26, fontWeight: 700, lineHeight: 1.3 }}>
+                      {totalPeople}
+                    </Typography>
+                    <Typography sx={{ fontSize: 12 }}>Total People</Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Evacuation Summary */}
+              <Grid size={{ xs: 12, sm: 7 }}>
+                <Stack spacing={1.5}>
+                  {evacuationData.map((item) => {
+                    const percentage =
+                      totalPeople > 0 ? Math.round((item.value / totalPeople) * 100) : 0;
+
+                    const descriptionMap: Record<string, string> = {
+                      Evacuated: 'Reached assembly point',
+                      Confirmed: 'Manually confirmed',
+                      Remaining: 'Still inside the building',
+                    };
+
+                    return (
+                      <Box
+                        key={item.name}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 3,
+                          bgcolor: 'grey.50',
+                          border: '1px solid',
+                          borderColor: 'grey.100',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 14,
+                            height: 14,
+                            minWidth: 14,
+                            borderRadius: '50%',
+                            bgcolor: item.color,
+                          }}
+                        />
+
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+                            {item.name}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                            {descriptionMap[item.name]}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ textAlign: 'right', minWidth: 40 }}>
+                          <Typography sx={{ fontSize: 16, fontWeight: 700 }}>
+                            {item.value}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12 }}>{percentage}%</Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* People by Assembly Point */}
+        <Box sx={{ width: '100%', mb: 2 }}>
+          {/* Header */}
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
             <Box
               sx={{
-                width: '100%',
-                height: 160,
+                width: 44,
+                height: 44,
+                borderRadius: 3,
+                bgcolor: '#E0F2FE',
+                color: '#0284C7',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={areaPieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    // label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {areaPieData.map((entry, idx) => (
-                      <Cell key={`cell-top-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  {/* Remove Legend from here */}
-                </PieChart>
-              </ResponsiveContainer>
+              <IconMapPin size={24} />
             </Box>
-          </Grid>
-          {/* Filter, Select, and Legend - Right */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: 16, textAlign: 'left' }}>
+                People by Assembly Point
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                Distribution of evacuated people across assembly points
+              </Typography>
+            </Box>
+          </Stack>
+
+          {/* Assembly Point Progress */}
+          <Stack spacing={1.5} sx={{ mb: 2.5 }}>
+            {donutData.map((entry, idx) => {
+              const total = donutData.reduce((sum, item) => sum + item.value, 0);
+              const percentage = total > 0 ? Math.round((entry.value / total) * 100) : 0;
+
+              const colors = ['#1976F3', '#4387F5', '#68A5F8'];
+
+              return (
+                <Stack key={entry.name} direction="row" alignItems="center" spacing={2}>
+                  <Typography
+                    sx={{
+                      width: { xs: 130, sm: 180 },
+                      minWidth: 0,
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {entry.name}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      flex: 1,
+                      height: 28,
+                      p: 0.5,
+                      borderRadius: 2,
+                      bgcolor: '#EDF2F8',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: '100%',
+                        width: `${percentage}%`,
+                        minWidth: entry.value > 0 ? 8 : 0,
+                        borderRadius: 1.5,
+                        bgcolor: colors[idx % colors.length],
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </Box>
+
+                  <Typography
+                    sx={{
+                      width: 20,
+                      textAlign: 'right',
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {entry.value}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      width: 38,
+                      textAlign: 'right',
+                      fontSize: 12,
+                      color: 'text.secondary',
+                    }}
+                  >
+                    {percentage}%
+                  </Typography>
+                </Stack>
+              );
+            })}
+          </Stack>
+
+          {/* Summary Card */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+              p: 2,
+              borderRadius: 4,
+              bgcolor: '#F7F9FC',
+              border: '1px solid #EAF0F7',
+            }}
+          >
+            {/* People at Assembly Points */}
             <Stack
               direction="row"
-              spacing={1}
+              spacing={1.5}
               alignItems="center"
-              justifyContent="flex-start"
-              sx={{ mt: 1, flexWrap: 'wrap' }}
-              gap={1}
-            >
-              {/* Building Dropdown */}
-              <FormControl
-                size="small"
-                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
-              >
-                <InputLabel id="building-label">Building</InputLabel>
-                <Select
-                  labelId="building-label"
-                  value={selectedBuilding ?? ''}
-                  label="Building"
-                  onChange={(e) => {
-                    setSelectedBuilding(e.target.value || null);
-                    setSelectedFloor(null);
-                    setSelectedArea(null);
-                  }}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  {dummyAreaMap.map((b) => (
-                    <MenuItem key={b.id} value={b.id}>
-                      {b.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {/* Floor Dropdown */}
-              <FormControl
-                size="small"
-                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
-              >
-                <InputLabel id="floor-label">Floor</InputLabel>
-                <Select
-                  labelId="floor-label"
-                  value={selectedFloor ?? ''}
-                  label="Floor"
-                  onChange={(e) => {
-                    setSelectedFloor(e.target.value || null);
-                    setSelectedArea(null);
-                  }}
-                  disabled={!selectedBuilding}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  {dummyAreaMap
-                    .find((b) => b.id === selectedBuilding)
-                    ?.floors.map((f) => (
-                      <MenuItem key={f.id} value={f.id}>
-                        {f.name}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-
-              {/* Area Dropdown */}
-              <FormControl
-                size="small"
-                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
-              >
-                <InputLabel id="area-label">Area</InputLabel>
-                <Select
-                  labelId="area-label"
-                  value={selectedArea ?? ''}
-                  label="Area"
-                  onChange={(e) => setSelectedArea(e.target.value || null)}
-                  disabled={!selectedFloor}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  {dummyAreaMap
-                    .find((b) => b.id === selectedBuilding)
-                    ?.floors.find((f) => f.id === selectedFloor)
-                    ?.areas.map((a) => (
-                      <MenuItem key={a.id} value={a.id}>
-                        {a.name}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-            </Stack>
-            <Stack direction="row" spacing={2} mt={3} flexWrap={'wrap'} gap={1}>
-              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
-                <Box sx={{ width: 16, height: 16, bgcolor: '#43a047', borderRadius: '3px' }} />
-                <Typography variant="body2">Evacuated</Typography>
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
-                <Box sx={{ width: 16, height: 16, bgcolor: '#ffca28', borderRadius: '3px' }} />
-                <Typography variant="body2">Confirmed</Typography>
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
-                <Box sx={{ width: 16, height: 16, bgcolor: '#ff5252', borderRadius: '3px' }} />
-                <Typography variant="body2">Not Confirmed</Typography>
-              </Stack>
-            </Stack>
-          </Grid>
-        </Grid>
-        <Box mb={2}>
-          <Typography variant="body2" color="text.secondary" mb={1}>
-            Total Visitor: {areaPieData.reduce((sum, item) => sum + item.value, 0)}
-          </Typography>
-          <Divider />
-        </Box>
-        <Grid container spacing={2} alignItems="flex-start" sx={{ width: '100%', mb: 2 }}>
-          {/* Pie Chart - Middle */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Box
               sx={{
-                width: '100%',
-                height: 160,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
+                p: 0.5,
+                borderRight: { xs: 'none', sm: '1px solid #DCE5F0' },
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="60%"
-                    outerRadius="80%"
-                    // label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {donutData.map((entry, idx) => (
-                      <Cell key={`donut-cell-${idx}`} fill={donutColors[idx]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          </Grid>
-          {/* Filter, Select, and Legend - Right */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Stack spacing={2} alignItems="flex-start" justifyContent="flex-start" sx={{ mt: 1 }}>
-              <ToggleButtonGroup
-                value={middleChartLevel}
-                exclusive
-                onChange={handleMiddleLevelChange}
-                color="primary"
-                size="small"
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  minWidth: 48,
+                  borderRadius: 3,
+                  bgcolor: '#E0F2FE',
+                  color: '#0284C7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <ToggleButton value="organization">Organization</ToggleButton>
-                <ToggleButton value="department">Department</ToggleButton>
-                <ToggleButton value="district">District</ToggleButton>
-              </ToggleButtonGroup>
-              <Box sx={{ mt: 2 }}>
-                <Stack direction="column" spacing={1}>
-                  {donutData.map((entry, idx) => (
-                    <Stack direction="row" alignItems="center" spacing={1} key={entry.name}>
+                <IconUsers size={24} />
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontSize: 20, fontWeight: 700 }}>
+                  {donutData.reduce((sum, item) => sum + item.value, 0)}
+                </Typography>
+                <Typography sx={{ fontSize: 12 }}>People at Assembly Points</Typography>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  (Evacuated + Confirmed)
+                </Typography>
+              </Box>
+            </Stack>
+
+            {/* Assembly Points Used */}
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 0.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  minWidth: 48,
+                  borderRadius: 3,
+                  bgcolor: '#FEE2E2',
+                  color: '#EF4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <IconFlag size={24} />
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontSize: 20, fontWeight: 700 }}>
+                  {donutData.filter((item) => item.value > 0).length}
+                </Typography>
+                <Typography sx={{ fontSize: 12 }}>Assembly Points Used out of</Typography>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  total available
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </Box>
+
+        {/* People Remaining by Area */}
+        <Box sx={{ width: '100%' }}>
+          <Grid container spacing={2} alignItems="flex-start">
+            {/* Left: Header + Area Progress */}
+            <Grid size={{ xs: 12, md: 12 }}>
+              {/* Header */}
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="flex-start"
+                spacing={1}
+                sx={{ mb: 3 }}
+              >
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      minWidth: 44,
+                      borderRadius: 3,
+                      bgcolor: '#F3E8FF',
+                      color: '#9333EA',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <IconBuildingCommunity size={24} />
+                  </Box>
+
+                  <Box>
+                    <Typography
+                      sx={{ fontWeight: 700, fontSize: 16, lineHeight: 1.2, textAlign: 'left' }}
+                    >
+                      People Remaining by Area
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color: 'text.secondary',
+                        lineHeight: 1.4,
+                        textAlign: 'left',
+                        mt: '0.5',
+                      }}
+                    >
+                      Number of people still inside per current location area
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                {/* Filters */}
+                <Stack
+                  direction="row"
+                  flexWrap="wrap"
+                  useFlexGap
+                  gap={1}
+                  justifyContent="flex-end"
+                  sx={{ minWidth: 150 }}
+                >
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel id="remaining-building-label">Building</InputLabel>
+                    <Select
+                      labelId="remaining-building-label"
+                      value={selectedBuilding ?? ''}
+                      label="Building"
+                      onChange={(e) => {
+                        setSelectedBuilding(e.target.value || null);
+                        setSelectedFloor(null);
+                        setSelectedArea(null);
+                      }}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap.map((b) => (
+                        <MenuItem key={b.id} value={b.id}>
+                          {b.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                    <InputLabel id="remaining-floor-label">Floor</InputLabel>
+                    <Select
+                      labelId="remaining-floor-label"
+                      value={selectedFloor ?? ''}
+                      label="Floor"
+                      onChange={(e) => {
+                        setSelectedFloor(e.target.value || null);
+                        setSelectedArea(null);
+                      }}
+                      disabled={!selectedBuilding}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap
+                        .find((b) => b.id === selectedBuilding)
+                        ?.floors.map((f) => (
+                          <MenuItem key={f.id} value={f.id}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel id="remaining-floorplan-label">Floorplan</InputLabel>
+                    <Select
+                      labelId="remaining-floorplan-label"
+                      value={selectedFloorplan ?? ''}
+                      label="Floorplan"
+                      onChange={(e) => setSelectedFloorplan(e.target.value || null)}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {/* Replace with your floorplan options */}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                    <InputLabel id="remaining-area-label">Area</InputLabel>
+                    <Select
+                      labelId="remaining-area-label"
+                      value={selectedArea ?? ''}
+                      label="Area"
+                      onChange={(e) => setSelectedArea(e.target.value || null)}
+                      disabled={!selectedFloor}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {dummyAreaMap
+                        .find((b) => b.id === selectedBuilding)
+                        ?.floors.find((f) => f.id === selectedFloor)
+                        ?.areas.map((a) => (
+                          <MenuItem key={a.id} value={a.id}>
+                            {a.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Stack>
+
+              {/* Area Progress List */}
+              <Stack spacing={1.5}>
+                {pieData.map((item) => {
+                  const maxValue = Math.max(...pieData.map((x) => x.value), 1);
+                  const percentage = (item.value / maxValue) * 100;
+
+                  return (
+                    <Stack key={item.name} direction="row" spacing={1.5} alignItems="center">
+                      <Typography
+                        sx={{
+                          width: 180,
+                          minWidth: 0,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={item.name}
+                      >
+                        {item.name}
+                      </Typography>
+
                       <Box
                         sx={{
-                          width: 16,
-                          height: 16,
-                          bgcolor: donutColors[idx],
-                          borderRadius: '3px',
+                          flex: 1,
+                          minWidth: 35,
+                          height: 28,
+                          p: 0.5,
+                          borderRadius: 2,
+                          bgcolor: '#F0F3F8',
                         }}
-                      />
-                      <Typography variant="body2">{entry.name}</Typography>
+                      >
+                        <Box
+                          sx={{
+                            width: `${percentage}%`,
+                            minWidth: item.value > 0 ? 5 : 0,
+                            height: '100%',
+                            borderRadius: 1.5,
+                            bgcolor: '#EF3038',
+                            transition: 'width 0.3s ease',
+                          }}
+                        />
+                      </Box>
+
+                      <Typography
+                        sx={{
+                          width: 28,
+                          textAlign: 'right',
+                          fontSize: 13,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {item.value}
+                      </Typography>
                     </Stack>
-                  ))}
-                </Stack>
-              </Box>
-            </Stack>
+                  );
+                })}
+              </Stack>
+            </Grid>
           </Grid>
-        </Grid>
-        <Box mb={2}>
-          <Typography variant="body2" color="text.secondary" mb={1}>
-            Total Evacuated Visitor: {donutData.reduce((sum, item) => sum + item.value, 0)}
-          </Typography>
-          <Divider />
-        </Box>
-        <Grid container spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
-          {/* Pie Chart - Bottom */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Box
-              sx={{
-                width: '100%',
-                height: 160,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-              }}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    startAngle={180}
-                    endAngle={0}
-                    cx="50%"
-                    cy="70%"
-                    outerRadius="80%"
-                    innerRadius="70%"
-                    // label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {pieData.map((entry, idx) => (
-                      <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  {/* Remove Legend from here */}
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          </Grid>
-          {/* Filter, Select, and Legend - Right */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Stack spacing={2} alignItems="flex-start" justifyContent="flex-start" sx={{ mt: 1 }}>
-              <ToggleButtonGroup
-                value={bottomChartLevel}
-                exclusive
-                onChange={handleBottomLevelChange}
-                color="primary"
-                size="small"
-              >
-                <ToggleButton value="organization">Organization</ToggleButton>
-                <ToggleButton value="department">Department</ToggleButton>
-                <ToggleButton value="district">District</ToggleButton>
-              </ToggleButtonGroup>
-              <Select
-                size="small"
-                value={bottomSelectedId}
-                onChange={(event: SelectChangeEvent<string>) =>
-                  setBottomSelectedId(event.target.value as string)
-                }
-                sx={{ minWidth: 130 }}
-              >
-                {bottomData.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Box sx={{ mt: 2 }}>
-                {/* Manual Legend */}
-                <Stack direction="row" spacing={2} gap={1} flexWrap={'wrap'}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    marginLeft={'0 !important'}
-                  >
-                    <Box sx={{ width: 16, height: 16, bgcolor: '#43a047', borderRadius: '3px' }} />
-                    <Typography variant="body2">Evacuated</Typography>
-                  </Stack>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    marginLeft={'0 !important'}
-                  >
-                    <Box sx={{ width: 16, height: 16, bgcolor: '#ffca28', borderRadius: '3px' }} />
-                    <Typography variant="body2">Confirmed</Typography>
-                  </Stack>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    marginLeft={'0 !important'}
-                  >
-                    <Box sx={{ width: 16, height: 16, bgcolor: '#ff5252', borderRadius: '3px' }} />
-                    <Typography variant="body2">Not Confirmed</Typography>
-                  </Stack>
-                </Stack>
-              </Box>
-            </Stack>
-          </Grid>
-        </Grid>
-        <Box mt={1}>
-          <Typography variant="body2" color="text.secondary">
-            Total Visitor: {bottomSelected.evacuated + bottomSelected.notConfirm}
-          </Typography>
         </Box>
       </CardContent>
+      <AssemblyPointDialog
+        open={openDialogAssemblyPoint}
+        onClose={() => setOpenDialogAssemblyPoint(false)}
+      />
+
+      <HistoryEvacuateDialog open={openHistory} onClose={() => setOpenHistory(false)} />
     </Card>
   );
 };

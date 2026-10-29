@@ -26,6 +26,8 @@ import {
   IconPrinter,
   IconRun,
   IconBell,
+  IconLink,
+  IconCar,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -350,12 +352,20 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   // },
   // {
   //   id: uniqueId(),
-  //   title: 'evacuate',
-  //   icon: IconRun,
-  //   href: '/admin/evacuate',
-  //   backgroundColor: '#D32F2F',
+  //   title: 'Parking Access',
+  //   icon: IconCar,
+  //   href: '/admin/sso',
   //   color: '#FFFFFF',
   // },
+  {
+    id: uniqueId(),
+    title: 'evacuate',
+    icon: IconRun,
+    href: '/admin/evacuate',
+    backgroundColor: '#D32F2F',
+    color: '#FFFFFF',
+  },
+
   // {
   //   id: uniqueId(),
   //   title: 'Operator View',

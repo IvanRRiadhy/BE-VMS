@@ -36,14 +36,37 @@ export const unassignAccount = async (id: string): Promise<any> => {
 
 // get
 export const getLinkAccountTracking = async (id: string): Promise<any> => {
-  const response = await axiosInstance.get(`/user/${id}/trackingble/account`);
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`/user/${id}/trackingble/account`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // create
 export const createLinkAccountTracking = async (id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/user/${id}/trackingble/assign`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getLinkAccountParking = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/user/${id}/parking/account`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// create
+export const createLinkAccountParking = async (id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/user/${id}/parking/assign`, data);
     return response.data;
   } catch (error) {
     throw error;

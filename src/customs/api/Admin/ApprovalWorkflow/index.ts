@@ -2,8 +2,12 @@ import { start } from 'repl';
 import axiosInstance from 'src/customs/api/interceptor';
 
 export const getAllApprovalWorkflow = async (): Promise<any> => {
-  const response = await axiosInstance.get('/approval-workflow');
-  return response.data;
+  try {
+    const response = await axiosInstance.get('/approval-workflow');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // by id
@@ -31,28 +35,44 @@ export const getApprovalWorkflowByDt = async (
     params['search[value]'] = keyword;
   }
 
-  const response = await axiosInstance.get('/approval-workflow/dt', {
-    params,
-  });
+  try {
+    const response = await axiosInstance.get('/approval-workflow/dt', {
+      params,
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 // create
 export const createApprovalWorkflow = async (data: any): Promise<any> => {
-  const response = await axiosInstance.post('/approval-workflow', data);
-  return response.data;
+  try {
+    const response = await axiosInstance.post('/approval-workflow', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // update
 export const updateApprovalWorkflow = async (id: string, data: any): Promise<any> => {
-  const response = await axiosInstance.put(`/approval-workflow/${id}`, data);
-  return response.data;
+  try {
+    const response = await axiosInstance.put(`/approval-workflow/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // delete
 export const deleteApprovalWorkflow = async (id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/approval-workflow/${id}`);
-  return response.data;
+  try {
+    const response = await axiosInstance.delete(`/approval-workflow/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Get Approval Manager and Employee

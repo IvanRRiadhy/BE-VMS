@@ -87,6 +87,7 @@ type DynamicTableProps<
   isHaveExportCsv?: boolean;
   isHaveAssignTracking?: boolean;
   onAssignTracking?: any;
+  onAssignParking?: any;
   isHaveExportExcel?: boolean;
   isHaveRole?: boolean;
   triggerCheckAll?: boolean;
@@ -158,6 +159,7 @@ type DynamicTableProps<
   onHaveViewAll?: any;
   isHavePdf?: boolean;
   isHaveCard?: boolean;
+  isHaveAssignParking?: boolean;
   isDataVerified?: boolean;
   headerContent?: HeaderContent;
   isHaveHeaderTitle?: boolean;
@@ -304,8 +306,10 @@ function DynamicTableBase<
     isHaveBooleanSwitch = false,
     isHavePermission = false,
     isHaveDataImage = false,
-    isHaveAssignTracking,
+    isHaveAssignTracking = false,
+    isHaveAssignParking = false,
     onAssignTracking,
+    onAssignParking,
     isHaveActionRevoke,
     breadcrumbItems,
     isOperatorSetting = false,
@@ -1903,6 +1907,8 @@ function DynamicTableBase<
                   toggleRow={toggleRow}
                   isHaveAssignTracking={isHaveAssignTracking}
                   onAssignTracking={onAssignTracking}
+                  isHaveAssignParking={isHaveAssignParking}
+                  onAssignParking={onAssignParking}
                   openRow={openRow}
                   page={currentPage}
                   isHaveDataImage={isHaveDataImage}

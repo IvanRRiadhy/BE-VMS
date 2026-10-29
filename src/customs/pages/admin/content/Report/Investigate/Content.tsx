@@ -58,6 +58,8 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { IconDownload } from '@tabler/icons-react';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -251,26 +253,28 @@ const Content = () => {
 
   const isFirstRender = useRef(true);
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+  // useEffect(() => {
+  //   if (isFirstRender.current) {
+  //     isFirstRender.current = false;
+  //     return;
+  //   }
 
-    handleSearch();
-  }, [debouncedSearchValue]);
+  //   handleSearch();
+  // }, [debouncedSearchValue]);
 
-  const handleExport = async () => {
+  const handleExportFiltered = async () => {
     try {
-      setLoading(true);
-
-      const payload = getInvestigatePayload();
+      const payload = {
+        ...getInvestigatePayload(),
+        is_export: true,
+        export_format: 'excel',
+      };
 
       const response = await getInvestigateExport(payload);
 
       const url = window.URL.createObjectURL(response.data);
-
       const link = document.createElement('a');
+
       link.href = url;
       link.download = 'investigate-report.xlsx';
 
@@ -282,9 +286,38 @@ const Content = () => {
 
       showSwal('success', 'Successfully exported report');
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || 'Failed to export report');
-    } finally {
-      setLoading(false);
+      showSwal('error', error?.response?.data?.message ?? 'Failed to export report');
+    }
+  };
+
+  const handleExportSelected = async () => {
+    if (!selectedVisitor) return;
+
+    try {
+      const payload = {
+        ...getInvestigatePayload(),
+        visitor_id: selectedVisitor.visitor_info?.id ?? selectedVisitor.id,
+        is_export: true,
+        export_format: 'excel',
+      };
+
+      const response = await getInvestigateExport(payload);
+
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = 'investigate-visitor.xlsx';
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      showSwal('success', 'Successfully exported visitor');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to export visitor');
     }
   };
 
@@ -336,18 +369,17 @@ const Content = () => {
 
       setVisitorPage(page);
 
-      // Kalau data yang dikembalikan kurang dari 10,
-      // berarti sudah tidak ada data berikutnya.
       setHasMoreVisitors(collection.length === VISITOR_PAGE_SIZE);
-    } catch (error) {
-      console.error('Failed to get investigate visitor:', error);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to get investigate visitor');
     } finally {
-      setLoading(false);
       setLoadingMoreVisitors(false);
+      setLoading(false);
     }
   };
-
+  const [hasSearched, setHasSearched] = useState(false);
   const handleSearch = async () => {
+    setHasSearched(true);
     setVisitorPage(0);
     setHasMoreVisitors(true);
     setSelectedVisitor(null);
@@ -555,7 +587,7 @@ const Content = () => {
                   options={['All Purposes', 'Visitor']}
                 />
                 <Box>
-                  <Typography sx={{ mb: 0.5, fontSize: 13, fontWeight: 500 }}>Employee</Typography>
+                  <Typography sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>Employee</Typography>
                   <Autocomplete
                     fullWidth
                     size="small"
@@ -600,6 +632,20 @@ const Content = () => {
               </Box>
 
               <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1.5}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<IconDownload />}
+                  onClick={handleExportFiltered}
+                  disabled={!hasSearched}
+                  sx={{
+                    textTransform: 'none',
+                    borderColor: '#d8e0eb',
+                    // color: '#536174',
+                  }}
+                >
+                  Export Data
+                </Button>
                 <Button
                   variant="outlined"
                   startIcon={<Refresh />}
@@ -671,9 +717,9 @@ const Content = () => {
                             Search Results
                           </Typography>
 
-                          <Typography fontSize={11} color="text.secondary">
+                          {/* <Typography fontSize={11} color="text.secondary">
                             {visitors.length} visitors
-                          </Typography>
+                          </Typography> */}
                         </Box>
                         <TextField
                           size="small"
@@ -829,17 +875,18 @@ const Content = () => {
                     </Box>
                   </Stack>
                   <Stack direction="row" spacing={1}>
-                    {selectedVisitor && (
+                    {/* {selectedVisitor && (
                       <Button
                         variant="contained"
-                        color="error"
+                        color="success"
                         size="small"
                         startIcon={<Download />}
-                        onClick={handleExport}
+                        onClick={handleExportSelected}
+                        sx={{ textTransform: 'none' }}
                       >
-                        Export Report
+                        Export Excel
                       </Button>
-                    )}
+                    )} */}
 
                     {/* <Button
                       variant="outlined"
@@ -931,7 +978,7 @@ const Content = () => {
                           />
 
                           <InfoRow
-                            label="Company"
+                            label="Organization"
                             value={selectedVisitor?.visitor_info?.company ?? '-'}
                           />
 
@@ -958,6 +1005,16 @@ const Content = () => {
                           <InfoRow
                             label="Current Location"
                             value={selectedVisitor?.visitor_info?.current_location ?? '-'}
+                          />
+
+                          <InfoRow
+                            label="Check In"
+                            value={formatDateTime(selectedVisitor?.visitor_info.checkin_at) ?? '-'}
+                          />
+
+                          <InfoRow
+                            label="Check Out"
+                            value={formatDateTime(selectedVisitor?.visitor_info.checkout_at) ?? '-'}
                           />
 
                           {/* <InfoRow
@@ -989,7 +1046,7 @@ const Content = () => {
                                 label="Parking Area"
                                 value={selectedVisitor?.vehicle_info?.parking_area ?? '-'}
                               />
-
+                              {/* 
                               <InfoRow
                                 label="Check In"
                                 value={selectedVisitor?.vehicle_info?.check_in ?? '-'}
@@ -998,7 +1055,7 @@ const Content = () => {
                               <InfoRow
                                 label="Check Out"
                                 value={selectedVisitor?.vehicle_info?.check_out ?? '-'}
-                              />
+                              /> */}
                             </Box>
 
                             <Box
@@ -1072,13 +1129,15 @@ const Content = () => {
                                 </IconButton>
                               </Box>
 
-                              <Typography fontSize={12} fontWeight={700} mt={0.5}>
-                                {item.time}
+                              <Typography>Time</Typography>
+
+                              <Typography fontSize={13} fontWeight={700} mt={0.5}>
+                                {formatDateTime(item.timestamp)}
                               </Typography>
 
-                              <Typography fontSize={11} color="text.secondary">
+                              {/* <Typography fontSize={11} color="text.secondary">
                                 {item.location || '-'}
-                              </Typography>
+                              </Typography> */}
                             </Box>
                           ))}
                         </Stack>
@@ -1096,15 +1155,15 @@ const Content = () => {
                               Visit Timeline
                             </Typography>
 
-                            <Typography fontSize={14} color="primary" sx={{ cursor: 'pointer' }}>
+                            {/* <Typography fontSize={14} color="primary" sx={{ cursor: 'pointer' }}>
                               View All
-                            </Typography>
+                            </Typography> */}
                           </Stack>
 
                           {selectedVisitor?.visit_timeline?.map((item: any, index: number) => (
                             <TimelineItem
                               key={item.id}
-                              time={item.time}
+                              time={formatDateTime(item.timestamp)}
                               title={item.title}
                               location={item.location || item.subtitle || '-'}
                               active={item.status === 'Completed'}
@@ -1294,7 +1353,7 @@ const FilterField = ({
   type?: 'text' | 'date';
 }) => (
   <Box>
-    <Typography fontSize={11} fontWeight={600} color="#3b4656" mb={0.5}>
+    <Typography fontSize={14} fontWeight={600} color="#3b4656" mb={0.5}>
       {label}
     </Typography>
 
@@ -1340,7 +1399,7 @@ const FilterSelect = ({
   onChange?: (value: string) => void;
 }) => (
   <Box>
-    <Typography fontSize={11} fontWeight={600} color="#3b4656" mb={0.5}>
+    <Typography fontSize={14} fontWeight={600} color="#3b4656" mb={0.5}>
       {label}
     </Typography>
 
@@ -1562,11 +1621,11 @@ const TimelineItem = ({
   <Box
     sx={{
       display: 'grid',
-      gridTemplateColumns: '50px 24px 1fr',
+      gridTemplateColumns: '100px 24px 1fr',
       minHeight: last ? 48 : 60,
     }}
   >
-    <Typography fontSize={13} color="text.secondary" pt={0.2} fontWeight={600}>
+    <Typography fontSize={13} color="text.secondary" pt={0.2} fontWeight={600} width={100}>
       {time}
     </Typography>{' '}
     <Box

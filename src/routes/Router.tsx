@@ -339,7 +339,6 @@ const Router = [
                 ],
               },
 
-              { path: '/auth/login', element: <Login /> },
               { path: '/auth/register', element: <Register /> },
               { path: '/auth/expired', element: <ExpiredPage /> },
               { path: '/auth/limited', element: <LimitedInvitation /> },
@@ -445,10 +444,10 @@ const Router = [
             element: <Parking />,
           },
         ],
-      }, 
+      },
       // Security Monitor/Admin
       {
-        element: <ProtectedRoute allowedRoles={['SecurityMonitor', 'Admin']} />,
+        element: <ProtectedRoute allowedRoles={['SecurityMonitor']} />,
         children: [
           {
             path: '/security-monitor',

@@ -162,7 +162,7 @@ const AssignTrackingDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button variant="contained" onClick={onSubmit}>
+        <Button variant="contained" onClick={onSubmit} color="primary">
           Submit
         </Button>
       </DialogActions>

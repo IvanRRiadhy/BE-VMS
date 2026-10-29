@@ -8,22 +8,70 @@ interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
+// export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+//   const { loading: authLoading, setAuthenticated, logout } = useAuth();
+
+//   const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
+
+//   useEffect(() => {
+//     if (profile) {
+//       setAuthenticated(profile);
+//     }
+
+//     // if (profileError) {
+//     //   logout();
+//     // }
+//   }, [profile, profileError, setAuthenticated, logout]);
+
+//   const loading = authLoading || profileLoading;
+
+//   if (loading) {
+//     return (
+//       <div
+//         style={{
+//           position: 'fixed',
+//           inset: 0,
+//           display: 'flex',
+//           alignItems: 'center',
+//           justifyContent: 'center',
+//           backgroundColor: 'rgba(255,255,255,0.7)',
+//           zIndex: 9999,
+//         }}
+//       >
+//         <CircularProgress color="primary" size={40} thickness={4} />
+//       </div>
+//     );
+//   }
+
+//   // Tidak punya session
+//   // if (profileError || !profile) {
+//   //   return <Navigate to="/auth/login" replace />;
+//   // }
+
+//   // Profile berhasil ditemukan
+//   const currentUser = profile;
+
+//   if (allowedRoles && allowedRoles.length > 0) {
+//     const normalizedRole = currentUser?.group_name?.toUpperCase();
+
+//     const allowedNormalized = allowedRoles.map((role) => role.toUpperCase());
+
+//     const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
+
+//     if (!isAllowed) {
+//       return <Navigate to="/unauthorized" replace />;
+//     }
+//   }
+
+//   return <Outlet />;
+// };
+
+interface ProtectedRouteProps {
+  allowedRoles?: string[];
+}
+
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { loading: authLoading, setAuthenticated, logout } = useAuth();
-
-  const { data: profile, isLoading: profileLoading, isError: profileError } = useProfile(true);
-
-  useEffect(() => {
-    if (profile) {
-      setAuthenticated(profile);
-    }
-
-    if (profileError) {
-      logout();
-    }
-  }, [profile, profileError, setAuthenticated, logout]);
-
-  const loading = authLoading || profileLoading;
+  const { loading, isAuthenticated, user } = useAuth();
 
   if (loading) {
     return (
@@ -43,22 +91,15 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  // Tidak punya session
-  if (profileError || !profile) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // Profile berhasil ditemukan
-  const currentUser = profile;
-
-  if (allowedRoles && allowedRoles.length > 0) {
-    const normalizedRole = currentUser.group_name?.toUpperCase();
-
+  if (allowedRoles?.length) {
+    const normalizedRole = user.group_name?.toUpperCase();
     const allowedNormalized = allowedRoles.map((role) => role.toUpperCase());
 
-    const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
-
-    if (!isAllowed) {
+    if (!normalizedRole || !allowedNormalized.includes(normalizedRole)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
@@ -108,16 +149,14 @@ export const PublicOnlyRoute = () => {
           justifyContent: 'center',
         }}
       >
-        <CircularProgress />
+        <CircularProgress size={40} thickness={4} />
       </Box>
     );
   }
 
-  // Sudah login → jangan boleh masuk halaman login
-  if (isAuthenticated) {
-    return <Navigate to={getDashboardPath(user?.group_name)} replace />;
+  if (isAuthenticated && user) {
+    return <Navigate to={getDashboardPath(user.group_name)} replace />;
   }
 
-  // Belum login → tampilkan halaman login
   return <Outlet />;
 };

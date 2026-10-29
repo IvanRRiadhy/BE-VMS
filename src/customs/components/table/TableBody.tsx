@@ -94,6 +94,8 @@ export const TableBodyContent = ({
   visiblePasswords,
   isHaveAssignTracking,
   onAssignTracking,
+  isHaveAssignParking,
+  onAssignParking,
   isCurrentUsed,
   togglePassword,
   isHavePassword,
@@ -396,6 +398,8 @@ export const TableBodyContent = ({
                 togglePassword,
                 isHaveAssignTracking,
                 onAssignTracking,
+                isHaveAssignParking,
+                onAssignParking,
                 onQrCode,
                 isHaveQrCode,
                 isHavePassword,
@@ -542,6 +546,8 @@ const TableRowItem = React.memo(
       isHaveAddEmpty,
       onAssignTracking,
       isSelectedType,
+      isHaveAssignParking,
+      onAssignParking,
       isHaveQrCode,
       isButtonGiveAccess,
       isButtonRegisteredSite,
@@ -1408,6 +1414,7 @@ const TableRowItem = React.memo(
                         textTransform: 'none',
                         fontSize: '0.875rem',
                         textDecoration: 'underline',
+                        textAlign: 'left',
                       }}
                       // target="_blank"
                     >
@@ -2120,7 +2127,7 @@ const TableRowItem = React.memo(
                       row.group_name === 'Admin' ||
                       row.group_name === 'Operator VMS') &&
                     row.employee_linked && (
-                      <Tooltip title="Unassign Employee" arrow placement="top" >
+                      <Tooltip title="Unassign Employee" arrow placement="top">
                         <Button
                           onClick={() => onUnAssign?.(row)}
                           disableRipple
@@ -2157,6 +2164,27 @@ const TableRowItem = React.memo(
                         }}
                       >
                         Assign Tracking
+                      </Button>
+                    </Tooltip>
+                  )}
+
+                  {isHaveAssignParking && (
+                    <Tooltip title="Assign Parking" arrow placement="top">
+                      <Button
+                        onClick={() => onAssignParking?.(row)}
+                        disableRipple
+                        variant="contained"
+                        // color="secondary"
+                        sx={{
+                          color: 'white',
+                          backgroundColor: 'gray',
+                          // width: 28,
+                          // height: 28,
+                          // p: 0.5,
+                          // borderRadius: '50%',
+                        }}
+                      >
+                        Assign Parking
                       </Button>
                     </Tooltip>
                   )}
