@@ -210,6 +210,9 @@ const ManageReportApproval = Loadable(
 const ManageReportOperatorActivityLog = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/OperatorActivityLog/Content')),
 );
+const ManageReportActivityLog = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/ActivityLog/Content')),
+);
 const ManagePrintBadge = Loadable(
   lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
 );
@@ -519,6 +522,10 @@ const Router = [
           {
             path: '/admin/report/operator-activity-log',
             element: <ManageReportOperatorActivityLog />,
+          },
+          {
+            path: '/admin/report/activity-logs',
+            element: <ManageReportActivityLog />,
           },
           { path: '/profile', element: <DetailProfile /> },
           { path: '/admin/print-badge', element: <ManagePrintBadge /> },

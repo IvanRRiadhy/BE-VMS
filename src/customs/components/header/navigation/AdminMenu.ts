@@ -320,6 +320,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         chipColor: 'secondary',
         href: '/admin/report/investigate',
       },
+      {
+        id: uniqueId(),
+        title: 'Activity Logs',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/activity-logs',
+      },
       // {
       //   id: uniqueId(),
       //   title: 'Invitation',
@@ -643,6 +650,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconReport,
         chipColor: 'secondary',
         href: '/admin/report/investigate',
+      },
+      {
+        id: uniqueId(),
+        title: 'Activity Logs',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/activity-logs',
       },
       // {
       //   id: uniqueId(),

@@ -28,6 +28,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useAssemblyPointPagination } from 'src/hooks/AssemblyPoint/useAssemblyPointPagination';
 import useAssemblyPointMutation from 'src/hooks/AssemblyPoint/useAssemblyPointMutation';
+import { useTranslation } from 'react-i18next';
 
 interface AssemblyPointDialogProps {
   open: boolean;
@@ -71,8 +72,19 @@ const AssemblyPointDialog = ({ open, onClose }: AssemblyPointDialogProps) => {
     searchKeyword: search,
   });
 
-  const assemblyPoints = data?.collection ?? [];
-  const totalRecords = data?.data?.RecordsTotal ?? 0;
+  const assemblyPoints = (data?.collection ?? []).map(
+    ({ site_name, name, code, description, capacity, latitude, longitude, id }) => ({
+      site_name,
+      name,
+      code,
+      description,
+      capacity,
+      latitude,
+      longitude,
+      id,
+    }),
+  );
+  const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.data?.RecordsFiltered ?? 0;
   const { createMutation, updateMutation, deleteMutation } = useAssemblyPointMutation();
   const handleChange = (field: keyof AssemblyPointForm, value: any) => {
@@ -151,16 +163,16 @@ const AssemblyPointDialog = ({ open, onClose }: AssemblyPointDialogProps) => {
     }
   };
 
-  const handleDelete = async (row: any) => {
-    const id = row.id ?? row.assembly_point_id;
+  const { t } = useTranslation();
 
+  const handleDelete = async (id: any) => {
     if (!id) {
       //   setError('Assembly Point ID was not found.');
       showSwal('error', 'Assembly Point ID was not found.');
       return;
     }
 
-    const confirmed = showConfirmDelete('Are you sure to delete this assembly point?');
+    const confirmed = showConfirmDelete(t('confirmDelete', { name: 'Assembly Point' }));
 
     if (!confirmed) return;
 
@@ -213,6 +225,7 @@ const AssemblyPointDialog = ({ open, onClose }: AssemblyPointDialogProps) => {
             onAddData={handleAdd}
             isHaveSearch
             isHavePagination
+            isHaveAction
             defaultRowsPerPage={rowsPerPage}
             totalCount={totalRecords}
             rowsPerPageOptions={[10, 50, 100]}
@@ -263,7 +276,7 @@ const AssemblyPointDialog = ({ open, onClose }: AssemblyPointDialogProps) => {
                   sites.find((site: any) => (site.site_id ?? site.id) === form.site_id) ?? null
                 }
                 onChange={(_, newValue) => {
-                  handleChange('site_id', newValue ? (newValue.id ?? newValue.id) : '');
+                  handleChange('site_id', newValue ? newValue.id ?? newValue.id : '');
                 }}
                 getOptionLabel={(option: any) => option.name ?? option.site_name ?? ''}
                 isOptionEqualToValue={(option: any, value: any) =>
