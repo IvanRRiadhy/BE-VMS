@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -35,9 +35,13 @@ import { AppDispatch, useDispatch } from 'src/store/Store';
 import { setEvacuationState } from 'src/store/customizer/CustomizerSlice';
 import { useMediaQuery } from '@mui/system';
 import { IconX } from '@tabler/icons-react';
-import { startEvacuate } from 'src/customs/api/Admin/Evacuate';
+import { endEvacuate, startEvacuate } from 'src/customs/api/Admin/Evacuate';
 import { useSites } from 'src/hooks/Sites/useSites';
 import GlobalBackdropLoading from '../../../components/GlobalBackdrop';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { useAssemblyPointPagination } from 'src/hooks/AssemblyPoint/useAssemblyPointPagination';
 
 const STORAGE_KEY = 'evac-timer-state';
 
@@ -174,7 +178,22 @@ const TimerButton: React.FC = () => {
   const [ms, setMs] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const { data: sites } = useSites();
+  // const { data: sites } = useSites();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState('');
+  const {
+    data: sites,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useAssemblyPointPagination({
+    page,
+    rowsPerPage,
+    sortDir: 'desc',
+    searchKeyword: search,
+  });
 
   // Restore from localStorage
   useEffect(() => {
@@ -226,10 +245,7 @@ const TimerButton: React.FC = () => {
     if (evacState === 'idle') {
       setOpenConfirm(true);
     } else if (evacState === 'running') {
-      setMs(startTime ? Date.now() - startTime : ms);
-      setStartTime(null);
-      setEvacState('finished');
-      dispatch(setEvacuationState('finished'));
+      setOpenFinishDialog(true);
     }
   };
   // const handleConfirmEvacuate = () => {
@@ -272,22 +288,27 @@ const TimerButton: React.FC = () => {
     }));
   };
 
+  const [evacuateEventId, setEvacuateEventId] = useState<string | null>(null);
+
   const handleConfirmEvacuate = async () => {
     try {
       setLoadingEvacuate(true);
 
       const payload = {
-        site_id: evacuateForm.site_id,
+        ...(evacuateForm.site_id && {
+          site_id: evacuateForm.site_id,
+        }),
         emergency_type: evacuateForm.emergency_type,
         initial_notes: evacuateForm.initial_notes,
       };
 
-      await startEvacuate(payload);
-
+      const response = await startEvacuate(payload);
+      const eventId = response.collection?.event_id;
       const now = Date.now();
 
       setStartTime(now);
       setMs(0);
+      setEvacuateEventId(eventId);
       setEvacState('running');
       dispatch(setEvacuationState('running'));
 
@@ -303,14 +324,77 @@ const TimerButton: React.FC = () => {
       // enqueueSnackbar('Evacuation alarm triggered successfully', {
       //   variant: 'success',
       // });
-    } catch (error) {
-      console.error('Failed to start evacuation:', error);
-
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to start evacuate');
       // Tampilkan notifikasi error jika menggunakan Snackbar
     } finally {
       setLoadingEvacuate(false);
     }
   };
+
+  const [openFinishDialog, setOpenFinishDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [finishForm, setFinishForm] = useState({
+    resolved_by_name: '',
+    emergency_type: '',
+    summary_notes: '',
+  });
+
+  const emergencyTypes = [
+    'Evacuate',
+    'FireAlarm',
+    'Earthquake',
+    'Flood',
+    'GasLeak',
+    'BombThreat',
+    'PowerOutage',
+    'MedicalEmergency',
+    'Drill',
+    'Other',
+  ];
+
+  const handleFinishEvacuation = async () => {
+    // if (!evacuateEventId) {
+    //   showSwal('error', 'Evacuation event ID not found');
+    //   return;
+    // }
+
+    // if (!finishForm.resolved_by_name.trim()) {
+    //   showSwal('warning', 'Please enter the resolved by name');
+    //   return;
+    // }
+
+    try {
+      setIsSubmitting(true);
+
+      const payload = {
+        evacuate_event_id: evacuateEventId,
+        resolved_by_name: finishForm.resolved_by_name,
+        emergency_type: finishForm.emergency_type,
+        summary_notes: finishForm.summary_notes,
+      };
+
+      await endEvacuate(payload);
+
+      setMs(startTime ? Date.now() - startTime : ms);
+      setStartTime(null);
+      setEvacState('finished');
+      dispatch(setEvacuationState('finished'));
+
+      setOpenFinishDialog(false);
+      showSwal('success', 'Evacuation successfully completed');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message ?? 'Failed to complete evacuation');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const selectedSite = useMemo(
+    () => sites?.collection?.find((site) => site.id === evacuateForm.site_id) ?? null,
+    [sites?.collection, evacuateForm.site_id],
+  );
 
   return (
     <>
@@ -459,23 +543,16 @@ const TimerButton: React.FC = () => {
 
               {/* Site */}
               <FormControl fullWidth required>
-                {/* <InputLabel id="evacuate-site-label">Site</InputLabel> */}
                 <Autocomplete
-                  options={sites ?? []}
-                  value={sites?.find((site) => site.id === evacuateForm.site_id) ?? null}
-                  getOptionLabel={(option) => option.name ?? ''}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  onChange={(_, newValue) => handleEvacuateChange('site_id', newValue?.id ?? '')}
-                  renderInput={(params) => (
-                    <TextField {...params} label="" placeholder="Select site" required />
-                  )}
+                  options={sites?.collection ?? []}
+                  value={selectedSite}
+                  getOptionLabel={(option) => option.site_name ?? ''}
+                  isOptionEqualToValue={(option, value) => option.site_id === value.site_id}
+                  onChange={(_, newValue) =>
+                    handleEvacuateChange('site_id', newValue?.site_id ?? '')
+                  }
+                  renderInput={(params) => <TextField {...params} placeholder="Select site" />}
                 />
-                {/* <Autocomplete
-                  options={assemblyPoints?.collection ?? []}
-                  getOptionLabel={(option) => option.name ?? ''}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  renderInput={(params) => <TextField {...params} label="Assembly Point" />}
-                /> */}
               </FormControl>
 
               {/* Emergency Type */}
@@ -488,8 +565,14 @@ const TimerButton: React.FC = () => {
                   label="Emergency Type"
                   onChange={(event) => handleEvacuateChange('emergency_type', event.target.value)}
                 >
-                  <MenuItem value="fire alarm">Fire Alarm</MenuItem>
-                  <MenuItem value="earthquake">Earthquake</MenuItem>
+                  <MenuItem value="FireAlarm">Fire Alarm</MenuItem>
+                  <MenuItem value="Earthquake">Earthquake</MenuItem>
+                  <MenuItem value="Flood">Flood</MenuItem>
+                  <MenuItem value="GasLeak">Gas Leak</MenuItem>
+                  <MenuItem value="BombThreat">Bomb Threat</MenuItem>
+                  <MenuItem value="PowerOutage">Power Outage</MenuItem>
+                  <MenuItem value="MedicalEmergency">Medical Emergency</MenuItem>
+                  <MenuItem value="Drill">Drill</MenuItem>
                   <MenuItem value="other">Other</MenuItem>
                 </Select>
               </FormControl>
@@ -521,7 +604,7 @@ const TimerButton: React.FC = () => {
               onClick={handleConfirmEvacuate}
               color="error"
               variant="contained"
-              disabled={loadingEvacuate || !evacuateForm.site_id || !evacuateForm.emergency_type}
+              disabled={loadingEvacuate}
             >
               {loadingEvacuate ? 'Starting...' : 'Yes, Start Evacuation'}
             </Button>
@@ -606,8 +689,109 @@ const TimerButton: React.FC = () => {
             </Box>
           </List>
         </Box>
+        <Dialog
+          open={openFinishDialog}
+          onClose={() => setOpenFinishDialog(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle sx={{ fontWeight: 700 }}>
+            Complete Evacuation
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenFinishDialog(false)}
+              disabled={loadingEvacuate}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent dividers>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
+                <CustomTextField
+                  fullWidth
+                  placeholder="Enter your name"
+                  value={finishForm.resolved_by_name}
+                  onChange={(e) =>
+                    setFinishForm((prev) => ({
+                      ...prev,
+                      resolved_by_name: e.target.value,
+                    }))
+                  }
+                />
+              </Box>
+
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Type Emergency</CustomFormLabel>
+                <CustomTextField
+                  select
+                  fullWidth
+                  label=""
+                  value={finishForm.emergency_type}
+                  onChange={(e) =>
+                    setFinishForm((prev) => ({
+                      ...prev,
+                      emergency_type: e.target.value,
+                    }))
+                  }
+                  required
+                >
+                  {emergencyTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type.replace(/([A-Z])/g, ' $1').trim()}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              </Box>
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Notes (Optional)</CustomFormLabel>
+                <CustomTextField
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  label="Summary Notes"
+                  placeholder="Enter evacuation summary or notes..."
+                  value={finishForm.summary_notes}
+                  onChange={(e) =>
+                    setFinishForm((prev) => ({
+                      ...prev,
+                      summary_notes: e.target.value,
+                    }))
+                  }
+                />
+              </Box>
+            </Box>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={() => setOpenFinishDialog(false)}
+              color="secondary"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleFinishEvacuation}
+              disabled={isSubmitting || !finishForm.resolved_by_name.trim()}
+            >
+              {isSubmitting ? 'Submitting...' : 'Complete Evacuation'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Card>
-      <GlobalBackdropLoading open={loadingEvacuate} />
+      <GlobalBackdropLoading open={loadingEvacuate || isSubmitting} />
     </>
   );
 };

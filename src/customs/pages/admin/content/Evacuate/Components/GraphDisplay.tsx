@@ -42,25 +42,25 @@ import HistoryEvacuateDialog from './HistoryEvacuateDialog';
 // Dummy data as before...
 const dataMap = {
   organization: [
-    { id: 'org1', name: 'Org Alpha', evacuated: 42, confirmed: 10, notConfirm: 13 },
-    { id: 'org2', name: 'Org Beta', evacuated: 34, confirmed: 5, notConfirm: 20 },
-    { id: 'org3', name: 'Org Gamma', evacuated: 21, confirmed: 8, notConfirm: 27 },
-    { id: 'org4', name: 'Org Delta', evacuated: 29, confirmed: 3, notConfirm: 0 },
-    { id: 'org5', name: 'Org Epsilon', evacuated: 54, confirmed: 12, notConfirm: 8 },
+    { id: 'org1', name: 'Org Alpha', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'org2', name: 'Org Beta', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'org3', name: 'Org Gamma', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'org4', name: 'Org Delta', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'org5', name: 'Org Epsilon', evacuated: 0, confirmed: 0, notConfirm: 0 },
   ],
   department: [
-    { id: 'dep1', name: 'Dept Security', evacuated: 12, confirmed: 5, notConfirm: 0 },
-    { id: 'dep2', name: 'Dept Facilities', evacuated: 7, confirmed: 2, notConfirm: 1 },
-    { id: 'dep3', name: 'Dept HR', evacuated: 16, confirmed: 4, notConfirm: 9 },
-    { id: 'dep4', name: 'Dept IT', evacuated: 22, confirmed: 6, notConfirm: 1 },
-    { id: 'dep5', name: 'Dept Finance', evacuated: 11, confirmed: 3, notConfirm: 5 },
+    { id: 'dep1', name: 'Dept Security', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dep2', name: 'Dept Facilities', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dep3', name: 'Dept HR', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dep4', name: 'Dept IT', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dep5', name: 'Dept Finance', evacuated: 0, confirmed: 0, notConfirm: 0 },
   ],
   district: [
-    { id: 'dist1', name: 'District North', evacuated: 24, confirmed: 8, notConfirm: 0 },
-    { id: 'dist2', name: 'District South', evacuated: 14, confirmed: 3, notConfirm: 13 },
-    { id: 'dist3', name: 'District East', evacuated: 19, confirmed: 5, notConfirm: 0 },
-    { id: 'dist4', name: 'District West', evacuated: 9, confirmed: 2, notConfirm: 17 },
-    { id: 'dist5', name: 'District Central', evacuated: 28, confirmed: 7, notConfirm: 10 },
+    { id: 'dist1', name: 'District North', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dist2', name: 'District South', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dist3', name: 'District East', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dist4', name: 'District West', evacuated: 0, confirmed: 0, notConfirm: 0 },
+    { id: 'dist5', name: 'District Central', evacuated: 0, confirmed: 0, notConfirm: 0 },
   ],
 };
 
@@ -249,9 +249,9 @@ const GraphDisplay: React.FC = () => {
   const [openDialogAssemblyPoint, setOpenDialogAssemblyPoint] = useState(false);
   const [openHistory, setOpenHistory] = useState(false);
   const evacuationData = [
-    { name: 'Evacuated', value: 3, color: '#22C55E' },
+    { name: 'Evacuated', value: 0, color: '#22C55E' },
     { name: 'Confirmed', value: 0, color: '#F59E0B' },
-    { name: 'Remaining', value: 20, color: '#F04448' },
+    { name: 'Remaining', value: 0, color: '#F04448' },
   ];
 
   const totalPeople = evacuationData.reduce((total, item) => total + item.value, 0);
