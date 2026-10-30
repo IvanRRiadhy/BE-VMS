@@ -113,7 +113,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
       host: enabled.visitorType ? (selectedVisitorType?.pre_host_id ?? null) : null,
 
       agenda: enabled.visitorType ? (selectedVisitorType?.pre_agenda ?? null) : null,
-
+      site_id: enabled.visitorType ? (selectedVisitorType?.pre_site_id ?? null) : null,
       visitor_type_id: enabled.visitorType ? (selectedVisitorType?.id ?? null) : null,
       visitor_period_start: enabled.visitStart ? form.visitor_period_start : null,
       visitor_period_end: enabled.visitEnd ? form.visitor_period_end : null,

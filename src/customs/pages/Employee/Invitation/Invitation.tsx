@@ -801,6 +801,10 @@ const Content = () => {
     setDetailVisitor(visitor);
     setDetailDialogOpen(true);
   };
+  const userTimezone = dayjs.tz.guess();
+  const toUtcStart = (date: string) => dayjs.tz(date, userTimezone).utc().format();
+
+  const toUtcEnd = (date: string) => dayjs.tz(date, userTimezone).add(1, 'day').utc().format();
 
   return (
     <>
@@ -836,7 +840,21 @@ const Content = () => {
                 marginTop: '5px',
               }}
             >
-              <VisitorFilterSidebar mdUp={mdUp} />
+              <VisitorFilterSidebar
+                mdUp={mdUp}
+                filters={filters}
+                setFilters={setFilters}
+                onDateRangeChange={(startDate: any, endDate: any) => {
+                  setAppliedFilters((prev: any) => ({
+                    ...prev,
+                    start_date: startDate ? toUtcStart(startDate) : undefined,
+                    end_date: endDate ? toUtcEnd(endDate) : undefined,
+                  }));
+
+                  setSelectedGroupId(null);
+                  setGroupVisitors([]);
+                }}
+              />
 
               <TransactionVisitorList
                 mdUp={mdUp}

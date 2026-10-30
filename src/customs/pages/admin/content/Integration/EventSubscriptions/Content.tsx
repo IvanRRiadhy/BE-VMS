@@ -197,7 +197,7 @@ const Content = () => {
       current.includes(cameraId) ? current.filter((id) => id !== cameraId) : [...current, cameraId],
     );
   };
-
+  const [activeIntegrationId, setActiveIntegrationId] = useState<string>('');
   const { data: integrations = [], isLoading: loadingIntegrations } = useIntegrationList();
 
   const getIntegrationIcon = (name: string) => {
@@ -223,9 +223,15 @@ const Content = () => {
   };
 
   const { data: integrationInstances = [], isLoading: loadingServers } = useIntegrationInstances();
+  const filteredIntegrationInstances = useMemo(() => {
+    if (!integration?.integration_list_id) return [];
 
+    return integrationInstances.filter(
+      (item: any) => item.integration?.integration_list_id === integration.integration_list_id,
+    );
+  }, [integrationInstances, integration]);
   const filteredServers = useMemo(() => {
-    return integrationInstances
+    return filteredIntegrationInstances
       .map((instance: any) => ({
         id: instance.id,
         instance_id: instance.id,
@@ -244,7 +250,7 @@ const Content = () => {
           server.integration_id?.toLowerCase().includes(search)
         );
       });
-  }, [integrationInstances, serverSearch]);
+  }, [filteredIntegrationInstances, serverSearch]);
 
   const [openAddServer, setOpenAddServer] = useState(false);
 

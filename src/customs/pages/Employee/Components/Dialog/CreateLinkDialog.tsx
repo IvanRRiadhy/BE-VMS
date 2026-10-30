@@ -50,8 +50,6 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
-  const { employee } = useEmployees();
-  const { sitesOperator } = useInvitationSite();
   const { visitorType } = useInvitationVisitorType();
 
   const initialEnabledState = {
@@ -101,11 +99,13 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
   };
 
   const buildPayload = () => {
+    const selectedVisitorType = form.visitor_type_id;
     return {
-      host: enabled.host ? (form.host?.id ?? null) : null,
-      agenda: enabled.agenda ? form.agenda : null,
-      visitor_type_id: enabled.visitorType ? (form.visitor_type_id?.id ?? null) : null,
-      site_id: enabled.site ? form.site_id : null,
+      host: enabled.visitorType ? (selectedVisitorType?.pre_host_id ?? null) : null,
+
+      agenda: enabled.visitorType ? (selectedVisitorType?.pre_agenda ?? null) : null,
+      site_id: enabled.visitorType ? (selectedVisitorType?.pre_site_id ?? null) : null,
+      visitor_type_id: enabled.visitorType ? (selectedVisitorType?.id ?? null) : null,
       visitor_period_start: enabled.visitStart ? form.visitor_period_start : null,
       visitor_period_end: enabled.visitEnd ? form.visitor_period_end : null,
       // link_active_at: new Date().toISOString(),
@@ -153,7 +153,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
       </DialogTitle>
       <DialogContent dividers>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Host</CustomFormLabel>
               <Switch
@@ -196,10 +196,10 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                 <CustomTextField {...params} placeholder="Select Site" fullWidth />
               )}
             />
-          </Grid>
+          </Grid> */}
 
           {/* VISITOR TYPE */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 12 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Type</CustomFormLabel>
               <Switch
@@ -225,7 +225,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
               )}
             />
           </Grid>
-
+          {/* 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }} required>
@@ -251,7 +251,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                 }))
               }
             />
-          </Grid>
+          </Grid> */}
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">

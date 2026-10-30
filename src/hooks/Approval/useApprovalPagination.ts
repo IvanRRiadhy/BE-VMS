@@ -49,7 +49,7 @@ export const useApprovalPagination = ({ page, rowsPerPage, search, sortDir, filt
 
     placeholderData: (prev) => prev,
 
-    refetchInterval: 10000,
-    refetchIntervalInBackground: true,
+    // refetchInterval: 10000,
+    // refetchIntervalInBackground: true,
   });
 };

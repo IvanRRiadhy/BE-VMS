@@ -444,6 +444,8 @@ const Content = () => {
       status: selectedType === 'All' ? undefined : statusMap[selectedType],
       ...filters,
       host: selectedHostId || '',
+      start_date: filters.start_date || undefined,
+      end_date: filters.end_date || undefined,
     });
 
     setSelectedGroupId(null);
@@ -612,6 +614,11 @@ const Content = () => {
     setGroupVisitors([]);
   }, [selectedHostId]);
 
+  const userTimezone = dayjs.tz.guess();
+  const toUtcStart = (date: string) => dayjs.tz(date, userTimezone).utc().format();
+
+  const toUtcEnd = (date: string) => dayjs.tz(date, userTimezone).add(1, 'day').utc().format();
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -653,6 +660,18 @@ const Content = () => {
               mdUp={mdUp}
               selectedHostId={selectedHostId}
               onHostChange={setSelectedHostId}
+              filters={filters}
+              setFilters={setFilters}
+              onDateRangeChange={(startDate: any, endDate: any) => {
+                setAppliedFilters((prev: any) => ({
+                  ...prev,
+                  start_date: startDate ? toUtcStart(startDate) : undefined,
+                  end_date: endDate ? toUtcEnd(endDate) : undefined,
+                }));
+
+                setSelectedGroupId(null);
+                setGroupVisitors([]);
+              }}
             />
 
             <TransactionVisitorList

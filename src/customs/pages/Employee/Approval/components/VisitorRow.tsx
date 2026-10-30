@@ -45,6 +45,7 @@ function VisitorRow({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 1,
+            width: '100%',
             fontSize: '13px',
           }}
         >
