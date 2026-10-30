@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
-import { IconFileSpreadsheet, IconPdf } from '@tabler/icons-react';
+import { IconFileExport, IconFileSpreadsheet, IconFileTypePdf, IconPdf } from '@tabler/icons-react';
 
 interface GroupVisitorTableProps {
   selectedGroupId: number | string | null;
@@ -85,11 +85,15 @@ const GroupVisitorTable = ({
                         <Button
                           variant="contained"
                           color="error"
+                          startIcon={<IconFileTypePdf size={16} />}
+                          sx={{ height: 36 }}
                           onClick={() =>
                             exportVisitorPdf(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                           }
                         >
-                          <IconPdf />
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Export PDF
+                          </Typography>
                         </Button>
                       </Tooltip>
 
@@ -97,11 +101,15 @@ const GroupVisitorTable = ({
                         <Button
                           variant="contained"
                           color="success"
+                          startIcon={<IconFileExport size={16} />}
+                          sx={{ height: 36 }}
                           onClick={() =>
                             exportVisitorExcel(groupHeader?.group_name ?? 'Visitors', groupVisitors)
                           }
                         >
-                          <IconFileSpreadsheet />
+                          <Typography variant="caption" fontSize={'0.7rem'}>
+                            Export Excel
+                          </Typography>
                         </Button>
                       </Tooltip>
                     </Box>
