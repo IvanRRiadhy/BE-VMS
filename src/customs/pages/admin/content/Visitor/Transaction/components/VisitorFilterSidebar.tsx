@@ -21,9 +21,11 @@ import { useDebounce } from 'src/hooks/useDebounce';
 
 interface VisitorFilterSidebarProps {
   mdUp: boolean;
+  selectedHostId: string;
+  onHostChange: (id: string) => void;
 }
 
-const VisitorFilterSidebar = ({ mdUp }: VisitorFilterSidebarProps) => {
+const VisitorFilterSidebar = ({ mdUp, selectedHostId, onHostChange }: VisitorFilterSidebarProps) => {
   const { visitorType = [] } = useInvitationVisitorType();
   const [searchEmployee, setSearchEmployee] = useState('');
 
@@ -183,7 +185,16 @@ const VisitorFilterSidebar = ({ mdUp }: VisitorFilterSidebarProps) => {
                       fontSize: 14,
                     },
                   }}
-                  control={<Checkbox size="small" sx={{ p: 0.4 }} />}
+                  control={
+                    <Checkbox
+                      size="small"
+                      sx={{ p: 0.4 }}
+                      checked={selectedHostId === item.id}
+                      onChange={(e) => {
+                        onHostChange(e.target.checked ? item.id : '');
+                      }}
+                    />
+                  }
                   label={item.name}
                 />
               </Box>

@@ -28,11 +28,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import {
-  IconLink,
-  IconUserPlus,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconLink, IconUserPlus, IconUsers } from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -432,15 +428,26 @@ const Content = () => {
     setSelectedType('All');
   };
 
+  // const handleApplyFilter = () => {
+  //   setAppliedFilters({
+  //     status: selectedType === 'All' ? undefined : statusMap[selectedType],
+  //     ...filters,
+  //   });
+
+  //   setSelectedGroupId(null);
+  //   setGroupVisitors([]);
+  //   // setShowDrawerFilterMore(false);
+  // };
+
   const handleApplyFilter = () => {
     setAppliedFilters({
       status: selectedType === 'All' ? undefined : statusMap[selectedType],
       ...filters,
+      host: selectedHostId || '',
     });
 
     setSelectedGroupId(null);
     setGroupVisitors([]);
-    // setShowDrawerFilterMore(false);
   };
 
   const handleSelectSite = (site: any) => {
@@ -593,6 +600,17 @@ const Content = () => {
   };
 
   const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [selectedHostId, setSelectedHostId] = useState('');
+
+  useEffect(() => {
+    setAppliedFilters((prev: any) => ({
+      ...prev,
+      host: selectedHostId,
+    }));
+
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+  }, [selectedHostId]);
 
   return (
     <PageContainer
@@ -631,7 +649,11 @@ const Content = () => {
               marginTop: '5px',
             }}
           >
-            <VisitorFilterSidebar mdUp={mdUp} />
+            <VisitorFilterSidebar
+              mdUp={mdUp}
+              selectedHostId={selectedHostId}
+              onHostChange={setSelectedHostId}
+            />
 
             <TransactionVisitorList
               mdUp={mdUp}

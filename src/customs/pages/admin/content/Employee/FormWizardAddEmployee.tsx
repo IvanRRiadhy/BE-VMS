@@ -420,8 +420,8 @@ const FormWizardAddEmployee = ({
   const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
     ...v,
     organization_id: String(v.organization_id ?? ''),
-    department_id: String(v.department_id ?? ''),
-    district_id: String(v.district_id ?? ''),
+    department_id: v.department_id ?? null,
+    district_id: v.district_id ?? null,
     type: String(v.type ?? 'Permanent'),
   });
 

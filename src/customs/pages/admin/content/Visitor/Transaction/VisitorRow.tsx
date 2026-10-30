@@ -126,7 +126,7 @@ function VisitorRow({
               display: 'inline-block',
               px: 1.5,
               py: 0.8,
-              width: '100%',
+              width: '100px',
               borderRadius: 2,
               textAlign: 'center',
               color: '#fff',
