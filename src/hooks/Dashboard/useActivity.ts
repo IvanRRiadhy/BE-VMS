@@ -31,6 +31,11 @@ export const useActivities = ({ start_date, end_date }: ActivitiesParams) => {
     // retry: false,
 
     // refetchInterval: 10000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    // refetchOnReconnect: false,
+
+    retry: false,
 
     select: (data) => ({
       ...data,

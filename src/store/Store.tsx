@@ -5,7 +5,7 @@ import userReducer from './apps/user/userSlice';
 import storage from 'redux-persist/lib/storage';
 import { persistReducer, persistStore } from 'redux-persist';
 import notificationReducer from './apps/notifications/NotificationSlice';
-
+import { clearUser } from './apps/user/userSlice';
 import { combineReducers } from 'redux';
 import {
   useDispatch as useAppDispatch,

@@ -154,7 +154,7 @@ const Content = () => {
       return res.collection ?? [];
     },
     enabled: !!selectedEmployeeId,
-    retry: 1,
+    // retry: 1,
   });
 
   const handleCloseEmployeeDialog = () => {
@@ -350,13 +350,13 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
-    // {
-    //   title: t('shareLink'),
-    //   icon: IconLink,
-    //   subTitle: iconAdd,
-    //   subTitleSetting: 'image',
-    //   color: 'none',
-    // },
+    {
+      title: t('shareLink'),
+      icon: IconLink,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
     // {
     //   title: t('quickAccess'),
     //   icon: IconBolt,
@@ -450,28 +450,16 @@ const Content = () => {
   const { deleteMutation, createMutation, sendEmailMutation } = useShareLinkMutation();
 
   useEffect(() => {
-    const fetchSecondaryData = async () => {
-      const [employeeResult, siteResult] = await Promise.allSettled([
-        getInvitationVisitorEmployee(),
-        getInvitationSite(),
-      ]);
-
-      if (employeeResult.status === 'fulfilled') {
-        setEmployee(employeeResult.value?.collection ?? []);
-      } else {
-        console.error('Error fetching employee:', employeeResult.reason);
-        setEmployee([]);
-      }
-
-      if (siteResult.status === 'fulfilled') {
-        setSites(siteResult.value?.collection ?? []);
-      } else {
-        console.error('Error fetching site:', siteResult.reason);
+    const fetchSites = async () => {
+      try {
+        const result = await getInvitationSite();
+        setSites(result?.collection ?? []);
+      } catch (error) {
         setSites([]);
       }
     };
 
-    fetchSecondaryData();
+    fetchSites();
   }, []);
 
   const handleDeleteLink = async (id: string) => {
@@ -827,12 +815,11 @@ const Content = () => {
                   if (index === 1) {
                     // setFlowTarget('preReg');
                     handleAddInvitation();
-                  // } else if (index === 2) {
-                  //   setOpenDetailShareLink(true);
-                  // } else if (index === 3) {
-                  //   setOpenQuickAccess(true);
-                  // }else {
-
+                  } else if (index === 2) {
+                    setOpenDetailShareLink(true);
+                    //  } else if (index === 3) {
+                    // /   setOpenQuickAccess(true);
+                    // }else {
                   }
                 }}
                 size={{ xs: 12, lg: 4 }}
@@ -942,7 +929,7 @@ const Content = () => {
         handleSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={allVisitorEmployee}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
         search={setSearchHost}
@@ -962,7 +949,7 @@ const Content = () => {
         onSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={allVisitorEmployee}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
         search={setSearchHost}
@@ -1082,6 +1069,7 @@ const Content = () => {
         setFilters={setFilters}
         onApply={handleApplyFilter}
         onResetFilter={handleResetFilter}
+        sites={sites}
       />
       <GlobalBackdropLoading
         open={

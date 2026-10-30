@@ -2,6 +2,8 @@ import axios, { AxiosInstance } from 'axios';
 
 import { getConfig } from 'src/config';
 import { refreshToken } from './users';
+import store from 'src/store/Store';
+import { clearUser } from 'src/store/apps/user/userSlice';
 
 export let BASE_URL = '';
 
@@ -38,12 +40,17 @@ let isHandling401 = false;
 
 const handleUnauthorized = () => {
   if (isHandling401) return;
-
   isHandling401 = true;
-
+  // Bersihkan data user dari redux & storage agar ProtectedRoute tidak menganggap masih login
+  store.dispatch(clearUser());
   clearTokenCallback?.();
-
-  window.location.replace('/auth/login');
+  // Hanya redirect jika tidak sedang di halaman login/auth
+  if (!window.location.pathname.startsWith('/auth/login')) {
+    window.location.replace('/auth/login');
+  }
+  setTimeout(() => {
+    isHandling401 = false;
+  }, 1000);
 };
 
 let isRefreshing = false;
@@ -58,6 +65,7 @@ const doRefreshToken = async () => {
       refreshPromise = null;
     });
   }
+  return refreshPromise;
 };
 
 const responseInterceptor = (response: any) => response;
@@ -81,32 +89,36 @@ const errorInterceptor = async (error: any) => {
       },
     });
   }
-  // if (
-  //   status === 401 &&
-  //   originalRequest &&
-  //   !originalRequest._retry &&
-  //   !originalRequest.url?.includes('/_Auth/RefreshToken')
-  // ) {
-  //   originalRequest._retry = true;
 
-  //   try {
-  //     await doRefreshToken();
-  //     return axiosInstance(originalRequest);
-  //   } catch (refreshError) {
-  //     return Promise.reject(refreshError);
-  //   }
-  // }
+  const url = error.config?.url ?? '';
+  const isAuthEndpoint =
+    url.includes('/_Auth/Login') ||
+    url.includes('/_Auth/RequestToken') ||
+    url.includes('/_Auth/RefreshToken');
 
-  // if (status === 401) {
-  //   const url = originalRequest?.url ?? '';
+  if (status === 401) {
+    // Jika endpoint auth itu sendiri yang 401, langsung logout / reject tanpa coba refresh lagi
+    if (isAuthEndpoint) {
+      if (url.includes('/_Auth/RefreshToken')) {
+        handleUnauthorized();
+      }
+      return Promise.reject(error);
+    }
 
-  //   const isLoginRequest = url.includes('/_Auth/Login') || url.includes('/_Auth/RefreshToken');
-
-  //   if (!isLoginRequest) {
-  //     handleUnauthorized();
-  //   }
-  // }
-
+    if (!originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        await doRefreshToken();
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        handleUnauthorized();
+        return Promise.reject(refreshError);
+      }
+    } else {
+      handleUnauthorized();
+      return Promise.reject(error);
+    }
+  }
   if (status === 403) {
     return Promise.reject(error);
   }

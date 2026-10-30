@@ -25,6 +25,7 @@ type FilterMoreContentProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApply: () => void;
   onResetFilter: () => void;
+  sites?: any;
 };
 
 const FilterTransaction: React.FC<FilterMoreContentProps> = ({
@@ -34,6 +35,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
   setFilters,
   onApply,
   onResetFilter,
+  sites
 }) => {
   const statusMap: Record<string, string> = {
     All: 'All',
@@ -51,7 +53,7 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
     Employee: 'Employee',
   };
 
-  const { data: sites = [] } = useSites();
+  // const { data: sites = [] } = useSites();
   return (
     <Drawer
       anchor="right"
