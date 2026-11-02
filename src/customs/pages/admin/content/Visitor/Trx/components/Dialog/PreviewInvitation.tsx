@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import { ArrowBack, CheckCircleOutline } from '@mui/icons-material';
 import { IconX } from '@tabler/icons-react';
-
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
@@ -26,6 +25,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import timezone from 'dayjs/plugin/timezone';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -186,7 +186,7 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
   const visitors = getVisitors(payload);
 
   const isGroup = Boolean(payload?.is_group) || Array.isArray(payload?.list_group);
-
+  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
@@ -198,10 +198,10 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
       <DialogTitle>
         <Box>
           <Typography variant="h6" fontWeight={700}>
-            Preview Invitation
+            {t('previewInvitation')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Review the visitor information before submitting.
+            {t('reviewVisitorInformationBeforeSubmitting')}
           </Typography>
         </Box>
         <IconButton
@@ -225,51 +225,6 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
           <Typography color="text.secondary">No visitor information to preview.</Typography>
         ) : (
           <Stack spacing={2.5}>
-            {/* <Paper variant="outlined" sx={{ p: 2 }}>
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1.5}
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                justifyContent="space-between"
-              >
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Submission type
-                  </Typography>
-                  <Typography fontWeight={600}>{flow}</Typography>
-                </Box>
-
-                <Stack direction="row" spacing={1}>
-                  <Chip label={isGroup ? 'Group visitor' : 'Single visitor'} variant="outlined" />
-                  <Chip
-                    label={`${visitors.length} visitor${visitors.length === 1 ? '' : 's'}`}
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Stack>
-              </Stack>
-
-              {groups.map((group: any, index: number) => (
-                <Box key={group.group_code ?? index} sx={{ mt: 1.5 }}>
-                  {group.group_name && (
-                    <Typography variant="body2">
-                      <strong>Group:</strong> {group.group_name}
-                    </Typography>
-                  )}
-                  {group.group_code && (
-                    <Typography variant="body2">
-                      <strong>Group code:</strong> {group.group_code}
-                    </Typography>
-                  )}
-                  {group.registered_site && (
-                    <Typography variant="body2">
-                      <strong>Registered site:</strong> {displayValue(group.registered_site)}
-                    </Typography>
-                  )}
-                </Box>
-              ))}
-            </Paper> */}
-
             {visitors.map((visitor: any, visitorIndex: number) => (
               <Paper
                 key={`${visitor._groupCode ?? 'visitor'}-${visitorIndex}`}
@@ -277,10 +232,7 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
                 sx={{ overflow: 'hidden' }}
               >
                 <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
-                  <Typography fontWeight={700}>
-                
-                      {`Visitor ${visitorIndex + 1}`}
-                  </Typography>
+                  <Typography fontWeight={700}>{`Visitor ${visitorIndex + 1}`}</Typography>
                 </Box>
 
                 <Box sx={{ p: { xs: 1.5, sm: 2 } }}>

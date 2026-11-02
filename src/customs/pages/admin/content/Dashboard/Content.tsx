@@ -33,7 +33,6 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import dayjs from 'dayjs';
 import { useProfile } from 'src/hooks/Profile/useProfile';
-import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 const Content = () => {

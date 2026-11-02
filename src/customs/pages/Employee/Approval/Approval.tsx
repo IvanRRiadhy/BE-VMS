@@ -76,7 +76,7 @@ const Approval = () => {
       approve: 0,
       reject: 0,
       pending: 0,
-    }; 
+    };
 
     approvalData.forEach((item: any) => {
       const status = item.approval_status;
@@ -126,18 +126,24 @@ const Approval = () => {
 
   const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
 
-  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+  const handleActionApproval = async (
+    id: string,
+    action: 'Approve' | 'Reject',
+    isFinal = false,
+  ) => {
     try {
-      if (action === 'Reject') {
+      if (action === 'Reject' || isFinal) {
         const confirm = await Swal.fire({
-          title: 'Reject Approval?',
-          text: 'Do you want to reject this approval?',
+          title: isFinal ? 'Final Approval' : 'Approval',
+          text: isFinal
+            ? 'Do you want to approve this final approval?'
+            : 'Do you want to reject this approval?',
           icon: 'warning',
           reverseButtons: true,
           showCancelButton: true,
-          confirmButtonText: 'Reject',
+          confirmButtonText: isFinal ? 'Approve' : 'Reject',
           cancelButtonText: 'Cancel',
-          confirmButtonColor: '#f44336',
+          confirmButtonColor: isFinal ? '#2e7d32' : '#f44336',
           customClass: {
             title: 'swal2-title-custom',
             htmlContainer: 'swal2-text-custom',
@@ -146,14 +152,11 @@ const Approval = () => {
 
         if (!confirm.isConfirmed) return;
       }
-      // await createApproval(token, { action }, id);
+
       if (action === 'Approve') await approveMutation.mutateAsync(id);
       if (action === 'Reject') await rejectMutation.mutateAsync(id);
 
-      showSwal(
-        'success',
-        `Data Approval ${action === 'Approve' ? 'approved' : 'denied'} successfully.`,
-      );
+      showSwal('success', `Successfully ${action === 'Approve' ? 'approve' : 'reject'} approval. `);
 
       setOpenDialog(false);
     } catch (error: any) {
@@ -163,10 +166,6 @@ const Approval = () => {
 
   const handleApproveMeetingHost = async (id: string) => {
     try {
-      const payload = {
-        list_trx_visitor_id: selectedRows.map((item: any) => item.id),
-      };
-
       const response = await approveMeetingHostMutation.mutateAsync({
         id,
         payload: {
@@ -174,7 +173,7 @@ const Approval = () => {
         },
       });
       const res = await handleActionApproval(id, 'Approve');
-      showSwal('success', response?.msg || 'Approve meeting host successfully.');
+      showSwal('success', response?.msg || 'Successfully approve meeting host.');
 
       setSelectedRows([]);
     } catch (error: any) {
@@ -265,7 +264,16 @@ const Approval = () => {
 
     try {
       const res = await getVisitorTransactionByIds(group.entity_id);
+      const visitors = res.collection ?? [];
 
+      // Jika terdapat visitor dengan is_final = true,
+      // langsung approve tanpa membuka dialog
+      const isFinal = visitors.some((item: any) => item.is_final === true);
+
+      if (isFinal) {
+        await handleActionApproval(group.approval_ticket_id, 'Approve');
+        return;
+      }
       setGroupHeader(res.collection[0]);
       setGroupVisitors(res.collection);
 
@@ -303,9 +311,19 @@ const Approval = () => {
       ...empty,
     });
 
-    //  setSearch('');
-    //  setSelectedType('All');
     setPage(0);
+  };
+
+  const handleReject = async (id: string) => {
+    await handleActionApproval(id, 'Reject');
+    await fetchGroupDetail();
+    setOpenDialog(false);
+  };
+
+  const handleApprove = async (id: string) => {
+    await handleApproveMeetingHost(id);
+    await fetchGroupDetail();
+    setOpenDialog(false);
   };
 
   return (
@@ -387,16 +405,8 @@ const Approval = () => {
         setSelectedRows={setSelectedRows}
         triggerCheckAll={triggerCheckAll}
         selectedId={selectedId ?? undefined}
-        onReject={async (id) => {
-          await handleActionApproval(id, 'Reject');
-          await fetchGroupDetail();
-          setOpenDialog(false);
-        }}
-        onApprove={async (id) => {
-          await handleApproveMeetingHost(id);
-          await fetchGroupDetail();
-          setOpenDialog(false);
-        }}
+        onReject={handleReject}
+        onApprove={handleApprove}
       />
       <GlobalBackdropLoading
         open={

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Box,
@@ -41,15 +41,12 @@ import {
 } from 'src/customs/api/Admin/Integration';
 import {
   IconCamera,
-  IconChartBar,
   IconParking,
   IconPlug,
-  IconShield,
   IconShieldFilled,
   IconSquareCheckFilled,
   IconUsers,
   IconVideo,
-  IconX,
 } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddServerDialog from './components/AddServerDialog';

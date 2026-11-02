@@ -11,6 +11,7 @@ import {
   IconButton,
   FormControl,
   RadioGroup,
+  Paper,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
@@ -22,6 +23,8 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import timezone from 'dayjs/plugin/timezone';
 import { IconX } from '@tabler/icons-react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { Stack } from '@mui/system';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -41,6 +44,8 @@ const PreviewDialog = ({
   sites,
   employee,
   invitation,
+  isGroup = false,
+  groupVisitors = [],
 }: any) => {
   const sections = invitationData?.question_page ?? [];
 
@@ -50,32 +55,70 @@ const PreviewDialog = ({
     return dayjs.utc(value).local().format('dddd, DD MMMM YYYY, HH:mm');
   };
 
-  const resolveValue = (f: any) => {
+  // const resolveValue = (f: any) => {
+  //   const raw = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
+  //   if (!raw) return null;
+  //   // HOST
+  //   if (f.remarks === 'host') {
+  //     const host = invitation?.host || employee?.find((e: any) => e.id === raw);
+
+  //     return host?.name || raw;
+  //   }
+  //   // SITE
+  //   if (f.remarks === 'site_place') {
+  //     const site = invitation?.site || sites?.find((s: any) => s.id === raw);
+  //     return site?.name || raw;
+  //   }
+  //   // RADIO / DROPDOWN
+  //   if (f.multiple_option_fields?.length) {
+  //     const opt = f.multiple_option_fields.find((o: any) => String(o.value) === String(raw));
+
+  //     return opt?.name || raw;
+  //   }
+  //   return raw;
+  // };
+
+  const resolveValue = (f: any, visitor: any) => {
     const raw = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
-    if (!raw) return null;
-    // HOST
+
+    if (raw == null || raw === '') return null;
+
     if (f.remarks === 'host') {
-      const host = invitation?.host || employee?.find((e: any) => e.id === raw);
+      const host =
+        visitor?.host_data || invitation?.host || employee?.find((e: any) => e.id === raw);
 
       return host?.name || raw;
     }
-    // SITE
+
     if (f.remarks === 'site_place') {
-      const site = invitation?.site || sites?.find((s: any) => s.id === raw);
+      const site = visitor?.site || invitation?.site || sites?.find((s: any) => s.id === raw);
+
       return site?.name || raw;
     }
-    // RADIO / DROPDOWN
+
     if (f.multiple_option_fields?.length) {
       const opt = f.multiple_option_fields.find((o: any) => String(o.value) === String(raw));
 
       return opt?.name || raw;
     }
+
     return raw;
   };
+
+  // const visitors = isGroup ? (invitationData?.data_visitor ?? []) : [invitationData];
+  const visitors = isGroup ? groupVisitors : [invitationData];
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Preview Invitation
+        <Box>
+          <Typography variant="h6" fontWeight={700}>
+            {t('previewInvitation')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('reviewVisitorInformationBeforeSubmitting')}
+          </Typography>
+        </Box>
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -90,7 +133,7 @@ const PreviewDialog = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
+      {/* <DialogContent dividers>
         {sections.map((section: any, sIdx: number) => (
           <Box key={sIdx} mb={3}>
             <Typography variant="h6" gutterBottom>
@@ -176,8 +219,134 @@ const PreviewDialog = ({
             </Grid>
           </Box>
         ))}
-      </DialogContent>
+      </DialogContent> */}
+      <DialogContent dividers>
+        <Stack spacing={2.5}>
+          {visitors.map((visitor: any, visitorIdx: number) => {
+            const sections = visitor?.question_page ?? [];
 
+            return (
+              <Paper key={visitorIdx} variant="outlined">
+                {/* Visitor Header */}
+                {isGroup && (
+                  <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Visitor {visitorIdx + 1}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* {sections.map((section: any, sIdx: number) => (
+                  <Box key={sIdx} mb={1} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      {section.name}
+                    </Typography>
+
+                    <Divider sx={{ mb: 2 }} />
+
+                    <Grid container spacing={2}> */}
+
+                {sections.map((section: any, sIdx: number) => (
+                  <Box key={sIdx} mb={1} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      {section.name}
+                    </Typography>
+
+                    <Divider sx={{ mb: 2 }} />
+
+                    <Grid container spacing={2}>
+                      {section.form.map((f: any, idx: number) => {
+                        let value = resolveValue(f, visitor);
+
+                        if (f.remarks === 'host') {
+                          value = visitor?.host_data?.name || value;
+                        } else if (f.remarks === 'site_place') {
+                          value = visitor?.site_place_name || value;
+                        }
+
+                        const displayValue =
+                          value === null || value === undefined || value === ''
+                            ? '—'
+                            : String(value);
+
+                        if (['visitor_period_start', 'visitor_period_end'].includes(f.remarks)) {
+                          return (
+                            <Grid item xs={12} sm={6} key={idx}>
+                              <Typography variant="caption" color="text.secondary">
+                                {f.long_display_text}
+                              </Typography>
+                              <Typography>{value ? formatDateTime(value) : '—'}</Typography>
+                            </Grid>
+                          );
+                        }
+
+                        if (f.remarks === 'is_driving') {
+                          const answer = f.answer_text;
+
+                          const isDriving = ['true', 'yes', '1'].includes(
+                            String(answer).trim().toLowerCase(),
+                          );
+
+                          return (
+                            <Grid item xs={12} sm={6} key={idx}>
+                              <Typography variant="caption" color="text.secondary">
+                                {f.long_display_text}
+                              </Typography>
+                              <Typography>
+                                {answer == null || answer === '' ? '—' : isDriving ? 'Yes' : 'No'}
+                              </Typography>
+                            </Grid>
+                          );
+                        }
+
+                        return (
+                          <Grid item xs={12} sm={6} key={idx}>
+                            <Typography variant="caption" color="text.secondary">
+                              {f.long_display_text}
+                            </Typography>
+
+                            {[10, 11, 12].includes(f.field_type) && value ? (
+                              /\.(jpg|jpeg|png)$/i.test(String(value)) ? (
+                                <Box mt={1}>
+                                  <img
+                                    src={`${axiosInstance2.defaults.baseURL}/cdn${value}`}
+                                    alt={f.remarks}
+                                    style={{
+                                      width: '100%',
+                                      maxHeight: 200,
+                                      objectFit: 'cover',
+                                      borderRadius: 8,
+                                    }}
+                                  />
+                                </Box>
+                              ) : (
+                                <Typography variant="body2" color="primary" mt={0.5}>
+                                  <a href={String(value)} target="_blank" rel="noopener noreferrer">
+                                    View Document
+                                  </a>
+                                </Typography>
+                              )
+                            ) : (
+                              <Typography variant="body1">{displayValue}</Typography>
+                            )}
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                ))}
+                {/* </Grid>
+                  </Box>
+                ))} */}
+
+                {isGroup && visitorIdx < visitors.length - 1 && (
+                  <Divider sx={{ my: 3, borderStyle: 'dashed' }} />
+                )}
+              </Paper>
+            );
+          })}
+        </Stack>
+      </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Back</Button>
         <Button variant="contained" color="primary" onClick={onConfirm}>

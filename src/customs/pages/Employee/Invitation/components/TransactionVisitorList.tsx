@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Stack } from '@mui/system';
-import { IconCalendarEvent, IconCalendarTime, IconPlus } from '@tabler/icons-react';
+import { IconCalendarEvent, IconCalendarTime, IconPlus, IconRefresh } from '@tabler/icons-react';
 import { IconFilterFilled } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -32,6 +32,7 @@ type TransactionVisitorListProps = {
   setShowDrawerFilterMore?: any;
   profile?: any;
   handleAdd?: any;
+  handleRefresh?: any;
 };
 
 const TransactionVisitorList = ({
@@ -52,6 +53,7 @@ const TransactionVisitorList = ({
   fetchNextPage,
   profile,
   handleAdd,
+  handleRefresh,
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -65,9 +67,29 @@ const TransactionVisitorList = ({
       }}
     >
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-        <Typography variant="h6" fontSize="1rem">
-          Transaction Visitor
-        </Typography>
+        <Typography variant="h5">Transaction Visitor</Typography>
+        <Tooltip title="Refresh Transaction" arrow>
+          <IconButton
+            onClick={handleRefresh}
+            size="small"
+            sx={{
+              color: 'white',
+              borderRadius: '50%',
+              transition: 'all 0.25s ease',
+              backgroundColor: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                transform: 'rotate(90deg)',
+              },
+              '&:active': {
+                transform: 'rotate(180deg) scale(0.9)',
+              },
+            }}
+          >
+            <IconRefresh size={20} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <CustomTextField
@@ -83,13 +105,13 @@ const TransactionVisitorList = ({
               <IconSearch color="gray" size={18} />
             </InputAdornment>
           ),
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                <IconFilterFilled size={18} />
-              </IconButton>
-            </InputAdornment>
-          ),
+          // endAdornment: (
+          //   <InputAdornment position="end">
+          //     <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+          //       <IconFilterFilled size={18} />
+          //     </IconButton>
+          //   </InputAdornment>
+          // ),
         }}
       />
 
@@ -130,7 +152,9 @@ const TransactionVisitorList = ({
                 setSelectedGroupId(group.id);
               }}
             >
-              <Typography fontWeight="bold" variant="h6">{group.agenda}</Typography>
+              <Typography fontWeight="bold" variant="h6">
+                {group.agenda}
+              </Typography>
 
               <Box display="flex" justifyContent="space-between" mt={0.5}>
                 <Typography>{group.visitor_type}</Typography>

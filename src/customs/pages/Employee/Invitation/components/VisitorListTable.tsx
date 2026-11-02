@@ -4,6 +4,7 @@ import {
   Checkbox,
   CircularProgress,
   IconButton,
+  InputAdornment,
   Paper,
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import {
 import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 
 import {
+  IconCheck,
   IconFileExport,
   IconFileSpreadsheet,
   IconFileTypePdf,
@@ -29,6 +31,8 @@ import VisitorRow from 'src/customs/pages/admin/content/Visitor/Transaction/Visi
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { exportVisitorExcel, exportVisitorPdf } from './VisitorExport';
 import { useTranslation } from 'react-i18next';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { IconSearch } from '@tabler/icons-react';
 type Props = {
   selectedGroupId: any;
   groupHeader: any;
@@ -111,18 +115,45 @@ export default function VisitorListTable({
                 </IconButton>
               </TableCell>
 
-              <TableCell colSpan={9}>
+              <TableCell colSpan={10}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: 18,
+                  <CustomTextField
+                    fullWidth
+                    size="medium"
+                    placeholder="Search..."
+                    // value={search}
+                    // onChange={(e) => setSearch(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconSearch size={18} />
+                        </InputAdornment>
+                      ),
                     }}
-                  >
-                    {groupHeader?.group_name ?? '-'}
-                  </Typography>
+                    sx={{
+                      width: '350px',
+                      '& .MuiOutlinedInput-root': {
+                        // borderRadius: 2,
+                        backgroundColor: 'background.paper',
+                      },
+                    }}
+                  />
 
                   <Box display="flex" gap={1}>
+                    <Tooltip title="History Approval" arrow>
+                      <Button
+                        variant="contained"
+                        size="medium"
+                        color="primary"
+                        startIcon={<IconCheck size={16} />}
+                        sx={{ height: 36 }}
+                        onClick={() => {}}
+                      >
+                        <Typography variant="caption" fontSize={'0.7rem'}>
+                          History Approval
+                        </Typography>
+                      </Button>
+                    </Tooltip>
                     <Tooltip title="Export PDF" arrow>
                       <Button
                         variant="contained"
@@ -175,7 +206,7 @@ export default function VisitorListTable({
                 Phone
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                Invitation Code
+                Identity Id
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Organization
@@ -184,7 +215,10 @@ export default function VisitorListTable({
                 Host
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                Site
+                Visit Start
+              </TableCell>
+              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                Visit End
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Status

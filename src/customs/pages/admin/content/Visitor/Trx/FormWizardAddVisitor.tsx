@@ -5050,30 +5050,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
             const original = dataVisitor[idx];
 
-            // const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
-            //   const isPurposeVisit =
-            //     qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
-
-            //   if (isPurposeVisit && original?.single_page?.length) {
-            //     return {
-            //       ...qp,
-            //       self_only: true,
-            //       form: original.single_page.map((f: any, idx: number) => mapField(f, idx)),
-            //     };
-            //   }
-
-            //   return {
-            //     id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
-            //     sort: qp.sort ?? sIdx,
-            //     name: qp.name ?? `Section ${sIdx + 1}`,
-            //     status: qp.status ?? 0,
-            //     is_document: qp.is_document ?? false,
-            //     can_multiple_used: qp.can_multiple_used ?? false,
-            //     foreign_id: qp.foreign_id ?? '',
-            //     self_only: qp.self_only ?? false,
-            //     form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-            //   };
-            // });
 
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =

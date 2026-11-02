@@ -27,7 +27,7 @@ import {
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconBolt, IconClipboard, IconLink, IconUserPlus } from '@tabler/icons-react';
+import { IconBolt, IconClipboard, IconLink, IconLogout, IconUserPlus } from '@tabler/icons-react';
 import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
@@ -70,6 +70,7 @@ import ExtendVisitDialog from '../../Operator/Dialog/ExtendVisitDialog';
 import { extendPeriodOperator } from 'src/customs/api/operator';
 import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
 import VisitorDetailDialog from '../../admin/content/Visitor/Transaction/components/VisitorDetailDialog';
+import { IconLogin } from '@tabler/icons-react';
 
 type Group = {
   id: string;
@@ -193,6 +194,7 @@ const Content = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useTransactionVisitorPagination({
     rowsPerPage,
     sortDir,
@@ -341,6 +343,20 @@ const Content = () => {
       title: 'Total ' + t('visitor'),
       icon: IconUserPlus,
       subTitle: `${totalFilteredRecords}`,
+      color: 'none',
+    },
+    {
+      title: 'Check In',
+      icon: IconLogin,
+      subTitle: `0`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Check Out',
+      icon: IconLogout,
+      subTitle: `0`,
+      subTitleSetting: 10,
       color: 'none',
     },
     {
@@ -806,6 +822,18 @@ const Content = () => {
 
   const toUtcEnd = (date: string) => dayjs.tz(date, userTimezone).add(1, 'day').utc().format();
 
+  const handleRefresh = async () => {
+    try {
+      setSelectedGroup(null);
+      setSelectedGroupId(null);
+      setGroupVisitors([]);
+
+      await refetch();
+    } catch (error) {
+      console.error('Failed to refresh transaction visitor:', error);
+    }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -816,17 +844,17 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 1) {
+                  if (index === 3) {
                     // setFlowTarget('preReg');
                     handleAddInvitation();
-                  } else if (index === 2) {
+                  } else if (index === 4) {
                     setOpenDetailShareLink(true);
                     //  } else if (index === 3) {
                     // /   setOpenQuickAccess(true);
                     // }else {
                   }
                 }}
-                size={{ xs: 12, lg: 4 }}
+                size={{ xs: 12, lg: 2.4 }}
               />
             </Grid>
             <Box
@@ -874,6 +902,7 @@ const Content = () => {
                 handleCancel={handleCancel}
                 profile={profile}
                 handleAdd={handleAdd}
+                handleRefresh={handleRefresh}
               />
               <Box
                 p={2}

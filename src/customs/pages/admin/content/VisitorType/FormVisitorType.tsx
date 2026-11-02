@@ -32,7 +32,6 @@ import NewSectionDialog from './components/NewSectionDialog';
 import { useCameraAnalytics } from 'src/hooks/VisitorType/useCameraAnalaytics';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import { useSites } from 'src/hooks/Sites/useSites';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;

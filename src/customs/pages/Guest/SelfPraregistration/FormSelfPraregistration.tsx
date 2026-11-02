@@ -186,20 +186,68 @@ const FormSelfPraregistration = ({
 
     const ans = pickAns(src ?? {});
 
-    if (tpl.field_type === 9 && ans?.answer_datetime) {
-      const parsed = dayjs(ans.answer_datetime);
-      out.answer_datetime = parsed.isValid()
-        ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
-        : ans.answer_datetime;
-      // out.answer_datetime = dayjs(ans.answer_datetime).toISOString();
-    } else if ([10, 11, 12].includes(tpl.field_type) && ans?.answer_file) {
-      out.answer_file = ans.answer_file;
-    } else if (ans?.answer_text) {
-      out.answer_text = ans.answer_text;
+    if (tpl.remarks === 'is_driving') {
+      out.answer_text =
+        ans.answer_text !== undefined && ans.answer_text !== ''
+          ? ans.answer_text
+          : (src?.multiple_option_fields?.[0]?.value ?? 'false');
+    } else if (tpl.field_type === 9) {
+      const parsed = dayjs(ans?.answer_datetime);
+
+      out.answer_datetime = ans?.answer_datetime
+        ? parsed.isValid()
+          ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+          : ans.answer_datetime
+        : null;
+    } else if ([10, 11, 12].includes(tpl.field_type)) {
+      out.answer_file = ans?.answer_file ?? null;
+    } else {
+      out.answer_text = ans?.answer_text ?? null;
     }
 
     return out;
   };
+
+  //   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
+  //   const out: any = {
+  //     remarks: tpl.remarks ?? '',
+  //     visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
+  //     field_type: tpl.field_type ?? 0,
+  //     sort: tpl.sort ?? sortIdx,
+  //     short_name: tpl.short_name ?? '',
+  //     long_display_text: tpl.long_display_text ?? '',
+  //     custom_field_id: tpl.custom_field_id ?? null,
+  //     form_visitor_type_id: '',
+  //   };
+
+  //   const ans = pickAns(src ?? {});
+
+  //   // Semua field tetap dikirim meskipun kosong
+  //   if ([10, 11, 12].includes(tpl.field_type)) {
+  //     out.answer_file = ans?.answer_file || null;
+  //     out.answer_text = ans?.answer_text ?? null;
+  //   } else if (tpl.field_type === 9) {
+  //     out.answer_datetime = ans?.answer_datetime
+  //       ? dayjs(ans.answer_datetime).utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+  //       : null;
+
+  //     out.answer_text = ans?.answer_text ?? null;
+  //   } else {
+  //     const value = ans?.answer_text;
+
+  //     out.answer_text =
+  //       value === undefined || value === null
+  //         ? null
+  //         : Array.isArray(value)
+  //           ? value.map(String).join(',')
+  //           : String(value).trim();
+
+  //     out.answer_datetime = ans?.answer_datetime ?? null;
+  //     out.answer_file = ans?.answer_file ?? null;
+  //   }
+
+  //   return out;
+  // };
 
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
 
@@ -437,26 +485,26 @@ const FormSelfPraregistration = ({
       let payload;
 
       if (isGroup) {
-        const totalVisitors = groupVisitors.reduce((sum, g) => {
-          const visitors = g.data_visitor?.length ? g.data_visitor : dataVisitor;
-          return sum + (visitors?.length || 0);
-        }, 0);
-        const confirm = await Swal.fire({
-          title: 'Confirm Submission',
-          html: `You are about to submit <b>${totalVisitors}</b> visitor(s) in <b>${groupVisitors.length}</b> group(s).<br/>Continue?`,
-          icon: 'question',
-          showCancelButton: true,
-          reverseButtons: true,
-          showCloseButton: true,
-          confirmButtonText: 'Yes, Submit',
-          confirmButtonColor: '#16a34a',
-          cancelButtonText: 'Cancel',
-        });
+        // const totalVisitors = groupVisitors.reduce((sum, g) => {
+        //   const visitors = g.data_visitor?.length ? g.data_visitor : dataVisitor;
+        //   return sum + (visitors?.length || 0);
+        // }, 0);
+        // const confirm = await Swal.fire({
+        //   title: 'Confirm Submission',
+        //   html: `You are about to submit <b>${totalVisitors}</b> visitor(s) in <b>${groupVisitors.length}</b> group(s).<br/>Continue?`,
+        //   icon: 'question',
+        //   showCancelButton: true,
+        //   reverseButtons: true,
+        //   showCloseButton: true,
+        //   confirmButtonText: 'Yes, Submit',
+        //   confirmButtonColor: '#16a34a',
+        //   cancelButtonText: 'Cancel',
+        // });
 
-        if (!confirm.isConfirmed) {
-          setLoading(false);
-          return;
-        }
+        // if (!confirm.isConfirmed) {
+        //   setLoading(false);
+        //   return;
+        // }
 
         setLoading(true);
 
@@ -511,11 +559,17 @@ const FormSelfPraregistration = ({
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-        await createSubmitGroupShareLink(code, timestamp, parsed);
+        // await createSubmitGroupShareLink(code, timestamp, parsed);
+        // setLoading(false);
+        // // showSwal('success', 'Group visitor created successfully.', 1000);
+        // resetGroupFormState();
+        // navigate('/invitation-share/success', { replace: true });
+
         setLoading(false);
-        // showSwal('success', 'Group visitor created successfully.', 1000);
-        resetGroupFormState();
-        navigate('/invitation-share/success', { replace: true });
+        setPreviewPayload(parsed);
+        setPreviewSections(null);
+        setPreviewOpen(true);
+        return;
       } else {
         if (!sectionsData.length) {
           toast(t('visitorMinimum'), 'warning');
@@ -694,17 +748,36 @@ const FormSelfPraregistration = ({
   //   });
   // };
 
+  // const handleSaveGroupVisitor = () => {
+  //   if (activeGroupIdx === null) {
+  //     return;
+  //   }
+
+  //   setGroupVisitors((prev) => {
+  //     const next = [...prev];
+  //     next[activeGroupIdx] = {
+  //       ...next[activeGroupIdx],
+  //       data_visitor: structuredClone(dataVisitor),
+  //     };
+  //     return next;
+  //   });
+  // };
+
   const handleSaveGroupVisitor = () => {
-    if (activeGroupIdx === null) {
-      return;
-    }
+    if (activeGroupIdx === null) return;
 
     setGroupVisitors((prev) => {
       const next = [...prev];
+
+      if (!next[activeGroupIdx]) {
+        return prev;
+      }
+
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
         data_visitor: structuredClone(dataVisitor),
       };
+
       return next;
     });
   };
@@ -1888,7 +1961,7 @@ const FormSelfPraregistration = ({
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
               <Box key={`${field.custom_field_id}-${index}`}>
-                <FormControl error={!!errorMessage} sx={{ width: '130px' }}>
+                <FormControl error={!!errorMessage} sx={{ width: '180px' }}>
                   <RadioGroup
                     row
                     value={field.answer_text || 'false'}
@@ -1898,6 +1971,7 @@ const FormSelfPraregistration = ({
                     }}
                     sx={{
                       width: '100%',
+
                       display: 'flex',
                       flexDirection: 'row',
                       justifyContent: 'space-between',
@@ -3838,7 +3912,13 @@ const FormSelfPraregistration = ({
       if (isGroup) {
         await createSubmitGroupShareLink(code, timestamp, previewPayload);
         // toast('Group visitor created successfully.', 'success');
-        showSwal('success', 'Group visitor created successfully.');
+        // showSwal('success', 'Group visitor created successfully.');
+        setPreviewOpen(false);
+        resetGroupFormState();
+
+        navigate('/invitation-share/success', {
+          replace: true,
+        });
       } else {
         await createSubmitShareLink(code, timestamp, previewPayload);
         // const successMessage =
@@ -3853,10 +3933,15 @@ const FormSelfPraregistration = ({
       resetSingleFormState();
       navigate('/invitation-share/success', { replace: true });
     } catch (err: any) {
+      const response = err?.response?.data;
+
+      const collectionError = response?.collection?.[0]?.error;
+
       showSwal(
         'error',
-        err?.response.data.msg ?? err?.response.data.message ?? 'Failed to create visitor.',
+        collectionError ?? response?.msg ?? response?.message ?? 'Failed to create visitor.',
       );
+
       setLoading(false);
     }
   };
@@ -3870,6 +3955,20 @@ const FormSelfPraregistration = ({
   const hasAnyFilled =
     dataVisitor.some((visitor: any) => !isVisitorEmpty(visitor)) ||
     groupVisitors.some((g) => g.data_visitor?.some((v: any) => !isVisitorEmpty(v)));
+
+  const previewGroupVisitors = useMemo(() => {
+    if (!previewPayload?.list_group) return [];
+
+    return previewPayload.list_group.flatMap((group: any, groupIdx: number) =>
+      (group.data_visitor ?? []).map((visitor: any, visitorIdx: number) => ({
+        ...visitor,
+        group_name: group.group_name,
+        group_code: group.group_code,
+        group_index: groupIdx,
+        visitor_index: visitorIdx,
+      })),
+    );
+  }, [previewPayload]);
 
   return (
     <>
@@ -4135,6 +4234,8 @@ const FormSelfPraregistration = ({
         onConfirm={handleConfirmSubmit}
         invitationData={previewSections}
         formValues={previewPayload}
+        isGroup={isGroup}
+        groupVisitors={previewGroupVisitors}
         employee={employee}
         sites={sites}
         invitation={invitation}

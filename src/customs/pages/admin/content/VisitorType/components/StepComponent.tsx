@@ -669,8 +669,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               htmlFor="duration_visit"
               sx={{ mt: 1, display: 'flex', alignItems: 'center' }}
             >
-              Minimal Time Visit
-              <Tooltip title="The minimum time of the visit in hours." arrow>
+              Duration Visit
+              <Tooltip title="The duration of the visit in days." arrow>
                 <IconButton size="small">
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -729,7 +729,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               // }}
             />
           </Grid>
-          <Grid size={12}>
+          {/* <Grid size={12}>
             <CustomFormLabel htmlFor="period" sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
               Period ({formData.simple_period ? 'minutes' : 'days'})
               <Tooltip
@@ -764,7 +764,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               //   pattern: '[0-9]*',
               // }}
             />
-          </Grid>
+          </Grid> */}
           <Grid size={12}>
             <CustomFormLabel
               htmlFor="grace_time"

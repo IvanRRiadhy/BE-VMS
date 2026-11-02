@@ -22,6 +22,42 @@ import { useState } from 'react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 
+import moment from 'moment-timezone';
+
+export const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
+  if (!dateStr) return '-';
+
+  const base = moment.utc(dateStr);
+
+  if (!base.isValid()) return '-';
+
+  if (extendMinutes !== 0) {
+    base.add(extendMinutes, 'minutes');
+  }
+
+  return base
+    .local()
+    .utcOffset(7 * 60)
+    .format('DD MMMM YYYY, HH:mm');
+};
+
+export const formatDateTimeEnd = (dateStr?: string, extendMinutes = 0) => {
+  if (!dateStr) return '-';
+
+  const base = moment.utc(dateStr);
+
+  if (!base.isValid()) return '-';
+
+  if (extendMinutes !== 0) {
+    base.add(extendMinutes, 'minutes');
+  }
+
+  return base
+    .local()
+    .utcOffset(7 * 60)
+    .format('HH:mm');
+};
+
 function VisitorRow({
   visitor,
   index,
@@ -70,6 +106,7 @@ function VisitorRow({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
   return (
     <>
       <TableRow>
@@ -79,7 +116,7 @@ function VisitorRow({
             onChange={() => setSelectedVisitor(selectedVisitor?.id === visitor.id ? null : visitor)}
           />
         </TableCell>
-
+        {/* 
         <TableCell
           sx={{
             display: 'inline-flex',
@@ -87,7 +124,8 @@ function VisitorRow({
             gap: 1,
             fontSize: '13px',
             width: '100%',
-            mt: 0.7,
+            // mt: 0.7,
+            height: '100%',
           }}
         >
           {' '}
@@ -113,12 +151,82 @@ function VisitorRow({
               </Box>
             )}{' '}
           </Box>{' '}
+        </TableCell> */}
+        <TableCell
+          sx={{
+            fontSize: '13px',
+            verticalAlign: 'middle',
+            py: 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              minWidth: 0,
+            }}
+          >
+            <Avatar
+              src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
+              sx={{
+                width: 36,
+                height: 36,
+                flexShrink: 0,
+              }}
+            />
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                minWidth: 0,
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  fontSize: '13px',
+                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {visitor.visitor_name}
+              </Box>
+
+              {visitor.is_host === true && (
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    backgroundColor: '#E3F2FD',
+                    color: '#1565C0',
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Host
+                </Box>
+              )}
+            </Box>
+          </Box>
         </TableCell>
+
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
-        <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
-        <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>
+          {`${formatDateTime(visitor.visitor_period_start)} `}
+        </TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>
+          {`${formatDateTime(visitor.visitor_period_end, visitor.visitor_period_extend)} `}
+        </TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>
           <Box
@@ -138,64 +246,6 @@ function VisitorRow({
           </Box>
         </TableCell>
 
-        {/* <TableCell
-          sx={{
-            verticalAlign: 'middle',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              minHeight: 50,
-            }}
-          >
-            {isAdmin && visitor.visitor_status !== 'Canceled' && (
-              <Tooltip title="Remove Visitor" arrow>
-                <span>
-                  <IconButton
-                    color="error"
-                    onClick={handleRemoveVisitor}
-                    disabled={!selectedVisitor}
-                  >
-                    <IconTrash size={26} />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            )}
-            <Tooltip title="Extend Time" arrow>
-              <Button
-                variant="contained"
-                startIcon={<IconClock size={25} />}
-                onClick={handleExtend}
-                disabled={!canExtend}
-                size="small"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 2.5,
-                  // boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                  background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-                  backgroundColor: 'primary.main',
-                  zIndex: 999,
-                  width: '100px',
-                  height: '40px',
-                  '&.Mui-disabled': {
-                    background: '#E0E0E0',
-                    color: '#9E9E9E',
-                    boxShadow: 'none',
-                  },
-                  p: 0,
-                }}
-              >
-                Extend
-              </Button>
-            </Tooltip>
-          </Box>
-        </TableCell> */}
         <TableCell
           sx={{
             verticalAlign: 'middle',
@@ -252,18 +302,19 @@ function VisitorRow({
                   Remove Visitor
                 </MenuItem>
               )}
-
-              <MenuItem
-                onClick={() => {
-                  handleMenuClose();
-                  handleExtend?.();
-                }}
-                disabled={!canExtend}
-                sx={{ gap: 1 }}
-              >
-                <IconClock size={20} />
-                Extend Time
-              </MenuItem>
+              {!isAdmin && (
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    handleExtend?.();
+                  }}
+                  disabled={!canExtend}
+                  sx={{ gap: 1 }}
+                >
+                  <IconClock size={20} />
+                  Extend Time
+                </MenuItem>
+              )}
             </Menu>
           </Box>
         </TableCell>

@@ -19,7 +19,6 @@ import { IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import axios from 'axios';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 
 import { axiosInstance2 } from 'src/customs/api/interceptor';

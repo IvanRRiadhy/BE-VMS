@@ -48,6 +48,8 @@
   "removeAll": "Remove All",
   "noDataAvailable": "No data available",
   "employeeAddress": "Employee Address",
+  "previewInvitation": "Preview Invitation",
+  "reviewVisitorInformationBeforeSubmitting": "Review the visitor information before submitting.",
   "exitDate": "Exit Date",
   "joinDate": "Join Date",
   "dateOfBirth": "Date of Birth",

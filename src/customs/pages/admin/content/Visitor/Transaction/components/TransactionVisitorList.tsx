@@ -13,6 +13,7 @@ import {
   IconCalendarEvent,
   IconCalendarTime,
   IconFilterFilled,
+  IconRefresh,
   IconSearch,
 } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -41,6 +42,7 @@ interface TransactionVisitorListProps {
   handleCancel: (id: string) => void;
   fetchNextPage?: any;
   handleAdd?: any;
+  handleRefresh?: any;
 }
 
 const TransactionVisitorList = ({
@@ -61,6 +63,7 @@ const TransactionVisitorList = ({
   handleCancel,
   fetchNextPage,
   handleAdd,
+  handleRefresh,
 }: TransactionVisitorListProps) => {
   return (
     <Box
@@ -73,9 +76,31 @@ const TransactionVisitorList = ({
         height: { xs: '100%', md: '80vh' },
       }}
     >
-      <Typography variant="h5" mb={2}>
-        Transaction Visitor
-      </Typography>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Typography variant="h5">Transaction Visitor</Typography>
+        <Tooltip title="Refresh Transaction" arrow>
+          <IconButton
+            onClick={handleRefresh}
+            size="small"
+            sx={{
+              color: 'white',
+              borderRadius: '50%',
+              transition: 'all 0.25s ease',
+              backgroundColor: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                transform: 'rotate(90deg)',
+              },
+              '&:active': {
+                transform: 'rotate(180deg) scale(0.9)',
+              },
+            }}
+          >
+            <IconRefresh size={20} />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <CustomTextField
         fullWidth
@@ -90,13 +115,13 @@ const TransactionVisitorList = ({
               <IconSearch fontSize="small" color="#9e9e9e" size={18} />
             </InputAdornment>
           ),
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-                <IconFilterFilled size={18} />
-              </IconButton>
-            </InputAdornment>
-          ),
+          // endAdornment: (
+          //   <InputAdornment position="end">
+          //     <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+          //       <IconFilterFilled size={18} />
+          //     </IconButton>
+          //   </InputAdornment>
+          // ),
         }}
       />
 

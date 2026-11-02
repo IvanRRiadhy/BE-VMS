@@ -370,7 +370,7 @@ const VisitorFilterSidebar = ({
       <Divider sx={{ my: 1.5 }} />
 
       {/* Recurring */}
-      <Box sx={{ mb: 2 }}>
+      {/* <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>
           Recurring
         </Typography>
@@ -404,7 +404,7 @@ const VisitorFilterSidebar = ({
             </Typography>
           </Box>
         ))}
-      </Box>
+      </Box> */}
     </Box>
   );
 };

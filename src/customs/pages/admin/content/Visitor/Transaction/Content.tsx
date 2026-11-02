@@ -28,7 +28,14 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import { IconLink, IconUserPlus, IconUsers } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconLink,
+  IconLogin,
+  IconLogout,
+  IconUserPlus,
+  IconUsers,
+} from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -184,6 +191,7 @@ const Content = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useTransactionVisitorPagination({
     rowsPerPage,
     sortDir,
@@ -267,9 +275,24 @@ const Content = () => {
 
   const cards = [
     {
-      title: t('totalVisitor'),
+      title: 'Total Transaction',
       icon: IconUsers,
       subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+
+    {
+      title: 'Check In',
+      icon: IconLogin,
+      subTitle: `0`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Check Out',
+      icon: IconLogout,
+      subTitle: `0`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -397,8 +420,8 @@ const Content = () => {
         showSwal('error', 'Your code does not exist.');
         return;
       }
-    } catch (error) {
-      showSwal('error', 'Failed to fetch visitor data.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to fetch visitor data.');
     } finally {
       setLoading(false);
     }
@@ -531,7 +554,7 @@ const Content = () => {
         trx_id_visitor: selectedVisitor.id,
       });
 
-      showSwal('success', 'Visitor removed successfully');
+      showSwal('success', 'Successfully removed visitor');
 
       setSelectedVisitor(null);
     } catch (err: any) {
@@ -619,6 +642,18 @@ const Content = () => {
 
   const toUtcEnd = (date: string) => dayjs.tz(date, userTimezone).add(1, 'day').utc().format();
 
+  const handleRefresh = async () => {
+    try {
+      setSelectedGroup(null);
+      setSelectedGroupId(null);
+      setGroupVisitors([]);
+
+      await refetch();
+    } catch (error) {
+      console.error('Failed to refresh transaction visitor:', error);
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -632,15 +667,15 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 1) {
+                  if (index === 3) {
                     handleAddInvitation();
-                  } else if (index === 2) {
+                  } else if (index === 4) {
                     setOpenCreateLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 4 }}
+                size={{ xs: 12, lg: 2.4 }}
               />
             </Grid>
           </Grid>
@@ -692,7 +727,9 @@ const Content = () => {
               hasMore={hasNextPage ?? false}
               fetchNextPage={fetchNextPage}
               handleAdd={handleAdd}
+              handleRefresh={handleRefresh}
             />
+
             <TransactionVisitorDetail
               selectedGroupId={selectedGroupId}
               openGroup={openGroup}
