@@ -259,7 +259,7 @@ const Content = () => {
         setLoading(false);
         return;
       }
-      
+
       const res = rep ? await generateReportVisitorById(rep) : await generateReport(formData);
 
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
@@ -340,7 +340,7 @@ const Content = () => {
       Object.fromEntries(
         exportColumns.map(({ key, label, format }) => [
           label,
-          format ? format(row[key]) : (row[key] ?? '-'),
+          format ? format(row[key]) : row[key] ?? '-',
         ]),
       ),
     );
@@ -358,7 +358,7 @@ const Content = () => {
       Object.fromEntries(
         columns.map(({ key, label, format }) => [
           label,
-          format ? format(row[key]) : (row[key] ?? '-'),
+          format ? format(row[key]) : row[key] ?? '-',
         ]),
       ),
     );
@@ -520,7 +520,7 @@ const Content = () => {
       const tableColumn = exportColumns.map((column) => column.label);
 
       const tableRows = reportData.map((row) =>
-        exportColumns.map(({ key, format }) => (format ? format(row[key]) : (row[key] ?? '-'))),
+        exportColumns.map(({ key, format }) => (format ? format(row[key]) : row[key] ?? '-')),
       );
 
       autoTable(doc, {
@@ -757,6 +757,7 @@ const Content = () => {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
             gap: 1,
             width: '100%',
             alignItems: 'stretch',
@@ -773,6 +774,7 @@ const Content = () => {
               flexShrink: 0,
               transition: 'width 300ms ease',
               overflow: 'hidden',
+              alignSelf: 'stretch',
             }}
           >
             <Box
@@ -780,6 +782,10 @@ const Content = () => {
                 backgroundColor: 'white',
                 p: isFilterCollapsed ? 1 : 2,
                 height: '100%',
+                overflowY: 'auto',
+                // maxHeight: { xs: 'none', md: 'calc(100vh - 100px)' },
+         
+                minHeight: '100%',
               }}
             >
               {/* HEADER + BUTTON */}
@@ -1138,8 +1144,11 @@ const Content = () => {
           </Box>
           <Box
             sx={{
-              flex: 1,
+              backgroundColor: 'white',
+              p: { xs: 1.5, sm: 2, md: 3 },
               minWidth: 0,
+              width: '100%',
+              overflow: 'hidden',
             }}
           >
             <Box sx={{ backgroundColor: 'white', p: 3 }}>
@@ -1147,7 +1156,7 @@ const Content = () => {
                 Report Result
               </Typography>
               <Divider sx={{ mb: 1 }} />
-              <Grid container spacing={2} gap={2}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, xl: 2.5 }}>
                   <FormControl sx={{ width: '100%' }}>
                     <CustomTextField
