@@ -187,10 +187,12 @@ const FormSelfPraregistration = ({
     const ans = pickAns(src ?? {});
 
     if (tpl.remarks === 'is_driving') {
+      // out.answer_text =
+      //   ans.answer_text !== undefined && ans.answer_text !== ''
+      //     ? ans.answer_text
+      //     : (src?.multiple_option_fields?.[0]?.value ?? 'false');
       out.answer_text =
-        ans.answer_text !== undefined && ans.answer_text !== ''
-          ? ans.answer_text
-          : (src?.multiple_option_fields?.[0]?.value ?? 'false');
+        ans.answer_text !== undefined && ans.answer_text !== '' ? ans.answer_text : 'false';
     } else if (tpl.field_type === 9) {
       const parsed = dayjs(ans?.answer_datetime);
 
@@ -3312,8 +3314,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
                                         const originalIndex = page?.form?.findIndex(
                                           (f: any) => f.custom_field_id === field.custom_field_id,
                                         );
@@ -3422,8 +3424,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                                          ? { ...field, ...pickAns(shared) }
+                                          : field;
 
                                         return (
                                           <TableCell key={field.custom_field_id}>
@@ -4081,8 +4083,8 @@ const FormSelfPraregistration = ({
                                     backgroundColor: snapshot.isDragging
                                       ? '#1976d2'
                                       : activeStep === index + 1
-                                        ? 'primary.main'
-                                        : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                     color:
                                       snapshot.isDragging || activeStep === index + 1
                                         ? '#fff'

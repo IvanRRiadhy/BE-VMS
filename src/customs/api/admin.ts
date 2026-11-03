@@ -294,8 +294,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-          ? false
-          : status;
+        ? false
+        : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -846,7 +846,7 @@ export const getAllVisitorCardPagination = async (
   sort_column?: string,
   type?: number | null,
   cardStatus?: number,
-  is_used?: boolean
+  is_used?: boolean,
 ): Promise<GetAllVisitorCardPaginationResponse> => {
   const params: Record<string, any> = {
     start,
@@ -869,7 +869,7 @@ export const getAllVisitorCardPagination = async (
   if (cardStatus !== undefined && cardStatus !== null) {
     params['card-status'] = cardStatus;
   }
-  
+
   if (is_used !== undefined && is_used !== null) {
     params.is_used = is_used;
   }
@@ -887,7 +887,7 @@ export const getAllVisitorCardPagination = async (
       collection: response.data?.collection ?? [],
     };
   } catch (error) {
-     throw error;
+    throw error;
   }
 };
 
@@ -1192,6 +1192,8 @@ export const getVisitorTransactionPagination = async (
   is_emergency?: boolean,
   is_block?: boolean,
   host?: string,
+  organization?: string,
+  visitor_type_id?: string,
 ): Promise<any> => {
   const response = await axiosInstance.get(`/visitor/transaction/dt`, {
     params: {
@@ -1209,7 +1211,10 @@ export const getVisitorTransactionPagination = async (
       'is-emergency-situation': is_emergency,
       'is-block': is_block,
       host: host,
+      organization: organization,
+      'visitor-type-id': visitor_type_id,
     },
+
     headers: { Accept: 'application/json' },
   });
   return response.data;

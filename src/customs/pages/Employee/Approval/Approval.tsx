@@ -141,7 +141,7 @@ const Approval = () => {
           icon: 'warning',
           reverseButtons: true,
           showCancelButton: true,
-          confirmButtonText: isFinal ? 'Approve' : 'Reject',
+          confirmButtonText: isFinal ? 'Yes' : 'Yes',
           cancelButtonText: 'Cancel',
           confirmButtonColor: isFinal ? '#2e7d32' : '#f44336',
           customClass: {
@@ -159,8 +159,10 @@ const Approval = () => {
       showSwal('success', `Successfully ${action === 'Approve' ? 'approve' : 'reject'} approval. `);
 
       setOpenDialog(false);
+      return true;
     } catch (error: any) {
       showSwal('error', error.response.data.msg || 'Failed action approval.');
+      throw error;
     }
   };
 
@@ -256,6 +258,11 @@ const Approval = () => {
       return;
     }
 
+    if (group.is_final === true) {
+      await handleActionApproval(group.approval_ticket_id, 'Approve', true);
+      return;
+    }
+
     setSelectedGroup(group);
     setSelectedId(group.approval_ticket_id);
     setGroupVisitors([]);
@@ -268,12 +275,12 @@ const Approval = () => {
 
       // Jika terdapat visitor dengan is_final = true,
       // langsung approve tanpa membuka dialog
-      const isFinal = visitors.some((item: any) => item.is_final === true);
+      // const isFinal = visitors.some((item: any) => item.is_final === true);
 
-      if (isFinal) {
-        await handleActionApproval(group.approval_ticket_id, 'Approve');
-        return;
-      }
+      // if (isFinal) {
+      //   await handleActionApproval(group.approval_ticket_id, 'Approve');
+      //   return;
+      // }
       setGroupHeader(res.collection[0]);
       setGroupVisitors(res.collection);
 

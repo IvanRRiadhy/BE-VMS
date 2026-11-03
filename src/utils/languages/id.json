@@ -44,6 +44,7 @@
   "back": "Kembali",
   "next": "Selanjutnya",
   "action": "Aksi",
+  "expiredLinkNote": "Wajib diisi H-1 dari waktu mulai kunjungan.",
   "noDataAvailable": "Data tidak tersedia",
   "delete": "Hapus",
   "clear": "Bersihkan",

@@ -161,7 +161,7 @@ const Content = () => {
     status: undefined,
     visitor_type: '',
     visitor_role: '',
-    host_id: '',
+    organization: '',
     site_id: '',
     is_employee: '',
     is_block: '',
@@ -176,7 +176,7 @@ const Content = () => {
     visitor_status: '',
     visitor_type: '',
     visitor_role: '',
-    host_id: '',
+    organization: '',
     site_id: '',
     is_block: '',
     transaction_status: '',
@@ -432,7 +432,7 @@ const Content = () => {
       visitor_status: '',
       visitor_type: '',
       visitor_role: '',
-      host_id: '',
+      organization: '',
       site_id: '',
       is_block: '',
       transaction_status: '',
@@ -466,7 +466,7 @@ const Content = () => {
     setAppliedFilters({
       status: selectedType === 'All' ? undefined : statusMap[selectedType],
       ...filters,
-      host: selectedHostId || '',
+      organization: selectedHostId || '',
       start_date: filters.start_date || undefined,
       end_date: filters.end_date || undefined,
     });
@@ -630,7 +630,7 @@ const Content = () => {
   useEffect(() => {
     setAppliedFilters((prev: any) => ({
       ...prev,
-      host: selectedHostId,
+      organization: selectedHostId,
     }));
 
     setSelectedGroupId(null);
@@ -702,6 +702,15 @@ const Content = () => {
                   ...prev,
                   start_date: startDate ? toUtcStart(startDate) : undefined,
                   end_date: endDate ? toUtcEnd(endDate) : undefined,
+                }));
+
+                setSelectedGroupId(null);
+                setGroupVisitors([]);
+              }}
+              onVisitorTypeChange={(visitorTypeId) => {
+                setAppliedFilters((prev: any) => ({
+                  ...prev,
+                  visitor_type_id: visitorTypeId,
                 }));
 
                 setSelectedGroupId(null);

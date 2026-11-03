@@ -127,25 +127,40 @@ export const getApprovalTicket = async (options?: {
 
 // Approve
 export const approveTicket = async (id: string): Promise<any> => {
-  const response = await axiosInstance.post(
-    '/approval-ticket/' + id + '/approve',
-    // {},
-    // null,
-    null,
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.post(
+      '/approval-ticket/' + id + '/approve',
+      // {},
+      // null,
+      null,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Reject
 export const rejectTicket = async (id: string): Promise<any> => {
-  const response = await axiosInstance.post(`/approval-ticket/${id}/reject`, null);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(`/approval-ticket/${id}/reject`, null);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Approve meeting host
 export const approveMeetingHost = async (id: string, payload: any): Promise<any> => {
-  const response = await axiosInstance.post(`/approval-ticket/${id}/approve-meetinghost`, payload);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(
+      `/approval-ticket/${id}/approve-meetinghost`,
+      payload,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getVisitorByTickedId = async (id: string): Promise<any> => {

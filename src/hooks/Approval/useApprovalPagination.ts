@@ -43,6 +43,8 @@ export const useApprovalPagination = ({ page, rowsPerPage, search, sortDir, filt
           current_step: item.current_step,
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
+          is_final: item.is_final,
+          is_reviewer: item.is_reviewer,
         })),
       };
     },

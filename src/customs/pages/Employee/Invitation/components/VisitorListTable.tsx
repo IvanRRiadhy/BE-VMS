@@ -3,8 +3,11 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -33,6 +36,9 @@ import { exportVisitorExcel, exportVisitorPdf } from './VisitorExport';
 import { useTranslation } from 'react-i18next';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconSearch } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import { useDebounce } from 'src/hooks/useDebounce';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 type Props = {
   selectedGroupId: any;
   groupHeader: any;
@@ -62,6 +68,23 @@ export default function VisitorListTable({
 }: Props) {
   const { t } = useTranslation();
   const lg = window.innerWidth > 1200;
+  const [search, setSearch] = useState('');
+
+  const debouncedSearch = useDebounce(search, 500);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const filteredVisitors = useMemo(() => {
+    return groupVisitors.filter((visitor) => {
+      const matchesName = visitor.visitor_name
+        ?.toLowerCase()
+        .includes(debouncedSearch.trim().toLowerCase());
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        visitor.visitor_status?.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesName && matchesStatus;
+    });
+  }, [groupVisitors, debouncedSearch, statusFilter]);
   if (!selectedGroupId) {
     return (
       <Box
@@ -117,27 +140,44 @@ export default function VisitorListTable({
 
               <TableCell colSpan={10}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <CustomTextField
-                    fullWidth
-                    size="medium"
-                    placeholder="Search..."
-                    // value={search}
-                    // onChange={(e) => setSearch(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <IconSearch size={18} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      width: '350px',
-                      '& .MuiOutlinedInput-root': {
-                        // borderRadius: 2,
-                        backgroundColor: 'background.paper',
-                      },
-                    }}
-                  />
+                  <Box display="flex" gap={1} alignItems="center">
+                    <CustomTextField
+                      fullWidth
+                      size="medium"
+                      placeholder="Search visitor name..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <IconSearch size={18} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        width: '350px',
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'background.paper',
+                        },
+                      }}
+                    />
+                    <FormControl size="medium" sx={{ minWidth: 160 }}>
+                      <InputLabel id="visitor-status-label">Status</InputLabel>
+                      <CustomSelect
+                        labelId="visitor-status-label"
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(e: any) => setStatusFilter(e.target.value)}
+                      >
+                        <MenuItem value="all">All</MenuItem>
+                        <MenuItem value="Preregis">Preregis</MenuItem>
+                        <MenuItem value="Check In">Check In</MenuItem>
+                        <MenuItem value="Check Out">Check Out</MenuItem>
+                        <MenuItem value="Waiting">Waiting</MenuItem>
+                        <MenuItem value="Available">Available</MenuItem>
+                      </CustomSelect>
+                    </FormControl>
+                  </Box>
 
                   <Box display="flex" gap={1}>
                     <Tooltip title="History Approval" arrow>
@@ -236,8 +276,8 @@ export default function VisitorListTable({
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : groupVisitors.length > 0 ? (
-              groupVisitors.map((visitor, index) => (
+            ) : filteredVisitors.length > 0 ? (
+              filteredVisitors.map((visitor, index) => (
                 <VisitorRow
                   key={`${visitor.id}-${index}`}
                   visitor={visitor}
@@ -250,7 +290,7 @@ export default function VisitorListTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={11} align="center">
                   <Typography color="text.secondary">No visitor data</Typography>
                 </TableCell>
               </TableRow>

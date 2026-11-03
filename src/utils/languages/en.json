@@ -81,6 +81,7 @@
   "fluctuation_visitor": "Fluctuation Visitor",
   "heatmap_visitor": "Visitor Heatmap",
   "visitor_praregist": "Pre Registration Visitor List",
+  "expiredLinkNote": "Must be set to H-1 from the visit start time.",
   "checkin": "Check In",
   "checkout": "Check Out",
   "canceled": "Canceled",

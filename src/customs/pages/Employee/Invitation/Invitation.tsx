@@ -172,13 +172,14 @@ const Content = () => {
     visitor_status: '',
     visitor_type: '',
     visitor_role: '',
-    host_id: '',
+    organization: '',
     site_id: '',
     is_block: '',
     transaction_status: '',
     emergency_situation: '',
     start_date: '',
     end_date: '',
+    visitor_type_id: '',
   });
 
   const queryClient = useQueryClient();
@@ -665,7 +666,7 @@ const Content = () => {
     status: undefined,
     visitor_type: '',
     visitor_role: '',
-    host_id: '',
+    organization: '',
     site_id: '',
     is_employee: '',
     is_block: '',
@@ -673,6 +674,7 @@ const Content = () => {
     emergency_situation: '',
     start_date: '',
     end_date: '',
+    visitor_type_id: '',
   });
 
   const [page, setPage] = useState(0);
@@ -694,13 +696,14 @@ const Content = () => {
       visitor_status: '',
       visitor_type: '',
       visitor_role: '',
-      host_id: '',
+      organization: '',
       site_id: '',
       is_block: '',
       transaction_status: '',
       emergency_situation: '',
       start_date: '',
       end_date: '',
+      visitor_type_id: '',
     };
 
     setFilters(empty);
@@ -877,6 +880,15 @@ const Content = () => {
                     ...prev,
                     start_date: startDate ? toUtcStart(startDate) : undefined,
                     end_date: endDate ? toUtcEnd(endDate) : undefined,
+                  }));
+
+                  setSelectedGroupId(null);
+                  setGroupVisitors([]);
+                }}
+                onVisitorTypeChange={(visitorTypeId) => {
+                  setAppliedFilters((prev: any) => ({
+                    ...prev,
+                    visitor_type_id: visitorTypeId,
                   }));
 
                   setSelectedGroupId(null);

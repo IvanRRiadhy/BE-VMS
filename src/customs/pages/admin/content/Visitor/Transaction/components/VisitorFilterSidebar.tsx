@@ -25,6 +25,7 @@ import { Stack } from '@mui/system';
 
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -35,6 +36,7 @@ interface VisitorFilterSidebarProps {
   filters?: any;
   setFilters?: React.Dispatch<React.SetStateAction<any>>;
   onDateRangeChange?: any;
+  onVisitorTypeChange?: (id: string) => void;
 }
 
 const VisitorFilterSidebar = ({
@@ -44,17 +46,29 @@ const VisitorFilterSidebar = ({
   filters,
   setFilters,
   onDateRangeChange,
+  onVisitorTypeChange,
 }: VisitorFilterSidebarProps) => {
   const { visitorType = [] } = useInvitationVisitorType();
   const [searchEmployee, setSearchEmployee] = useState('');
 
   const debouncedSearch = useDebounce(searchEmployee, 500);
 
-  const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
-    search: debouncedSearch,
-    start: 0,
-    length: 10,
+  // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
+  //   search: debouncedSearch,
+  //   start: 0,
+  //   length: 10,
+  // });
+
+  const { data: organization = [], isLoading } = useOrganizationPagination({
+    page: 0,
+    rowsPerPage: 10,
+    sortDir: 'desc',
+    sort_column: 'create_at',
+    searchKeyword: debouncedSearch,
   });
+
+  const organizations = organization?.collection || [];
+
   const dateRange: [Dayjs | null, Dayjs | null] = [
     filters.start_date ? dayjs(filters.start_date) : null,
     filters.end_date ? dayjs(filters.end_date) : null,
@@ -81,7 +95,7 @@ const VisitorFilterSidebar = ({
     const startDate = newStart?.format('YYYY-MM-DD') ?? '';
     const endDate = newEnd?.format('YYYY-MM-DD') ?? '';
 
-    setFilters((prev: any) => ({
+    setFilters?.((prev: any) => ({
       ...prev,
       start_date: startDate,
       end_date: endDate,
@@ -277,7 +291,7 @@ const VisitorFilterSidebar = ({
         <TextField
           fullWidth
           size="small"
-          placeholder="Search employee..."
+          placeholder="Search Satker..."
           value={searchEmployee}
           sx={{ mb: 1 }}
           onChange={(e) => setSearchEmployee(e.target.value)}
@@ -309,7 +323,7 @@ const VisitorFilterSidebar = ({
                 <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
               </Box>
             ))
-          : visitorEmployee.map((item: any) => (
+          : organizations.map((item: any) => (
               <Box
                 key={item.id}
                 sx={{
@@ -346,6 +360,7 @@ const VisitorFilterSidebar = ({
       <Divider sx={{ my: 1.5 }} />
 
       {/* Visitor Type */}
+      {/* Visitor Type */}
       <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>
           Visitor Type
@@ -361,7 +376,23 @@ const VisitorFilterSidebar = ({
                 fontSize: 14,
               },
             }}
-            control={<Checkbox size="small" sx={{ p: 0.4 }} />}
+            control={
+              <Checkbox
+                size="small"
+                sx={{ p: 0.4 }}
+                checked={filters?.visitor_type === item.id}
+                onChange={(e) => {
+                  const selectedId = e.target.checked ? item.id : '';
+
+                  setFilters?.((prev: any) => ({
+                    ...prev,
+                    visitor_type: selectedId,
+                  }));
+
+                  onVisitorTypeChange?.(selectedId);
+                }}
+              />
+            }
             label={item.name}
           />
         ))}

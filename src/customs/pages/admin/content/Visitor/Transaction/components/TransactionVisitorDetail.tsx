@@ -3,8 +3,11 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
+  MenuItem,
   Pagination,
   Paper,
   Table,
@@ -29,8 +32,10 @@ import {
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 
 import VisitorRow from '../VisitorRow';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useDebounce } from 'src/hooks/useDebounce';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 interface TransactionVisitorDetailProps {
   selectedGroupId: string | null;
@@ -66,24 +71,40 @@ const TransactionVisitorDetail = ({
   handleViewDetail,
 }: TransactionVisitorDetailProps) => {
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  // const rowsPerPage = 10;
   const rowsPerPage = 10;
 
-  const totalCount = groupVisitors.length;
+  const debouncedSearch = useDebounce(search, 500);
+
+  const filteredVisitors = useMemo(() => {
+    return groupVisitors.filter((visitor) => {
+      const matchesName = visitor.visitor_name
+        ?.toLowerCase()
+        .includes(debouncedSearch.trim().toLowerCase());
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        visitor.visitor_status?.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesName && matchesStatus;
+    });
+  }, [groupVisitors, debouncedSearch, statusFilter]);
+
+  const totalCount = filteredVisitors.length;
   const totalPages = Math.ceil(totalCount / rowsPerPage);
 
   const startIndex = (page - 1) * rowsPerPage;
 
-  const paginatedVisitors = groupVisitors.slice(startIndex, startIndex + rowsPerPage);
+  const paginatedVisitors = filteredVisitors.slice(startIndex, startIndex + rowsPerPage);
 
   const from = totalCount === 0 ? 0 : startIndex + 1;
   const to = Math.min(startIndex + rowsPerPage, totalCount);
 
-  // Reset pagination ketika group berubah
   useEffect(() => {
     setPage(1);
-  }, [selectedGroupId]);
+  }, [selectedGroupId, debouncedSearch, statusFilter]);
   return (
     <Box
       flexGrow={1}
@@ -112,27 +133,43 @@ const TransactionVisitorDetail = ({
 
                   <TableCell colSpan={10}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <CustomTextField
-                        fullWidth
-                        size="medium"
-                        placeholder="Search..."
-                        // value={search}
-                        // onChange={(e) => setSearch(e.target.value)}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IconSearch size={18} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{
-                          width: '350px',
-                          '& .MuiOutlinedInput-root': {
-                            // borderRadius: 2,
-                            backgroundColor: 'background.paper',
-                          },
-                        }}
-                      />
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <CustomTextField
+                          size="medium"
+                          placeholder="Search visitor name..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IconSearch size={18} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            width: '280px',
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: 'background.paper',
+                            },
+                          }}
+                        />
+                        <FormControl size="medium" sx={{ minWidth: 150 }}>
+                          <InputLabel id="visitor-status-label">Status</InputLabel>
+                          <CustomSelect
+                            labelId="visitor-status-label"
+                            label="Status"
+                            value={statusFilter}
+                            onChange={(e: any) => setStatusFilter(e.target.value)}
+                          >
+                            <MenuItem value="all">All</MenuItem>
+                            <MenuItem value="Preregis">Preregis</MenuItem>
+                            <MenuItem value="Check In">Check In</MenuItem>
+                            <MenuItem value="Check Out">Check Out</MenuItem>
+                            <MenuItem value="Waiting">Waiting</MenuItem>
+                            <MenuItem value="Available">Available</MenuItem>
+                          </CustomSelect>
+                        </FormControl>
+                      </Box>
 
                       <Box display="flex" gap={0.5}>
                         <Tooltip title="History Approval" arrow>

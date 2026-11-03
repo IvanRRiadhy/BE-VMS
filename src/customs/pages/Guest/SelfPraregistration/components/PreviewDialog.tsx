@@ -279,10 +279,9 @@ const PreviewDialog = ({
                             </Grid>
                           );
                         }
-
                         if (f.remarks === 'is_driving') {
                           const answer = f.answer_text;
-
+                      
                           const isDriving = ['true', 'yes', '1'].includes(
                             String(answer).trim().toLowerCase(),
                           );

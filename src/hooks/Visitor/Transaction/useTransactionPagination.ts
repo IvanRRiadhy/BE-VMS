@@ -36,6 +36,8 @@ export const useTransactionVisitorPagination = ({
         filters.emergency_situation === '' ? undefined : filters.emergency_situation === 'true',
         filters.is_block === '' ? undefined : filters.is_block === 'true',
         filters.host || undefined,
+        filters.organization || undefined,
+        filters.visitor_type_id || undefined,
       ),
 
     getNextPageParam: (lastPage, pages) => {
