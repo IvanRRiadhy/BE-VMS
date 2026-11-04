@@ -81,6 +81,9 @@ const NotificationGuest = Loadable(
 
 /* Admin Pages */
 const Dashboard = Loadable(lazy(() => import('src/customs/pages/admin/content/Dashboard/Content')));
+const DashboardInsight = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Dashboard/Insight/Content')),
+);
 const ManageVisitor = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Visitor/Trx/Content')),
 );
@@ -227,6 +230,9 @@ const ManageAdminNotification = Loadable(
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Dashboard/Dashboard')),
+);
+const DashboardInsightEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Dashboard/Insight/Content')),
 );
 const ApprovalEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Approval/Approval')),
@@ -469,6 +475,7 @@ const Router = [
         element: <ProtectedRoute allowedRoles={['Admin', 'OperatorAdmin']} />,
         children: [
           { path: '/admin/dashboard', element: <Dashboard /> },
+          { path: '/admin/insight', element: <DashboardInsight /> },
           { path: '/admin/monitoring', element: <MonitoringAdmin /> },
           // Visitor
           { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
@@ -544,6 +551,7 @@ const Router = [
             children: [
               { index: true, element: <DashboardEmployee /> },
               { path: 'dashboard', element: <DashboardEmployee /> },
+              { path: 'insight', element: <DashboardInsightEmployee /> },
               { path: 'approval', element: <ApprovalEmployee /> },
               { path: 'my-invitation', element: <InvitationEmployee /> },
               { path: 'share-link', element: <ShareLinkEmployee /> },

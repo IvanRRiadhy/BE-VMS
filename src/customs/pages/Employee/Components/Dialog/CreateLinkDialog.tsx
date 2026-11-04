@@ -201,7 +201,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
           {/* VISITOR TYPE */}
           <Grid size={{ xs: 12, md: 12 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Type</CustomFormLabel>
+              <CustomFormLabel sx={{ marginTop: 0 }} required>
+                Visitor Type
+              </CustomFormLabel>
               <Switch
                 size="small"
                 checked={enabled.visitorType}
@@ -255,7 +257,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Visit Start</CustomFormLabel>
+              <CustomFormLabel sx={{ marginTop: 0 }} required>
+                Visit Start
+              </CustomFormLabel>
               <Switch
                 size="small"
                 checked={enabled.visitStart}
@@ -323,7 +327,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Visit End</CustomFormLabel>
+              <CustomFormLabel sx={{ marginTop: 0 }} required>
+                Visit End
+              </CustomFormLabel>
               <Switch
                 size="small"
                 checked={enabled.visitEnd}

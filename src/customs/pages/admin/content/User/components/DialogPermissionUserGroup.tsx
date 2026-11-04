@@ -118,6 +118,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
       'ManageUser',
     ],
     visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
+    securitymonitor: ['OrganizationAssignment', 'ManageVisitorTypeScope', 'ManageSiteScope'],
   };
   const permissionNeedSite = [
     'OrganizationAssignment',

@@ -32,7 +32,7 @@ const Content = () => {
         color: 'none',
       },
     ],
-    [],
+    [totalRecords],
   );
 
   const handleSearch = useCallback(

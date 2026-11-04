@@ -68,6 +68,7 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import VisitorFilterSidebar from './components/VisitorFilterSidebar';
 import VisitorDetailDialog from './components/VisitorDetailDialog';
 import ShareLink from './components/ShareLink';
+import HistoryApprovalDialog from './components/HistoryApprovalDialog';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -184,6 +185,8 @@ const Content = () => {
     start_date: '',
     end_date: '',
   });
+
+  const [historyApprovalOpen, setHistoryApprovalOpen] = useState(false);
 
   const {
     data: tableTransaction,
@@ -754,6 +757,7 @@ const Content = () => {
               handleRemoveVisitor={handleRemoveVisitor}
               handleAddInvitation={handleAddInvitation}
               handleViewDetail={handleViewDetail}
+              onHistoryApproval={() => setHistoryApprovalOpen(true)}
             />
             {/* <Box sx={{ mt: 2 }}>
               {selectedVisitor && (
@@ -858,6 +862,11 @@ const Content = () => {
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         visitorData={visitorData}
+      />
+      <HistoryApprovalDialog
+        open={historyApprovalOpen}
+        onClose={() => setHistoryApprovalOpen(false)}
+        id={selectedGroupId}
       />
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}

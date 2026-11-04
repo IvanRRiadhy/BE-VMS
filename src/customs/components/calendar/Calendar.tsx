@@ -85,6 +85,18 @@ const Calendar: FC<CalendarProps> = ({ onChange, value }) => {
     // }
   };
 
+  useEffect(() => {
+    if (value?.startDate && value?.endDate) {
+      setState([
+        {
+          startDate: value.startDate,
+          endDate: value.endDate,
+          key: 'selection',
+        },
+      ]);
+    }
+  }, [value?.startDate, value?.endDate]);
+
   return (
     <>
       <DateRangePicker months={2} direction="vertical" ranges={state} onChange={handleOnChange} />

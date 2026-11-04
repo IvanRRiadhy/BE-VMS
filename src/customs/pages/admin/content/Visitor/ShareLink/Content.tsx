@@ -93,8 +93,14 @@ const Content = () => {
       // showSwal('success', 'Successfully created share link');
       showSwal('success', t('createSuccess', { name: 'share link' }));
     } catch (err: any) {
-      showSwal('error', err?.response.data.message || 'Failed to create share link');
-      throw err;
+      const errorMessage =
+        err?.response?.data?.msg ||
+        err?.response?.data?.message ||
+        err?.message ||
+        err?.msg ||
+        'Failed to create share link';
+
+      showSwal('error', errorMessage);
     }
   };
 

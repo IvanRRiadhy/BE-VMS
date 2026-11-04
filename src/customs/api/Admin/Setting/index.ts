@@ -2,8 +2,12 @@ import axiosInstance from 'src/customs/api/interceptor';
 
 //#region Setting VMS
 export const getSettingVms = async (): Promise<any> => {
-  const response = await axiosInstance.get('/setting/vms');
-  return response.data;
+  try {
+    const response = await axiosInstance.get('/setting/vms');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // update vms
@@ -20,13 +24,21 @@ export const updateSettingVms = async (data: any): Promise<any> => {
 //#region Setting Apikey
 
 export const getApiKey = async (): Promise<any> => {
-  const response = await axiosInstance.get('/setting-apikey');
-  return response.data;
+  try {
+    const response = await axiosInstance.get('/setting-apikey');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getApiKeyById = async (id: string): Promise<any> => {
-  const response = await axiosInstance.get(`/setting-apikey/${id}`);
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`/setting-apikey/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // reveal api key
@@ -55,37 +67,60 @@ export const getApiKeyDT = async (
 };
 
 export const createApiKey = async (data: any): Promise<any> => {
-  const response = await axiosInstance.post('/setting-apikey', data);
-  return response.data;
+  try {
+    const response = await axiosInstance.post('/setting-apikey', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateApiKey = async (id: string, data: any): Promise<any> => {
-  const response = await axiosInstance.put(`/setting-apikey/${id}`, data);
-  return response.data;
+  try {
+    const response = await axiosInstance.put(`/setting-apikey/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // update api key active
 
 export const updateApiKeyActive = async (id: string, is_active: boolean): Promise<any> => {
-  const response = await axiosInstance.put(`/setting-apikey/${id}/active`, { is_active });
-
-  return response.data;
+  try {
+    const response = await axiosInstance.put(`/setting-apikey/${id}/active`, { is_active });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateApiKeyExpired = async (id: string, expired_at: string | null): Promise<any> => {
-  const response = await axiosInstance.put(`/setting-apikey/${id}/expired`, { expired_at });
+  try {
+    const response = await axiosInstance.put(`/setting-apikey/${id}/expired`, { expired_at });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const deleteApiKey = async (id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/setting-apikey/${id}`);
-  return response.data;
+  try {
+    const response = await axiosInstance.delete(`/setting-apikey/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const generateApiKeyById = async (id: string): Promise<any> => {
-  const response = await axiosInstance.post(`/setting-apikey/${id}/generate`);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(`/setting-apikey/${id}/generate`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getRevealById = async (id: string): Promise<any> => {

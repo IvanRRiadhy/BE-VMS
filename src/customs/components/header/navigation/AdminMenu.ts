@@ -35,27 +35,32 @@ import { ItemDataCustomSidebarItems } from './CustomSidebarItems';
 
 export const AdminNavListingData: ItemDataCustomNavListing[] = [
   // DASHBOARD.
-  // {
-  //   id: uniqueId(),
-  //   title: 'Dashboard',
-  //   icon: IconHome,
-  //   href: '/admin/dashboard',
-  //   children: [
-
-  //     // {
-  //     //   id: uniqueId(),
-  //     //   title: 'Monitoring',
-  //     //   icon: IconEye,
-  //     //   href: '/admin/monitoring',
-  //     // },
-  //   ],
-  // },
   {
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconHome,
     href: '/admin/dashboard',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/admin/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Insight',
+        icon: IconEye,
+        href: '/admin/insight',
+      },
+    ],
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Dashboard',
+  //   icon: IconHome,
+  //   href: '/admin/dashboard',
+  // },
   {
     id: uniqueId(),
     title: 'navigation.manage_system',
@@ -402,9 +407,21 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconHome,
-    chip: 'Main View',
-    chipColor: 'secondary',
     href: '/admin/dashboard',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/admin/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Insight',
+        icon: IconEye,
+        href: '/admin/insight',
+      },
+    ],
   },
   // {
   //   id: uniqueId(),
@@ -1213,7 +1230,27 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
     title: 'Dashboard',
     icon: IconHome,
     href: '/employee/dashboard',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/employee/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Insight',
+        icon: IconEye,
+        href: '/employee/insight',
+      },
+    ],
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Dashboard',
+  //   icon: IconHome,
+  //   href: '/employee/dashboard',
+  // },
   {
     id: uniqueId(),
     title: 'navigation.invitation',
@@ -1274,10 +1311,30 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconHome,
-    chip: 'Main View',
-    chipColor: 'secondary',
     href: '/employee/dashboard',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/employee/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Insight',
+        icon: IconEye,
+        href: '/employee/insight',
+      },
+    ],
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Dashboard',
+  //   icon: IconHome,
+  //   chip: 'Main View',
+  //   chipColor: 'secondary',
+  //   href: '/employee/dashboard',
+  // },
   {
     id: uniqueId(),
     title: 'navigation.invitation',

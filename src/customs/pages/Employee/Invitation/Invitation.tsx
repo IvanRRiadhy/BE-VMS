@@ -27,7 +27,7 @@ import {
   getVisitorTransactionByIds,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconBolt, IconClipboard, IconLink, IconLogout, IconUserPlus } from '@tabler/icons-react';
+import { IconLink, IconLogout, IconUserPlus } from '@tabler/icons-react';
 import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
@@ -38,7 +38,7 @@ import {
 } from 'src/customs/api/Admin/InvitationData';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
+import CreateLinkDialog from '../ShareLink/components/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -71,6 +71,7 @@ import { extendPeriodOperator } from 'src/customs/api/operator';
 import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
 import VisitorDetailDialog from '../../admin/content/Visitor/Transaction/components/VisitorDetailDialog';
 import { IconLogin } from '@tabler/icons-react';
+import HistoryApprovalDialog from '../../admin/content/Visitor/Transaction/components/HistoryApprovalDialog';
 
 type Group = {
   id: string;
@@ -81,7 +82,6 @@ type Group = {
 
 const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -189,6 +189,7 @@ const Content = () => {
   const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
   const [openGroup, setOpenGroup] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const [historyApprovalOpen, setHistoryApprovalOpen] = useState(false);
   const {
     data: tableTransaction,
     isLoading,
@@ -228,7 +229,7 @@ const Content = () => {
           host_name: item.host_name || '-',
 
           visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
 
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
@@ -608,7 +609,14 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', t('createSuccess', { name: 'Share Link' }));
     } catch (err: any) {
-      showSwal('error', err.response.data.message ?? t('createdFailed', { name: 'Share Link' }));
+      const errorMessage =
+        err?.response?.data?.msg ||
+        err?.response?.data?.message ||
+        err?.message ||
+        err?.msg ||
+        'Failed to create share link';
+
+      showSwal('error', errorMessage);
     }
   };
 
@@ -944,6 +952,7 @@ const Content = () => {
                   handleAddInvitation={handleAddInvitation}
                   handleExtend={handleOpenExtend}
                   handleViewDetail={handleViewDetail}
+                  onHistoryApproval={() => setHistoryApprovalOpen(true)}
                 />
                 {/* Detail From List */}
                 {/* {selectedVisitor && (
@@ -1095,6 +1104,11 @@ const Content = () => {
         open={openSendEmail}
         onClose={() => setOpenSendEmail(false)}
         onSend={handleSendEmail}
+      />
+      <HistoryApprovalDialog
+        open={historyApprovalOpen}
+        onClose={() => setHistoryApprovalOpen(false)}
+        id={selectedGroupId}
       />
 
       <ConfirmUnsavedDialog

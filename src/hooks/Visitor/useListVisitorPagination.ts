@@ -14,10 +14,10 @@ interface VisitorFilters {
 interface Props {
   page: number;
   rowsPerPage: number;
-  sortDir: string;
+  sortDir?: string;
   sort_column?: string;
-  search: string;
-  filters: VisitorFilters;
+  search?: string;
+  filters?: VisitorFilters;
 }
 
 export const useListVisitorPagination = ({

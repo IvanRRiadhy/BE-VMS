@@ -63,6 +63,7 @@
   "contactUs": "Contact us",
   "confirmationInputCode": "Please enter your invitation code",
   "invitationCode": "Invitation Code",
+    "visitEndEstimatedNote": "Visit End is an estimated end time and may differ from the actual visit completion time.",
   "invitationCodeNotFound": "Invitation Code not found",
   "verify": "Verify",
   "maxFileSize": "Maximum file size is 5 MB.",

@@ -119,7 +119,7 @@ const DashboardEmployee = () => {
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
   const { data: profile } = useProfile();
-  const userId = profile?.id;
+  // const userId = profile?.id;
   const handleCloseInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(false);
   };
@@ -225,22 +225,22 @@ const DashboardEmployee = () => {
       }),
   });
 
-  const {
-    data: currentlyVisitingRes,
-    isLoading: loadingCurrentlyVisiting,
-    refetch: refetchCurrentlyVisiting,
-  } = useQuery({
-    queryKey: ['currently-visiting', startDate, endDate],
-    queryFn: () =>
-      getCurrentlyVisiting({
-        today: 'true',
-        // startDate: formatLocalDate(startDate),
-        // endDate: formatLocalDate(endDate),
-        start: 0,
-        length: 5,
-        sort_dir: 'desc',
-      }),
-  });
+  // const {
+  //   data: currentlyVisitingRes,
+  //   isLoading: loadingCurrentlyVisiting,
+  //   refetch: refetchCurrentlyVisiting,
+  // } = useQuery({
+  //   queryKey: ['currently-visiting', startDate, endDate],
+  //   queryFn: () =>
+  //     getCurrentlyVisiting({
+  //       today: 'true',
+  //       // startDate: formatLocalDate(startDate),
+  //       // endDate: formatLocalDate(endDate),
+  //       start: 0,
+  //       length: 5,
+  //       sort_dir: 'desc',
+  //     }),
+  // });
 
   const invitationMonitoringData =
     todayVisitorsRes?.collection?.slice(0, 5).map((item: any) => ({
@@ -254,17 +254,17 @@ const DashboardEmployee = () => {
       visitor_status: item.visitor_status,
     })) ?? [];
 
-  const currentlyVisiting =
-    currentlyVisitingRes?.collection?.slice(0, 5).map((item: any) => ({
-      id: item.id,
-      name: item.visitor_name,
-      email: item.visitor_email,
-      visitor_period_start: item.visitor_period_start,
-      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-      host: item.host_name ?? '-',
-      site: item.site_place_name,
-      visitor_status: item.visitor_status,
-    })) ?? [];
+  // const currentlyVisiting =
+  //   currentlyVisitingRes?.collection?.slice(0, 5).map((item: any) => ({
+  //     id: item.id,
+  //     name: item.visitor_name,
+  //     email: item.visitor_email,
+  //     visitor_period_start: item.visitor_period_start,
+  //     visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //     host: item.host_name ?? '-',
+  //     site: item.site_place_name,
+  //     visitor_status: item.visitor_status,
+  //   })) ?? [];
 
   const handleView = (row: any) => {
     setSelectedInvitationId(row.id);

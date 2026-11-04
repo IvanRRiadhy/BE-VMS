@@ -52,6 +52,7 @@ interface TransactionVisitorDetailProps {
   handleRemoveVisitor: () => void;
   handleAddInvitation: () => void;
   handleViewDetail: (visitor: any) => void;
+  onHistoryApproval: () => void;
 }
 
 const TransactionVisitorDetail = ({
@@ -69,6 +70,7 @@ const TransactionVisitorDetail = ({
   handleRemoveVisitor,
   handleAddInvitation,
   handleViewDetail,
+  onHistoryApproval,
 }: TransactionVisitorDetailProps) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -179,7 +181,7 @@ const TransactionVisitorDetail = ({
                             color="primary"
                             startIcon={<IconCheck size={16} />}
                             sx={{ height: 36 }}
-                            onClick={() => {}}
+                            onClick={onHistoryApproval}
                           >
                             <Typography variant="caption" fontSize={'0.7rem'}>
                               History Approval
@@ -243,12 +245,12 @@ const TransactionVisitorDetail = ({
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Organization
                   </TableCell>
-                  <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+                  {/* <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Visit Start
                   </TableCell>
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Visit End
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Site
                   </TableCell>

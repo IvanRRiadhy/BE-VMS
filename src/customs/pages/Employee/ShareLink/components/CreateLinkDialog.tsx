@@ -112,6 +112,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   const [errors, setErrors] = useState({
     visitorType: false,
     visitStart: false,
+    visitEnd: false,
     expiredLink: false,
     visitorQuota: false,
   });
@@ -120,6 +121,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
     const newErrors = {
       visitorType: !form.visitor_type_id,
       visitStart: !form.visitor_period_start,
+      visitEnd: !form.visitor_period_end,
       expiredLink: !enabled.expiredLink || !form.expired_number,
       visitorQuota: !enabled.visitorQuota || (!form.is_single_use && form.max_usage < 1),
     };
@@ -132,11 +134,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   const buildPayload = () => {
     const selectedVisitorType = form.visitor_type_id;
     return {
-      host: enabled.visitorType ? selectedVisitorType?.pre_host_id ?? null : null,
+      host: enabled.visitorType ? (selectedVisitorType?.pre_host_id ?? null) : null,
 
-      agenda: enabled.visitorType ? selectedVisitorType?.pre_agenda ?? null : null,
-      site_id: enabled.visitorType ? selectedVisitorType?.pre_site_id ?? null : null,
-      visitor_type_id: enabled.visitorType ? selectedVisitorType?.id ?? null : null,
+      agenda: enabled.visitorType ? (selectedVisitorType?.pre_agenda ?? null) : null,
+      site_id: enabled.visitorType ? (selectedVisitorType?.pre_site_id ?? null) : null,
+      visitor_type_id: enabled.visitorType ? (selectedVisitorType?.id ?? null) : null,
       visitor_period_start: enabled.visitStart ? form.visitor_period_start : null,
       visitor_period_end: enabled.visitEnd ? form.visitor_period_end : null,
       // link_active_at: new Date().toISOString(),
@@ -164,6 +166,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
       setErrors({
         visitorType: false,
         visitStart: false,
+        visitEnd: false,
         expiredLink: false,
         visitorQuota: false,
       });
@@ -216,65 +219,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
       </DialogTitle>
       <DialogContent dividers>
         <Grid container spacing={2}>
-          {/* <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Host</CustomFormLabel>
-              <Switch
-                size="small"
-                checked={enabled.host}
-                onChange={(e) => handleToggle('host', e.target.checked)}
-              />
-            </Stack>
-            <Autocomplete
-              disabled={!enabled.host}
-              options={employee}
-              getOptionLabel={(option: any) => option.name ?? ''}
-              value={form.host}
-              onChange={(_, value) => setForm((prev) => ({ ...prev, host: value }))}
-              renderInput={(params) => <CustomTextField {...params} placeholder="Select Host" />}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Site</CustomFormLabel>
-              <Switch
-                size="small"
-                checked={enabled.site}
-                onChange={(e) => handleToggle('site', e.target.checked)}
-              />
-            </Stack>
-
-            <Autocomplete
-              // multiple
-              size="medium"
-              disabled={!enabled.site}
-              // options={sites.filter((s) => !s.parent)} // hanya parent
-              options={sitesOperator || []}
-              getOptionLabel={(option: any) => option.name ?? ''}
-              // value={sitesOperator.filter((s) => selectedSiteParentIds.includes(s.id))}
-              // value={form.site_id}
-              value={sitesOperator?.find((s) => s.id === form.site_id) || null}
-              // onChange={(_, newValues) => {
-              //   const parentIds = newValues.map((v: any) => v.id);
-              //   setSelectedSiteParentIds(parentIds);
-
-              //   const trees = parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid));
-
-              //   setSiteTree(trees);
-              // }}
-              // onlly one site no parant
-              onChange={(_, value) => {
-                setForm((prev) => ({ ...prev, site_id: value?.id }));
-              }}
-              renderInput={(params) => (
-                <CustomTextField {...params} placeholder="Select Site" fullWidth />
-              )}
-            />
-
-      
-          </Grid> */}
-
           {/* VISITOR TYPE */}
           <Grid size={{ xs: 12, md: 12 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -295,16 +239,26 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               getOptionLabel={(option: any) => option.name ?? ''}
               value={form.visitor_type_id}
               onChange={(_, value) => {
+                const isSpecialCategory = ['CIT', 'Remise'].includes(value?.visitor_category);
+
                 setForm((prev) => ({
                   ...prev,
                   visitor_type_id: value,
                   host: value?.pre_host_id ? { id: value.pre_host_id } : null,
                   site_id: value?.pre_site_id ?? null,
                   agenda: value?.pre_agenda ?? '',
+                  expired_number: isSpecialCategory ? 99999999 : 0,
                 }));
+
+                setEnabled((prev) => ({
+                  ...prev,
+                  expiredLink: isSpecialCategory ? true : prev.expiredLink,
+                }));
+
                 setErrors((prev) => ({
                   ...prev,
                   visitorType: !value,
+                  expiredLink: false,
                 }));
               }}
               renderInput={(params) => (
@@ -330,33 +284,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               )}
             />
           </Grid>
-
-          {/* <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }} required>
-                Agenda
-              </CustomFormLabel>
-              <Switch
-                size="small"
-                checked={enabled.agenda}
-                onChange={(e) => handleToggle('agenda', e.target.checked)}
-              />
-            </Stack>
-
-            <CustomTextField
-              fullWidth
-              disabled={!enabled.agenda}
-              sx={{ mt: 1 }}
-              placeholder="Enter your agenda"
-              value={form.agenda}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  agenda: e.target.value,
-                }))
-              }
-            />
-          </Grid> */}
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -435,7 +362,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Visit End</CustomFormLabel>
+              <CustomFormLabel sx={{ marginTop: 0 }} required>
+                Visit End
+              </CustomFormLabel>
               <Switch
                 size="small"
                 checked={enabled.visitEnd}
@@ -483,6 +412,8 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
 
                   textField: {
                     fullWidth: true,
+                    error: errors.visitEnd,
+                    helperText: errors.visitEnd ? 'Visit Start is required' : '',
                     onClick: () => {
                       setOpenEndPicker(true);
                     },
@@ -502,6 +433,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }}
               />
             </LocalizationProvider>
+            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && (
+              <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1 }}>
+              {t('visitEndEstimatedNote')}
+              </Typography>
+            )}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -515,33 +451,45 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 onChange={(e) => handleToggle('expiredLink', e.target.checked)}
               />
             </Stack>
+            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
+              <CustomTextField
+                fullWidth
+                disabled
+                value="99999999"
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-root.Mui-disabled': {
+                    backgroundColor: '#f0f0f0',
+                  },
+                }}
+              />
+            ) : (
+              <CustomSelect
+                fullWidth
+                disabled={!enabled.expiredLink}
+                sx={{
+                  mt: 1,
+                  '&.Mui-disabled': {
+                    backgroundColor: '#f0f0f0',
+                  },
+                }}
+                error={errors.expiredLink}
+                value={form.expired_number}
+                onChange={(e: any) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    expired_number: Number(e.target.value),
+                  }));
 
-            <CustomSelect
-              fullWidth
-              disabled={!enabled.expiredLink}
-              sx={{
-                mt: 1,
-                '&.Mui-disabled': {
-                  backgroundColor: '#f0f0f0',
-                },
-              }}
-              error={errors.expiredLink}
-              value={form.expired_number}
-              onChange={(e: any) => {
-                setForm((prev) => ({
-                  ...prev,
-                  expired_number: Number(e.target.value),
-                }));
-
-                setErrors((prev) => ({ ...prev, expiredLink: false }));
-              }}
-            >
-              {/* <MenuItem value={0}>No Expired</MenuItem> */}
-              <MenuItem value={30}>30 Min</MenuItem>
-              <MenuItem value={60}>1 Hour</MenuItem>
-              <MenuItem value={180}>3 Hour</MenuItem>
-              <MenuItem value={1440}>1 Day</MenuItem>
-            </CustomSelect>
+                  setErrors((prev) => ({ ...prev, expiredLink: false }));
+                }}
+              >
+                <MenuItem value={30}>30 Min</MenuItem>
+                <MenuItem value={60}>1 Hour</MenuItem>
+                <MenuItem value={180}>3 Hour</MenuItem>
+                <MenuItem value={1440}>1 Day</MenuItem>
+              </CustomSelect>
+            )}{' '}
             {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && (
               <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1.5 }}>
                 Note: {t('expiredLinkNote')}

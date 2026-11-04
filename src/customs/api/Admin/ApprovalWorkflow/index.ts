@@ -173,7 +173,7 @@ export const getVisitorByTickedId = async (id: string): Promise<any> => {
 // History  Approval
 export const getHistoryApproval = async (id: string): Promise<any> => {
   try {
-    const response = await axiosInstance.get(`/aprproval-ticket/entity/${id}/history`);
+    const response = await axiosInstance.get(`/approval-ticket/entity/${id}/history`);
     return response.data;
   } catch (error) {
     throw error;

@@ -80,6 +80,8 @@ import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalB
 import { useTranslation } from 'react-i18next';
 import { getConfig } from 'src/config';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -146,7 +148,20 @@ const Content = () => {
 
   const { data: siteOptions = [] } = useSites();
   const { allVisitorEmployee } = useVisitorEmployees();
-  const { data: visitorOptions = [] } = useListVisitor();
+  const [visitorSearch, setVisitorSearch] = useState('');
+  // const { data: visitorOptions = [] } = useListVisitor();
+  const debouncedVisitorSearch = useDebounce(visitorSearch, 500);
+  const [pageVisitor, setPageVisitor] = useState(0);
+  const [rowsPerPageVisitor, setRowsPerPageVisitor] = useState(10);
+  const { data: visitorData, isLoading } = useListVisitorPagination({
+    page: pageVisitor,
+    rowsPerPage: rowsPerPageVisitor,
+    sortDir: 'desc',
+    sort_column: 'created_at',
+    search: debouncedVisitorSearch,
+  });
+
+  const visitorOptions = visitorData?.collection ?? [];
 
   const getSiteNames = (ids: string[]) => {
     if (!ids || !siteOptions?.length) return '-';
@@ -340,7 +355,7 @@ const Content = () => {
       Object.fromEntries(
         exportColumns.map(({ key, label, format }) => [
           label,
-          format ? format(row[key]) : row[key] ?? '-',
+          format ? format(row[key]) : (row[key] ?? '-'),
         ]),
       ),
     );
@@ -358,7 +373,7 @@ const Content = () => {
       Object.fromEntries(
         columns.map(({ key, label, format }) => [
           label,
-          format ? format(row[key]) : row[key] ?? '-',
+          format ? format(row[key]) : (row[key] ?? '-'),
         ]),
       ),
     );
@@ -520,7 +535,7 @@ const Content = () => {
       const tableColumn = exportColumns.map((column) => column.label);
 
       const tableRows = reportData.map((row) =>
-        exportColumns.map(({ key, format }) => (format ? format(row[key]) : row[key] ?? '-')),
+        exportColumns.map(({ key, format }) => (format ? format(row[key]) : (row[key] ?? '-'))),
       );
 
       autoTable(doc, {
@@ -784,7 +799,7 @@ const Content = () => {
                 height: '100%',
                 overflowY: 'auto',
                 // maxHeight: { xs: 'none', md: 'calc(100vh - 100px)' },
-         
+
                 minHeight: '100%',
               }}
             >
@@ -1095,7 +1110,7 @@ const Content = () => {
 
                       <Button
                         variant="contained"
-                        color="success"
+                        // color="success"
                         // onClick={handleOpenSaveDialog}
                         onClick={handleConfirmSaveReport}
                         startIcon={<IconDeviceFloppy size={20} />}
@@ -1103,9 +1118,9 @@ const Content = () => {
                         sx={{
                           fontSize: 12,
                           minWidth: 150,
-                          backgroundColor: 'success',
+                          backgroundColor: '#16a765',
                           '&.Mui-disabled': {
-                            backgroundColor: 'success.main',
+                            backgroundColor: '#16a765',
                             color: '#fff',
                             opacity: 0.7,
                           },
@@ -1151,7 +1166,7 @@ const Content = () => {
               overflow: 'hidden',
             }}
           >
-            <Box sx={{ backgroundColor: 'white', p: 3 }}>
+            <Box sx={{ backgroundColor: 'white', p: 1 }}>
               <Typography variant="h5" gutterBottom mb={2}>
                 Report Result
               </Typography>
@@ -1342,7 +1357,7 @@ const Content = () => {
                   size={{ xs: 12, xl: 0.1 }}
                 />
 
-                <Grid size={{ xs: 12, xl: 9 }} flexGrow={1}>
+                <Grid size={{ xs: 12, xl: isFilterCollapsed ? 9.3 : 9.1 }} flexGrow={1}>
                   {isHavePreview ? (
                     <>
                       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>

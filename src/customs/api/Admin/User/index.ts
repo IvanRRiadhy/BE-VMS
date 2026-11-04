@@ -82,3 +82,40 @@ export const getUserRoles = async (): Promise<any> => {
     throw error;
   }
 };
+
+// SSO
+export const getSSO = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/user/sso/linked');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// switch-account
+export const switchAccount = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/user/sso/switch-account`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// sso auth
+export const ssoAuth = async (
+  data: any,
+  integrationId: string,
+  userLinkedId: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      `/user/sso/system/${integrationId}/linked/${userLinkedId}`,
+      data,
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

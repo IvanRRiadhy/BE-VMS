@@ -77,6 +77,7 @@
   "visiting_type": "Jenis Pengunjung",
   "subtitlePersonFiling": "Silakan isi data orang yang mendaftarkan pengunjung ini.",
   "avarage_duration": "Durasi Pengunjung Rata-rata",
+  "visitEndEstimatedNote": "Visit End merupakan estimasi waktu berakhirnya kunjungan dan dapat berbeda dari waktu selesai kunjungan yang sebenarnya.",
   "fluctuation_visitor": "Fluktuasi Pengunjung",
   "heatmap_visitor": "Heatmap Pengunjung",
   "visitor_praregist": "Daftar Pengunjung Pra Registrasi",

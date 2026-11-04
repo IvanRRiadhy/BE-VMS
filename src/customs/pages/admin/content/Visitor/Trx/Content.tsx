@@ -607,7 +607,14 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
     } catch (err: any) {
-      showSwal('error', err?.response.data.message || 'Failed to create share link');
+      const errorMessage =
+        err?.response?.data?.msg ||
+        err?.response?.data?.message ||
+        err?.message ||
+        err?.msg ||
+        'Failed to create share link';
+
+      showSwal('error', errorMessage);
     }
   };
 

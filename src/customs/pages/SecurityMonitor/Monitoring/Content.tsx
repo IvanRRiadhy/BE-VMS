@@ -32,6 +32,7 @@ import {
   Typography,
   CircularProgress,
   Paper,
+  MenuItem,
 } from '@mui/material';
 import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
 import { Stack } from '@mui/system';
@@ -42,6 +43,7 @@ import {
   IconFileTypePdf,
   IconFilterFilled,
   IconPlus,
+  IconRefresh,
   IconSearch,
   IconUsers,
 } from '@tabler/icons-react';
@@ -52,6 +54,14 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { useTranslation } from 'react-i18next';
 import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
 import VisitorDetailPanel from '../../Employee/Invitation/components/VisitorDetailPanel';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import dayjs from 'dayjs';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/id';
 type TransactionStatus =
   | 'Check In'
   | 'Check Out'
@@ -72,114 +82,33 @@ interface Transaction {
 
 const dummyTransactions: any[] = [
   {
-    initial_trx_code:
-      '6ZUKKMXDPERG5GZDRYZ5Q3GD7MT49JPQTC8WEOWWJ64K58PIUYJLB1NCY8QW1GU8H58LLP92RVHV96X2EBU5BXBYQJAIYQ9IV7IHHNNA2XONZRJ6ICJCNVC2GHFTT5HZ',
-    agenda: 'Agenda Sinergi',
-    host: '6df5c006-1431-483e-81a7-71078cd861c2',
-    host_name: 'DLAF',
-    host_organization_name: 'DLAF',
-    invitation_created_at: '2026-10-27T02:26:00.7272345',
-    can_track_ble: true,
-    can_track_cctv: true,
-    can_parking: true,
-    can_access: true,
-    remarks: 'Invitation',
-    site_id: '1d6c9704-f6ab-47bd-a6b0-3e1fb3d6faea',
-    site_location: 'SPU',
-    visitor_type_id: '854291d4-6a2e-412c-98a3-f8c30503db0e',
-    visitor_type_name: 'General Visitor',
-    visitor_period_start: '2026-10-27T01:00:00',
-    visitor_period_end: '2026-10-27T12:00:00',
-    tz: 'Asia/Jakarta',
-    visitor_role: 'Visitor',
-    transaction_status: 'Available',
-    flow: 'Invitation',
-    list_visitor: [],
-    invited_by: '416befe2-b840-4f35-b310-a079bf1b6a3b',
-    invited_by_name: 'Admins',
-    id: 1,
-    status: 'Checkin',
-  },
-  {
-    id: 2,
-    agenda: 'Project Discussion',
-    visitorName: 'Siti Rahma',
-    host_name: 'Dewi Lestari',
-    visitor_period_start: '2026-10-27 08:00',
-    visitor_period_end: '2026-10-27 09:00',
-    status: 'Checkout',
-  },
-  {
-    id: 3,
-    agenda: 'Vendor Visit',
-    visitorName: 'Rudi Hartono',
-    host_name: 'Agus Wijaya',
-    visitor_period_start: '2026-10-27 13:00',
-    visitor_period_end: '2026-10-27 14:00',
-    status: 'Available',
-  },
-  {
-    id: 4,
-    agenda: 'Business Partnership',
-    visitorName: 'Maya Putri',
-    host_name: 'Dian Saputra',
-    visitor_period_start: '2026-10-27 10:00',
-    visitor_period_end: '2026-10-27 11:00',
-    status: 'Approved',
-  },
-  {
-    id: 5,
-    agenda: 'Product Presentation',
-    visitorName: 'Fajar Nugraha',
-    host_name: 'Rina Amelia',
-    visitor_period_start: '2026-10-27 14:00',
-    visitor_period_end: '2026-10-27 15:00',
-    status: 'Rejected',
-  },
-  {
-    id: 6,
-    agenda: 'Technical Interview',
-    visitorName: 'Nadia Putri',
-    host_name: 'Dimas Prakoso',
-    visitor_period_start: '2026-10-27 11:00',
-    visitor_period_end: '2026-10-27 12:00',
-    status: 'Waiting',
-  },
-  {
-    id: 7,
-    agenda: 'System Maintenance',
-    visitorName: 'Eko Saputra',
-    host_name: 'Andi Wijaya',
-    visitor_period_start: '2026-10-27 15:00',
-    visitor_period_end: '2026-10-27 16:00',
-    status: 'Checkin',
-  },
-  {
-    id: 8,
-    agenda: 'Annual Review',
-    visitorName: 'Lina Marlina',
-    host_name: 'Bambang Setiawan',
-    visitor_period_start: '2026-10-27 09:30',
-    visitor_period_end: '2026-10-27 10:30',
-    status: 'Approved',
-  },
-  {
-    id: 9,
-    agenda: 'Training Session',
-    visitorName: 'Doni Kurniawan',
-    host_name: 'Putri Anggraini',
-    visitor_period_start: '2026-10-27 13:30',
-    visitor_period_end: '2026-10-27 14:30',
-    status: 'Waiting',
-  },
-  {
-    id: 10,
-    agenda: 'Office Tour',
-    visitorName: 'Tina Permata',
-    host_name: 'Hendra Gunawan',
-    start: '2026-10-27 16:00',
-    end: '2026-10-27 17:00',
-    status: 'Available',
+    // event_id: '550e8400-e29b-41d4-a716-446655440000',
+    // service_source: 0,
+    // action_type: 'VISITOR_CHECK_IN',
+    // section: 0,
+    title: 'Visitor Check-In',
+    message: 'John Doe has successfully checked in at Main Lobby.',
+    // icon: 0,
+    // priority: 1,
+    // is_alarm: false,
+    // timestamp: '2026-11-04T09:30:00Z',
+    actor_name: 'Security Officer',
+    // trx_visitor_id: '650e8400-e29b-41d4-a716-446655440000',
+    // visitor_id: '750e8400-e29b-41d4-a716-446655440000',
+    // user_id: null,
+    visitor_name: 'John Doe',
+    visitor_type: 'Business Visitor',
+    // host_id: '850e8400-e29b-41d4-a716-446655440000',
+    host_name: 'Michael Smith',
+    // employee_id: null,
+    // site_id: '950e8400-e29b-41d4-a716-446655440000',
+    site_name: 'Head Office',
+    // location: 'Main Lobby',
+    // card_number: 'CARD-00125',
+    vehicle_plate: 'B 1234 ABC',
+    vehicle_type: 'Car',
+    check_in_time: formatDateTime('2026-11-04T09:30:00Z'),
+    check_out_time: formatDateTime('2026-11-04T10:30:00Z'),
   },
 ];
 
@@ -249,7 +178,8 @@ const Content = () => {
       color: 'none',
     },
   ];
-
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(350);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -285,344 +215,199 @@ const Content = () => {
     };
   }, [isDragging]);
 
+  const initialFilter: any = {
+    site: '',
+    host: '',
+    visitorName: '',
+    startDate: null,
+    endDate: null,
+  };
+
+  const [filters, setFilters] = useState<any>(initialFilter);
+
+  const handleResetFilter = () => {
+    setFilters(initialFilter);
+  };
+
   return (
     <Container title="Transaction Visitor" description="this is transaction visitor page">
       <Box>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, lg: 12 }}>
-            <TopCard cardMarginBottom={1} items={cards} size={{ xs: 12, lg: 4 }} />
-          </Grid>
-        </Grid>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: mdUp ? 'row' : 'column',
-            backgroundColor: '#fff',
-            // bgcolor: 'background.paper',
-            height: '100%',
-            width: '100%',
-            // overflow: 'hidden',
-            marginTop: '5px',
-          }}
-        >
-          <Box
-            sx={{
-              width: mdUp ? `${sidebarWidth}px` : '100%',
-              flexShrink: 0,
-              borderRight: '1px solid #eee',
-              p: 2,
-              pt: 2,
-              overflow: 'auto',
-              height: { xs: '100%', md: '90vh' },
-              boxSizing: 'border-box',
-            }}
-          >
-            <Typography variant="h5" mb={2}>
-              Event
-            </Typography>
-
-            <CustomTextField
-              fullWidth
-              size="small"
-              placeholder="Search Event"
-              // value={searchAgenda}
-              // onChange={(e) => setSearchAgenda(e.target.value)}
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch fontSize="small" color="#9e9e9e" size={18} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton edge="end">
-                      <IconFilterFilled size={18} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Box>
-              <Box>
-                {dummyTransactions.map((transaction) => {
-                  const statusColor = statusBgMap[transaction.status] ?? '#9E9E9E';
-                  const statusLabel = statusLabelMap[transaction.status] ?? transaction.status;
-                  const isSelected = selectedGroup?.id === transaction.id;
-
-                  return (
-                    <Box
-                      key={transaction.id}
-                      onClick={() => setSelectedGroup(transaction)}
-                      sx={{
-                        backgroundColor: isSelected ? '#e3f2fd' : '#fff',
-                        border: '1px solid',
-                        borderColor: isSelected ? '#90caf9' : '#e0e0e0',
-                        // borderLeft: `4px solid ${statusColor}`,
-                        borderRadius: 2,
-                        p: 1.5,
-                        cursor: 'pointer',
-                        mb: 1,
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          backgroundColor: '#f5f9ff',
-                          borderColor: '#90caf9',
-                        },
-                      }}
-                    >
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography fontWeight="bold" variant="h6">
-                          {transaction.agenda}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {transaction.host_name}
-                        </Typography>
-                      </Box>
-
-                      {/* <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Visitor: {transaction.visitorName}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        Host: {transaction.hostName}
-                      </Typography> */}
-
-                      <Stack spacing={0.75} sx={{ mt: 1 }}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <IconCalendarEvent size={18} color="#1976d2" stroke={1.8} />
-                          <Typography variant="body2" color="text.secondary">
-                            Start: {formatDateTime(transaction.visitor_period_start)}
-                          </Typography>
-                        </Stack>
-
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <IconCalendarTime size={18} color="#1976d2" stroke={1.8} />
-                          <Typography variant="body2" color="text.secondary">
-                            End: {formatDateTime(transaction.visitor_period_end)}
-                          </Typography>
-                        </Stack>
-                      </Stack>
-
-                      <Box display="flex" justifyContent="flex-end" mt={1}>
-                        <Typography
-                          sx={{
-                            px: 1.2,
-                            py: 0.4,
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            backgroundColor: statusColor,
-                            color: '#fff',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {statusLabel}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
-          </Box>
-
-          {mdUp && (
+            {/* <TopCard cardMarginBottom={1} items={cards} size={{ xs: 12, lg: 4 }} /> */}
             <Box
-              onMouseDown={handleMouseDown}
               sx={{
-                width: '8px',
-                minWidth: '8px',
-                flexShrink: 0,
-                cursor: 'col-resize',
-                backgroundColor: isDragging ? '#1976d2' : '#e0e0e0',
-                position: 'relative',
-                zIndex: 10,
-                alignSelf: 'stretch',
-                marginLeft: '-1px',
-                marginRight: '-1px',
-                '&:hover': {
-                  backgroundColor: '#90caf9',
-                },
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '2px',
-                  width: '4px',
-                  height: '40px',
-                  transform: 'translateY(-50%)',
-                  borderRadius: '4px',
-                  backgroundColor: isDragging ? '#1565c0' : '#757575',
-                },
+                p: 2,
+                borderRadius: 2,
+                bgcolor: '#fff',
+                border: '1px solid',
+                borderColor: 'divider',
               }}
-            />
-          )}
-          <Box
-            flexGrow={1}
-            p={2}
-            sx={{
-              height: { xs: 'auto', xl: '78vh' },
-              overflow: 'auto',
-            }}
-          >
-            {selectedGroup ? (
-              <TableContainer
-                component={Paper}
+            >
+              <Box
                 sx={{
-                  border: '1px solid #d6d6d6ff',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
                 }}
               >
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: 50 }}>
-                        <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
-                          {openGroup ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
-                        </IconButton>
-                      </TableCell>
-                      {/* <TableCell>
-                        <Typography>Today</Typography>
-                      </TableCell> */}
-
-                      <TableCell colSpan={9}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <CustomTextField
-                            fullWidth
-                            size="medium"
-                            placeholder="Search visitor..."
-                            sx={{ width: '300px' }}
-                            value={searchVisitor}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setSearchVisitor(e.target.value)
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <IconSearch size={18} color="#9e9e9e" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-
-                          <Box display="flex" gap={0.5}>
-                            <Tooltip title="Export PDF" arrow>
-                              <Button
-                                variant="contained"
-                                size="medium"
-                                color="error"
-                                startIcon={<IconFileTypePdf size={16} />}
-                                sx={{ height: 36 }}
-                              >
-                                <Typography variant="caption" fontSize={'0.7rem'}>
-                                  Export PDF
-                                </Typography>
-                              </Button>
-                            </Tooltip>
-
-                            <Tooltip title="Export Excel" arrow>
-                              <Button
-                                variant="contained"
-                                size="medium"
-                                color="success"
-                                startIcon={<IconFileExport size={16} />}
-                                sx={{ height: 36 }}
-                              >
-                                <Typography variant="caption" fontSize={'0.7rem'}>
-                                  Export Excel
-                                </Typography>
-                              </Button>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-
-                    <TableRow>
-                      <TableCell>{/* <Checkbox /> */}</TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Visitor Name
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Email
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Phone
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Invitation Code
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Organization
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Host
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Site
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        Status
-                      </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
-                        {t('action')}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  {openGroup && (
-                    <TableBody>
-                      {groupDetailLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={10} align="center">
-                            <CircularProgress size={24} />
-                          </TableCell>
-                        </TableRow>
-                      ) : groupVisitors.length > 0 ? (
-                        groupVisitors.map((visitor: any, index: number) => (
-                          <VisitorRow
-                            key={visitor.id}
-                            visitor={visitor}
-                            index={index}
-                            selectedVisitor={selectedVisitor}
-                            setSelectedVisitor={setSelectedVisitor}
-                          />
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={8} align="center">
-                            <Typography color="text.secondary">No visitor data</Typography>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  )}
-                </Table>
-              </TableContainer>
-            ) : (
-              <Box
-                height="100%"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                flexDirection="column"
-                gap={1}
-              >
-                <img src={bg_nodata} width={150} />
-
-                <Typography color="text.secondary" mt={2} variant="h5">
-                  {t('selectGroupFromTheList')}
+                <Typography variant="h5" color="textPrimary">
+                  Monitoring Data Visitor
                 </Typography>
               </Box>
-            )}
-          </Box>
 
-          <Box sx={{ mt: 2 }}>
-            {selectedVisitor && (
-              <VisitorDetailPanel selectedVisitor={selectedVisitor} tab={tab} setTab={setTab} />
-            )}
-          </Box>
-        </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  mb: 2,
+                }}
+              >
+                <Grid container spacing={2} alignItems="center">
+                  {/* Site */}
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Site</CustomFormLabel>
+                    <CustomSelect
+                      fullWidth
+                      displayEmpty
+                      value={filters.site}
+                      onChange={(e: any) =>
+                        setFilters((prev) => ({ ...prev, site: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="">All Sites</MenuItem>
+                      <MenuItem value="site-1">Site 1</MenuItem>
+                      <MenuItem value="site-2">Site 2</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+
+                  {/* Host */}
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Host</CustomFormLabel>
+                    <CustomSelect
+                      fullWidth
+                      displayEmpty
+                      value={filters.host}
+                      onChange={(e: any) =>
+                        setFilters((prev) => ({ ...prev, host: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="">All Hosts</MenuItem>
+                      <MenuItem value="host-1">Host 1</MenuItem>
+                      <MenuItem value="host-2">Host 2</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+
+                  {/* Visitor Name */}
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Visitor Name</CustomFormLabel>
+                    <CustomSelect
+                      fullWidth
+                      displayEmpty
+                      value={filters.visitorName}
+                      onChange={(e: any) =>
+                        setFilters((prev) => ({ ...prev, host: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="">All Visitor</MenuItem>
+                      <MenuItem value="Danny">Danny</MenuItem>
+                      <MenuItem value="Ilham">Ilham</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+
+                  {/* Start Date */}
+                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Start Date</CustomFormLabel>
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DatePicker
+                        format="DD/MM/YYYY"
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={(value) => {
+                          const date = value?.isValid() ? value.format('YYYY-MM-DD') : '';
+                          setStartDate(date);
+
+                          if (
+                            date &&
+                            endDate &&
+                            dayjs.utc(date).isAfter(dayjs.utc(endDate), 'day')
+                          ) {
+                            setEndDate(date);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                            placeholder: 'DD/MM/YYYY',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+
+                  {/* End Date */}
+                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>End Date</CustomFormLabel>
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DatePicker
+                        format="DD/MM/YYYY"
+                        value={endDate ? dayjs(endDate) : null}
+                        minDate={startDate ? dayjs(startDate) : undefined}
+                        onChange={(value) => {
+                          setEndDate(value?.isValid() ? value.format('YYYY-MM-DD') : '');
+                        }}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                            placeholder: 'DD/MM/YYYY',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+
+                  {/* Reset */}
+                  <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Action</CustomFormLabel>
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      startIcon={<IconRefresh />}
+                      onClick={handleResetFilter}
+                    >
+                      Reset Filter
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+              <DynamicTable
+                // loading={isLoading}
+                overflowX="auto"
+                data={dummyTransactions}
+                isHavePagination={false}
+                isHaveSearch={false}
+                isHaveHeaderTitle
+                titleHeader=""
+                // defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[25, 50, 100]}
+                // totalCount={totalRecords}
+                // currentPage={page}
+                // searchKeyword={search}
+                // onSearch={handleSearch}
+                // onPaginationChange={(newPage, newRowsPerPage) => {
+                //   setPage(newPage);
+                //   setRowsPerPage(newRowsPerPage);
+                // }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );

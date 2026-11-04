@@ -221,12 +221,12 @@ function VisitorRow({
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_identity_id}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
-        <TableCell sx={{ fontSize: '13px' }}>
+        {/* <TableCell sx={{ fontSize: '13px' }}>
           {`${formatDateTime(visitor.visitor_period_start)} `}
         </TableCell>
         <TableCell sx={{ fontSize: '13px' }}>
           {`${formatDateTime(visitor.visitor_period_end, visitor.visitor_period_extend)} `}
-        </TableCell>
+        </TableCell> */}
         <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>
           <Box

@@ -8,6 +8,7 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
+  Pagination,
   Paper,
   Table,
   TableBody,
@@ -36,7 +37,7 @@ import { exportVisitorExcel, exportVisitorPdf } from './VisitorExport';
 import { useTranslation } from 'react-i18next';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconSearch } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'src/hooks/useDebounce';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 type Props = {
@@ -51,6 +52,7 @@ type Props = {
   handleAddInvitation: () => void;
   handleExtend: any;
   handleViewDetail: (visitor: any) => void;
+  onHistoryApproval: () => void;
 };
 
 export default function VisitorListTable({
@@ -65,13 +67,18 @@ export default function VisitorListTable({
   handleAddInvitation,
   handleExtend,
   handleViewDetail,
+  onHistoryApproval,
 }: Props) {
   const { t } = useTranslation();
   const lg = window.innerWidth > 1200;
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const rowsPerPage = 10;
 
   const debouncedSearch = useDebounce(search, 500);
-  const [statusFilter, setStatusFilter] = useState('all');
+
   const filteredVisitors = useMemo(() => {
     return groupVisitors.filter((visitor) => {
       const matchesName = visitor.visitor_name
@@ -85,6 +92,20 @@ export default function VisitorListTable({
       return matchesName && matchesStatus;
     });
   }, [groupVisitors, debouncedSearch, statusFilter]);
+
+  const totalCount = filteredVisitors.length;
+  const totalPages = Math.ceil(totalCount / rowsPerPage);
+
+  const startIndex = (page - 1) * rowsPerPage;
+
+  const paginatedVisitors = filteredVisitors.slice(startIndex, startIndex + rowsPerPage);
+
+  const from = totalCount === 0 ? 0 : startIndex + 1;
+  const to = Math.min(startIndex + rowsPerPage, totalCount);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedGroupId, debouncedSearch, statusFilter]);
   if (!selectedGroupId) {
     return (
       <Box
@@ -187,7 +208,7 @@ export default function VisitorListTable({
                         color="primary"
                         startIcon={<IconCheck size={16} />}
                         sx={{ height: 36 }}
-                        onClick={() => {}}
+                        onClick={onHistoryApproval}
                       >
                         <Typography variant="caption" fontSize={'0.7rem'}>
                           History Approval
@@ -254,12 +275,12 @@ export default function VisitorListTable({
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Host
               </TableCell>
-              <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
+              {/* <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Visit Start
               </TableCell>
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Visit End
-              </TableCell>
+              </TableCell> */}
               <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                 Status
               </TableCell>
@@ -276,8 +297,8 @@ export default function VisitorListTable({
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : filteredVisitors.length > 0 ? (
-              filteredVisitors.map((visitor, index) => (
+            ) : paginatedVisitors.length > 0 ? (
+              paginatedVisitors.map((visitor, index) => (
                 <VisitorRow
                   key={`${visitor.id}-${index}`}
                   visitor={visitor}
@@ -298,6 +319,31 @@ export default function VisitorListTable({
           </TableBody>
         </Table>
       </TableContainer>
+      {openGroup && !groupDetailLoading && totalCount > 0 && (
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={2}
+          mt={2}
+          px={1}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Showing {from}–{to} of {totalCount} visitors
+          </Typography>
+
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
+            shape="rounded"
+            siblingCount={1}
+            boundaryCount={1}
+          />
+        </Box>
+      )}
     </Box>
   );
 }
