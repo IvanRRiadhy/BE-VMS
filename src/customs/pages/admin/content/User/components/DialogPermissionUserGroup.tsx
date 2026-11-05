@@ -118,7 +118,12 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
       'ManageUser',
     ],
     visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
-    securitymonitor: ['OrganizationAssignment', 'ManageVisitorTypeScope', 'ManageSiteScope'],
+    securitymonitor: [
+      'OrganizationAssignment',
+      'ManageVisitorTypeScope',
+      'ManageSiteScope',
+      'ManageAccessScope',
+    ],
   };
   const permissionNeedSite = [
     'OrganizationAssignment',
@@ -305,9 +310,9 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                           <TableHead>
                             <TableRow>
                               <TableCell>Access</TableCell>
-                              <TableCell align="center">Can Grant</TableCell>
+                              {/* <TableCell align="center">Can Grant</TableCell>
                               <TableCell align="center">Can Revoke</TableCell>
-                              <TableCell align="center">Can Block</TableCell>
+                              <TableCell align="center">Can Block</TableCell> */}
                               <TableCell align="center">Action</TableCell>
                             </TableRow>
                           </TableHead>
@@ -353,7 +358,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                                     )}
                                   />
                                 </TableCell>
-
+{/* 
                                 <TableCell align="center">
                                   <Switch
                                     checked={row.can_grant}
@@ -400,7 +405,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                                       }));
                                     }}
                                   />
-                                </TableCell>
+                                </TableCell> */}
                                 <TableCell align="center">
                                   <IconButton
                                     color="error"

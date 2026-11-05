@@ -57,7 +57,7 @@ const Approval = () => {
   const [appliedFilters, setAppliedFilters] = useState<any>({
     'approval-status': undefined,
   });
-  const { data, isLoading, isFetching } = useApprovalPagination({
+  const { data, isLoading, isFetching, refetch } = useApprovalPagination({
     page,
     rowsPerPage,
     search: debouncedKeyword,
@@ -371,6 +371,7 @@ const Approval = () => {
                     setSelectedId(group.approval_ticket_id);
                   }}
                   onOpenApprovalDialog={handleOpenApprovalDialog}
+                  onRefresh={() => refetch()}
                 />
                 {/* Right */}
                 <GroupVisitorTable

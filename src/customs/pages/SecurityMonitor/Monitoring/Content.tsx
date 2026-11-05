@@ -1,16 +1,6 @@
-import {
-  ContentCopy,
-  KeyboardArrowDownOutlined,
-  KeyboardArrowUpOutlined,
-  Security,
-} from '@mui/icons-material';
 import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-import {
-  SecurityMonitorNavListingData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
 import {
   Box,
   Grid2 as Grid,
@@ -20,65 +10,20 @@ import {
   useTheme,
   useMediaQuery,
   Button,
-  IconButton,
-  InputAdornment,
-  TableContainer,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
   Typography,
   CircularProgress,
   Paper,
   MenuItem,
 } from '@mui/material';
-import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
-import { Stack } from '@mui/system';
-import {
-  IconCalendarEvent,
-  IconCalendarTime,
-  IconFileExport,
-  IconFileTypePdf,
-  IconFilterFilled,
-  IconPlus,
-  IconRefresh,
-  IconSearch,
-  IconUsers,
-} from '@tabler/icons-react';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { IconRefresh, IconSearch, IconUsers } from '@tabler/icons-react';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
-import TopCard from 'src/customs/components/cards/TopCard';
 import { useTranslation } from 'react-i18next';
-import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
-import VisitorDetailPanel from '../../Employee/Invitation/components/VisitorDetailPanel';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import dayjs from 'dayjs';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
-type TransactionStatus =
-  | 'Check In'
-  | 'Check Out'
-  | 'Available'
-  | 'Approved'
-  | 'Rejected'
-  | 'Waiting';
-
-interface Transaction {
-  id: number;
-  agenda: string;
-  visitorName: string;
-  hostName: string;
-  start: string;
-  end: string;
-  status: any;
-}
+import { useMonitorActivities } from 'src/hooks/Monitoring/useMonitorActivities';
+import { getConfig } from 'src/config';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
+import MonitoringFilter from './components/MonitoringFilter';
 
 const dummyTransactions: any[] = [
   {
@@ -91,25 +36,31 @@ const dummyTransactions: any[] = [
     // icon: 0,
     // priority: 1,
     // is_alarm: false,
-    // timestamp: '2026-11-04T09:30:00Z',
-    actor_name: 'Security Officer',
+    timestamp: formatDateTime('2026-11-04T09:30:00Z'),
+    // actor_name: 'Security Officer',
     // trx_visitor_id: '650e8400-e29b-41d4-a716-446655440000',
     // visitor_id: '750e8400-e29b-41d4-a716-446655440000',
     // user_id: null,
-    visitor_name: 'John Doe',
-    visitor_type: 'Business Visitor',
+    // visitor_name: 'John Doe',
+    // visitor_type: 'Business Visitor',
     // host_id: '850e8400-e29b-41d4-a716-446655440000',
-    host_name: 'Michael Smith',
+    // host_name: 'Michael Smith',
     // employee_id: null,
     // site_id: '950e8400-e29b-41d4-a716-446655440000',
-    site_name: 'Head Office',
+    // site_name: 'Head Office',
     // location: 'Main Lobby',
     // card_number: 'CARD-00125',
-    vehicle_plate: 'B 1234 ABC',
-    vehicle_type: 'Car',
-    check_in_time: formatDateTime('2026-11-04T09:30:00Z'),
-    check_out_time: formatDateTime('2026-11-04T10:30:00Z'),
+    // vehicle_plate: 'B 1234 ABC',
+    // vehicle_type: 'Car',
+    // check_in_time: formatDateTime('2026-11-04T09:30:00Z'),
+    // check_out_time: formatDateTime('2026-11-04T10:30:00Z'),
   },
+  {
+    title: 'Visitor Check-Out',
+    message: 'John Doe has successfully checked out at Main Lobby.',
+    timestamp: formatDateTime('2026-11-04T10:30:00Z'),
+  }
+
 ];
 
 const dummyListVisitor: any[] = [
@@ -219,6 +170,7 @@ const Content = () => {
     site: '',
     host: '',
     visitorName: '',
+    access: '',
     startDate: null,
     endDate: null,
   };
@@ -228,6 +180,23 @@ const Content = () => {
   const handleResetFilter = () => {
     setFilters(initialFilter);
   };
+
+  const config = getConfig();
+  const { activities, connected } = useMonitorActivities({
+    host: '103.193.15.67',
+    port: 15675,
+    username: 'user',
+    password: 'root',
+  });
+
+  console.log('activities', activities);
+
+  // const { data } = useInvitationSite();
+  // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
+  //   search: debouncedSearch,
+  //   start: 0,
+  //   length: 10,
+  // });
 
   return (
     <Container title="Transaction Visitor" description="this is transaction visitor page">
@@ -257,135 +226,15 @@ const Content = () => {
                 </Typography>
               </Box>
 
-              <Box
-                sx={{
-                  p: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  mb: 2,
-                }}
-              >
-                <Grid container spacing={2} alignItems="center">
-                  {/* Site */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>Site</CustomFormLabel>
-                    <CustomSelect
-                      fullWidth
-                      displayEmpty
-                      value={filters.site}
-                      onChange={(e: any) =>
-                        setFilters((prev) => ({ ...prev, site: e.target.value }))
-                      }
-                    >
-                      <MenuItem value="">All Sites</MenuItem>
-                      <MenuItem value="site-1">Site 1</MenuItem>
-                      <MenuItem value="site-2">Site 2</MenuItem>
-                    </CustomSelect>
-                  </Grid>
-
-                  {/* Host */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>Host</CustomFormLabel>
-                    <CustomSelect
-                      fullWidth
-                      displayEmpty
-                      value={filters.host}
-                      onChange={(e: any) =>
-                        setFilters((prev) => ({ ...prev, host: e.target.value }))
-                      }
-                    >
-                      <MenuItem value="">All Hosts</MenuItem>
-                      <MenuItem value="host-1">Host 1</MenuItem>
-                      <MenuItem value="host-2">Host 2</MenuItem>
-                    </CustomSelect>
-                  </Grid>
-
-                  {/* Visitor Name */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>Visitor Name</CustomFormLabel>
-                    <CustomSelect
-                      fullWidth
-                      displayEmpty
-                      value={filters.visitorName}
-                      onChange={(e: any) =>
-                        setFilters((prev) => ({ ...prev, host: e.target.value }))
-                      }
-                    >
-                      <MenuItem value="">All Visitor</MenuItem>
-                      <MenuItem value="Danny">Danny</MenuItem>
-                      <MenuItem value="Ilham">Ilham</MenuItem>
-                    </CustomSelect>
-                  </Grid>
-
-                  {/* Start Date */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>Start Date</CustomFormLabel>
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                      <DatePicker
-                        format="DD/MM/YYYY"
-                        value={startDate ? dayjs(startDate) : null}
-                        onChange={(value) => {
-                          const date = value?.isValid() ? value.format('YYYY-MM-DD') : '';
-                          setStartDate(date);
-
-                          if (
-                            date &&
-                            endDate &&
-                            dayjs.utc(date).isAfter(dayjs.utc(endDate), 'day')
-                          ) {
-                            setEndDate(date);
-                          }
-                        }}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            placeholder: 'DD/MM/YYYY',
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-
-                  {/* End Date */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>End Date</CustomFormLabel>
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                      <DatePicker
-                        format="DD/MM/YYYY"
-                        value={endDate ? dayjs(endDate) : null}
-                        minDate={startDate ? dayjs(startDate) : undefined}
-                        onChange={(value) => {
-                          setEndDate(value?.isValid() ? value.format('YYYY-MM-DD') : '');
-                        }}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            size: 'small',
-                            placeholder: 'DD/MM/YYYY',
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-
-                  {/* Reset */}
-                  <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                    <CustomFormLabel sx={{ mt: 0 }}>Action</CustomFormLabel>
-                    <Button
-                      fullWidth
-                      size="small"
-                      variant="contained"
-                      color="primary"
-                      startIcon={<IconRefresh />}
-                      onClick={handleResetFilter}
-                    >
-                      Reset Filter
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Box>
+              <MonitoringFilter
+                filters={filters}
+                setFilters={setFilters}
+                startDate={startDate}
+                setStartDate={setStartDate}
+                endDate={endDate}
+                setEndDate={setEndDate}
+                handleResetFilter={handleResetFilter}
+              />
               <DynamicTable
                 // loading={isLoading}
                 overflowX="auto"
@@ -395,7 +244,7 @@ const Content = () => {
                 isHaveHeaderTitle
                 titleHeader=""
                 // defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[25, 50, 100]}
+                // rowsPerPageOptions={[25, 50, 100]}
                 // totalCount={totalRecords}
                 // currentPage={page}
                 // searchKeyword={search}

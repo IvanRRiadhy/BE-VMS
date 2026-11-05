@@ -464,7 +464,11 @@ const Content = () => {
       length: 10,
     });
 
-  const { visitorType } = useInvitationVisitorType();
+  // const { visitorType } = useInvitationVisitorType();
+  const { visitorType, loading, isFetching } = useInvitationVisitorType({
+    start: 0,
+    length: 10,
+  });
   const { deleteMutation, createMutation, sendEmailMutation } = useShareLinkMutation();
 
   useEffect(() => {

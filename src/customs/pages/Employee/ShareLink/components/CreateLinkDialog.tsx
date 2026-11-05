@@ -20,18 +20,13 @@ import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { showSwal } from 'src/customs/components/alerts/alerts';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
-import { useVisitorType } from 'src/hooks/VisitorType/useVisitorType';
-import { useSites } from 'src/hooks/Sites/useSites';
-import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
-import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 import { useTranslation } from 'react-i18next';
 import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
 
@@ -56,12 +51,7 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }: Props) => {
-  // const { employee } = useEmployees();
-  // const { visitorType } = useVisitorType();
   const { visitorType } = useInvitationVisitorType();
-  // const { data: sites } = useSites();
-  // const { sitesOperator = [] } = useInvitationSite();
-
   const initialEnabledState = {
     visitorType: false,
     agenda: false,
@@ -118,12 +108,14 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   });
 
   const validateForm = () => {
+    const isSpecialCategory = ['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category);
+
     const newErrors = {
       visitorType: !form.visitor_type_id,
       visitStart: !form.visitor_period_start,
       visitEnd: !form.visitor_period_end,
-      expiredLink: !enabled.expiredLink || !form.expired_number,
-      visitorQuota: !enabled.visitorQuota || (!form.is_single_use && form.max_usage < 1),
+      expiredLink: !isSpecialCategory && !form.expired_number,
+      visitorQuota: enabled.visitorQuota && !form.is_single_use && form.max_usage < 1,
     };
 
     setErrors(newErrors);
@@ -133,17 +125,18 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
 
   const buildPayload = () => {
     const selectedVisitorType = form.visitor_type_id;
+    const isSpecialCategory = ['CIT', 'Remise'].includes(selectedVisitorType?.visitor_category);
     return {
-      host: enabled.visitorType ? (selectedVisitorType?.pre_host_id ?? null) : null,
+      host: selectedVisitorType?.pre_host_id ?? null,
 
-      agenda: enabled.visitorType ? (selectedVisitorType?.pre_agenda ?? null) : null,
-      site_id: enabled.visitorType ? (selectedVisitorType?.pre_site_id ?? null) : null,
-      visitor_type_id: enabled.visitorType ? (selectedVisitorType?.id ?? null) : null,
-      visitor_period_start: enabled.visitStart ? form.visitor_period_start : null,
-      visitor_period_end: enabled.visitEnd ? form.visitor_period_end : null,
+      agenda: selectedVisitorType?.pre_agenda ?? null,
+      site_id: selectedVisitorType?.pre_site_id ?? null,
+      visitor_type_id: selectedVisitorType?.id ?? null,
+      visitor_period_start: form.visitor_period_start,
+      visitor_period_end: form.visitor_period_end ?? null,
       // link_active_at: new Date().toISOString(),
-      expired_number: enabled.expiredLink ? form.expired_number : 0,
-      max_usage: enabled.visitorQuota ? form.max_usage : 0,
+      expired_number: isSpecialCategory ? 99999999 : form.expired_number,
+      max_usage: form.max_usage ?? 0,
       is_single_use: form.is_single_use,
       // tz: 'Asia/Jakarta',
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -204,6 +197,13 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
 
   const handleClose = () => {
     resetState();
+    setErrors({
+      visitorType: false,
+      visitStart: false,
+      visitEnd: false,
+      expiredLink: false,
+      visitorQuota: false,
+    });
     onClose();
   };
 
@@ -225,16 +225,16 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Visitor Type
               </CustomFormLabel>
-              <Switch
+              {/* <Switch
                 size="small"
                 checked={enabled.visitorType}
                 onChange={(e) => handleToggle('visitorType', e.target.checked)}
-              />
+              /> */}
             </Stack>
 
             <Autocomplete
               size="medium"
-              disabled={!enabled.visitorType}
+              // disabled={!enabled.visitorType}
               options={visitorType}
               getOptionLabel={(option: any) => option.name ?? ''}
               value={form.visitor_type_id}
@@ -247,7 +247,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                   host: value?.pre_host_id ? { id: value.pre_host_id } : null,
                   site_id: value?.pre_site_id ?? null,
                   agenda: value?.pre_agenda ?? '',
-                  expired_number: isSpecialCategory ? 99999999 : 0,
+                  expired_number: isSpecialCategory ? 0 : 0,
                 }));
 
                 setEnabled((prev) => ({
@@ -290,18 +290,18 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Visit Start
               </CustomFormLabel>
-              <Switch
+              {/* <Switch
                 size="small"
                 checked={enabled.visitStart}
                 onChange={(e) => handleToggle('visitStart', e.target.checked)}
-              />
+              /> */}
             </Stack>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
               <DateTimePicker
                 open={openStartPicker}
                 onOpen={() => setOpenStartPicker(true)}
                 onClose={() => setOpenStartPicker(false)}
-                disabled={!enabled.visitStart}
+                // disabled={!enabled.visitStart}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
                 minDate={dayjs().startOf('day')}
@@ -358,6 +358,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }}
               />
             </LocalizationProvider>
+            <Typography variant="caption" color="gray" sx={{ display: 'block', mt: 0.5, mb: 0 }}>
+              Note: {t('visitStartNote')}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -365,11 +368,11 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Visit End
               </CustomFormLabel>
-              <Switch
+              {/* <Switch
                 size="small"
                 checked={enabled.visitEnd}
                 onChange={(e) => handleToggle('visitEnd', e.target.checked)}
-              />
+              /> */}
             </Stack>
 
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
@@ -377,7 +380,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 open={openEndPicker}
                 onOpen={() => setOpenEndPicker(true)}
                 onClose={() => setOpenEndPicker(false)}
-                disabled={!enabled.visitEnd}
+                // disabled={!enabled.visitEnd}
                 ampm={false}
                 format="dddd, DD MMMM YYYY, HH:mm"
                 value={form.visitor_period_end ? dayjs(form.visitor_period_end) : null}
@@ -388,6 +391,10 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                   setForm((prev) => ({
                     ...prev,
                     visitor_period_end: newValue ? newValue.utc().format() : null,
+                  }));
+                  setErrors((prev) => ({
+                    ...prev,
+                    visitEnd: !newValue || !newValue.isValid(),
                   }));
                 }}
                 slotProps={{
@@ -433,9 +440,13 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }}
               />
             </LocalizationProvider>
-            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && (
+            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
               <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1 }}>
-              {t('visitEndEstimatedNote')}
+                {t('visitEndEstimatedNote')}
+              </Typography>
+            ) : (
+              <Typography variant="caption" color="gray" sx={{ display: 'block', mt: 0.5, mb: 0 }}>
+                Note: {t('visitEndNote')}
               </Typography>
             )}
           </Grid>
@@ -445,17 +456,17 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Expired Link
               </CustomFormLabel>
-              <Switch
+              {/* <Switch
                 size="small"
                 checked={enabled.expiredLink}
                 onChange={(e) => handleToggle('expiredLink', e.target.checked)}
-              />
+              /> */}
             </Stack>
             {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
               <CustomTextField
                 fullWidth
                 disabled
-                value="99999999"
+                value="0"
                 sx={{
                   mt: 1,
                   '& .MuiInputBase-root.Mui-disabled': {
@@ -466,9 +477,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
             ) : (
               <CustomSelect
                 fullWidth
-                disabled={!enabled.expiredLink}
+                // disabled={!enabled.expiredLink}
                 sx={{
-                  mt: 1,
+                  mt: 0,
                   '&.Mui-disabled': {
                     backgroundColor: '#f0f0f0',
                   },
@@ -490,16 +501,15 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 <MenuItem value={1440}>1 Day</MenuItem>
               </CustomSelect>
             )}{' '}
-            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && (
-              <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1.5 }}>
-                Note: {t('expiredLinkNote')}
-              </Typography>
-            )}
             {errors.expiredLink && (
               <Typography variant="caption" color="error">
                 Expired Link is required
               </Typography>
             )}
+            {/* {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && ( */}
+            <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1.5 }}>
+              Note: {t('expiredLinkNote')}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -507,22 +517,22 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               <CustomFormLabel sx={{ marginTop: 0 }} required>
                 Visitor Quota Limit
               </CustomFormLabel>
-              <Switch
+              {/* <Switch
                 size="small"
                 checked={enabled.visitorQuota}
                 onChange={(e) => handleToggle('visitorQuota', e.target.checked)}
-              />
+              /> */}
             </Stack>
 
             <CustomTextField
               type="text"
               fullWidth
               // disabled={!enabled.visitorQuota}
-              disabled={!enabled.visitorQuota || form.is_single_use}
+              disabled={form.is_single_use}
               error={errors.visitorQuota}
               helperText={errors.visitorQuota ? 'Visitor Quota Limit is required' : ''}
               sx={{
-                mt: 1,
+                mt: 0,
                 '&.Mui-disabled': {
                   backgroundColor: '#f0f0f0',
                 },

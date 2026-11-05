@@ -13,6 +13,7 @@ import {
   IconCalendarTime,
   IconFilter,
   IconFilterFilled,
+  IconRefresh,
 } from '@tabler/icons-react';
 import { IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -34,6 +35,7 @@ type ApprovalSidebarProps = {
     group: any,
     action: 'Approve' | 'Reject',
   ) => void;
+  onRefresh: () => void;
 };
 
 const ApprovalSidebar = ({
@@ -49,6 +51,7 @@ const ApprovalSidebar = ({
   setPage,
   onSelectGroup,
   onOpenApprovalDialog,
+  onRefresh,
 }: ApprovalSidebarProps) => {
   return (
     <Box
@@ -65,6 +68,29 @@ const ApprovalSidebar = ({
         <Typography variant="h6" fontSize="1rem">
           Approval
         </Typography>
+        <Tooltip title="Refresh Approval" arrow>
+          <IconButton
+            size="small"
+            onClick={onRefresh}
+            disabled={loading}
+            sx={{
+              color: 'white',
+              borderRadius: '50%',
+              transition: 'all 0.25s ease',
+              backgroundColor: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                transform: 'rotate(90deg)',
+              },
+              '&:active': {
+                transform: 'rotate(180deg) scale(0.9)',
+              },
+            }}
+          >
+            <IconRefresh size={20} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <CustomTextField

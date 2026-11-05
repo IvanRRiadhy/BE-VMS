@@ -1,4 +1,4 @@
-import { ArrowLeftSharp } from '@mui/icons-material';
+
 import { Box } from '@mui/system';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
 import React from 'react';
@@ -40,7 +40,7 @@ const LimitedInvitation = () => {
           <p style={{ color: '#777', fontSize: 14 }}>
             Please contact the person or organization who invited you for further assistance.
           </p>
-          <Link
+          {/* <Link
             to="/auth/login"
             style={{
               display: 'flex',
@@ -53,7 +53,7 @@ const LimitedInvitation = () => {
           >
             <IconArrowNarrowLeft />
             Back to login
-          </Link>
+          </Link> */}
         </div>
       </div>
     </PageContainer>

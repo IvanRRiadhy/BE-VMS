@@ -10,14 +10,13 @@ const NotificationProvider = () => {
   const dispatch = useDispatch();
 
   const user = useSelector((state: any) => state.userReducer.data);
-  // console.log('user id', user);
 
   useEffect(() => {
     if (!user) return;
 
-    const client = mqtt.connect('wss://mqtt.bio-experience.com/ws', {
-      username: 'admin',
-      password: 'instar',
+    const client = mqtt.connect('wss://103.193.15.67:15675/ws', {
+      username: 'user',
+      password: 'root',
       protocolVersion: 4,
       protocol: 'wss',
       reconnectPeriod: 1000,
@@ -26,7 +25,7 @@ const NotificationProvider = () => {
     });
 
     client.on('connect', () => {
-      // console.log('✅ MQTT connected');
+      console.log('✅ MQTT connected');
 
       let topic = '';
       if (user?.visitor_id) {

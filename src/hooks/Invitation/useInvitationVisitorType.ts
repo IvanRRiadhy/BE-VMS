@@ -1,31 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 
-const useInvitationVisitorType = () => {
-  const [visitorType, setVisitorType] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+interface InvitationVisitorTypeParams {
+  start?: number;
+  length?: number;
+  'search[value]'?: string;
+}
 
-  useEffect(() => {
-    const fetchVisitorType = async () => {
-      try {
-        setLoading(true);
-
-        const res = await getInvitationVisitorType();
-        setVisitorType(res?.collection ?? []);
-      } catch (err) {
-        console.error('Failed fetch visitor type:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVisitorType();
-  }, []);
+const useInvitationVisitorType = (params: InvitationVisitorTypeParams = {}) => {
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ['invitation-visitor-type', params],
+    queryFn: async () => {
+      const res = await getInvitationVisitorType(params);
+      return res?.collection ?? [];
+    },
+  });
 
   return {
-    visitorType,
-    loading,
-    setVisitorType,
+    visitorType: data ?? [],
+    loading: isLoading,
+    isFetching,
+    error,
+    refetch,
   };
 };
 

@@ -28,7 +28,6 @@ import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
 import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
-import { useEmployees } from 'src/hooks/Employee/useEmployees';
 
 dayjs.extend(utc);
 

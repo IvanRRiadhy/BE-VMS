@@ -38,7 +38,7 @@ const ExpiredPage = () => {
           <p style={{ color: '#777', fontSize: 14 }}>
             Please contact the person or organization who invited you for further assistance.
           </p>
-          <Link
+          {/* <Link
             to="/auth/login"
             style={{
               display: 'flex',
@@ -51,7 +51,7 @@ const ExpiredPage = () => {
           >
             <IconArrowNarrowLeft />
             Back to login
-          </Link>
+          </Link> */}
         </div>
       </div>
     </PageContainer>

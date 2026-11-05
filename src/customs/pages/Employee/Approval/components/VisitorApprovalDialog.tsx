@@ -49,8 +49,8 @@ const VisitorApprovalDialog: React.FC<VisitorApprovalDialogProps> = ({
       }}
     >
       <DialogTitle sx={{ position: 'relative' }}>
-        {groupName ?? 'Visitor Group'}
-
+        {/* {groupName ?? 'Visitor Group'} */}
+        Review Approval
         <IconButton
           sx={{
             position: 'absolute',

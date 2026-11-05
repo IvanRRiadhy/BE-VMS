@@ -73,7 +73,7 @@ export const useActivityLogs = ({
     actor_type: item.actor_type,
     action: item.action,
     entity_name: item.entity_name,
-    entity_id: item.entity_id,
+    // entity_id: item.entity_id,
     description: item.description,
     action_at: item.action_at ? formatDateTime(item.action_at) : '-',
   }));

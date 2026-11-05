@@ -24,15 +24,18 @@ export const getInvitationAccessControl = async (): Promise<any> => {
   }
 };
 
-export const getInvitationVisitorType = async (): Promise<any> => {
+export const getInvitationVisitorType = async (params: {
+  start?: number;
+  length?: number;
+  'search[value]'?: string;
+}): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/invitation-visitor-type');
+    const response = await axiosInstance.get('/invitation-visitor-type', {
+      params,
+    });
     return response.data;
   } catch (error: any) {
-    // if (error.response?.status === 404) {
-    //   return { collection: [] };
-    // }
-    // throw error;
+    throw error;
   }
 };
 
@@ -48,7 +51,7 @@ export const getInvitationVisitor = async (params?: {
 
     return response.data;
   } catch (error: any) {
-    // throw error;
+    throw error;
   }
 };
 
@@ -64,7 +67,7 @@ export const getInvitationVisitorEmployee = async (params?: {
 
     return response.data;
   } catch (error: any) {
-    // throw error;
+    throw error;
   }
 };
 
