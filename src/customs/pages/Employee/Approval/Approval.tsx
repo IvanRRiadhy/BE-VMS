@@ -270,17 +270,8 @@ const Approval = () => {
     setOpenDialog(true);
 
     try {
-      const res = await getVisitorTransactionByIds(group.entity_id);
-      const visitors = res.collection ?? [];
+      const res = await getVisitorByTickedId(group.approval_ticket_id);
 
-      // Jika terdapat visitor dengan is_final = true,
-      // langsung approve tanpa membuka dialog
-      // const isFinal = visitors.some((item: any) => item.is_final === true);
-
-      // if (isFinal) {
-      //   await handleActionApproval(group.approval_ticket_id, 'Approve');
-      //   return;
-      // }
       setGroupHeader(res.collection[0]);
       setGroupVisitors(res.collection);
 

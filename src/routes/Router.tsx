@@ -320,8 +320,22 @@ const MonitoringAdmin = Loadable(
 const DashboardSecurityMonitor = Loadable(
   lazy(() => import('src/customs/pages/SecurityMonitor/Dashboard/Content')),
 );
+const DashboardInsightSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Dashboard/Insight/Content')),
+);
 const MonitoringSecurity = Loadable(
   lazy(() => import('src/customs/pages/SecurityMonitor/Monitoring/Content')),
+);
+
+const ManageBlacklistVisitorSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Blacklist/Content')),
+);
+
+const ManageListVisitorSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/List/Content')),
+);
+const ManageReportTransactionSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Report/TransactionLog/Content')),
 );
 
 const Router = [
@@ -462,8 +476,15 @@ const Router = [
             path: '/security-monitor',
             element: <SecurityMonitorLayout />,
             children: [
-              { index: true, element: <DashboardSecurityMonitor /> },
-              { path: 'dashboard', element: <DashboardSecurityMonitor /> },
+              { index: true, element: <DashboardInsightSecurityMonitor /> },
+              { path: 'dashboard', element: <DashboardInsightSecurityMonitor /> },
+              {
+                path: 'report/transaction-log',
+                element: <ManageReportTransactionSecurityMonitor />,
+              },
+              { path: 'list-visitor', element: <ManageListVisitorSecurityMonitor /> },
+              { path: 'blacklist-visitor', element: <ManageBlacklistVisitorSecurityMonitor /> },
+              // { path: 'dashboard', element: <DashboardInsight /> },
               { path: 'monitoring', element: <MonitoringSecurity /> },
             ],
           },

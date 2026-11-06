@@ -33,7 +33,7 @@ const DashboardEmployeeActionBar = ({
       sx={{ width: '100%' }}
     >
       <Grid
-        size={{ xs: 12, lg: 6 }}
+        size={{ xs: 12, sm: 6 }}
         display="flex"
         justifyContent="flex-start"
         alignItems="center"
@@ -51,7 +51,7 @@ const DashboardEmployeeActionBar = ({
         </Box>
       </Grid>
       <Grid
-        size={{ xs: 12, lg: 6 }}
+        size={{ xs: 12, sm: 6 }}
         display="flex"
         justifyContent="flex-end"
         alignItems="center"

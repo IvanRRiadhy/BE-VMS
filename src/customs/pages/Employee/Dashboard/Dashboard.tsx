@@ -295,19 +295,25 @@ const DashboardEmployee = () => {
     }
   };
 
-  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+  const handleActionApproval = async (
+    id: string,
+    action: 'Approve' | 'Reject',
+    isFinal = false,
+  ) => {
     try {
       setIsGenerating(true);
-      if (action === 'Reject') {
+      if (action === 'Reject' || isFinal) {
         const confirm = await Swal.fire({
-          title: 'Reject Approval?',
-          text: 'Do you want to reject this approval?',
+          title: isFinal ? 'Final Approval' : 'Approval',
+          text: isFinal
+            ? 'Do you want to approve this final approval?'
+            : 'Do you want to reject this approval?',
           icon: 'warning',
           reverseButtons: true,
           showCancelButton: true,
-          confirmButtonText: 'Reject',
+          confirmButtonText: isFinal ? 'Yes' : 'Yes',
           cancelButtonText: 'Cancel',
-          confirmButtonColor: '#f44336',
+          confirmButtonColor: isFinal ? '#2e7d32' : '#f44336',
           customClass: {
             title: 'swal2-title-custom',
             htmlContainer: 'swal2-text-custom',
@@ -322,14 +328,10 @@ const DashboardEmployee = () => {
       if (action === 'Approve') await approveMutation.mutateAsync(id);
       if (action === 'Reject') await rejectMutation.mutateAsync(id);
 
-      showSwal(
-        'success',
-        `Data Approval ${action === 'Approve' ? 'approved' : 'denied'} successfully.`,
-      );
+      showSwal('success', `Successfully. ${action === 'Approve' ? 'approved' : 'reject'} `);
 
       setOpenDialog(false);
     } catch (error: any) {
-      setTimeout(() => setIsGenerating(false), 800);
       showSwal('error', error.response.data.msg || 'Failed action approval.');
     } finally {
       setIsGenerating(false);
@@ -479,6 +481,10 @@ const DashboardEmployee = () => {
   const handleOpenApprovalDialog = async (row: any) => {
     try {
       setSelectedId(row.ticket_id);
+      if (row.is_final === true) {
+        await handleActionApproval(row.ticket_id, 'Approve', true);
+        return;
+      }
       setOpenDialog(true);
       setGroupDetailLoading(true);
 

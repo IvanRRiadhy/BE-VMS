@@ -1400,6 +1400,41 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/security-monitor/monitoring',
   },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconUser,
+    href: '/security-monitor/visitor',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'List Visitor',
+        icon: IconUserCircle,
+        chipColor: 'secondary',
+        href: '/security-monitor/list-visitor',
+      },
+      {
+        id: uniqueId(),
+        title: 'Blacklist Visitor',
+        icon: IconUserCircle,
+        chipColor: 'secondary',
+        href: '/security-monitor/blacklist-visitor',
+      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.scheduler',
+      //   icon: IconCalendarClock,
+      //   href: '/admin/visitor/scheduler',
+      // },
+    ],
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconReport,
+    chipColor: 'secondary',
+    href: '/security-monitor/report/transaction-log',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'navigation.history',

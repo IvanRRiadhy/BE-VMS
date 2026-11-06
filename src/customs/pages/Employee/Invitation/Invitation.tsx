@@ -121,6 +121,7 @@ const Content = () => {
   const { data: profile } = useProfile();
   // const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const { t } = useTranslation();
+
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);

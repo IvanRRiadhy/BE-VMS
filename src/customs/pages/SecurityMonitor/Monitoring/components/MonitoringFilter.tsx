@@ -141,7 +141,7 @@ const MonitoringFilter = ({
         </Grid>
 
         {/* End Date */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>End Date</CustomFormLabel>
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
             <DatePicker
@@ -163,7 +163,7 @@ const MonitoringFilter = ({
         </Grid>
 
         {/* Reset */}
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+        <Grid size={{ xs: 12, sm: 12, xl: 1 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Action</CustomFormLabel>
           <Button
             fullWidth

@@ -484,7 +484,7 @@ const Content = () => {
                 onSearch={handleSearch}
                 onAddData={handleAdd}
                 isHaveAddEmpty={true}
-                addDataText="Add Employee"
+                addDataText={t('add' + ' ' + 'Employee')}
                 onAddEmpty={handleAdd}
               />
             </Grid>

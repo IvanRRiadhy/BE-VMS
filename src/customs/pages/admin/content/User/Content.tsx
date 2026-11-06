@@ -64,7 +64,7 @@ const Content = () => {
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined);
 
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [sortDir] = useState('asc');
 
@@ -89,7 +89,6 @@ const Content = () => {
       })),
     [users],
   );
-
 
   const totalRecords =
     users?.RecordsTotal ??
@@ -483,8 +482,8 @@ const Content = () => {
                 onAssignTracking={handleAssignTracking}
                 onAssignParking={handleAssignParking}
                 onAssign={handleAssign}
-                defaultRowsPerPage={25}
-                rowsPerPageOptions={[25, 50, 100]}
+                defaultRowsPerPage={10}
+                rowsPerPageOptions={[10, 25, 50, 100]}
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

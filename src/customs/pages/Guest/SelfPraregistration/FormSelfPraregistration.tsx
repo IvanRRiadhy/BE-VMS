@@ -3314,8 +3314,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
                                         const originalIndex = page?.form?.findIndex(
                                           (f: any) => f.custom_field_id === field.custom_field_id,
                                         );
@@ -3424,8 +3424,8 @@ const FormSelfPraregistration = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                         return (
                                           <TableCell key={field.custom_field_id}>
@@ -3936,14 +3936,11 @@ const FormSelfPraregistration = ({
       navigate('/invitation-share/success', { replace: true });
     } catch (err: any) {
       const response = err?.response?.data;
-
       const collectionError = response?.collection?.[0]?.error;
-
       showSwal(
         'error',
         collectionError ?? response?.msg ?? response?.message ?? 'Failed to create visitor.',
       );
-
       setLoading(false);
     }
   };
@@ -4083,8 +4080,8 @@ const FormSelfPraregistration = ({
                                     backgroundColor: snapshot.isDragging
                                       ? '#1976d2'
                                       : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
+                                        ? 'primary.main'
+                                        : '#9e9e9e',
                                     color:
                                       snapshot.isDragging || activeStep === index + 1
                                         ? '#fff'

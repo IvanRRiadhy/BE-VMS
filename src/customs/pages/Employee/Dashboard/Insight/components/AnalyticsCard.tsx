@@ -124,9 +124,9 @@ export const StatCard = ({ item }: StatCardProps) => (
         <Typography
           fontSize={10.5}
           fontWeight={750}
-          color={item.icon === 'alert' ? '#d7353e' : '#168344'}
+          color={Number(item.change) < 0 ? '#d7353e' : '#168344'}
         >
-          ▲ {item.change}
+          {Number(item.change) < 0 ? '▼' : '▲'} {item.change}
         </Typography>
       </Stack>
 

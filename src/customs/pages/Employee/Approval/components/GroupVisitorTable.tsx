@@ -203,7 +203,7 @@ const GroupVisitorTable = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={10} align="center">
                     <Typography color="text.secondary">No visitor data</Typography>
                   </TableCell>
                 </TableRow>

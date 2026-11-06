@@ -77,6 +77,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
       'InviteWithinAllowPreRegister',
       'InviteWithinOwnOrganization',
       'InviteWithinOwnSite',
+      'InviteVistorOwn',
       'AllowMobileLogin',
       'AllowSSOActiveDirectory',
       // 'External',
@@ -358,7 +359,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                                     )}
                                   />
                                 </TableCell>
-{/* 
+                                {/* 
                                 <TableCell align="center">
                                   <Switch
                                     checked={row.can_grant}

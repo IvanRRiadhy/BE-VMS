@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useLayoutEffect, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,

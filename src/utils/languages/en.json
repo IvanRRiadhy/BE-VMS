@@ -272,5 +272,23 @@
   "identity_id_invalid": "Identity number must contain exactly 16 digits",
   "maxVisitorsDescription": "Enter the maximum number of visitors allowed.",
   "singleUseLinkDescription": "Enable this option to allow the link to be used only once. After the first use, the link will become inactive.",
-  "estimatedReturnTime": "This is an estimated return time and may very depending on the actual duration of the visit."
+  "estimatedReturnTime": "This is an estimated return time and may very depending on the actual duration of the visit.",
+  "insight": {
+    "visitorAnalysis": "Visitor Analysis",
+    "visitorAnalysisDescription": "Comprehensive analysis of visits, vehicles, parking, extensions, alarms, and visitor growth.",
+    "totalVisits": "Total Visits",
+    "uniqueVisitors": "Unique Visitors",
+    "vehicles": "Vehicles",
+    "needParking": "Parking Required",
+    "needExtend": "Extension Required",
+    "triggeredAlarm": "Alarm Triggered",
+    "visitsPerSite": "Visits per Site",
+    "visitsPerVisitorType": "Visits by Visitor Type",
+    "visitsPerDay": "Visits per Day",
+    "vehicleAnalysis": "Vehicle Analysis",
+    "visitExtension": "Visit Extension",
+    "monthlyVisitorGrowth": "Visitor Growth (Monthly Trend)",
+    "visitorGrowthSummary": "Visitor Growth Summary",
+    "alarmAndRisk": "Alarms & Risks"
+  }
 }

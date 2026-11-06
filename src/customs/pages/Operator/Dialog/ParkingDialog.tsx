@@ -8,7 +8,7 @@ import {
   Card,
   Divider,
 } from '@mui/material';
-import { IconCar, IconMotorbike, IconParkingCircle, IconTruck, IconX } from '@tabler/icons-react';
+import { IconBus, IconCar, IconMotorbike, IconParkingCircle, IconTruck, IconX } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { Box } from '@mui/material';
 import InfoCard from '../Components/InfoCard';
@@ -183,9 +183,14 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
                 />
 
                 <InfoCard
-                  icon={<IconTruck size={24} />}
-                  title="Truck"
-                  value={datas?.vehicle?.truck || 0}
+                  icon={<IconBus size={24} />}
+                  title="Bus"
+                  value={datas?.vehicle?.bus || 0}
+                />
+                <InfoCard
+                  icon={<IconBus size={24} />}
+                  title="Mini Bus"
+                  value={datas?.vehicle?.bus || 0}
                 />
               </Box>
             </Box>
@@ -193,11 +198,11 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
             <Divider sx={{ my: 2 }} />
 
             <Box>
-              <Typography variant="h5" sx={{ borderBottom: '1px solid #f0f0f0' }}>
+              {/* <Typography variant="h5" sx={{ borderBottom: '1px solid #f0f0f0' }}>
                 Parking
-              </Typography>
+              </Typography> */}
 
-              <Box display="flex" gap={2} mt={2} flexWrap="wrap">
+              {/* <Box display="flex" gap={2} mt={2} flexWrap="wrap">
                 <InfoCard
                   icon={<IconParkingCircle size={24} />}
                   title="Used Slot"
@@ -214,6 +219,25 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
                   icon={<IconParkingCircle size={24} />}
                   title="Total Slot"
                   value={(datas?.parking?.used || 0) + (datas?.parking?.available || 0)}
+                />
+              </Box> */}
+              <Box display="flex" gap={2} mt={2} flexWrap="wrap">
+                <InfoCard
+                  icon={<IconTruck size={24} />}
+                  title="Truck 16 Feet"
+                  value={datas?.vehicle?.truck || 0}
+                />
+
+                <InfoCard
+                  icon={<IconTruck size={24} />}
+                  title="Truck 20 Feet"
+                  value={datas?.vehicle?.truck || 0}
+                />
+
+                <InfoCard
+                  icon={<IconTruck size={24} />}
+                  title="Truck 40 Feet"
+                  value={datas?.vehicle?.truck || 0}
                 />
               </Box>
             </Box>

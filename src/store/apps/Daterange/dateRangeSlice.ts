@@ -11,7 +11,7 @@ export interface DateRangeState {
 const initialState: DateRangeState = {
   // startDate: subDays(new Date(), 7),
   // endDate: new Date(),
-  startDate: startOfDay(subDays(new Date(), 7)),
+  startDate: startOfDay(subDays(new Date(), 6)),
   endDate: startOfDay(new Date()),
   isManual: false,
 };
@@ -29,8 +29,10 @@ const dateRangeSlice = createSlice({
       state.isManual = action.payload.isManual ?? true;
     },
     resetToDefault: (state) => {
-      state.startDate = subDays(new Date(), 7);
-      state.endDate = new Date();
+      // state.startDate = subDays(new Date(), 7);
+      state.startDate = startOfDay(subDays(new Date(), 6));
+      // state.endDate = new Date();
+      state.endDate = startOfDay(new Date());
       state.isManual = false;
     },
   },
