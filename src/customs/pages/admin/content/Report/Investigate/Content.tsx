@@ -269,18 +269,8 @@ const Content = () => {
     const response = await getInvestigateVisitorId(visitor.id, payload);
 
     setSelectedVisitor(response.collection);
+    setDetailTab(0);
   };
-
-  const isFirstRender = useRef(true);
-
-  // useEffect(() => {
-  //   if (isFirstRender.current) {
-  //     isFirstRender.current = false;
-  //     return;
-  //   }
-
-  //   handleSearch();
-  // }, [debouncedSearchValue]);
 
   const handleExportFiltered = async () => {
     try {
@@ -1365,11 +1355,20 @@ const Content = () => {
                       {selectedVisitor?.related_people?.map((person: any) => (
                         <Box
                           key={person.id}
+                          onClick={() => handleSelectVisitor(person)}
                           sx={{
                             p: 1.5,
                             border: '1px solid #e2e7ef',
                             borderRadius: 2,
                             backgroundColor: '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+
+                            '&:hover': {
+                              backgroundColor: '#f5f9ff',
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-1px)',
+                            },
                           }}
                         >
                           <Stack direction="row" spacing={1.25} alignItems="center">
