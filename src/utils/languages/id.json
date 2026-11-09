@@ -139,6 +139,7 @@
   "noAccessPass": "Tidak ada akses pass ditemukan",
   "tapShowDetail": "Tekan untuk menampilkan detail",
   "selectGroupFromTheList": "Pilih grup dari daftar disamping",
+  "selectVisitorFromTheList": "Pilih pengunjung dari daftar disamping",
   "card": {
     "number": "Nomor Kartu",
     "inputCardNumber": "Masukkan Nomor Kartu atau Tap Kartu",
@@ -272,6 +273,8 @@
   "singleUseLinkDescription": "Aktifkan opsi ini agar tautan hanya dapat digunakan satu kali. Setelah digunakan pertama kali, tautan akan menjadi tidak aktif.",
   "estimatedReturnTime": "Ini adalah perkiraan waktu kembali dan dapat berubah tergantung pada durasi kunjungan yang sebenarnya.",
   "too_many_login_attempts": "Terlalu banyak percobaan login. Silakan tunggu sebentar, lalu coba lagi.",
+  "investigate": "Investigasi",
+  "investigate_description": "Cari dan investigasi data pengunjung, pergerakan, serta aktivitas di seluruh area gedung.",
   "insight": {
     "visitorAnalysis": "Analisa Kunjungan",
     "visitorAnalysisDescription": "Analisis lengkap kunjungan, kendaraan, parkir, extend, alarm, dan pertumbuhan pengunjung.",

@@ -139,6 +139,7 @@
   "noAccessPass": "No access pass found",
   "tapShowDetail": "Tap to show detail",
   "selectGroupFromTheList": "Select group from the list",
+  "selectVisitorFromTheList": "Select visitor from the list",
   "card": {
     "number": "Card Number",
     "inputCardNumber": "Input Card Number or Tap Card",
@@ -273,6 +274,8 @@
   "maxVisitorsDescription": "Enter the maximum number of visitors allowed.",
   "singleUseLinkDescription": "Enable this option to allow the link to be used only once. After the first use, the link will become inactive.",
   "estimatedReturnTime": "This is an estimated return time and may very depending on the actual duration of the visit.",
+  "investigate": "Investigate",
+  "investigate_description": "Search and investigate visitor records, movements, and activities across your building.",
   "insight": {
     "visitorAnalysis": "Visitor Analysis",
     "visitorAnalysisDescription": "Comprehensive analysis of visits, vehicles, parking, extensions, alarms, and visitor growth.",

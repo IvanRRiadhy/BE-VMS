@@ -272,10 +272,12 @@ const Approval = () => {
     try {
       const res = await getVisitorByTickedId(group.approval_ticket_id);
 
-      setGroupHeader(res.collection[0]);
-      setGroupVisitors(res.collection);
+      const filteredVisitors = res.collection.filter((visitor: any) => visitor.is_host !== true);
 
-      setSelectedRows(res.collection);
+      setGroupHeader(res.collection[0]);
+      setGroupVisitors(filteredVisitors);
+
+      setSelectedRows(filteredVisitors);
       setTriggerCheckAll(false);
 
       setTimeout(() => {

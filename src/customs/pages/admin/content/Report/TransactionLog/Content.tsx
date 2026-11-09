@@ -38,8 +38,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 import {
-  IconChevronLeft,
-  IconChevronRight,
   IconDeviceFloppy,
   IconInfoCircle,
   IconLayoutSidebarLeftCollapse,
@@ -82,6 +80,7 @@ import { getConfig } from 'src/config';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -146,14 +145,16 @@ const Content = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const { data: siteOptions = [] } = useSites();
+  const { sitesOperator = [] } = useInvitationSite();
   const { allVisitorEmployee } = useVisitorEmployees();
   const [visitorSearch, setVisitorSearch] = useState('');
-  // const { data: visitorOptions = [] } = useListVisitor();
+
   const debouncedVisitorSearch = useDebounce(visitorSearch, 500);
+
   const [pageVisitor, setPageVisitor] = useState(0);
   const [rowsPerPageVisitor, setRowsPerPageVisitor] = useState(10);
-  const { data: visitorData, isLoading } = useListVisitorPagination({
+
+  const { data: visitorData, isFetching: isFetchingVisitor } = useListVisitorPagination({
     page: pageVisitor,
     rowsPerPage: rowsPerPageVisitor,
     sortDir: 'desc',
@@ -164,10 +165,10 @@ const Content = () => {
   const visitorOptions = visitorData?.collection ?? [];
 
   const getSiteNames = (ids: string[]) => {
-    if (!ids || !siteOptions?.length) return '-';
+    if (!ids || !sitesOperator?.length) return '-';
     return ids
       .map((id) => {
-        const site = siteOptions?.find((site) => site.id.toUpperCase() === id.toUpperCase());
+        const site = sitesOperator?.find((site) => site.id.toUpperCase() === id.toUpperCase());
         return site?.name;
       })
       .filter(Boolean)
@@ -230,14 +231,19 @@ const Content = () => {
   }, [debouncedKeyword, sortDir]);
 
   const refreshReportList = async () => {
-    const start = page * rowsPerPage;
-    const res = await getReportVisitorTransactionDt({
-      start,
-      length: rowsPerPage,
-      sort_dir: sortDir,
-      search: searchKeyword || '',
-    });
-    setSavedReports(res.collection);
+    try {
+      const res = await getReportVisitorTransactionDt({
+        start: 0,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        search: searchKeyword || '',
+      });
+
+      setSavedReports(res.collection || []);
+      setPage(0);
+    } catch (err) {
+      console.error('Failed to refresh reports:', err);
+    }
   };
 
   const [reportData, setReportData] = useState<any[]>([]);
@@ -633,9 +639,7 @@ const Content = () => {
     setLoading(true);
     try {
       await createReportVisitorTransaction(formData);
-      await refreshReportList();
-      await new Promise((res) => setTimeout(res, 600));
-
+      await fetchReports(true);
       showSnackbar('Successfully saved report', 'success');
       handleResetForm();
     } catch (err) {
@@ -949,26 +953,29 @@ const Content = () => {
                       <Autocomplete
                         size="small"
                         options={visitorOptions}
-                        getOptionLabel={(option) =>
-                          typeof option === 'string' ? option : option.name
-                        }
+                        loading={isFetchingVisitor}
+                        filterOptions={(options) => options}
+                        getOptionLabel={(option) => option?.name || ''}
                         isOptionEqualToValue={(option, value) => option.id === value.id}
-                        inputValue={searchVisitor}
-                        onInputChange={(_, newInputValue) => setSearchVisitor(newInputValue)}
-                        filterOptions={(opts, state) => {
-                          const term = (state.inputValue || '').toLowerCase();
-                          // if (term.length < 3) return [];
-                          return opts.filter((opt) =>
-                            (opt.name || '').toLowerCase().includes(term),
-                          );
+                        inputValue={visitorSearch}
+                        onInputChange={(_, newInputValue, reason) => {
+                          if (reason === 'input' || reason === 'clear') {
+                            setVisitorSearch(newInputValue);
+                            setPageVisitor(0);
+                          }
+                        }}
+                        value={
+                          visitorOptions.find((x: any) => x.id === formData.visitor_id) ?? null
+                        }
+                        onChange={(_, val, reason) => {
+                          handleChange('visitor_id', val?.id ?? null);
+                          setVisitorSearch(val?.name ?? '');
                         }}
                         noOptionsText={
-                          searchVisitor.length < 3 ? 'Search Visitor' : 'No visitor found'
+                          visitorSearch.length < 3
+                            ? 'Type at least 3 characters'
+                            : 'No visitor found'
                         }
-                        value={
-                          visitorOptions.find((x: any) => x.id === formData.visitor_id) || null
-                        }
-                        onChange={(_, val) => handleChange('visitor_id', val ? val.id : null)}
                         renderOption={(props, option) => (
                           <li {...props} key={option.id}>
                             {option.name}
@@ -1019,8 +1026,8 @@ const Content = () => {
                       <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
                       <Autocomplete
                         multiple
-                        options={siteOptions}
-                        value={siteOptions.filter((x) =>
+                        options={sitesOperator}
+                        value={sitesOperator.filter((x) =>
                           formData.sites
                             .map((id) => id.toString().toUpperCase())
                             .includes(x.id.toString().toUpperCase()),
@@ -1105,7 +1112,7 @@ const Content = () => {
                         sx={{ fontSize: 12 }}
                         size="medium"
                       >
-                        {loading ? <CircularProgress size={18} /> : 'Generate Report'}
+                        Generate Report
                       </Button>
 
                       <Button

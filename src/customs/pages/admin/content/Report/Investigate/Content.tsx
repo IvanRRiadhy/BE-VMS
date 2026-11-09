@@ -21,10 +21,6 @@ import {
 
 import {
   Search,
-  Refresh,
-  KeyboardArrowRight,
-  Download,
-  Visibility,
   PersonOutline,
   DirectionsCarOutlined,
   GroupsOutlined,
@@ -73,30 +69,16 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
+import InvestigateFilter from './InvestigateFilter';
+import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
-
-const captureImages = [
-  {
-    time: '09:58',
-    location: 'Entrance Gate',
-    image: 'https://i.pravatar.cc/300?img=12',
-  },
-  {
-    time: '10:02',
-    location: 'Main Lobby',
-    image: 'https://i.pravatar.cc/300?img=12',
-  },
-  {
-    time: '10:05',
-    location: 'Elevator',
-    image: 'https://i.pravatar.cc/300?img=12',
-  },
-];
 
 const statusBgMap: Record<string, string> = {
   Checkin: '#21c45d',
@@ -173,34 +155,6 @@ const Content = () => {
     event_type: filter.eventType === '' ? undefined : filter.eventType,
   });
 
-  // const handleSearch = async () => {
-  //   const payload = {
-  //     start_date: dayjs.utc(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
-
-  //     end_date: dayjs.utc(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
-
-  //     keyword: filter.keyword || undefined,
-
-  //     purpose: filter.purpose || undefined,
-
-  //     host_id: filter.hostId || undefined,
-  //     'search[value]': debouncedSearchValue || undefined,
-  //     draw: 0,
-  //     start: 0,
-  //     length: 100,
-  //     sort_dir: 'desc',
-  //   };
-
-  //   try {
-  //     const response = await getInvestigateVisitor(payload);
-  //     const collection = response?.collection ?? [];
-
-  //     setVisitors(collection);
-  //   } catch (error) {
-  //     console.error('Failed to get investigate visitor:', error);
-  //   }
-  // };
-
   const handleFilterChange = (field: string, value: any) => {
     setFilter((prev) => ({
       ...prev,
@@ -231,6 +185,8 @@ const Content = () => {
     setStartDate('');
     setEndDate('');
     setVisitors([]);
+    setVisitorSearch('');
+    setSearchEmployee('');
     setSelectedVisitor(null);
     setHasSearched(false);
   };
@@ -331,13 +287,25 @@ const Content = () => {
     }
   };
 
-  const { employee = [] } = useEmployees();
+  // const { employee = [] } = useEmployees();
+  const [searchEmployee, setSearchEmployee] = useState('');
+
+  const debouncedSearch = useDebounce(searchEmployee, 500);
+
+  const { data: visitorEmployee = [], isLoading: isLoadingEmployee } = useInvitationVisitorEmployee(
+    {
+      search: debouncedSearch,
+      start: 0,
+      length: 10,
+    },
+  );
   const [visitorSearch, setVisitorSearch] = useState('');
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const debouncedVisitorSearch = useDebounce(visitorSearch, 500);
+
   const { data: visitorData, isLoading } = useListVisitorPagination({
     page: page,
     rowsPerPage: rowsPerPage,
@@ -348,11 +316,6 @@ const Content = () => {
 
   const visitor = visitorData?.collection ?? [];
   const visitorStatus = selectedVisitor?.visitor_info?.status ?? '';
-
-  const statusColor = statusBgMap[visitorStatus] ?? 'gray';
-
-  const statusLabel = (statusLabelMap[visitorStatus] ?? visitorStatus) || '-';
-
   const [visitorPage, setVisitorPage] = useState(0);
   const [hasMoreVisitors, setHasMoreVisitors] = useState(true);
   const [loadingMoreVisitors, setLoadingMoreVisitors] = useState(false);
@@ -440,7 +403,6 @@ const Content = () => {
             minHeight: 'calc(100vh - 100px)',
           }}
         >
-          {/* ================= HEADER ================= */}
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Box
@@ -460,17 +422,16 @@ const Content = () => {
 
               <Box>
                 <Typography fontSize={22} fontWeight={700} color="#172033">
-                  Investigate
+                  {t('investigate')}
                 </Typography>
 
                 <Typography fontSize={13} color="text.secondary">
-                  Search and investigate visitor records, movements, and activities across your
-                  building.
+                  {t('investigate_description')}
                 </Typography>
               </Box>
             </Stack>
 
-            <Button
+            {/* <Button
               variant="outlined"
               startIcon={<Visibility />}
               sx={{
@@ -480,7 +441,7 @@ const Content = () => {
               }}
             >
               Guide
-            </Button>
+            </Button> */}
           </Stack>
 
           <Card
@@ -519,289 +480,27 @@ const Content = () => {
               /> */}
             </Tabs>
 
-            <Box
-              sx={{
-                p: 2,
-                backgroundColor: '#fff',
-                borderBottom: '1px solid #e7ebf0',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'repeat(2, 1fr)',
-                    lg: '1.1fr 1.4fr 1.2fr 1fr',
-                  },
-                  gap: 1.5,
-                }}
-              >
-                <FilterField
-                  label="Keyword"
-                  placeholder="Search Name"
-                  value={filter.keyword}
-                  onChange={(value) => handleFilterChange('keyword', value)}
-                />
-                {/* <FilterField
-                  label="Start Date"
-                  type="date"
-                  value={startDate}
-                  onChange={(value) => {
-                    setStartDate(value);
-
-                    if (value && endDate && dayjs.utc(value).isAfter(dayjs.utc(endDate), 'day')) {
-                      setEndDate(value);
-                    }
-                  }}
-                /> */}
-
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0 }}>Start Date</CustomFormLabel>
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                    <DatePicker
-                      format="DD/MM/YYYY"
-                      value={startDate ? dayjs(startDate) : null}
-                      onChange={(value) => {
-                        const date = value?.isValid() ? value.format('YYYY-MM-DD') : '';
-                        setStartDate(date);
-
-                        if (date && endDate && dayjs.utc(date).isAfter(dayjs.utc(endDate), 'day')) {
-                          setEndDate(date);
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                          placeholder: 'DD/MM/YYYY',
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                </Box>
-
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0 }}>End Date</CustomFormLabel>
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                    <DatePicker
-                      format="DD/MM/YYYY"
-                      value={endDate ? dayjs(endDate) : null}
-                      minDate={startDate ? dayjs(startDate) : undefined}
-                      onChange={(value) => {
-                        setEndDate(value?.isValid() ? value.format('YYYY-MM-DD') : '');
-                      }}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                          placeholder: 'DD/MM/YYYY',
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                </Box>
-
-                {/* <FilterField
-                  label="End Date"
-                  type="date"
-                  value={endDate}
-                  onChange={(value) => {
-                    if (
-                      value &&
-                      startDate &&
-                      dayjs.utc(value).isBefore(dayjs.utc(startDate), 'day')
-                    ) {
-                      return;
-                    }
-
-                    setEndDate(value);
-                  }}
-                /> */}
-                {/* <FilterSelect
-                  label="Status"
-                  value="All Status"
-                  options={['All Status', 'Checked In', 'Expected', 'Upcoming', 'Not Arrived']}
-                /> */}
-                <FilterSelect
-                  label="Alarm"
-                  value={filter.isAlarm === '' ? 'All' : filter.isAlarm ? 'Yes' : 'No'}
-                  options={['All', 'Yes', 'No']}
-                  onChange={(value) =>
-                    handleFilterChange(
-                      'isAlarm',
-                      value === 'Yes' ? true : value === 'No' ? false : '',
-                    )
-                  }
-                />
-                <FilterSelect
-                  label="Source Type"
-                  value={filter.sourceType}
-                  options={['All Types', 'AccessControl', 'CameraCCTV', 'Event']}
-                  onChange={(value) =>
-                    setFilter((prev) => ({
-                      ...prev,
-                      sourceType: value,
-                    }))
-                  }
-                />
-                <FilterSelect
-                  label="Event Type"
-                  value={filter.eventType}
-                  options={[
-                    'All Event Types',
-                    'TapReader',
-                    'CameraCapture',
-                    'Alarm',
-                    'AlarmAck',
-                    'EvacuateTrigger',
-                    'Status',
-                  ]}
-                  onChange={(value) =>
-                    setFilter((prev) => ({
-                      ...prev,
-                      eventType: value,
-                    }))
-                  }
-                />
-                {/* <FilterSelect
-                  label="Purpose"
-                  value="All Purposes"
-                  options={['All Purposes', 'Visitor']}
-                /> */}
-                <Box>
-                  <Typography sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>Visitor</Typography>
-                  <Autocomplete
-                    fullWidth
-                    size="small"
-                    options={visitor}
-                    loading={isLoading}
-                    filterOptions={(options) => options}
-                    getOptionLabel={(option) => option.full_name || option.name || ''}
-                    value={selectedVisitorOption}
-                    inputValue={visitorSearch}
-                    onInputChange={(_, value, reason) => {
-                      if (reason === 'input' || reason === 'clear') {
-                        setVisitorSearch(value);
-                      }
-                    }}
-                    onChange={(_, value) => {
-                      setFilter((prev) => ({
-                        ...prev,
-                        visitor_id: value?.id ?? '',
-                      }));
-
-                      setVisitorSearch(value?.full_name || value?.name || '');
-                    }}
-                    isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
-                    noOptionsText={
-                      visitorSearch.length < 3 ? 'Type at least 3 characters' : 'No visitor found'
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder="Search visitor..."
-                        size="small"
-                        InputProps={{
-                          ...params.InputProps,
-                          startAdornment: (
-                            <>
-                              <Search fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                              {params.InputProps.startAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-                <Box>
-                  <Typography sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>Employee</Typography>
-                  <Autocomplete
-                    fullWidth
-                    size="small"
-                    options={employee}
-                    getOptionLabel={(option) => option.full_name || option.name || ''}
-                    value={employee.find((item: any) => item.id === filter.hostId) ?? null}
-                    onChange={(_, value) => {
-                      setFilter((prev) => ({
-                        ...prev,
-                        hostId: value?.id ?? '',
-                      }));
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label=""
-                        placeholder="Search employee..."
-                        size="small"
-                        sx={{
-                          '& .MuiInputBase-input': {
-                            fontSize: 12,
-                          },
-                          '& .MuiInputBase-input::placeholder': {
-                            fontSize: 12,
-                            opacity: 0.6,
-                          },
-                        }}
-                        InputProps={{
-                          ...params.InputProps,
-                          startAdornment: (
-                            <>
-                              <Search fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                              {params.InputProps.startAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-
-              <Stack direction="row" justifyContent="flex-end" spacing={1} mt={1.5}>
-                <Button
-                  variant="contained"
-                  // color="success"
-                  startIcon={<IconDownload />}
-                  onClick={handleExportFiltered}
-                  disabled={!hasSearched}
-                  sx={{
-                    textTransform: 'none',
-                    borderColor: '#d8e0eb',
-                    // color: '#536174',
-                    backgroundColor: '#16a765',
-                  }}
-                >
-                  Export Excel
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<Refresh />}
-                  onClick={handleReset}
-                  sx={{
-                    textTransform: 'none',
-                    borderColor: '#d8e0eb',
-                    color: '#536174',
-                  }}
-                >
-                  Reset
-                </Button>
-
-                <Button
-                  variant="contained"
-                  startIcon={<Search />}
-                  sx={{
-                    textTransform: 'none',
-                    boxShadow: 'none',
-                  }}
-                  onClick={handleSearch}
-                >
-                  {t('search')}
-                </Button>
-              </Stack>
-            </Box>
+            <InvestigateFilter
+              filter={filter}
+              setFilter={setFilter}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              visitor={visitor}
+              visitorEmployee={visitorEmployee}
+              selectedVisitorOption={selectedVisitorOption}
+              visitorSearch={visitorSearch}
+              setVisitorSearch={setVisitorSearch}
+              isLoading={isLoading}
+              isLoadingEmployee={isLoadingEmployee}
+              hasSearched={hasSearched}
+              handleFilterChange={handleFilterChange}
+              handleSearch={handleSearch}
+              handleReset={handleReset}
+              handleExportFiltered={handleExportFiltered}
+              t={t}
+            />
 
             <Box
               sx={{
@@ -952,7 +651,7 @@ const Content = () => {
                 </Box>
               </Box>
 
-              {selectedVisitor && (
+              {selectedVisitor ? (
                 <Box sx={{ backgroundColor: '#fff', minWidth: 0 }}>
                   <Box
                     sx={{
@@ -1082,10 +781,10 @@ const Content = () => {
                               value={selectedVisitor?.visitor_info?.host_employee ?? '-'}
                             />
 
-                            {/* <InfoRow
-                            label="Visit Schedule"
-                            value={selectedVisitor?.visitor_info?.visit_schedule ?? '-'}
-                          /> */}
+                            <InfoRow
+                              label="Visit Schedule"
+                              value={selectedVisitor?.visitor_info?.visit_schedule ?? '-'}
+                            />
 
                             <InfoRow
                               label="Location"
@@ -1424,6 +1123,52 @@ const Content = () => {
                       ))}
                     </Stack>
                   )}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    minHeight: {
+                      xs: 300,
+                      sm: '100%',
+                    },
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    boxSizing: 'border-box',
+
+                    pt: '0 !important',
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={bg_nodata}
+                    sx={{
+                      width: {
+                        xs: 130,
+                        sm: 130,
+                      },
+                      height: 'auto',
+
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <Typography
+                    color="text.secondary"
+                    mt={2}
+                    variant="h5"
+                    sx={{
+                      textAlign: 'center',
+                      px: 2,
+                      fontSize: {
+                        xs: '1.1rem',
+                        sm: '1.1rem',
+                      },
+                    }}
+                  >
+                    {t('selectVisitorFromTheList')}
+                  </Typography>
                 </Box>
               )}
             </Box>
