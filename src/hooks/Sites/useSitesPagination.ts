@@ -24,7 +24,18 @@ export const useSitePagination = ({
   sort_column,
 }: Props) => {
   return useQuery({
-    queryKey: ['sites', page, rowsPerPage, sortDir, searchKeyword, type, parent, isChild, sort_column],
+    queryKey: [
+      'sites',
+      'invitation-sites',
+      page,
+      rowsPerPage,
+      sortDir,
+      searchKeyword,
+      type,
+      parent,
+      isChild,
+      sort_column,
+    ],
     queryFn: async () => {
       try {
         const result = await getAllSitePagination(
@@ -39,18 +50,18 @@ export const useSitePagination = ({
         );
         return result;
       } catch (error: any) {
-        const status = error?.response?.status;
-        const statusCode = error?.response?.data?.status_code;
+        // const status = error?.response?.status;
+        // const statusCode = error?.response?.data?.status_code;
 
-        // Search tidak menemukan data
-        if (status === 404 || statusCode === 404) {
-          return {
-            collection: [],
-            RecordsTotal: 0,
-            RecordsFiltered: 0,
-            Draw: 0,
-          };
-        }
+        // // Search tidak menemukan data
+        // if (status === 404 || statusCode === 404) {
+        //   return {
+        //     collection: [],
+        //     RecordsTotal: 0,
+        //     RecordsFiltered: 0,
+        //     Draw: 0,
+        //   };
+        // }
 
         throw error;
       }

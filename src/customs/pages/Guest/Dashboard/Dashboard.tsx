@@ -12,14 +12,7 @@ import {
   Card,
   IconButton,
 } from '@mui/material';
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconCircleMinus,
-  IconLogin,
-  IconLogout,
-  IconX,
-} from '@tabler/icons-react';
+
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
@@ -53,6 +46,7 @@ import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import VisitStatusCard from './components/VisitorStatusCard';
 import AccessPassPdf from './components/AccessPassPdf';
 import { getConfig } from 'src/config';
+import { useNavigate } from 'react-router';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
@@ -93,142 +87,6 @@ const Dashboard = () => {
   const handleCloseAccess = () => {
     setOpenAccess(false);
   };
-
-  // const handleDownloadPDF = async () => {
-  //   if (!exportRef.current || isGenerating) return;
-
-  //   let clone: HTMLElement | null = null;
-
-  //   setIsGenerating(true);
-
-  //   try {
-  //     clone = exportRef.current.cloneNode(true) as HTMLElement;
-
-  //     // Hilangkan tombol download dan elemen lain
-  //     // yang memiliki class no-print
-  //     clone.querySelectorAll('.no-print').forEach((el) => {
-  //       (el as HTMLElement).style.display = 'none';
-  //     });
-
-  //     // Posisikan clone di luar layar
-  //     clone.style.position = 'fixed';
-  //     clone.style.left = '-9999px';
-  //     clone.style.top = '0';
-  //     clone.style.width = `${exportRef.current.offsetWidth}px`;
-  //     clone.style.backgroundColor = '#fff';
-
-  //     document.body.appendChild(clone);
-
-  //     // Tunggu render selesai
-  //     await new Promise((resolve) => setTimeout(resolve, 100));
-
-  //     const canvas = await html2canvas(clone, {
-  //       scale: 3,
-  //       useCORS: true,
-  //       backgroundColor: '#fff',
-  //     });
-
-  //     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-  //     if (!ctx) throw new Error('Failed to get canvas context');
-
-  //     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-  //     const data = imageData.data;
-
-  //     let minX = canvas.width;
-  //     let minY = canvas.height;
-  //     let maxX = 0;
-  //     let maxY = 0;
-
-  //     for (let y = 0; y < canvas.height; y++) {
-  //       for (let x = 0; x < canvas.width; x++) {
-  //         const index = (y * canvas.width + x) * 4;
-
-  //         const r = data[index];
-  //         const g = data[index + 1];
-  //         const b = data[index + 2];
-  //         const a = data[index + 3];
-
-  //         // Anggap pixel yang bukan putih sebagai content
-  //         if (a > 0 && (r < 245 || g < 245 || b < 245)) {
-  //           minX = Math.min(minX, x);
-  //           minY = Math.min(minY, y);
-  //           maxX = Math.max(maxX, x);
-  //           maxY = Math.max(maxY, y);
-  //         }
-  //       }
-  //     }
-
-  //     const padding = 20;
-
-  //     minX = Math.max(0, minX - padding);
-  //     minY = Math.max(0, minY - padding);
-  //     maxX = Math.min(canvas.width, maxX + padding);
-  //     maxY = Math.min(canvas.height, maxY + padding);
-
-  //     const croppedCanvas = document.createElement('canvas');
-
-  //     croppedCanvas.width = maxX - minX;
-  //     croppedCanvas.height = maxY - minY;
-
-  //     const croppedCtx = croppedCanvas.getContext('2d');
-
-  //     if (!croppedCtx) throw new Error('Failed to create cropped canvas');
-
-  //     croppedCtx.fillStyle = '#fff';
-  //     croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
-
-  //     croppedCtx.drawImage(
-  //       canvas,
-  //       minX,
-  //       minY,
-  //       croppedCanvas.width,
-  //       croppedCanvas.height,
-  //       0,
-  //       0,
-  //       croppedCanvas.width,
-  //       croppedCanvas.height,
-  //     );
-
-  //     const imgData = croppedCanvas.toDataURL('image/png');
-
-  //     const pdf = new jsPDF('p', 'mm', 'a6');
-
-  //     const pdfWidth = pdf.internal.pageSize.getWidth();
-  //     const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  //     const margin = 4;
-
-  //     const maxWidth = pdfWidth - margin * 2;
-  //     const maxHeight = pdfHeight - margin * 2;
-
-  //     let imgWidth = maxWidth;
-  //     let imgHeight = (croppedCanvas.height * imgWidth) / croppedCanvas.width;
-
-  //     if (imgHeight > maxHeight) {
-  //       imgHeight = maxHeight;
-  //       imgWidth = (croppedCanvas.width * imgHeight) / croppedCanvas.height;
-  //     }
-
-  //     const x = (pdfWidth - imgWidth) / 2;
-  //     const y = (pdfHeight - imgHeight) / 2;
-
-  //     pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-
-  //     showSwal('success', 'Successfully generated PDF');
-
-  //     pdf.save(`Visitor Code-${currentAccessPass?.visitor_number || 'Visitor'}.pdf`);
-  //   } catch (error) {
-  //     console.error('Failed to generate PDF:', error);
-  //   } finally {
-  //     if (clone) {
-  //       clone.remove();
-  //     }
-
-  //     setIsGenerating(false);
-  //   }
-  // };
 
   const handleDownloadPDF = async () => {
     if (!accessPassPdfRef.current || isGenerating) return;
@@ -303,27 +161,8 @@ const Dashboard = () => {
 
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
-  const handleOpenParkingBlocker = async () => {
-    if (!currentAccessPass?.id) return;
+  const navigate = useNavigate();
 
-    const result = await showSwal('confirm', 'Are you sure  to open the parking blocker?');
-
-    if (!result?.isConfirmed) return;
-
-    setIsParkingLoading(true);
-
-    try {
-      await openParkingBlocker({
-        trx_visitor_id: currentAccessPass.id,
-      });
-
-      showSwal('success', 'Parking blocker opened successfully.');
-    } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
-    } finally {
-      setTimeout(() => setIsParkingLoading(false), 600);
-    }
-  };
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
@@ -368,6 +207,29 @@ const Dashboard = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleOpenParkingBlocker = async () => {
+    if (!currentAccessPass?.id) return;
+
+    const result = await showSwal('confirm', 'Are you sure  to open the parking blocker?');
+
+    if (!result?.isConfirmed) return;
+
+    setIsParkingLoading(true);
+
+    try {
+      await openParkingBlocker({
+        trx_visitor_id: currentAccessPass.id,
+      });
+
+      showSwal('success', 'Parking blocker opened successfully.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
+    } finally {
+      setTimeout(() => setIsParkingLoading(false), 600);
+    }
+    // navigate('/guest/parking');
   };
 
   const accessPassPdfRef = useRef<HTMLDivElement>(null);

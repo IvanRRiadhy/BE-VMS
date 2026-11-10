@@ -1,12 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid2 as Grid,
-  IconButton,
-} from '@mui/material';
+import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
@@ -489,7 +482,7 @@ const Content = () => {
                   setPage(0);
                 }}
                 isDataVerified={true}
-                searchPlaceholder="Search Card"
+                searchPlaceholder={t('search') + ' Card'}
                 sortColumns={['name']}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => {

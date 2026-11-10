@@ -217,7 +217,7 @@ const OperatorView = () => {
   ];
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [typeVisitor, setTypeVisitor] = useState('live');
-  const { sitesOperator } = useInvitationSite();
+  const { sites } = useInvitationSite();
   const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
     useRegisteredSiteOperator();
   const { printData } = usePrintBadgeConfig();
@@ -3580,7 +3580,7 @@ const [isLoadingCards, setIsLoadingCards] = useState(false);
         <SwipeAccessDialog
           open={openSwipeAccess}
           onClose={handleCloseSwipeAccess}
-          data={sitesOperator}
+          data={sites}
           payload={swipePayload}
           invitationId={invitationId as string}
           visitor={currentAccessVisitor}
@@ -3684,7 +3684,7 @@ const [isLoadingCards, setIsLoadingCards] = useState(false);
               registeredSite={registerSiteOperator}
               forceTick={tick}
               visitorType={visitorType}
-              sites={sitesOperator}
+              sites={sites}
               employee={employee}
               allVisitorEmployee={allVisitorEmployee}
               vtLoading={vtLoading}
@@ -3724,7 +3724,7 @@ const [isLoadingCards, setIsLoadingCards] = useState(false);
               onSuccess={handleSuccess}
               containerRef={containerRef ?? null}
               visitorType={visitorType}
-              sites={sitesOperator}
+              sites={sites}
               registeredSite={registerSiteOperator}
               employee={employee}
               allVisitorEmployee={allVisitorEmployee}

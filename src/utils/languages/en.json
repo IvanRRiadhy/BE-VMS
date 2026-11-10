@@ -270,6 +270,8 @@
   "phone_invalid": "Phone number must contain 10–15 digits",
   "email_invalid": "Email must be a valid email address",
   "is_required": "is required",
+  "pleaseSelectStartEndDateCustomDateReport": "Please select start and end date for CustomDate report",
+  "pleaseSelectAtLeastOneFilter": "Please select at least one filter.",
   "identity_id_invalid": "Identity number must contain exactly 16 digits",
   "maxVisitorsDescription": "Enter the maximum number of visitors allowed.",
   "singleUseLinkDescription": "Enable this option to allow the link to be used only once. After the first use, the link will become inactive.",

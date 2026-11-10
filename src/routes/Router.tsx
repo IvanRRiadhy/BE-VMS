@@ -449,6 +449,7 @@ const Router = [
             children: [
               { index: true, element: <DashboardLayout /> },
               { path: 'dashboard', element: <DashboardLayout /> },
+              { path: 'parking', element: <Parking /> },
               // { path: 'access-page', element: <PageAcces /> },
               // { path: 'invitation', element: <Invitation /> },
               // { path: 'history', element: <History /> },
@@ -462,10 +463,10 @@ const Router = [
               // { path: 'notification', element: <NotificationGuest /> },
             ],
           },
-          {
-            path: '/parking',
-            element: <Parking />,
-          },
+          // {
+          //   path: '/parking',
+          //   element: <Parking />,
+          // },
         ],
       },
       // Security Monitor/Admin

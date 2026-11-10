@@ -22,7 +22,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'dayjs/locale/id';
 import { useMonitorActivities } from 'src/hooks/Monitoring/useMonitorActivities';
 import { getConfig } from 'src/config';
-import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 import MonitoringFilter from './components/MonitoringFilter';
 
 const dummyTransactions: any[] = [
@@ -191,7 +190,7 @@ const Content = () => {
 
   console.log('activities', activities);
 
-  // const { data } = useInvitationSite();
+
   // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
   //   search: debouncedSearch,
   //   start: 0,

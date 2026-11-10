@@ -96,7 +96,7 @@ const VisitStatusCard = ({ accessPass }: VisitStatusCardProps) => {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Checked In By
+            Check In By
           </Typography>
 
           <Typography variant="body1" fontWeight={600}>
@@ -151,7 +151,7 @@ const VisitStatusCard = ({ accessPass }: VisitStatusCardProps) => {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Checked Out By
+            Check Out By
           </Typography>
 
           <Typography variant="body1" fontWeight={600}>

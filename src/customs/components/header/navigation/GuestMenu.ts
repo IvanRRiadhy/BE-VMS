@@ -32,14 +32,14 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
   //   href: '/guest/invitation',
   // },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/parking',
-  //   target: '_blank',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/guest/parking',
+    target: '_blank',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -83,14 +83,14 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   href: '/guest/invitation',
   // },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/parking',
-  //   target: '_blank',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/parking',
+    target: '_blank',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',

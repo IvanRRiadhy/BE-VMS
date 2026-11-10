@@ -53,12 +53,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { Snackbar, Alert } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
 
-import {
-  generateReport,
-  getAllSite,
-  getAllVisitor,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
+import { generateReport } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import {
@@ -70,10 +65,7 @@ import {
   updateReportVisitorTransaction,
 } from 'src/customs/api/Admin/Report';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import axiosInstance from 'src/customs/api/interceptor';
-import { useSites } from 'src/hooks/Sites/useSites';
 import { useVisitorEmployees } from 'src/hooks/Employee/useVisitorEmployees';
-import { useListVisitor } from 'src/hooks/Visitor/useListVisitor';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import { getConfig } from 'src/config';
@@ -81,6 +73,7 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagination';
 import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
+import TransactionLogDialog from './components/TransactionLogDialog';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -108,20 +101,18 @@ const Content = () => {
 
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);``
   const [summary, setSummary] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(7);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState('desc');
-  const [savedReports, setSavedReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [debouncedKeyword, setDebouncedSearch] = useState('');
   const [loadingReports, setLoadingReports] = useState(false);
-  const [searchVisitor, setSearchVisitor] = useState('');
   const [reports, setReports] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [reportData, setReportData] = useState<any[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const { t } = useTranslation();
   const [snackbar, setSnackbar] = useState({
@@ -133,7 +124,6 @@ const Content = () => {
   const config = getConfig();
 
   const logoUrl = config.LOGO_URL || Logo;
-
   const showSnackbar = (
     message: string,
     severity: 'success' | 'error' | 'info' | 'warning' = 'success',
@@ -145,12 +135,10 @@ const Content = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const { sitesOperator = [] } = useInvitationSite();
+  const { sites = [] } = useInvitationSite();
   const { allVisitorEmployee } = useVisitorEmployees();
   const [visitorSearch, setVisitorSearch] = useState('');
-
   const debouncedVisitorSearch = useDebounce(visitorSearch, 500);
-
   const [pageVisitor, setPageVisitor] = useState(0);
   const [rowsPerPageVisitor, setRowsPerPageVisitor] = useState(10);
 
@@ -165,10 +153,10 @@ const Content = () => {
   const visitorOptions = visitorData?.collection ?? [];
 
   const getSiteNames = (ids: string[]) => {
-    if (!ids || !sitesOperator?.length) return '-';
+    if (!ids || !sites?.length) return '-';
     return ids
       .map((id) => {
-        const site = sitesOperator?.find((site) => site.id.toUpperCase() === id.toUpperCase());
+        const site = sites?.find((site: any) => site.id.toUpperCase() === id.toUpperCase());
         return site?.name;
       })
       .filter(Boolean)
@@ -230,24 +218,6 @@ const Content = () => {
     fetchReports(true);
   }, [debouncedKeyword, sortDir]);
 
-  const refreshReportList = async () => {
-    try {
-      const res = await getReportVisitorTransactionDt({
-        start: 0,
-        length: rowsPerPage,
-        sort_dir: sortDir,
-        search: searchKeyword || '',
-      });
-
-      setSavedReports(res.collection || []);
-      setPage(0);
-    } catch (err) {
-      console.error('Failed to refresh reports:', err);
-    }
-  };
-
-  const [reportData, setReportData] = useState<any[]>([]);
-
   const isFormDataEmpty = (f: any) => {
     return (
       !f.start_date &&
@@ -269,14 +239,14 @@ const Content = () => {
       }
 
       if (isFormDataEmpty(formData)) {
-        showSwal('error', 'Please select at least one filter.');
+        showSwal('error', t('pleaseSelectAtLeastOneFilter'));
         return;
       }
 
       setLoading(true);
 
       if (formData.time_report === 'CustomDate' && (!formData.start_date || !formData.end_date)) {
-        showSwal('error', 'Please select start and end date for CustomDate report');
+        showSwal('error', t('pleaseSelectStartEndDateCustomDateReport'));
         setLoading(false);
         return;
       }
@@ -758,11 +728,11 @@ const Content = () => {
         await deleteReportVisitorTransaction(id);
         await fetchReports(true);
 
-        showSwal('success', 'Successfully deleted report.');
-      } catch (err) {
-        showSwal('error', 'Failed to delete report.');
+        showSwal('success', t('deleteSuccess', { name: 'Report' }));
+      } catch (err: any) {
+        showSwal('error', err.response.data.msg || 'Failed to delete report.');
       } finally {
-        setTimeout(() => setLoading(false), 500);
+        setLoading(false);
       }
     }
   };
@@ -1026,8 +996,8 @@ const Content = () => {
                       <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
                       <Autocomplete
                         multiple
-                        options={sitesOperator}
-                        value={sitesOperator.filter((x) =>
+                        options={sites}
+                        value={sites.filter((x: any) =>
                           formData.sites
                             .map((id) => id.toString().toUpperCase())
                             .includes(x.id.toString().toUpperCase()),
@@ -1164,6 +1134,7 @@ const Content = () => {
               )}
             </Box>
           </Box>
+          {/* Report Result */}
           <Box
             sx={{
               backgroundColor: 'white',
@@ -1363,7 +1334,7 @@ const Content = () => {
                   }}
                   size={{ xs: 12, xl: 0.1 }}
                 />
-
+                {/* Table */}
                 <Grid size={{ xs: 12, xl: isFilterCollapsed ? 9.3 : 9.1 }} flexGrow={1}>
                   {isHavePreview ? (
                     <>
@@ -1377,6 +1348,7 @@ const Content = () => {
                         <Box>
                           {summary ? (
                             <DynamicTable
+                              loading={loading}
                               data={summary}
                               isHaveHeaderTitle={true}
                               titleHeader="Summary"
@@ -1400,6 +1372,7 @@ const Content = () => {
                         <Box>
                           <div id="print-report-area">
                             <DynamicTable
+                              loading={loading}
                               data={reportData}
                               isHaveSearch={false}
                               isHavePagination={false}
@@ -1446,85 +1419,20 @@ const Content = () => {
           </Box>
         </Box>
 
-        <Dialog
+        <TransactionLogDialog
           open={openDialog}
           onClose={() => setOpenDialog(false)}
-          fullWidth
-          maxWidth="xl"
-          PaperProps={{
-            sx: {
-              width: '90vw',
-              maxWidth: 'none',
-            },
-          }}
-        >
-          <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-            Transaction Log Report
-          </DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenDialog(false)}
-            sx={{
-              position: 'absolute',
-              top: 15,
-              right: 15,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <DialogContent dividers>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-              <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
-                <Tab label="Summary" />
-                <Tab label="Table Report" />
-              </Tabs>
-            </Box>
-            {activeTab === 0 && (
-              <Box>
-                {summary ? (
-                  <DynamicTable
-                    data={summary}
-                    isHaveHeaderTitle={true}
-                    titleHeader="Summary"
-                    isHaveExportCsv={true}
-                    onExportCsv={exportToCSV}
-                    isHaveExportExcel={true}
-                    onExportExcel={exportToExcel}
-                    isHaveExportPdf={true}
-                    onExportPdf={exportToPDF}
-                  />
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    No summary data available.
-                  </Typography>
-                )}
-              </Box>
-            )}
-            {activeTab === 1 && (
-              <Box>
-                <div id="print-report-area">
-                  <DynamicTable
-                    data={reportData}
-                    isHaveSearch={true}
-                    isHavePagination={false}
-                    isHavePeriod
-                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                    isHaveExportCsv={true}
-                    isHaveExportExcel={true}
-                    // isHavePrint={true}
-                    isHaveVip={true}
-                    isHaveExportPdf={true}
-                    onExportCsv={exportToCSV}
-                    onExportExcel={exportToExcel}
-                    onExportPdf={exportToPDF}
-                    onPrint={printReport}
-                  />
-                </div>
-              </Box>
-            )}
-          </DialogContent>
-        </Dialog>
+          summary={summary}
+          reportData={reportData}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onExportCsv={exportToCSV}
+          onExportExcel={exportToExcel}
+          onExportPdf={exportToPDF}
+          onPrint={printReport}
+          onSearchKeywordChange={setSearchKeyword}
+        />
+
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}

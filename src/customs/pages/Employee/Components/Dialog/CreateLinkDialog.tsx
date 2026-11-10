@@ -26,7 +26,6 @@ import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
-import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 import useInvitationVisitorType from 'src/hooks/Invitation/useInvitationVisitorType';
 
 dayjs.extend(utc);
