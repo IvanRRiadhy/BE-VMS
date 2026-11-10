@@ -170,7 +170,7 @@ const Parking = () => {
                       Vehicle Type
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
-                      SUV
+                      Car
                     </Typography>
                   </Grid>
 
@@ -188,7 +188,7 @@ const Parking = () => {
                       Parking Area
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
-                      Basement 1
+                      Area A
                     </Typography>
                   </Grid>
 

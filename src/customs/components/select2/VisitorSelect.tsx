@@ -12,7 +12,10 @@ import {
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { components } from 'react-select';
 import { IconSearch } from '@tabler/icons-react';
-import { getInvitationVisitor, getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
+import {
+  getInvitationVisitor,
+  getInvitationVisitorEmployee,
+} from 'src/customs/api/Admin/InvitationData';
 type Visitor = {
   id: string;
   visitor_status: string;

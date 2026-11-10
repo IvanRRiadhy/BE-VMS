@@ -115,7 +115,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   const buildPayload = () => {
     const selectedVisitorType = form.visitor_type_id;
 
-    const isSpecialCategory = ['CIT', 'Remise'].includes(selectedVisitorType?.visitor_category);
+    const isSpecialCategory = ['CIT', 'Remise', 'DCVendor'].includes(
+      selectedVisitorType?.visitor_category,
+    );
 
     return {
       // host: enabled.host ? (form.host?.id ?? null) : null,
@@ -252,7 +254,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
               getOptionLabel={(option: any) => option.name ?? ''}
               value={form.visitor_type_id}
               onChange={(_, value) => {
-                const isSpecialCategory = ['CIT', 'Remise'].includes(value?.visitor_category);
+                const isSpecialCategory = ['CIT', 'Remise', 'DCVendor'].includes(
+                  value?.visitor_category,
+                );
 
                 setForm((prev) => ({
                   ...prev,
@@ -481,7 +485,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 }}
               />
             </LocalizationProvider>
-            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
+            {['CIT', 'DCVendor', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
               <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1 }}>
                 {t('visitEndEstimatedNote')}
               </Typography>
@@ -503,7 +507,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 onChange={(e) => handleToggle('expiredLink', e.target.checked)}
               /> */}
             </Stack>
-            {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
+            {['CIT', 'DCVendor', 'Remise'].includes(form.visitor_type_id?.visitor_category) ? (
               <CustomTextField
                 fullWidth
                 disabled
