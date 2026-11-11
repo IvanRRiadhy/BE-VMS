@@ -7,6 +7,7 @@ import {
   Button,
   IconButton,
   CircularProgress,
+  Box,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,7 @@ interface ReturnCardDialogProps {
   onClose: () => void;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onReturnCheckout: () => void;
 }
 
 const ReturnCardDialog = ({
@@ -28,6 +30,7 @@ const ReturnCardDialog = ({
   onClose,
   onChange,
   onSubmit,
+  onReturnCheckout,
 }: ReturnCardDialogProps) => {
   const { t } = useTranslation();
   return (
@@ -60,12 +63,17 @@ const ReturnCardDialog = ({
         />
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit} disabled={loading}>
-          Submit
-        </Button>
-      </DialogActions>
+      <Box sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Button onClick={onReturnCheckout}>Return & Checkout</Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button onClick={onClose}>Cancel</Button>
+            <Button variant="contained" onClick={onSubmit} disabled={loading}>
+              Submit
+            </Button>
+          </Box>
+        </Box>
+      </Box>
     </Dialog>
   );
 };

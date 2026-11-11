@@ -59,12 +59,30 @@ export const createShareLinkByEmail = async (data: any): Promise<any> => {
 };
 
 export const createShareLinkByEmailById = async (id: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post(`/visitor-share-link/send-email/${id}`, data);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(`/visitor-share-link/send-email/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Delete
 export const deleteShareLink = async (id: string): Promise<any> => {
-  const response = await axiosInstance.delete('/visitor-share-link/' + id);
-  return response.data;
+  try {
+    const response = await axiosInstance.delete('/visitor-share-link/' + id);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// get detail visitor share link
+export const getDetailShareLink = async (id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/visitor-share-link/${id}/invited-visitor`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };

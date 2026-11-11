@@ -39,7 +39,7 @@ import {
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CreateLinkDialog from '../ShareLink/components/CreateLinkDialog';
-import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
+import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
@@ -72,6 +72,7 @@ import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/compon
 import VisitorDetailDialog from '../../admin/content/Visitor/Transaction/components/VisitorDetailDialog';
 import { IconLogin } from '@tabler/icons-react';
 import HistoryApprovalDialog from '../../admin/content/Visitor/Transaction/components/HistoryApprovalDialog';
+import { useDetailShareLink } from 'src/hooks/Visitor/useShareLinkPagination';
 
 type Group = {
   id: string;
@@ -343,7 +344,7 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total ' + t('visitor'),
+      title: 'Total Transaction',
       icon: IconUserPlus,
       subTitle: `${totalFilteredRecords}`,
       color: 'none',
@@ -528,10 +529,6 @@ const Content = () => {
       console.error('Copy link failed:', error);
       showSwal('error', 'Failed to copy link.');
     }
-  };
-
-  const handleDetailLink = (link: string) => {
-    setOpenDetailLink(true);
   };
 
   const handleAddShareLink = () => {
@@ -850,6 +847,18 @@ const Content = () => {
     }
   };
 
+  const [selectedDetailShareLinkId, setSelectedDetailShareLinkId] = useState<string | null>(null);
+
+  const { data: detailVisitorList = [], isLoading: isLoadingDetail } = useDetailShareLink(
+    selectedDetailShareLinkId as any,
+    openDetailLink,
+  );
+
+  const handleDetailLink = (row: any) => {
+    setSelectedDetailShareLinkId(row.id);
+    setOpenDetailLink(true);
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -1101,8 +1110,12 @@ const Content = () => {
 
       <DetailLinkDialog
         open={openDetailLink}
-        onClose={() => setOpenDetailLink(false)}
-        dataVisitor={[]}
+        onClose={() => {
+          setOpenDetailLink(false);
+          setSelectedDetailShareLinkId(null);
+        }}
+        dataVisitor={detailVisitorList}
+        loading={isLoadingDetail}
       />
 
       <SendEmailDialog

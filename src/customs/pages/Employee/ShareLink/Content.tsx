@@ -2,7 +2,10 @@ import React, { useCallback, useState } from 'react';
 import Container from 'src/components/container/PageContainer';
 import { Box, Grid2 as Grid } from '@mui/material';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
+import {
+  useDetailShareLink,
+  useShareLinkPagination,
+} from 'src/hooks/Visitor/useShareLinkPagination';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -150,8 +153,15 @@ const Content = () => {
       showSwal('error', 'Failed to copy link.');
     }
   };
+  const [selectedDetailShareLinkId, setSelectedDetailShareLinkId] = useState<string | null>(null);
 
-  const handleDetailLink = (link: string) => {
+  const { data: detailVisitorList = [], isLoading: isLoadingDetail } = useDetailShareLink(
+    selectedDetailShareLinkId as any,
+    openDetailLink,
+  );
+
+  const handleDetailLink = (row: any) => {
+    setSelectedDetailShareLinkId(row.id);
     setOpenDetailLink(true);
   };
 
@@ -262,7 +272,7 @@ const Content = () => {
                 setRowsPerPage(newRowsPerPage);
               }}
               onCopyLink={(row: any) => handleOpenInviteDialog(row)}
-              onDetailLink={(row: any) => handleDetailLink(row.shorten_url || row.url)}
+              onDetailLink={(row: any) => handleDetailLink(row)}
               onDelete={(row: any) => handleDeleteLink(row.id)}
               isHaveAddData={true}
               onAddData={handleAddShareLink}
@@ -292,8 +302,12 @@ const Content = () => {
 
       <DetailLinkDialog
         open={openDetailLink}
-        onClose={() => setOpenDetailLink(false)}
-        dataVisitor={[]}
+        onClose={() => {
+          setOpenDetailLink(false);
+          setSelectedDetailShareLinkId(null);
+        }}
+        dataVisitor={detailVisitorList}
+        loading={isLoadingDetail}
       />
       <InvitationShareDialog
         open={openInviteViaLinkEmail}

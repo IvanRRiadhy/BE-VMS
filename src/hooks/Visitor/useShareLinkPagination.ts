@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getShareLinkByDt } from 'src/customs/api/Admin/ShareLink';
+import { getDetailShareLink, getShareLinkByDt } from 'src/customs/api/Admin/ShareLink';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Props {
@@ -58,5 +58,31 @@ export const useShareLinkPagination = ({ page, rowsPerPage, search, sortDir }: P
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     placeholderData: (prev) => prev,
+  });
+};
+
+export const useDetailShareLink = (id: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['share-link-detail', id],
+
+    queryFn: async () => {
+      const res = await getDetailShareLink(id);
+
+      return (
+        res.collection
+          ?.filter((item: any) => item.is_host === false)
+          .map((item: any) => ({
+            Name: item.visitor_name,
+            Organization: item.visitor_organization_name,
+            'Identity ID': item.visitor_identity_id,
+            Phone: item.visitor_phone,
+            Email: item.visitor_email,
+            site: item.site_place_name,
+          })) ?? []
+      );
+    },
+
+    enabled: Boolean(id) && enabled,
+    refetchOnWindowFocus: false,
   });
 };

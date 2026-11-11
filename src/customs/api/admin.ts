@@ -294,8 +294,8 @@ export const getBlacklistDt = async (
       status === 'true' || status === true
         ? true
         : status === 'false' || status === false
-        ? false
-        : status;
+          ? false
+          : status;
   }
 
   const response = await axiosInstance.get('/visitor/blacklist/dt', {
@@ -1211,7 +1211,7 @@ export const getVisitorTransactionPagination = async (
       'is-emergency-situation': is_emergency,
       'is-block': is_block,
       host: host,
-      organization: organization,
+      'organization-id': organization,
       'visitor-type-id': visitor_type_id,
     },
 

@@ -22,8 +22,6 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
-import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
-import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -39,7 +37,10 @@ import { useTranslation } from 'react-i18next';
 import InviteOrCreateLinkDialog from '../Components/Dialog/InviteOrCreateLinkDialog';
 import DashboardEmployeeActionBar from '../Components/DashboardEmployeeActionBar';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
-import { useShareLinkPagination } from 'src/hooks/Visitor/useShareLinkPagination';
+import {
+  useDetailShareLink,
+  useShareLinkPagination,
+} from 'src/hooks/Visitor/useShareLinkPagination';
 import { useShareLinkMutation } from 'src/hooks/Visitor/useShareLinkMutation';
 import ApprovalVisitorGroupDialog from '../Components/Dialog/ApprovalVisitorGroupDialog';
 import { useQuickAccessPagination } from 'src/hooks/Visitor/useQuickAccessPagination';
@@ -58,7 +59,8 @@ import {
   getDashboardSchedule,
   getTodayVisitors,
 } from 'src/customs/api/Employee/Dashboard';
-
+import CreateLinkDialog from 'src/customs/pages/Employee/ShareLink/components/CreateLinkDialog';
+import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
@@ -378,8 +380,14 @@ const DashboardEmployee = () => {
     }
   };
 
-  const handleDetailLink = (link: string) => {
-    // window.open(link, '_blank');
+  const [selectedDetailShareLinkId, setSelectedDetailShareLinkId] = useState<string | null>(null);
+
+  const { data: detailVisitorList = [], isLoading: isLoadingDetail } = useDetailShareLink(
+    selectedDetailShareLinkId as any,
+    openDetailLink,
+  );
+  const handleDetailLink = (row: any) => {
+    setSelectedDetailShareLinkId(row.id);
     setOpenDetailLink(true);
   };
 
@@ -921,8 +929,12 @@ const DashboardEmployee = () => {
 
       <DetailLinkDialog
         open={openDetailLink}
-        onClose={() => setOpenDetailLink(false)}
-        dataVisitor={[]}
+        onClose={() => {
+          setOpenDetailLink(false);
+          setSelectedDetailShareLinkId(null);
+        }}
+        dataVisitor={detailVisitorList}
+        loading={isLoadingDetail}
       />
 
       <SendEmailDialog

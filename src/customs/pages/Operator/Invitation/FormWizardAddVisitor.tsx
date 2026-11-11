@@ -2100,7 +2100,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                               >
                                                 <IconTrash />
                                               </IconButton>
-                                              <Button
+                                              {/* <Button
                                                 variant="contained"
                                                 size="small"
                                                 color={hasSelfOnly ? 'success' : 'primary'}
@@ -2110,7 +2110,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 onClick={() => handleOpenSelfOnly(gIdx)}
                                               >
                                                 {hasSelfOnly ? 'Filled' : 'Self Only'}
-                                              </Button>
+                                              </Button> */}
                                             </>
                                           )}
                                         </TableCell>

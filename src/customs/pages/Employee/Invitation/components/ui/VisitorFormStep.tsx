@@ -487,7 +487,7 @@ const VisitorFormStep = ({
                                           >
                                             <IconTrash />
                                           </IconButton>
-                                          {!isAddTransaction && (
+                                          {/* {!isAddTransaction && (
                                             <Button
                                               variant="contained"
                                               size="small"
@@ -499,7 +499,7 @@ const VisitorFormStep = ({
                                             >
                                               {hasSelfOnly ? 'Filled' : 'Self Only'}
                                             </Button>
-                                          )}
+                                          )} */}
                                         </>
                                       )}
                                     </TableCell>

@@ -88,7 +88,7 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     title: 'Parking',
     icon: IconCar,
     chipColor: 'secondary',
-    href: '/parking',
+    href: '/guest/parking',
     target: '_blank',
   },
   // {

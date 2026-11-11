@@ -231,7 +231,7 @@ const OperatorView = () => {
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
   const [vtLoading, setVTLoading] = useState(false);
-const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -3194,6 +3194,103 @@ const [isLoadingCards, setIsLoadingCards] = useState(false);
 
   const handleOpenDetailQrCode = () => setOpenDetailQrCode(true);
 
+  const handleReturnAndCheckout = async () => {
+    try {
+      // 1. Validasi card number
+      if (!returnCardNumber.trim()) {
+        showSwal('warning', t('card.inputCardNumber'));
+        return;
+      }
+
+      // 2. Validasi visitor
+      const id = selectedVisitorId ?? selectedVisitors[0] ?? invitationCode?.[0]?.id;
+
+      if (!id) {
+        showSwal('warning', 'Visitor not found.');
+        return;
+      }
+
+      const visitor = relatedVisitors.find((v) => v.id?.toLowerCase() === id.toLowerCase());
+
+      const isPraRegisterDone =
+        visitor?.is_praregister_done ?? invitationCode?.[0]?.is_praregister_done;
+
+      const visitorStatus = visitor?.visitor_status ?? invitationCode?.[0]?.visitor_status;
+
+      if (!isPraRegisterDone) {
+        showSwal('info', 'Visitor must complete Pra Register before Check out.', 3000);
+        return;
+      }
+
+      if (visitorStatus !== 'Checkin') {
+        showSwal('info', 'Visitor must Check in first before Check out.', 3000);
+        return;
+      }
+
+      setLoadingAccess(true);
+
+      const cardNumber = returnCardNumber.trim();
+
+      // =========================================================
+      // 3. RETURN CARD
+      // =========================================================
+      const returnPayload = {
+        card_number: cardNumber,
+        registered_site_id: registerSiteOperator,
+      };
+
+      await returnCard(returnPayload);
+
+      // =========================================================
+      // 4. CHECKOUT VISITOR
+      // =========================================================
+      await createInvitationActionOperator(id, {
+        action: 'Checkout',
+      });
+
+      // =========================================================
+      // 5. REFRESH DATA
+      // =========================================================
+      await queryClient.invalidateQueries({
+        queryKey: ['upcoming-purpose'],
+      });
+
+      const invitationId = invitationCode?.[0]?.id;
+
+      if (invitationId) {
+        const previousSelected = [...selectedVisitors];
+        const previousSelectedId = selectedVisitorId;
+
+        await fetchRelatedVisitorsByInvitationId(invitationId);
+
+        setSelectedVisitors(previousSelected);
+        setSelectedVisitorId(previousSelectedId);
+      }
+
+      await fetchAvailableCards();
+
+      showSwal(
+        'success',
+        `Successfully returned card and checked out visitor\nCard: ${cardNumber}`,
+      );
+
+      setOpenReturnCard(false);
+      setReturnCardNumber('');
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.msg ??
+        error?.response?.data?.message ??
+        error?.message ??
+        'Failed to return card and checkout visitor.';
+
+      const cleanMessage = message.replace(/^Failed Message:\s*/i, '');
+
+      showSwal('error', cleanMessage);
+    } finally {
+      setLoadingAccess(false);
+    }
+  };
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3762,6 +3859,7 @@ const [isLoadingCards, setIsLoadingCards] = useState(false);
           }}
           onChange={setReturnCardNumber}
           onSubmit={handleSubmitReturnCard}
+          onReturnCheckout={handleReturnAndCheckout}
         />
 
         <ConfirmUnsavedDialog

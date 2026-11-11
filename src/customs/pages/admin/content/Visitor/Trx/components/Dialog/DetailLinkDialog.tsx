@@ -6,11 +6,12 @@ interface Props {
   open: boolean;
   onClose: () => void;
   dataVisitor: any[];
+  loading?: any;
 }
 
-const DetailLinkDialog = ({ open, onClose, dataVisitor }: Props) => {
+const DetailLinkDialog = ({ open, onClose, dataVisitor, loading }: Props) => {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle>Detail Visitor</DialogTitle>
 
       <IconButton
@@ -27,7 +28,12 @@ const DetailLinkDialog = ({ open, onClose, dataVisitor }: Props) => {
       </IconButton>
 
       <DialogContent dividers>
-        <DynamicTable data={dataVisitor} titleHeader="Visitor" isHaveHeaderTitle isHaveChecked />
+        <DynamicTable
+          loading={loading}
+          data={dataVisitor}
+          isHaveHeaderTitle={false}
+          isNoActionTableHead
+        />
       </DialogContent>
     </Dialog>
   );

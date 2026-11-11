@@ -210,26 +210,31 @@ const Dashboard = () => {
   };
 
   const handleOpenParkingBlocker = async () => {
-    if (!currentAccessPass?.id) return;
+    if (!currentAccessPass?.id || isParkingLoading) return;
 
-    const result = await showSwal('confirm', 'Are you sure  to open the parking blocker?');
+    const result = await showSwal('confirm', 'Are you sure to open the parking blocker?');
 
     if (!result?.isConfirmed) return;
 
     setIsParkingLoading(true);
 
     try {
+      // 1. Tunggu sampai API selesai
       await openParkingBlocker({
         trx_visitor_id: currentAccessPass.id,
       });
 
-      showSwal('success', 'Parking blocker opened successfully.');
+      // 2. API sukses, tampilkan notifikasi
+      showSwal('success', 'Successfully opened parking blocker.');
+
+      // 3. Mulai cooldown 3 detik setelah API selesai
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
     } finally {
-      setTimeout(() => setIsParkingLoading(false), 600);
+      // 4. Aktifkan kembali tombol
+      setIsParkingLoading(false);
     }
-    // navigate('/guest/parking');
   };
 
   const accessPassPdfRef = useRef<HTMLDivElement>(null);
@@ -328,7 +333,7 @@ const Dashboard = () => {
       >
         <AccessPassPdf accessPass={currentAccessPass} logoSrc={logoUrl || ''} />
       </Box>
-      <GlobalBackdropLoading open={isGenerating} />
+      <GlobalBackdropLoading open={isGenerating || isParkingLoading} />
     </PageContainer>
   );
 };

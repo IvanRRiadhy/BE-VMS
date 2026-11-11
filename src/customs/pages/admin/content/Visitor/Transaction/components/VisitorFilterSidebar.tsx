@@ -26,6 +26,7 @@ import { Stack } from '@mui/system';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
+import { useProfile } from 'src/hooks/Profile/useProfile';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -149,6 +150,9 @@ const VisitorFilterSidebar = ({
       />
     );
   };
+
+  const { data: profile } = useProfile();
+  const isAdmin = profile?.group_name === 'Admin';
 
   return (
     <Box
@@ -283,83 +287,84 @@ const VisitorFilterSidebar = ({
       <Divider sx={{ my: 1.5 }} />
 
       {/* Employee */}
-      <Box sx={{ mb: 2 }}>
-        <Typography fontSize={14} fontWeight={700} mb={1}>
-          Satuan Kerja (Satker)
-        </Typography>
+      {isAdmin && (
+        <Box sx={{ mb: 2 }}>
+          <Typography fontSize={14} fontWeight={700} mb={1}>
+            Satuan Kerja (Satker)
+          </Typography>
 
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search Satker..."
-          value={searchEmployee}
-          sx={{ mb: 1 }}
-          onChange={(e) => setSearchEmployee(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IconSearch size={18} />
-              </InputAdornment>
-            ),
-          }}
-        />
-        {isLoading
-          ? Array.from({ length: 5 }).map((_, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  py: 0.4,
-                  gap: 1,
-                }}
-              >
-                <Skeleton
-                  variant="rectangular"
-                  width={18}
-                  height={18}
-                  sx={{ borderRadius: '3px' }}
-                />
-                <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
-              </Box>
-            ))
-          : organizations.map((item: any) => (
-              <Box
-                key={item.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  py: 0.4,
-                }}
-              >
-                <FormControlLabel
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search Satker..."
+            value={searchEmployee}
+            sx={{ mb: 1 }}
+            onChange={(e) => setSearchEmployee(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconSearch size={18} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, index) => (
+                <Box
+                  key={index}
                   sx={{
-                    m: 0,
-                    '& .MuiFormControlLabel-label': {
-                      fontSize: 14,
-                    },
+                    display: 'flex',
+                    alignItems: 'center',
+                    py: 0.4,
+                    gap: 1,
                   }}
-                  control={
-                    <Checkbox
-                      size="small"
-                      sx={{ p: 0.4 }}
-                      checked={selectedHostId === item.id}
-                      onChange={(e) => {
-                        if (onHostChange) {
-                          onHostChange(e.target.checked ? item.id : '');
-                        }
-                      }}
-                    />
-                  }
-                  label={item.name}
-                />
-              </Box>
-            ))}
-      </Box>
+                >
+                  <Skeleton
+                    variant="rectangular"
+                    width={18}
+                    height={18}
+                    sx={{ borderRadius: '3px' }}
+                  />
+                  <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
+                </Box>
+              ))
+            : organizations.map((item: any) => (
+                <Box
+                  key={item.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    py: 0.4,
+                  }}
+                >
+                  <FormControlLabel
+                    sx={{
+                      m: 0,
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: 14,
+                      },
+                    }}
+                    control={
+                      <Checkbox
+                        size="small"
+                        sx={{ p: 0.4 }}
+                        checked={selectedHostId === item.id}
+                        onChange={(e) => {
+                          if (onHostChange) {
+                            onHostChange(e.target.checked ? item.id : '');
+                          }
+                        }}
+                      />
+                    }
+                    label={item.name}
+                  />
+                </Box>
+              ))}
+        </Box>
+      )}
 
       <Divider sx={{ my: 1.5 }} />
 
-      {/* Visitor Type */}
       {/* Visitor Type */}
       <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>

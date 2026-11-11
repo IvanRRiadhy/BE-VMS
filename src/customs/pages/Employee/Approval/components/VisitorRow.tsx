@@ -58,8 +58,8 @@ function VisitorRow({
 
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_organization_name}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.invitation_code}</TableCell>
-        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_type ?? '-'}</TableCell>
-        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_plate_number ?? '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_type || '-'}</TableCell>
+        <TableCell sx={{ fontSize: '13px' }}>{visitor.vehicle_plate_number || '-'}</TableCell>
         <TableCell sx={{ fontSize: '13px' }}>
           <Box
             sx={{

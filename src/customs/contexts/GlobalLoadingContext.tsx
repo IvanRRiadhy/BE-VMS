@@ -38,7 +38,7 @@ export const GlobalLoadingProvider: React.FC<{ children: ReactNode }> = ({ child
             transition: 'opacity 0.2s ease-in-out',
           }}
         >
-          <CircularProgress color="primary" thickness={4} />
+          <CircularProgress color="primary" thickness={4} size={40} />
         </Backdrop>,
         document.body,
       )

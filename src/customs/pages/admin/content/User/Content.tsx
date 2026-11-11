@@ -60,8 +60,6 @@ const Content = () => {
   const queryClient = useQueryClient();
   // const { data, isLoading } = useUsers();
   const { deleteMutation: deleteUser } = useUsersMutation();
-  const [selectedGroup, setSelectedGroup] = useState('All');
-
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined);
 
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -90,12 +88,8 @@ const Content = () => {
     [users],
   );
 
-  const totalRecords =
-    users?.RecordsTotal ??
-    users?.recordsTotal ??
-    users?.recordsFiltered ??
-    users?.collection?.length ??
-    0;
+  const totalRecords = users?.RecordsTotal ?? 0;
+  const totalFilteredRecords = users?.RecordsFiltered ?? 0;
 
   const cards = useMemo(
     () => [
@@ -181,7 +175,7 @@ const Content = () => {
         employee_id: selectedEmployeeId,
       });
 
-      showSwal('success', 'Employee assigned successfully');
+      showSwal('success', 'Successfully assign employee');
       setOpenEmployeeAssign(false);
 
       queryClient.invalidateQueries({
@@ -475,7 +469,7 @@ const Content = () => {
                 searchPlaceholder="Search User"
                 searchKeyword={search}
                 isHaveAssign={false}
-                totalCount={totalRecords}
+                totalCount={totalFilteredRecords}
                 isHaveUnAssign={true}
                 isHaveAssignTracking={true}
                 isHaveAssignParking={true}

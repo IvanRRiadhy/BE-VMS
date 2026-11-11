@@ -320,9 +320,9 @@ const GuestAccessPass = ({
           {t('noAccessPass')}
         </Typography>
 
-        <Button variant="contained" onClick={onInsertInvitationCode} sx={{ mt: 1 }}>
+        {/* <Button variant="contained" onClick={onInsertInvitationCode} sx={{ mt: 1 }}>
           {t('insertInvitationCode')}
-        </Button>
+        </Button> */}
       </Card>
     );
   }

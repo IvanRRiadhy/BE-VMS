@@ -30,6 +30,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Box,
   TextField,
   Tooltip,
   Typography,
@@ -49,7 +50,7 @@ import {
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 // import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
-import { Box, useMediaQuery } from '@mui/system';
+import { useMediaQuery } from '@mui/system';
 import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequestSchema,
@@ -80,7 +81,6 @@ import {
 } from 'src/customs/api/Public';
 import PreviewDialog from './components/PreviewDialog';
 import { useNavigate } from 'react-router';
-import Swal from 'sweetalert2';
 import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
@@ -209,47 +209,6 @@ const FormSelfPraregistration = ({
 
     return out;
   };
-
-  //   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
-  //   const out: any = {
-  //     remarks: tpl.remarks ?? '',
-  //     visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
-  //     field_type: tpl.field_type ?? 0,
-  //     sort: tpl.sort ?? sortIdx,
-  //     short_name: tpl.short_name ?? '',
-  //     long_display_text: tpl.long_display_text ?? '',
-  //     custom_field_id: tpl.custom_field_id ?? null,
-  //     form_visitor_type_id: '',
-  //   };
-
-  //   const ans = pickAns(src ?? {});
-
-  //   // Semua field tetap dikirim meskipun kosong
-  //   if ([10, 11, 12].includes(tpl.field_type)) {
-  //     out.answer_file = ans?.answer_file || null;
-  //     out.answer_text = ans?.answer_text ?? null;
-  //   } else if (tpl.field_type === 9) {
-  //     out.answer_datetime = ans?.answer_datetime
-  //       ? dayjs(ans.answer_datetime).utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
-  //       : null;
-
-  //     out.answer_text = ans?.answer_text ?? null;
-  //   } else {
-  //     const value = ans?.answer_text;
-
-  //     out.answer_text =
-  //       value === undefined || value === null
-  //         ? null
-  //         : Array.isArray(value)
-  //           ? value.map(String).join(',')
-  //           : String(value).trim();
-
-  //     out.answer_datetime = ans?.answer_datetime ?? null;
-  //     out.answer_file = ans?.answer_file ?? null;
-  //   }
-
-  //   return out;
-  // };
 
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
 
@@ -1625,7 +1584,12 @@ const FormSelfPraregistration = ({
     index: number,
     onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void,
     onDelete?: (index: number) => void,
-    opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] },
+    opts?: {
+      showLabel?: boolean;
+      uniqueKey?: string;
+      details?: any[];
+      vehicleOptions?: { value: string; name: string }[];
+    },
   ) => {
     const showLabel = opts?.showLabel ?? true;
     const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
@@ -1782,6 +1746,14 @@ const FormSelfPraregistration = ({
                     name: emp.name,
                   }));
               break;
+            case 'vehicle_id':
+              options = (opts?.vehicleOptions ?? field.multiple_option_fields ?? []).map(
+                (item: any) => ({
+                  value: String(item.value ?? item.id),
+                  name: item.name ?? item.vehicle_type_name,
+                }),
+              );
+              break;
 
             case 'visitor_role':
               options = (visitorRoles || []).map((role: any) => ({
@@ -1936,6 +1908,13 @@ const FormSelfPraregistration = ({
           }
 
           if (field.remarks === 'vehicle_id') {
+            const vehicleOptions = (opts?.vehicleOptions ?? field.multiple_option_fields ?? []).map(
+              (opt: any) => ({
+                value: String(opt.value ?? opt.id),
+                name: opt.name ?? opt.vehicle_type_name,
+              }),
+            );
+
             return (
               <CustomTextField
                 select
@@ -1951,8 +1930,8 @@ const FormSelfPraregistration = ({
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
-                {field.multiple_option_fields?.map((opt: any) => (
-                  <MenuItem key={opt.id} value={opt.value}>
+                {vehicleOptions.map((opt: any) => (
+                  <MenuItem key={opt.value} value={opt.value}>
                     {opt.name}
                   </MenuItem>
                 ))}
@@ -1961,6 +1940,12 @@ const FormSelfPraregistration = ({
           }
 
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
+            const options = [...(field.multiple_option_fields ?? [])].sort((a: any, b: any) => {
+              if (a.name === 'Yes') return -1;
+              if (b.name === 'Yes') return 1;
+              return 0;
+            });
+
             return (
               <Box key={`${field.custom_field_id}-${index}`}>
                 <FormControl error={!!errorMessage} sx={{ width: '180px' }}>
@@ -1973,30 +1958,23 @@ const FormSelfPraregistration = ({
                     }}
                     sx={{
                       width: '100%',
-
                       display: 'flex',
                       flexDirection: 'row',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}
                   >
-                    {field.multiple_option_fields
-                      ?.sort((a: any, b: any) => {
-                        if (a.name === 'Yes') return -1;
-                        if (b.name === 'Yes') return 1;
-                        return 0;
-                      })
-                      .map((opt: any) => (
-                        <FormControlLabel
-                          key={opt.id}
-                          value={opt.value}
-                          control={<Radio size="small" />}
-                          label={opt.name}
-                        />
-                      ))}
+                    {options.map((opt: any, optIndex: number) => (
+                      <FormControlLabel
+                        key={`${field.custom_field_id}-${opt.id ?? opt.value ?? optIndex}`}
+                        value={opt.value}
+                        control={<Radio size="small" />}
+                        label={opt.name}
+                      />
+                    ))}
                   </RadioGroup>
                 </FormControl>
-                <br />
+
                 {errorMessage && (
                   <Typography variant="caption" color="error">
                     {errorMessage}
@@ -2527,6 +2505,13 @@ const FormSelfPraregistration = ({
 
   const isLockedVisitorType = !!invitation?.visitor_type?.id || !!invitation?.visitor_type_id;
   const [visitorType, setVisitorType] = useState<any[]>([]);
+  const vehicleOptions = useMemo(() => {
+    const vehicleField = rawSections
+      .flatMap((section: any) => section.visit_form ?? [])
+      .find((field: any) => field.remarks === 'vehicle_id');
+
+    return vehicleField?.multiple_option_fields ?? [];
+  }, [rawSections]);
 
   const injectInvitationData = (sections: any[], invitation: any) => {
     if (!invitation) return sections;
@@ -2870,99 +2855,6 @@ const FormSelfPraregistration = ({
                       Group List
                     </CustomFormLabel>
 
-                    {/* <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Group Name</TableCell>
-                          <TableCell>Code</TableCell>
-                          <TableCell>Visitor Form</TableCell>
-                          <TableCell align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groupVisitors.map((g, index) => (
-                          <TableRow key={g.id}>
-                            <TableCell style={{ minWidth: 150 }}>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_name"
-                                value={g.group_name}
-                                placeholder="Enter group name"
-                                onChange={(e) =>
-                                  setGroupVisitors((prev) =>
-                                    prev.map((item) =>
-                                      item.id === g.id
-                                        ? { ...item, group_name: e.target.value }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell style={{ minWidth: 120 }}>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_code"
-                                value={g.group_code}
-                                InputProps={{ readOnly: true }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  setActiveGroupIdx(index);
-                                  const deepClone = (obj: any) => {
-                                    try {
-                                      return structuredClone(obj);
-                                    } catch {
-                                      return JSON.parse(JSON.stringify(obj));
-                                    }
-                                  };
-
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    const cloned = deepClone(g.data_visitor);
-                                    setDataVisitor(cloned);
-                                  } else {
-                                    const fresh = deepClone(
-                                      seedDataVisitorFromSections(sectionsData),
-                                    );
-                                    setDataVisitor(fresh);
-                                  }
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                color="error"
-                                onClick={() => handleDeleteGroup(g.id || '')}
-                                size="small"
-                              >
-                                <IconX />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {groupVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              No group added yet.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer> */}
                     <TableContainer
                       component={Paper}
                       sx={{
@@ -4238,6 +4130,7 @@ const FormSelfPraregistration = ({
         employee={employee}
         sites={sites}
         invitation={invitation}
+        vehicleOptions={vehicleOptions}
       />
       <GlobalBackdropLoading open={loading} />
       <Portal>

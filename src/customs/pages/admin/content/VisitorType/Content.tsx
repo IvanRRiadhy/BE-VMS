@@ -95,7 +95,7 @@ const Content = () => {
       id: item.id,
       name: item.name,
       description: item.description,
-      period: item.period,
+      // period: item.period,
       grace_time: item.grace_time,
       active: item.is_enable,
       // quick_access: item.is_quick_access,
@@ -341,7 +341,7 @@ const Content = () => {
         id: row.id,
         active: checked,
       });
-      showSwal('success', t('updatedSuccess', { name: 'visitor type' }));
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
     } finally {
@@ -356,9 +356,9 @@ const Content = () => {
         id: row.id,
         quickAccess: checked,
       });
-      showSwal('success', t('updatedSuccess', { name: 'visitor type' }));
+      showSwal('success', t('updatedSuccess', { name: 'Visitor Type' }));
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || t('updatedFailed', { name: 'visitor type' }));
+      showSwal('error', error?.response?.data?.msg || t('updatedFailed', { name: 'Visitor Type' }));
     } finally {
       setLoadingData(false);
     }
@@ -389,8 +389,7 @@ const Content = () => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
-              
-                searchPlaceholder="Search Visitor Type"
+                searchPlaceholder={t('search') + ' Visitor Type'}
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

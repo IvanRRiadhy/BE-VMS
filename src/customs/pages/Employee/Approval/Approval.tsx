@@ -188,11 +188,14 @@ const Approval = () => {
 
     const fetchDetail = async () => {
       setGroupDetailLoading(true);
+
       try {
-        // const res = await getVisitorTransactionByIds(token, selectedGroupId);
         const res = await getVisitorByTickedId(selectedGroupId);
-        setGroupHeader(res.collection[0]);
-        setGroupVisitors(res.collection);
+
+        const visitors = res.collection ?? [];
+
+        setGroupHeader(visitors[0]);
+        setGroupVisitors(visitors.filter((item: any) => item.is_host === false));
       } catch (e) {
         setGroupVisitors([]);
       } finally {

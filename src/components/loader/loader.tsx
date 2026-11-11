@@ -15,7 +15,7 @@ const GlobalLoader: React.FC<GlobalLoaderProps> = ({ open }) => (
       transition: 'opacity 0.3s ease-in-out',
     }}
   >
-    <CircularProgress color="primary" size={50} />
+    <CircularProgress color="primary" size={40} thickness={4} />
   </Backdrop>
 );
 

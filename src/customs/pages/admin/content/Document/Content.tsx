@@ -59,12 +59,12 @@ const Content = () => {
     () => [
       {
         title: t('totalDocument'),
-        subTitle: `${totalRecords}`,
+        subTitle: `${totalFilteredRecords}`,
         icon: IconScript,
         color: 'none',
       },
     ],
-    [t, totalRecords],
+    [t, totalFilteredRecords],
   );
 
   const handleCloseDialog = () => {
@@ -214,7 +214,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 rowsPerPageOptions={[10, 50, 100]}
-                searchPlaceholder="Search Document"
+                searchPlaceholder={t('search') } 
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

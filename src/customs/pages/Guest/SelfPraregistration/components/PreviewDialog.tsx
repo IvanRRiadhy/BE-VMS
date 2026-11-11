@@ -46,6 +46,7 @@ const PreviewDialog = ({
   invitation,
   isGroup = false,
   groupVisitors = [],
+  vehicleOptions = [],
 }: any) => {
   const sections = invitationData?.question_page ?? [];
 
@@ -78,6 +79,41 @@ const PreviewDialog = ({
   //   return raw;
   // };
 
+  // const resolveValue = (f: any, visitor: any) => {
+  //   const raw = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
+
+  //   if (raw == null || raw === '') return null;
+
+  //   if (f.remarks === 'host') {
+  //     const host =
+  //       visitor?.host_data || invitation?.host || employee?.find((e: any) => e.id === raw);
+
+  //     return host?.name || raw;
+  //   }
+
+  //   if (f.remarks === 'site_place') {
+  //     const site = visitor?.site || invitation?.site || sites?.find((s: any) => s.id === raw);
+
+  //     return site?.name || raw;
+  //   }
+
+  //   if (f.multiple_option_fields?.length) {
+  //     const opt = f.multiple_option_fields.find((o: any) => String(o.value) === String(raw));
+
+  //     return opt?.name || raw;
+  //   }
+
+  //   return raw;
+  // };
+
+  const getVehicleTypeName = (vehicleId: any) => {
+    const selected = vehicleOptions.find(
+      (opt: any) => String(opt.value ?? opt.id).toLowerCase() === String(vehicleId).toLowerCase(),
+    );
+
+    return selected?.name ?? vehicleId;
+  };
+
   const resolveValue = (f: any, visitor: any) => {
     const raw = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
 
@@ -85,21 +121,26 @@ const PreviewDialog = ({
 
     if (f.remarks === 'host') {
       const host =
-        visitor?.host_data || invitation?.host || employee?.find((e: any) => e.id === raw);
+        visitor?.host_data ||
+        invitation?.host ||
+        employee?.find((e: any) => String(e.id) === String(raw));
 
       return host?.name || raw;
     }
 
     if (f.remarks === 'site_place') {
-      const site = visitor?.site || invitation?.site || sites?.find((s: any) => s.id === raw);
+      const site =
+        visitor?.site || invitation?.site || sites?.find((s: any) => String(s.id) === String(raw));
 
       return site?.name || raw;
     }
 
     if (f.multiple_option_fields?.length) {
-      const opt = f.multiple_option_fields.find((o: any) => String(o.value) === String(raw));
+      const opt = f.multiple_option_fields.find(
+        (o: any) => String(o.id) === String(raw) || String(o.value) === String(raw),
+      );
 
-      return opt?.name || raw;
+      return opt?.name ?? raw;
     }
 
     return raw;
@@ -108,6 +149,7 @@ const PreviewDialog = ({
   // const visitors = isGroup ? (invitationData?.data_visitor ?? []) : [invitationData];
   const visitors = isGroup ? groupVisitors : [invitationData];
   const { t } = useTranslation();
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -133,93 +175,6 @@ const PreviewDialog = ({
         </IconButton>
       </DialogTitle>
 
-      {/* <DialogContent dividers>
-        {sections.map((section: any, sIdx: number) => (
-          <Box key={sIdx} mb={3}>
-            <Typography variant="h6" gutterBottom>
-              {section.name}
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-
-            <Grid container spacing={2}>
-              {section.form.map((f: any, idx: number) => {
-                // let value = formValues[f.remarks];
-
-                // if (!value) return null;
-                // let value = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
-                let value = resolveValue(f);
-
-                if (!value) return null;
-
-                if (f.remarks === 'host') {
-                  value = invitationData?.host_data?.name || value;
-                } else if (f.remarks === 'site_place') {
-                  value = invitationData?.site_place_name || value;
-                }
-                if (['visitor_period_start', 'visitor_period_end'].includes(f.remarks)) {
-                  // const utcValue = value ? value + 'Z' : value;
-                  return (
-                    <Grid item xs={12} sm={6} key={idx}>
-                      <Typography variant="caption" color="text.secondary">
-                        {f.long_display_text}
-                      </Typography>
-                      <Typography>{formatDateTime(value)}</Typography>
-                    </Grid>
-                  );
-                }
-                if (f.remarks === 'is_driving') {
-                  const answer = f.answer_text;
-
-                  const isDriving = answer === true || String(answer).toLowerCase() === 'true';
-
-                  return (
-                    <Grid item xs={12} sm={6} key={idx}>
-                      <Typography variant="caption" color="text.secondary">
-                        {f.long_display_text}
-                      </Typography>
-
-                      <Typography sx={{ textTransform: 'capitalize' }}>
-                        {answer == null || answer === '' ? '-' : isDriving ? 'Yes' : 'No'}
-                      </Typography>
-                    </Grid>
-                  );
-                }
-                return (
-                  <Grid item xs={12} sm={6} key={idx}>
-                    <Typography variant="caption" color="text.secondary">
-                      {f.long_display_text}
-                    </Typography>
-                    {[10, 11, 12].includes(f.field_type) ? (
-                      value.match(/\.(jpg|jpeg|png)$/i) ? (
-                        <Box mt={1}>
-                          <img
-                            src={`${axiosInstance2.defaults.baseURL}/cdn${value}`}
-                            alt={f.remarks}
-                            style={{
-                              width: '100%',
-                              maxHeight: 200,
-                              objectFit: 'cover',
-                              borderRadius: 8,
-                            }}
-                          />
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>
-                          <a href={value} target="_blank" rel="noopener noreferrer">
-                            View Document
-                          </a>
-                        </Typography>
-                      )
-                    ) : (
-                      <Typography variant="body1">{String(value)}</Typography>
-                    )}
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
-        ))}
-      </DialogContent> */}
       <DialogContent dividers>
         <Stack spacing={2.5}>
           {visitors.map((visitor: any, visitorIdx: number) => {
@@ -262,6 +217,8 @@ const PreviewDialog = ({
                           value = visitor?.host_data?.name || value;
                         } else if (f.remarks === 'site_place') {
                           value = visitor?.site_place_name || value;
+                        } else if (f.remarks === 'vehicle_id') {
+                          value = getVehicleTypeName(f.answer_text);
                         }
 
                         const displayValue =
@@ -281,7 +238,7 @@ const PreviewDialog = ({
                         }
                         if (f.remarks === 'is_driving') {
                           const answer = f.answer_text;
-                      
+
                           const isDriving = ['true', 'yes', '1'].includes(
                             String(answer).trim().toLowerCase(),
                           );
