@@ -65,7 +65,9 @@ const ReturnCardDialog = ({
 
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button onClick={onReturnCheckout}>Return & Checkout</Button>
+          <Button onClick={onReturnCheckout} variant="contained">
+            Return & Checkout
+          </Button>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button onClick={onClose}>Cancel</Button>
             <Button variant="contained" onClick={onSubmit} disabled={loading}>
