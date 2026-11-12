@@ -51,7 +51,8 @@ const VisitorFilterSidebar = ({
 }: VisitorFilterSidebarProps) => {
   const { visitorType = [] } = useInvitationVisitorType();
   const [searchEmployee, setSearchEmployee] = useState('');
-
+  const { data: profile } = useProfile();
+  const isAdmin = profile?.group_name === 'Admin';
   const debouncedSearch = useDebounce(searchEmployee, 500);
 
   // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
@@ -60,15 +61,20 @@ const VisitorFilterSidebar = ({
   //   length: 10,
   // });
 
-  const { data: organization = [], isLoading } = useOrganizationPagination({
-    page: 0,
-    rowsPerPage: 10,
-    sortDir: 'desc',
-    sort_column: 'create_at',
-    searchKeyword: debouncedSearch,
-  });
+  const { data: organization = [], isLoading } = useOrganizationPagination(
+    {
+      page: 0,
+      rowsPerPage: 10,
+      sortDir: 'desc',
+      sort_column: 'create_at',
+      searchKeyword: debouncedSearch,
+    },
+    {
+      enabled: isAdmin,
+    },
+  );
 
-  const organizations = organization?.collection || [];
+  const organizations: any = organization?.collection || [];
 
   const dateRange: [Dayjs | null, Dayjs | null] = [
     filters.start_date ? dayjs(filters.start_date) : null,
@@ -78,7 +84,6 @@ const VisitorFilterSidebar = ({
     if (!date) return;
 
     const [start, end] = dateRange;
-
     let newStart: Dayjs | null;
     let newEnd: Dayjs | null;
 
@@ -150,9 +155,6 @@ const VisitorFilterSidebar = ({
       />
     );
   };
-
-  const { data: profile } = useProfile();
-  const isAdmin = profile?.group_name === 'Admin';
 
   return (
     <Box

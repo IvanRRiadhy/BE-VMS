@@ -410,9 +410,9 @@ const GuestAccessPass = ({
               sx={{
                 position: 'absolute',
                 right: 0,
-                minWidth: 50,
-                width: 50,
-                height: 50,
+                minWidth: 40,
+                width: 40,
+                height: 40,
                 p: 0,
                 borderRadius: 1.5,
               }}

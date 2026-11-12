@@ -429,3 +429,46 @@ export const getUpComingPurpose = async (params?: {
 
   return response.data;
 };
+
+// operator-invitation/vehicle-count
+interface OperatorVehicleCountParams {
+  today?: boolean;
+  'start-date'?: string;
+  'end-date'?: string;
+  'vehicle-type'?: string;
+  'vehicle-id'?: string;
+  'visitor-type'?: string;
+  'detail-by-visitor-type'?: boolean;
+  is_export?: boolean;
+  export_format?: string;
+}
+
+export const getOperatorVehicleCount = async (
+  params?: OperatorVehicleCountParams,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/operator-invitation/vehicle-count', {
+      headers: { Accept: 'application/json' },
+      params,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportOperatorVehicleCount = async (params?: OperatorVehicleCountParams) => {
+  const response = await axiosInstance.get('/operator-invitation/vehicle-count', {
+    headers: {
+      Accept: 'application/octet-stream',
+    },
+    params: {
+      ...params,
+      is_export: true,
+    },
+    responseType: 'blob',
+  });
+
+  return response.data;
+};

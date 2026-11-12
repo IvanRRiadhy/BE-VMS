@@ -11,6 +11,12 @@ import {
   Typography,
   Card,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Chip,
 } from '@mui/material';
 
 import TopCard from './TopCard';
@@ -47,6 +53,8 @@ import VisitStatusCard from './components/VisitorStatusCard';
 import AccessPassPdf from './components/AccessPassPdf';
 import { getConfig } from 'src/config';
 import { useNavigate } from 'react-router';
+import { IconBellRinging, IconCalendarEvent, IconClock, IconX } from '@tabler/icons-react';
+import VisitTimeReminderDialog from './components/VisitTimeReminderDialog';
 
 const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
@@ -69,7 +77,7 @@ const Dashboard = () => {
   const open = Boolean(anchorEl);
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-
+  const [openVisitReminder, setOpenVisitReminder] = useState(false);
   const config = getConfig();
 
   const logoUrl = config.LOGO_URL;
@@ -238,7 +246,77 @@ const Dashboard = () => {
   };
 
   const accessPassPdfRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const visitorId = currentAccessPass?.id;
+    const periodEnd = currentAccessPass?.visitor_period_end;
 
+    if (!visitorId || !periodEnd) {
+      setOpenVisitReminder(false);
+      return;
+    }
+
+    // Abaikan tanggal default
+    if (periodEnd.startsWith('9999-01-01')) {
+      setOpenVisitReminder(false);
+      return;
+    }
+
+    // Data visitor_period_end disimpan dalam UTC
+    const endTime = dayjs.utc(periodEnd).valueOf();
+
+    if (!endTime || !dayjs.utc(periodEnd).isValid()) {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Jangan tampilkan jika kunjungan sudah berakhir
+    if (now >= endTime) {
+      setOpenVisitReminder(false);
+      return;
+    }
+
+    // Reminder 5 menit sebelum visitor_period_end
+    const reminderTime = endTime - 5 * 60 * 1000;
+
+    // Gunakan ID transaksi dan waktu akhir sebagai identitas reminder
+    const reminderKey = `visitor-reminder-${visitorId}-${periodEnd}`;
+
+    // Jika sudah pernah ditutup, jangan tampilkan lagi
+    if (localStorage.getItem(reminderKey) === 'dismissed') {
+      setOpenVisitReminder(false);
+      return;
+    }
+
+    const delay = reminderTime - now;
+
+    if (delay <= 0) {
+      // Halaman dibuka ketika sudah masuk periode reminder
+      setOpenVisitReminder(true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setOpenVisitReminder(true);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentAccessPass?.id, currentAccessPass?.visitor_period_end]);
+
+  const handleCloseVisitReminder = () => {
+    const visitorId = currentAccessPass?.id;
+    const periodEnd = currentAccessPass?.visitor_period_end;
+
+    if (visitorId && periodEnd) {
+      const reminderKey = `visitor-reminder-${visitorId}-${periodEnd}`;
+
+      localStorage.setItem(reminderKey, 'dismissed');
+    }
+
+    setOpenVisitReminder(false);
+  };
   return (
     <PageContainer title="Dashboard">
       {/* <VisitorActionBar
@@ -333,6 +411,11 @@ const Dashboard = () => {
       >
         <AccessPassPdf accessPass={currentAccessPass} logoSrc={logoUrl || ''} />
       </Box>
+      <VisitTimeReminderDialog
+        open={openVisitReminder}
+        visitorPeriodEnd={currentAccessPass?.visitor_period_end}
+        onClose={handleCloseVisitReminder}
+      />
       <GlobalBackdropLoading open={isGenerating || isParkingLoading} />
     </PageContainer>
   );

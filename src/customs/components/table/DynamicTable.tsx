@@ -91,6 +91,7 @@ type DynamicTableProps<
   isHaveExportExcel?: boolean;
   isHaveRole?: boolean;
   triggerCheckAll?: boolean;
+  isOnlyBlacklist?: boolean;
   isHavePrint?: boolean;
   isHaveConnection?: boolean;
   isHaveActive?: boolean;
@@ -285,6 +286,7 @@ function DynamicTableBase<
     onFilterDataChange,
     addDataText,
     isHaveExportXlf = false,
+    isOnlyBlacklist = false,
     isHaveImportExcel = false,
     isHaveQrCode,
     isHaveRole = false,
@@ -1941,6 +1943,7 @@ function DynamicTableBase<
                   togglePassword={togglePassword}
                   isStickyColumns={isStickyColumns}
                   isHavePassword={isHavePassword}
+                  isOnlyBlacklist={isOnlyBlacklist}
                   isHaveAssign={isHaveAssign}
                   isHaveUnAssign={isHaveUnAssign}
                   onAssign={onAssign}

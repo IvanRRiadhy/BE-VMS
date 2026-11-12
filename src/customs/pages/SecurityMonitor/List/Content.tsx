@@ -30,6 +30,8 @@ import VisitorEditDialog from './components/VisitorEditDialog';
 import { CreateEmployeeRequestSchema } from 'src/customs/api/models/Admin/Employee';
 import EmployeeFormDialog from '../../admin/content/Employee/components/EmployeeFormDialog';
 import VisitorDetailDialog from '../../admin/content/Visitor/Dialog/VisitorDetailDialog';
+import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
+import { useInvitationVisitor } from 'src/hooks/Invitation/useInvitationVisitor';
 
 interface VisitorFilters {
   organization_id: string;
@@ -70,13 +72,10 @@ const Content = () => {
   const [filters, setFilters] = useState<VisitorFilters>(emptyFilters);
 
   const [appliedFilters, setAppliedFilters] = useState<VisitorFilters>(emptyFilters);
-  const { data, isLoading } = useListVisitorPagination({
+  const { data, isLoading, isFetching } = useInvitationVisitor({
+    search,
     page,
     rowsPerPage,
-    sortDir,
-    sort_column: 'created_at',
-    search,
-    filters: appliedFilters,
   });
 
   const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } =
@@ -99,7 +98,8 @@ const Content = () => {
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
-  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+  // const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+  const totalFilteredRecords = data?.collection?.length ?? 0;
 
   const cards = useMemo(
     () => [
@@ -109,24 +109,6 @@ const Content = () => {
         subTitle: `${totalFilteredRecords}`,
         color: 'none',
       },
-      // {
-      //   title: 'Total Visitor Employee',
-      //   icon: IconUsers,
-      //   subTitle: `${0}`,
-      //   color: 'none',
-      // },
-      // {
-      //   title: 'Total New Visitor',
-      //   icon: IconUsers,
-      //   subTitle: `${0}`,
-      //   color: 'none',
-      // },
-      // {
-      //   title: 'Total Repeat Visitor',
-      //   icon: IconUsers,
-      //   subTitle: `${0}`,
-      //   color: 'none',
-      // },
     ],
     [totalFilteredRecords, t],
   );
@@ -437,11 +419,9 @@ const Content = () => {
                 onPaginationChange={handlePaginationChange}
                 onBlacklist={handleBlacklistMemo}
                 onView={handleViewMemo}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 currentPage={page}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 isHaveChecked={true}
                 isHaveVip={true}
                 isHaveImage
@@ -454,7 +434,7 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveGender={true}
                 isHaveVisitor={true}
-                isBlacklistAction={true}
+                isOnlyBlacklist={true}
                 isActionVisitor={false}
                 isHaveEmployee={true}
                 // isHaveVerified={true}
@@ -466,11 +446,11 @@ const Content = () => {
                     setPage(0);
                   }
                 }}
-                isHaveFilterMore={true}
+                isHaveFilterMore={false}
                 filterMoreContent={filterContent}
                 isBlacklistPage={true}
                 onNavigatePage={() => {
-                  navigate('/admin/visitor/blacklist-visitor');
+                  navigate('/security-monitor/blacklist-visitor');
                 }}
                 onEdit={(row) => {
                   handleEdit(row);
@@ -505,47 +485,13 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <VisitorDetailDialog
+      {/* <VisitorDetailDialog
         open={openVisitorDialog}
         loading={visitorLoading}
         error={visitorError}
         detail={visitorDetail}
         onClose={() => setOpenVisitorDialog(false)}
-      />
-
-      <VisitorEditDialog
-        open={openEditDialog}
-        detail={visitorEdit}
-        onClose={() => {
-          setOpenEditDialog(false);
-          setVisitorEdit(null);
-        }}
-        onSave={handleUpdate}
-      />
-
-      <EmployeeFormDialog
-        open={openEmployeeDialog}
-        onClose={() => {
-          setOpenEmployeeDialog(false);
-          setEdittingId('');
-          setEmployeeEdit(null);
-        }}
-        onRequestClose={() => {
-          setOpenEmployeeDialog(false);
-        }}
-        loadingEdit={loadingEdit}
-        isBatchEdit={isBatchEdit}
-        edittingId={edittingId}
-        formData={formDataAddEmployee}
-        setFormData={setFormDataAddEmployee}
-        onSuccess={async () => {
-          setOpenEmployeeDialog(false);
-          setEmployeeEdit(null);
-        }}
-        selectedRows={[]}
-        enabledFields={enabledFields}
-        setEnabledFields={setEnabledFields}
-      />
+      /> */}
 
       <GlobalBackdropLoading open={loadingData} />
     </>

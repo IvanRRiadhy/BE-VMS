@@ -338,6 +338,10 @@ const ManageReportTransactionSecurityMonitor = Loadable(
   lazy(() => import('src/customs/pages/SecurityMonitor/Report/TransactionLog/Content')),
 );
 
+const ManageReportInvestigateSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/Report/Investigate/Content')),
+)
+
 const Router = [
   {
     element: <AuthRedirector />,
@@ -423,6 +427,10 @@ const Router = [
               {
                 path: 'report/transaction-log',
                 element: <ManageReportTransactionSecurityMonitor />,
+              },
+              {
+                path: 'report/investigate',
+                element: <ManageReportInvestigateSecurityMonitor />,
               },
               { path: 'list-visitor', element: <ManageListVisitorSecurityMonitor /> },
               { path: 'blacklist-visitor', element: <ManageBlacklistVisitorSecurityMonitor /> },

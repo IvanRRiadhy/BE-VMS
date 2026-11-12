@@ -6,6 +6,8 @@ export interface RuntimeConfig {
   LOGIN_LOGO_URL?: string;
   API_ID: string;
   ENABLE_CAPTCHA: boolean;
+  WS_MONITOR: string;
+  WS_MONITOR_PORT: number;
 }
 
 let runtimeConfig: RuntimeConfig | null = null;

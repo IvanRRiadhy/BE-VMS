@@ -87,7 +87,13 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, isEmployee }) => {
         //   inputValue.trim(), // keyword
         // );
 
-        const res = await getInvitationVisitor();
+        const params = {
+          'search[value]': inputValue,
+          start: 0,
+          length: 10,
+        };
+
+        const res = await getInvitationVisitor(params);
 
         list = res?.collection ?? [];
       }

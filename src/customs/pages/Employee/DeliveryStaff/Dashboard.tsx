@@ -45,7 +45,6 @@ import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
-import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
 import {
@@ -67,6 +66,7 @@ import Calendar from 'src/customs/components/calendar/Calendar';
 import { IconDownload } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAccessPass } from 'src/hooks/Dashboard/useAccessPass';
+import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 
 const DashboardDeliveryStaff = () => {
   const CardItems = [

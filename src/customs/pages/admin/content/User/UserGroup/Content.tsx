@@ -41,7 +41,7 @@ import {
   deletePermissionVisitorType,
   getAllPermissionAccessControl,
   getAllPermissionVisitorType,
-} from 'src/customs/api/UserGroup';
+} from 'src/customs/api/Admin/UserGroup';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import useDropPoint from 'src/hooks/Invitation/useDropPoint';

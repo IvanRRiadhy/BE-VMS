@@ -9,7 +9,6 @@ import {
   Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getUserById } from 'src/customs/api/admin';
 import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from '../FormUser';

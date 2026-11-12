@@ -151,7 +151,6 @@ const Invitation = () => {
   const [detailVisitorInvitation, setDetailVisitorInvitation] = useState([]);
 
   useEffect(() => {
-
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -185,7 +184,7 @@ const Invitation = () => {
     };
 
     fetchData();
-  }, [ refreshTrigger]);
+  }, [refreshTrigger]);
 
   const handleView = async (id: string) => {
     if (!id) return;
@@ -1261,7 +1260,7 @@ const Invitation = () => {
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ( !selectedMinutes) return;
+    if (!selectedMinutes) return;
 
     try {
       setLoadingAccess(true);
@@ -1271,13 +1270,12 @@ const Invitation = () => {
       await updateExtend({
         id: invitationDetail?.id,
         period: selectedMinutes,
-        apply_to_all: applyToAll,
+        // apply_to_all: applyToAll,
       });
 
       if (invitationDetail?.visitor_period_end) {
-        const baseTime = moment
-          .utc(invitationDetail.visitor_period_end)
-          .add(invitationDetail.extend_visitor_period || 0, 'minutes');
+        const baseTime = moment.utc(invitationDetail.visitor_period_end);
+        // .add(invitationDetail.extend_visitor_period || 0, 'minutes');
 
         const newEnd = baseTime.add(selectedMinutes, 'minutes');
 
@@ -1309,7 +1307,7 @@ const Invitation = () => {
     : invitationDetail?.visitor_period_end
       ? moment
           .utc(invitationDetail.visitor_period_end)
-          .add(invitationDetail.extend_visitor_period || 0, 'minutes')
+          // .add(invitationDetail.extend_visitor_period || 0, 'minutes')
           .local()
       : null;
 

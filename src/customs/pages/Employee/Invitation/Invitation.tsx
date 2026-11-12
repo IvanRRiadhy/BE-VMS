@@ -25,6 +25,7 @@ import {
   getEmployeeById,
   getVisitorFormTransaction,
   getVisitorTransactionByIds,
+  updateExtend,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { IconLink, IconLogout, IconUserPlus } from '@tabler/icons-react';
@@ -231,7 +232,7 @@ const Content = () => {
           host_name: item.host_name || '-',
 
           visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
 
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
@@ -320,7 +321,7 @@ const Content = () => {
   //         invitation_code: item.invitation_code || '-',
   //         phone: item.visitor_phone || '-',
   //         visitor_period_start: item.visitor_period_start || '-',
-  //         visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //         visitor_period_end: formatDateTime(item.visitor_period_end,item.extend_visitor_period),
   //         invitation_created_at: item.invitation_created_at,
   //         host: item.host ?? '-',
   //         visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
@@ -807,11 +808,12 @@ const Content = () => {
       const payload = {
         id: selectedVisitor.id,
         period: selectedMinutes,
-        apply_to_all: applyToAll,
+        // apply_to_all: applyToAll,
       };
 
-      await extendPeriodOperator(payload);
+      await updateExtend(payload);
 
+      showSwal('success', 'Successfully extended visitor');
       setOpenExtendVisit(false);
       setSelectedMinutes(null);
       setApplyToAll(false);

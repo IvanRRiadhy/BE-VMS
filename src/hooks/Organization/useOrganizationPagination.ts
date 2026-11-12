@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { getAllOrganizationPagination } from 'src/customs/api/admin';
 
 interface Props {
@@ -9,13 +9,14 @@ interface Props {
   searchKeyword?: string;
 }
 
-export const useOrganizationPagination = ({
-  page,
-  rowsPerPage,
-  sortDir,
-  sort_column,
-  searchKeyword,
-}: Props) => {
+interface Options {
+  enabled?: boolean;
+}
+
+export const useOrganizationPagination = (
+  { page, rowsPerPage, sortDir, sort_column, searchKeyword }: Props,
+  options?: Options,
+) => {
   return useQuery({
     queryKey: [
       'organizations',
@@ -26,7 +27,7 @@ export const useOrganizationPagination = ({
       sort_column,
       searchKeyword,
     ],
-    // enabled: !!token,
+    enabled: options?.enabled ?? true,
     queryFn: () =>
       getAllOrganizationPagination(
         page * rowsPerPage,

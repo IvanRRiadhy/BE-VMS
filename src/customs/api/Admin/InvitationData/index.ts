@@ -82,9 +82,31 @@ export const getInvitationVisitorHost = async (params?: {
     });
     return response.data;
   } catch (error: any) {
-    // if (error.response?.status === 404) {
-    //   return { collection: [] };
-    // }
-    // throw error;
+    throw error;
+  }
+};
+interface ParkingAvailableParams {
+  site_id: string;
+  visitor_type_id: string;
+  start_date: string;
+  end_date: string;
+}
+// invitation-site/parking/available
+export const getInvitationSiteParkingAvailable = async (
+  params: ParkingAvailableParams,
+): Promise<any> => {
+  try {
+   const response = await axiosInstance.get('/invitation-site/parking/available', {
+     params: {
+       'site-id': params.site_id,
+       'visitor-type-id': params.visitor_type_id,
+       'start-date': params.start_date,
+       'end-date': params.end_date,
+     },
+   });
+
+   return response.data;
+  } catch (error: any) {
+    throw error;
   }
 };

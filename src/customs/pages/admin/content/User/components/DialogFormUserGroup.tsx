@@ -9,12 +9,9 @@ import {
   Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSession } from 'src/customs/contexts/SessionContext';
 import { getUserById, getUserGroupById } from 'src/customs/api/admin';
-import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
-import FormUser from '../FormUser';
 import FormWizardUserGroup from '../UserGroup/FormWizardUserGroup';
-import { CreateUserGroupSchema } from 'src/customs/api/Admin/UserGroup';
+import { CreateUserGroupSchema } from 'src/customs/api/models/Admin/UserGroup';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 
 interface Props {

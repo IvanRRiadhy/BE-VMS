@@ -169,11 +169,18 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
             <DetailItem label="Host" value={visitor.host_name} icon={<IconUser size={18} />} />
 
             <DetailItem
-              label="Visit Date"
-              value={`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
-                visitor.visitor_period_end,
-                visitor.extend_visitor_period,
-              )}`}
+              label="Visit Start"
+              value={`${formatDateTime(visitor.visitor_period_start)} `}
+              icon={<IconCalendarEvent size={18} />}
+            />
+
+            <DetailItem
+              label="Visit End"
+              value={`${
+                visitor.visitor_period_end?.startsWith('9999-01-01')
+                  ? '-'
+                  : formatDateTime(visitor.visitor_period_end, visitor.extend_visitor_period)
+              }`}
               icon={<IconCalendarEvent size={18} />}
             />
 

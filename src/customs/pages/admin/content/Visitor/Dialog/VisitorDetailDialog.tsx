@@ -218,10 +218,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
                     {
                       icon: <IconCalendarUp />,
                       label: 'Period End',
-                      value: formatDateTime(
-                        detail.visitor_period_end,
-                        detail.extend_visitor_period,
-                      ),
+                      value: formatDateTime(detail.visitor_period_end),
                     },
                     {
                       icon: <IconMapPin />,

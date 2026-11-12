@@ -294,7 +294,7 @@ export default function VisitorListTable({
             {groupDetailLoading ? (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  <CircularProgress size={24} />
+                  <CircularProgress size={40} thickness={4} />
                 </TableCell>
               </TableRow>
             ) : paginatedVisitors.length > 0 ? (

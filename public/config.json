@@ -5,5 +5,7 @@
   "LOGO_URL": "/assets/images/BI_Logo.png",
   "LOGIN_LOGO_URL": "/assets/images/bi_pic.png",
   "API_ID": "be-vms",
-  "ENABLE_CAPTCHA": false
+  "ENABLE_CAPTCHA": false,
+  "WS_MONITOR": "103.193.15.67",
+  "WS_MONITOR_PORT": 15675
 }

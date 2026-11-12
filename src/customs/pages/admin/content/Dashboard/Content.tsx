@@ -122,7 +122,7 @@ const Content = () => {
   //           name: item.visitor_name,
   //           host: item.host_name,
   //           visit_start: formatDateTime(item.visitor_period_start),
-  //           visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //           visit_end: formatDateTime(item.visitor_period_end),
   //         }));
   //       setDataPraregist(rows || []);
   //     } catch (error) {}

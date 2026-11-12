@@ -18,6 +18,7 @@ import {
 import { IconUsers } from '@tabler/icons-react';
 import Language from 'src/layouts/full/vertical/header/Language';
 import { getConfig } from 'src/config';
+import { getInvitationSiteParkingAvailable } from 'src/customs/api/Admin/InvitationData';
 
 export default function InvitationShare() {
   const config = getConfig();
@@ -82,6 +83,8 @@ export default function InvitationShare() {
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [availableVisitorSlot, setAvailableVisitorSlot] = useState<number | null>(null);
+  const [loadingParking, setLoadingParking] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,6 +127,42 @@ export default function InvitationShare() {
       fetchData();
     }
   }, [code]);
+
+  useEffect(() => {
+    const fetchParkingAvailable = async () => {
+      const siteId = invitation?.site?.id;
+      const visitorTypeId = invitation?.visitor_type?.id;
+      const startDate = invitation?.visitor_period_start;
+      const endDate = invitation?.visitor_period_end;
+
+      if (!siteId || !visitorTypeId || !startDate || !endDate) {
+        setAvailableVisitorSlot(null);
+        return;
+      }
+
+      try {
+        setLoadingParking(true);
+
+        const res = await getInvitationSiteParkingAvailable({
+          site_id: siteId,
+          visitor_type_id: visitorTypeId,
+          start_date: startDate,
+          end_date: endDate,
+        });
+
+        setAvailableVisitorSlot(res.collection?.total_available_visitor_slot ?? 0);
+      } catch (error) {
+        console.error('Error fetching parking availability:', error);
+        setAvailableVisitorSlot(null);
+      } finally {
+        setLoadingParking(false);
+      }
+    };
+
+    if (invitation) {
+      fetchParkingAvailable();
+    }
+  }, [invitation]);
 
   if (error)
     return (
@@ -233,6 +272,8 @@ export default function InvitationShare() {
                   sites={sites}
                   employee={employee}
                   allVisitorEmployee={allVisitorEmployee}
+                  availableVisitorSlot={availableVisitorSlot}
+                  loadingParking={loadingParking}
                 />
               </Box>
             </Box>

@@ -1430,10 +1430,26 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Report',
+    title: 'report',
     icon: IconReport,
     chipColor: 'secondary',
-    href: '/security-monitor/report/transaction-log',
+    href: '/security-monitor/report',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'navigation.transaction_log',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/security-monitor/report/transaction-log',
+      },
+      {
+        id: uniqueId(),
+        title: 'Investigate',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/security-monitor/report/investigate',
+      },
+    ],
   },
   // {
   //   id: uniqueId(),
@@ -1639,12 +1655,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconEye,
     href: '/operator/view',
   },
-  {
-    id: uniqueId(),
-    title: 'Security',
-    icon: IconEye,
-    href: '/operator/security',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Security',
+  //   icon: IconEye,
+  //   href: '/operator/security',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'View',
@@ -1705,12 +1721,12 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     icon: IconEye,
     href: '/operator/view',
   },
-  {
-    id: uniqueId(),
-    title: 'Security',
-    icon: IconEye,
-    href: '/operator/security',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Security',
+  //   icon: IconEye,
+  //   href: '/operator/security',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'View',

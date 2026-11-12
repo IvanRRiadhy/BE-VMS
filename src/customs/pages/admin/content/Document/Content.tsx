@@ -214,7 +214,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 rowsPerPageOptions={[10, 50, 100]}
-                searchPlaceholder={t('search') } 
+                searchPlaceholder={t('search') + ' Document'} 
                 currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);

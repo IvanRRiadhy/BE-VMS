@@ -35,12 +35,18 @@ import {
   Tooltip,
   Typography,
   useTheme,
+  CardContent,
+  Stack,
+  Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import {
   IconArrowLeft,
   IconArrowRight,
+  IconCar,
   IconInfoCircle,
+  IconParking,
+  IconParkingCircle,
   IconPlus,
   IconTrash,
   IconUser,
@@ -50,6 +56,7 @@ import {
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 // import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import { useMediaQuery } from '@mui/system';
 import {
   CreateGroupVisitorRequestSchema,
@@ -85,6 +92,7 @@ import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
 import { useTranslation } from 'react-i18next';
 import RequiredFieldNotice from '../../admin/content/Visitor/Trx/components/ui/RequiredFieldNotice';
 import VisitorTypeList from './VisitorTypeList';
+import ParkingAvailability from './components/ParkingAvailability';
 type VisitorItem = {
   question_page: SectionPageVisitor[];
   single_page: FormField[];
@@ -98,6 +106,8 @@ const FormSelfPraregistration = ({
   sites,
   employee,
   allVisitorEmployee,
+  availableVisitorSlot,
+  loadingParking,
 }: {
   invitation?: any;
   code?: string;
@@ -105,6 +115,8 @@ const FormSelfPraregistration = ({
   sites?: any;
   employee?: any;
   allVisitorEmployee?: any;
+  availableVisitorSlot: number | null;
+  loadingParking: boolean;
 }) => {
   const THEME = useTheme();
   const navigate = useNavigate();
@@ -3131,9 +3143,19 @@ const FormSelfPraregistration = ({
                   </>
                 );
               }
+              if (sectionType === 'parking') {
+                return (
+                  <>
+                    <ParkingAvailability
+                      loadingParking={loadingParking}
+                      availableVisitorSlot={availableVisitorSlot}
+                    />
 
+                    {renderTable()}
+                  </>
+                );
+              }
               if (
-                sectionType === 'parking' ||
                 sectionType === 'purpose_visit' ||
                 sectionType === 'nda' ||
                 sectionType === 'identity_image' ||
@@ -3149,6 +3171,10 @@ const FormSelfPraregistration = ({
         {isGroup && (
           <Grid>
             <RequiredFieldNotice />
+            <ParkingAvailability
+              loadingParking={loadingParking}
+              availableVisitorSlot={availableVisitorSlot}
+            />
             {(() => {
               // const section = sectionsData[activeStep - 1];
               const section = currentSection;

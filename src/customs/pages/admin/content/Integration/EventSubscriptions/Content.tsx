@@ -346,7 +346,7 @@ const Content = () => {
     const integrationName = integration?.name?.toLowerCase() ?? '';
 
     if (integrationName.includes('parking')) {
-      return String(source?.uid ?? '');
+      return String(source?.id ?? '');
     }
 
     if (integrationName.includes('prowatch')) {
@@ -375,7 +375,7 @@ const Content = () => {
       return {
         source_type: isPeopleTracking ? 'PersonCategory' : (integration?.sourceType?.[0] ?? ''),
         external_id: integration?.name?.toLowerCase().includes('parking')
-          ? camera.uid
+          ? camera.id
           : getSourceExternalId(camera),
         description: camera.description ?? camera.name,
         is_active: true,
@@ -467,7 +467,7 @@ const Content = () => {
     }
 
     if (integration?.name?.toLowerCase().includes('parking')) {
-      return String(source?.uid ?? '');
+      return String(source?.id ?? '');
     }
 
     return String(source?.id ?? source?.external_id ?? '');
@@ -888,7 +888,19 @@ const Content = () => {
                     <Paper
                       key={item.integration_list_id}
                       elevation={0}
-                      onClick={() => setIntegration(item)}
+                      onClick={() => {
+                        setIntegration(item);
+
+                        setSelectedServer('');
+                        setSelectedCameras([]);
+                        setSelectedEventsBySource({});
+                        setCameras([]);
+
+                        setServerSearch('');
+                        setCameraSearch('');
+                        setEventSearch('');
+                        setShowSelected(false);
+                      }}
                       sx={{
                         height: 80,
                         px: 1.5,

@@ -613,7 +613,7 @@ const OperatorView = () => {
       const payload = {
         id: selectedVisitors[0],
         period: selectedMinutes,
-        apply_to_all: applyToAll,
+        // apply_to_all: applyToAll,
       };
 
       await extendPeriodOperator(payload);
@@ -3840,6 +3840,7 @@ const OperatorView = () => {
             setOpenParking(false);
           }}
           data={parkingData}
+          visitorType={visitorType}
         />
 
         <InfoDialog

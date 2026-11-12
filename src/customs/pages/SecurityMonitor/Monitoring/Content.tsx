@@ -58,8 +58,7 @@ const dummyTransactions: any[] = [
     title: 'Visitor Check-Out',
     message: 'John Doe has successfully checked out at Main Lobby.',
     timestamp: formatDateTime('2026-11-04T10:30:00Z'),
-  }
-
+  },
 ];
 
 const dummyListVisitor: any[] = [
@@ -182,14 +181,13 @@ const Content = () => {
 
   const config = getConfig();
   const { activities, connected } = useMonitorActivities({
-    host: '103.193.15.67',
-    port: 15675,
+    host: config.WS_MONITOR,
+    port: config.WS_MONITOR_PORT,
     username: 'user',
     password: 'root',
   });
 
-  console.log('activities', activities);
-
+  // console.log('activities', activities);
 
   // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
   //   search: debouncedSearch,
@@ -237,7 +235,7 @@ const Content = () => {
               <DynamicTable
                 // loading={isLoading}
                 overflowX="auto"
-                data={dummyTransactions}
+                data={activities ?? []}
                 isHavePagination={false}
                 isHaveSearch={false}
                 isHaveHeaderTitle

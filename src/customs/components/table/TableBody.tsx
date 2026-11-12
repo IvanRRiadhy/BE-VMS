@@ -66,6 +66,7 @@ export const TableBodyContent = ({
   isHaveDataQuickAccess,
   onDetailQuickAccess,
   htmlFields,
+  isOnlyBlacklist,
   isHaveAssign,
   isHaveUnAssign,
   onAssign,
@@ -427,6 +428,7 @@ export const TableBodyContent = ({
                 isHaveViewAndAction,
                 isBlacklistAction,
                 onBlacklist,
+                isOnlyBlacklist,
                 isActionListVisitor,
                 isHaveSettingOperator,
                 onSettingOperator,
@@ -510,6 +512,7 @@ const TableRowItem = React.memo(
       onDuplicate,
       onQrCode,
       isHaveDataQuickAccess,
+      isOnlyBlacklist,
       onDetailQuickAccess,
       visiblePasswords,
       togglePassword,
@@ -1562,6 +1565,41 @@ const TableRowItem = React.memo(
                     }}
                   ></Box>
                 )
+              ) : isOnlyBlacklist ? (
+                <Box>
+                  <Tooltip
+                    title={row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                    arrow
+                    placement="top"
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '0.85rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                    }}
+                  >
+                    <Button
+                      size="small"
+                      startIcon={row.is_blacklist ? <IconCheck /> : <IconCircleMinus />}
+                      onClick={() => onBlacklist?.(row)}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: 1,
+                        fontWeight: 500,
+                        backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                          opacity: 0.8,
+                        },
+                      }}
+                    >
+                      {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                    </Button>
+                  </Tooltip>
+                </Box>
               ) : isHaveAccess ? (
                 <TableCell
                   sx={{

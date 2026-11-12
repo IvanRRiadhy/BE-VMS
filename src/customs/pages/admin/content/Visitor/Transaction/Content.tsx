@@ -27,13 +27,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import { getVisitorFormTransaction, getVisitorTransactionByIds } from 'src/customs/api/admin';
-import {
-  IconLink,
-  IconLogin,
-  IconLogout,
-  IconUserPlus,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconLink, IconLogin, IconLogout, IconUserPlus, IconUsers } from '@tabler/icons-react';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
@@ -259,7 +253,10 @@ const Content = () => {
           host_name: item.host_name || '-',
 
           visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
+          visitor_period_end:
+            item.visitor_period_end === '9999-01-01T00:00:00'
+              ? '-'
+              : formatDateTime(item.visitor_period_end),
 
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
