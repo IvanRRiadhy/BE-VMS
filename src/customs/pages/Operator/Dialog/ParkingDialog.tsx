@@ -73,7 +73,7 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<any>(null);
-
+  const userTimezone = dayjs.tz.guess();
   useEffect(() => {
     if (!open) return;
 
@@ -81,9 +81,14 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
       try {
         setLoading(true);
 
+        const startDate = dayjs().tz(userTimezone).startOf('day').utc().toISOString();
+
+        const endDate = dayjs().tz(userTimezone).endOf('day').utc().toISOString();
+
         const response = await getOperatorVehicleCount({
-          today: true,
-          // 'detail-by-visitor-type': true,
+          today: false,
+          'start-date': startDate,
+          'end-date': endDate,
         });
 
         setReport(response?.collection ?? null);
@@ -105,13 +110,13 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
       const params: any = {
         ...(filter.start_date && {
           'start-date': dayjs
-            .tz(filter.start_date, 'Asia/Jakarta')
+            .tz(filter.start_date, userTimezone)
             .startOf('day')
             .utc()
             .toISOString(),
         }),
         ...(filter.end_date && {
-          'end-date': dayjs.tz(filter.end_date, 'Asia/Jakarta').endOf('day').utc().toISOString(),
+          'end-date': dayjs.tz(filter.end_date, userTimezone).endOf('day').utc().toISOString(),
         }),
         ...(filter.vehicleType && { 'vehicle-type': filter.vehicleType }),
         ...(filter.visitorType && { 'visitor-type': filter.visitorType }),

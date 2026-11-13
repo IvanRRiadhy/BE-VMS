@@ -463,8 +463,7 @@ const GuestAccessPass = ({
             <Field label="Host Name" value={accessPass.host_name} />
 
             <Field label="Visit Start">{formatDateTime(accessPass.visitor_period_start)}</Field>
-
-            <Field label="Visit End">{formatDateTime(accessPass.visitor_period_end)}</Field>
+            <Field label="Site" value={accessPass.site_place_name ?? '-'} />
           </Box>
 
           {/* RIGHT */}
@@ -507,7 +506,7 @@ const GuestAccessPass = ({
               </Box>
             </Field>
 
-            <Field label="Site" value={accessPass.site_place_name ?? '-'} />
+            <Field label="Visit End">{formatDateTime(accessPass.visitor_period_end)}</Field>
           </Box>
         </Box>
         {/* QR CODE */}
@@ -644,9 +643,9 @@ const GuestAccessPass = ({
             textTransform: 'capitalize',
           }}
         >
-          <Field label="Parking Area" value={accessPass.parking_area} />
+          <Field label="Parking Area" value={accessPass.parking_area || '-'} />
 
-          <Field label="Parking Slot" value={accessPass.parking_slot} />
+          <Field label="Parking Slot" value={accessPass.parking_slot || '-'} />
 
           <Field label="Vehicle Plate" value={accessPass.vehicle_plate_number || '-'} />
 
@@ -678,7 +677,7 @@ const GuestAccessPass = ({
             borderRadius: 1.5,
           }}
         >
-          {isParkingLoading ? 'Opening...' : 'Open Parking Blocker'}
+          {isParkingLoading ? 'Opening...' : 'Open Parking Portal'}
         </Button>
 
         {/* PAGINATION */}

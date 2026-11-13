@@ -145,6 +145,17 @@
     "inputCardNumber": "Input Card Number or Tap Card",
     "returnCard": "Return Card"
   },
+  "parking": {
+    "information": "Parking Information",
+    "registeredParkingDetails": "Your registered parking details",
+    "hideInformation": "Hide information",
+    "vehicleDetails": "Vehicle Details",
+    "vehicleType": "Vehicle Type",
+    "vehiclePlate": "Vehicle Plate Number",
+    "parkingArea": "Parking Area",
+    "parkingSlot": "Parking Slot",
+    "parkingInstruction": "Please ensure your vehicle is parked in the assigned parking slot."
+  },
   "noImage": "No Image",
   "searchVisitor": "Search Visitor",
   "name": "Name",

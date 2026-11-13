@@ -243,7 +243,8 @@ const TimerButton: React.FC = () => {
 
   const handleButtonClick = () => {
     if (evacState === 'idle') {
-      setOpenConfirm(true);
+      // setOpenConfirm(true);
+      handleConfirmEvacuate();
     } else if (evacState === 'running') {
       setOpenFinishDialog(true);
     }
@@ -275,7 +276,7 @@ const TimerButton: React.FC = () => {
 
   const [evacuateForm, setEvacuateForm] = useState({
     site_id: '',
-    emergency_type: '',
+    emergency_type: 'Evacuate',
     initial_notes: '',
   });
 
@@ -291,6 +292,8 @@ const TimerButton: React.FC = () => {
   const [evacuateEventId, setEvacuateEventId] = useState<string | null>(null);
 
   const handleConfirmEvacuate = async () => {
+    const confirm = await showSwal('confirm', 'Are you sure you want to start evacuate?');
+    if (!confirm) return;
     try {
       setLoadingEvacuate(true);
 
@@ -298,7 +301,7 @@ const TimerButton: React.FC = () => {
         ...(evacuateForm.site_id && {
           site_id: evacuateForm.site_id,
         }),
-        emergency_type: evacuateForm.emergency_type,
+        emergency_type: evacuateForm.emergency_type || 'Evacuate',
         initial_notes: evacuateForm.initial_notes,
       };
 
@@ -319,14 +322,8 @@ const TimerButton: React.FC = () => {
         emergency_type: '',
         initial_notes: '',
       });
-
-      // Jika diperlukan, tampilkan notifikasi sukses
-      // enqueueSnackbar('Evacuation alarm triggered successfully', {
-      //   variant: 'success',
-      // });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to start evacuate');
-      // Tampilkan notifikasi error jika menggunakan Snackbar
     } finally {
       setLoadingEvacuate(false);
     }
@@ -476,7 +473,7 @@ const TimerButton: React.FC = () => {
                     : evacState === 'running'
                       ? '#ff5252'
                       : '#43a047',
-                color: '#fff',
+                color: '#fff !important',
                 boxShadow: 4,
                 '&:hover': {
                   background:
@@ -517,7 +514,7 @@ const TimerButton: React.FC = () => {
         {/* Warning Dialog */}
 
         {/* Warning Dialog */}
-        <Dialog open={openConfirm} onClose={handleCancelEvacuate} fullWidth maxWidth="sm">
+        {/* <Dialog open={openConfirm} onClose={handleCancelEvacuate} fullWidth maxWidth="sm">
           <DialogTitle>
             Start Evacuation?
             <IconButton
@@ -541,7 +538,7 @@ const TimerButton: React.FC = () => {
                 Please provide the details below before starting the evacuation alarm.
               </Typography>
 
-              {/* Site */}
+          
               <FormControl fullWidth required>
                 <Autocomplete
                   options={sites?.collection ?? []}
@@ -555,7 +552,7 @@ const TimerButton: React.FC = () => {
                 />
               </FormControl>
 
-              {/* Emergency Type */}
+     
               <FormControl fullWidth>
                 <InputLabel id="evacuate-type-label">Emergency Type</InputLabel>
                 <Select
@@ -577,7 +574,7 @@ const TimerButton: React.FC = () => {
                 </Select>
               </FormControl>
 
-              {/* Initial Notes */}
+            
               <TextField
                 label="Initial Notes"
                 placeholder="Enter evacuation details or additional information..."
@@ -609,7 +606,7 @@ const TimerButton: React.FC = () => {
               {loadingEvacuate ? 'Starting...' : 'Yes, Start Evacuation'}
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
 
         <Box sx={{ mt: 2, width: '100%' }}>
           <List disablePadding sx={{ width: '100%', border: '1px solid #ccc', borderRadius: 2 }}>
@@ -784,7 +781,7 @@ const TimerButton: React.FC = () => {
               variant="contained"
               color="success"
               onClick={handleFinishEvacuation}
-              disabled={isSubmitting || !finishForm.resolved_by_name.trim()}
+              disabled={isSubmitting}
             >
               {isSubmitting ? 'Submitting...' : 'Complete Evacuation'}
             </Button>

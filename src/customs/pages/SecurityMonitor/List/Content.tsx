@@ -72,10 +72,19 @@ const Content = () => {
   const [filters, setFilters] = useState<VisitorFilters>(emptyFilters);
 
   const [appliedFilters, setAppliedFilters] = useState<VisitorFilters>(emptyFilters);
-  const { data, isLoading, isFetching } = useInvitationVisitor({
-    search,
+  // const { data, isLoading, isFetching } = useInvitationVisitor({
+  //   search,
+  //   page,
+  //   rowsPerPage,
+  // });
+
+  const { data, isLoading } = useListVisitorPagination({
     page,
     rowsPerPage,
+    sortDir,
+    sort_column: 'created_at',
+    search,
+    filters: appliedFilters,
   });
 
   const { blacklistMutation, updateVisitorMutation, deleteVisitorMutation } =
@@ -98,8 +107,8 @@ const Content = () => {
     })) ?? [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
-  // const totalFilteredRecords = data?.RecordsFiltered ?? 0;
-  const totalFilteredRecords = data?.collection?.length ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
+  // const totalFilteredRecords = data?.collection?.length ?? 0;
 
   const cards = useMemo(
     () => [

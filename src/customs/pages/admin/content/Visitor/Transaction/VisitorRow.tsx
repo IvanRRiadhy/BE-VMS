@@ -94,7 +94,7 @@ function VisitorRow({
   };
   const { data: profile } = useProfile();
   const isAdmin = profile?.group_name === 'Admin';
-  const canExtend = ['Preregis', 'Checkin', 'Available'].includes(visitor.visitor_status);
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const menuOpen = Boolean(anchorEl);
@@ -107,6 +107,8 @@ function VisitorRow({
     setAnchorEl(null);
   };
 
+  const isHost = profile?.id === visitor?.host_id;
+  const canExtend = ['Preregis', 'Checkin', 'Available'].includes(visitor.visitor_status) && isHost;
   return (
     <>
       <TableRow>
@@ -289,7 +291,7 @@ function VisitorRow({
                 <IconEye size={20} />
                 Detail
               </MenuItem>
-              {isAdmin && visitor.visitor_status !== 'Canceled' && (
+              {/* {isAdmin && visitor.visitor_status !== 'Canceled' && (
                 <MenuItem
                   onClick={() => {
                     handleMenuClose();
@@ -301,20 +303,21 @@ function VisitorRow({
                   <IconTrash size={20} />
                   Remove Visitor
                 </MenuItem>
-              )}
-              {!isAdmin && (
-                <MenuItem
-                  onClick={() => {
-                    handleMenuClose();
-                    handleExtend?.();
-                  }}
-                  disabled={!canExtend}
-                  sx={{ gap: 1 }}
-                >
-                  <IconClock size={20} />
-                  Extend Time
-                </MenuItem>
-              )}
+              )} */}
+              {!isAdmin ||
+                (isHost && (
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleExtend?.();
+                    }}
+                    disabled={!canExtend}
+                    sx={{ gap: 1 }}
+                  >
+                    <IconClock size={20} />
+                    Extend Time
+                  </MenuItem>
+                ))}
             </Menu>
           </Box>
         </TableCell>

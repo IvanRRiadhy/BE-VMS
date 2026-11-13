@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -23,13 +23,29 @@ import {
 } from '@tabler/icons-react';
 
 import PageContainer from 'src/components/container/PageContainer';
+import { useTranslation } from 'react-i18next';
 
 const Parking = () => {
   const [showInfo, setShowInfo] = useState(true);
-
+  const [parkingData, setParkingData] = useState<any | null>(null);
   const publicUrl =
     'https://parking-app.app.bio-experience.com/Maps/Public?blockSlotUid=d46a6a89-2c3f-4046-ac65-42af27b7287d';
 
+  const iframeUrl = parkingData?.parking_slot?.trim()
+    ? parkingData?.parking_map || publicUrl
+    : publicUrl;
+  useEffect(() => {
+    const storedData = sessionStorage.getItem('guest_parking_data');
+
+    if (!storedData) return;
+
+    try {
+      const data: any = JSON.parse(storedData);
+      setParkingData(data);
+    } catch (error) {
+      console.error('Failed to parse parking data:', error);
+    }
+  }, []);
   const handleAuthorize = () => {
     const isAuthorized = localStorage.getItem('parking');
 
@@ -42,19 +58,7 @@ const Parking = () => {
     window.location.href = 'http://localhost:5000/auth/authorize';
   };
 
-  const [zoom, setZoom] = useState(1);
-
-  const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.2, 2));
-  };
-
-  const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 0.2, 1));
-  };
-
-  const handleResetZoom = () => {
-    setZoom(1);
-  };
+  const { t } = useTranslation();
 
   return (
     <PageContainer title="Parking">
@@ -76,7 +80,7 @@ const Parking = () => {
           }}
         >
           <iframe
-            src={publicUrl}
+            src={iframeUrl}
             title="Public Parking"
             style={{
               width: '100%',
@@ -99,13 +103,24 @@ const Parking = () => {
             zIndex: 10,
           }}
         >
-          <Card
+          {/* <Card
             elevation={10}
             sx={{
               borderRadius: { xs: '18px 18px 0 0', md: '20px 20px 0 0' },
               maxWidth: 1100,
               mx: 'auto',
               maxHeight: '35vh',
+              overflowY: 'auto',
+            }}
+          > */}
+          <Card
+            elevation={10}
+            sx={{
+              borderRadius: { xs: '18px 18px 0 0', md: '20px 20px 0 0' },
+              maxWidth: 1100,
+              mx: 'auto',
+              height: { xs: '50vh', md: 'auto' },
+              maxHeight: { xs: '50vh', md: '35vh' },
               overflowY: 'auto',
             }}
           >
@@ -130,15 +145,15 @@ const Parking = () => {
 
                   <Box>
                     <Typography variant="h6" fontWeight={700}>
-                      Parking Information
+                      {t('parking.information')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Your registered parking details
+                      {t('parking.registeredParkingDetails')}
                     </Typography>
                   </Box>
                 </Stack>
 
-                <Tooltip title="Hide information">
+                <Tooltip title={t('parking.hideInformation')}>
                   <IconButton onClick={() => setShowInfo(false)}>
                     <IconX size={20} />
                   </IconButton>
@@ -158,7 +173,7 @@ const Parking = () => {
               >
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
                   <Typography variant="subtitle1" fontWeight={700}>
-                    Vehicle Details
+                    {t('parking.vehicleDetails')}
                   </Typography>
 
                   {/* <Chip label="Registered" color="success" size="small" variant="outlined" /> */}
@@ -167,37 +182,45 @@ const Parking = () => {
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Typography variant="caption" color="text.secondary">
-                      Vehicle Type
+                      {t('parking.vehicleType')}
                     </Typography>
-                    <Typography variant="body1" fontWeight={600}>
-                      Car
-                    </Typography>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Vehicle Plate
-                    </Typography>
-                    <Typography variant="body1" fontWeight={600}>
-                      B 1234 ABC
+                    <Typography
+                      variant="body1"
+                      fontWeight={600}
+                      sx={{ textTransform: 'capitalize' }}
+                    >
+                      {/* Car */}
+                      {parkingData?.vehicle_type || '-'}
                     </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Typography variant="caption" color="text.secondary">
-                      Parking Area
+                      {t('parking.vehiclePlate')}
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
-                      Area A
+                      {/* B 1512 FG */}
+                      {parkingData?.vehicle_plate_number || '-'}
                     </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Typography variant="caption" color="text.secondary">
-                      Parking Slot
+                      {t('parking.parkingArea')}
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
-                      A-3
+                      {/* Area Parkir */}
+                      {parkingData?.parking_area || '-'}
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('parking.parkingSlot')}
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {/* A-3 */}
+                      {parkingData?.parking_slot || '-'}
                     </Typography>
                   </Grid>
                 </Grid>
@@ -212,12 +235,12 @@ const Parking = () => {
                 mt={2}
               >
                 <Typography variant="caption" color="text.secondary">
-                  Please ensure your vehicle is parked in the assigned parking slot.
+                  {t('parking.parkingInstruction')}
                 </Typography>
 
-                <Button variant="contained" color="primary" onClick={() => setShowInfo(false)}>
+                {/* <Button variant="contained" color="primary" onClick={() => setShowInfo(false)}>
                   Open Parking Blocker
-                </Button>
+                </Button> */}
               </Stack>
             </CardContent>
           </Card>
@@ -244,7 +267,7 @@ const Parking = () => {
                 boxShadow: 4,
               }}
             >
-              Parking Information
+              {t('parking.information')}
             </Button>
           </Box>
         )}

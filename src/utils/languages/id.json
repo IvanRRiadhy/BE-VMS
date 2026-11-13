@@ -145,6 +145,17 @@
     "inputCardNumber": "Masukkan Nomor Kartu atau Tap Kartu",
     "returnCard": "Pengembalian Kartu"
   },
+  "parking": {
+    "information": "Informasi Parkir",
+    "registeredParkingDetails": "Detail parkir kendaraan Anda",
+    "hideInformation": "Sembunyikan informasi",
+    "vehicleDetails": "Detail Kendaraan",
+    "vehicleType": "Jenis Kendaraan",
+    "vehiclePlate": "Nomor Kendaraan",
+    "parkingArea": "Area Parkir",
+    "parkingSlot": "Slot Parkir",
+    "parkingInstruction": "Pastikan kendaraan Anda diparkir pada slot parkir yang telah ditentukan."
+  },
   "noImage": "Tidak ada gambar",
   "searchVisitor": "Cari Pengunjung",
   "name": "Nama",

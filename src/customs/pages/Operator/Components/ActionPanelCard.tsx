@@ -127,7 +127,7 @@ const ActionPanelCard: FC<Props> = ({
                           textTransform: 'none',
                           fontWeight: 600,
                           px: 2.5,
-                          boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+             
                           '&:hover': {
                             background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
                           },
@@ -166,7 +166,7 @@ const ActionPanelCard: FC<Props> = ({
                               fontWeight: 600,
                               px: 2.5,
 
-                              boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                 
                               zIndex: 999,
                               width: '100%',
                               height: '50px',
@@ -198,7 +198,7 @@ const ActionPanelCard: FC<Props> = ({
                               px: 2.5,
                               backgroundColor: '#EF4444',
                               // background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
-                              boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
+                       
                               // '&:hover': {
                               //   background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
                               // },
@@ -269,7 +269,6 @@ const ActionPanelCard: FC<Props> = ({
                               px: '10px !important',
                               // background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
 
-                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
                               // '&:hover': {
                               //   background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
                               // },
@@ -301,7 +300,7 @@ const ActionPanelCard: FC<Props> = ({
                               textTransform: 'none',
                               fontWeight: 600,
                               px: '10px !important',
-                              boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+
                               zIndex: 999,
                               width: '100%',
                               height: '50px',
@@ -331,7 +330,7 @@ const ActionPanelCard: FC<Props> = ({
                               fontWeight: 600,
                               px: 2.5,
                               background: 'primary.main',
-                              boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
+
                               zIndex: 999,
                               width: '100%',
                               height: '50px',

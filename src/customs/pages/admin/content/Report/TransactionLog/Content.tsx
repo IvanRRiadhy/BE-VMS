@@ -702,7 +702,13 @@ const Content = () => {
     setLoading(true);
 
     try {
-      await updateReportVisitorTransaction(selectedReport.id, formData);
+        const payload = {
+          ...formData,
+          start_date: formData.start_date || null,
+          end_date: formData.end_date || null,
+        };
+
+        await updateReportVisitorTransaction(selectedReport.id, payload);
       // await refreshReportList();
       await fetchReports(true);
       setEditingId(null);
@@ -1013,7 +1019,7 @@ const Content = () => {
                               loading={loading}
                               data={reportData}
                               isHaveSearch={false}
-                              isHavePagination={false}
+                              isHavePagination={true}
                               isHaveHeaderTitle={true}
                               titleHeader="Report"
                               isHavePeriod
@@ -1021,9 +1027,15 @@ const Content = () => {
                               //   setSearchReport(val);
                               //   handlePostReport(selectedReport?.id, val);
                               // }}
+                              // defaultRowsPerPage={rowsPerPage}
+                              // totalCount={totalFilteredRecords}
+                              // onPaginationChange={(page, rowsPerPage) => {
+                              //   setPage(page);
+                              //   setRowsPerPage(rowsPerPage);
+                              // }}
+                              rowsPerPageOptions={[10, 50, 100]}
                               isHaveExportCsv={false}
                               isHaveExportExcel={true}
-                              // isHavePrint={true}
                               isHaveVip={true}
                               isHaveExportPdf={true}
                               onExportCsv={exportToCSV}
