@@ -10,6 +10,7 @@ import {
   MenuItem,
   Pagination,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -292,11 +293,12 @@ export default function VisitorListTable({
 
           <TableBody>
             {groupDetailLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <CircularProgress size={40} thickness={4} />
-                </TableCell>
-              </TableRow>
+              // <TableRow>
+              //   <TableCell colSpan={7} align="center">
+              //     <CircularProgress size={40} thickness={4} />
+              //   </TableCell>
+              // </TableRow>
+              <VisitorSkeleton rows={5} />
             ) : paginatedVisitors.length > 0 ? (
               paginatedVisitors.map((visitor, index) => (
                 <VisitorRow
@@ -347,3 +349,52 @@ export default function VisitorListTable({
     </Box>
   );
 }
+
+const VisitorSkeleton = ({ rows = 5 }: { rows?: number }) => {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, index) => (
+        <TableRow key={index}>
+          <TableCell>
+            <Skeleton variant="circular" width={24} height={24} />
+          </TableCell>
+
+          <TableCell>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Skeleton variant="circular" width={36} height={36} />
+              <Skeleton variant="text" width={120} />
+            </Box>
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="text" width={140} />
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="text" width={100} />
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="text" width={100} />
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="text" width={120} />
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="text" width={100} />
+          </TableCell>
+
+          <TableCell>
+            <Skeleton variant="rounded" width={85} height={28} />
+          </TableCell>
+
+          <TableCell align="center">
+            <Skeleton variant="circular" width={28} height={28} />
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+};

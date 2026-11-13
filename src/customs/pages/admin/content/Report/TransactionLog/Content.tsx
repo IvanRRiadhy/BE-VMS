@@ -702,13 +702,13 @@ const Content = () => {
     setLoading(true);
 
     try {
-        const payload = {
-          ...formData,
-          start_date: formData.start_date || null,
-          end_date: formData.end_date || null,
-        };
+      const payload = {
+        ...formData,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+      };
 
-        await updateReportVisitorTransaction(selectedReport.id, payload);
+      await updateReportVisitorTransaction(selectedReport.id, payload);
       // await refreshReportList();
       await fetchReports(true);
       setEditingId(null);

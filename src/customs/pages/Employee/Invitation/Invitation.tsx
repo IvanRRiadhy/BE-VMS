@@ -98,7 +98,6 @@ const Content = () => {
   }>({ open: false, message: '', severity: 'info' });
 
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-  const [tab, setTab] = useState(0);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
@@ -255,6 +254,8 @@ const Content = () => {
     selectedGroupId as string,
   );
 
+  const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
+
   const getVisitorStatus = (visitor: any) => {
     const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -276,17 +277,18 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (detailData?.collection) {
-      const visitors = detailData.collection.map((visitor: any) => ({
-        ...visitor,
-        visitor_status: getVisitorStatus(visitor),
-      }));
+    if (!selectedGroupId || groupDetailLoading) return;
 
-      setGroupVisitors(visitors);
-    } else {
-      setGroupVisitors([]);
-    }
-  }, [detailData]);
+    const visitors = (detailData?.collection ?? []).map((visitor: any) => ({
+      ...visitor,
+      visitor_status: getVisitorStatus(visitor),
+    }));
+
+    setGroupVisitors(visitors);
+    setLoadedGroupId(selectedGroupId);
+  }, [detailData, selectedGroupId, groupDetailLoading]);
+
+  const isVisitorLoading = groupDetailLoading || loadedGroupId !== selectedGroupId;
 
   const groupHeader = detailData?.collection?.[0] ?? null;
 
@@ -728,12 +730,12 @@ const Content = () => {
     setPage(0);
   };
 
-  const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
+  // const [loadingAddTransaction, setLoadingAddTransaction] = useState(false);
   const [duplicateData, setDuplicateData] = useState<any>(null);
   const [isAddTransaction, setIsAddTransaction] = useState(false);
   const handleAdd = async (group: any) => {
     try {
-      setLoadingAddTransaction(true);
+      // setLoadingAddTransaction(true);
 
       const response = await getVisitorFormTransaction(group.id);
       const data = response?.collection;
@@ -775,8 +777,6 @@ const Content = () => {
       setOpenInvitationVisitor(true);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg ?? 'Failed to get visitor form');
-    } finally {
-      setLoadingAddTransaction(false);
     }
   };
 
@@ -960,7 +960,7 @@ const Content = () => {
                   selectedGroupId={selectedGroupId}
                   groupHeader={groupHeader}
                   groupVisitors={groupVisitors}
-                  groupDetailLoading={groupDetailLoading}
+                  groupDetailLoading={isVisitorLoading}
                   selectedVisitor={selectedVisitor}
                   setSelectedVisitor={setSelectedVisitor}
                   openGroup={openGroup}

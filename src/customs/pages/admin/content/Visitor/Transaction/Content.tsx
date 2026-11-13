@@ -194,9 +194,11 @@ const Content = () => {
     filters: appliedFilters,
   });
 
-  const { data: detailData, isLoading: groupDetailLoading } = useTransactionVisitorDetail(
+  const { data: detailData, isFetching: groupDetailLoading } = useTransactionVisitorDetail(
     selectedGroupId as string,
   );
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+  const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
 
   const getVisitorStatus = (visitor: any) => {
     const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -216,20 +218,20 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (detailData?.collection) {
-      const visitors = detailData.collection.map((visitor: any) => ({
-        ...visitor,
-        visitor_status: getVisitorStatus(visitor),
-      }));
+    if (!selectedGroupId || groupDetailLoading) return;
 
-      setGroupVisitors(visitors);
-    } else {
-      setGroupVisitors([]);
-    }
-  }, [detailData]);
+    const visitors = (detailData?.collection ?? []).map((visitor: any) => ({
+      ...visitor,
+      visitor_status: getVisitorStatus(visitor),
+    }));
+
+    setGroupVisitors(visitors);
+    setLoadedGroupId(selectedGroupId);
+  }, [detailData, selectedGroupId, groupDetailLoading]);
+
+  const isVisitorLoading = groupDetailLoading || loadedGroupId !== selectedGroupId;
 
   const groupHeader = detailData?.collection?.[0] ?? null;
-  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const getTransactionStatus = (item: any) => {
     const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -743,7 +745,7 @@ const Content = () => {
               setOpenGroup={setOpenGroup}
               groupHeader={groupHeader}
               groupVisitors={groupVisitors}
-              groupDetailLoading={groupDetailLoading}
+              groupDetailLoading={isVisitorLoading}
               exportVisitorPdf={exportVisitorPdf}
               exportVisitorExcel={exportVisitorExcel}
               t={t}
