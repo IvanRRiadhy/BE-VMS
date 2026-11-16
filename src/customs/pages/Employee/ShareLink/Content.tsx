@@ -21,7 +21,6 @@ import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import CreateLinkDialog from './components/CreateLinkDialog';
 
 const Content = () => {
-  // const [page, setPage] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');

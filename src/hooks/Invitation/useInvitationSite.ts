@@ -40,7 +40,7 @@ import { getInvitationSite } from 'src/customs/api/Admin/InvitationData';
 
 const useInvitationSite = () => {
   const {
-    data: sites= [],
+    data: sites = [],
     isPending: loading,
     isError,
     error,

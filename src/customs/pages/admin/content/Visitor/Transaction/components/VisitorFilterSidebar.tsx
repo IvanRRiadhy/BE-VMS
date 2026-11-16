@@ -59,10 +59,13 @@ const VisitorFilterSidebar = ({
   const [search, setSearch] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [sort_column, setSortColumn] = useState<string>('created_at');
+  const debouncedVisitorTypeSearch = useDebounce(search, 500);
 
   const { visitorType: invitationVisitorType = [], isLoading: isLoadingInvitation } =
     useInvitationVisitorType(
-      {},
+      {
+        'search[value]': debouncedVisitorTypeSearch,
+      },
       {
         enabled: !isAdmin,
       },
@@ -74,7 +77,7 @@ const VisitorFilterSidebar = ({
       rowsPerPage,
       sortDir,
       sort_column,
-      search,
+      search: debouncedVisitorTypeSearch,
     },
     isAdmin,
   );
@@ -393,6 +396,24 @@ const VisitorFilterSidebar = ({
         <Typography fontSize={14} fontWeight={700} mb={1}>
           Visitor Type
         </Typography>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search visitor type..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          sx={{ mb: 1 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} />
+              </InputAdornment>
+            ),
+          }}
+        />
         {isLoadingVisitor
           ? Array.from({ length: 5 }).map((_, index) => (
               <Box

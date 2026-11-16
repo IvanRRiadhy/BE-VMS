@@ -293,7 +293,6 @@ const Login = () => {
 
       const res = await AuthVisitor({ code });
 
-
       const status = res?.status;
 
       if (status === 'process') {
@@ -571,8 +570,10 @@ const Login = () => {
                   <Box sx={{ width: '100%', mb: 1.5, mt: 3 }}>
                     <FormControl fullWidth size="medium">
                       <Select
-                        value={tab}
-                        onChange={(e) => setTab(e.target.value)}
+                        value={employeeRole}
+                        onChange={(e) => {
+                          setEmployeeRole(e.target.value);
+                        }}
                         fullWidth
                         sx={{
                           minHeight: 55,

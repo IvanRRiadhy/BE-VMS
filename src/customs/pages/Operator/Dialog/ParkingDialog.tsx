@@ -33,7 +33,10 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/id';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.locale('id');
@@ -52,9 +55,11 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
   container = undefined,
   visitorType,
 }) => {
+  const today = dayjs().format('YYYY-MM-DD');
+
   const [filter, setFilter] = useState({
-    start_date: '',
-    end_date: '',
+    start_date: today,
+    end_date: today,
     vehicleType: '',
     visitorType: '',
   });
@@ -333,21 +338,63 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
 
             <Stack spacing={2}>
               {/* Today */}
-              <TextField
-                label="Start Date"
-                type="date"
-                value={filter.start_date}
-                onChange={(e) => setFilter({ ...filter, start_date: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
 
-              <TextField
-                label="End Date"
-                type="date"
-                value={filter.end_date}
-                onChange={(e) => setFilter({ ...filter, end_date: e.target.value })}
-                InputLabelProps={{ shrink: true }}
-              />
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Start Date</CustomFormLabel>
+
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    value={filter.start_date ? dayjs(filter.start_date) : null}
+                    onChange={(value) => {
+                      const date = value?.isValid() ? value.format('YYYY-MM-DD') : '';
+
+                      setFilter((prev) => ({
+                        ...prev,
+                        start_date: date,
+                        end_date:
+                          date &&
+                          prev.end_date &&
+                          dayjs.utc(date).isAfter(dayjs.utc(prev.end_date), 'day')
+                            ? date
+                            : prev.end_date,
+                      }));
+                    }}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        placeholder: 'DD/MM/YYYY',
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Box>
+
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>End Date</CustomFormLabel>
+
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    value={filter.end_date ? dayjs(filter.end_date) : null}
+                    minDate={filter.start_date ? dayjs(filter.start_date) : undefined}
+                    onChange={(value) => {
+                      setFilter((prev) => ({
+                        ...prev,
+                        end_date: value?.isValid() ? value.format('YYYY-MM-DD') : '',
+                      }));
+                    }}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        placeholder: 'DD/MM/YYYY',
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </Box>
 
               <TextField
                 label="Vehicle Type"

@@ -29,14 +29,8 @@ import {
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { IconLink, IconLogout, IconUserPlus } from '@tabler/icons-react';
-import Praregist from './Praregist';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
-import {
-  getInvitationSite,
-  getInvitationVisitorEmployee,
-  getInvitationVisitorType,
-} from 'src/customs/api/Admin/InvitationData';
 import { getShareLinkById } from 'src/customs/api/Admin/ShareLink';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CreateLinkDialog from '../ShareLink/components/CreateLinkDialog';
@@ -68,12 +62,12 @@ import PreRegistrationDialog from './components/PraRegistrationDialog';
 import FilterTransaction from './components/FilterMoreContent';
 import InvitationVisitorDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationVisitorDialog';
 import ExtendVisitDialog from '../../Operator/Dialog/ExtendVisitDialog';
-import { extendPeriodOperator } from 'src/customs/api/operator';
 import VisitorFilterSidebar from '../../admin/content/Visitor/Transaction/components/VisitorFilterSidebar';
 import VisitorDetailDialog from '../../admin/content/Visitor/Transaction/components/VisitorDetailDialog';
 import { IconLogin } from '@tabler/icons-react';
 import HistoryApprovalDialog from '../../admin/content/Visitor/Transaction/components/HistoryApprovalDialog';
 import { useDetailShareLink } from 'src/hooks/Visitor/useShareLinkPagination';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 
 type Group = {
   id: string;
@@ -459,7 +453,7 @@ const Content = () => {
   };
 
   const [vtLoading, setVtLoading] = useState(false);
-  const [sites, setSites] = useState<any[]>([]);
+  // const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
   const debounceSearch = useDebounce(searchHost, 400);
   const { data: allVisitorEmployee = [], isLoading: isLoadingEmployee } =
@@ -469,25 +463,17 @@ const Content = () => {
       length: 10,
     });
 
-  // const { visitorType } = useInvitationVisitorType();
-  const { visitorType, loading, isFetching } = useInvitationVisitorType({
+  const {
+    visitorType,
+    isLoading: isLoadingVisitorType,
+    isFetching,
+  } = useInvitationVisitorType({
     start: 0,
     length: 10,
   });
   const { deleteMutation, createMutation, sendEmailMutation } = useShareLinkMutation();
 
-  useEffect(() => {
-    const fetchSites = async () => {
-      try {
-        const result = await getInvitationSite();
-        setSites(result?.collection ?? []);
-      } catch (error) {
-        setSites([]);
-      }
-    };
-
-    fetchSites();
-  }, []);
+  const { sites, loading: isLoadingSites } = useInvitationSite();
 
   const handleDeleteLink = async (id: string) => {
     try {
