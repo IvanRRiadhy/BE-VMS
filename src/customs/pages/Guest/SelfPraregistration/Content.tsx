@@ -150,8 +150,8 @@ export default function InvitationShare() {
           end_date: endDate,
         });
 
-        // setAvailableVisitorSlot(res.collection?.total_available_visitor_slot ?? 0);
-        setAvailableVisitorSlot(0);
+        setAvailableVisitorSlot(res.collection?.total_available_visitor_slot ?? 0);
+        // setAvailableVisitorSlot(0);
       } catch (error) {
         console.error('Error fetching parking availability:', error);
         setAvailableVisitorSlot(null);
