@@ -102,6 +102,8 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import EditVisitorDialog from './Dialog/EditVisitorDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
 import InvitationQrDialog from './Dialog/InvitationQrDialog';
+import { useInvitationAccessControl } from 'src/hooks/Invitation/useInvitationAccessControl';
+import ExtendAccessCardDialog from './Components/ExtendAccessCardDialog';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -223,6 +225,7 @@ const OperatorView = () => {
   const { printData } = usePrintBadgeConfig();
   const { permission, loading: loadingPermission } = useDataPermission();
   const { permissionAccess } = usePermissionOperator();
+
   const { availableCards, setAvailableCards } = useAvailableCardOperator();
   const { visitorType } = useInvitationVisitorType();
   const { employee } = useInvitationHost();
@@ -3291,6 +3294,30 @@ const OperatorView = () => {
     }
   };
 
+
+  const {
+    data: invitationAccessControl,
+    isLoading: isLoadingAccess,
+    refetch,
+  } = useInvitationAccessControl();
+
+  const accessControls = invitationAccessControl?.collection ?? [];
+ const [openExtendDialog, setOpenExtendDialog] = useState(false);
+ const [selectedExtendCard, setSelectedExtendCard] = useState<any>(null);
+ const [selectedExtendVisitor, setSelectedExtendVisitor] = useState<any>(null);
+
+ const handleOpenExtendAccess = (card: any, visitor: any) => {
+   setSelectedExtendCard(card);
+   setSelectedExtendVisitor(visitor);
+   setOpenExtendDialog(true);
+ };
+
+ const handleCloseExtendAccess = () => {
+   setOpenExtendDialog(false);
+   setSelectedExtendCard(null);
+   setSelectedExtendVisitor(null);
+ };
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3397,6 +3424,7 @@ const OperatorView = () => {
                   handleChooseCard={handleChooseCard}
                   handleConfirmStatus={handleConfirmStatus}
                   handleView={handleView}
+                  onExtendAccess={handleOpenExtendAccess}
                 />
               </Grid>
 
@@ -3527,6 +3555,18 @@ const OperatorView = () => {
             </Grid>
           </Grid>
         </Box>
+
+        {/* Extend Access */}
+        <ExtendAccessCardDialog
+          open={openExtendDialog}
+          onClose={() => setOpenExtendDialog(false)}
+          visitor={activeVisitor}
+          card={selectedExtendCard}
+          registeredSiteId={registerSiteOperator}
+          accessControls={accessControls}
+          isLoadingAccess={isLoadingAccess}
+          // onSuccess={onExtendAccessSuccess}
+        />
 
         {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}
         <InvitationQrDialog

@@ -118,6 +118,7 @@ const DashboardEmployee = () => {
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
   };
+  const [summaryRefreshKey, setSummaryRefreshKey] = useState(0);
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const { approveMutation, rejectMutation, approveMeetingHostMutation } = useApprovalMutation();
   const { data: profile } = useProfile();
@@ -302,36 +303,33 @@ const DashboardEmployee = () => {
     action: 'Approve' | 'Reject',
     isFinal = false,
   ) => {
+    if (action === 'Reject' || isFinal) {
+      const confirm = await Swal.fire({
+        title: isFinal ? 'Final Approval' : 'Approval',
+        text: isFinal
+          ? 'Do you want to approve this final approval?'
+          : 'Do you want to reject this approval?',
+        icon: 'warning',
+        reverseButtons: true,
+        showCancelButton: true,
+        confirmButtonText: isFinal ? 'Yes' : 'Yes',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: isFinal ? '#2e7d32' : '#f44336',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+    }
+
     try {
       setIsGenerating(true);
-      if (action === 'Reject' || isFinal) {
-        const confirm = await Swal.fire({
-          title: isFinal ? 'Final Approval' : 'Approval',
-          text: isFinal
-            ? 'Do you want to approve this final approval?'
-            : 'Do you want to reject this approval?',
-          icon: 'warning',
-          reverseButtons: true,
-          showCancelButton: true,
-          confirmButtonText: isFinal ? 'Yes' : 'Yes',
-          cancelButtonText: 'Cancel',
-          confirmButtonColor: isFinal ? '#2e7d32' : '#f44336',
-          customClass: {
-            title: 'swal2-title-custom',
-            htmlContainer: 'swal2-text-custom',
-          },
-        });
-
-        if (!confirm.isConfirmed) return;
-      }
-
-      // if (action === 'Approve') await approveTicket(id);
-      // if (action === 'Reject') await rejectTicket(id);
       if (action === 'Approve') await approveMutation.mutateAsync(id);
       if (action === 'Reject') await rejectMutation.mutateAsync(id);
-
-      showSwal('success', `Successfully. ${action === 'Approve' ? 'approved' : 'reject'} `);
-
+      setSummaryRefreshKey((prev) => prev + 1);
+      showSwal('success', `Successfully ${action === 'Approve' ? 'approved' : 'reject'} approval.`);
       setOpenDialog(false);
     } catch (error: any) {
       showSwal('error', error.response.data.msg || 'Failed action approval.');
@@ -696,7 +694,7 @@ const DashboardEmployee = () => {
             minHeight: 0,
           }}
         >
-          <TopCards items={CardItems} />
+          <TopCards items={CardItems} refreshKey={summaryRefreshKey} />
         </Grid>
 
         <VisitorInvitationActions

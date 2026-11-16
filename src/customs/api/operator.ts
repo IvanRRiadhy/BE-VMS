@@ -472,3 +472,27 @@ export const exportOperatorVehicleCount = async (params?: OperatorVehicleCountPa
 
   return response.data;
 };
+
+// extend access card
+export const extendAccessCard = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/operator-invitation/extend/access-card', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Revoke access card
+export const revokeAccessCard = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/operator-invitation/revoke/access-card', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

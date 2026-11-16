@@ -1660,7 +1660,7 @@ const TableRowItem = React.memo(
                   </Tooltip>
 
                   {/* 🗑 Delete */}
-                  <Tooltip title="Delete" arrow>
+                  {/* <Tooltip title="Delete" arrow>
                     <IconButton
                       onClick={() => onDelete?.(row)}
                       disableRipple
@@ -1679,7 +1679,7 @@ const TableRowItem = React.memo(
                     >
                       <IconTrash width={14} height={14} />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip> */}
                 </>
               ) : isHaveDuplicate ? (
                 <Box

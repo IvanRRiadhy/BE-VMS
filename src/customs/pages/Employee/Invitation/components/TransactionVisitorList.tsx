@@ -13,6 +13,7 @@ import { IconCalendarEvent, IconCalendarTime, IconPlus, IconRefresh } from '@tab
 import { IconFilterFilled } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import TransactionSearch from './ui/TransactionSearch';
 
 type TransactionVisitorListProps = {
   mdUp: boolean;
@@ -92,28 +93,7 @@ const TransactionVisitorList = ({
         </Tooltip>
       </Box>
 
-      <CustomTextField
-        fullWidth
-        size="small"
-        placeholder="Search Transaction"
-        value={searchAgenda}
-        onChange={(e) => setSearchAgenda(e.target.value)}
-        sx={{ mb: 2 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <IconSearch color="gray" size={18} />
-            </InputAdornment>
-          ),
-          // endAdornment: (
-          //   <InputAdornment position="end">
-          //     <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-          //       <IconFilterFilled size={18} />
-          //     </IconButton>
-          //   </InputAdornment>
-          // ),
-        }}
-      />
+      <TransactionSearch onSearch={setSearchAgenda} />
 
       {loading
         ? Array.from({ length: 10 }).map((_, i) => (

@@ -28,6 +28,8 @@ import timezone from 'dayjs/plugin/timezone';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useVisitorTypePagination } from 'src/hooks/VisitorType/useVisitorTypePagination';
+import { getSummaryCount } from 'src/customs/api/Admin/Dashboard';
+import { useQuery } from '@tanstack/react-query';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -39,6 +41,7 @@ interface VisitorFilterSidebarProps {
   setFilters?: React.Dispatch<React.SetStateAction<any>>;
   onDateRangeChange?: any;
   onVisitorTypeChange?: (id: string) => void;
+  totalFilteredRecords?: any;
 }
 
 const VisitorFilterSidebar = ({
@@ -49,6 +52,7 @@ const VisitorFilterSidebar = ({
   setFilters,
   onDateRangeChange,
   onVisitorTypeChange,
+  totalFilteredRecords,
 }: VisitorFilterSidebarProps) => {
   const [searchEmployee, setSearchEmployee] = useState('');
   const { data: profile } = useProfile();
@@ -180,6 +184,57 @@ const VisitorFilterSidebar = ({
     );
   };
 
+  const today = dayjs().format('YYYY-MM-DD');
+
+  const userTimezone = dayjs.tz.guess() || 'Asia/Jakarta';
+
+  const startDateUtc = filters?.start_date
+    ? dayjs.tz(filters.start_date, userTimezone).startOf('day').utc().toISOString()
+    : dayjs().tz(userTimezone).startOf('day').utc().toISOString();
+
+  const endDateUtc = filters?.end_date
+    ? dayjs.tz(filters.end_date, userTimezone).endOf('day').utc().toISOString()
+    : dayjs().tz(userTimezone).endOf('day').utc().toISOString();
+
+  const { data: summaryResponse, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ['summary-count', startDateUtc, endDateUtc],
+    queryFn: () => getSummaryCount(startDateUtc, endDateUtc),
+    enabled: Boolean(startDateUtc && endDateUtc),
+  });
+
+  const summary = summaryResponse?.collection;
+  const quickFilters = [
+    {
+      label: 'All Transactions',
+      count: totalFilteredRecords, // Tunggu field total_transactions dari API
+      key: 'all',
+    },
+    // {
+    //   label: 'Today',
+    //   count: summary?.invite ?? 0,
+    //   key: 'today',
+    // },
+    {
+      label: 'Check In',
+      count: summary?.active_checkin ?? 0,
+      key: 'checkin',
+    },
+    {
+      label: 'Check Out',
+      count: summary?.active_checkout ?? 0,
+      key: 'checkout',
+    },
+    // {
+    //   label: 'Waiting',
+    //   count: summary?.pending ?? 0,
+    //   key: 'waiting',
+    // },
+    // {
+    //   label: 'Available',
+    //   count: summary?.active ?? 0,
+    //   key: 'available',
+    // },
+  ];
   return (
     <Box
       sx={{
@@ -273,20 +328,16 @@ const VisitorFilterSidebar = ({
       {/* Quick Filters */}
       <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>
-          Quick Filters
+          Transaction Overview
+      
         </Typography>
 
-        {[
-          { label: 'All Transactions', count: 0 },
-          { label: 'Today', count: 0 },
-          { label: 'Check In', count: 0 },
-          { label: 'Check Out', count: 0 },
-          { label: 'Waiting', count: 0 },
-          { label: 'Available', count: 0 },
-        ].map((item, index) => (
+        {quickFilters.map((item, index) => (
           <Box
-            key={item.label}
-            onClick={() => console.log(item.label)}
+            key={item.key}
+            onClick={() => {
+              console.log('Selected quick filter:', item.key);
+            }}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -303,8 +354,9 @@ const VisitorFilterSidebar = ({
             }}
           >
             <Typography fontSize={13}>{item.label}</Typography>
+
             <Typography fontSize={12} color="text.secondary">
-              {item.count}
+              {isLoadingSummary ? '...' : item.count}
             </Typography>
           </Box>
         ))}

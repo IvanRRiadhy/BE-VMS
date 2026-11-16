@@ -15,6 +15,7 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import ApiKeyRevealDialog from './components/ApiKeyRevealDialog';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -175,41 +176,49 @@ const ThirdPartyIntegration = () => {
     removeApiKey.isPending ||
     generateApiKey.isPending;
 
-  const handleRevealApiKey = async (id: string) => {
-    if (visibleApiKeys[id]) {
-      return;
-    }
+  // const handleRevealApiKey = async (id: string) => {
+  //   if (visibleApiKeys[id]) {
+  //     return;
+  //   }
 
-    try {
-      setLoadingApiKeys((prev) => ({
-        ...prev,
-        [id]: true,
-      }));
+  //   try {
+  //     setLoadingApiKeys((prev) => ({
+  //       ...prev,
+  //       [id]: true,
+  //     }));
 
-      const response = await getRevealById(id);
+  //     const response = await getRevealById(id);
 
-      const apiKey = response?.collection?.api_key ?? response?.api_key;
+  //     const apiKey = response?.collection?.api_key ?? response?.api_key;
 
-      if (!apiKey) {
-        showSwal('error', 'API Key not found');
-        return;
-      }
+  //     if (!apiKey) {
+  //       showSwal('error', 'API Key not found');
+  //       return;
+  //     }
 
-      setVisibleApiKeys((prev) => ({
-        ...prev,
-        [id]: apiKey,
-      }));
-    } catch (error: any) {
-      showSwal(
-        'error',
-        error?.response?.data?.message || error?.response?.data?.msg || 'Failed to reveal API Key',
-      );
-    } finally {
-      setLoadingApiKeys((prev) => ({
-        ...prev,
-        [id]: false,
-      }));
-    }
+  //     setVisibleApiKeys((prev) => ({
+  //       ...prev,
+  //       [id]: apiKey,
+  //     }));
+  //   } catch (error: any) {
+  //     showSwal(
+  //       'error',
+  //       error?.response?.data?.message || error?.response?.data?.msg || 'Failed to reveal API Key',
+  //     );
+  //   } finally {
+  //     setLoadingApiKeys((prev) => ({
+  //       ...prev,
+  //       [id]: false,
+  //     }));
+  //   }
+  // };
+
+  const [revealDialogOpen, setRevealDialogOpen] = useState(false);
+  const [revealApiKeyId, setRevealApiKeyId] = useState<string | null>(null);
+
+  const handleRevealApiKey = (id: string) => {
+    setRevealApiKeyId(id);
+    setRevealDialogOpen(true);
   };
 
   const handleHideApiKey = (id: string) => {
@@ -277,14 +286,14 @@ const ThirdPartyIntegration = () => {
         isHaveSearch
         isHavePagination
         isHaveChecked
-        isHaveAddData
+        isHaveAddData={false}
         isHaveAction
         currentPage={page}
         isHaveActive
         defaultRowsPerPage={rowsPerPage}
         onActiveToggle={handleActiveToggle}
         selectedRows={selectedRows}
-        searchPlaceholder="Search Api Key"
+        searchPlaceholder={t('search') + ' Api Key'}
         onCheckedChange={(selected) => setSelectedRows(selected)}
         rowsPerPageOptions={[10, 50, 100]}
         onPaginationChange={(page, rowsPerPage) => {
@@ -307,7 +316,7 @@ const ThirdPartyIntegration = () => {
         onGenerateApiKey={(row: any) => handleGenerateApiKey(row.id)}
         onBatchDelete={handleBatchDelete}
         isHaveAddEmpty={true}
-        addDataText="Add Api Key"
+        addDataText={t('add') + ' Api Key'}
         onAddEmpty={handleAdd}
       />
 
@@ -317,6 +326,15 @@ const ThirdPartyIntegration = () => {
         initialData={initialData}
         onClose={handleCloseDialog}
         onSubmit={handleSubmit}
+      />
+
+      <ApiKeyRevealDialog
+        open={revealDialogOpen}
+        id={revealApiKeyId}
+        onClose={() => {
+          setRevealDialogOpen(false);
+          setRevealApiKeyId(null);
+        }}
       />
 
       <GlobalBackdropLoading open={isMutating} />

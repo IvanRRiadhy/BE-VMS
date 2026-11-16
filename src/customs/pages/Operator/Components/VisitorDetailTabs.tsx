@@ -37,6 +37,7 @@ import {
   IconCheck,
   IconRefresh,
   IconEye,
+  IconKey,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
@@ -47,6 +48,7 @@ interface Props {
   tabValue: number;
   onTabChange: (value: number) => void;
   onOpenRelatedVisitors?: any;
+  onExtendAccess?: (card: any, visitor: any) => void;
 }
 
 const VisitorDetailTabs: React.FC<Props> = ({
@@ -56,6 +58,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
   tabValue,
   onTabChange,
   onOpenRelatedVisitors,
+  onExtendAccess,
 }) => {
   // const [tabValue, setTabValue] = useState(0);
   // const data = invitationCode?.[0];
@@ -758,6 +761,18 @@ const VisitorDetailTabs: React.FC<Props> = ({
                           <Typography fontWeight={600}>{formatDateTime(card.issued_at)}</Typography>
                         </Box>
                       </Stack>
+                    )}
+                    {card.current_used && (
+                      <Box sx={{ mt: 2 }}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          startIcon={<IconKey size={18} />}
+                          onClick={() => onExtendAccess?.(card, activeVisitor)}
+                        >
+                          Extend Access
+                        </Button>
+                      </Box>
                     )}
                   </Paper>
                 </Grid>

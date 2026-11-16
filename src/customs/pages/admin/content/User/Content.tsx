@@ -26,6 +26,7 @@ import {
   getLinkAccountParking,
   getLinkAccountTracking,
   unassignAccount,
+  updateUserActive,
 } from 'src/customs/api/Admin/User';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import { useOrganization } from 'src/hooks/Organization/useOrganization';
@@ -59,7 +60,7 @@ const Content = () => {
   const { organizations } = useOrganization();
   const queryClient = useQueryClient();
   // const { data, isLoading } = useUsers();
-  const { deleteMutation: deleteUser } = useUsersMutation();
+  const { deleteMutation: deleteUser, updateActiveMutation } = useUsersMutation();
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(undefined);
 
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -84,6 +85,7 @@ const Content = () => {
         // group_name: item.group_name,
         description: item.description || '',
         employee_linked: item.employee_linked,
+        active: item.is_active || false,
       })),
     [users],
   );
@@ -438,6 +440,18 @@ const Content = () => {
     ];
   }, [userRoleData]);
 
+  const handleActiveToggle = async (row: any, checked: boolean) => {
+    try {
+      await updateActiveMutation.mutateAsync({
+        id: row.id,
+        is_active: checked,
+      });
+
+      showSwal('success', t('updatedSuccess', { name: 'User' }));
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
+    }
+  };
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -489,6 +503,9 @@ const Content = () => {
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
                 isHaveRole={true}
+                // isHaveBooleanSwitch={true}
+                isHaveActive
+                onActiveToggle={handleActiveToggle}
                 onBatchDelete={handleBatchDelete}
                 onAddData={handleAdd}
                 isHaveAddEmpty={true}

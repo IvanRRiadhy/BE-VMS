@@ -8,9 +8,10 @@ import { getSummaryCount } from 'src/customs/api/Admin/Dashboard';
 interface TopCardProps {
   items?: any[];
   size?: any;
+  refreshKey?: any;
 }
 
-const TopCard = ({ items = [], size }: TopCardProps) => {
+const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
   const { t } = useTranslation();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
@@ -52,7 +53,7 @@ const TopCard = ({ items = [], size }: TopCardProps) => {
     };
 
     fetchSummary();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, refreshKey]);
 
   const getColorByKey = (key: string) => {
     switch (key.toLowerCase()) {

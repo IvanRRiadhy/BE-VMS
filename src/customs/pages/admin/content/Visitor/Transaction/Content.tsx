@@ -194,9 +194,11 @@ const Content = () => {
     filters: appliedFilters,
   });
 
-  const { data: detailData, isFetching: groupDetailLoading } = useTransactionVisitorDetail(
-    selectedGroupId as string,
-  );
+  const {
+    data: detailData,
+    isFetching: groupDetailLoading,
+    refetch: refetchDetail,
+  } = useTransactionVisitorDetail(selectedGroupId as string);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
 
@@ -282,20 +284,20 @@ const Content = () => {
       color: 'none',
     },
 
-    {
-      title: 'Check In',
-      icon: IconLogin,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Check Out',
-      icon: IconLogout,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
+    // {
+    //   title: 'Check In',
+    //   icon: IconLogin,
+    //   subTitle: `0`,
+    //   subTitleSetting: 10,
+    //   color: 'none',
+    // },
+    // {
+    //   title: 'Check Out',
+    //   icon: IconLogout,
+    //   subTitle: `0`,
+    //   subTitleSetting: 10,
+    //   color: 'none',
+    // },
     // {
     //   title: 'Scan QR ' + t('navigation.visitor'),
     //   icon: IconQrcode,
@@ -667,15 +669,15 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 3) {
+                  if (index === 1) {
                     handleAddInvitation();
-                  } else if (index === 4) {
+                  } else if (index === 2) {
                     setOpenCreateLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 2.4 }}
+                size={{ xs: 12, lg: 4 }}
               />
             </Grid>
           </Grid>
@@ -716,6 +718,7 @@ const Content = () => {
                 setSelectedGroupId(null);
                 setGroupVisitors([]);
               }}
+              totalFilteredRecords={totalFilteredRecords}
             />
 
             <TransactionVisitorList

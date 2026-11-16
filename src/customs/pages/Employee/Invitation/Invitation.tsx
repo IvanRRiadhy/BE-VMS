@@ -182,7 +182,7 @@ const Content = () => {
   const [sortDir, setSortDir] = useState<string>('desc');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [searchAgenda, setSearchAgenda] = useState('');
-  const debouncedSearchAgenda = useDebounce(searchAgenda, 500);
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 300);
   const [openGroup, setOpenGroup] = useState(true);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const [historyApprovalOpen, setHistoryApprovalOpen] = useState(false);
@@ -346,20 +346,20 @@ const Content = () => {
       subTitle: `${totalFilteredRecords}`,
       color: 'none',
     },
-    {
-      title: 'Check In',
-      icon: IconLogin,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Check Out',
-      icon: IconLogout,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
+    // {
+    //   title: 'Check In',
+    //   icon: IconLogin,
+    //   subTitle: `0`,
+    //   subTitleSetting: 10,
+    //   color: 'none',
+    // },
+    // {
+    //   title: 'Check Out',
+    //   icon: IconLogout,
+    //   subTitle: `0`,
+    //   subTitleSetting: 10,
+    //   color: 'none',
+    // },
     {
       title: t('add') + ' Invitation',
       icon: IconUserPlus,
@@ -632,14 +632,16 @@ const Content = () => {
   //   setQuickSearch(keyword);
   // }, []);
 
-  const filteredVisitors = tableRowVisitors.filter((item) => {
-    const keyword = searchAgenda.trim().toLowerCase();
+  // const filteredVisitors = tableRowVisitors.filter((item) => {
+  //   const keyword = searchAgenda.trim().toLowerCase();
 
-    return (
-      item.agenda?.toLowerCase().includes(keyword) ||
-      item.host_name?.toLowerCase().includes(keyword)
-    );
-  });
+  //   return (
+  //     item.agenda?.toLowerCase().includes(keyword) ||
+  //     item.host_name?.toLowerCase().includes(keyword)
+  //   );
+  // });
+
+  const filteredVisitors = tableRowVisitors;
 
   const { cancelMutation, removeMutation } = useTransactionVisitorMutation();
 
@@ -867,7 +869,7 @@ const Content = () => {
                     // }else {
                   }
                 }}
-                size={{ xs: 12, lg: 2.4 }}
+                size={{ xs: 12, lg: 4 }}
               />
             </Grid>
             <Box
@@ -904,6 +906,7 @@ const Content = () => {
                   setSelectedGroupId(null);
                   setGroupVisitors([]);
                 }}
+                totalFilteredRecords={totalFilteredRecords}
               />
 
               <TransactionVisitorList

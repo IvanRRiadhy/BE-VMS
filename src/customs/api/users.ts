@@ -29,12 +29,12 @@ export const login = async (
       headers['X-Captcha-Id'] = captchaId || ''; //id dari captcha id
       headers['X-Captcha-Answer'] = captchaAnswer || ''; // answer dari captcha
       headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
-      headers['X-Employee-Role'] = employeeRole || '';
+      // headers['X-Employee-Role'] = employeeRole || '';
     } else {
       headers['X-Bypass-Captcha'] =
         '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
       headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
-      headers['X-Employee-Role'] = employeeRole || '';
+      // headers['X-Employee-Role'] = employeeRole || '';
     }
 
     const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
@@ -47,6 +47,40 @@ export const login = async (
   }
 };
 
+export const loginSatker = async (
+  body: LoginRequest,
+  captchaId?: string,
+  captchaAnswer?: string,
+  employeeRole?: string,
+): Promise<any> => {
+  try {
+    const config = getConfig();
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (config.ENABLE_CAPTCHA) {
+      headers['X-Captcha-Id'] = captchaId || ''; //id dari captcha id
+      headers['X-Captcha-Answer'] = captchaAnswer || ''; // answer dari captcha
+      headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
+      headers['X-Employee-Role'] = employeeRole || ''; //Employee Role
+    } else {
+      headers['X-Bypass-Captcha'] =
+        '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+      headers['X-Platform-Id'] = 'web'; // platform, mobileapps,tableoperator,kiosk,web
+      headers['X-Employee-Role'] = employeeRole || '';
+    }
+
+    const response = await axiosInstance.post<any>(`/_Auth/RequestToken/satker`, body, {
+      headers,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 // export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
 //   try {
 //     const response = await axiosInstance.post<RefreshTokenResponse>(`/_Auth/RefreshToken`, body, {

@@ -369,14 +369,14 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   //   href: '/admin/sso',
   //   color: '#FFFFFF',
   // },
-  {
-    id: uniqueId(),
-    title: 'evacuate',
-    icon: IconRun,
-    href: '/admin/evacuate',
-    backgroundColor: '#D32F2F',
-    color: '#FFFFFF',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'evacuate',
+  //   icon: IconRun,
+  //   href: '/admin/evacuate',
+  //   backgroundColor: '#D32F2F',
+  //   color: '#FFFFFF',
+  // },
 
   // {
   //   id: uniqueId(),
@@ -1392,7 +1392,27 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
     title: 'Dashboard',
     icon: IconHome,
     href: '/security-monitor/dashboard',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconHome,
+        href: '/security-monitor/dashboard',
+      },
+      {
+        id: uniqueId(),
+        title: 'Insight',
+        icon: IconEye,
+        href: '/security-monitor/insight',
+      },
+    ],
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Dashboard',
+  //   icon: IconHome,
+  //   href: '/security-monitor/dashboard',
+  // },
   {
     id: uniqueId(),
     title: 'Monitoring',

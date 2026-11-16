@@ -366,6 +366,8 @@ const Router = [
                 ],
               },
 
+              // auth login satker, user
+
               { path: '/auth/register', element: <Register /> },
               { path: '/auth/expired', element: <ExpiredPage /> },
               { path: '/auth/limited', element: <LimitedInvitation /> },
@@ -422,8 +424,9 @@ const Router = [
             path: '/security-monitor',
             element: <SecurityMonitorLayout />,
             children: [
-              { index: true, element: <DashboardInsightSecurityMonitor /> },
-              { path: 'dashboard', element: <DashboardInsightSecurityMonitor /> },
+              { index: true, element: <DashboardSecurityMonitor /> },
+              { path: 'dashboard', element: <DashboardSecurityMonitor /> },
+              { path: 'insight', element: <DashboardInsightSecurityMonitor /> },
               {
                 path: 'report/transaction-log',
                 element: <ManageReportTransactionSecurityMonitor />,

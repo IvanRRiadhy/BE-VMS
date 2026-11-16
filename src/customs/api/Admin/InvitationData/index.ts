@@ -17,10 +17,7 @@ export const getInvitationAccessControl = async (): Promise<any> => {
     const response = await axiosInstance.get('/invitation-ac');
     return response.data;
   } catch (error: any) {
-    // if (error.response?.status === 404) {
-    //   return { collection: [] };
-    // }
-    // throw error;
+    throw error;
   }
 };
 
@@ -96,16 +93,16 @@ export const getInvitationSiteParkingAvailable = async (
   params: ParkingAvailableParams,
 ): Promise<any> => {
   try {
-   const response = await axiosInstance.get('/invitation-site/parking/available', {
-     params: {
-       'site-id': params.site_id,
-       'visitor-type-id': params.visitor_type_id,
-       'start-date': params.start_date,
-       'end-date': params.end_date,
-     },
-   });
+    const response = await axiosInstance.get('/invitation-site/parking/available', {
+      params: {
+        'site-id': params.site_id,
+        'visitor-type-id': params.visitor_type_id,
+        'start-date': params.start_date,
+        'end-date': params.end_date,
+      },
+    });
 
-   return response.data;
+    return response.data;
   } catch (error: any) {
     throw error;
   }

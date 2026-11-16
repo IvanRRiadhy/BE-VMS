@@ -235,7 +235,7 @@ const Content = () => {
               <DynamicTable
                 // loading={isLoading}
                 overflowX="auto"
-                data={activities ?? []}
+                data={dummyTransactions ?? []}
                 isHavePagination={false}
                 isHaveSearch={false}
                 isHaveHeaderTitle

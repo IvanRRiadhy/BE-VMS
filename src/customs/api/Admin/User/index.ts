@@ -119,3 +119,13 @@ export const ssoAuth = async (
     throw error;
   }
 };
+
+// update user active
+export const updateUserActive = async (id: string, data: any) => {
+  try {
+    const response = await axiosInstance.put(`/user/${id}/active`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

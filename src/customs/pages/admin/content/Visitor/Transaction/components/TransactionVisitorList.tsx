@@ -19,6 +19,7 @@ import {
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconPlus } from '@tabler/icons-react';
 import { Stack } from '@mui/system';
+import TransactionSearch from 'src/customs/pages/Employee/Invitation/components/ui/TransactionSearch';
 
 interface TransactionVisitorListProps {
   mdUp: boolean;
@@ -102,28 +103,7 @@ const TransactionVisitorList = ({
         </Tooltip>
       </Box>
 
-      <CustomTextField
-        fullWidth
-        size="small"
-        placeholder="Search Transaction"
-        value={searchAgenda}
-        onChange={(e) => setSearchAgenda(e.target.value)}
-        sx={{ mb: 2 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <IconSearch fontSize="small" color="#9e9e9e" size={18} />
-            </InputAdornment>
-          ),
-          // endAdornment: (
-          //   <InputAdornment position="end">
-          //     <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
-          //       <IconFilterFilled size={18} />
-          //     </IconButton>
-          //   </InputAdornment>
-          // ),
-        }}
-      />
+      <TransactionSearch onSearch={setSearchAgenda} />
 
       <Box>
         {loading ? (
