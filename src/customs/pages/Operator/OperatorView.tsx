@@ -3565,7 +3565,6 @@ const OperatorView = () => {
           registeredSiteId={registerSiteOperator}
           accessControls={accessControls}
           isLoadingAccess={isLoadingAccess}
-          // onSuccess={onExtendAccessSuccess}
         />
 
         {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}

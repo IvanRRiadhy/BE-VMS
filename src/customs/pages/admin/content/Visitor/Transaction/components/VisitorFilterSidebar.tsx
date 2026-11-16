@@ -28,7 +28,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 import { useVisitorTypePagination } from 'src/hooks/VisitorType/useVisitorTypePagination';
-import { getSummaryCount } from 'src/customs/api/Admin/Dashboard';
+import { getSummaryCount, getSummaryCountVisitor } from 'src/customs/api/Admin/Dashboard';
 import { useQuery } from '@tanstack/react-query';
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -197,8 +197,11 @@ const VisitorFilterSidebar = ({
     : dayjs().tz(userTimezone).endOf('day').utc().toISOString();
 
   const { data: summaryResponse, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ['summary-count', startDateUtc, endDateUtc],
-    queryFn: () => getSummaryCount(startDateUtc, endDateUtc),
+    queryKey: ['summary-count', isAdmin, startDateUtc, endDateUtc],
+    queryFn: () =>
+      isAdmin
+        ? getSummaryCountVisitor(startDateUtc, endDateUtc)
+        : getSummaryCount(startDateUtc, endDateUtc),
     enabled: Boolean(startDateUtc && endDateUtc),
   });
 
@@ -329,7 +332,6 @@ const VisitorFilterSidebar = ({
       <Box sx={{ mb: 2 }}>
         <Typography fontSize={14} fontWeight={700} mb={1}>
           Transaction Overview
-      
         </Typography>
 
         {quickFilters.map((item, index) => (

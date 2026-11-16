@@ -485,10 +485,36 @@ export const extendAccessCard = async (data: any): Promise<any> => {
   }
 };
 
-// Revoke access card
+// Extend tracking card
+export const extendTrackingCard = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/operator-invitation/extend/tracking-card', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// revoke access card
 export const revokeAccessCard = async (data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post('/operator-invitation/revoke/access-card', data, {
+    const response = await axiosInstance.delete('/operator-invitation/revoke/access-card', {
+      data,
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// revoke tracking card
+export const revokeTrackingCard = async (data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete('/operator-invitation/revoke/tracking-card', {
+      data,
       headers: { Accept: 'application/json' },
     });
     return response.data;

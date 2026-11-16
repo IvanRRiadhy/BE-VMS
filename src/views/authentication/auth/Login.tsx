@@ -616,7 +616,16 @@ const Login = () => {
                       >
                         <IconShieldCheck size={34} color="#FFC247" />
                       </Box>
-
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 20,
+                          zIndex: 2,
+                        }}
+                      >
+                        <Language colorTxt="#fff" />
+                      </Box>
                       <Typography
                         variant="h3"
                         sx={{
@@ -627,7 +636,7 @@ const Login = () => {
                           letterSpacing: '-0.5px',
                         }}
                       >
-                        Selamat Datang
+                        {t('welcomeBack')}
                       </Typography>
 
                       <Typography
@@ -640,8 +649,7 @@ const Login = () => {
                           lineHeight: 1.8,
                         }}
                       >
-                        Pilih jenis akses untuk melanjutkan menu login ke <br /> Visitor Management
-                        System.
+                        {t('access_selection_description')}
                       </Typography>
 
                       <Box
@@ -741,8 +749,7 @@ const Login = () => {
                                   lineHeight: 1.7,
                                 }}
                               >
-                                Akses portal pengelolaan sistem sebagai super admin, admin dan
-                                operator.
+                                {t('admin_access_description')}
                               </Typography>
                             </Box>
 
@@ -857,7 +864,7 @@ const Login = () => {
                                   lineHeight: 1.7,
                                 }}
                               >
-                                Akses sistem menggunakan akun satuan kerja yang telah terdaftar.
+                                {t('organization_access_description')}
                               </Typography>
                             </Box>
 

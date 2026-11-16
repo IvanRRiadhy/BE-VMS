@@ -34,3 +34,22 @@ export const getSummaryCount = async (start_date: string, end_date: string): Pro
     throw error;
   }
 };
+
+export const getSummaryCountVisitor = async (
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  try {
+    const response = await axiosInstance.get('/dashboard/today/summary/count/visitor', {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching summary count:', error);
+    throw error;
+  }
+};
