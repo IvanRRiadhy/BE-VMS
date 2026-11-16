@@ -7,18 +7,24 @@ interface InvitationVisitorTypeParams {
   'search[value]'?: string;
 }
 
-const useInvitationVisitorType = (params: InvitationVisitorTypeParams = {}) => {
+const useInvitationVisitorType = (
+  params: InvitationVisitorTypeParams = {},
+  options?: {
+    enabled?: boolean;
+  },
+) => {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['invitation-visitor-type', params],
     queryFn: async () => {
       const res = await getInvitationVisitorType(params);
       return res?.collection ?? [];
     },
+    enabled: options?.enabled ?? true,
   });
 
   return {
     visitorType: data ?? [],
-    loading: isLoading,
+    isLoading,
     isFetching,
     error,
     refetch,

@@ -27,6 +27,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useOrganizationPagination } from 'src/hooks/Organization/useOrganizationPagination';
 import { useProfile } from 'src/hooks/Profile/useProfile';
+import { useVisitorTypePagination } from 'src/hooks/VisitorType/useVisitorTypePagination';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -49,18 +50,38 @@ const VisitorFilterSidebar = ({
   onDateRangeChange,
   onVisitorTypeChange,
 }: VisitorFilterSidebarProps) => {
-  const { visitorType = [] } = useInvitationVisitorType();
   const [searchEmployee, setSearchEmployee] = useState('');
   const { data: profile } = useProfile();
   const isAdmin = profile?.group_name === 'Admin';
   const debouncedSearch = useDebounce(searchEmployee, 500);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const [sort_column, setSortColumn] = useState<string>('created_at');
 
-  // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
-  //   search: debouncedSearch,
-  //   start: 0,
-  //   length: 10,
-  // });
+  const { visitorType: invitationVisitorType = [], isLoading: isLoadingInvitation } =
+    useInvitationVisitorType(
+      {},
+      {
+        enabled: !isAdmin,
+      },
+    );
 
+  const { data: visitorTypePagination, isLoading: isLoadingPagination } = useVisitorTypePagination(
+    {
+      page,
+      rowsPerPage,
+      sortDir,
+      sort_column,
+      search,
+    },
+    isAdmin,
+  );
+
+  const visitorType = isAdmin ? (visitorTypePagination?.collection ?? []) : invitationVisitorType;
+
+  const isLoadingVisitor = isAdmin ? isLoadingPagination : isLoadingInvitation;
   const { data: organization = [], isLoading } = useOrganizationPagination(
     {
       page: 0,
@@ -229,7 +250,7 @@ const VisitorFilterSidebar = ({
             <Button
               size="small"
               onClick={() => {
-                setFilters((prev: any) => ({
+                setFilters?.((prev: any) => ({
                   ...prev,
                   start_date: '',
                   end_date: '',
@@ -372,37 +393,56 @@ const VisitorFilterSidebar = ({
         <Typography fontSize={14} fontWeight={700} mb={1}>
           Visitor Type
         </Typography>
-
-        {visitorType.map((item: any) => (
-          <FormControlLabel
-            key={item.id}
-            sx={{
-              m: 0,
-              display: 'flex',
-              '& .MuiFormControlLabel-label': {
-                fontSize: 14,
-              },
-            }}
-            control={
-              <Checkbox
-                size="small"
-                sx={{ p: 0.4 }}
-                checked={filters?.visitor_type === item.id}
-                onChange={(e) => {
-                  const selectedId = e.target.checked ? item.id : '';
-
-                  setFilters?.((prev: any) => ({
-                    ...prev,
-                    visitor_type: selectedId,
-                  }));
-
-                  onVisitorTypeChange?.(selectedId);
+        {isLoadingVisitor
+          ? Array.from({ length: 5 }).map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  py: 0.4,
+                  gap: 1,
                 }}
+              >
+                <Skeleton
+                  variant="rectangular"
+                  width={18}
+                  height={18}
+                  sx={{ borderRadius: '3px' }}
+                />
+                <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
+              </Box>
+            ))
+          : visitorType.map((item: any) => (
+              <FormControlLabel
+                key={item.id}
+                sx={{
+                  m: 0,
+                  display: 'flex',
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: 14,
+                  },
+                }}
+                control={
+                  <Checkbox
+                    size="small"
+                    sx={{ p: 0.4 }}
+                    checked={filters?.visitor_type === item.id}
+                    onChange={(e) => {
+                      const selectedId = e.target.checked ? item.id : '';
+
+                      setFilters?.((prev: any) => ({
+                        ...prev,
+                        visitor_type: selectedId,
+                      }));
+
+                      onVisitorTypeChange?.(selectedId);
+                    }}
+                  />
+                }
+                label={item.name}
               />
-            }
-            label={item.name}
-          />
-        ))}
+            ))}
       </Box>
 
       <Divider sx={{ my: 1.5 }} />

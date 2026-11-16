@@ -144,7 +144,7 @@ const FormSelfPraregistration = ({
   const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
-
+  // const isParkingUnavailable = availableVisitorSlot === 0;
   const [otherForm, setOtherForm] = useState({
     name: '',
     email: '',
@@ -653,89 +653,6 @@ const FormSelfPraregistration = ({
     });
   };
 
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   const deepClone = (obj: any) => {
-  //     try {
-  //       return structuredClone(obj);
-  //     } catch {
-  //       return JSON.parse(JSON.stringify(obj));
-  //     }
-  //   };
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     if (!next[activeGroupIdx]) {
-  //       return prev;
-  //     }
-
-  //     let cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
-  //       ...dv,
-  //       question_page: (dv.question_page || []).map((qp: any) => ({
-  //         id: qp.id || generateUUIDv4(),
-  //         sort: qp.sort ?? 0,
-  //         name: qp.name ?? '',
-  //         is_document: qp.is_document ?? false,
-  //         can_multiple_used: qp.can_multiple_used ?? false,
-  //         foreign_id: qp.foreign_id ?? '',
-  //         self_only: qp.self_only ?? false,
-  //         form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-  //       })),
-  //     }));
-
-  //     cleanDataVisitor = syncPurposeVisitToAllVisitors(cleanDataVisitor);
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: cleanDataVisitor,
-  //     };
-
-  //     return next;
-  //   });
-  // };
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   const deepClone = (obj: any) => {
-  //     try {
-  //       return structuredClone(obj);
-  //     } catch {
-  //       return JSON.parse(JSON.stringify(obj));
-  //     }
-  //   };
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-
-  //     if (!next[activeGroupIdx]) {
-  //       return prev;
-  //     }
-
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: deepClone(dataVisitor),
-  //     };
-
-  //     return next;
-  //   });
-  // };
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) {
-  //     return;
-  //   }
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: structuredClone(dataVisitor),
-  //     };
-  //     return next;
-  //   });
-  // };
-
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
 
@@ -1116,28 +1033,55 @@ const FormSelfPraregistration = ({
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
+  const isParkingUnavailable = (details: any[]) => {
+    const vehicleField = details.find((f: any) => f.remarks?.toLowerCase() === 'vehicle_id');
+
+    return availableVisitorSlot === 0 || (vehicleField?.multiple_option_fields?.length ?? 0) === 0;
+  };
+
+  // const getVisibilityMap = (details: any[]) => {
+  //   const getFlag = (key: string) => {
+  //     const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
+
+  //     if (!field) return false;
+
+  //     const val = field.answer_text;
+
+  //     if (Array.isArray(val)) {
+  //       return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
+  //     }
+
+  //     return ['true', '1', 'yes', 'true'].includes(String(val).toLowerCase());
+  //   };
+
+  //   const isDriving = getFlag('is_driving');
+  //   const isEmployee = getFlag('is_employee');
+
+  //   return {
+  //     vehicle_id: isDriving,
+  //     vehicle_plate: isDriving,
+  //     employee: isEmployee,
+  //   };
+  // };
+
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
       const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
 
-      if (!field) return false;
-
-      const val = field.answer_text;
-
-      if (Array.isArray(val)) {
-        return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
-      }
-
-      return ['true', '1', 'yes', 'true'].includes(String(val).toLowerCase());
+      return ['true', '1', 'yes'].includes(String(field?.answer_text ?? '').toLowerCase());
     };
 
+    const parkingUnavailable =
+      availableVisitorSlot === 0 ||
+      (details.find((f: any) => f.remarks?.toLowerCase() === 'vehicle_id')?.multiple_option_fields
+        ?.length ?? 0) === 0;
+
     const isDriving = getFlag('is_driving');
-    const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_id: isDriving,
-      vehicle_plate: isDriving,
-      employee: isEmployee,
+      vehicle_id: parkingUnavailable || isDriving,
+      vehicle_plate: parkingUnavailable || isDriving,
+      employee: getFlag('is_employee'),
     };
   };
 
@@ -1485,35 +1429,6 @@ const FormSelfPraregistration = ({
     );
   };
 
-  // const handleAddDetails = () => {
-  //   if (!isGroup) {
-  //     handleAddDetail(FORM_KEY);
-  //     return;
-  //   }
-
-  //   setDataVisitor((prev: any) => {
-  //     if (prev.length === 0) return prev;
-
-  //     const clone = JSON.parse(JSON.stringify(prev[0])) as {
-  //       question_page: SectionPageVisitor[];
-  //       type: string;
-  //     };
-  //     clone.question_page.forEach((page) => {
-  //       (page.form ?? []).forEach((f) => {
-  //         f.answer_text = '';
-  //         f.answer_datetime = '';
-  //         f.answer_file = '';
-  //       });
-  //     });
-
-  //     clone.type = '';
-
-  //     const next = [...prev, clone];
-  //     setActiveGroupIdx(next.length - 1);
-  //     return next;
-  //   });
-  // };
-
   const handleAddDetails = () => {
     if (!isGroup) {
       handleAddDetail(FORM_KEY);
@@ -1615,6 +1530,12 @@ const FormSelfPraregistration = ({
       (f: any) => (f.remarks || '').toLowerCase() === 'employee' && f.answer_text,
     );
     const isDriving = String(isDrivingField?.answer_text ?? 'false').toLowerCase() === 'true';
+    const parkingUnavailable =
+      availableVisitorSlot === 0 ||
+      (opts?.details?.find((f: any) => f.remarks?.toLowerCase() === 'vehicle_id')
+        ?.multiple_option_fields?.length ?? 0) === 0;
+
+    const isDrivingDisabled = parkingUnavailable;
     const renderInput = () => {
       switch (field.field_type) {
         case 0: // Text
@@ -1683,7 +1604,9 @@ const FormSelfPraregistration = ({
               helperText={errorMessage}
               disabled={
                 shouldDisable ||
-                ((field.remarks || '').toLowerCase() === 'vehicle_plate' && !isDriving)
+                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&
+                  !parkingUnavailable &&
+                  !isDriving)
               }
             />
           );
@@ -1730,7 +1653,6 @@ const FormSelfPraregistration = ({
         case 3: {
           // let options: { value: string; name: string }[] = [];
           let options: { value: string; name: string; disabled?: boolean }[] = [];
-
           const isLockedByInvitation =
             (field.remarks === 'host' && !!invitation?.host) ||
             (field.remarks === 'employee' && !!invitation?.host) ||
@@ -1919,6 +1841,38 @@ const FormSelfPraregistration = ({
             );
           }
 
+          // if (field.remarks === 'vehicle_id') {
+          //   const vehicleOptions = (opts?.vehicleOptions ?? field.multiple_option_fields ?? []).map(
+          //     (opt: any) => ({
+          //       value: String(opt.value ?? opt.id),
+          //       name: opt.name ?? opt.vehicle_type_name,
+          //     }),
+          //   );
+
+          //   return (
+          //     <CustomTextField
+          //       select
+          //       size="small"
+          //       value={field.answer_text || ''}
+          //       onChange={(e) => {
+          //         const value = e.target.value;
+          //         onChange(index, 'answer_text', value);
+          //         if (value) clearFieldError(errorKey);
+          //       }}
+          //       fullWidth
+          //       disabled={!isDriving}
+          //       error={!!errorMessage}
+          //       helperText={errorMessage}
+          //     >
+          //       {vehicleOptions.map((opt: any) => (
+          //         <MenuItem key={opt.value} value={opt.value}>
+          //           {opt.name}
+          //         </MenuItem>
+          //       ))}
+          //     </CustomTextField>
+          //   );
+          // }
+
           if (field.remarks === 'vehicle_id') {
             const vehicleOptions = (opts?.vehicleOptions ?? field.multiple_option_fields ?? []).map(
               (opt: any) => ({
@@ -1938,7 +1892,7 @@ const FormSelfPraregistration = ({
                   if (value) clearFieldError(errorKey);
                 }}
                 fullWidth
-                disabled={!isDriving}
+                disabled={!parkingUnavailable && !isDriving}
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
@@ -1957,15 +1911,22 @@ const FormSelfPraregistration = ({
               if (b.name === 'Yes') return 1;
               return 0;
             });
-
+            const isDrivingRadio = field.remarks === 'is_driving';
             return (
               <Box key={`${field.custom_field_id}-${index}`}>
                 <FormControl error={!!errorMessage} sx={{ width: '180px' }}>
                   <RadioGroup
                     row
-                    value={field.answer_text || 'false'}
+                    value={
+                      isDrivingRadio && parkingUnavailable
+                        ? 'false'
+                        : String(field.answer_text || 'false')
+                    }
                     onChange={(e) => {
+                      if (isDrivingRadio && isDrivingDisabled) return;
+
                       onChange(index, 'answer_text', e.target.value);
+
                       if (e.target.value) clearFieldError(errorKey);
                     }}
                     sx={{
@@ -1979,9 +1940,12 @@ const FormSelfPraregistration = ({
                     {options.map((opt: any, optIndex: number) => (
                       <FormControlLabel
                         key={`${field.custom_field_id}-${opt.id ?? opt.value ?? optIndex}`}
-                        value={opt.value}
-                        control={<Radio size="small" />}
+                        value={String(opt.value)}
+                        control={
+                          <Radio size="small" disabled={isDrivingRadio && isDrivingDisabled} />
+                        }
                         label={opt.name}
+                        disabled={isDrivingRadio && isDrivingDisabled}
                       />
                     ))}
                   </RadioGroup>
@@ -3099,6 +3063,7 @@ const FormSelfPraregistration = ({
               // const section = sectionsData[activeStep - 1];
               const section = currentSection;
               const sectionType = getSectionType(section);
+              const parkingUnavailable = availableVisitorSlot === 0;
               //   const isEmployee = isEmployeeSection(section);
               const renderTable = () => (
                 <Table>
@@ -3116,6 +3081,7 @@ const FormSelfPraregistration = ({
                       employee={employee}
                       allVisitorEmployee={allVisitorEmployee}
                       selectedVisitorType={selectedVisitorType}
+                      parkingUnavailable={parkingUnavailable}
                       onChange={(index, field, value) => {
                         setSectionsData((prev) =>
                           prev.map((s, sIdx) =>
@@ -3474,6 +3440,8 @@ const FormSelfPraregistration = ({
 
                   validateField(item, key, errors);
                 });
+
+                const parkingUnavailable = availableVisitorSlot === 0;
                 return (
                   <Table>
                     <TableBody>
@@ -3490,6 +3458,7 @@ const FormSelfPraregistration = ({
                         employee={employee}
                         allVisitorEmployee={allVisitorEmployee}
                         selectedVisitorType={selectedVisitorType}
+                        parkingUnavailable={parkingUnavailable}
                         onChange={(index, field, value) => {
                           setGroupedPages((prev: any) => {
                             const next = { ...prev, single_page: [...prev.single_page] };

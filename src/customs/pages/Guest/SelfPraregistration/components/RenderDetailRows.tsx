@@ -1,19 +1,3 @@
-interface Props {
-  details: any[];
-  activeStep: number;
-  invitation: any;
-  fieldErrors: Record<string, string>;
-  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  uploadNames: Record<string, string>;
-  setUploadNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  onChange: (index: number, field: any, value: any) => void;
-  sites: any[];
-  employee: any[];
-  allVisitorEmployee: any[];
-  visitorRoles: any[];
-  selectedVisitorType: any;
-}
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Autocomplete,
@@ -66,6 +50,22 @@ import { useTranslation } from 'react-i18next';
 import CameraDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CameraDialog';
 import { InfoOutlined } from '@mui/icons-material';
 
+interface Props {
+  details: any[];
+  activeStep: number;
+  invitation: any;
+  fieldErrors: Record<string, string>;
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  uploadNames: Record<string, string>;
+  setUploadNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onChange: (index: number, field: any, value: any) => void;
+  sites: any[];
+  employee: any[];
+  allVisitorEmployee: any[];
+  visitorRoles: any[];
+  selectedVisitorType: any;
+  parkingUnavailable: boolean;
+}
 const RenderDetailRows = ({
   details,
   activeStep,
@@ -80,6 +80,7 @@ const RenderDetailRows = ({
   employee,
   sites,
   selectedVisitorType,
+  parkingUnavailable,
 }: Props) => {
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
@@ -141,18 +142,33 @@ const RenderDetailRows = ({
         return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
       }
 
-      return ['true', '1', 'yes', 'true'].includes(String(val).toLowerCase());
+      return ['true', '1', 'yes'].includes(String(val).toLowerCase());
     };
 
     const isDriving = getFlag('is_driving');
     const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_id: isDriving,
-      vehicle_plate: isDriving,
+      vehicle_id: parkingUnavailable || isDriving,
+      vehicle_plate: parkingUnavailable || isDriving,
       employee: isEmployee,
     };
   };
+
+  useEffect(() => {
+    if (!parkingUnavailable) return;
+
+    const drivingIndex = details.findIndex((item) => item.remarks?.toLowerCase() === 'is_driving');
+
+    if (drivingIndex === -1) return;
+
+    const currentValue = String(details[drivingIndex].answer_text).toLowerCase();
+
+    if (currentValue !== 'false') {
+      onChange(drivingIndex, 'answer_text', 'false');
+    }
+  }, [parkingUnavailable, details, onChange]);
+
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
     if (/^(data:|blob:|https?:\/\/)/i.test(rel)) return rel;
@@ -657,11 +673,17 @@ const RenderDetailRows = ({
                 <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                   <Typography variant="subtitle2" fontWeight={600}>
                     {getDisplayText(item)}
-                    {item.mandatory && (
+                    {/* {item.mandatory && (
                       <Typography component="span" color="error" sx={{ ml: 0.5 }}>
                         *
                       </Typography>
-                    )}
+                    )} */}
+                    {item.mandatory &&
+                      !(parkingUnavailable && ['vehicle_id', 'vehicle_plate'].includes(remark)) && (
+                        <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                          *
+                        </Typography>
+                      )}
                   </Typography>
 
                   {item.remarks === 'host' && (
@@ -996,22 +1018,74 @@ const RenderDetailRows = ({
                         />
                       </LocalizationProvider>
                     );
-                  case 5: // Radio
+                  // case 5: // Radio
+                  //   return (
+                  //     <>
+                  //       <FormControl component="fieldset" error={!!errorMessage}>
+                  //         <RadioGroup
+                  //           value={String(item.answer_text)}
+                  //           onChange={(e) => {
+                  //             onChange(originalIndex, 'answer_text', e.target.value);
+                  //             if (e.target.value) clearFieldError(key);
+                  //           }}
+                  //           sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                  //         >
+                  //           {(item.multiple_option_fields || [])
+                  //             .sort((a: any, b: any) => {
+                  //               if (item.remarks === 'is_driving') {
+                  //                 const order: Record<string, number> = { true: 0, false: 1 };
+                  //                 return order[a.value] - order[b.value];
+                  //               }
+                  //               return 0;
+                  //             })
+                  //             .map((opt: any, idx: number) => (
+                  //               <FormControlLabel
+                  //                 key={idx}
+                  //                 value={String(opt.value)}
+                  //                 control={<Radio />}
+                  //                 label={opt.name}
+                  //               />
+                  //             ))}
+                  //         </RadioGroup>
+                  //       </FormControl>
+                  //       <br />
+                  //       {errorMessage && (
+                  //         <Typography variant="caption" color="error">
+                  //           {errorMessage}
+                  //         </Typography>
+                  //       )}
+                  //     </>
+                  //   );
+
+                  case 5: {
+                    const remark = (item.remarks || '').toLowerCase();
+                    const isDrivingField = remark === 'is_driving';
+
                     return (
                       <>
                         <FormControl component="fieldset" error={!!errorMessage}>
                           <RadioGroup
-                            value={String(item.answer_text)}
+                            value={
+                              parkingUnavailable && isDrivingField
+                                ? 'false'
+                                : String(item.answer_text ?? 'false')
+                            }
                             onChange={(e) => {
+                              if (parkingUnavailable && isDrivingField) return;
+
                               onChange(originalIndex, 'answer_text', e.target.value);
+
                               if (e.target.value) clearFieldError(key);
                             }}
                             sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                           >
                             {(item.multiple_option_fields || [])
                               .sort((a: any, b: any) => {
-                                if (item.remarks === 'is_driving') {
-                                  const order: Record<string, number> = { true: 0, false: 1 };
+                                if (isDrivingField) {
+                                  const order: Record<string, number> = {
+                                    true: 0,
+                                    false: 1,
+                                  };
                                   return order[a.value] - order[b.value];
                                 }
                                 return 0;
@@ -1020,13 +1094,16 @@ const RenderDetailRows = ({
                                 <FormControlLabel
                                   key={idx}
                                   value={String(opt.value)}
-                                  control={<Radio />}
+                                  disabled={parkingUnavailable && isDrivingField}
+                                  control={
+                                    <Radio disabled={parkingUnavailable && isDrivingField} />
+                                  }
                                   label={opt.name}
                                 />
                               ))}
                           </RadioGroup>
                         </FormControl>
-                        <br />
+
                         {errorMessage && (
                           <Typography variant="caption" color="error">
                             {errorMessage}
@@ -1034,6 +1111,7 @@ const RenderDetailRows = ({
                         )}
                       </>
                     );
+                  }
 
                   case 6: // Checkbox
                     return (

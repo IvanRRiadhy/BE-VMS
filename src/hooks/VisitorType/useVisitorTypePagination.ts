@@ -9,13 +9,10 @@ interface Props {
   search: string;
 }
 
-export const useVisitorTypePagination = ({
-  page,
-  rowsPerPage,
-  sortDir,
-  sort_column,
-  search,
-}: Props) => {
+export const useVisitorTypePagination = (
+  { page, rowsPerPage, sortDir, sort_column, search }: Props,
+  enabled: boolean = true,
+) => {
   return useQuery({
     queryKey: ['visitor-type', page, rowsPerPage, sortDir, sort_column, search],
 
@@ -23,5 +20,6 @@ export const useVisitorTypePagination = ({
       getAllVisitorTypePagination(page * rowsPerPage, rowsPerPage, sortDir, sort_column, search),
 
     placeholderData: (previousData) => previousData,
+    enabled,
   });
 };

@@ -1500,7 +1500,7 @@ export const getAllOrganizationPagination = async (
   sortDir?: string,
   sortColumn?: string,
   keyword: string = '',
-): Promise<GetAllOrganizationPaginationResponse> => {
+): Promise<any> => {
   const params: Record<string, any> = {
     start,
     length,
