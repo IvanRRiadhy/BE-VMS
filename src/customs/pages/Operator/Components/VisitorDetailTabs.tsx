@@ -51,6 +51,7 @@ interface Props {
   onOpenRelatedVisitors?: any;
   onExtendAccess?: (card: any, visitor: any) => void;
   onRevokeAccess?: (card: any, visitor: any) => void;
+  onDetailAccess?: (card: any, visitor: any) => void;
 }
 
 const VisitorDetailTabs: React.FC<Props> = ({
@@ -61,7 +62,8 @@ const VisitorDetailTabs: React.FC<Props> = ({
   onTabChange,
   onOpenRelatedVisitors,
   onExtendAccess,
-  onRevokeAccess
+  onRevokeAccess,
+  onDetailAccess,
 }) => {
   // const [tabValue, setTabValue] = useState(0);
   // const data = invitationCode?.[0];
@@ -648,157 +650,176 @@ const VisitorDetailTabs: React.FC<Props> = ({
           >
             <Grid container spacing={2}>
               {/* {invitationCode?.[0]?.card?.map((card: any) => ( */}
-              {invitationCode?.[0]?.card?.filter((card: any) => card.current_used).map((card: any) => (
-                <Grid
-                  key={card.id}
-                  size={{
-                    xs: 12,
-                    md: 6,
-                  }}
-                >
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      height: '100%',
-                      p: 1.5,
-                      borderRadius: 3,
-                      border: '2px solid',
-                      borderColor: card.current_used ? 'primary.main' : 'divider',
-                      boxSizing: 'border-box',
+              {invitationCode?.[0]?.card
+                ?.filter((card: any) => card.current_used)
+                .map((card: any) => (
+                  <Grid
+                    key={card.id}
+                    size={{
+                      xs: 12,
+                      md: 6,
                     }}
                   >
-                    {/* Header */}
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Box>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        height: '100%',
+                        p: 1.5,
+                        borderRadius: 3,
+                        border: '2px solid',
+                        borderColor: card.current_used ? 'primary.main' : 'divider',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* Header */}
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Box>
-                          <Typography>Card Number</Typography>
+                          <Box>
+                            <Typography>Card Number</Typography>
 
-                          <Typography
-                            variant="h6"
-                            fontWeight={700}
-                            lineHeight={1.1}
-                            sx={{
-                              whiteSpace: 'normal',
-                              overflowWrap: 'anywhere',
-                              wordBreak: 'break-word',
-                            }}
-                          >
-                            {card.card_number}
-                          </Typography>
+                            <Typography
+                              variant="h6"
+                              fontWeight={700}
+                              lineHeight={1.1}
+                              sx={{
+                                whiteSpace: 'normal',
+                                overflowWrap: 'anywhere',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {card.card_number}
+                            </Typography>
+                          </Box>
+
+                          <Box mt={0.5}>
+                            <Typography>BLE Number</Typography>
+
+                            <Typography
+                              variant="h6"
+                              fontWeight={700}
+                              lineHeight={1.1}
+                              sx={{
+                                whiteSpace: 'normal',
+                                overflowWrap: 'anywhere',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {card.card_mac || '-'}
+                            </Typography>
+                          </Box>
                         </Box>
 
-                        <Box mt={0.5}>
-                          <Typography>BLE Number</Typography>
-
-                          <Typography
-                            variant="h6"
-                            fontWeight={700}
-                            lineHeight={1.1}
+                        {card.current_used && (
+                          <Chip
+                            icon={<IconCheck size={16} />}
+                            label="Current Card"
+                            color="primary"
                             sx={{
-                              whiteSpace: 'normal',
-                              overflowWrap: 'anywhere',
-                              wordBreak: 'break-word',
+                              fontWeight: 700,
+                              borderRadius: 999,
                             }}
-                          >
-                            {card.card_mac || '-'}
-                          </Typography>
-                        </Box>
+                          />
+                        )}
+                      </Stack>
+
+                      <Divider sx={{ my: 1 }} />
+
+                      {/* Status */}
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography color="text.secondary">Status</Typography>
+
+                        <Chip
+                          label={
+                            card.card_status === 'Revoked' ? 'Revoked Access' : card.card_status
+                          }
+                          size="small"
+                          sx={{
+                            backgroundColor:
+                              card.card_status === 'Issued'
+                                ? '#21c45d'
+                                : card.card_status === 'Returned'
+                                ? '#e0e0e0'
+                                : card.card_status === 'Revoked'
+                                ? 'red'
+                                : '#9c27b0',
+                            color: card.card_status === 'Returned' ? '#333333' : '#ffffff',
+                          }}
+                        />
+                      </Stack>
+
+                      {/* Issued */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          mt: 2,
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {card.issued_at && (
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Box
+                              sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 2,
+                                bgcolor: 'grey.100',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <IconCalendarEvent size={22} color="#1976d2" />
+                            </Box>
+
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">
+                                Issued
+                              </Typography>
+
+                              <Typography fontWeight={600} variant="body2">
+                                {formatDateTime(card.issued_at)}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        )}
+                        <Button
+                          variant="contained"
+                          startIcon={<IconKey size={18} />}
+                          color="primary"
+                          onClick={() => onDetailAccess?.(card, activeVisitor)}
+                        >
+                          Detail Access
+                        </Button>
                       </Box>
 
                       {card.current_used && (
-                        <Chip
-                          icon={<IconCheck size={16} />}
-                          label="Current Card"
-                          color="primary"
-                          sx={{
-                            fontWeight: 700,
-                            borderRadius: 999,
-                          }}
-                        />
-                      )}
-                    </Stack>
-
-                    <Divider sx={{ my: 1 }} />
-
-                    {/* Status */}
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography color="text.secondary">Status</Typography>
-
-                      <Chip
-                        label={card.card_status === 'Revoked' ? 'Revoked Access' : card.card_status}
-                        size="small"
-                        sx={{
-                          backgroundColor:
-                            card.card_status === 'Issued'
-                              ? '#21c45d'
-                              : card.card_status === 'Returned'
-                                ? '#e0e0e0'
-                                : card.card_status === 'Revoked'
-                                  ? 'red'
-                                  : '#9c27b0',
-                          color:
-                            card.card_status === 'Returned' ? '#333333' : '#ffffff',
-                        }}
-                      />
-                    </Stack>
-
-                    {/* Issued */}
-                    <Box sx={{ display: 'flex', flexDirection: 'row', mt: 2, justifyContent: 'space-between', flexWrap: "wrap", }}>
-                      {card.issued_at && (
-                        <Stack direction="row" spacing={1.5} alignItems="center" >
-                          <Box
-                            sx={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: 2,
-                              bgcolor: 'grey.100',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                            }}
+                        <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            startIcon={<IconKey size={18} />}
+                            onClick={() => onExtendAccess?.(card, activeVisitor)}
                           >
-                            <IconCalendarEvent size={22} color="#1976d2" />
-                          </Box>
-
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Issued
-                            </Typography>
-
-                            <Typography fontWeight={600} variant="body2">{formatDateTime(card.issued_at)}</Typography>
-                          </Box>
-                        </Stack>
+                            Extend Access
+                          </Button>
+                          {/* Revoke */}
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            color="error"
+                            startIcon={<IconKeyOff size={18} />}
+                            onClick={() => onRevokeAccess?.(card, activeVisitor)}
+                          >
+                            Revoke Access
+                          </Button>
+                        </Box>
                       )}
-                      <Button variant='contained' startIcon={<IconKey size={18} />} color="primary" onClick={() => { }}>Detail Access</Button>
-                    </Box>
-
-                    {card.current_used && (
-                      <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          startIcon={<IconKey size={18} />}
-                          onClick={() => onExtendAccess?.(card, activeVisitor)}
-                        >
-                          Extend Access
-                        </Button>
-                        {/* Revoke */}
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          color="error"
-                          startIcon={<IconKeyOff size={18} />}
-                          onClick={() => onRevokeAccess?.(card, activeVisitor)}
-
-                        >
-                          Revoke Access
-                        </Button>
-                      </Box>
-                    )}
-                  </Paper>
-                </Grid>
-              ))}
+                    </Paper>
+                  </Grid>
+                ))}
             </Grid>
           </Box>
         )}

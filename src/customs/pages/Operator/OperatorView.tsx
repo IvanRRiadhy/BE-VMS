@@ -26,6 +26,7 @@ import {
   createSubmitCompletePraMultiple,
   extendPeriodOperator,
   getAvailableCardOperator,
+  getExtendAccessCard,
   getInvitationCode,
   getInvitationOperatorRelated,
 } from 'src/customs/api/operator';
@@ -625,9 +626,9 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...v,
+                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : v,
         ),
       );
@@ -636,9 +637,9 @@ const OperatorView = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-              ...item,
-              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-            }
+                ...item,
+                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+              }
             : item,
         ),
       );
@@ -715,7 +716,7 @@ const OperatorView = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch { }
+    } catch {}
     setCurrentAction(null);
     setActionButton(null);
     setTorchOn(false);
@@ -1122,7 +1123,7 @@ const OperatorView = () => {
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
 
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
 
           visitor: {
             ...inv.visitor,
@@ -2063,10 +2064,10 @@ const OperatorView = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-        relatedVisitors.find(
-          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-        ),
-      ].filter(Boolean);
+          relatedVisitors.find(
+            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+          ),
+        ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -2168,9 +2169,9 @@ const OperatorView = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-            ...f,
-            sort: f.sort ?? i,
-          }))
+              ...f,
+              sort: f.sort ?? i,
+            }))
           : [];
 
         return {
@@ -2530,7 +2531,7 @@ const OperatorView = () => {
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
                   } else {
-                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
+                    fieldPayload.answer_text = answer_text !== '' ? answer_text ?? null : null;
                   }
 
                   return fieldPayload;
@@ -2549,10 +2550,10 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-              ...v,
-              is_praregister_done: true,
-              visitor_status: 'Preregis',
-            }
+                ...v,
+                is_praregister_done: true,
+                visitor_status: 'Preregis',
+              }
             : v,
         ),
       );
@@ -2958,15 +2959,15 @@ const OperatorView = () => {
         typeVisitor === 'related'
           ? [v.name, v.organization, v.host]
           : [
-            v.name,
-            v.organization,
-            v.host,
-            v.invitation_code,
-            v.agenda,
-            v.vehicle_plate_number,
-            v.vehicle_type,
-            v.visitor_status,
-          ];
+              v.name,
+              v.organization,
+              v.host,
+              v.invitation_code,
+              v.agenda,
+              v.vehicle_plate_number,
+              v.vehicle_type,
+              v.visitor_status,
+            ];
 
       return fields.filter(Boolean).some((field) => String(field).toLowerCase().includes(keyword));
     });
@@ -3291,7 +3292,6 @@ const OperatorView = () => {
     }
   };
 
-
   const {
     data: invitationAccessControl,
     isLoading: isLoadingAccess,
@@ -3299,11 +3299,15 @@ const OperatorView = () => {
   } = useInvitationAccessControl();
 
   const accessControls = invitationAccessControl?.collection ?? [];
+
+  const [revokeAccessControls, setRevokeAccessControls] = useState<any[]>([]);
+  const [isLoadingRevokeAccess, setIsLoadingRevokeAccess] = useState(false);
   const [openExtendDialog, setOpenExtendDialog] = useState(false);
   const [selectedExtendCard, setSelectedExtendCard] = useState<any>(null);
   const [selectedExtendVisitor, setSelectedExtendVisitor] = useState<any>(null);
-
-  const [accessMode, setAccessMode] = useState<'extend' | 'revoke'>('extend');
+  const [detailAccessControls, setDetailAccessControls] = useState<any[]>([]);
+  const [isLoadingDetailAccess, setIsLoadingDetailAccess] = useState(false);
+  const [accessMode, setAccessMode] = useState<'extend' | 'revoke' | 'detail'>('extend');
 
   const handleOpenExtendAccess = (card: any, visitor: any) => {
     setAccessMode('extend');
@@ -3311,12 +3315,78 @@ const OperatorView = () => {
     setSelectedExtendVisitor(visitor);
     setOpenExtendDialog(true);
   };
-
-  const handleOpenRevokeAccess = (card: any, visitor: any) => {
+  const handleOpenRevokeAccess = async (card: any, visitor: any) => {
     setAccessMode('revoke');
     setSelectedExtendCard(card);
     setSelectedExtendVisitor(visitor);
+    setRevokeAccessControls([]);
     setOpenExtendDialog(true);
+
+    try {
+      setIsLoadingRevokeAccess(true);
+
+      const res = await getExtendAccessCard({
+        'registered-site': registerSiteOperator,
+        'trx-visitor-id': visitor?.id,
+      });
+
+      const grantAccessControls = (res?.collection ?? [])
+        .filter((item: any) => item.visitor_give_access === 'Grant')
+        .map((item: any) => ({
+          ...item,
+
+          // samakan dengan format accessControls untuk Extend
+          id: item.access_control_id,
+          name: item.access_control_name,
+          type: item.card_type,
+          visitor_give_access: item.visitor_give_access,
+        }));
+
+      setRevokeAccessControls(grantAccessControls);
+    } catch (error: any) {
+      setRevokeAccessControls([]);
+
+      showSwal(
+        'error',
+        error?.response?.data?.msg ||
+          error?.response?.data?.message ||
+          'Failed to get revoke access control',
+      );
+    } finally {
+      setIsLoadingRevokeAccess(false);
+    }
+  };
+
+  const handleOpenDetailAccess = async (card: any, visitor: any) => {
+    setAccessMode('detail');
+    setSelectedExtendCard(card);
+    setSelectedExtendVisitor(visitor);
+    setDetailAccessControls([]);
+    setOpenExtendDialog(true);
+
+    try {
+      setIsLoadingDetailAccess(true);
+
+      const res = await getExtendAccessCard({
+        'registered-site': registerSiteOperator,
+        'trx-visitor-id': visitor?.id,
+      });
+
+      const collection = res?.collection ?? [];
+
+      setDetailAccessControls(collection);
+    } catch (error: any) {
+      setDetailAccessControls([]);
+
+      showSwal(
+        'error',
+        error?.response?.data?.msg ||
+          error?.response?.data?.message ||
+          'Failed to get access card detail',
+      );
+    } finally {
+      setIsLoadingDetailAccess(false);
+    }
   };
 
   const handleCloseExtendAccess = () => {
@@ -3433,6 +3503,7 @@ const OperatorView = () => {
                   handleView={handleView}
                   onExtendAccess={handleOpenExtendAccess}
                   onRevokeAccess={handleOpenRevokeAccess}
+                  onDetailAccess={handleOpenDetailAccess}
                 />
               </Grid>
 
@@ -3568,11 +3639,17 @@ const OperatorView = () => {
         <ExtendAccessCardDialog
           open={openExtendDialog}
           onClose={handleCloseExtendAccess}
-          visitor={activeVisitor}
+          visitor={selectedExtendVisitor}
           card={selectedExtendCard}
           registeredSiteId={registerSiteOperator}
-          accessControls={accessControls}
-          isLoadingAccess={isLoadingAccess}
+          accessControls={
+            accessMode === 'detail'
+              ? detailAccessControls
+              : accessMode === 'revoke'
+              ? revokeAccessControls
+              : accessControls
+          }
+          isLoadingAccess={accessMode === 'revoke' ? isLoadingRevokeAccess : isLoadingAccess}
           mode={accessMode}
         />
 

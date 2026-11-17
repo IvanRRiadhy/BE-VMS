@@ -529,7 +529,7 @@ export const getExtendAccessCard = async (params: {
   'trx-visitor-id': string;
 }): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/operator-invitation/extend-card', {
+    const response = await axiosInstance.get('/operator-invitation/extend/access-card', {
       headers: { Accept: 'application/json' },
       params,
     });
@@ -545,7 +545,7 @@ export const getExtendTrackingCard = async (params: {
   'trx-visitor-id': string;
 }): Promise<any> => {
   try {
-    const response = await axiosInstance.get('/operator-invitation/tracking-card', {
+    const response = await axiosInstance.get('/operator-invitation/extend/tracking-card', {
       headers: { Accept: 'application/json' },
       params,
     });
