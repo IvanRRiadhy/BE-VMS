@@ -2692,6 +2692,29 @@ export const syncHoneywellBadgeIntegration = async (
   }
 };
 
+// sync logdevs
+export const syncHoneywellLogdevs = async (integrationId: string): Promise<ApiResponse> => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/integration-honeywell/sync/${integrationId}/logdevs`,
+      {},
+    );
+    return data as ApiResponse;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const d = (error.response.data || {}) as Partial<ApiResponse>;
+      return {
+        status: d.status ?? 'fail',
+        status_code: d.status_code ?? error.response.status,
+        title: d.title ?? 'fail',
+        msg: d.msg ?? 'Request failed',
+        collection: d.collection ?? null,
+      };
+    }
+    throw error;
+  }
+};
+
 export const syncHoneywellBadge = async (integrationId: string): Promise<ApiResponse> => {
   try {
     const { data } = await axiosInstance.post(
@@ -2731,7 +2754,7 @@ export const syncTrackingBleIntegration = async (integrationId: string): Promise
   try {
     const { data } = await axiosInstance.post(
       `/integration-trackingble/sync/${integrationId}`,
-      {}, // pakai {} biar nggak trigger edge-case body null
+      {}, 
     );
     return data as ApiResponse;
   } catch (error: any) {
@@ -2749,6 +2772,23 @@ export const syncTrackingBleIntegration = async (integrationId: string): Promise
     throw error;
   }
 };
+
+// delete all integration honeywell by id integration
+export const deleteAllIntegrationHoneywell = async (integrationId: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/integration-honeywell/sync/${integrationId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+
+
+// End Sync
 
 export const deleteIntegration = async (
   integrationId: string,

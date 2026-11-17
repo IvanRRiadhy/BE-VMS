@@ -15,9 +15,10 @@ import {
 import { useState, useEffect } from 'react';
 
 import { useMutation } from '@tanstack/react-query';
-import { extendAccessCard } from 'src/customs/api/operator';
+import { extendAccessCard, revokeAccessCard } from 'src/customs/api/operator';
 import { IconX } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ interface Props {
   accessControls?: any[];
   isLoadingAccess?: boolean;
   onSuccess?: () => void;
+  mode?: any;
 }
 
 const ExtendAccessCardDialog = ({
@@ -39,6 +41,7 @@ const ExtendAccessCardDialog = ({
   accessControls,
   isLoadingAccess,
   onSuccess,
+  mode
 }: Props) => {
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
 
@@ -46,20 +49,35 @@ const ExtendAccessCardDialog = ({
     if (open) setSelectedAccess([]);
   }, [open, card?.id]);
 
-  const mutation = useMutation({
-    mutationFn: extendAccessCard,
+  const isExtend = mode === 'extend';
 
-    onSuccess: (response) => {
-      showSwal('success', 'Successfully extend access card');
+
+  const mutation = useMutation({
+    mutationFn: (payload: any) =>
+      isExtend
+        ? extendAccessCard(payload)
+        : revokeAccessCard(payload),
+
+    onSuccess: () => {
+      showSwal(
+        'success',
+        isExtend
+          ? 'Successfully extend access card'
+          : 'Successfully revoke access card'
+      );
 
       onSuccess?.();
       onClose();
     },
 
     onError: (error: any) => {
-      console.error('Extend access card error:', error);
-
-      showSwal('error', error?.response?.data?.message || 'Failed to extend access card');
+      showSwal(
+        'error',
+        error?.response?.data?.msg ||
+        (isExtend
+          ? 'Failed to extend access card'
+          : 'Failed to revoke access card')
+      );
     },
   });
   const handleSubmit = () => {
@@ -93,47 +111,54 @@ const ExtendAccessCardDialog = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <Box display="flex" flexDirection="column" gap={2}>
+        <Box display="flex" flexDirection="column" gap={1}>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body1" color="text.secondary">
               Card Number
             </Typography>
             <Typography fontWeight={600}>{card?.card_number || '-'}</Typography>
           </Box>
 
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body1" color="text.secondary">
               Visitor
             </Typography>
             <Typography fontWeight={600}>{visitor?.name || '-'}</Typography>
           </Box>
 
-          <Autocomplete
-            multiple
-            disableCloseOnSelect
-            options={accessControls ?? []}
-            value={selectedAccess}
-            onChange={(_, value) => setSelectedAccess(value)}
-            loading={isLoadingAccess}
-            getOptionLabel={(option) => option.Name || ''}
-            isOptionEqualToValue={(option, value) => option.Id === value.Id}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Access Control"
-                placeholder="Select access control"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {isLoadingAccess && <CircularProgress size={18} />}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
+
+          <Box>
+            <CustomFormLabel sx={{ mb: 0.5 }}>Access Control</CustomFormLabel>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              options={accessControls ?? []}
+              value={selectedAccess}
+              onChange={(_, value) => setSelectedAccess(value)}
+              loading={isLoadingAccess}
+              getOptionLabel={(option) => option?.Name ?? option?.name ?? ''}
+              isOptionEqualToValue={(option, value) =>
+                String(option?.Id ?? option?.id) ===
+                String(value?.Id ?? value?.id)
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label=""
+                  placeholder="Select access control"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {isLoadingAccess && <CircularProgress size={18} />}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+          </Box>
           {/* 
           {selectedAccess.length > 0 && (
             <Box display="flex" gap={1} flexWrap="wrap">
@@ -146,7 +171,7 @@ const ExtendAccessCardDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} color="inherit">
+        <Button onClick={onClose} color="secondary">
           Cancel
         </Button>
 
@@ -161,7 +186,7 @@ const ExtendAccessCardDialog = ({
             mutation.isPending
           }
         >
-          {mutation.isPending ? 'Processing...' : 'Extend Access'}
+          Submit
         </Button>
       </DialogActions>
     </Dialog>

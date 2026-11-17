@@ -167,6 +167,7 @@
   "deleteSuccess": "Successfully deleted {{name}}.",
   "deleteSuccessMultiple": "Successfully deleted {{count}} {{name}}.",
   "deleteFailed": "Failed to delete {{name}}.",
+  "deleteHoneywellIntegrationConfirm": "Are you sure you want to delete all Honeywell integration data?",
   "create": "Create",
   "createSuccess": "Successfully created {{name}}.",
   "createdFailed": "Failed to create {{name}}.",

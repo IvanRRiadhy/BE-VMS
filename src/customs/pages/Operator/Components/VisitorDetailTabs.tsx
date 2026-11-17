@@ -49,6 +49,7 @@ interface Props {
   onTabChange: (value: number) => void;
   onOpenRelatedVisitors?: any;
   onExtendAccess?: (card: any, visitor: any) => void;
+  onRevokeAccess?: (card: any, visitor: any) => void;
 }
 
 const VisitorDetailTabs: React.FC<Props> = ({
@@ -59,6 +60,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
   onTabChange,
   onOpenRelatedVisitors,
   onExtendAccess,
+  onRevokeAccess
 }) => {
   // const [tabValue, setTabValue] = useState(0);
   // const data = invitationCode?.[0];
@@ -763,7 +765,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                       </Stack>
                     )}
                     {card.current_used && (
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Button
                           fullWidth
                           variant="contained"
@@ -771,6 +773,17 @@ const VisitorDetailTabs: React.FC<Props> = ({
                           onClick={() => onExtendAccess?.(card, activeVisitor)}
                         >
                           Extend Access
+                        </Button>
+                        {/* Revoke */}
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          color="error"
+                          startIcon={<IconKey size={18} />}
+                          onClick={() => onRevokeAccess?.(card, activeVisitor)}
+
+                        >
+                          Revoke Access
                         </Button>
                       </Box>
                     )}

@@ -12,6 +12,9 @@ interface CardItem {
   icon?: React.FC<TablerIconsProps>;
   onIconClick?: (item: CardItem) => Promise<void> | void;
   type?: 'info' | 'action' | string;
+  backgroundColor?: string;
+  iconBackgroundColor?: string;
+  iconColor?: string;
 }
 
 interface TopCardsProps {
@@ -26,7 +29,7 @@ const defaultColor = '#FFFFFF';
 
 const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom, size }) => {
   return (
-    <Grid2 container spacing={3} sx={{ height: '100%', alignItems: 'stretch' }}>
+    <Grid2 container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
       {items.map((card, index) => {
         const isImage = typeof card.subTitleSetting === 'string';
         const cardColor =
@@ -55,7 +58,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                   height: '100%',
                   ...(isAction && {
                     // border: '1px dashed #1976d2',
-                    backgroundColor: '#1976d2',
+                    backgroundColor: card.backgroundColor || '#1976d2',
                     color: 'white',
                     '&:hover': {
                       // backgroundColor: '#f5faff',
@@ -89,18 +92,21 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                         <Box
                           onClick={() => card.onIconClick?.(card)}
                           sx={{
-                            backgroundColor:
-                              card.title === 'Check In'
-                                ? '#21c45d' // hijau
+                            backgroundColor: isAction
+                              ?
+                              card.iconBackgroundColor || '#055499'
+                              :
+                              (card.title === 'Check In'
+                                ? '#21c45d'
                                 : card.title === 'Check Out'
-                                  ? '#F44336' // merah
+                                  ? '#F44336'
                                   : card.title === 'Denied'
-                                    ? '#8B0000' // merah tua
+                                    ? '#8B0000'
                                     : card.title === 'Block'
-                                      ? '#000000' // hitam
-                                      : '#055499', // default biru
+                                      ? '#000000'
+                                      : '#055499'),
                             borderRadius: '50%',
-                            color: '#fff',
+                            color: card.iconColor || '#fff',
                             padding: 1,
                             display: 'flex',
                             alignItems: 'center',
@@ -108,7 +114,9 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                             cursor: card.onIconClick ? 'pointer' : 'default',
                           }}
                         >
-                          <card.icon size={24} color="#fff" />
+                          <card.icon size={24} color={
+                            card.iconColor || '#fff'
+                          } />
                         </Box>
                       )}
                       <Box>

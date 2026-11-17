@@ -133,8 +133,6 @@ const Content = () => {
   const { t } = useTranslation();
   const { visitorType } = useVisitorType();
   const { data: sites } = useSites();
-  // const [hostSearch, setHostSearch] = useState('');
-  // const debouncedSearch = useDebounce(hostSearch, 400);
   const [hostSearch, setHostSearch] = useState('');
 
   const debouncedSearch = hostSearch ? useDebounce(hostSearch, 400) : '';

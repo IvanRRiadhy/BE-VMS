@@ -27,7 +27,7 @@ type ApprovalSidebarProps = {
   searchKeyword: string;
   setSearchKeyword: (value: string) => void;
   hasMore: boolean;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  // setPage: React.Dispatch<React.SetStateAction<number>>;
   onSelectGroup: (group: any) => void;
   setShowDrawerFilterMore?: any;
   onOpenApprovalDialog: (
@@ -36,6 +36,8 @@ type ApprovalSidebarProps = {
     action: 'Approve' | 'Reject',
   ) => void;
   onRefresh: () => void;
+  loadingMore: boolean;
+  onLoadMore: () => void;
 };
 
 const ApprovalSidebar = ({
@@ -48,10 +50,12 @@ const ApprovalSidebar = ({
   setSearchKeyword,
   hasMore,
   setShowDrawerFilterMore,
-  setPage,
+  // setPage,
   onSelectGroup,
   onOpenApprovalDialog,
   onRefresh,
+  loadingMore,
+  onLoadMore,
 }: ApprovalSidebarProps) => {
   return (
     <Box
@@ -61,7 +65,7 @@ const ApprovalSidebar = ({
         p: 2,
         pt: 2,
         overflow: 'auto',
-        height: { xs: '100%', md: '75vh' },
+        height: { xs: '100%', md: '100vh' },
       }}
     >
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -268,11 +272,11 @@ const ApprovalSidebar = ({
             <Box mt={2} textAlign="center">
               <Button
                 variant="outlined"
-                disabled={loading}
-                onClick={() => setPage((prev) => prev + 1)}
+                disabled={loadingMore}
+                onClick={onLoadMore}
                 fullWidth
               >
-                {loading ? 'Loading...' : 'Load More'}
+                {loadingMore ? 'Loading...' : 'Load More'}
               </Button>
             </Box>
           )}

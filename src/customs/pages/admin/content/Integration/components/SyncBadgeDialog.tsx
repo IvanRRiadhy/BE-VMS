@@ -13,6 +13,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 type Badge = {
   BadgeID: string;
@@ -44,7 +45,7 @@ const SyncBadgeDialog = ({
   onConfirm,
 }: Props) => {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
       <DialogTitle>
         Confirm Badge Import To Employee
         <IconButton
@@ -91,14 +92,14 @@ const SyncBadgeDialog = ({
                 </TableCell>
 
                 <TableCell>
-                  {badge.FirstName} {badge.LastName}
+                  {badge.FirstName}
                 </TableCell>
 
                 <TableCell>{badge.BadgeID}</TableCell>
                 <TableCell>{badge.BadgeType?.description}</TableCell>
                 <TableCell>{badge.RowVersion}</TableCell>
-                <TableCell>{badge.IssueDate}</TableCell>
-                <TableCell>{badge.ExpireDate}</TableCell>
+                <TableCell>{formatDateTime(badge.IssueDate)}</TableCell>
+                <TableCell>{formatDateTime(badge.ExpireDate)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

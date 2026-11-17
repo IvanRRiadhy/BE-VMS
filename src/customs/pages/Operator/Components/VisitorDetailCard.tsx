@@ -35,6 +35,7 @@ const VisitorDetailCard = ({
   handleConfirmStatus,
   handleView,
   onExtendAccess,
+  onRevokeAccess
 }: any) => {
   // const selectedVisitor =
   //   relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||
@@ -276,6 +277,7 @@ const VisitorDetailCard = ({
             onTabChange={setActiveTab}
             onOpenRelatedVisitors={onOpenRelatedVisitors}
             onExtendAccess={onExtendAccess}
+            onRevokeAccess={onRevokeAccess}
           />
         </CardContent>
         {hasData && activeTab === 0 && (

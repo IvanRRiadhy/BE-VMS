@@ -49,7 +49,6 @@ const useInvitationSite = () => {
     queryKey: ['invitation-sites'],
     queryFn: async () => {
       const res = await getInvitationSite();
-
       return res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
     },
   });

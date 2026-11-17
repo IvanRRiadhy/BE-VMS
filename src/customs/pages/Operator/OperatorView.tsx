@@ -625,9 +625,9 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...v,
+              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : v,
         ),
       );
@@ -636,9 +636,9 @@ const OperatorView = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-                ...item,
-                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...item,
+              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : item,
         ),
       );
@@ -715,7 +715,7 @@ const OperatorView = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch {}
+    } catch { }
     setCurrentAction(null);
     setActionButton(null);
     setTorchOn(false);
@@ -2063,10 +2063,10 @@ const OperatorView = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-          relatedVisitors.find(
-            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-          ),
-        ].filter(Boolean);
+        relatedVisitors.find(
+          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+        ),
+      ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -2168,9 +2168,9 @@ const OperatorView = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-              ...f,
-              sort: f.sort ?? i,
-            }))
+            ...f,
+            sort: f.sort ?? i,
+          }))
           : [];
 
         return {
@@ -2549,10 +2549,10 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                is_praregister_done: true,
-                visitor_status: 'Preregis',
-              }
+              ...v,
+              is_praregister_done: true,
+              visitor_status: 'Preregis',
+            }
             : v,
         ),
       );
@@ -2958,15 +2958,15 @@ const OperatorView = () => {
         typeVisitor === 'related'
           ? [v.name, v.organization, v.host]
           : [
-              v.name,
-              v.organization,
-              v.host,
-              v.invitation_code,
-              v.agenda,
-              v.vehicle_plate_number,
-              v.vehicle_type,
-              v.visitor_status,
-            ];
+            v.name,
+            v.organization,
+            v.host,
+            v.invitation_code,
+            v.agenda,
+            v.vehicle_plate_number,
+            v.vehicle_type,
+            v.visitor_status,
+          ];
 
       return fields.filter(Boolean).some((field) => String(field).toLowerCase().includes(keyword));
     });
@@ -3302,21 +3302,31 @@ const OperatorView = () => {
   } = useInvitationAccessControl();
 
   const accessControls = invitationAccessControl?.collection ?? [];
- const [openExtendDialog, setOpenExtendDialog] = useState(false);
- const [selectedExtendCard, setSelectedExtendCard] = useState<any>(null);
- const [selectedExtendVisitor, setSelectedExtendVisitor] = useState<any>(null);
+  const [openExtendDialog, setOpenExtendDialog] = useState(false);
+  const [selectedExtendCard, setSelectedExtendCard] = useState<any>(null);
+  const [selectedExtendVisitor, setSelectedExtendVisitor] = useState<any>(null);
 
- const handleOpenExtendAccess = (card: any, visitor: any) => {
-   setSelectedExtendCard(card);
-   setSelectedExtendVisitor(visitor);
-   setOpenExtendDialog(true);
- };
+  const [accessMode, setAccessMode] = useState<'extend' | 'revoke'>('extend');
 
- const handleCloseExtendAccess = () => {
-   setOpenExtendDialog(false);
-   setSelectedExtendCard(null);
-   setSelectedExtendVisitor(null);
- };
+  const handleOpenExtendAccess = (card: any, visitor: any) => {
+    setAccessMode('extend');
+    setSelectedExtendCard(card);
+    setSelectedExtendVisitor(visitor);
+    setOpenExtendDialog(true);
+  };
+
+  const handleOpenRevokeAccess = (card: any, visitor: any) => {
+    setAccessMode('revoke');
+    setSelectedExtendCard(card);
+    setSelectedExtendVisitor(visitor);
+    setOpenExtendDialog(true);
+  };
+
+  const handleCloseExtendAccess = () => {
+    setOpenExtendDialog(false);
+    setSelectedExtendCard(null);
+    setSelectedExtendVisitor(null);
+  };
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3425,6 +3435,7 @@ const OperatorView = () => {
                   handleConfirmStatus={handleConfirmStatus}
                   handleView={handleView}
                   onExtendAccess={handleOpenExtendAccess}
+                  onRevokeAccess={handleOpenRevokeAccess}
                 />
               </Grid>
 
@@ -3559,12 +3570,13 @@ const OperatorView = () => {
         {/* Extend Access */}
         <ExtendAccessCardDialog
           open={openExtendDialog}
-          onClose={() => setOpenExtendDialog(false)}
+          onClose={handleCloseExtendAccess}
           visitor={activeVisitor}
           card={selectedExtendCard}
           registeredSiteId={registerSiteOperator}
           accessControls={accessControls}
           isLoadingAccess={isLoadingAccess}
+          mode={accessMode}
         />
 
         {/* <InvitationQrCard invitationCode={invitationCode} activeVisitor={activeVisitor} /> */}

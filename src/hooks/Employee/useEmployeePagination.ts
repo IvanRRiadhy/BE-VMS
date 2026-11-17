@@ -17,7 +17,7 @@ interface Props {
   sortDir: string;
   sort_column?: string;
   search: string;
-  filters: Filters;
+  filters?: Filters;
 }
 
 export const useEmployeePagination = ({
@@ -26,7 +26,7 @@ export const useEmployeePagination = ({
   sortDir,
   sort_column,
   search,
-  filters, 
+  filters,
 }: Props) => {
   return useQuery({
     queryKey: ['employees', page, rowsPerPage, sortDir, sort_column, search, filters],
@@ -38,13 +38,13 @@ export const useEmployeePagination = ({
         sortDir,
         sort_column,
         search,
-        filters.gender === 0 ? undefined : filters.gender,
-        filters.joinStart,
-        filters.exitEnd,
-        filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
-        String(filters.organization),
-        String(filters.district),
-        String(filters.department),
+        filters?.gender === 0 ? undefined : filters?.gender,
+        filters?.joinStart,
+        filters?.exitEnd,
+        filters?.statusEmployee === 0 ? undefined : filters?.statusEmployee,
+        ...(filters?.organization ? [filters.organization] : []),
+        ...(filters?.district ? [filters.district] : []),
+        ...(filters?.department ? [filters.department] : []),
       ),
     placeholderData: (previousData) => previousData,
   });

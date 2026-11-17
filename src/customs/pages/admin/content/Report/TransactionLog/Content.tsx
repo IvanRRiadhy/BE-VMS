@@ -75,6 +75,7 @@ import { useListVisitorPagination } from 'src/hooks/Visitor/useListVisitorPagina
 import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 import TransactionLogDialog from './components/TransactionLogDialog';
 import TransactionLogSidebar from './components/TransactionLogSidebar';
+import TransactionLogResult from './components/TransactionLogResult';
 
 const Content = () => {
   const [formData, setFormData] = useState({
@@ -715,8 +716,8 @@ const Content = () => {
       setTimeout(() => {
         showSwal('success', 'Successfully updated report.');
       }, 600);
-    } catch (err) {
-      showSwal('error', 'Failed to update report.');
+    } catch (err: any) {
+      showSwal('error', err.response.data.msg || 'Failed to update report.');
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
@@ -778,295 +779,45 @@ const Content = () => {
             onSave={handleConfirmSaveReport}
             onReset={handleResetForm}
           />
-          {/* Report Result */}
-          <Box
-            sx={{
-              backgroundColor: 'white',
-              p: { xs: 1.5, sm: 2, md: 3 },
-              minWidth: 0,
-              width: '100%',
-              overflow: 'hidden',
-            }}
-          >
-            <Box sx={{ backgroundColor: 'white', p: 1 }}>
-              <Typography variant="h5" gutterBottom mb={2}>
-                Report Result
-              </Typography>
-              <Divider sx={{ mb: 1 }} />
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, xl: 2.5 }}>
-                  <FormControl sx={{ width: '100%' }}>
-                    <CustomTextField
-                      fullWidth
-                      size="medium"
-                      value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
-                      placeholder="Search  Report Name"
-                      sx={{ mb: 1, width: '100%' }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <IconSearch fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </FormControl>
-                  {loadingReports ? (
-                    [...Array(7)].map((_, i) => (
-                      <Card key={i} sx={{ p: 2, mb: 2 }}>
-                        <Skeleton width="60%" height={30} />
-                        <Skeleton height={20} />
-                        <Skeleton height={20} width="80%" />
-                      </Card>
-                    ))
-                  ) : reports.length === 0 ? (
-                    <Typography variant="h6" color="text.secondary" align="center" mt={5}>
-                      Report not found.
-                    </Typography>
-                  ) : (
-                    <>
-                      {reports.map((rep) => (
-                        <Card
-                          key={rep.id}
-                          sx={{
-                            p: 2,
-                            minHeight: 100,
-                            mb: 2,
-                            cursor: 'pointer',
-                            border:
-                              selectedReport?.id === rep.id
-                                ? '2px solid #1976d2'
-                                : '1px solid #ddd',
-                            backgroundColor:
-                              selectedReport?.id === rep.id
-                                ? 'rgba(25, 118, 210, 0.08)'
-                                : 'inherit',
-                            '&:hover': {
-                              border: '2px solid #1976d2',
-                              backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                              transition: 'all 0.3s ease-in-out',
-                              transform: 'scale(1.05)',
-                            },
-                          }}
-                          onClick={() => handleViewReport(rep)}
-                        >
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Typography variant="h6">{rep.name}</Typography>
-                            <Typography variant="body1"> {getHostNames(rep.hosts)}</Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              mt: 1,
-                            }}
-                          >
-                            <Typography variant="body1" color="text.secondary">
-                              {rep.time_report === 'CustomDate' && rep.start_date && rep.end_date
-                                ? `${rep.start_date} - ${rep.end_date}`
-                                : ''}
-                            </Typography>
-                            <Typography variant="body1"> {getSiteNames(rep.sites)}</Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              justifyContent: 'flex-end',
-                              gap: 0.5,
-                            }}
-                          >
-                            <Tooltip title="Generate Report" arrow>
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                sx={{ mt: 2, me: 1 }}
-                                // disabled={loading}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePostReport(rep.id);
-                                }}
-                              >
-                                <IconReport size={20} />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Edit Report" arrow>
-                              <Button
-                                variant="contained"
-                                color="secondary"
-                                sx={{ mt: 2, backgroundColor: '#FA896B' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditReport(rep);
-                                }}
-                              >
-                                {/* Edit */}
-                                <IconPencil size={20} />
-                              </Button>
-                            </Tooltip>
-                            {editingId === rep?.id && (
-                              <Tooltip title="Update Report" arrow>
-                                <Button
-                                  variant="contained"
-                                  color="warning"
-                                  startIcon={<IconDeviceFloppy size={20} />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateReport();
-                                  }}
-                                  disabled={loading}
-                                  sx={{ mt: 2, me: 1 }}
-                                >
-                                  Update
-                                </Button>
-                              </Tooltip>
-                            )}
-                            <Tooltip title="Delete Report" arrow>
-                              <Button
-                                variant="contained"
-                                color="error"
-                                size="small"
-                                sx={{ mt: 2 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(rep.id);
-                                }}
-                              >
-                                {/* Edit */}
-                                <IconTrash size={20} />
-                              </Button>
-                            </Tooltip>
-                          </Box>
-                        </Card>
-                      ))}
-                      {hasMore && (
-                        <Box textAlign="center" mt={2}>
-                          <Button
-                            onClick={() => fetchReports(false)}
-                            variant="contained"
-                            color="primary"
-                            fullWidth
-                          >
-                            {loadingReports || loadingMore ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              'Load More'
-                            )}
-                          </Button>
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </Grid>
 
-                <Grid
-                  sx={{
-                    display: { xs: 'none', md: 'block' },
-                    borderRight: '1px solid #e0e0e0',
-                    height: 'auto',
-                    mx: 0.5,
-                    flexGrow: 0.5,
-                  }}
-                  size={{ xs: 12, xl: 0.1 }}
-                />
-                {/* Table */}
-                <Grid size={{ xs: 12, xl: isFilterCollapsed ? 9.3 : 9.1 }} flexGrow={1}>
-                  {isHavePreview ? (
-                    <>
-                      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                        <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
-                          <Tab label="Summary" />
-                          <Tab label="Table Report" />
-                        </Tabs>
-                      </Box>
-                      {activeTab === 0 && (
-                        <Box>
-                          {summary ? (
-                            <DynamicTable
-                              loading={loading}
-                              data={summary}
-                              isHaveHeaderTitle={true}
-                              titleHeader="Summary"
-                              isHaveExportCsv={false}
-                              onExportCsv={exportToCSV}
-                              isHaveExportExcel={true}
-                              onExportExcel={exportToExcel}
-                              isHaveExportPdf={true}
-                              onExportPdf={exportToPDF}
-                            />
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              No summary data available.
-                            </Typography>
-                          )}
-                        </Box>
-                      )}
+          {/* REPORT RESULT */}
+          <TransactionLogResult
+            reports={reports}
+            loadingReports={loadingReports}
+            loading={loading}
+            hasMore={hasMore}
 
-                      {/* 🔹 TAB 2 - TABLE */}
-                      {activeTab === 1 && (
-                        <Box>
-                          <div id="print-report-area">
-                            <DynamicTable
-                              loading={loading}
-                              data={reportData}
-                              isHaveSearch={false}
-                              isHavePagination={true}
-                              isHaveHeaderTitle={true}
-                              titleHeader="Report"
-                              isHavePeriod
-                              // onSearchKeywordChange={(val) => {
-                              //   setSearchReport(val);
-                              //   handlePostReport(selectedReport?.id, val);
-                              // }}
-                              // defaultRowsPerPage={rowsPerPage}
-                              // totalCount={totalFilteredRecords}
-                              // onPaginationChange={(page, rowsPerPage) => {
-                              //   setPage(page);
-                              //   setRowsPerPage(rowsPerPage);
-                              // }}
-                              rowsPerPageOptions={[10, 50, 100]}
-                              isHaveExportCsv={false}
-                              isHaveExportExcel={true}
-                              isHaveVip={true}
-                              isHaveExportPdf={true}
-                              onExportCsv={exportToCSV}
-                              onExportExcel={exportToExcel}
-                              onExportPdf={exportToPDF}
-                              onPrint={printReport}
-                            />
-                          </div>
-                        </Box>
-                      )}
-                    </>
-                  ) : (
-                    <Card
-                      sx={{
-                        p: 3,
-                        minHeight: '90vh',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: 'none !important',
-                      }}
-                    >
-                      <Typography variant="h5" color="text.secondary">
-                        Select a report from the left to preview details.
-                      </Typography>
-                    </Card>
-                  )}
-                </Grid>
-              </Grid>
-            </Box>
-          </Box>
+            searchKeyword={searchKeyword}
+            setSearchKeyword={setSearchKeyword}
+
+            selectedReport={selectedReport}
+            editingId={editingId}
+
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+
+            isHavePreview={isHavePreview}
+            isFilterCollapsed={isFilterCollapsed}
+
+            summary={summary}
+            reportData={reportData}
+
+            getHostNames={getHostNames}
+            getSiteNames={getSiteNames}
+
+            onView={handleViewReport}
+            onGenerate={(id) => handlePostReport(id)}
+            onEdit={handleEditReport}
+            onUpdate={handleUpdateReport}
+            onDelete={handleDelete}
+            onLoadMore={() => fetchReports(false)}
+
+            onExportCsv={exportToCSV}
+            onExportExcel={exportToExcel}
+            onExportPdf={exportToPDF}
+            onPrint={printReport}
+          />
+
         </Box>
 
         <TransactionLogDialog

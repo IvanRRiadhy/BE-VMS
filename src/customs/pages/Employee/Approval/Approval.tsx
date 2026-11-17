@@ -30,7 +30,7 @@ type Group = {
 };
 
 const Approval = () => {
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -57,18 +57,37 @@ const Approval = () => {
   const [appliedFilters, setAppliedFilters] = useState<any>({
     'approval-status': undefined,
   });
-  const { data, isLoading, isFetching, refetch } = useApprovalPagination({
-    page,
+  // const { data, isLoading, isFetching, refetch } = useApprovalPagination({
+  //   page,
+  //   rowsPerPage,
+  //   search: debouncedKeyword,
+  //   sortDir,
+  //   filters: appliedFilters,
+  // });
+
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    isFetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useApprovalPagination({
     rowsPerPage,
     search: debouncedKeyword,
     sortDir,
     filters: appliedFilters,
   });
 
-  const approvalData = data?.collection ?? [];
-  const totalRecords = data?.totalRecords ?? 0;
-  const totalFilteredRecords = data?.totalFiltered ?? 0;
-  const hasMore = approvalData.length < totalFilteredRecords;
+  const approvalData =
+    data?.pages.flatMap((page) => page.collection) ?? [];
+
+  const totalRecords = data?.pages[0]?.totalRecords ?? 0;
+
+  const totalFilteredRecords = data?.pages[0]?.totalFiltered ?? 0;
+
+  const hasMore = hasNextPage ?? false;
 
   const getApprovalCounts = () => {
     const counts = {
@@ -298,7 +317,7 @@ const Approval = () => {
       ...filters,
     });
 
-    setPage(0);
+    // setPage(0);
     setSelectedGroupId(null);
     setGroupVisitors([]);
   };
@@ -314,7 +333,7 @@ const Approval = () => {
       ...empty,
     });
 
-    setPage(0);
+    // setPage(0);
   };
 
   const handleReject = async (id: string) => {
@@ -354,13 +373,14 @@ const Approval = () => {
                   mdUp={mdUp}
                   secdrawerWidth={secdrawerWidth}
                   loading={isLoading}
+                  loadingMore={isFetchingNextPage}
                   approvalData={approvalData}
                   selectedId={selectedId}
                   searchKeyword={searchKeyword}
                   setSearchKeyword={setSearchKeyword}
                   setShowDrawerFilterMore={setShowDrawerFilterMore}
                   hasMore={hasMore}
-                  setPage={setPage}
+                  onLoadMore={() => fetchNextPage()}
                   onSelectGroup={(group) => {
                     setSelectedGroup(group);
                     setSelectedGroupId(group.ticket_id);

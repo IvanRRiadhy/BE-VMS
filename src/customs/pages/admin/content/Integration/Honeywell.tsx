@@ -5,8 +5,6 @@ import {
   Portal,
   Button,
   Grid2 as Grid,
-  Backdrop,
-  CircularProgress,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -36,6 +34,8 @@ import {
   getLogdevsById,
   getLogdevs,
   updateLogdevs,
+  syncHoneywellLogdevs,
+  deleteAllIntegrationHoneywell,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -47,6 +47,7 @@ import {
   IconBuilding,
   IconCode,
   IconRefresh,
+  IconTrash,
   IconUsersGroup,
 } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -58,6 +59,7 @@ import EditCompanyDialog from './components/Honeywell/EditCompaniesDialog';
 import EditBadgeTypeDialog from './components/Honeywell/EditBadgeTypeDialog';
 import EditClearCodeDialog from './components/Honeywell/EditClearCodeDialog';
 import EditLogDevsDialog from './components/Honeywell/EditLogDevsDialog';
+import { useTranslation } from 'react-i18next';
 
 const Honeywell = ({ id, integrationName }: { id: string; integrationName: string }) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
@@ -149,7 +151,7 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
 
     try {
       setSyncing(true);
-      const res = await syncHoneywellBadgeIntegration(id as string);
+      const res = await syncHoneywellLogdevs(id as string);
       setSyncing(false);
 
       if (res.status !== 'success') {
@@ -189,7 +191,9 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         return;
       }
 
-      const notExisted = res.collection?.data_notexisted || [];
+      // const notExisted = res.collection?.data_notexisted || [];
+      const notExisted = res.collection || [];
+
 
       if (notExisted.length === 0) {
         showSwal('info', 'No new badge data to import.');
@@ -202,6 +206,45 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
     } catch (e: any) {
       setSyncing(false);
       showSwal('error', e?.message || 'Synchronization failed.');
+    }
+  };
+
+  const { t } = useTranslation();
+
+  const handleDeleteAllIntegration = async () => {
+    if (!id) {
+      showSwal('error', 'Session expired / Invalid ID.');
+      return;
+    }
+
+    const confirm = await showSwal(
+      'confirm',
+      t("deleteHoneywellIntegrationConfirm"),
+    );
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      setSyncing(true);
+
+      const res = await deleteAllIntegrationHoneywell(id);
+
+      if (res.status !== 'success') {
+        showSwal('error', res.msg || 'Failed to delete integration data.');
+        return;
+      }
+
+      showSwal('success', res.msg || t("deleteSuccess", { name: 'Integration' }));
+
+      await loadTotals();
+      await fetchListByType(selectedType);
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error?.msg || error?.response?.data?.msg || 'Failed to delete integration data.',
+      );
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -253,18 +296,45 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         onIconClick: handleSyncIntegration,
         type: 'action',
       },
+      ...(selectedType !== 'logdevs'
+        ? [
+          {
+            title: 'Sync Badge',
+            icon: IconRefresh,
+            onIconClick: handleSyncBadgeIntegration,
+            type: 'action',
+          },
+
+
+          {
+            title: 'Import Badge',
+            icon: IconRefresh,
+            onIconClick: handleSyncBadge,
+            type: 'action',
+          },
+        ]
+        : []),
+
+      ...(selectedType === 'logdevs'
+        ? [
+          {
+            title: 'Sync Log Devs',
+            icon: IconRefresh,
+            onIconClick: handleSyncBadgeIntegration,
+            type: 'action',
+          },
+        ]
+        : []),
       {
-        title: 'Sync Badge',
-        icon: IconRefresh,
-        onIconClick: handleSyncBadgeIntegration,
+        title: 'Delete All',
+        color: 'red',
+        iconColor: 'red',
+        backgroundColor: 'red',
+        iconBackgroundColor: 'white',
+        icon: IconTrash,
+        onIconClick: handleDeleteAllIntegration,
         type: 'action',
-      },
-      {
-        title: 'Import Badge',
-        icon: IconRefresh,
-        onIconClick: handleSyncBadge,
-        type: 'action',
-      },
+      }
     ],
     [totals, handleSyncIntegration, handleSyncBadge],
   );
@@ -616,7 +686,7 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
     };
 
     loadOptions();
-    return () => {};
+    return () => { };
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -660,10 +730,10 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         ...(enabled.name ? { name: companyForm.name?.trim() } : {}),
         ...(enabled.organization_id
           ? {
-              organization_id: companyForm.organization_id
-                ? String(companyForm.organization_id).trim()
-                : undefined,
-            }
+            organization_id: companyForm.organization_id
+              ? String(companyForm.organization_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -728,10 +798,10 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         ...(enabled.name ? { name: badgeTypeForm.name?.trim() } : {}),
         ...(enabled.visitor_type_id
           ? {
-              visitor_type_id: badgeTypeForm.visitor_type_id
-                ? String(badgeTypeForm.visitor_type_id).trim()
-                : undefined,
-            }
+            visitor_type_id: badgeTypeForm.visitor_type_id
+              ? String(badgeTypeForm.visitor_type_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -792,10 +862,10 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         ...(enabled.name ? { name: clearCodeForm.name?.trim() } : {}),
         ...(enabled.access_control_id
           ? {
-              access_control_id: clearCodeForm.access_control_id
-                ? String(clearCodeForm.access_control_id).trim()
-                : undefined,
-            }
+            access_control_id: clearCodeForm.access_control_id
+              ? String(clearCodeForm.access_control_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -859,10 +929,10 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
         ...(enabled.name ? { name: logdevsForm.name?.trim() } : {}),
         ...(enabled.access_control_id
           ? {
-              access_control_id: logdevsForm.access_control_id
-                ? String(logdevsForm.access_control_id).trim()
-                : undefined,
-            }
+            access_control_id: logdevsForm.access_control_id
+              ? String(logdevsForm.access_control_id).trim()
+              : undefined,
+          }
           : {}),
       });
 
@@ -1093,9 +1163,9 @@ const Honeywell = ({ id, integrationName }: { id: string; integrationName: strin
     <>
       <PageContainer title="Honeywell" description="this is Dashboard page">
         <Box>
-          <Grid container spacing={3} flexWrap={'wrap'}>
+          <Grid container spacing={2} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 1.5 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 1.33 }} />
             </Grid>
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>

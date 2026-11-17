@@ -883,6 +883,12 @@ function DynamicTableBase<
                         '& .MuiTabs-flexContainer': {
                           gap: 0.5,
                         },
+                        // hover
+                        // '& .MuiTab-root:hover': {
+                        //   backgroundColor: 'primary.main',
+                        //   color: '#fff',
+                        //   border: '1px solid transparent',
+                        // },
                         '& .MuiTab-root': {
                           minWidth: 'auto',
                           whiteSpace: 'nowrap',

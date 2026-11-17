@@ -166,6 +166,7 @@
   "deleteSuccess": "{{name}} berhasil dihapus.",
   "deleteSuccessMultiple": "{{count}} {{name}} berhasil dihapus.",
   "deleteFailed": "Gagal menghapus {{name}}.",
+  "deleteHoneywellIntegrationConfirm": "Apakah Anda yakin ingin menghapus semua data integrasi Honeywell?",
   "createSuccess": "{{name}} berhasil dibuat.",
   "createdFailed": "Gagal membuat {{name}}.",
   "updatedSuccess": "{{name}} berhasil diubah.",
