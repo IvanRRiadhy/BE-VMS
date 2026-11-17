@@ -3190,11 +3190,8 @@ const OperatorView = () => {
   }, [registeredSite, registerSiteOperator, isFullscreen]);
 
   const [openEnableEdit, setOpenEnableEdit] = useState(false);
-
   const handleOpenEnableEdit = () => setOpenEnableEdit(true);
-
   const [openDetailQrCode, setOpenDetailQrCode] = useState(false);
-
   const handleOpenDetailQrCode = () => setOpenDetailQrCode(true);
 
   const handleReturnAndCheckout = async () => {

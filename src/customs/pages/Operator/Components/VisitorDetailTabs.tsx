@@ -38,6 +38,7 @@ import {
   IconRefresh,
   IconEye,
   IconKey,
+  IconKeyOff,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
@@ -646,7 +647,8 @@ const VisitorDetailTabs: React.FC<Props> = ({
             }}
           >
             <Grid container spacing={2}>
-              {invitationCode?.[0]?.card?.map((card: any) => (
+              {/* {invitationCode?.[0]?.card?.map((card: any) => ( */}
+              {invitationCode?.[0]?.card?.filter((card: any) => card.current_used).map((card: any) => (
                 <Grid
                   key={card.id}
                   size={{
@@ -724,46 +726,53 @@ const VisitorDetailTabs: React.FC<Props> = ({
 
                       <Chip
                         label={card.card_status === 'Revoked' ? 'Revoked Access' : card.card_status}
-                        color={
-                          card.card_status === 'Issued'
-                            ? 'success'
-                            : card.card_status === 'Returned'
-                              ? 'default'
-                              : card.card_status === 'Revoked'
-                                ? 'error'
-                                : 'secondary'
-                        }
                         size="small"
+                        sx={{
+                          backgroundColor:
+                            card.card_status === 'Issued'
+                              ? '#21c45d'
+                              : card.card_status === 'Returned'
+                                ? '#e0e0e0'
+                                : card.card_status === 'Revoked'
+                                  ? 'red'
+                                  : '#9c27b0',
+                          color:
+                            card.card_status === 'Returned' ? '#333333' : '#ffffff',
+                        }}
                       />
                     </Stack>
 
                     {/* Issued */}
-                    {card.issued_at && (
-                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 2 }}>
-                        <Box
-                          sx={{
-                            width: 42,
-                            height: 42,
-                            borderRadius: 2,
-                            bgcolor: 'grey.100',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <IconCalendarEvent size={22} color="#1976d2" />
-                        </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', mt: 2, justifyContent: 'space-between', flexWrap: "wrap", }}>
+                      {card.issued_at && (
+                        <Stack direction="row" spacing={1.5} alignItems="center" >
+                          <Box
+                            sx={{
+                              width: 42,
+                              height: 42,
+                              borderRadius: 2,
+                              bgcolor: 'grey.100',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <IconCalendarEvent size={22} color="#1976d2" />
+                          </Box>
 
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Issued
-                          </Typography>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              Issued
+                            </Typography>
 
-                          <Typography fontWeight={600}>{formatDateTime(card.issued_at)}</Typography>
-                        </Box>
-                      </Stack>
-                    )}
+                            <Typography fontWeight={600} variant="body2">{formatDateTime(card.issued_at)}</Typography>
+                          </Box>
+                        </Stack>
+                      )}
+                      <Button variant='contained' startIcon={<IconKey size={18} />} color="primary" onClick={() => { }}>Detail Access</Button>
+                    </Box>
+
                     {card.current_used && (
                       <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Button
@@ -779,7 +788,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                           fullWidth
                           variant="contained"
                           color="error"
-                          startIcon={<IconKey size={18} />}
+                          startIcon={<IconKeyOff size={18} />}
                           onClick={() => onRevokeAccess?.(card, activeVisitor)}
 
                         >

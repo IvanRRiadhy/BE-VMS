@@ -150,7 +150,6 @@ const Content = () => {
   };
 
   const { sites = [] } = useInvitationSite();
-  console.log("sites", sites);
   // const { allVisitorEmployee } = useVisitorEmployees();
   const [pageEmployee, setPageEmployee] = useState(0);
   const [rowsPerPageEmployee, setRowsPerPageEmployee] = useState(10);
@@ -185,7 +184,7 @@ const Content = () => {
     if (!ids || !sites?.length) return '-';
     return ids
       .map((id) => {
-        const site = sites?.find((site) => site.id.toUpperCase() === id.toUpperCase());
+        const site = sites?.find((site: any) => site.id.toUpperCase() === id.toUpperCase());
         return site?.name;
       })
       .filter(Boolean)
@@ -196,7 +195,7 @@ const Content = () => {
     if (!ids || !employeeOptions.length) return '-';
     return ids
       .map((id) => {
-        const host = employeeOptions.find((e) => e.id.toUpperCase() === id.toUpperCase());
+        const host = employeeOptions.find((e: any) => e.id.toUpperCase() === id.toUpperCase());
         return host?.name;
       })
       .filter(Boolean)

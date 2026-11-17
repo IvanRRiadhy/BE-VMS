@@ -522,3 +522,35 @@ export const revokeTrackingCard = async (data: any): Promise<any> => {
     throw error;
   }
 };
+
+// get extend card by params registered-site dan trx-visitor-id
+export const getExtendAccessCard = async (params: {
+  'registered-site': string;
+  'trx-visitor-id': string;
+}): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/operator-invitation/extend-card', {
+      headers: { Accept: 'application/json' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// get tracking card
+export const getExtendTrackingCard = async (params: {
+  'registered-site': string;
+  'trx-visitor-id': string;
+}): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/operator-invitation/tracking-card', {
+      headers: { Accept: 'application/json' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

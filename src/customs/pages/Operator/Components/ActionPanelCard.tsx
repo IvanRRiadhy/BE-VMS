@@ -1,6 +1,7 @@
 import { Grid2 as Grid, Card, CardContent, Tooltip, Button, Typography } from '@mui/material';
 import {
   IconCards,
+  IconCheck,
   IconClock,
   IconLogin,
   IconLogout,
@@ -127,7 +128,7 @@ const ActionPanelCard: FC<Props> = ({
                           textTransform: 'none',
                           fontWeight: 600,
                           px: 2.5,
-             
+
                           '&:hover': {
                             background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
                           },
@@ -166,7 +167,7 @@ const ActionPanelCard: FC<Props> = ({
                               fontWeight: 600,
                               px: 2.5,
 
-                 
+
                               zIndex: 999,
                               width: '100%',
                               height: '50px',
@@ -198,7 +199,7 @@ const ActionPanelCard: FC<Props> = ({
                               px: 2.5,
                               backgroundColor: '#EF4444',
                               // background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
-                       
+
                               // '&:hover': {
                               //   background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
                               // },
@@ -215,6 +216,29 @@ const ActionPanelCard: FC<Props> = ({
                         </Grid>
                       )
                     )}
+                    <Grid size={{ xs: 12, lg: 12 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<IconCheck size={25} />}
+                        onClick={() => { }}
+                        size="large"
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: 2.5,
+                          background: 'primary.main',
+
+                          zIndex: 999,
+                          width: '100%',
+                          height: '50px',
+                          p: 0,
+                        }}
+                      >
+                        <Typography variant="h6" color="white">
+                          Validate
+                        </Typography>
+                      </Button>
+                    </Grid>
                     {/* {loading ? (
                       <ButtonSkeleton />
                     ) : (
@@ -344,6 +368,7 @@ const ActionPanelCard: FC<Props> = ({
                         </Grid>
                       )
                     )}
+
                   </Grid>
                 </Grid>
 

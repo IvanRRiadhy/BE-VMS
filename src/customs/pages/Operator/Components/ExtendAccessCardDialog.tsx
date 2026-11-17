@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogTitle,
@@ -7,18 +8,16 @@ import {
   Box,
   Typography,
   TextField,
-  Autocomplete,
   CircularProgress,
-  Chip,
   IconButton,
+  Checkbox,
+  Divider,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { extendAccessCard, revokeAccessCard } from 'src/customs/api/operator';
-import { IconX } from '@tabler/icons-react';
+import { IconX, IconSearch } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 
 interface Props {
   open: boolean;
@@ -38,19 +37,66 @@ const ExtendAccessCardDialog = ({
   visitor,
   card,
   registeredSiteId,
-  accessControls,
+  accessControls = [],
   isLoadingAccess,
   onSuccess,
-  mode
+  mode,
 }: Props) => {
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (open) setSelectedAccess([]);
-  }, [open, card?.id]);
+  const [search, setSearch] = useState('');
 
   const isExtend = mode === 'extend';
 
+  useEffect(() => {
+    if (open) {
+      setSelectedAccess([]);
+      setSearch('');
+    }
+  }, [open, card?.id]);
+
+  // Search access control
+  const filteredAccess = useMemo(() => {
+    const keyword = search.toLowerCase().trim();
+
+    if (!keyword) return accessControls;
+
+    return accessControls.filter((item) =>
+      [
+        item.name,
+        item.description,
+        item.type,
+        item.integrationName,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword)),
+    );
+  }, [accessControls, search]);
+
+  // Select all
+  const isAllSelected =
+    accessControls.length > 0 &&
+    selectedAccess.length === accessControls.length;
+
+  const isIndeterminate =
+    selectedAccess.length > 0 &&
+    selectedAccess.length < accessControls.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedAccess(checked ? [...accessControls] : []);
+  };
+
+  // Select individual card
+  const handleToggleAccess = (item: any) => {
+    setSelectedAccess((prev) => {
+      const exists = prev.some((x) => x.id === item.id);
+
+      if (exists) {
+        return prev.filter((x) => x.id !== item.id);
+      }
+
+      return [...prev, item];
+    });
+  };
 
   const mutation = useMutation({
     mutationFn: (payload: any) =>
@@ -63,7 +109,7 @@ const ExtendAccessCardDialog = ({
         'success',
         isExtend
           ? 'Successfully extend access card'
-          : 'Successfully revoke access card'
+          : 'Successfully revoke access card',
       );
 
       onSuccess?.();
@@ -76,97 +122,224 @@ const ExtendAccessCardDialog = ({
         error?.response?.data?.msg ||
         (isExtend
           ? 'Failed to extend access card'
-          : 'Failed to revoke access card')
+          : 'Failed to revoke access card'),
       );
     },
   });
+
   const handleSubmit = () => {
     const payload = {
       trx_visitor_id: visitor?.id,
       trx_card_id: card?.id,
       registered_site_id: registeredSiteId,
       card_number: card?.card_number,
-      access_controls: selectedAccess.map((item) => item.Id),
+      access_controls: selectedAccess.map((item) => item.id),
     };
 
     mutation.mutate(payload);
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        Extend Access Card
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="lg"
+    >
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        {isExtend ? 'Extend Access Card' : 'Revoke Access Card'}
+
+        <IconButton onClick={onClose} size="small">
           <IconX />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers>
-        <Box display="flex" flexDirection="column" gap={1}>
-          <Box>
-            <Typography variant="body1" color="text.secondary">
-              Card Number
-            </Typography>
-            <Typography fontWeight={600}>{card?.card_number || '-'}</Typography>
-          </Box>
+        <Box display="flex" flexDirection="column" gap={2}>
 
-          <Box>
-            <Typography variant="body1" color="text.secondary">
-              Visitor
-            </Typography>
-            <Typography fontWeight={600}>{visitor?.name || '-'}</Typography>
-          </Box>
-
-
-          <Box>
-            <CustomFormLabel sx={{ mb: 0.5 }}>Access Control</CustomFormLabel>
-            <Autocomplete
-              multiple
-              disableCloseOnSelect
-              options={accessControls ?? []}
-              value={selectedAccess}
-              onChange={(_, value) => setSelectedAccess(value)}
-              loading={isLoadingAccess}
-              getOptionLabel={(option) => option?.Name ?? option?.name ?? ''}
-              isOptionEqualToValue={(option, value) =>
-                String(option?.Id ?? option?.id) ===
-                String(value?.Id ?? value?.id)
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label=""
-                  placeholder="Select access control"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {isLoadingAccess && <CircularProgress size={18} />}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
-          {/* 
-          {selectedAccess.length > 0 && (
-            <Box display="flex" gap={1} flexWrap="wrap">
-              {selectedAccess.map((item) => (
-                <Chip key={item.id} label={item.Name} />
-              ))}
+          {/* Card Information */}
+          {/* <Box display="flex" gap={4} flexWrap="wrap">
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Card Number
+              </Typography>
+              <Typography fontWeight={600}>
+                {card?.card_number || '-'}
+              </Typography>
             </Box>
-          )} */}
+
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Visitor
+              </Typography>
+              <Typography fontWeight={600}>
+                {visitor?.name || '-'}
+              </Typography>
+            </Box>
+          </Box> */}
+
+          {/* <Divider /> */}
+
+          {/* Search */}
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search access control"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <IconSearch size={18} style={{ marginRight: 8 }} />
+              ),
+            }}
+          />
+
+          {/* Select All */}
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center">
+              <Checkbox
+                checked={isAllSelected}
+                indeterminate={isIndeterminate}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                disabled={!accessControls.length || isLoadingAccess}
+              />
+              <Typography variant="body2">
+                Select All
+              </Typography>
+            </Box>
+
+            <Typography variant="body2" color="text.secondary">
+              {selectedAccess.length} / {accessControls.length} selected
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          {/* Access Control Cards */}
+          {isLoadingAccess ? (
+            <Box display="flex" justifyContent="center" py={5}>
+              <CircularProgress size={30} />
+            </Box>
+          ) : filteredAccess.length === 0 ? (
+            <Box py={5} textAlign="center">
+              <Typography color="text.secondary">
+                No access control found
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: 'repeat(1, minmax(0, 1fr))',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                  md: 'repeat(3, minmax(0, 1fr))',
+                  lg: 'repeat(4, minmax(0, 1fr))',
+                },
+                gap: 1.5,
+              }}
+            >
+              {filteredAccess.map((item) => {
+                const selected = selectedAccess.some(
+                  (x) => x.id === item.id,
+                );
+
+                return (
+                  <Box
+                    key={item.id}
+                    onClick={() => handleToggleAccess(item)}
+                    sx={{
+                      minHeight: 170,
+                      border: '1px solid',
+                      borderColor: selected ? 'primary.main' : 'divider',
+                      backgroundColor: selected
+                        ? 'action.selected'
+                        : 'background.paper',
+                      borderRadius: 2,
+                      p: 4,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: 2,
+                      },
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        fontWeight={600}
+                        textAlign="center"
+                        sx={{
+                          mb: 3,
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {item.name || item.Name || '-'}
+                      </Typography>
+
+                      <Box display="flex" justifyContent="space-between" gap={2}>
+                        <Typography variant="caption" color="text.secondary">
+                          Type
+                        </Typography>
+                        <Typography variant="caption" fontWeight={500}>
+                          {item.type || item.Type || '-'}
+                        </Typography>
+                      </Box>
+
+                      <Box display="flex" justifyContent="space-between" gap={2}>
+                        <Typography variant="caption" color="text.secondary">
+                          Description
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          fontWeight={500}
+                          textAlign="right"
+                          sx={{ overflowWrap: 'anywhere' }}
+                        >
+                          {item.description || item.Description || '-'}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        textAlign="center"
+                        display="block"
+                        sx={{
+                          mt: 1,
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {item.integrationName || item.IntegrationName || '-'}
+                      </Typography>
+
+                      <Box display="flex" justifyContent="center">
+                        <Checkbox
+                          checked={selected}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={() => handleToggleAccess(item)}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
         </Box>
       </DialogContent>
 
@@ -186,7 +359,11 @@ const ExtendAccessCardDialog = ({
             mutation.isPending
           }
         >
-          Submit
+          {mutation.isPending ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            'Submit'
+          )}
         </Button>
       </DialogActions>
     </Dialog>
