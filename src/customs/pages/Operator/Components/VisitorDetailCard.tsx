@@ -36,7 +36,8 @@ const VisitorDetailCard = ({
   handleView,
   onExtendAccess,
   onRevokeAccess,
-  onDetailAccess
+  onDetailAccess,
+  visitorTrackerData
 }: any) => {
   // const selectedVisitor =
   //   relatedVisitors.find((v: any) => v.visitor_number === invitationCode[0]?.visitor_number) ||
@@ -210,7 +211,7 @@ const VisitorDetailCard = ({
     setOpenRelatedDialog(false);
   };
 
-  const [selectedRelatedVisitor, setSelectedRelatedVisitor] = useState<any>(null);
+
 
   return (
     <Grid
@@ -223,6 +224,7 @@ const VisitorDetailCard = ({
         minWidth: 0,
         minHeight: 0,
       }}
+
     >
       {/* <Card
         sx={{
@@ -249,6 +251,7 @@ const VisitorDetailCard = ({
           borderRadius: 2,
           overflow: 'hidden',
         }}
+        id="visitor-detail-card"
       >
         {/* <CardContent
           sx={{
@@ -280,7 +283,8 @@ const VisitorDetailCard = ({
             onExtendAccess={onExtendAccess}
             onRevokeAccess={onRevokeAccess}
             onDetailAccess={onDetailAccess}
-         
+            visitorTrackerData={visitorTrackerData}
+
           />
         </CardContent>
         {hasData && activeTab === 0 && (

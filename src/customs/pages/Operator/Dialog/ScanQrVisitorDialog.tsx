@@ -172,8 +172,8 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
               onChange={(e) => setQrValue(e.target.value)}
             />
             <Divider sx={{ my: 2 }} />
-            <Box mt={2} display="flex" justifyContent="space-between" alignItems={'center'}>
-              <Tooltip
+            <Box mt={2} display="flex" justifyContent="end" alignItems={'center'}>
+              {/* <Tooltip
                 title="Create a new invitation"
                 placement="top"
                 arrow
@@ -209,7 +209,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
                     New Invitation
                   </Button>
                 )}
-              </Tooltip>
+              </Tooltip> */}
               <Button
                 variant="contained"
                 color="primary"

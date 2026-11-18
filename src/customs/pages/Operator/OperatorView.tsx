@@ -105,6 +105,8 @@ import InvitationQrCard from './Components/InvitationQrCard';
 import InvitationQrDialog from './Dialog/InvitationQrDialog';
 import { useInvitationAccessControl } from 'src/hooks/Invitation/useInvitationAccessControl';
 import ExtendAccessCardDialog from './Components/ExtendAccessCardDialog';
+import { useInvestigateVisitor } from 'src/hooks/Operator/useInvestigateVisitor';
+import { getTourSteps } from './utils/tourStep';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -236,6 +238,16 @@ const OperatorView = () => {
   const handleOpenMore = () => setOpenMore(true);
   const [vtLoading, setVTLoading] = useState(false);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const {
+    data: visitorDetail,
+    isLoading,
+    isError,
+    refetch: refetchVisitorDetail,
+    isFetching,
+  } = useInvestigateVisitor(selectedVisitorId ?? invitationCode?.[0]?.id, {}, !!selectedVisitorId);
+
+  const visitorTrackerData = visitorDetail?.collection;
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -269,17 +281,17 @@ const OperatorView = () => {
     }
   };
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+  // useEffect(() => {
+  //   const handleFullscreenChange = () => {
+  //     setIsFullscreen(!!document.fullscreenElement);
+  //   };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+  //   document.addEventListener('fullscreenchange', handleFullscreenChange);
 
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
+  //   return () => {
+  //     document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  //   };
+  // }, []);
 
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
@@ -375,7 +387,7 @@ const OperatorView = () => {
       setLoadingAccess(false);
 
       requestAnimationFrame(() => {
-        showSwal('success', 'Cards swapped successfully!');
+        showSwal('success', 'Successfully swap cards');
       });
     } catch (err: any) {
       setLoadingAccess(false);
@@ -626,9 +638,9 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...v,
+              extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : v,
         ),
       );
@@ -637,9 +649,9 @@ const OperatorView = () => {
         prev.map((item) =>
           selectedVisitors.includes(item.id)
             ? {
-                ...item,
-                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
-              }
+              ...item,
+              extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+            }
             : item,
         ),
       );
@@ -716,7 +728,7 @@ const OperatorView = () => {
       if (track && caps?.torch && torchOn) {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
-    } catch {}
+    } catch { }
     setCurrentAction(null);
     setActionButton(null);
     setTorchOn(false);
@@ -1412,168 +1424,6 @@ const OperatorView = () => {
     }
   };
 
-  // const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
-  //   const id = selectedVisitorId ?? invitationCode?.[0]?.id;
-  //   const actionLabelMap: Record<string, string> = {
-  //     Checkin: 'check in',
-  //     Checkout: 'check out',
-  //     Block: 'block this visitor',
-  //     Unblock: 'unblock this visitor',
-  //   };
-
-  //   let reason = '';
-
-  //   try {
-  //     if (action === 'Block' || action === 'Unblock') {
-  //       const { value: inputReason } = await Swal.fire({
-  //         // imageUrl: '/assets/images/BI_Logo.png',
-  //         icon: 'warning',
-  //         imageWidth: 80,
-  //         imageHeight: 80,
-  //         imageAlt: 'Logo',
-  //         target: containerRef.current,
-  //         title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
-  //         text:
-  //           action === 'Block'
-  //             ? 'Please provide a reason for blocking this visitor:'
-  //             : 'Please provide a reason for unblocking this visitor:',
-  //         input: 'text',
-  //         inputPlaceholder: 'Enter reason...',
-  //         inputAttributes: { maxlength: '200' },
-  //         showCloseButton: true,
-  //         showCancelButton: true,
-  //         confirmButtonText: 'Yes',
-  //         confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#16a34a' : '#16a34a',
-  //         cancelButtonText: 'Cancel',
-  //         reverseButtons: true,
-  //         customClass: {
-  //           title: 'swal2-title-custom',
-  //           popup: 'swal-popup-custom',
-  //           closeButton: 'swal-close-red',
-  //         },
-  //         inputValidator: (value) => {
-  //           if (!value || value.trim().length < 3) {
-  //             return 'Reason must be at least 3 characters long.';
-  //           }
-  //           return null;
-  //         },
-  //       });
-
-  //       if (!inputReason) return;
-  //       reason = inputReason.trim();
-  //     } else {
-  //       const confirm = await Swal.fire({
-  //         title: `Do you want to ${actionLabelMap[action]}?`,
-  //         // imageUrl: '/assets/images/BI_Logo.png',
-  //         icon: 'success',
-  //         imageWidth: 80,
-  //         imageHeight: 80,
-  //         imageAlt: 'Logo',
-  //         showCancelButton: true,
-  //         confirmButtonText: 'Yes',
-  //         cancelButtonText: 'Cancel',
-  //         showCloseButton: true,
-  //         target: containerRef.current,
-  //         confirmButtonColor: '#4caf50',
-  //         reverseButtons: true,
-  //         customClass: {
-  //           title: 'swal2-title-custom',
-  //           popup: 'swal-popup-custom',
-  //           closeButton: 'swal-close-red',
-  //         },
-  //       });
-
-  //       if (!confirm.isConfirmed) return;
-  //     }
-
-  //     setLoadingAccess(true);
-
-  //     const payload: any = { action };
-
-  //     if (reason) {
-  //       payload.reason = reason;
-  //     }
-
-  //     await createInvitationActionOperator(id!, payload);
-  //     await queryClient.invalidateQueries({
-  //       queryKey: ['upcoming-purpose'],
-  //     });
-  //     const currentVisitor =
-  //       relatedVisitors?.find((v: any) => v.id === selectedVisitorId) || invitationCode?.[0];
-
-  //     // Block / Unblock TIDAK mengubah visitor_status
-  //     const newStatus =
-  //       action === 'Block' || action === 'Unblock' ? currentVisitor?.visitor_status : action;
-
-  //     const newIsBlock =
-  //       action === 'Block'
-  //         ? true
-  //         : action === 'Unblock'
-  //           ? false
-  //           : (currentVisitor?.is_block ?? false);
-
-  //     setRelatedVisitors((prev) =>
-  //       prev.map((v) =>
-  //         v.id === selectedVisitorId
-  //           ? {
-  //               ...v,
-  //               visitor_status: newStatus,
-  //               is_block: newIsBlock,
-  //             }
-  //           : v,
-  //       ),
-  //     );
-
-  //     setInvitationCode((prev) => {
-  //       if (!prev.length) return prev;
-
-  //       const updated = {
-  //         ...prev[0],
-  //         visitor_status: newStatus,
-  //         is_block: newIsBlock,
-
-  //         visitor: {
-  //           ...prev[0].visitor,
-  //           visitor_status: newStatus,
-  //           is_block: newIsBlock,
-  //         },
-  //       };
-
-  //       return [updated];
-  //     });
-  //     setSelectedVisitors((prev) => {
-  //       if (!selectedVisitorId) return prev;
-  //       if (!prev.includes(selectedVisitorId)) {
-  //         return [...prev, selectedVisitorId];
-  //       }
-  //       return prev;
-  //     });
-
-  //     const invitationId = invitationCode?.[0]?.id;
-  //     if (invitationId) {
-  //       const previousSelected = [...selectedVisitors];
-  //       const previousSelectedId = selectedVisitorId;
-
-  //       await new Promise((r) => setTimeout(r, 600));
-  //       await fetchRelatedVisitorsByInvitationId(invitationId);
-
-  //       setSelectedVisitors(previousSelected);
-  //       setSelectedVisitorId(previousSelectedId);
-  //     }
-  //     showSwal('success', `${action} successfully.`);
-  //   } catch (e: any) {
-  //     const message =
-  //       e?.response?.data?.msg ??
-  //       e?.response?.data?.message ??
-  //       e?.message ??
-  //       'Failed to update visitor status.';
-
-  //     showSwal('error', message);
-  //   } finally {
-  //     setLoadingAccess(false);
-  //   }
-  // };
-
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
     // const id = selectedVisitorId ?? invitationCode?.[0]?.id;
     const id = selectedVisitorId ?? selectedVisitors[0] ?? invitationCode?.[0]?.id;
@@ -2064,10 +1914,10 @@ const OperatorView = () => {
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
       : [
-          relatedVisitors.find(
-            (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
-          ),
-        ].filter(Boolean);
+        relatedVisitors.find(
+          (v) => (v.visitor_number || '').toString() === (selectedVisitorNumber || '').toString(),
+        ),
+      ].filter(Boolean);
 
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
@@ -2169,9 +2019,9 @@ const OperatorView = () => {
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
-              ...f,
-              sort: f.sort ?? i,
-            }))
+            ...f,
+            sort: f.sort ?? i,
+          }))
           : [];
 
         return {
@@ -2550,10 +2400,10 @@ const OperatorView = () => {
         prev.map((v) =>
           selectedVisitors.includes(v.id)
             ? {
-                ...v,
-                is_praregister_done: true,
-                visitor_status: 'Preregis',
-              }
+              ...v,
+              is_praregister_done: true,
+              visitor_status: 'Preregis',
+            }
             : v,
         ),
       );
@@ -2802,7 +2652,11 @@ const OperatorView = () => {
 
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
-  const activeCaptureVehicle = getCdnUrl(activeVisitor?.vehicle_captured);
+  const activeCaptureVehicle = getCdnUrl(
+    visitorTrackerData?.vehicle_info?.vehicle_image_url ||
+    visitorTrackerData?.capture_images?.[0]?.image_url ||
+    activeVisitor?.vehicle_captured
+  );
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
 
   const handlePrint = () => {
@@ -2959,15 +2813,15 @@ const OperatorView = () => {
         typeVisitor === 'related'
           ? [v.name, v.organization, v.host]
           : [
-              v.name,
-              v.organization,
-              v.host,
-              v.invitation_code,
-              v.agenda,
-              v.vehicle_plate_number,
-              v.vehicle_type,
-              v.visitor_status,
-            ];
+            v.name,
+            v.organization,
+            v.host,
+            v.invitation_code,
+            v.agenda,
+            v.vehicle_plate_number,
+            v.vehicle_type,
+            v.visitor_status,
+          ];
 
       return fields.filter(Boolean).some((field) => String(field).toLowerCase().includes(keyword));
     });
@@ -3102,52 +2956,8 @@ const OperatorView = () => {
     });
   };
 
-  const tourSteps = useMemo(
-    () => [
-      {
-        target: '#tour-search',
-        content: t('tour.search'),
-      },
-      {
-        target: '#tour-visitor-info',
-        content: t('tour.visitorInfo'),
-      },
-      {
-        target: '#tour-visitor-detail',
-        content: t('tour.visitorDetail'),
-      },
-      {
-        target: '#tour-action-panel',
-        content: t('tour.actionPanel'),
-      },
-      {
-        target: '#tour-visitor-list',
-        content: t('tour.visitorList'),
-      },
-      {
-        target: '#tour-select-multiple',
-        content: t('tour.selectMultiple'),
-      },
-      {
-        target: '#tour-host-info',
-        content: t('tour.hostInfo'),
-      },
-      {
-        target: '#tour-occupancy',
-        content: t('tour.occupancy'),
-      },
-      {
-        target: '#tour-identity-image',
-        content: t('tour.identityImage'),
-      },
-      {
-        target: '#tour-alert',
-        content: t('tour.alert'),
-      },
-    ],
-    [t],
-  );
 
+  const tourSteps = useMemo(() => getTourSteps(t), [t]);
   const [relatedPage, setRelatedPage] = useState(0);
   const [relatedRowsPerPage, setRelatedRowsPerPage] = useState(10);
   const handleRefreshVisitorList = async () => {
@@ -3197,13 +3007,11 @@ const OperatorView = () => {
 
   const handleReturnAndCheckout = async () => {
     try {
-      // 1. Validasi card number
       if (!returnCardNumber.trim()) {
         showSwal('warning', t('card.inputCardNumber'));
         return;
       }
 
-      // 2. Validasi visitor
       const id = selectedVisitorId ?? selectedVisitors[0] ?? invitationCode?.[0]?.id;
 
       if (!id) {
@@ -3231,27 +3039,16 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       const cardNumber = returnCardNumber.trim();
-
-      // =========================================================
-      // 3. RETURN CARD
-      // =========================================================
       const returnPayload = {
         card_number: cardNumber,
         registered_site_id: registerSiteOperator,
       };
 
       await returnCard(returnPayload);
-
-      // =========================================================
-      // 4. CHECKOUT VISITOR
-      // =========================================================
       await createInvitationActionOperator(id, {
         action: 'Checkout',
       });
 
-      // =========================================================
-      // 5. REFRESH DATA
-      // =========================================================
       await queryClient.invalidateQueries({
         queryKey: ['upcoming-purpose'],
       });
@@ -3349,8 +3146,8 @@ const OperatorView = () => {
       showSwal(
         'error',
         error?.response?.data?.msg ||
-          error?.response?.data?.message ||
-          'Failed to get revoke access control',
+        error?.response?.data?.message ||
+        'Failed to get revoke access control',
       );
     } finally {
       setIsLoadingRevokeAccess(false);
@@ -3381,8 +3178,8 @@ const OperatorView = () => {
       showSwal(
         'error',
         error?.response?.data?.msg ||
-          error?.response?.data?.message ||
-          'Failed to get access card detail',
+        error?.response?.data?.message ||
+        'Failed to get access card detail',
       );
     } finally {
       setIsLoadingDetailAccess(false);
@@ -3394,6 +3191,8 @@ const OperatorView = () => {
     setSelectedExtendCard(null);
     setSelectedExtendVisitor(null);
   };
+
+
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3418,31 +3217,7 @@ const OperatorView = () => {
             // height: '100%',
           }}
         >
-          {/* <Grid container spacing={0.5} mb={0} alignItems={{ xs: 'center', xl: 'center' }}>
-            <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }} id="tour-search">
-              <VisitorSearchInput
-                onOpenSearch={() => setOpenSearch(true)}
-                onClear={handleClearAll}
-                containerRef={containerRef as any}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
-              <OperatorToolbar
-                registeredSite={registeredSite}
-                selectedSite={registerSiteOperator}
-                onChangeSite={setRegisterSiteOperator}
-                onClear={handleClearAll}
-                onOpenList={handleOpenListVisitor}
-                onOpenBlacklist={handleOpenBlacklistVisitor}
-                // onOpenInfo={() => setOpenDialogInfo(true)}
-                onOpenInfo={handleOpenInfo}
-                onOpenVehicle={handleOpenVehicle}
-                isFullscreen={isFullscreen}
-                onToggleFullscreen={toggleFullscreen}
-                containerRef={containerRef as any}
-              />
-            </Grid>
-          </Grid> */}
+       
 
           <Grid
             container
@@ -3504,6 +3279,7 @@ const OperatorView = () => {
                   onExtendAccess={handleOpenExtendAccess}
                   onRevokeAccess={handleOpenRevokeAccess}
                   onDetailAccess={handleOpenDetailAccess}
+                  visitorTrackerData={visitorTrackerData}
                 />
               </Grid>
 
@@ -3629,6 +3405,7 @@ const OperatorView = () => {
                   todayVisitingPurpose={upcomingPurpose}
                   // recordsFiltered={liveRecordsFiltered}
                   recordsFiltered={liveRecordsFiltered}
+                  visitorTrackerData={visitorTrackerData}
                 />
               </Grid>
             </Grid>
@@ -3646,8 +3423,8 @@ const OperatorView = () => {
             accessMode === 'detail'
               ? detailAccessControls
               : accessMode === 'revoke'
-              ? revokeAccessControls
-              : accessControls
+                ? revokeAccessControls
+                : accessControls
           }
           isLoadingAccess={accessMode === 'revoke' ? isLoadingRevokeAccess : isLoadingAccess}
           mode={accessMode}

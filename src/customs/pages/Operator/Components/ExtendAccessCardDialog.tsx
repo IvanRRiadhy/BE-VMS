@@ -15,8 +15,9 @@ import {
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { extendAccessCard, revokeAccessCard } from 'src/customs/api/operator';
-import { IconX, IconSearch } from '@tabler/icons-react';
+import { IconX, IconSearch, IconDoor } from '@tabler/icons-react';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -43,7 +44,7 @@ const ExtendAccessCardDialog = ({
 }: Props) => {
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-
+  const getAccessId = (item: any) => item.id ?? item.Id;
   const isExtend = mode === 'extend';
   const isRevoke = mode === 'revoke';
   const isDetail = mode === 'detail';
@@ -53,6 +54,7 @@ const ExtendAccessCardDialog = ({
       setSearch('');
     }
   }, [open, card?.id]);
+
 
   // Search access control
   const filteredAccess = useMemo(() => {
@@ -89,13 +91,13 @@ const ExtendAccessCardDialog = ({
   // Select individual card
   const handleToggleAccess = (item: any) => {
     setSelectedAccess((prev) => {
-      const exists = prev.some((x) => x.id === item.id);
+      const exists = prev.some(
+        (x) => getAccessId(x) === getAccessId(item)
+      );
 
-      if (exists) {
-        return prev.filter((x) => x.id !== item.id);
-      }
-
-      return [...prev, item];
+      return exists
+        ? prev.filter((x) => getAccessId(x) !== getAccessId(item))
+        : [...prev, item];
     });
   };
 
@@ -117,7 +119,7 @@ const ExtendAccessCardDialog = ({
       showSwal(
         'error',
         error?.response?.data?.msg ||
-          (isExtend ? 'Failed to extend access card' : 'Failed to revoke access card'),
+        (isExtend ? 'Failed to extend access card' : 'Failed to revoke access card'),
       );
     },
   });
@@ -128,11 +130,13 @@ const ExtendAccessCardDialog = ({
       trx_card_id: card?.id,
       registered_site_id: registeredSiteId,
       card_number: card?.card_number,
-      access_controls: selectedAccess.map((item) => item.id),
+      access_controls: selectedAccess.map((item) => getAccessId(item)),
     };
 
     mutation.mutate(payload);
   };
+
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
@@ -145,7 +149,7 @@ const ExtendAccessCardDialog = ({
           borderColor: 'divider',
         }}
       >
-        {isExtend ? 'Extend Access Card' : isDetail ? 'Access Card Detail' : 'Revoke Access Card'}
+        {isExtend ? 'Extend Access Card' : isDetail ? 'Detail Access Card' : 'Revoke Access Card'}
 
         <IconButton onClick={onClose} size="small">
           <IconX />
@@ -218,12 +222,31 @@ const ExtendAccessCardDialog = ({
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     disabled={!accessControls.length || isLoadingAccess}
                   />
-                  <Typography variant="body2">Select All</Typography>
+                  <Typography variant="body1">{t("selectAll")}</Typography>
                 </Box>
 
-                <Typography variant="body2" color="text.secondary">
-                  {selectedAccess.length} / {accessControls.length} selected
-                </Typography>
+                <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                  <Typography>Selected : </Typography>
+                  <Box
+                    sx={{
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 2,
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+
+
+
+                    <Typography variant="body1">
+                      {selectedAccess.length} / {accessControls.length} selected
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
 
               <Divider />
@@ -253,11 +276,14 @@ const ExtendAccessCardDialog = ({
               }}
             >
               {filteredAccess.map((item) => {
-                const selected = selectedAccess.some((x) => x.id === item.id);
+                // const selected = selectedAccess.some((x) => x.id === item.id);
+                const selected = selectedAccess.some(
+                  (x) => getAccessId(x) === getAccessId(item)
+                );
 
                 return (
                   <Box
-                    key={item.id}
+                    key={getAccessId(item)}
                     onClick={() => {
                       if (!isDetail) {
                         handleToggleAccess(item);
@@ -281,50 +307,35 @@ const ExtendAccessCardDialog = ({
                       },
                     }}
                   >
-                    {/* <Box>
-                      <Typography
-                        variant="h6"
-                        fontWeight={600}
-                        textAlign="center"
+
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      justifyContent="center"
+                      minHeight={100}
+                      gap={1}
+                    >
+                      <Box
                         sx={{
-                          mb: 3,
-                          overflowWrap: 'anywhere',
+                          width: 42,
+                          height: 42,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.lighter',
+                          color: 'primary.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        {item.name || item.Name || '-'}
-                      </Typography>
-
-                      <Box display="flex" justifyContent="space-between" gap={2}>
-                        <Typography variant="caption" color="text.secondary">
-                          Type
-                        </Typography>
-                        <Typography variant="caption" fontWeight={500}>
-                          {item.type || item.Type || '-'}
-                        </Typography>
+                        <IconDoor size={40} />
                       </Box>
 
-                      <Box display="flex" justifyContent="space-between" gap={2}>
-                        <Typography variant="caption" color="text.secondary">
-                          Description
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          fontWeight={500}
-                          textAlign="right"
-                          sx={{ overflowWrap: 'anywhere' }}
-                        >
-                          {item.description || item.Description || '-'}
-                        </Typography>
-                      </Box>
-                    </Box> */}
-                    <Box display="flex" alignItems="center" justifyContent="center" minHeight={100}>
                       <Typography
-                        variant="h5"
+                        variant="h4"
                         fontWeight={600}
                         textAlign="center"
-                        sx={{
-                          overflowWrap: 'anywhere',
-                        }}
+                        sx={{ overflowWrap: 'anywhere', mt: 1.5 }}
                       >
                         {item.name || item.Name || item.access_control_name || '-'}
                       </Typography>
@@ -348,8 +359,8 @@ const ExtendAccessCardDialog = ({
                                 item.visitor_give_access === 'Grant'
                                   ? 'success.main'
                                   : item.visitor_give_access === 'Revoke'
-                                  ? 'error.main'
-                                  : 'grey.500',
+                                    ? 'error.main'
+                                    : 'grey.500',
                               borderRadius: 1,
                               px: 2,
                               py: 0.5,
@@ -362,7 +373,7 @@ const ExtendAccessCardDialog = ({
                       )}
 
                       {!isDetail && (
-                        <Box display="flex" justifyContent="center">
+                        <Box display="flex" justifyContent="center" mt={2}>
                           <Checkbox
                             checked={selected}
                             onClick={(e) => e.stopPropagation()}
@@ -380,24 +391,26 @@ const ExtendAccessCardDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} color="secondary">
-          Cancel
-        </Button>
 
         {!isDetail && (
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={
-              !selectedAccess.length ||
-              !visitor?.id ||
-              !card?.id ||
-              !registeredSiteId ||
-              mutation.isPending
-            }
-          >
-            {mutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Submit'}
-          </Button>
+          <>
+            <Button onClick={onClose} color="secondary">
+              Cancel
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={
+                !selectedAccess.length ||
+                !visitor?.id ||
+                !card?.id ||
+                !registeredSiteId ||
+                mutation.isPending
+              }
+            >
+              {mutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Submit'}
+            </Button></>
         )}
       </DialogActions>
     </Dialog>

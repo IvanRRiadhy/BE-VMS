@@ -2752,10 +2752,7 @@ export const addBadgeEmployee = async (id: string, data: any): Promise<any> => {
 
 export const syncTrackingBleIntegration = async (integrationId: string): Promise<ApiResponse> => {
   try {
-    const { data } = await axiosInstance.post(
-      `/integration-trackingble/sync/${integrationId}`,
-      {}, 
-    );
+    const { data } = await axiosInstance.post(`/integration-trackingble/sync/${integrationId}`, {});
     return data as ApiResponse;
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response) {
@@ -2776,7 +2773,9 @@ export const syncTrackingBleIntegration = async (integrationId: string): Promise
 // delete all integration honeywell by id integration
 export const deleteAllIntegrationHoneywell = async (integrationId: string): Promise<any> => {
   try {
-    const response = await axiosInstance.delete(`/integration-honeywell/sync/${integrationId}`);
+    const response = await axiosInstance.delete(
+      `/integration-honeywell/sync/${integrationId}/delete`,
+    );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -2785,8 +2784,6 @@ export const deleteAllIntegrationHoneywell = async (integrationId: string): Prom
     throw error;
   }
 };
-
-
 
 // End Sync
 

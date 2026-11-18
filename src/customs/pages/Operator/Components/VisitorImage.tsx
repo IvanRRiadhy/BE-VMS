@@ -4,6 +4,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -13,6 +14,15 @@ import {
   IconButton,
   MenuItem,
   Select,
+  Stack,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
   Typography,
 } from '@mui/material';
 
@@ -24,105 +34,14 @@ interface ImageCardProps {
   onClick?: () => void;
 }
 
-const ImageCard = ({
-  title,
-  imageSrc,
-  emptyText,
-  isFullscreen = false,
-  onClick,
-}: ImageCardProps) => {
-  return (
-    <Card
-      sx={{
-        width: '100%',
-        height: '100%',
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid #e0e0e0',
-        boxShadow: 1,
-        overflow: 'hidden',
-      }}
-    >
-      <CardHeader
-        title={title}
-        sx={{
-          p: 0,
-          flexShrink: 0,
-        }}
-        slotProps={{
-          title: {
-            sx: {
-              fontSize: '16px !important',
-              mb: '8px',
-              fontWeight: 'bold',
-            },
-          },
-        }}
-      />
 
-      <CardContent
-        sx={{
-          p: 0,
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          overflow: 'hidden',
-          '&:last-child': {
-            pb: 0,
-          },
-        }}
-      >
-        {imageSrc ? (
-          <Box
-            component="img"
-            src={imageSrc}
-            alt={title}
-            onClick={onClick}
-            sx={{
-              width: '100%',
-              height: '100%',
-              minHeight: 0,
-              borderRadius: 2,
-              objectFit: 'cover',
-              objectPosition: 'center center',
-              display: 'block',
-              cursor: onClick ? 'pointer' : 'default',
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              minHeight: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: 'grey.50',
-              borderRadius: 2,
-              color: 'text.secondary',
-              fontStyle: 'italic',
-              fontSize: '0.9rem',
-              opacity: 0.5,
-            }}
-          >
-            {emptyText}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
 
 import { Fragment, useState } from 'react';
 import VisitingPurposeDialog from '../Dialog/VisitingPurposeDialog';
 import PreviewImageDialog from '../Dialog/PreviewImageDialog';
 import AlertCard from './AlertCard';
-import { IconX } from '@tabler/icons-react';
+import { IconActivity, IconShieldCheck, IconX } from '@tabler/icons-react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface VisitorImageProps {
   faceImage?: string | null;
@@ -136,6 +55,7 @@ interface VisitorImageProps {
   todayVisitingPurpose?: any;
   recordsFiltered?: any;
   captureVehicle?: any;
+  visitorTrackerData?: any;
 }
 
 const VisitorImage = ({
@@ -150,6 +70,7 @@ const VisitorImage = ({
   todayVisitingPurpose,
   recordsFiltered,
   captureVehicle,
+  visitorTrackerData
 }: VisitorImageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -164,9 +85,7 @@ const VisitorImage = ({
   const handleClose = () => {
     setOpen(false);
   };
-  const [alertData, setAlertData] = useState<any[]>([]);
 
-  const [openAlertDialog, setOpenAlertDialog] = useState(false);
 
   const visiblePurposes = todayVisitingPurpose?.slice(0, 4) ?? [];
   const remainingCount = Math.max((todayVisitingPurpose?.length ?? 0) - 4, 0);
@@ -247,6 +166,34 @@ const VisitorImage = ({
     };
   });
 
+  const [vehicleTab, setVehicleTab] = useState(0);
+
+  const movements = visitorTrackerData?.movements ?? [];
+  const accessLogs = visitorTrackerData?.access_logs ?? [];
+  const getStatusColor = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+      case 'granted':
+      case 'checked in':
+      case 'active':
+      case 'parked':
+        return 'success';
+
+      case 'expected':
+        return 'info';
+      case 'pending':
+        return 'default';
+
+
+      case 'denied':
+      case 'failed':
+      case 'alarm':
+        return 'error';
+
+      default:
+        return 'default';
+    }
+  };
   return (
     <Grid
       container
@@ -280,6 +227,7 @@ const VisitorImage = ({
           display: 'flex',
           flexDirection: 'column',
         }}
+        id="tour-occupancy"
       >
         <Box
           sx={{
@@ -403,14 +351,19 @@ const VisitorImage = ({
           display: 'flex',
           width: '100%',
         }}
+        id="tour-vehicle-image"
       >
         <ImageCard
           title="Capture Vehicle"
           imageSrc={captureVehicle}
           emptyText="No Capture Vehicle"
           isFullscreen={isFullscreen}
-          onClick={() => captureVehicle && handleOpen(captureVehicle, 'Capture Vehicle')}
+          onClick={() =>
+            captureVehicle &&
+            handleOpen(captureVehicle, 'Capture Vehicle')
+          }
         />
+      
       </Grid>
       {/* <AlertCard
           isFullscreen={isFullscreen}
@@ -498,3 +451,117 @@ const VisitorImage = ({
 };
 
 export default VisitorImage;
+
+const SectionTitle = ({
+  icon,
+  title,
+  count,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+}) => (
+  <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+    {icon}
+    <Typography variant="h6" fontWeight={600}>
+      {title}
+    </Typography>
+    {count !== undefined && (
+      <Chip size="small" label={count} />
+    )}
+  </Stack>
+);
+
+const ImageCard = ({
+  title,
+  imageSrc,
+  emptyText,
+  isFullscreen = false,
+  onClick,
+}: ImageCardProps) => {
+  return (
+    <Card
+      sx={{
+        width: '100%',
+        height: '100%',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        border: '1px solid #e0e0e0',
+        boxShadow: 1,
+        overflow: 'hidden',
+      }}
+    >
+      <CardHeader
+        title={title}
+        sx={{
+          p: 0,
+          flexShrink: 0,
+        }}
+        slotProps={{
+          title: {
+            sx: {
+              fontSize: '16px !important',
+              mb: '8px',
+              fontWeight: 'bold',
+            },
+          },
+        }}
+      />
+
+      <CardContent
+        sx={{
+          p: 0,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          overflow: 'hidden',
+          '&:last-child': {
+            pb: 0,
+          },
+        }}
+      >
+        {imageSrc ? (
+          <Box
+            component="img"
+            src={imageSrc}
+            alt={title}
+            onClick={onClick}
+            sx={{
+              width: '100%',
+              height: '100%',
+              minHeight: 0,
+              borderRadius: 2,
+              objectFit: 'cover',
+              objectPosition: 'center center',
+              display: 'block',
+              cursor: onClick ? 'pointer' : 'default',
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'grey.50',
+              borderRadius: 2,
+              color: 'text.secondary',
+              fontStyle: 'italic',
+              fontSize: '0.9rem',
+              opacity: 0.5,
+            }}
+          >
+            {emptyText}
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

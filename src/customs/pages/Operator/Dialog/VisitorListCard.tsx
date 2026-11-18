@@ -470,7 +470,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
               gap={1}
               alignItems="center"
               justifyContent={'flex-end'}
-              id="tour-select-multiple"
+              // id="tour-select-multiple"
             >
               {/* <Tooltip
               title="Click and Select more than 1 visitor"

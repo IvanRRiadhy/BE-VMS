@@ -554,3 +554,19 @@ export const getExtendTrackingCard = async (params: {
     throw error;
   }
 };
+
+// investigate/operator/visitor/{id}
+export const getInvestigateVisitorId = async (id: string, payload?: Record<string, any>) => {
+  try {
+    const response = await axiosInstance.get(`/investigate/operator/visitor/${id}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+      params: payload,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
