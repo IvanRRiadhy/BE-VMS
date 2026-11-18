@@ -31,7 +31,11 @@ export const useMonitorActivities = ({
   useEffect(() => {
     if (!host || !port) return;
 
-    const client: MqttClient = mqtt.connect(`wss://${host}:${port}/ws`, {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const mqttUrl = `${protocol}://${host}:${port}/ws`;
+
+    const client: MqttClient = mqtt.connect(mqttUrl, {
       username,
       password,
       protocolVersion: 4,
@@ -50,8 +54,6 @@ export const useMonitorActivities = ({
           console.error('Monitor subscribe failed:', error);
           return;
         }
-
-        console.log('Subscribed:', MONITOR_TOPIC);
       });
     });
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Autocomplete,
   Avatar,
@@ -27,6 +27,15 @@ import {
   MapOutlined,
   AccessTimeOutlined,
   DirectionsCar,
+  AccessTime,
+  LocationOn,
+  SensorsOff,
+  Videocam,
+  WarningAmber,
+  DirectionsWalk,
+  CreditCard,
+  CheckCircle,
+  Block,
 } from '@mui/icons-material';
 
 import Container from 'src/components/container/PageContainer';
@@ -72,6 +81,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitationVisitorEmployee';
 import InvestigateFilter from './InvestigateFilter';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+import VisitorSearchResults from './components/VisitorSearchResult';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -322,7 +332,7 @@ const Content = () => {
 
   const VISITOR_PAGE_SIZE = 10;
 
-  const loadVisitors = async (page = 0, append = false) => {
+  const loadVisitors = useCallback(async (page = 0, append = false) => {
     try {
       if (append) {
         setLoadingMoreVisitors(true);
@@ -332,7 +342,6 @@ const Content = () => {
 
       const payload = {
         start_date: dayjs.utc(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
-
         end_date: dayjs.utc(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]'),
         is_alarm: filter.isAlarm || undefined,
         keyword: filter.keyword || undefined,
@@ -345,18 +354,15 @@ const Content = () => {
         length: VISITOR_PAGE_SIZE,
         sort_dir: 'desc',
         source_type: filter.sourceType === '' ? undefined : filter.sourceType,
-
         event_type: filter.eventType === '' ? undefined : filter.eventType,
       };
 
       const response = await getInvestigateVisitor(payload);
-
       const collection = response?.collection ?? [];
 
       setVisitors((prev) => (append ? [...prev, ...collection] : collection));
 
       setVisitorPage(page);
-
       setHasMoreVisitors(collection.length === VISITOR_PAGE_SIZE);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message ?? 'Failed to get investigate visitor');
@@ -364,8 +370,29 @@ const Content = () => {
       setLoadingMoreVisitors(false);
       setLoading(false);
     }
-  };
+  }, [
+    startDate,
+    endDate,
+    filter.isAlarm,
+    filter.keyword,
+    filter.purpose,
+    filter.hostId,
+    filter.visitor_id,
+    filter.sourceType,
+    filter.eventType,
+    debouncedSearchValue,
+  ]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    if (!hasSearched) return;
+
+    setVisitorPage(0);
+    setHasMoreVisitors(true);
+    loadVisitors(0, false);
+  }, [debouncedSearchValue, hasSearched, loadVisitors]);
+
+
   const handleSearch = async () => {
     setHasSearched(true);
     setVisitorPage(0);
@@ -386,6 +413,17 @@ const Content = () => {
   const selectedVisitorOption = React.useMemo(() => {
     return visitor.find((item: any) => String(item.id) === String(filter.visitor_id)) ?? null;
   }, [visitor, filter.visitor_id]);
+  const handleVisitorSearch = useCallback((value: string) => {
+    setFilter((prev) => {
+      if (prev.searchValue === value) return prev;
+
+      return {
+        ...prev,
+        searchValue: value,
+      };
+    });
+  }, []);
+
 
   return (
     <PageContainer
@@ -550,36 +588,7 @@ const Content = () => {
                             {visitors.length} visitors
                           </Typography> */}
                         </Box>
-                        <TextField
-                          size="small"
-                          placeholder="Search visitor..."
-                          value={filter.searchValue}
-                          onChange={(e) =>
-                            setFilter((prev) => ({
-                              ...prev,
-                              searchValue: e.target.value,
-                            }))
-                          }
-                          fullWidth
-                          sx={{
-                            width: '100%',
-                            '& .MuiOutlinedInput-root': {
-                              height: 34,
-                              fontSize: 12,
-                              backgroundColor: '#fff',
-                            },
-                            '& .MuiInputBase-input': {
-                              fontSize: 12,
-                            },
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <Search fontSize="small" />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
+                        <VisitorSearchResults onSearch={handleVisitorSearch} />
                       </Box>
                     </Stack>
                   </Stack>
@@ -965,8 +974,287 @@ const Content = () => {
                     </Box>
                   )}
 
-                  {detailTab === 1 && <PlaceholderTab title="Movement" />}
-                  {detailTab === 2 && <PlaceholderTab title="Access Log" />}
+                  {detailTab === 1 && (
+                    <Stack spacing={1.5} p={2}>
+                      {/* Header */}
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography fontSize={15} fontWeight={700}>
+                            Movement History
+                          </Typography>
+                          <Typography fontSize={11} color="text.secondary">
+                            Visitor movement and detected activities
+                          </Typography>
+                        </Box>
+
+                        <Chip
+                          size="small"
+                          label={`${selectedVisitor?.movements?.length ?? 0} Records`}
+                          variant="outlined"
+                          color="primary"
+                        />
+                      </Stack>
+
+                      {selectedVisitor?.movements?.length > 0 ? (
+                        selectedVisitor.movements.map((item: any, index: number) => {
+                          const isAlarm = item.event_type?.toLowerCase() === 'alarm';
+
+                          return (
+                            <Box
+                              key={item.id}
+                              sx={{
+                                p: 1.5,
+                                border: '1px solid #e2e7ef',
+                                borderRadius: 2,
+                                backgroundColor: '#fff',
+                              }}
+                            >
+                              <Stack direction="row" spacing={1.5}>
+                                <Avatar
+                                  sx={{
+                                    width: 38,
+                                    height: 38,
+                                    bgcolor: isAlarm ? '#fff0f0' : '#eaf3ff',
+                                    color: isAlarm ? '#d32f2f' : '#1976d2',
+                                  }}
+                                >
+                                  {isAlarm ? (
+                                    <WarningAmber fontSize="small" />
+                                  ) : (
+                                    <DirectionsWalk fontSize="small" />
+                                  )}
+                                </Avatar>
+
+                                <Box flex={1} minWidth={0}>
+                                  <Stack
+                                    direction="row"
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    gap={1}
+                                  >
+                                    <Typography fontSize={13} fontWeight={700}>
+                                      {item.event_type || 'Movement'}
+                                    </Typography>
+
+                                    <Chip
+                                      size="small"
+                                      label={item.remarks || item.event_type || 'Event'}
+                                      color={isAlarm ? 'error' : 'primary'}
+                                      sx={{ height: 22, fontSize: 10 }}
+                                    />
+                                  </Stack>
+
+                                  <Typography fontSize={12} mt={0.5} sx={{ wordBreak: 'break-word' }}>
+                                    {item.area_name || '-'}
+                                  </Typography>
+
+                                  <Divider sx={{ my: 1.25 }} />
+
+                                  <Stack spacing={0.8}>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <AccessTime sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                      <Typography fontSize={11} color="text.secondary">
+                                        {formatDateTime(item.timestamp)}
+                                      </Typography>
+                                    </Stack>
+
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <LocationOn sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                      <Typography fontSize={11} color="text.secondary">
+                                        {item.building_name || '-'}
+                                      </Typography>
+                                    </Stack>
+
+                                    {/* <Stack direction="row" spacing={1} alignItems="center">
+                                      <SensorsOff sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                      <Typography fontSize={11} color="text.secondary">
+                                        Reader: {item.reader_name || '-'}
+                                      </Typography>
+                                    </Stack>
+
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <Videocam sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                      <Typography fontSize={11} color="text.secondary">
+                                        Camera: {item.camera_name || '-'}
+                                      </Typography>
+                                    </Stack> */}
+                                  </Stack>
+                                </Box>
+                              </Stack>
+                            </Box>
+                          );
+                        })
+                      ) : (
+                        <Box py={6} textAlign="center">
+                          <DirectionsWalk sx={{ fontSize: 35, color: '#b0b8c4' }} />
+                          <Typography fontSize={12} color="text.secondary" mt={1}>
+                            No movement records found
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  )}
+                  {detailTab === 2 && (
+                    <Stack spacing={1.5} p={2}>
+                      {/* Header */}
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                          <Typography fontSize={15} fontWeight={700}>
+                            Access History
+                          </Typography>
+                          <Typography fontSize={11} color="text.secondary">
+                            Access control events and authorization results
+                          </Typography>
+                        </Box>
+
+                        <Chip
+                          size="small"
+                          label={`${selectedVisitor?.access_logs?.length ?? 0} Records`}
+                          variant="outlined"
+                          color="primary"
+                        />
+                      </Stack>
+
+                      {selectedVisitor?.access_logs?.length > 0 ? (
+                        selectedVisitor.access_logs.map((item: any) => {
+                          const denied = ['denied', 'failed'].includes(
+                            String(item.access_status || item.result).toLowerCase(),
+                          );
+
+                          return (
+                            <Box
+                              key={item.id}
+                              sx={{
+                                p: 1.5,
+                                border: '1px solid #e2e7ef',
+                                borderRadius: 2,
+                                backgroundColor: '#fff',
+                              }}
+                            >
+                              <Stack direction="row" spacing={1.5}>
+                                <Avatar
+                                  sx={{
+                                    width: 38,
+                                    height: 38,
+                                    bgcolor: denied ? '#fff0f0' : '#e9f8ef',
+                                    color: denied ? '#d32f2f' : '#2e7d32',
+                                  }}
+                                >
+                                  {denied ? (
+                                    <Block fontSize="small" />
+                                  ) : (
+                                    <CheckCircle fontSize="small" />
+                                  )}
+                                </Avatar>
+
+                                <Box flex={1} minWidth={0}>
+                                  <Stack
+                                    direction="row"
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    gap={1}
+                                  >
+                                    <Typography fontSize={13} fontWeight={700}>
+                                      {item.access_point || 'Access Point'}
+                                    </Typography>
+
+                                    <Chip
+                                      size="small"
+                                      label={item.access_status || item.result || 'Unknown'}
+                                      color={denied ? 'error' : 'success'}
+                                      sx={{ height: 22, fontSize: 10 }}
+                                    />
+                                  </Stack>
+
+                                  <Typography fontSize={11} color="text.secondary" mt={0.5}>
+                                    {item.access_type || '-'}
+                                  </Typography>
+
+                                  <Divider sx={{ my: 1.25 }} />
+
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: {
+                                        xs: '1fr',
+                                        sm: '1fr 1fr',
+                                      },
+                                      gap: 1.5,
+                                    }}
+                                  >
+                                    <Box>
+                                      <Typography fontSize={10} color="text.secondary">
+                                        Date & Time
+                                      </Typography>
+                                      <Typography fontSize={12} fontWeight={600}>
+                                        {formatDateTime(item.timestamp)}
+                                      </Typography>
+                                    </Box>
+
+                                    <Box>
+                                      <Typography fontSize={10} color="text.secondary">
+                                        Device
+                                      </Typography>
+                                      <Typography fontSize={12} fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+                                        {item.device_name || '-'}
+                                      </Typography>
+                                    </Box>
+
+                                    <Box>
+                                      <Typography fontSize={10} color="text.secondary">
+                                        Card Number
+                                      </Typography>
+                                      <Typography fontSize={12} fontWeight={600}>
+                                        {item.card_number || '-'}
+                                      </Typography>
+                                    </Box>
+
+                                    <Box>
+                                      <Typography fontSize={10} color="text.secondary">
+                                        Direction
+                                      </Typography>
+                                      <Typography fontSize={12} fontWeight={600}>
+                                        {item.direction || '-'}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+
+                                  {item.message && (
+                                    <Box
+                                      sx={{
+                                        mt: 1.25,
+                                        p: 1,
+                                        borderRadius: 1,
+                                        backgroundColor: denied ? '#fff5f5' : '#f5f8fc',
+                                      }}
+                                    >
+                                      <Typography fontSize={10} color="text.secondary">
+                                        Message
+                                      </Typography>
+                                      <Typography
+                                        fontSize={11}
+                                        color={denied ? 'error.main' : 'text.secondary'}
+                                        sx={{ wordBreak: 'break-word', mt: 0.25 }}
+                                      >
+                                        {item.message}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Stack>
+                            </Box>
+                          );
+                        })
+                      ) : (
+                        <Box py={6} textAlign="center">
+                          <CreditCard sx={{ fontSize: 35, color: '#b0b8c4' }} />
+                          <Typography fontSize={12} color="text.secondary" mt={1}>
+                            No access log records found
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  )}
                   {detailTab === 3 && (
                     <Stack spacing={1.25} p={1.5}>
                       {selectedVisitor?.vehicle_records?.map((vehicle: any) => (

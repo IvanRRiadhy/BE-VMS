@@ -90,9 +90,9 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
       const selectedIds = Array.isArray(answer)
         ? answer.map(String)
         : String(answer ?? '')
-            .split(',')
-            .map((id) => id.trim())
-            .filter(Boolean);
+          .split(',')
+          .map((id) => id.trim())
+          .filter(Boolean);
 
       return selectedIds
         .map((id) => {
@@ -112,6 +112,17 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
       );
 
       return host?.name ?? answer;
+    }
+    if (field?.remarks === 'identity_type') {
+      const answer = String(field?.answer_text ?? '').trim();
+      const options = field?.multiple_option_fields ?? [];
+
+      const selectedOption = options.find(
+        (item: any) =>
+          String(item?.value ?? '').toLowerCase() === answer.toLowerCase(),
+      );
+
+      return selectedOption?.name ?? '—';
     }
 
     if (fieldType === 9) {
@@ -133,9 +144,9 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
       const selectedValues = Array.isArray(answer)
         ? answer.map(String)
         : String(answer ?? '')
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean);
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
 
       return selectedValues
         .map((value: string) => {
@@ -331,9 +342,8 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
 
                                         const imageSrc = isUrl
                                           ? String(filePath)
-                                          : `${axiosInstance2.defaults.baseURL}/cdn${
-                                              String(filePath).startsWith('/') ? '' : '/'
-                                            }${filePath}`;
+                                          : `${axiosInstance2.defaults.baseURL}/cdn${String(filePath).startsWith('/') ? '' : '/'
+                                          }${filePath}`;
 
                                         return (
                                           <Box key={fileIndex}>

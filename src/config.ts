@@ -8,6 +8,8 @@ export interface RuntimeConfig {
   ENABLE_CAPTCHA: boolean;
   WS_MONITOR: string;
   WS_MONITOR_PORT: number;
+  WS_USERNAME: string;
+  WS_PASSWORD: string;
 }
 
 let runtimeConfig: RuntimeConfig | null = null;

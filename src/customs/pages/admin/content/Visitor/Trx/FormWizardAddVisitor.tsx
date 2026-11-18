@@ -686,6 +686,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         'organization',
         'indentity_id',
         'identity_id',
+        'identity_type',
         'gender',
         'employee',
       ];
@@ -728,6 +729,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       organization: v.Organization?.name ?? v.organization?.name ?? v.organization ?? '',
       indentity_id: v.identity_id,
       identity_id: v.identity_id,
+      identity_type: v.identity_type,
       gender: genderValue,
       employee: v.id,
     };

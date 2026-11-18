@@ -197,11 +197,16 @@ const TransactionVisitorList = ({
                         </IconButton>
                       </Tooltip>
                       {/* )} */}
-                      <Button
+                      {/* <Button
                         variant="outlined"
                         sx={{
                           backgroundColor: 'gray',
                           color: 'white',
+                          border: 'none',
+
+                          '&:hover': {
+                            backgroundColor: 'primary.dark',
+                          },
                         }}
                         startIcon={<ContentCopy />}
                         onClick={(e) => {
@@ -210,7 +215,7 @@ const TransactionVisitorList = ({
                         }}
                       >
                         Duplicate
-                      </Button>
+                      </Button> */}
 
                       {group.invited_by === profile?.user_id && (
                         <Button

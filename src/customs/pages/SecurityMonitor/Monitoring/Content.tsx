@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
 import {
@@ -23,6 +23,7 @@ import 'dayjs/locale/id';
 import { useMonitorActivities } from 'src/hooks/Monitoring/useMonitorActivities';
 import { getConfig } from 'src/config';
 import MonitoringFilter from './components/MonitoringFilter';
+import dayjs from 'dayjs';
 
 const dummyTransactions: any[] = [
   {
@@ -164,6 +165,8 @@ const Content = () => {
     };
   }, [isDragging]);
 
+
+
   const initialFilter: any = {
     site: '',
     host: '',
@@ -174,19 +177,60 @@ const Content = () => {
   };
 
   const [filters, setFilters] = useState<any>(initialFilter);
-
   const handleResetFilter = () => {
-    setFilters(initialFilter);
+    setFilters({ ...initialFilter });
+    setStartDate('');
+    setEndDate('');
   };
-
   const config = getConfig();
   const { activities, connected } = useMonitorActivities({
     host: config.WS_MONITOR,
     port: config.WS_MONITOR_PORT,
-    username: 'user',
-    password: 'root',
+    username: config.WS_USERNAME,
+    password: config.WS_PASSWORD,
   });
+  const filteredMonitorActivities = useMemo(() => {
+    return activities
+      .filter((item: any) => {
+        const matchVisitor =
+          !filters.visitorName ||
+          item.visitor_name?.toLowerCase() === filters.visitorName.toLowerCase();
 
+        const matchHost =
+          !filters.host ||
+          item.host_name?.toLowerCase() === filters.host.toLowerCase();
+
+        const matchSite =
+          !filters.site ||
+          item.site_name?.toLowerCase() === filters.site.toLowerCase();
+
+        const itemDate = dayjs(item.timestamp);
+
+        const matchStartDate =
+          !startDate || !itemDate.isBefore(dayjs(startDate).startOf('day'));
+
+        const matchEndDate =
+          !endDate || !itemDate.isAfter(dayjs(endDate).endOf('day'));
+
+        return (
+          matchVisitor &&
+          matchHost &&
+          matchSite &&
+          matchStartDate &&
+          matchEndDate
+        );
+      })
+      .map((item: any) => ({
+        title: item.title,
+        message: item.message,
+        actor_name: item.actor_name,
+        visitor_name: item.visitor_name,
+        visitor_type: item.visitor_type,
+        site_name: item.site_name,
+        host_name: item.host_name,
+        timestamp: formatDateTime(item.timestamp),
+      }));
+  }, [activities, filters, startDate, endDate]);
   // console.log('activities', activities);
 
   // const { data: visitorEmployee = [], isLoading } = useInvitationVisitorEmployee({
@@ -194,6 +238,127 @@ const Content = () => {
   //   start: 0,
   //   length: 10,
   // });
+
+  // const dummyData = [
+  //   {
+  //     "event_id": "c18dd9f3-de7e-4a17-8aa9-c8430d8a2634",
+  //     "service_source": "Visitor",
+  //     "action_type": "checkout",
+  //     "section": "Visit",
+  //     "title": "Visitor Check-out",
+  //     "message": "You have successfully checked out.",
+  //     "icon": "VisitorCheckout",
+  //     "priority": "Medium",
+  //     "is_alarm": false,
+  //     "timestamp": "2026-11-18T08:22:52.3609412Z",
+  //     "actor_name": "Operator 1",
+  //     "trx_visitor_id": "bf6908d7-9c57-4738-b0ff-9cf8f1ac2f92",
+  //     "visitor_id": "6c3de97f-7661-4cb7-ab51-564d4a5d8cf3",
+  //     "user_id": "416befe2-b840-4f35-b310-a079bf1b6a3b",
+  //     "visitor_name": "Dion",
+  //     "visitor_type": "General Visitor",
+  //     "host_id": "bc0820d4-0123-44e0-b47b-5226fb96e6dc",
+  //     "host_name": "DLAF",
+  //     "employee_id": null,
+  //     "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+  //     "site_name": "Gedung SINERGI",
+  //     "location": "Gedung SINERGI",
+  //     "card_number": null,
+  //     "payload_details": {
+  //       "action": "Checkout",
+  //       "reason": null,
+  //       "extended_minutes": null,
+  //       "previous_period_end": null,
+  //       "new_period_end": null,
+  //       "card_type": null,
+  //       "card_status": null,
+  //       "approval_ticket_id": null,
+  //       "approval_ticket_name": null,
+  //       "approval_status": null,
+  //       "current_step": null
+  //     }
+  //   },
+  //   {
+  //     "event_id": "90297feb-2198-48c3-b2fe-6364bfde4209",
+  //     "service_source": "Visitor",
+  //     "action_type": "checkout",
+  //     "section": "Visit",
+  //     "title": "Visitor Check-out",
+  //     "message": "You have successfully checked out.",
+  //     "icon": "VisitorCheckout",
+  //     "priority": "Medium",
+  //     "is_alarm": false,
+  //     "timestamp": "2026-11-18T08:21:28.1168934Z",
+  //     "actor_name": "Operator 1",
+  //     "trx_visitor_id": "d4c4d3b6-fe90-4c83-abbc-83935da5fb25",
+  //     "visitor_id": "a37adcf4-bae5-4766-aa77-387e35833afc",
+  //     "user_id": "416befe2-b840-4f35-b310-a079bf1b6a3b",
+  //     "visitor_name": "Geha",
+  //     "visitor_type": "General Visitor",
+  //     "host_id": "bc0820d4-0123-44e0-b47b-5226fb96e6dc",
+  //     "host_name": "DLAF",
+  //     "employee_id": null,
+  //     "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+  //     "site_name": "Gedung SINERGI",
+  //     "location": "Gedung SINERGI",
+  //     "card_number": null,
+  //     "payload_details": {
+  //       "action": "Checkout",
+  //       "reason": null,
+  //       "extended_minutes": null,
+  //       "previous_period_end": null,
+  //       "new_period_end": null,
+  //       "card_type": null,
+  //       "card_status": null,
+  //       "approval_ticket_id": null,
+  //       "approval_ticket_name": null,
+  //       "approval_status": null,
+  //       "current_step": null
+  //     }
+  //   }
+  // ]
+  // const filteredMonitorActivities = useMemo(() => {
+  //   return dummyData
+  //     .filter((item: any) => {
+  //       const matchVisitor =
+  //         !filters.visitorName ||
+  //         item.visitor_name?.toLowerCase() === filters.visitorName.toLowerCase();
+
+  //       const matchHost =
+  //         !filters.host ||
+  //         item.host_name?.toLowerCase() === filters.host.toLowerCase();
+
+  //       const matchSite =
+  //         !filters.site ||
+  //         item.site_name?.toLowerCase() === filters.site.toLowerCase();
+
+  //       const itemDate = dayjs(item.timestamp);
+
+  //       const matchStartDate =
+  //         !startDate || !itemDate.isBefore(dayjs(startDate).startOf('day'));
+
+  //       const matchEndDate =
+  //         !endDate || !itemDate.isAfter(dayjs(endDate).endOf('day'));
+
+  //       return (
+  //         matchVisitor &&
+  //         matchHost &&
+  //         matchSite &&
+  //         matchStartDate &&
+  //         matchEndDate
+  //       );
+  //     })
+  //     .map((item: any) => ({
+  //       title: item.title,
+  //       message: item.message,
+  //       actor_name: item.actor_name,
+  //       visitor_name: item.visitor_name,
+  //       visitor_type: item.visitor_type,
+  //       site_name: item.site_name,
+  //       host_name: item.host_name,
+  //       timestamp: formatDateTime(item.timestamp),
+  //     }));
+  // }, [dummyData, filters, startDate, endDate]);
 
   return (
     <Container title="Transaction Visitor" description="this is transaction visitor page">
@@ -235,21 +400,22 @@ const Content = () => {
               <DynamicTable
                 // loading={isLoading}
                 overflowX="auto"
-                data={activities ?? []}
+                // data={monitorActivities ?? []}
+                data={filteredMonitorActivities ?? []}
                 isHavePagination={false}
                 isHaveSearch={false}
                 isHaveHeaderTitle
                 titleHeader=""
-                // defaultRowsPerPage={rowsPerPage}
-                // rowsPerPageOptions={[25, 50, 100]}
-                // totalCount={totalRecords}
-                // currentPage={page}
-                // searchKeyword={search}
-                // onSearch={handleSearch}
-                // onPaginationChange={(newPage, newRowsPerPage) => {
-                //   setPage(newPage);
-                //   setRowsPerPage(newRowsPerPage);
-                // }}
+              // defaultRowsPerPage={rowsPerPage}
+              // rowsPerPageOptions={[25, 50, 100]}
+              // totalCount={totalRecords}
+              // currentPage={page}
+              // searchKeyword={search}
+              // onSearch={handleSearch}
+              // onPaginationChange={(newPage, newRowsPerPage) => {
+              //   setPage(newPage);
+              //   setRowsPerPage(newRowsPerPage);
+              // }}
               />
             </Box>
           </Grid>

@@ -7,5 +7,7 @@
   "API_ID": "be-vms",
   "ENABLE_CAPTCHA": false,
   "WS_MONITOR": "103.193.15.67",
-  "WS_MONITOR_PORT": 15675
+  "WS_MONITOR_PORT": 15675,
+  "WS_USERNAME": "user",
+  "WS_PASSWORD": "root"
 }

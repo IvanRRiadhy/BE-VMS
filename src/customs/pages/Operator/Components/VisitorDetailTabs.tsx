@@ -368,7 +368,7 @@ const VisitorDetailTabs: React.FC<Props> = ({
                                   ? '#e0e0e0'
                                   : card.card_status === 'Revoked'
                                     ? 'red'
-                                    : '#9c27b0',
+                                    : 'gray',
                             color: card.card_status === 'Returned' ? '#333333' : '#ffffff',
                           }}
                         />

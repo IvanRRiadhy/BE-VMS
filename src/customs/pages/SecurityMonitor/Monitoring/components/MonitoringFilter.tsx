@@ -1,13 +1,19 @@
-import { Box, Grid2 as Grid, MenuItem, Button } from '@mui/material';
+import { Box, Grid2 as Grid, MenuItem, Button, Autocomplete } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
 import { IconRefresh } from '@tabler/icons-react';
-
+import { useEmployeePagination } from 'src/hooks/Employee/useEmployeePagination';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useInvitationVisitor } from 'src/hooks/Invitation/useInvitationVisitor';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useInvitationAccessControl } from 'src/hooks/Invitation/useInvitationAccessControl';
+import useInvitationSite from 'src/hooks/Invitation/useInvitationSite';
 
 dayjs.extend(utc);
 
@@ -37,6 +43,89 @@ const MonitoringFilter = ({
   setEndDate,
   handleResetFilter,
 }: VisitorFilterProps) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState<string>('');
+  const debounceSearch = useDebounce(search, 500);
+  const { data: visitor, isLoading, isFetching } = useInvitationVisitor({
+    search: debounceSearch,
+    page,
+    rowsPerPage,
+  });
+  // const visitorOptions = visitor?.collection ?? [];
+  const { sites = [] } = useInvitationSite();
+  const [pageEmployee, setPageEmployee] = useState(0);
+  const [rowsPerPageEmployee, setRowsPerPageEmployee] = useState(10);
+  const [searchEmployee, setSearchEmployee] = useState('');
+  const debouncedSearchEmployee = useDebounce(searchEmployee, 500);
+  const [sortDir, setSortDir] = useState('desc');
+  const { data: allVisitorEmployee = [], isFetching: isFetchingVisitor } = useEmployeePagination({
+    page: pageEmployee,
+    rowsPerPage: rowsPerPageEmployee,
+    sortDir,
+    sort_column: 'created_at',
+    search: debouncedSearchEmployee,
+  });
+  const employeeOptions = allVisitorEmployee?.collection ?? [];
+  const [selectedVisitor, setSelectedVisitor] = useState<any | null>(null);
+  const [visitorInputValue, setVisitorInputValue] = useState('');
+  const [selectedHost, setSelectedHost] = useState<any | null>(null);
+  const [hostInputValue, setHostInputValue] = useState('');
+  const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  const visitorOptions = useMemo(() => {
+    const options = visitor?.collection ?? [];
+
+    if (
+      selectedVisitor &&
+      !options.some((item: any) => String(item.id) === String(selectedVisitor.id))
+    ) {
+      return [selectedVisitor, ...options];
+    }
+
+    return options;
+  }, [visitor?.collection, selectedVisitor]);
+  const hostOptions = useMemo(() => {
+    const options = employeeOptions ?? [];
+
+    if (
+      selectedHost &&
+      !options.some(
+        (item: any) =>
+          String(item.id ?? item.Id) ===
+          String(selectedHost.id ?? selectedHost.Id)
+      )
+    ) {
+      return [selectedHost, ...options];
+    }
+
+    return options;
+  }, [employeeOptions, selectedHost]);
+  // const {
+  //   data: invitationAccessControl,
+  //   isLoading: isLoadingAccess,
+  //   refetch,
+  // } = useInvitationAccessControl();
+
+  // const accessControls = invitationAccessControl?.collection ?? [];
+  useEffect(() => {
+    if (!filters.visitorName) {
+      setSelectedVisitor(null);
+      setVisitorInputValue('');
+      setSearch('');
+      setPage(0);
+    }
+
+    if (!filters.host) {
+      setSelectedHost(null);
+      setHostInputValue('');
+      setSearchEmployee('');
+      setPageEmployee(0);
+    }
+
+    if (!filters.site) {
+      setSelectedSite(null);
+    }
+  }, [filters.visitorName, filters.host, filters.site]);
   return (
     <Box
       sx={{
@@ -51,67 +140,166 @@ const MonitoringFilter = ({
         {/* Site */}
         <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Site</CustomFormLabel>
-          <CustomSelect
-            fullWidth
-            displayEmpty
-            value={filters.site}
-            onChange={(e: any) => setFilters((prev) => ({ ...prev, site: e.target.value }))}
-          >
-            <MenuItem value="">All Sites</MenuItem>
-            <MenuItem value="site-1">Site 1</MenuItem>
-            <MenuItem value="site-2">Site 2</MenuItem>
-          </CustomSelect>
-        </Grid>
 
+          <Autocomplete
+            fullWidth
+            options={sites}
+            value={selectedSite}
+            getOptionLabel={(option: any) =>
+              option?.name ?? option?.Name ?? ''
+            }
+            isOptionEqualToValue={(option: any, value: any) =>
+              String(option.id ?? option.Id) ===
+              String(value.id ?? value.Id)
+            }
+            onChange={(_, newValue) => {
+              setSelectedSite(newValue);
+
+              setFilters((prev) => ({
+                ...prev,
+                site: newValue?.name ?? newValue?.Name ?? '',
+              }));
+            }}
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Search site..."
+                size="small"
+              />
+            )}
+          />
+        </Grid>
         {/* Host */}
         <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Host</CustomFormLabel>
-          <CustomSelect
+
+          <Autocomplete
             fullWidth
-            displayEmpty
-            value={filters.host}
-            onChange={(e: any) => setFilters((prev) => ({ ...prev, host: e.target.value }))}
-          >
-            <MenuItem value="">All Hosts</MenuItem>
-            <MenuItem value="host-1">Host 1</MenuItem>
-            <MenuItem value="host-2">Host 2</MenuItem>
-          </CustomSelect>
+            options={hostOptions}
+            loading={isFetchingVisitor}
+            value={selectedHost}
+            inputValue={hostInputValue}
+            getOptionLabel={(option: any) =>
+              option?.name ?? option?.Name ?? ''
+            }
+            isOptionEqualToValue={(option: any, value: any) =>
+              String(option.id ?? option.Id) ===
+              String(value.id ?? value.Id)
+            }
+            onInputChange={(_, newInputValue, reason) => {
+              setHostInputValue(newInputValue);
+
+              if (reason === 'input') {
+                setSearchEmployee(newInputValue);
+                setPageEmployee(0);
+              }
+
+              if (reason === 'clear') {
+                setSearchEmployee('');
+                setPageEmployee(0);
+              }
+            }}
+            onChange={(_, newValue) => {
+              setSelectedHost(newValue);
+
+              const hostName = newValue?.name ?? newValue?.Name ?? '';
+
+              setHostInputValue(hostName);
+              setSearchEmployee('');
+
+              setFilters((prev) => ({
+                ...prev,
+                host: hostName,
+              }));
+            }}
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Search host..."
+                size="small"
+              />
+            )}
+          />
         </Grid>
 
         {/* Visitor Name */}
         <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Visitor Name</CustomFormLabel>
-          <CustomSelect
+          <Autocomplete
             fullWidth
-            displayEmpty
-            value={filters.visitorName}
-            onChange={(e: any) =>
+            options={visitorOptions}
+            loading={isLoading || isFetching}
+            value={selectedVisitor}
+            inputValue={visitorInputValue}
+            getOptionLabel={(option: any) => option?.name ?? ''}
+            isOptionEqualToValue={(option: any, value: any) =>
+              String(option.id) === String(value.id)
+            }
+            onInputChange={(_, newInputValue, reason) => {
+              setVisitorInputValue(newInputValue);
+
+              if (reason === 'input') {
+                setSearch(newInputValue);
+                setPage(0);
+              }
+
+              if (reason === 'clear') {
+                setSearch('');
+                setPage(0);
+              }
+            }}
+            onChange={(_, newValue) => {
+              setSelectedVisitor(newValue);
+
+              setVisitorInputValue(newValue?.name ?? '');
+              setSearch('');
+
               setFilters((prev) => ({
                 ...prev,
-                visitorName: e.target.value,
-              }))
-            }
-          >
-            <MenuItem value="">All Visitor</MenuItem>
-            <MenuItem value="Danny">Danny</MenuItem>
-            <MenuItem value="Ilham">Ilham</MenuItem>
-          </CustomSelect>
+                visitorName: newValue?.name ?? '',
+              }));
+            }}
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Search visitor..."
+                size="small"
+              />
+            )}
+          />
         </Grid>
 
         {/* Access */}
-        <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+        {/* <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
           <CustomFormLabel sx={{ mt: 0 }}>Access</CustomFormLabel>
-          <CustomSelect
+
+          <Autocomplete
             fullWidth
-            displayEmpty
-            value={filters.access}
-            onChange={(e: any) => setFilters((prev) => ({ ...prev, access: e.target.value }))}
-          >
-            <MenuItem value="">All Access</MenuItem>
-            <MenuItem value="SCP 5">SCP 5</MenuItem>
-            <MenuItem value="SCP 4">SCP 4</MenuItem>
-          </CustomSelect>
-        </Grid>
+            options={accessControls}
+            value={
+              accessControls.find(
+                (item: any) => (item.name ?? item.Name) === filters.access
+              ) ?? null
+            }
+            getOptionLabel={(option: any) => option.name ?? option.Name ?? ''}
+            isOptionEqualToValue={(option: any, value: any) =>
+              (option.id ?? option.Id) === (value.id ?? value.Id)
+            }
+            onChange={(_, newValue) =>
+              setFilters((prev) => ({
+                ...prev,
+                access: newValue?.name ?? newValue?.Name ?? '',
+              }))
+            }
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Search access..."
+                size="small"
+              />
+            )}
+          />
+        </Grid> */}
 
         {/* Start Date */}
         <Grid size={{ xs: 12, sm: 6, xl: 4 }}>
@@ -173,7 +361,7 @@ const MonitoringFilter = ({
             startIcon={<IconRefresh />}
             onClick={handleResetFilter}
           >
-            Reset Filter
+            Reset
           </Button>
         </Grid>
       </Grid>
