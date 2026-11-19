@@ -49,7 +49,13 @@ function VisitorRow({
             fontSize: '13px',
           }}
         >
-          <Avatar src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`} />
+          <Avatar
+            src={
+              visitor.selfie_image
+                ? `${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`
+                : undefined
+            }
+          />
           {visitor.visitor_name}
         </TableCell>
         <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>

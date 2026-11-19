@@ -260,7 +260,7 @@ const Content = () => {
           visitor_period_end:
             item.visitor_period_end === '9999-01-01T00:00:00'
               ? '-'
-              : formatDateTime(item.visitor_period_end),
+              : formatDateTime(item.visitor_period_end, item.extend_visitor_period),
 
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',

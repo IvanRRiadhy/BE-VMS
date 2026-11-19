@@ -137,12 +137,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconUsersGroup,
         href: '/admin/manage/visitor-type',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.document',
-        icon: IconScript,
-        href: '/admin/manage/document',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.document',
+      //   icon: IconScript,
+      //   href: '/admin/manage/document',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.brand',
@@ -313,7 +313,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'navigation.transaction_log',
+        title: 'Invitation',
         icon: IconReport,
         chipColor: 'secondary',
         href: '/admin/report/transaction-log',
@@ -504,12 +504,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconUsersGroup,
         href: '/admin/manage/visitor-type',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.document',
-        icon: IconScript,
-        href: '/admin/manage/document',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.document',
+      //   icon: IconScript,
+      //   href: '/admin/manage/document',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.brand',
@@ -656,7 +656,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'navigation.transaction_log',
+        title: 'Invitation',
         icon: IconReport,
         chipColor: 'secondary',
         href: '/admin/report/transaction-log',
@@ -933,7 +933,7 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'navigation.transaction_log',
+        title: 'Invitation',
         icon: IconReport,
         chipColor: 'secondary',
         href: '/operator-admin/report/transaction-log',
@@ -1421,7 +1421,7 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'Dashboard',
+        title: 'Monitoring',
         icon: IconEye,
         href: '/security-monitor/monitoring',
       },
@@ -1478,7 +1478,7 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'navigation.transaction_log',
+        title: 'Invitation',
         icon: IconReport,
         chipColor: 'secondary',
         href: '/security-monitor/report/transaction-log',

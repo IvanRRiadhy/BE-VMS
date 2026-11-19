@@ -1,4 +1,4 @@
-import {  useState,  useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
@@ -46,7 +46,6 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const { t } = useTranslation();
-
   const { data, isLoading } = useAccessControlPagination({
     page,
     rowsPerPage,
@@ -243,7 +242,7 @@ const Content = () => {
                 overflowX={'auto'}
                 data={tableData}
                 isHaveChecked={true}
-                searchPlaceholder="Search Access Control"
+                searchPlaceholder={t('search') + ' Access Control'}
                 isHaveAction={true}
                 isHaveSearch={true}
                 currentPage={page}

@@ -56,8 +56,6 @@
 //   });
 // };
 
-
-
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getApprovalTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -71,12 +69,7 @@ interface Props {
   };
 }
 
-export const useApprovalPagination = ({
-  rowsPerPage,
-  search,
-  sortDir,
-  filters,
-}: Props) => {
+export const useApprovalPagination = ({ rowsPerPage, search, sortDir, filters }: Props) => {
   return useInfiniteQuery({
     queryKey: ['approval', rowsPerPage, search, sortDir, filters],
 
@@ -108,7 +101,11 @@ export const useApprovalPagination = ({
           approval_status: item.approval_status,
           current_step: item.current_step,
           visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
+          visitor_period_end:
+            item.visitor_period_end === '9999-01-01T00:00:00'
+              ? '-'
+              : formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+
           is_final: item.is_final,
           is_reviewer: item.is_reviewer,
         })),
@@ -116,10 +113,7 @@ export const useApprovalPagination = ({
     },
 
     getNextPageParam: (lastPage, allPages) => {
-      const loadedRecords = allPages.reduce(
-        (total, page) => total + page.collection.length,
-        0,
-      );
+      const loadedRecords = allPages.reduce((total, page) => total + page.collection.length, 0);
 
       if (loadedRecords >= lastPage.totalFiltered) {
         return undefined;

@@ -112,6 +112,8 @@ export const TableBodyContent = ({
   isHaveApproval,
   onAccept,
   onDenied,
+  isHavePayload,
+  onHavePayload,
   isHaveQrCode,
   isHaveAccess,
   getAccessActions,
@@ -377,6 +379,7 @@ export const TableBodyContent = ({
                 onUnAssign,
                 isHaveActive,
                 onActiveToggle,
+                onHavePayload,
                 onQuickAccessToggle,
                 htmlMaxWidth,
                 isAccessControlType,
@@ -414,6 +417,7 @@ export const TableBodyContent = ({
                 isHaveApproval,
                 onAccept,
                 isStickyColumns,
+                isHavePayload,
                 onDenied,
                 isHaveAccess,
                 getAccessActions,
@@ -529,6 +533,8 @@ const TableRowItem = React.memo(
       onDenied,
       isHaveAccess,
       getAccessActions,
+      isHavePayload,
+      onHavePayload,
       isHaveView,
       isCurrentUsed,
       onView,
@@ -1420,7 +1426,7 @@ const TableRowItem = React.memo(
                         textDecoration: 'underline',
                         textAlign: 'left',
                       }}
-                      // target="_blank"
+                    // target="_blank"
                     >
                       {String(row[col] ?? '-')}
                     </Button>
@@ -1461,6 +1467,58 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
+
+        {isHavePayload &&
+          (
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                bgcolor: 'background.paper',
+                zIndex: 2,
+                p: 0,
+                verticalAlign: 'middle',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  px: 1.5,
+                  py: 1.25,
+                  height: '100%',
+                }}
+              >
+                <Tooltip title="Detail Payload" arrow>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onHavePayload?.(row);
+                    }}
+                    disableRipple
+                    sx={{
+                      color: 'white',
+                      backgroundColor: 'gray',
+                      width: 28,
+                      height: 28,
+                      cursor: 'pointer',
+                      p: 0.5,
+                      borderRadius: '50%',
+                      '&:hover': {
+                        backgroundColor: 'gray',
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    <IconEye width={14} height={14} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </TableCell>
+          )
+        }
 
         {isHaveAction && !isActionVisitor && (
           <TableCell
@@ -2271,292 +2329,303 @@ const TableRowItem = React.memo(
               )}
             </Box>
           </TableCell>
-        )}
-        {isHaveActionRevoke && !isActionVisitor && (
-          <>
-            <TableCell
-              sx={{
-                position: 'sticky',
-                right: 0,
-                background: 'white',
-                zIndex: 2,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Tooltip title="Grant" arrow>
-                <Button
-                  onClick={() => onActionAccess?.(row, 'grant')}
-                  disableRipple
-                  variant="contained"
-                  sx={{
-                    color: 'white',
-                    backgroundColor: '#4CAF50',
-                  }}
-                >
-                  Grant
-                </Button>
-              </Tooltip>
-              <Tooltip title="Revoke" arrow>
-                <Button
-                  onClick={() => onActionAccess?.(row, 'revoke')}
-                  disableRipple
-                  variant="contained"
-                  sx={{
-                    color: 'white',
-                    backgroundColor: '#f44336',
-                  }}
-                >
-                  Revoke
-                </Button>
-              </Tooltip>
-              <Tooltip title="Block" arrow>
-                <Button
-                  onClick={() => onActionAccess?.(row, 'block')}
-                  disableRipple
-                  variant="contained"
-                  sx={{
-                    color: 'white',
-                    backgroundColor: '#000',
-                  }}
-                >
-                  Block
-                </Button>
-              </Tooltip>
-            </TableCell>
-          </>
-        )}
-        {isHaveActionOnlyEdit && !isActionVisitor && (
-          <>
-            <TableCell
-              sx={{
-                position: 'sticky',
-                right: 0,
-                background: 'white',
-                zIndex: 2,
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Box display="flex" alignItems="end" gap={0.5}>
-                {isCopy && (
-                  <Tooltip title="Copy" arrow>
-                    <IconButton
-                      onClick={() => onCopy?.(row)}
-                      disableRipple
-                      sx={{
-                        color: 'white',
-                        backgroundColor: 'gray',
-                        width: 28,
-                        height: 28,
-                        p: 0.5,
-                        borderRadius: '50%',
-                        '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
-                      }}
-                    >
-                      <IconCopy width={14} height={14} />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {/* Tombol Edit (Primary, Kecil) */}
-                {isSelectedType && (
-                  <Tooltip title="Edit" arrow>
-                    <IconButton
-                      onClick={() => onEdit?.(row)}
-                      disableRipple
-                      sx={{
-                        color: 'white',
-                        backgroundColor: '#FA896B',
-                        width: 28,
-                        height: 28,
-                        p: 0.5,
-                        borderRadius: '50%',
-                        '&:hover': {
-                          backgroundColor: '#e06f52',
+        )
+        }
+        {
+          isHaveActionRevoke && !isActionVisitor && (
+            <>
+              <TableCell
+                sx={{
+                  position: 'sticky',
+                  right: 0,
+                  background: 'white',
+                  zIndex: 2,
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Tooltip title="Grant" arrow>
+                  <Button
+                    onClick={() => onActionAccess?.(row, 'grant')}
+                    disableRipple
+                    variant="contained"
+                    sx={{
+                      color: 'white',
+                      backgroundColor: '#4CAF50',
+                    }}
+                  >
+                    Grant
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Revoke" arrow>
+                  <Button
+                    onClick={() => onActionAccess?.(row, 'revoke')}
+                    disableRipple
+                    variant="contained"
+                    sx={{
+                      color: 'white',
+                      backgroundColor: '#f44336',
+                    }}
+                  >
+                    Revoke
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Block" arrow>
+                  <Button
+                    onClick={() => onActionAccess?.(row, 'block')}
+                    disableRipple
+                    variant="contained"
+                    sx={{
+                      color: 'white',
+                      backgroundColor: '#000',
+                    }}
+                  >
+                    Block
+                  </Button>
+                </Tooltip>
+              </TableCell>
+            </>
+          )
+        }
+        {
+          isHaveActionOnlyEdit && !isActionVisitor && (
+            <>
+              <TableCell
+                sx={{
+                  position: 'sticky',
+                  right: 0,
+                  background: 'white',
+                  zIndex: 2,
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Box display="flex" alignItems="end" gap={0.5}>
+                  {isCopy && (
+                    <Tooltip title="Copy" arrow>
+                      <IconButton
+                        onClick={() => onCopy?.(row)}
+                        disableRipple
+                        sx={{
                           color: 'white',
-                        },
-                      }}
-                    >
-                      <IconPencil width={14} height={14} />
-                    </IconButton>
-                  </Tooltip>
-                )}
+                          backgroundColor: 'gray',
+                          width: 28,
+                          height: 28,
+                          p: 0.5,
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+                        }}
+                      >
+                        <IconCopy width={14} height={14} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {/* Tombol Edit (Primary, Kecil) */}
+                  {isSelectedType && (
+                    <Tooltip title="Edit" arrow>
+                      <IconButton
+                        onClick={() => onEdit?.(row)}
+                        disableRipple
+                        sx={{
+                          color: 'white',
+                          backgroundColor: '#FA896B',
+                          width: 28,
+                          height: 28,
+                          p: 0.5,
+                          borderRadius: '50%',
+                          '&:hover': {
+                            backgroundColor: '#e06f52',
+                            color: 'white',
+                          },
+                        }}
+                      >
+                        <IconPencil width={14} height={14} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
+            </>
+          )
+        }
+        {
+          isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                background: 'white',
+                zIndex: 2,
+                display: 'flex',
+                gap: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Box display="flex" alignItems="end" gap={1}>
+                {/* Tombol Edit (Primary, Kecil) */}
+                <Tooltip title="Give Access" arrow>
+                  <Button
+                    onClick={() => onGiveAccess?.(row)}
+                    // disableRipple
+                    variant="contained"
+                    color="primary"
+                  >
+                    Give Access
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Registered Site" arrow>
+                  <Button
+                    onClick={() => onRegisteredSite?.(row)}
+                    // disableRipple
+                    variant="contained"
+                    color="secondary"
+                  >
+                    Registered Site
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Site Access" arrow>
+                  <Button
+                    onClick={() => onSiteAccess?.(row)}
+                    // disableRipple
+                    variant="contained"
+                    color="warning"
+                  >
+                    Site Access
+                  </Button>
+                </Tooltip>
               </Box>
             </TableCell>
-          </>
-        )}
-        {isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
-          <TableCell
-            sx={{
-              position: 'sticky',
-              right: 0,
-              background: 'white',
-              zIndex: 2,
-              display: 'flex',
-              gap: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Box display="flex" alignItems="end" gap={1}>
-              {/* Tombol Edit (Primary, Kecil) */}
-              <Tooltip title="Give Access" arrow>
-                <Button
-                  onClick={() => onGiveAccess?.(row)}
-                  // disableRipple
-                  variant="contained"
-                  color="primary"
-                >
-                  Give Access
-                </Button>
-              </Tooltip>
-              <Tooltip title="Registered Site" arrow>
-                <Button
-                  onClick={() => onRegisteredSite?.(row)}
-                  // disableRipple
-                  variant="contained"
-                  color="secondary"
-                >
-                  Registered Site
-                </Button>
-              </Tooltip>
-              <Tooltip title="Site Access" arrow>
-                <Button
-                  onClick={() => onSiteAccess?.(row)}
-                  // disableRipple
-                  variant="contained"
-                  color="warning"
-                >
-                  Site Access
-                </Button>
-              </Tooltip>
-            </Box>
-          </TableCell>
-        )}
-        {isCopyLink && (
-          <TableCell
-            sx={{
-              position: 'sticky',
-              right: 0,
-              background: 'white',
-              zIndex: 2,
-              display: 'flex',
-              gap: 0.5,
-              mt: 0.5,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Box display="flex" alignItems="end" gap={1}>
-              {/* Tombol Edit (Primary, Kecil) */}
-              <Tooltip title="Copy Link" arrow>
-                <IconButton
-                  onClick={() => onCopyLink?.(row)}
-                  disableRipple
-                  sx={{
-                    color: 'white',
-                    backgroundColor: '#FA896B',
-                    width: 28,
-                    height: 28,
-                    p: 0.5,
-                    borderRadius: '50%',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 0, 0, 0.7)',
+          )
+        }
+        {
+          isCopyLink && (
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                background: 'white',
+                zIndex: 2,
+                display: 'flex',
+                gap: 0.5,
+                mt: 0.5,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Box display="flex" alignItems="end" gap={1}>
+                {/* Tombol Edit (Primary, Kecil) */}
+                <Tooltip title="Copy Link" arrow>
+                  <IconButton
+                    onClick={() => onCopyLink?.(row)}
+                    disableRipple
+                    sx={{
                       color: 'white',
-                    },
-                  }}
-                >
-                  <IconCopy width={14} height={14} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Detail Link" arrow>
-                <IconButton
-                  onClick={() => onDetailLink?.(row)}
-                  disableRipple
-                  sx={{
-                    color: 'white',
-                    backgroundColor: 'gray',
-                    width: 28,
-                    height: 28,
-                    p: 0.5,
-                    borderRadius: '50%',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                      backgroundColor: '#FA896B',
+                      width: 28,
+                      height: 28,
+                      p: 0.5,
+                      borderRadius: '50%',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    <IconCopy width={14} height={14} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Detail Link" arrow>
+                  <IconButton
+                    onClick={() => onDetailLink?.(row)}
+                    disableRipple
+                    sx={{
                       color: 'white',
-                    },
-                  }}
-                >
-                  {/* <IconCopy width={14} height={14} /> */}
-                  <IconEye width={24} height={24} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete Link" arrow>
-                <IconButton
-                  onClick={() => onDelete?.(row)}
-                  disableRipple
-                  sx={{
-                    color: 'white',
-                    backgroundColor: 'red',
-                    width: 28,
-                    height: 28,
-                    p: 0.5,
-                    borderRadius: '50%',
-                    '&:hover': {
+                      backgroundColor: 'gray',
+                      width: 28,
+                      height: 28,
+                      p: 0.5,
+                      borderRadius: '50%',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    {/* <IconCopy width={14} height={14} /> */}
+                    <IconEye width={24} height={24} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Link" arrow>
+                  <IconButton
+                    onClick={() => onDelete?.(row)}
+                    disableRipple
+                    sx={{
+                      color: 'white',
                       backgroundColor: 'red',
-                      color: 'white',
-                    },
-                  }}
-                >
-                  {/* <IconCopy width={14} height={14} /> */}
-                  <IconTrash width={24} height={24} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </TableCell>
-        )}
-        {isButtonEnabled && isButtonDisabled && (
-          <TableCell
-            sx={{
-              position: 'sticky',
-              right: 0,
-              background: 'white',
-              zIndex: 2,
-              display: 'flex',
-              gap: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Box display="flex" alignItems="end" gap={1}>
-              {/* Tombol Edit (Primary, Kecil) */}
-              <Tooltip title="Enabled" arrow>
-                <Button
-                  onClick={() => onGiveAccess?.(row)}
-                  // disableRipple
-                  variant="contained"
-                  color="primary"
-                >
-                  Enabled
-                </Button>
-              </Tooltip>
-              <Tooltip title="Disabled" arrow>
-                <Button
-                  onClick={() => onIsButtonDisabled?.(row)}
-                  // disableRipple
-                  variant="contained"
-                  color="error"
-                >
-                  Disabled
-                </Button>
-              </Tooltip>
-            </Box>
-          </TableCell>
-        )}
-      </TableRow>
+                      width: 28,
+                      height: 28,
+                      p: 0.5,
+                      borderRadius: '50%',
+                      '&:hover': {
+                        backgroundColor: 'red',
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    {/* <IconCopy width={14} height={14} /> */}
+                    <IconTrash width={24} height={24} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </TableCell>
+          )
+        }
+        {
+          isButtonEnabled && isButtonDisabled && (
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                background: 'white',
+                zIndex: 2,
+                display: 'flex',
+                gap: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Box display="flex" alignItems="end" gap={1}>
+                {/* Tombol Edit (Primary, Kecil) */}
+                <Tooltip title="Enabled" arrow>
+                  <Button
+                    onClick={() => onGiveAccess?.(row)}
+                    // disableRipple
+                    variant="contained"
+                    color="primary"
+                  >
+                    Enabled
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Disabled" arrow>
+                  <Button
+                    onClick={() => onIsButtonDisabled?.(row)}
+                    // disableRipple
+                    variant="contained"
+                    color="error"
+                  >
+                    Disabled
+                  </Button>
+                </Tooltip>
+              </Box>
+            </TableCell>
+          )
+        }
+      </TableRow >
     );
   },
   (prev, next) => {

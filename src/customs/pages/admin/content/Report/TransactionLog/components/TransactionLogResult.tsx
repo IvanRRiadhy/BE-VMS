@@ -230,7 +230,7 @@ const TransactionLogResult = ({
                         </Button>
                       </Tooltip>
 
-                      <Tooltip title="Edit Report" arrow>
+                      {/* <Tooltip title="Edit Report" arrow>
                         <Button
                           variant="contained"
                           color="secondary"
@@ -245,7 +245,7 @@ const TransactionLogResult = ({
                         >
                           <IconPencil size={20} />
                         </Button>
-                      </Tooltip>
+                      </Tooltip> */}
 
                       {editingId === rep.id && (
                         <Tooltip title="Update Report" arrow>

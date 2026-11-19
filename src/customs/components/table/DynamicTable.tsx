@@ -112,7 +112,6 @@ type DynamicTableProps<
   }[];
 
   filterDataValue?: string;
-
   onFilterDataChange?: (value: string) => void;
   isHaveVisitor?: boolean;
   isButtonRegisteredSite?: boolean;
@@ -125,6 +124,8 @@ type DynamicTableProps<
   isCopyLink?: boolean;
   isDetailLink?: boolean;
   hasFetched?: boolean;
+  isHavePayload?: boolean;
+  onHavePayload?: any;
   isSiteSpaceName?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
@@ -179,6 +180,10 @@ type DynamicTableProps<
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
+  isInfiniteScroll?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onFetchNextPage?: () => void;
   isHaveApproval?: boolean;
   isHaveIntegration?: boolean;
   isHaveActionRevoke?: boolean;
@@ -357,8 +362,14 @@ function DynamicTableBase<
     isHavePassword = false,
     isHavePagination,
     isHavePdf,
+    isInfiniteScroll = false,
+    hasNextPage = false,
+    isFetchingNextPage = false,
+    onFetchNextPage,
     isSiteSpaceType = false,
     isBlacklistAction,
+    isHavePayload = false,
+    onHavePayload,
     isHaveIntegration,
     onNameClick,
     isDataVerified = false,
@@ -453,6 +464,7 @@ function DynamicTableBase<
     'selfie image',
     'selfie_image',
     'trx_card_access_id',
+    'payload'
   ];
 
   const isStickyColumn = (colName: string) => isStickyColumns.includes(colName);
@@ -470,9 +482,9 @@ function DynamicTableBase<
     loading || data.length === 0
       ? fallbackColumns
       : (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
-          keyof T,
-          string
-        >[]);
+        keyof T,
+        string
+      >[]);
 
   const columnss =
     sortColumns && sortColumns.length > 0
@@ -555,6 +567,18 @@ function DynamicTableBase<
     //  });
 
     onPaginationChange?.(0, newRowsPerPage);
+  };
+
+  const handleTableScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (!isInfiniteScroll || !hasNextPage || isFetchingNextPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+    if (distanceFromBottom <= 150) {
+      onFetchNextPage?.();
+    }
   };
 
   const paginatedData = useMemo(() => {
@@ -1512,11 +1536,13 @@ function DynamicTableBase<
             }}
           > */}
           <TableContainer
+            onScroll={isInfiniteScroll ? handleTableScroll : undefined}
             sx={{
               flex: 1,
               minHeight: 0,
-              overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
-              overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
+              maxHeight: isInfiniteScroll ? '75vh' : undefined,
+              overflowX: 'auto',
+              overflowY: 'auto',
               width: '100%',
             }}
           >
@@ -1799,6 +1825,24 @@ function DynamicTableBase<
                       </TableCell>
                     )}
 
+                    {isHavePayload && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
                     {isHaveDataQuickAccess && (
                       <TableCell
                         sx={{
@@ -1999,6 +2043,8 @@ function DynamicTableBase<
                   isButtonDisabled={isButtonDisabled}
                   onIsButtonDisabled={onIsButtonDisabled}
                   isHaveVisitor={isHaveVisitor}
+                  isHavePayload={isHavePayload}
+                  onHavePayload={onHavePayload}
                   onDelete={onDelete}
                   isHaveDuplicate={isHaveDuplicate}
                   onDuplicate={onDuplicate}
@@ -2012,10 +2058,29 @@ function DynamicTableBase<
                 />
               </Table>
             )}
+            {isInfiniteScroll && isFetchingNextPage && (
+              <Box display="flex" justifyContent="center" alignItems="center" py={2}>
+                <Skeleton variant="text" width={120} height={24} />
+              </Box>
+            )}
           </TableContainer>
-          {isHavePagination && (
+          {/* {isHavePagination && (
             <TablePagination
               // rowsPerPageOptions={rowsPerPageOptions}
+              rowsPerPageOptions={rowsPerPageOptions?.map((opt) =>
+                opt === -1 ? { label: 'All', value: -1 } : opt,
+              )}
+              component="div"
+              count={totalCount ?? data.length}
+              rowsPerPage={rowsPerPage}
+              page={currentPage}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{ overflow: 'hidden' }}
+            />
+          )} */}
+          {isHavePagination && !isInfiniteScroll && (
+            <TablePagination
               rowsPerPageOptions={rowsPerPageOptions?.map((opt) =>
                 opt === -1 ? { label: 'All', value: -1 } : opt,
               )}
@@ -2058,13 +2123,13 @@ function DynamicTableBase<
       >
         {React.isValidElement(filterMoreContent)
           ? React.cloneElement(
-              filterMoreContent as React.ReactElement<{
-                onClose?: () => void;
-              }>,
-              {
-                onClose: () => setShowDrawerFilterMore(false),
-              },
-            )
+            filterMoreContent as React.ReactElement<{
+              onClose?: () => void;
+            }>,
+            {
+              onClose: () => setShowDrawerFilterMore(false),
+            },
+          )
           : filterMoreContent}
       </Drawer>
     </>

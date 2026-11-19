@@ -15,18 +15,31 @@ const NotificationSlice = createSlice({
   name: 'notifications',
   initialState,
   reducers: {
+    // addNotification: (state, action: PayloadAction<NotificationItem>) => {
+    //   const exists = state.items.some(
+    //     (x) =>
+    //       x.trx_visitor_id === action.payload.trx_visitor_id &&
+    //       x.created_at === action.payload.created_at,
+    //   );
+
+    //   if (exists) return;
+
+    //   state.items.unshift(action.payload);
+
+    //   state.unreadCount = state.items.filter((x) => !x.is_read).length;
+    // },
+
     addNotification: (state, action: PayloadAction<NotificationItem>) => {
-      const exists = state.items.some(
-        (x) =>
-          x.trx_visitor_id === action.payload.trx_visitor_id &&
-          x.created_at === action.payload.created_at,
-      );
+      const incoming = action.payload;
 
-      if (exists) return;
+      // Cek duplikat hanya jika event_id tersedia
+      if (incoming.event_id && state.items.some((item) => item.event_id === incoming.event_id)) {
+        return;
+      }
 
-      state.items.unshift(action.payload);
+      state.items.unshift(incoming);
 
-      state.unreadCount = state.items.filter((x) => !x.is_read).length;
+      state.unreadCount = state.items.filter((item) => !item.is_read).length;
     },
 
     markAsRead: (state, action: PayloadAction<string>) => {

@@ -170,7 +170,11 @@ function VisitorRow({
             }}
           >
             <Avatar
-              src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
+              src={
+                visitor.selfie_image
+                  ? `${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`
+                  : undefined
+              }
               sx={{
                 width: 36,
                 height: 36,

@@ -146,7 +146,7 @@ const ApprovalSidebar = ({
             )
             .map((group: any) => (
               <Box
-                key={group.approval_ticket_id}
+                key={`${group.approval_ticket_id}`}
                 sx={{
                   backgroundColor: selectedId === group.approval_ticket_id ? '#e3f2fd' : '#f5f5f5',
                   borderRadius: '8px',

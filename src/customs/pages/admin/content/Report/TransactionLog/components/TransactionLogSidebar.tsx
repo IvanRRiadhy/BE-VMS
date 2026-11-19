@@ -100,7 +100,7 @@ const TransactionLogSidebar = ({
             mb: 1,
           }}
         >
-          {!isFilterCollapsed && <Typography variant="h5">Transaction Log Report</Typography>}
+          {!isFilterCollapsed && <Typography variant="h5">Report Invitation</Typography>}
 
           <Tooltip title={isFilterCollapsed ? 'Show Sidebar' : 'Hide Sidebar'} arrow>
             <IconButton size="small" onClick={onToggleCollapse}>

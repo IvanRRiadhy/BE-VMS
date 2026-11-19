@@ -63,6 +63,7 @@ import CreateLinkDialog from 'src/customs/pages/Employee/ShareLink/components/Cr
 import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { extend } from 'lodash';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -195,6 +196,7 @@ const DashboardEmployee = () => {
         approval_status,
         visitor_period_start,
         visitor_period_end,
+        extend_visitor_period,
         ticket_id,
       }: any) => ({
         id: entity_id,
@@ -205,7 +207,10 @@ const DashboardEmployee = () => {
         // approval_workflow_type,
         approval_status,
         visitor_period_start,
-        visitor_period_end: formatDateTime(visitor_period_end),
+        visitor_period_end:
+          visitor_period_end === '9999-01-01T00:00:00'
+            ? '-'
+            : formatDateTime(visitor_period_end, extend_visitor_period),
         ticket_id,
       }),
     ) || [];
@@ -566,6 +571,14 @@ const DashboardEmployee = () => {
     return `${year}-${month}-${day}`;
   };
 
+
+  const formatUtcDate = (date: Date, isEndOfDay = false) => {
+    return dayjs(date)
+    [isEndOfDay ? 'endOf' : 'startOf']('day')
+      .utc()
+      .format('YYYY-MM-DDTHH:mm:ss[Z]');
+  };
+
   const {
     data: activities,
     isLoading: isLoadingActivities,
@@ -575,8 +588,8 @@ const DashboardEmployee = () => {
     fetchNextPage,
     refetch: refetchActivities,
   } = useActivities({
-    start_date: formatLocalDate(startDate),
-    end_date: formatLocalDate(endDate),
+    start_date: formatUtcDate(startDate),
+    end_date: formatUtcDate(endDate, true),
   });
 
   const activites = activities?.activities ?? [];
@@ -599,6 +612,7 @@ const DashboardEmployee = () => {
       key: 'pending',
       description: 'requests waiting for your approval',
       icon: <IconHourglass size={30} />,
+      path: '/employee/approval',
     },
     {
       title: 'Active Visitors',

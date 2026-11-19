@@ -17,11 +17,18 @@ const Content = () => {
 
   const { page, search, setPage, setSearch } = useTableQueryParams();
 
-  const { data, totalRecords, isLoading, error } = useIntegrationEvents({
-    page,
-    rowsPerPage,
+  const {
+    data,
+    totalRecords,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useIntegrationEvents({
+    rowsPerPage: 25,
     search,
   });
+
 
   const cards = useMemo(
     () => [
@@ -55,15 +62,14 @@ const Content = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
+              {/* <DynamicTable
                 loading={isLoading}
                 overflowX="auto"
                 data={data}
                 isHavePagination
-                isHaveSearch={true}
-                // isHaveHeaderTitle
-                // titleHeader="Activity Logs"
-              
+                isHaveSearch={false}
+                isHaveHeaderTitle
+                titleHeader="Activity Logs"
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[25, 50, 100]}
                 totalCount={totalRecords}
@@ -74,6 +80,25 @@ const Content = () => {
                   setPage(newPage);
                   setRowsPerPage(newRowsPerPage);
                 }}
+              /> */}
+              <DynamicTable
+                loading={isLoading}
+                data={data}
+                overflowX="auto"
+                isHavePagination={false}
+                isHaveSearch={false}
+                isInfiniteScroll
+                hasNextPage={!!hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onFetchNextPage={() => {
+                  if (hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                  }
+                }}
+                searchKeyword={search}
+                onSearch={handleSearch}
+                // isHavePayload={true}
+                // onHavePayload={() => { }}
               />
             </Grid>
           </Grid>

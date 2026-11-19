@@ -1,25 +1,25 @@
-import { Box, Grid2 as Grid, Icon } from '@mui/material';
-import { IconWorldCog } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
+import { IconWorldCog, IconX } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
-import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useIntegrationEvents } from 'src/hooks/Monitor/useIntegrationEvents';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { search, setPage, setSearch } = useTableQueryParams();
 
-  const { page, search, setPage, setSearch } = useTableQueryParams();
-
-  const { data, totalRecords, isLoading, error } = useIntegrationEvents({
-    page,
-    rowsPerPage,
+  const {
+    data,
+    totalRecords,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useIntegrationEvents({
+    rowsPerPage: 25,
     search,
   });
 
@@ -35,45 +35,51 @@ const Content = () => {
     [totalRecords],
   );
 
-  const handleSearch = useCallback(
-    (keyword: string) => {
-      setPage(0);
-      setSearch(keyword);
-    },
-    [setPage, setSearch],
-  );
+  const handleSearch = (keyword: string) => {
+    setPage(0);
+    setSearch(keyword);
+  };
+
+  const [openPayload, setOpenPayload] = useState(false);
+  const [selectedPayload, setSelectedPayload] = useState<any>(null);
+
+  const handleOpenPayload = (row: any) => {
+    setSelectedPayload(row.payload);
+    setOpenPayload(true);
+  };
 
   return (
-
     <Container title="Integration" description="Integration page">
       <Box>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid size={{ xs: 12, lg: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
-          <Grid container size={{ xs: 12, lg: 12 }}>
+
+          <Grid size={{ xs: 12 }}>
             <DynamicTable
               loading={isLoading}
-              overflowX="auto"
               data={data}
-              isHavePagination
-              isHaveSearch={true}
-              // isHaveHeaderTitle
-              // titleHeader="Event Logs"
-              defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[25, 50, 100]}
-              totalCount={totalRecords}
-              currentPage={page}
+              overflowX="auto"
+              isHavePagination={false}
+              isHaveSearch={false}
+              isInfiniteScroll
+              hasNextPage={!!hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onFetchNextPage={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
               searchKeyword={search}
               onSearch={handleSearch}
-              onPaginationChange={(newPage, newRowsPerPage) => {
-                setPage(newPage);
-                setRowsPerPage(newRowsPerPage);
-              }}
+              // isHavePayload={true}
+              // onHavePayload={handleOpenPayload}
             />
           </Grid>
         </Grid>
       </Box>
+
     </Container>
   );
 };

@@ -53,6 +53,19 @@ const Notifications = () => {
     setSelectedNotification(notification);
     setOpenDialog(true);
   }, []);
+
+  const generalNotifications = notifications.filter(
+    (item: any) => !item.action_type?.startsWith('approval-')
+  );
+
+  const approvalNotifications = notifications.filter(
+    (item: any) => item.action_type?.startsWith('approval-')
+  );
+
+  const systemNotifications = notifications.filter(
+    (item: any) => item.service_source === 'System'
+  );
+
   return (
     <Box>
       <IconButton
@@ -102,20 +115,40 @@ const Notifications = () => {
           }}
         >
           <Tab label="General" />
-          <Tab label="Approval" />
-          <Tab label="System" />
+          {/* <Tab label="Approval" />
+          <Tab label="System" /> */}
         </Tabs>
-        <Box sx={{ height: '350px', overflowY: 'auto' }}>
+        <Box sx={{
+          height: 400,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          '&::-webkit-scrollbar': {
+            width: 6,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: 3,
+          },
+        }}
+        >
           {tab === 0 && (
             <Box>
-              {notifications.length === 0 ? (
-                <Box p={1} textAlign="center">
+              {generalNotifications.length === 0 ? (
+                <Box
+                  sx={{
+                    height: 400,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                  }}
+                >
                   <Typography variant="subtitle2" color="textSecondary">
                     No notifications
                   </Typography>
                 </Box>
               ) : (
-                notifications.map((notification: any) => (
+                generalNotifications.map((notification: any) => (
                   <MenuItem
                     key={notification.id}
                     sx={{
@@ -141,10 +174,19 @@ const Notifications = () => {
                       </Avatar>
 
                       <Box width="100%">
-                        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                          <Typography variant="subtitle2" color="textPrimary" fontWeight={600}>
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                        >
+                          <Typography
+                            variant="subtitle2"
+                            color="textPrimary"
+                            fontWeight={600}
+                          >
                             {notification.title}
                           </Typography>
+
                           <Chip
                             label={notification.is_read ? 'Read' : 'Unread'}
                             size="small"
@@ -160,24 +202,9 @@ const Notifications = () => {
                           color="textSecondary"
                           variant="body2"
                           mt={1}
-                          sx={{
-                            whiteSpace: 'normal',
-                          }}
+                          sx={{ whiteSpace: 'normal' }}
                         >
                           {notification.message}
-                        </Typography>
-
-                        {/* <Typography variant="caption" color="text.secondary">
-                          {notification.site_name}
-                        </Typography> */}
-
-                        <Typography
-                          variant="caption"
-                          display="block"
-                          color="text.secondary"
-                          mt={0.5}
-                        >
-                          {notification.remaining_minutes} minute(s) remaining
                         </Typography>
                       </Box>
                     </Stack>
@@ -187,7 +214,7 @@ const Notifications = () => {
             </Box>
           )}
 
-          {tab === 1 && (
+          {/* {tab === 1 && (
             <Box>
               <MenuItem sx={{ py: 2, px: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Stack direction="row" spacing={2}>
@@ -232,6 +259,108 @@ const Notifications = () => {
                   </Box>
                 </Stack>
               </MenuItem>
+            </Box>
+          )} */}
+          {/* {tab === 1 && (
+            <Box>
+              {approvalNotifications.length === 0 ? (
+                <Box p={2} textAlign="center">
+                  <Typography variant="subtitle2" color="textSecondary">
+                    No approval notifications
+                  </Typography>
+                </Box>
+              ) : (
+                approvalNotifications.map((notification: any) => (
+                  <MenuItem
+                    key={notification.id}
+                    sx={{
+                      py: 2,
+                      px: 2,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      backgroundColor: notification.is_read
+                        ? 'transparent'
+                        : 'rgba(25,118,210,0.08)',
+                    }}
+                  // onClick={() => handleOpenNotification(notification)}
+                  >
+                    <Stack direction="row" spacing={2} width="100%" alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: 'primary.main',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <IconBellRinging size={20} />
+                      </Avatar>
+
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        width="100%"
+                        gap={1}
+                      >
+                        <Box flex={1} minWidth={0}>
+                          <Typography
+                            variant="subtitle2"
+                            color="textPrimary"
+                            fontWeight={600}
+                          >
+                            {notification.title}
+                          </Typography>
+
+                          <Typography
+                            color="textSecondary"
+                            variant="body2"
+                            mt={1}
+                            sx={{ whiteSpace: 'normal' }}
+                          >
+                            {notification.message}
+                          </Typography>
+
+                          <Typography
+                            color="textSecondary"
+                            variant="body2"
+                            mt={1}
+                            sx={{ whiteSpace: 'normal' }}
+                          >
+                            {formatDateTime(notification.timestamp)}
+                          </Typography>
+                        </Box>
+
+                        <Stack direction="row" spacing={0.5} flexShrink={0}>
+                          <IconButton
+                            size="small"
+                            color="success"
+                            title="Approve"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Handle approve
+                            }}
+                          >
+                            <IconCheck size={20} />
+                          </IconButton>
+
+                          <IconButton
+                            size="small"
+                            color="error"
+                            title="Reject"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Handle reject
+                            }}
+                          >
+                            <IconX size={20} />
+                          </IconButton>
+                        </Stack>
+                      </Box>
+                    </Stack>
+                  </MenuItem>
+                ))
+              )}
             </Box>
           )}
           {tab === 2 && (
@@ -283,9 +412,9 @@ const Notifications = () => {
                 </Stack>
               </MenuItem>
             </Box>
-          )}
+          )} */}
         </Box>
-        <Box p={2} pb={1}>
+        {/* <Box p={2} pb={1}>
           <Button
             to="/guest/notification"
             variant="outlined"
@@ -295,9 +424,9 @@ const Notifications = () => {
           >
             See all Notifications
           </Button>
-        </Box>
+        </Box> */}
       </Menu>
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+      {/* <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           {selectedNotification?.title}
           <IconButton
@@ -358,7 +487,7 @@ const Notifications = () => {
             </Box>
           </Stack>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </Box>
   );
 };

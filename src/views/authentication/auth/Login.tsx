@@ -472,9 +472,14 @@ const Login = () => {
           >
             <Box
               sx={{
+                display: {
+                  xs: 'none',
+                  sm: 'none',
+                  lg: 'block',
+                },
                 position: 'absolute',
-                top: { xs: 80, md: 90, lg: 90 },
-                left: { xs: '45%', md: 360, lg: 290 },
+                top: { xs: 80, md: 90, lg: 200, xl: 200 },
+                left: { xs: '45%', md: 360, lg: 200, xl: 290 },
                 zIndex: 10,
               }}
             >
@@ -595,6 +600,8 @@ const Login = () => {
                           left: '50%',
                           transform: 'translateX(-50%)',
                           pointerEvents: 'none',
+                          px: { xs: 1, lg: 0 }
+
                         }}
                       />
 
@@ -667,7 +674,7 @@ const Login = () => {
                     {/* Access Cards */}
                     <Grid container spacing={2}>
                       {/* User System */}
-                      <Grid size={{ xs: 12, sm: 6 }}>
+                      <Grid size={{ xs: 12, sm: 6 }} sx={{ px: { xs: 1, lg: 0 } }}>
                         <Card
                           onClick={() => handleSelectAccess('user-system')}
                           elevation={0}
@@ -782,7 +789,7 @@ const Login = () => {
                       </Grid>
 
                       {/* Satker */}
-                      <Grid size={{ xs: 12, sm: 6 }}>
+                      <Grid size={{ xs: 12, sm: 6 }} sx={{ px: { xs: 1, lg: 0 } }}>
                         <Card
                           onClick={() => handleSelectAccess('satker')}
                           elevation={0}
@@ -1335,7 +1342,7 @@ const Login = () => {
                                     opacity: 1,
                                   },
                                 }}
-                                // endIcon={<IconArrowRight size={20} />}
+                              // endIcon={<IconArrowRight size={20} />}
                               >
                                 {loading ? (
                                   <CircularProgress size={22} sx={{ color: '#FFFFFF' }} />

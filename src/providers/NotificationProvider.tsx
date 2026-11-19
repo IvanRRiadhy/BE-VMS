@@ -18,9 +18,8 @@ const NotificationProvider = () => {
     if (!user?.id && !user?.visitor_id) return;
 
     if (!config?.WS_MONITOR || !config?.WS_MONITOR_PORT) return;
-
-    const brokerUrl = `wss://${config.WS_MONITOR}:${config.WS_MONITOR_PORT}/ws`;
-
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const brokerUrl = `${protocol}://${config.WS_MONITOR}:${config.WS_MONITOR_PORT}/ws`;
     let lastErrorLog = 0;
 
     const client = mqtt.connect(brokerUrl, {
@@ -34,22 +33,23 @@ const NotificationProvider = () => {
 
     const topic = user.visitor_id
       ? `notification/visitor/${user.visitor_id}/#`
-      : `notification/employee/${user.id}/#`;
+      : `notification/user/${user.id}/#`;
 
     client.on('connect', () => {
-      console.log('MQTT connected');
-
+      // console.log('MQTT connected');
       client.subscribe(topic, (err) => {
         if (err) {
           console.error('MQTT subscribe failed:', err.message);
           return;
         }
-
-        console.log('MQTT subscribed:', topic);
+        // console.log('MQTT subscribed:', topic);
       });
     });
 
     client.on('message', (_, msg) => {
+      const message = msg.toString();
+      // console.log('Raw Message:', message);
+
       try {
         const payload = JSON.parse(msg.toString());
 

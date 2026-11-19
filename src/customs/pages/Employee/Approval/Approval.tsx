@@ -33,7 +33,7 @@ const Approval = () => {
   // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
+  const mdUp = useMediaQuery(theme.breakpoints.up('lg'));
   const secdrawerWidth = 350;
   const [searchKeyword, setSearchKeyword] = useState('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -237,7 +237,11 @@ const Approval = () => {
     site_place: item.site_place_name,
     selfie_image: item.selfie_image,
     visitor_period_start: formatDateTime(item.visitor_period_start),
-    visitor_period_end: formatDateTime(item.visitor_period_end),
+    visitor_period_end:
+      item.visitor_period_end === '9999-01-01T00:00:00'
+        ? '-'
+        : formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+
     // vehicle_type: item.vehicle_type,
     // vehicle_plate_number: item.vehicle_plate_number,
   }));

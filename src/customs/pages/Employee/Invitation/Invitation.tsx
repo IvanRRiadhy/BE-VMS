@@ -225,7 +225,10 @@ const Content = () => {
           host_name: item.host_name || '-',
 
           visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
+          visitor_period_end:
+            item.visitor_period_end === '9999-01-01T00:00:00'
+              ? '-'
+              : formatDateTime(item.visitor_period_end, item.extend_visitor_period),
 
           invitation_code: item.invitation_code || '-',
           invited_by: item.invited_by || '-',
@@ -859,10 +862,10 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 3) {
+                  if (index === 1) {
                     // setFlowTarget('preReg');
                     handleAddInvitation();
-                  } else if (index === 4) {
+                  } else if (index === 2) {
                     setOpenDetailShareLink(true);
                     //  } else if (index === 3) {
                     // /   setOpenQuickAccess(true);
@@ -1028,7 +1031,7 @@ const Content = () => {
         search={setSearchHost}
         isLoadingEmployee={isLoadingEmployee}
         duplicateData={duplicateData}
-        // isAddTransaction={isAddTransaction}
+      // isAddTransaction={isAddTransaction}
       />
 
       {/* <QuickAccessDialog

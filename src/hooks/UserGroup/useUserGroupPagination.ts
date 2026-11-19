@@ -32,8 +32,8 @@ const useUserGroups = ({
                 id: item.id,
                 name: item.name,
                 description: item.description || '',
-                homepage: item.homepage,
-                level_priority: item.level_priority,
+                // homepage: item.homepage,
+                // level_priority: item.level_priority,
                 role_access: item.role_access,
             }));
 

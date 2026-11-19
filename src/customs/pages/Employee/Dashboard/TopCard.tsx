@@ -4,6 +4,8 @@ import { IconUserCheck, IconHourglass } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { getSummaryCount } from 'src/customs/api/Admin/Dashboard';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router';
 
 interface TopCardProps {
   items?: any[];
@@ -11,7 +13,7 @@ interface TopCardProps {
   refreshKey?: any;
 }
 
-const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
+const TopCard = ({ items = [], size, refreshKey, }: TopCardProps) => {
   const { t } = useTranslation();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
@@ -20,21 +22,28 @@ const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
     pending: 0,
   });
 
-  const formatLocalDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+  // const formatLocalDate = (date: Date) => {
+  //   const year = date.getFullYear();
+  //   const month = String(date.getMonth() + 1).padStart(2, '0');
+  //   const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`;
+  //   return `${year}-${month}-${day}`;
+  // };
+
+  const formatUtcDate = (date: Date, isEndOfDay = false) => {
+    return dayjs(date)
+    [isEndOfDay ? 'endOf' : 'startOf']('day')
+      .utc()
+      .format('YYYY-MM-DDTHH:mm:ss[Z]');
   };
 
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const start = formatLocalDate(new Date(startDate));
-        const end = formatLocalDate(new Date(endDate));
+        // const start = formatUtcDate(startDate);
+        // const end = formatUtcDate(endDate);
 
-        const res = await getSummaryCount(start, end);
+        const res = await getSummaryCount(formatUtcDate(startDate), formatUtcDate(endDate, true));
 
         const collection = res?.collection ?? {};
 
@@ -68,6 +77,8 @@ const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <Grid
       container
@@ -84,6 +95,7 @@ const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
         return (
           <Grid key={index} size={{ xs: 12, sm: 6 }}>
             <CardContent
+              onClick={() => navigate(card.path)}
               sx={{
                 backgroundColor: '#fff',
                 border: '1px solid',
@@ -95,6 +107,7 @@ const TopCard = ({ items = [], size, refreshKey }: TopCardProps) => {
                 py: 1.5,
                 display: 'flex',
                 alignItems: 'center',
+                cursor: 'pointer',
                 position: 'relative',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
                 transition: 'all 0.2s ease',

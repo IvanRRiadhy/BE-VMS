@@ -786,32 +786,24 @@ const Content = () => {
             loadingReports={loadingReports}
             loading={loading}
             hasMore={hasMore}
-
             searchKeyword={searchKeyword}
             setSearchKeyword={setSearchKeyword}
-
             selectedReport={selectedReport}
             editingId={editingId}
-
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-
             isHavePreview={isHavePreview}
             isFilterCollapsed={isFilterCollapsed}
-
             summary={summary}
             reportData={reportData}
-
             getHostNames={getHostNames}
             getSiteNames={getSiteNames}
-
             onView={handleViewReport}
             onGenerate={(id) => handlePostReport(id)}
             onEdit={handleEditReport}
             onUpdate={handleUpdateReport}
             onDelete={handleDelete}
             onLoadMore={() => fetchReports(false)}
-
             onExportCsv={exportToCSV}
             onExportExcel={exportToExcel}
             onExportPdf={exportToPDF}
