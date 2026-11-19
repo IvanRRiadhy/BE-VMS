@@ -60,9 +60,10 @@ const Content = () => {
                 overflowX="auto"
                 data={data}
                 isHavePagination
-                isHaveSearch={false}
-                isHaveHeaderTitle
-                titleHeader="Activity Logs"
+                isHaveSearch={true}
+                // isHaveHeaderTitle
+                // titleHeader="Activity Logs"
+              
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[25, 50, 100]}
                 totalCount={totalRecords}

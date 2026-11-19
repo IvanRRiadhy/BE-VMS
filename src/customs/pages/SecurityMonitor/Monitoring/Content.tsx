@@ -221,6 +221,7 @@ const Content = () => {
         );
       })
       .map((item: any) => ({
+        id: item.id,
         title: item.title,
         message: item.message,
         actor_name: item.actor_name,

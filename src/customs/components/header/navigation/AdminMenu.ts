@@ -1416,10 +1416,31 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'Monitoring',
-    icon: IconMail,
-    chipColor: 'secondary',
+    icon: IconEye,
     href: '/security-monitor/monitoring',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Dashboard',
+        icon: IconEye,
+        href: '/security-monitor/monitoring',
+      },
+      {
+        id: uniqueId(),
+        title: 'Event Logs',
+        icon: IconEye,
+        href: '/security-monitor/monitoring/event-logs',
+      },
+    ],
   },
+
+  // {
+  //   id: uniqueId(),
+  //   title: 'Monitoring',
+  //   icon: IconMail,
+  //   chipColor: 'secondary',
+  //   href: '/security-monitor/monitoring',
+  // },
   {
     id: uniqueId(),
     title: 'Visitor',

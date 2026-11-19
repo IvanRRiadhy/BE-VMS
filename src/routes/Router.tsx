@@ -331,6 +331,10 @@ const ManageBlacklistVisitorSecurityMonitor = Loadable(
   lazy(() => import('src/customs/pages/SecurityMonitor/Blacklist/Content')),
 );
 
+const ManageEventLogsSecurityMonitor = Loadable(
+  lazy(() => import('src/customs/pages/SecurityMonitor/EventLogs/Content')),
+)
+
 const ManageListVisitorSecurityMonitor = Loadable(
   lazy(() => import('src/customs/pages/SecurityMonitor/List/Content')),
 );
@@ -431,6 +435,7 @@ const Router = [
                 path: 'report/transaction-log',
                 element: <ManageReportTransactionSecurityMonitor />,
               },
+
               {
                 path: 'report/investigate',
                 element: <ManageReportInvestigateSecurityMonitor />,
@@ -439,6 +444,10 @@ const Router = [
               { path: 'blacklist-visitor', element: <ManageBlacklistVisitorSecurityMonitor /> },
               // { path: 'dashboard', element: <DashboardInsight /> },
               { path: 'monitoring', element: <MonitoringSecurity /> },
+              {
+                path: 'monitoring/event-logs',
+                element: <ManageEventLogsSecurityMonitor />,
+              },
             ],
           },
         ],

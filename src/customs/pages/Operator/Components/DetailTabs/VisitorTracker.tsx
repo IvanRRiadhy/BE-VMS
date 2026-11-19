@@ -172,9 +172,11 @@ const VisitorTracker = ({ visitor }: Props) => {
 
                                     <TimelineSeparator>
                                         <TimelineDot
-                                            color={getStatusColor(item.status) as any}
                                             variant="filled"
-                                            sx={{ boxShadow: 'none' }}
+                                            sx={{
+                                                bgcolor: getStatusColor(item.status),
+                                                boxShadow: 'none',
+                                            }}
                                         />
 
                                         {index !== timeline.length - 1 && (

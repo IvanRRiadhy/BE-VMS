@@ -11,6 +11,8 @@ import {
 } from '@tabler/icons-react';
 import { FC } from 'react';
 import { Skeleton } from '@mui/material';
+import { getValidateVisitorId } from 'src/customs/api/operator';
+import { useQuery } from '@tanstack/react-query';
 
 interface Props {
   permission: any;
@@ -25,6 +27,10 @@ interface Props {
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
   setAccessIssuance: (value: boolean) => void;
+  visitorId?: any;
+  isValidated?: any;
+  isLoadingValidation?: any;
+  handleValidateVisitor?: () => void;
 }
 
 const ButtonSkeleton = () => (
@@ -44,6 +50,10 @@ const ActionPanelCard: FC<Props> = ({
   setOpenInvitationVisitor,
   setOpenReturnCard,
   setAccessIssuance,
+  isValidated,
+  visitorId,
+  isLoadingValidation,
+  handleValidateVisitor
 }) => {
   const {
     canCheckin,
@@ -59,6 +69,7 @@ const ActionPanelCard: FC<Props> = ({
     canExtend,
     canAccess,
   } = permission;
+
   return (
     <Grid
       size={{ xs: 12 }}
@@ -217,27 +228,32 @@ const ActionPanelCard: FC<Props> = ({
                       )
                     )}
                     <Grid size={{ xs: 12, lg: 12 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<IconCheck size={25} />}
-                        onClick={() => { }}
-                        size="large"
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 2.5,
-                          background: 'primary.main',
-
-                          zIndex: 999,
-                          width: '100%',
-                          height: '50px',
-                          p: 0,
-                        }}
-                      >
-                        <Typography variant="h6" color="white">
-                          Validate
-                        </Typography>
-                      </Button>
+                      {!visitorId ? null : isLoadingValidation ? (
+                        <ButtonSkeleton />
+                      ) : (
+                        !isValidated && (
+                          <Button
+                            variant="contained"
+                            startIcon={<IconCheck size={25} />}
+                              onClick={handleValidateVisitor}
+                            size="large"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              px: 2.5,
+                              background: 'primary.main',
+                              zIndex: 999,
+                              width: '100%',
+                              height: '50px',
+                              p: 0,
+                            }}
+                          >
+                            <Typography variant="h6" color="white">
+                              Validate
+                            </Typography>
+                          </Button>
+                        )
+                      )}
                     </Grid>
                     {/* {loading ? (
                       <ButtonSkeleton />

@@ -29,6 +29,8 @@ import {
   getExtendAccessCard,
   getInvitationCode,
   getInvitationOperatorRelated,
+  getValidateVisitorId,
+  validateVisitor,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import frImage from 'src/assets/images/products/pic_fr.webp';
@@ -96,7 +98,7 @@ import { getConfig } from 'src/config';
 import { Joyride, STATUS } from 'react-joyride';
 import { useUpcomingPurpose } from 'src/hooks/Operator/upComingPurpose';
 import { useUpcomingVisitors } from 'src/hooks/Operator/useUpcomingVisitors';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from 'src/hooks/Websocket/useWebsocket';
 import { useOperatorToolbar } from 'src/customs/contexts/OperatorToolbarContext';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -3192,7 +3194,114 @@ const OperatorView = () => {
     setSelectedExtendVisitor(null);
   };
 
+  const {
+    data: validationData,
+    isLoading: isLoadingValidation,
+  } = useQuery({
+    queryKey: ['validate-visitor', selectedVisitorId],
+    queryFn: () => getValidateVisitorId(selectedVisitorId!),
+    enabled: !!selectedVisitorId,
+  });
 
+  const isValidated = validationData?.collection?.some(
+    (item: any) => item.isValidated === true
+  ) ?? false;
+
+  const handleValidateVisitor = async () => {
+    try {
+      const selectedSite = registeredSite.find(
+        (site: any) => site.id === registerSiteOperator
+      );
+
+      if (!activeVisitor?.id) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Visitor Not Found',
+          text: 'Please select a visitor first.',
+          target: containerRef.current,
+        });
+        return;
+      }
+
+      if (!selectedSite) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Registered Site Not Found',
+          text: 'Please select a registered site first.',
+          target: containerRef.current,
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        icon: 'info',
+        title: 'Validate Visitor',
+        text: 'Please provide a validation reason.',
+        target: containerRef.current,
+
+        input: 'text',
+        inputPlaceholder: 'Enter reason...',
+        inputAttributes: {
+          maxlength: '200',
+        },
+
+        showCloseButton: true,
+        showCancelButton: false,
+        showDenyButton: true,
+
+        confirmButtonText: 'Yes',
+        confirmButtonColor: '#16a34a',
+
+        denyButtonText: 'No',
+        denyButtonColor: '#dc2626',
+
+        // cancelButtonText: 'Cancel',
+        reverseButtons: true,
+
+        customClass: {
+          title: 'swal2-title-custom',
+          popup: 'swal-popup-custom',
+          closeButton: 'swal-close-red',
+        },
+
+        // inputValidator: (value) => {
+        //   if (!value || value.trim().length < 3) {
+        //     return 'Reason must be at least 3 characters long.';
+        //   }
+
+        //   return null;
+        // },
+      });
+
+      if (!result.isConfirmed && !result.isDenied) {
+        return;
+      }
+
+      const payload = {
+        trx_visitor_id: activeVisitor.id,
+        is_validated: result.isConfirmed,
+        validation_reason: result.value.trim(),
+        registered_site_id: selectedSite.id,
+        registered_site_name: selectedSite.name ?? selectedSite.Name,
+      };
+
+      await validateVisitor(payload);
+
+      // Refresh status validasi
+      await queryClient.invalidateQueries({
+        queryKey: ['validate-visitor', activeVisitor.id],
+      });
+
+      showSwal(
+        'success',
+        result.isConfirmed
+          ? 'Successfully validate visitor.'
+          : 'Successfully unvalidate visitor.'
+      );
+    } catch (error: any) {
+      showSwal("error", error?.response?.data?.msg || "Failed to validate visitor");
+    }
+  };
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3217,8 +3326,6 @@ const OperatorView = () => {
             // height: '100%',
           }}
         >
-       
-
           <Grid
             container
             spacing={1}
@@ -3264,6 +3371,7 @@ const OperatorView = () => {
                   t={t}
                   handleOpenEnableEdit={handleOpenEnableEdit}
                   handleOpenQrCode={handleOpenDetailQrCode}
+                  isValidated={isValidated}
                 />
 
                 <VisitorDetailCard
@@ -3308,8 +3416,13 @@ const OperatorView = () => {
                   setOpenInvitationVisitor={setOpenInvitationVisitor}
                   setOpenReturnCard={setOpenReturnCard}
                   setAccessIssuance={setAccessIssuance}
+                  visitorId={activeVisitor?.id}
+                  isValidated={isValidated}
+                  isLoadingValidation={isLoadingValidation}
+                  handleValidateVisitor={handleValidateVisitor}
                 />
                 <VisitorListCard
+
                   isFullscreen={isFullscreen}
                   onClear={handleClearAll}
                   typeVisitor={typeVisitor}

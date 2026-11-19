@@ -233,7 +233,7 @@ const ExtendAccessCardDialog = ({
                       py: 0.25,
                       borderRadius: 2,
                       bgcolor: 'primary.main',
-                      color: 'primary.contrastText',
+                      color: 'primary.main',
 
                       display: 'flex',
                       alignItems: 'center',

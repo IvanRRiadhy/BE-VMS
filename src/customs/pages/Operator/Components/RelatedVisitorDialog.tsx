@@ -215,7 +215,7 @@ const RelatedVisitorsDialog = ({
                         mx: 'auto',
                         mb: 0.7,
                         bgcolor: isSelected ? 'primary.main' : 'grey.200',
-                        color: isSelected ? 'primary.contrastText' : 'text.secondary',
+                        color: isSelected ? 'primary.main' : 'text.secondary',
                         border: '3px solid',
                         borderColor: isSelected ? 'primary.light' : 'transparent',
                         transition: 'all .15s ease',

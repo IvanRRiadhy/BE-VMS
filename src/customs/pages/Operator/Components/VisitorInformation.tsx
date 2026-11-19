@@ -78,6 +78,7 @@ const VisitorInformation = ({
   lgUp,
   handleOpenEnableEdit,
   handleOpenQrCode,
+  isValidated
 }: any) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -240,16 +241,26 @@ const VisitorInformation = ({
             <Stack direction="row" spacing={2}>
               <Box flex={1}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    display="flex"
-                    alignItems="center"
-                    gap={1}
-                    sx={{ textTransform: 'capitalize' }}
-                  >
-                    {invitationCode[0]?.visitor_name ?? 'Name'}
-                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1}>
+
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      sx={{ textTransform: 'capitalize' }}
+                    >
+                      {invitationCode[0]?.visitor_name ?? 'Name'}
+                    </Typography>
+                    {isValidated && (
+                      <Tooltip title="Verified Visitor" arrow>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <IconCheck
+                            size={22}
+                            color="#22C55E"
+                          />
+                        </Box>
+                      </Tooltip>
+                    )}
+                  </Box>
 
                   {invitationCode?.[0] && (
                     <Box display="flex" gap={1}>
