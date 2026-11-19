@@ -65,23 +65,15 @@ const Approval = () => {
   //   filters: appliedFilters,
   // });
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    isFetching,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-  } = useApprovalPagination({
-    rowsPerPage,
-    search: debouncedKeyword,
-    sortDir,
-    filters: appliedFilters,
-  });
+  const { data, isLoading, isFetchingNextPage, isFetching, refetch, fetchNextPage, hasNextPage } =
+    useApprovalPagination({
+      rowsPerPage,
+      search: debouncedKeyword,
+      sortDir,
+      filters: appliedFilters,
+    });
 
-  const approvalData =
-    data?.pages.flatMap((page) => page.collection) ?? [];
+  const approvalData = data?.pages.flatMap((page) => page.collection) ?? [];
 
   const totalRecords = data?.pages[0]?.totalRecords ?? 0;
 
@@ -176,7 +168,8 @@ const Approval = () => {
       if (action === 'Reject') await rejectMutation.mutateAsync(id);
 
       showSwal('success', `Successfully ${action === 'Approve' ? 'approve' : 'reject'} approval. `);
-
+      // await refetch();
+      await fetchGroupDetail();
       setOpenDialog(false);
       return true;
     } catch (error: any) {
@@ -202,28 +195,28 @@ const Approval = () => {
     }
   };
 
-  useEffect(() => {
-    if (!selectedGroupId) return;
+  // useEffect(() => {
+  //   if (!selectedGroupId) return;
 
-    const fetchDetail = async () => {
-      setGroupDetailLoading(true);
+  //   const fetchDetail = async () => {
+  //     setGroupDetailLoading(true);
 
-      try {
-        const res = await getVisitorByTickedId(selectedGroupId);
+  //     try {
+  //       const res = await getVisitorByTickedId(selectedGroupId);
 
-        const visitors = res.collection ?? [];
+  //       const visitors = res.collection ?? [];
 
-        setGroupHeader(visitors[0]);
-        setGroupVisitors(visitors.filter((item: any) => item.is_host === false));
-      } catch (e) {
-        setGroupVisitors([]);
-      } finally {
-        setGroupDetailLoading(false);
-      }
-    };
+  //       setGroupHeader(visitors[0]);
+  //       setGroupVisitors(visitors.filter((item: any) => item.is_host === false));
+  //     } catch (e) {
+  //       setGroupVisitors([]);
+  //     } finally {
+  //       setGroupDetailLoading(false);
+  //     }
+  //   };
 
-    fetchDetail();
-  }, [selectedGroupId]);
+  //   fetchDetail();
+  // }, [selectedGroupId]);
 
   const visitorTableData = groupVisitors.map((item: any) => ({
     id: item.id,
@@ -252,21 +245,30 @@ const Approval = () => {
     setOpenDialog(false);
     setTriggerCheckAll(false);
   };
+  const fetchGroupDetail = useCallback(
+    async (ticketId?: string) => {
+      const id = ticketId ?? selectedGroupId;
 
-  const fetchGroupDetail = useCallback(async () => {
-    if (!selectedGroupId) return;
+      if (!id) return;
 
-    setGroupDetailLoading(true);
-    try {
-      const res = await getVisitorByTickedId(selectedGroupId);
-      setGroupHeader(res.collection[0]);
-      setGroupVisitors(res.collection);
-    } catch {
-      setGroupVisitors([]);
-    } finally {
-      setGroupDetailLoading(false);
-    }
-  }, [selectedGroupId]);
+      setGroupDetailLoading(true);
+
+      try {
+        const res = await getVisitorByTickedId(id);
+
+        const visitors = res.collection ?? [];
+
+        setGroupHeader(visitors[0]);
+
+        setGroupVisitors(visitors.filter((visitor: any) => visitor.is_host !== true));
+      } catch {
+        setGroupVisitors([]);
+      } finally {
+        setGroupDetailLoading(false);
+      }
+    },
+    [selectedGroupId],
+  );
 
   useEffect(() => {
     fetchGroupDetail();
@@ -290,7 +292,9 @@ const Approval = () => {
     }
 
     setSelectedGroup(group);
+    setSelectedGroupId(group.approval_ticket_id);
     setSelectedId(group.approval_ticket_id);
+
     setGroupVisitors([]);
     setGroupDetailLoading(true);
     setOpenDialog(true);
@@ -345,10 +349,12 @@ const Approval = () => {
     await fetchGroupDetail();
     setOpenDialog(false);
   };
-
   const handleApprove = async (id: string) => {
     await handleApproveMeetingHost(id);
-    await fetchGroupDetail();
+
+    await refetch();
+    await fetchGroupDetail(id);
+
     setOpenDialog(false);
   };
 

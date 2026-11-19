@@ -164,10 +164,14 @@ export const approveMeetingHost = async (id: string, payload: any): Promise<any>
 };
 
 export const getVisitorByTickedId = async (id: string): Promise<any> => {
-  const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
-    headers: { Accept: 'application/json' },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`/approval-ticket/${id}/visitors`, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // History  Approval
