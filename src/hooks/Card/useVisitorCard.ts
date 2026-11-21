@@ -25,7 +25,19 @@ export const useVisitorCardPagination = ({
   filters,
 }: Props) => {
   return useQuery({
-    queryKey: ['visitor-card', page, rowsPerPage, sortDir, sort_column, search, filters],
+    queryKey: [
+      'visitor-card',
+      {
+        page,
+        rowsPerPage,
+        sortDir,
+        sort_column,
+        search,
+        type: filters.type,
+        card_status: filters.card_status,
+        is_used: filters.is_used,
+      },
+    ],
 
     queryFn: () =>
       getAllVisitorCardPagination(

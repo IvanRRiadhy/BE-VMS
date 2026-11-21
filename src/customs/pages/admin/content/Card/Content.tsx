@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Box, Dialog, DialogContent, DialogTitle, Grid2 as Grid, IconButton } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -110,7 +110,6 @@ const Content = () => {
       is_used: isUsedFilter,
     },
   });
-
   const { deleteMutation } = useVisitorCardMutation();
   const { data: summary } = useVisitorCardSummary();
 
@@ -471,7 +470,7 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveSearch={true}
                 onImportExcel={handleImportExcel}
-                isHaveImportExcel={true}
+                isHaveImportExcel={false}
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 defaultSelectedHeaderItem="all"

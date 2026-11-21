@@ -407,7 +407,7 @@ const Login = () => {
 
   const roleOptions: Record<Exclude<AccessType, 'visitor'>, string[]> = {
     'user-system': ['Super Admin', 'Admin', 'Operator'],
-    satker: ['DLAF', 'DLDS', 'DPID', 'DPSS', 'DPU', 'DSDM'],
+    satker: ['DLAF', 'DLDS', 'DPID', 'DPSS', 'DPU', 'DSDM', 'Departemen Jasa Perbankan, Perizinan, dan Operasional Tresuri'],
   };
 
   const handleSelectAccess = (type: Exclude<AccessType, 'visitor'>) => {

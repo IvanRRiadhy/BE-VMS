@@ -423,7 +423,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
 
             <CustomSelect
               fullWidth
-              disabled={!enabled.expiredLink}
+              // disabled={!enabled.expiredLink}
               sx={{
                 mt: 1,
                 '&.Mui-disabled': {

@@ -397,7 +397,7 @@ export const getUserPagination = async (
   sortDir: string,
   keyword: string = '',
   user_group_id?: string,
-  is_employee?: string,
+  is_employee?: boolean,
   // startDate?: string,
   // endDate?: string,
   // visitor?: string,
@@ -412,7 +412,7 @@ export const getUserPagination = async (
 
     if (keyword) params['search[value]'] = keyword;
     if (user_group_id) params['user-group-id'] = user_group_id;
-    if (is_employee) params.is_employee = is_employee;
+    if (is_employee) params['is-employee'] = is_employee;
     // if (startDate) params['start-date'] = startDate;
     // if (endDate) params['end-date'] = endDate;
     // if (visitor) params.visitor = visitor;

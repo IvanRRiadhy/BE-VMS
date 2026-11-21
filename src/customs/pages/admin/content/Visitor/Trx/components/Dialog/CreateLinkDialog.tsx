@@ -149,12 +149,17 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
   });
 
   const validateForm = () => {
+    const isSpecialCategory = ['CIT', 'DCVendor', 'Remise'].includes(
+      form.visitor_type_id?.visitor_category
+    );
     const newErrors = {
       visitorType: !form.visitor_type_id,
       visitStart: !form.visitor_period_start,
       visitEnd: !form.visitor_period_end,
-      expiredLink: !enabled.expiredLink || !form.expired_number,
-      visitorQuota: !enabled.visitorQuota || (!form.is_single_use && form.max_usage < 1),
+      expiredLink: !isSpecialCategory && !form.expired_number,
+
+      // Tidak wajib jika Single Use aktif
+      visitorQuota: !form.is_single_use && form.max_usage < 1,
     };
 
     setErrors(newErrors);
@@ -182,7 +187,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
         expiredLink: false,
         visitorQuota: false,
       });
-    } catch {}
+    } catch { }
   };
 
   const buildSiteTree = (

@@ -218,3 +218,83 @@ export const getInvestigateLogById = async (id: string): Promise<any> => {
     throw error;
   }
 };
+
+// export report approval
+export const getReportApproval = async (payload: any) => {
+  try {
+    const response = await axiosInstance.post(`/report/approval/generate`, payload, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportReportApproval = async (payload: any) => {
+  const response = await axiosInstance.post(`/report/approval/generate`, payload, {
+    headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+    responseType: 'blob',
+  });
+
+  return response.data;
+};
+
+// export parking
+export const getReportParking = async (payload: any) => {
+  const response = await axiosInstance.post(`/report/parking/generate`, payload, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  return response.data;
+};
+
+export const exportReportParking = async (payload: any) => {
+  const response = await axiosInstance.post(`/report/parking/generate`, payload, {
+    headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+    responseType: 'blob',
+  });
+
+  return response.data;
+};
+
+export const getReportVisitor = async (payload: any) => {
+  try {
+    const response = await axiosInstance.post(`/report/visitor/behavior/generate`, payload, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getReportSecurityIncident = async (payload: any) => {
+  try {
+    const response = await axiosInstance.post(
+      `/report/security/security-incident/generate`,
+      payload,
+      {
+        headers: {
+          Accept: 'application/json',
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

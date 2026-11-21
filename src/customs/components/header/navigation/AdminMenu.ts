@@ -332,6 +332,34 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         chipColor: 'secondary',
         href: '/admin/report/activity-logs',
       },
+      {
+        id: uniqueId(),
+        title: 'Approval',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/approval-workflow',
+      },
+      {
+        id: uniqueId(),
+        title: 'Incident',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/security-incident',
+      },
+      {
+        id: uniqueId(),
+        title: 'Parking',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/parking',
+      },
+        {
+        id: uniqueId(),
+        title: 'Visitor',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/visitor',
+      },
       // {
       //   id: uniqueId(),
       //   title: 'Invitation',
@@ -339,13 +367,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   chipColor: 'secondary',
       //   href: '/admin/report/invitation',
       // },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Approval Workflow',
-      //   icon: IconReport,
-      //   chipColor: 'secondary',
-      //   href: '/admin/report/approval-workflow',
-      // },
+
       // {
       //   id: uniqueId(),
       //   title: 'Operator Activity Log',
@@ -675,13 +697,27 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         chipColor: 'secondary',
         href: '/admin/report/activity-logs',
       },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Approval Workflow',
-      //   icon: IconReport,
-      //   chipColor: 'secondary',
-      //   href: '/admin/report/approval-workflow',
-      // },
+      {
+        id: uniqueId(),
+        title: 'Incident',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/security-incident',
+      },
+      {
+        id: uniqueId(),
+        title: 'Parking',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/parking',
+      },
+      {
+        id: uniqueId(),
+        title: 'Visitor',
+        icon: IconReport,
+        chipColor: 'secondary',
+        href: '/admin/report/visitor',
+      },
       // {
       //   id: uniqueId(),
       //   title: 'Operator Activity Log',
@@ -1522,99 +1558,99 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
   // },
 ];
 
-export const StaffNavListingData: ItemDataCustomNavListing[] = [
-  {
-    id: uniqueId(),
-    title: 'Dashboard',
-    icon: IconHome,
-    href: '/delivery-staff/dashboard',
-  },
-  {
-    id: uniqueId(),
-    title: 'navigation.invitation',
-    icon: IconMail,
-    chipColor: 'secondary',
-    href: '/delivery-staff/schedule-invitation',
-  },
-  // {
-  //   id: uniqueId(),
-  //   title: 'navigation.notification',
-  //   icon: IconBell,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/notification',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconReport,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/report',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/parking',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'History',
-  //   icon: IconHistory,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/history',
-  // },
-];
+// export const StaffNavListingData: ItemDataCustomNavListing[] = [
+//   {
+//     id: uniqueId(),
+//     title: 'Dashboard',
+//     icon: IconHome,
+//     href: '/delivery-staff/dashboard',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.invitation',
+//     icon: IconMail,
+//     chipColor: 'secondary',
+//     href: '/delivery-staff/schedule-invitation',
+//   },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'navigation.notification',
+//   //   icon: IconBell,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/notification',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'Report',
+//   //   icon: IconReport,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/report',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'Parking',
+//   //   icon: IconCar,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/parking',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'History',
+//   //   icon: IconHistory,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/history',
+//   // },
+// ];
 
-export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
-  {
-    navlabel: true,
-    subheader: 'MENU',
-  },
-  {
-    id: uniqueId(),
-    title: 'Dashboard',
-    icon: IconHome,
-    chip: 'Main View',
-    chipColor: 'secondary',
-    href: '/delivery-staff/dashboard',
-  },
-  {
-    id: uniqueId(),
-    title: 'navigation.invitation',
-    icon: IconMail,
-    chipColor: 'secondary',
-    href: '/delivery-staff/schedule-invitation',
-  },
-  // {
-  //   id: uniqueId(),
-  //   title: 'navigation.notification',
-  //   icon: IconBell,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/notification',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconReport,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/report',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/parking',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'History',
-  //   icon: IconHistory,
-  //   chipColor: 'secondary',
-  //   href: '/delivery-staff/history',
-  // },
-];
+// export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+//   {
+//     navlabel: true,
+//     subheader: 'MENU',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'Dashboard',
+//     icon: IconHome,
+//     chip: 'Main View',
+//     chipColor: 'secondary',
+//     href: '/delivery-staff/dashboard',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.invitation',
+//     icon: IconMail,
+//     chipColor: 'secondary',
+//     href: '/delivery-staff/schedule-invitation',
+//   },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'navigation.notification',
+//   //   icon: IconBell,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/notification',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'Report',
+//   //   icon: IconReport,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/report',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'Parking',
+//   //   icon: IconCar,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/parking',
+//   // },
+//   // {
+//   //   id: uniqueId(),
+//   //   title: 'History',
+//   //   icon: IconHistory,
+//   //   chipColor: 'secondary',
+//   //   href: '/delivery-staff/history',
+//   // },
+// ];
 
 export const ManagerNavListingData: ItemDataCustomNavListing[] = [
   {

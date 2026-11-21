@@ -210,6 +210,20 @@ const ManageReportApproval = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/Approval/Content')),
 );
 
+// manage report parking
+const ManageReportParking = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Parking/Content')),
+);
+
+const ManageReportIncident = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Incident/Content')),
+);
+
+const ManageReportVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Report/Visitor/Content')),
+);
+
+
 const ManageReportOperatorActivityLog = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/OperatorActivityLog/Content')),
 );
@@ -509,6 +523,9 @@ const Router = [
           { path: '/admin/report/investigate', element: <ManageReportInvestigate /> },
           { path: '/admin/report/invitation', element: <ManageReportInvitation /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
+          { path: '/admin/report/security-incident', element: <ManageReportIncident /> },
+          { path: '/admin/report/parking', element: <ManageReportParking /> },
+          { path: '/admin/report/visitor', element: <ManageReportVisitor /> },
           {
             path: '/admin/report/operator-activity-log',
             element: <ManageReportOperatorActivityLog />,
