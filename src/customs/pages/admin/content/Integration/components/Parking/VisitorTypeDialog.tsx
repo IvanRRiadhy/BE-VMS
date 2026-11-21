@@ -112,7 +112,7 @@ const VisitorTypeDialog = ({
                 multiple
                 fullWidth
                 autoHighlight
-                disablePortal
+                // disablePortal  
                 options={orgOptions}
                 value={orgOptions.filter((o) =>
                   (organizationForm?.visitor_type_id ?? []).includes(o.id),

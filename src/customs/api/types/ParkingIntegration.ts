@@ -32,15 +32,11 @@ type ApiResponse = {
   collection?: any;
 };
 
-export const syncParkingIntegration = async (
-  integrationId: string,
-): Promise<ApiResponse> => {
-
+export const syncParkingIntegration = async (integrationId: string): Promise<ApiResponse> => {
   try {
     const { data, status } = await axiosInstance.post(
       `/integration-parking/sync/${integrationId}`,
       {}, // body kosong
-    
     );
 
     console.log('✅ [SYNC] Success:', status, data);
@@ -97,8 +93,27 @@ export const getVisitorTypeParkingById = async (
     const response = await axiosInstance.get(
       `/integration-parking/visitor-type/${integrationId}/${id}`,
       {
-        headers: {Accept: 'application/json' },
+        headers: { Accept: 'application/json' },
       },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Create
+export const createVisitorTypeParking = async (
+  integrationId: string,
+  data: any,
+): Promise<UpdateVisitorTypeParkingResponse> => {
+  try {
+    const response = await axiosInstance.post(
+      `/integration-parking/visitor-type/${integrationId}`,
+      data,
     );
     return response.data;
   } catch (error) {
@@ -124,9 +139,7 @@ export const updateVisitorTypeParking = async (
   }
 };
 
-export const getBlockParking = async (
-  integrationId: string,
-): Promise<GetBlockParkingResponse> => {
+export const getBlockParking = async (integrationId: string): Promise<GetBlockParkingResponse> => {
   try {
     const response = await axiosInstance.get(`/integration-parking/block/${integrationId}`);
     return response.data;
@@ -168,9 +181,7 @@ export const updateBlockParking = async (
   }
 };
 
-export const getAreaParking = async (
-  integrationId: string,
-): Promise<GetAreaParkingResponse> => {
+export const getAreaParking = async (integrationId: string): Promise<GetAreaParkingResponse> => {
   try {
     const response = await axiosInstance.get(`/integration-parking/area/${integrationId}`);
     return response.data;
@@ -212,9 +223,7 @@ export const updateAreaParking = async (
   }
 };
 
-export const getSlotParking = async (
-  integrationId: string,
-): Promise<GetSlotParkingResponse> => {
+export const getSlotParking = async (integrationId: string): Promise<GetSlotParkingResponse> => {
   try {
     const response = await axiosInstance.get(`/integration-parking/slot/${integrationId}`);
     return response.data;
@@ -229,7 +238,6 @@ export const getSlotParking = async (
 export const getSlotParkingById = async (
   integrationId: string,
   id: string,
-
 ): Promise<GetSlotParkingResponseById> => {
   try {
     const response = await axiosInstance.get(`/integration-parking/slot/${integrationId}/${id}`, {
@@ -247,7 +255,6 @@ export const getSlotParkingById = async (
 export const updateSlotParking = async (
   id: string,
   data: UpdateSlotParkingRequest,
-
 ): Promise<UpdateSlotParkingResponse> => {
   try {
     const response = await axiosInstance.put(`/integration-parking/slot/${id}`, data);
@@ -282,7 +289,7 @@ export const getVehicleParkingById = async (
     const response = await axiosInstance.get(
       `/integration-parking/vehicle/${integrationId}/${id}`,
       {
-        headers: {Accept: 'application/json' },
+        headers: { Accept: 'application/json' },
       },
     );
     return response.data;

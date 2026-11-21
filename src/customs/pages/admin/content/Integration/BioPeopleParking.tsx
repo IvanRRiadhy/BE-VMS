@@ -39,6 +39,7 @@ import {
   updateClearcodes,
 } from 'src/customs/api/admin';
 import {
+  createVisitorTypeParking,
   getAreaParking,
   getAreaParkingById,
   getBlockParking,
@@ -73,6 +74,7 @@ import VehicleDialog from './components/Parking/VehicleDialog';
 import VisitorTypeDialog from './components/Parking/VisitorTypeDialog';
 import BlockDialog from './components/Parking/BlockDialog';
 import { useTranslation } from 'react-i18next';
+import CreateVisitorTypeParkingDialog from './components/Parking/CreateVisitorTypeDialog';
 
 const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName?: string }) => {
   const [totals, setTotals] = useState<{ [key: string]: number }>({
@@ -123,13 +125,13 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         icon: IconUsersGroup,
         color: 'none',
       },
-      {
-        title: 'Blocks',
-        subTitle: String(totals.block),
-        subTitleSetting: 0,
-        icon: IconForbid,
-        color: 'none',
-      },
+      // {
+      //   title: 'Blocks',
+      //   subTitle: String(totals.block),
+      //   subTitleSetting: 0,
+      //   icon: IconForbid,
+      //   color: 'none',
+      // },
       {
         title: 'Area',
         subTitle: String(totals.area),
@@ -137,13 +139,13 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         icon: IconMapPins,
         color: 'none',
       },
-      {
-        title: 'Slot',
-        subTitle: String(totals.slot),
-        subTitleSetting: 0,
-        icon: IconUsers,
-        color: 'none',
-      },
+      // {
+      //   title: 'Slot',
+      //   subTitle: String(totals.slot),
+      //   subTitleSetting: 0,
+      //   icon: IconUsers,
+      //   color: 'none',
+      // },
       {
         title: 'Vehicle',
         subTitle: String(totals.vehicle),
@@ -186,7 +188,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
   });
 
   const [editDialogType, setEditDialogType] = useState<
-    'Visitor Type' | 'Block' | 'Area' | 'Slot' | 'Vehicle' | null
+    'Visitor Type' | 'Area' | 'Vehicle' | null
   >(null);
   const [selectedType, setSelectedType] = useState('visitor_type');
   const [editingRow, setEditingRow] = useState<Item | null>(null);
@@ -194,15 +196,11 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     visitor_type: 'Visitor Type',
     vehicle: 'Vehicle',
     area: 'Area',
-    block: 'Block',
-    slot: 'Slot',
   };
 
-  const TYPE_MAP: Record<string, 'Visitor Type' | 'Block' | 'Area' | 'Slot' | 'Vehicle'> = {
+  const TYPE_MAP: Record<string, 'Visitor Type' | 'Area' | 'Vehicle'> = {
     visitor_type: 'Visitor Type',
-    block: 'Block',
     area: 'Area',
-    slot: 'Slot',
     vehicle: 'Vehicle',
   };
 
@@ -226,8 +224,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     const settled = await Promise.allSettled([
       getVisitorTypeParking(id as string), // 0
       getAreaParking(id as string), // 1
-      getBlockParking(id as string), // 2
-      getSlotParking(id as string), // 3
+      // getBlockParking(id as string), // 2
+      // getSlotParking(id as string), // 3
       getVehicleParking(id as string), // 4
     ]);
 
@@ -239,8 +237,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     setTotals({
       visitor_type: countOf(0),
       area: countOf(1),
-      block: countOf(2),
-      slot: countOf(3),
+      // block: countOf(2),
+      // slot: countOf(3),
       vehicle: countOf(4),
     });
   };
@@ -268,18 +266,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
       } else if (type === 'area') {
         const res = await getAreaParking(id as string);
 
-        const data = (res.collection ?? []).map(({ integration_id, ...item }) => item);
+        const data = (res.collection ?? []).map(({ integration_id, need_barier, need_block, ...item }) => item);
 
-        setListData(data);
-      } else if (type === 'block') {
-        const res = await getBlockParking(id as string);
-        setListData(
-          (res.collection ?? []).map(({ integration_id, area_id, ...item }: any) => item),
-        );
-      } else if (type === 'slot') {
-        const res = await getSlotParking(id as string);
-
-        const data = (res.collection ?? []).map(({ integration_id, host_id, ...item }) => item);
 
         setListData(data);
       } else if (type === 'vehicle') {
@@ -289,6 +277,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
           (res.collection ?? []).map(({ integration_id, ...item }: any) => ({
             ...item,
             vehicle_type: item.vehicle_type ?? '-',
+            active: item.active ?? false,
           })),
         );
       } else {
@@ -374,9 +363,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
 
     let type: typeof editDialogType = null;
     if (selectedType === 'visitor_type') type = 'Visitor Type';
-    else if (selectedType === 'block') type = 'Block';
     else if (selectedType === 'area') type = 'Area';
-    else if (selectedType === 'slot') type = 'Slot';
     else if (selectedType === 'vehicle') type = 'Vehicle';
 
     setEditDialogType(type);
@@ -417,17 +404,6 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         uid: detailData.uid ?? '',
         id: detailData.id ?? '',
       });
-    } else if (editDialogType === 'Slot') {
-      setDepartmentForm({
-        integration_id: detailData.integration_id ?? '',
-        number: detailData.number ?? '',
-        active: detailData.active ?? false,
-        host_id: detailData.host_id ?? '',
-        name: detailData.name ?? '',
-        host: detailData.host ?? '',
-        uid: detailData.uid ?? '',
-        id: detailData.id ?? '',
-      });
     } else if (editDialogType === 'Area') {
       setDistrictForm({
         uid: detailData.uid ?? '',
@@ -450,17 +426,6 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         vehicle_id: detailData.vehicle_id ?? '',
         slug: detailData.slug ?? '',
         integration_id: detailData.integration_id ?? '',
-        active: detailData.active ?? false,
-        id: detailData.id ?? '',
-      });
-    } else if (editDialogType === 'Block') {
-      setMemberForm({
-        uid: detailData.uid ?? '',
-        name: detailData.name ?? '',
-        block_code: detailData.block_code ?? '',
-        serial: detailData.serial ?? '',
-        integration_id: detailData.integration_id ?? '',
-        area_id: detailData.area_id ?? '',
         active: detailData.active ?? false,
         id: detailData.id ?? '',
       });
@@ -503,7 +468,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
 
     loadOptions();
 
-    return () => {};
+    return () => { };
   }, [editDialogType]);
 
   const omitEmpty = <T extends Record<string, any>>(obj: T) =>
@@ -853,6 +818,75 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
 
   const isEditable = ['visitor_type', 'vehicle'].includes(selectedType);
 
+  const [openCreateVisitorType, setOpenCreateVisitorType] = useState(false);
+
+  const [createVisitorTypes, setCreateVisitorTypes] = useState<
+    Array<{ id: string; label: string }>
+  >([]);
+
+  const [createVisitorTypeActive, setCreateVisitorTypeActive] = useState(true);
+
+  const [loadingVisitorTypeOptions, setLoadingVisitorTypeOptions] = useState(false);
+  const handleOpenCreateVisitorType = async () => {
+    setCreateVisitorTypes([]);
+    setCreateVisitorTypeActive(true);
+    setOpenCreateVisitorType(true);
+
+    try {
+      setLoadingVisitorTypeOptions(true);
+
+      const res = await getAllVisitorType();
+
+      const items = (res.collection ?? []).map((item: any) => ({
+        id: String(item.id),
+        label: item.name ?? '',
+      }));
+
+      setOrgOptions(items);
+    } catch (error) {
+      showSwal('error', 'Failed to load visitor types.');
+    } finally {
+      setLoadingVisitorTypeOptions(false);
+    }
+  };
+
+  const handleCreateVisitorType = async () => {
+    if (!id) return;
+
+    if (createVisitorTypes.length === 0) {
+      showSwal('error', 'Please select at least one visitor type.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const payload = {
+        visitor_type_id: createVisitorTypes.map((item) => item.id),
+        active: createVisitorTypeActive,
+      };
+
+      await createVisitorTypeParking(id, payload);
+
+      setOpenCreateVisitorType(false);
+      setCreateVisitorTypes([]);
+      setCreateVisitorTypeActive(true);
+
+      await fetchListByType('visitor_type');
+      await loadTotals();
+
+      showSwal('success', 'Visitor Type created successfully.');
+    } catch (err: any) {
+      showSwal(
+        'error',
+        err?.msg ||
+        err?.response?.data?.msg ||
+        'Failed to create visitor type.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <>
       <PageContainer
@@ -862,7 +896,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 2 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
 
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
@@ -904,16 +938,31 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  // isCopy={true}
-                  // onCopy={(row) => {
-                  //   handleCopy(row);
-                  // }}
+                  isHaveAddData={selectedType === 'visitor_type'}
+                  onAddData={handleOpenCreateVisitorType}
+                // isCopy={true}
+                // onCopy={(row) => {
+                //   handleCopy(row);
+                // }}
                 />
               </Grid>
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
+
+      <CreateVisitorTypeParkingDialog
+        open={openCreateVisitorType}
+        saving={saving}
+        options={orgOptions}
+        loadingOptions={loadingVisitorTypeOptions}
+        selectedVisitorTypes={createVisitorTypes}
+        active={createVisitorTypeActive}
+        onClose={() => setOpenCreateVisitorType(false)}
+        onSubmit={handleCreateVisitorType}
+        setSelectedVisitorTypes={setCreateVisitorTypes}
+        setActive={setCreateVisitorTypeActive}
+      />
 
       <VisitorTypeDialog
         open={editDialogType === 'Visitor Type'}
@@ -930,14 +979,14 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         setEnabled={setEnabled}
       />
 
-      <BlockDialog
+      {/* <BlockDialog
         open={editDialogType === 'Block'}
         saving={saving}
         memberForm={memberForm}
         onClose={handleCloseDialog}
         onSubmit={handleSaveBlock}
         setMemberForm={setMemberForm}
-      />
+      /> */}
 
       <AreaDialog
         open={editDialogType === 'Area'}
@@ -948,14 +997,14 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
         saving={saving}
       />
 
-      <SlotDialog
+      {/* <SlotDialog
         open={editDialogType === 'Slot'}
         departmentForm={departmentForm}
         setDepartmentForm={setDepartmentForm}
         handleCloseDialog={handleCloseDialog}
         handleSaveSlot={handleSaveSlot}
         saving={saving}
-      />
+      /> */}
 
       <VehicleDialog
         open={editDialogType === 'Vehicle'}
