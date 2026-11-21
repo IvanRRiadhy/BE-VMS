@@ -117,7 +117,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
       visitStart: !form.visitor_period_start,
       visitEnd: !form.visitor_period_end,
       expiredLink: !isSpecialCategory && !form.expired_number,
-      visitorQuota: enabled.visitorQuota && !form.is_single_use && form.max_usage < 1,
+      visitorQuota: !form.is_single_use && form.max_usage < 1,
     };
 
     setErrors(newErrors);
@@ -167,7 +167,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
         expiredLink: false,
         visitorQuota: false,
       });
-    } catch {}
+    } catch { }
   };
 
   // const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);

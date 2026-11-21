@@ -551,16 +551,17 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink, loading }:
                 <MenuItem value={1440}>1 Day</MenuItem>
               </CustomSelect>
             )}{' '}
-            {/* {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && ( */}
-            <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1 }}>
-              Note: {t('expiredLinkNote')}
-            </Typography>
-            {/* )} */}
             {errors.expiredLink && (
               <Typography variant="caption" color="error">
                 Expired Link is required
               </Typography>
             )}
+            {/* {['CIT', 'Remise'].includes(form.visitor_type_id?.visitor_category) && ( */}
+            <Typography variant="caption" color="gray" sx={{ display: 'block', my: 1 }}>
+              Note: {t('expiredLinkNote')}
+            </Typography>
+            {/* )} */}
+
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
