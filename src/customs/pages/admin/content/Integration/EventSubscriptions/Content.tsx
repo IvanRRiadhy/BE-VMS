@@ -829,6 +829,22 @@ const Content = () => {
     }
   };
 
+  const toggleAllEvents = (sourceId: string, events: string[]) => {
+    setSelectedEventsBySource((prev) => {
+      const currentEvents = prev[sourceId] ?? [];
+
+      const allSelected =
+        events.length > 0 &&
+        events.every((event) => currentEvents.includes(event));
+
+      return {
+        ...prev,
+        [sourceId]: allSelected
+          ? currentEvents.filter((event) => !events.includes(event))
+          : [...new Set([...currentEvents, ...events])],
+      };
+    });
+  };
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -1427,6 +1443,7 @@ const Content = () => {
             {/* =================================================
                 3. EVENT
             ================================================= */}
+
             <Card
               elevation={0}
               sx={{
@@ -1454,6 +1471,7 @@ const Content = () => {
                   />
                 </Stack>
 
+                {/* SEARCH EVENT */}
                 <Box sx={{ mb: 1 }}>
                   <SearchField
                     placeholder="Search event type..."
@@ -1465,8 +1483,28 @@ const Content = () => {
                 <Stack spacing={1.5}>
                   {selectedCameraData.map((camera) => {
                     const sourceId = getSourceId(camera);
-
                     const selectedEvents = selectedEventsBySource[sourceId] ?? [];
+
+                    const isPeopleTracking = integration?.name
+                      ?.toLowerCase()
+                      .includes('people tracking');
+
+                    // Semua event yang sedang tampil berdasarkan pencarian
+                    const visibleEvents = isPeopleTracking
+                      ? PEOPLE_TRACKING_EVENT_GROUPS.flatMap((group) =>
+                        group.values.filter((value) =>
+                          value.toLowerCase().includes(eventSearch.toLowerCase())
+                        )
+                      )
+                      : filteredEvents.map((event) => event.name);
+
+                    const allSelected =
+                      visibleEvents.length > 0 &&
+                      visibleEvents.every((event) => selectedEvents.includes(event));
+
+                    const someSelected = visibleEvents.some((event) =>
+                      selectedEvents.includes(event)
+                    );
 
                     return (
                       <Box
@@ -1495,63 +1533,30 @@ const Content = () => {
                           >
                             {camera.name ?? camera.description ?? camera.external_id}
                           </Typography>
-                          {/* 
-                          <Typography
-                            sx={{
-                              fontSize: 10,
-                              color: '#8a94a3',
-                            }}
-                          >
-                            {camera.external_id ?? camera.log_dev_id}
-                          </Typography> */}
                         </Box>
 
-                        {/* EVENT HEADER */}
+                        {/* EVENT HEADER - SELECT ALL */}
                         <Box
                           sx={{
                             display: 'grid',
                             gridTemplateColumns: '34px 1fr',
-                            minHeight: 29,
+                            minHeight: 34,
                             alignItems: 'center',
                             px: 0.5,
                             backgroundColor: '#fff',
+                            borderBottom: '1px solid #edf0f3',
                           }}
                         >
-                          {/* <Checkbox
+                          <Checkbox
                             size="small"
                             sx={{ p: 0.3 }}
-                            checked={
-                              filteredEvents.length > 0 &&
-                              filteredEvents.every((event) => selectedEvents.includes(event.name))
+                            checked={allSelected}
+                            indeterminate={someSelected && !allSelected}
+                            disabled={visibleEvents.length === 0}
+                            onChange={() =>
+                              toggleAllEvents(sourceId, visibleEvents)
                             }
-                            indeterminate={
-                              filteredEvents.some((event) => selectedEvents.includes(event.name)) &&
-                              !filteredEvents.every((event) => selectedEvents.includes(event.name))
-                            }
-                            onChange={() => {
-                              const allSelected =
-                                filteredEvents.length > 0 &&
-                                filteredEvents.every((event) =>
-                                  selectedEvents.includes(event.name),
-                                );
-
-                              setSelectedEventsBySource((prev) => ({
-                                ...prev,
-                                [sourceId]: allSelected
-                                  ? selectedEvents.filter(
-                                      (name) =>
-                                        !filteredEvents.some((event) => event.name === name),
-                                    )
-                                  : [
-                                      ...new Set([
-                                        ...selectedEvents,
-                                        ...filteredEvents.map((event) => event.name),
-                                      ]),
-                                    ],
-                              }));
-                            }}
-                          /> */}
-                          <Box></Box>
+                          />
 
                           <Typography
                             sx={{
@@ -1560,11 +1565,10 @@ const Content = () => {
                               color: '#6e7785',
                             }}
                           >
-                            Event Type
+                            Select All Event Type
                           </Typography>
                         </Box>
 
-                        {/* EVENTS */}
                         {/* EVENTS */}
                         <Box
                           sx={{
@@ -1572,112 +1576,143 @@ const Content = () => {
                             overflow: 'auto',
                           }}
                         >
-                          {integration?.name?.toLowerCase().includes('people tracking')
-                            ? PEOPLE_TRACKING_EVENT_GROUPS.map((group) => {
-                                const filteredValues = group.values.filter((value) =>
-                                  value.toLowerCase().includes(eventSearch.toLowerCase()),
+                          {isPeopleTracking ? (
+                            /* PEOPLE TRACKING GROUPS */
+                            PEOPLE_TRACKING_EVENT_GROUPS.map((group) => {
+                              const filteredValues = group.values.filter((value) =>
+                                value.toLowerCase().includes(eventSearch.toLowerCase())
+                              );
+
+                              if (filteredValues.length === 0) {
+                                return null;
+                              }
+
+                              const groupAllSelected =
+                                filteredValues.length > 0 &&
+                                filteredValues.every((value) =>
+                                  selectedEvents.includes(value)
                                 );
 
-                                if (filteredValues.length === 0) {
-                                  return null;
-                                }
+                              const groupSomeSelected = filteredValues.some((value) =>
+                                selectedEvents.includes(value)
+                              );
 
-                                return (
-                                  <Box key={group.label}>
-                                    {/* GROUP HEADER */}
-                                    <Box
-                                      sx={{
-                                        px: 1,
-                                        py: 0.7,
-                                        backgroundColor: '#f8fafc',
-                                        borderTop: '1px solid #edf0f3',
-                                        borderBottom: '1px solid #edf0f3',
-                                      }}
-                                    >
-                                      <Typography
-                                        sx={{
-                                          fontSize: 11,
-                                          fontWeight: 700,
-                                          color: '#667181',
-                                          textTransform: 'uppercase',
-                                        }}
-                                      >
-                                        {group.label}
-                                      </Typography>
-                                    </Box>
-
-                                    {/* GROUP VALUES */}
-                                    {filteredValues.map((value) => {
-                                      const checked = selectedEvents.includes(value);
-
-                                      return (
-                                        <Box
-                                          key={value}
-                                          sx={{
-                                            display: 'grid',
-                                            gridTemplateColumns: '34px 1fr',
-                                            minHeight: 34,
-                                            alignItems: 'center',
-                                            px: 0.5,
-                                            borderBottom: '1px solid #f0f2f5',
-                                            backgroundColor: checked ? '#f4faff' : '#fff',
-                                          }}
-                                        >
-                                          <Checkbox
-                                            size="small"
-                                            checked={checked}
-                                            onChange={() => toggleEvent(sourceId, value)}
-                                            sx={{ p: 0.3 }}
-                                          />
-
-                                          <Typography
-                                            sx={{
-                                              fontSize: 12,
-                                              color: '#344050',
-                                            }}
-                                          >
-                                            {value}
-                                          </Typography>
-                                        </Box>
-                                      );
-                                    })}
-                                  </Box>
-                                );
-                              })
-                            : filteredEvents.map((event) => {
-                                const checked = selectedEvents.includes(event.name);
-
-                                return (
+                              return (
+                                <Box key={group.label}>
+                                  {/* GROUP HEADER - SELECT ALL GROUP */}
                                   <Box
-                                    key={event.name}
                                     sx={{
                                       display: 'grid',
                                       gridTemplateColumns: '34px 1fr',
-                                      minHeight: 34,
                                       alignItems: 'center',
                                       px: 0.5,
-                                      borderBottom: '1px solid #f0f2f5',
-                                      backgroundColor: checked ? '#f4faff' : '#fff',
+                                      py: 0.5,
+                                      backgroundColor: '#f8fafc',
+                                      borderTop: '1px solid #edf0f3',
+                                      borderBottom: '1px solid #edf0f3',
                                     }}
                                   >
                                     <Checkbox
                                       size="small"
-                                      checked={checked}
-                                      onChange={() => toggleEvent(sourceId, event.name)}
                                       sx={{ p: 0.3 }}
+                                      checked={groupAllSelected}
+                                      indeterminate={
+                                        groupSomeSelected && !groupAllSelected
+                                      }
+                                      onChange={() =>
+                                        toggleAllEvents(sourceId, filteredValues)
+                                      }
                                     />
 
                                     <Typography
                                       sx={{
-                                        fontSize: 12,
-                                        color: '#344050',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        color: '#667181',
+                                        textTransform: 'uppercase',
                                       }}
                                     >
-                                      {event.name}
+                                      {group.label}
                                     </Typography>
                                   </Box>
-                                );
-                              })}
+
+                                  {/* GROUP VALUES */}
+                                  {filteredValues.map((value) => {
+                                    const checked = selectedEvents.includes(value);
+
+                                    return (
+                                      <Box
+                                        key={value}
+                                        sx={{
+                                          display: 'grid',
+                                          gridTemplateColumns: '34px 1fr',
+                                          minHeight: 34,
+                                          alignItems: 'center',
+                                          px: 0.5,
+                                          borderBottom: '1px solid #f0f2f5',
+                                          backgroundColor: checked ? '#f4faff' : '#fff',
+                                        }}
+                                      >
+                                        <Checkbox
+                                          size="small"
+                                          checked={checked}
+                                          onChange={() => toggleEvent(sourceId, value)}
+                                          sx={{ p: 0.3 }}
+                                        />
+
+                                        <Typography
+                                          sx={{
+                                            fontSize: 12,
+                                            color: '#344050',
+                                          }}
+                                        >
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  })}
+                                </Box>
+                              );
+                            })
+                          ) : (
+                            /* NORMAL INTEGRATION EVENTS */
+                            filteredEvents.map((event) => {
+                              const checked = selectedEvents.includes(event.name);
+
+                              return (
+                                <Box
+                                  key={event.name}
+                                  sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '34px 1fr',
+                                    minHeight: 34,
+                                    alignItems: 'center',
+                                    px: 0.5,
+                                    borderBottom: '1px solid #f0f2f5',
+                                    backgroundColor: checked ? '#f4faff' : '#fff',
+                                  }}
+                                >
+                                  <Checkbox
+                                    size="small"
+                                    checked={checked}
+                                    onChange={() =>
+                                      toggleEvent(sourceId, event.name)
+                                    }
+                                    sx={{ p: 0.3 }}
+                                  />
+
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      color: '#344050',
+                                    }}
+                                  >
+                                    {event.name}
+                                  </Typography>
+                                </Box>
+                              );
+                            })
+                          )}
                         </Box>
                       </Box>
                     );
@@ -1685,6 +1720,7 @@ const Content = () => {
                 </Stack>
               </CardContent>
             </Card>
+
           </Box>
 
           {/* =================================================
