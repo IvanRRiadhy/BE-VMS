@@ -353,7 +353,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         chipColor: 'secondary',
         href: '/admin/report/parking',
       },
-        {
+      {
         id: uniqueId(),
         title: 'Visitor',
         icon: IconReport,
@@ -540,9 +540,29 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       // },
       {
         id: uniqueId(),
-        title: 'navigation.integration',
-        icon: IconWorldCog,
+        title: 'Integration',
+        icon: IconPackageExport,
         href: '/admin/manage/integration',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'navigation.integration',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration',
+          },
+          {
+            id: uniqueId(),
+            title: 'Event Logs',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration/event-logs',
+          },
+          {
+            id: uniqueId(),
+            title: 'Event Subscription',
+            icon: IconWorldCog,
+            href: '/admin/manage/integration/event-subscription',
+          },
+        ],
       },
       // {
       //   id: uniqueId(),

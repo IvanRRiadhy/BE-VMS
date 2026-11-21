@@ -241,18 +241,18 @@ const FormSite = ({
 
     const mappedAccess = Array.isArray(site)
       ? site.map((a: any, idx: number) => {
-          const master = accessControlList.find(
-            (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
-          );
+        const master = accessControlList.find(
+          (x: any) => x.id.toLowerCase() === a.access_control_id.toLowerCase(),
+        );
 
-          return {
-            id: a.id,
-            sort: idx,
-            access_control_id: a.access_control_id,
-            name: master?.name ?? '',
-            early_access: a.early_access ?? false,
-          };
-        })
+        return {
+          id: a.id,
+          sort: idx,
+          access_control_id: a.access_control_id,
+          name: master?.name ?? '',
+          early_access: a.early_access ?? false,
+        };
+      })
       : [];
 
     setInitialTracking(mappedTracking);
@@ -396,6 +396,7 @@ const FormSite = ({
         const updateData = {
           ...updateDataRaw,
           host: localForm.host || null,
+          can_signout: true,
           open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
@@ -500,6 +501,7 @@ const FormSite = ({
           parent: parentId ?? null,
           is_child: Boolean(parentId),
           type: localForm.type ?? 0,
+          can_signout: true,
           open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
@@ -1327,7 +1329,7 @@ const FormSite = ({
                   </Box>
                 </Grid>
 
-                <Grid size={{ xs: 12, xl: 6 }}>
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1353,8 +1355,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1385,8 +1387,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1412,8 +1414,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1446,8 +1448,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1476,8 +1478,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1506,8 +1508,8 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1533,7 +1535,7 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
+                </Grid> */}
                 {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
@@ -1805,15 +1807,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.parking ||
                     (localForm.parking.length === 0 && localForm.can_visited)) && (
-                    <MuiButton
-                      size="small"
-                      onClick={() => handleAddDetail('parking')}
-                      variant="contained"
-                      color="primary"
-                    >
-                      Add New
-                    </MuiButton>
-                  )}
+                      <MuiButton
+                        size="small"
+                        onClick={() => handleAddDetail('parking')}
+                        variant="contained"
+                        color="primary"
+                      >
+                        Add New
+                      </MuiButton>
+                    )}
                 </Box>
               </Paper>
             </Grid>
@@ -1857,15 +1859,15 @@ const FormSite = ({
                   </DndContext>
                   {(!localForm.tracking ||
                     (localForm.tracking.length === 0 && localForm.can_visited)) && (
-                    <MuiButton
-                      size="small"
-                      onClick={() => handleAddDetail('tracking')}
-                      variant="contained"
-                      color="primary"
-                    >
-                      Add New
-                    </MuiButton>
-                  )}
+                      <MuiButton
+                        size="small"
+                        onClick={() => handleAddDetail('tracking')}
+                        variant="contained"
+                        color="primary"
+                      >
+                        Add New
+                      </MuiButton>
+                    )}
                 </Box>
               </Paper>
             </Grid>
