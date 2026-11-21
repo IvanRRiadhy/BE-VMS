@@ -149,6 +149,7 @@ export default function InvitationShare() {
           start_date: startDate,
           end_date: endDate,
         });
+        console.log("res", res.collection);
 
         setAvailableVisitorSlot(res.collection?.total_available_visitor_slot ?? 0);
         // setAvailableVisitorSlot(0);

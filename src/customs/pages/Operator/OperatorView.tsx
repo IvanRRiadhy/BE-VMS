@@ -2656,7 +2656,7 @@ const OperatorView = () => {
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
   const activeCaptureVehicle = getCdnUrl(
     visitorTrackerData?.vehicle_info?.vehicle_image_url ||
-    visitorTrackerData?.capture_images?.[0]?.image_url ||
+    // visitorTrackerData?.capture_images?.[0]?.image_url ||
     activeVisitor?.vehicle_captured
   );
   const activeBarcode = getCdnUrl(activeVisitor?.nda);

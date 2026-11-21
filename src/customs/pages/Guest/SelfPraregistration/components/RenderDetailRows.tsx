@@ -189,7 +189,7 @@ const RenderDetailRows = ({
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    // formData.append('file_name', filename);
+    formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
     formData.append('is_face', 'true');
@@ -247,15 +247,15 @@ const RenderDetailRows = ({
 
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path);
+        const path = await uploadFileToCDN(file);
+        if (path) onChange(idx, 'answer_file', path);
 
-      e.target.value = '';
-    };
+        e.target.value = '';
+      };
 
   const collectAllChildIds = (node: any): string[] => {
     if (!node.children) return [];
@@ -772,9 +772,9 @@ const RenderDetailRows = ({
                         inputProps={
                           (item.remarks || '').toLowerCase() === 'phone'
                             ? {
-                                inputMode: 'numeric',
-                                pattern: '[0-9]*',
-                              }
+                              inputMode: 'numeric',
+                              pattern: '[0-9]*',
+                            }
                             : undefined
                         }
                         fullWidth
@@ -832,34 +832,34 @@ const RenderDetailRows = ({
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
                         : Array.isArray(employee)
                           ? employee.map((emp: any) => ({
-                              value: emp.id,
-                              name: emp.name,
-                            }))
+                            value: emp.id,
+                            name: emp.name,
+                          }))
                           : [];
                     } else if (item.remarks === 'employee') {
                       options = invitation?.host
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
                         : Array.isArray(allVisitorEmployee)
                           ? allVisitorEmployee.map((emp: any) => ({
-                              value: emp.id,
-                              name: emp.name,
-                            }))
+                            value: emp.id,
+                            name: emp.name,
+                          }))
                           : [];
                     } else if (item.remarks === 'site_place') {
                       options = invitation?.site
                         ? [
-                            {
-                              value: invitation.site.id,
-                              name: invitation.site.name,
-                              // disabled: invitation.site.can_visited === false,
-                              disabled: true,
-                            },
-                          ]
+                          {
+                            value: invitation.site.id,
+                            name: invitation.site.name,
+                            // disabled: invitation.site.can_visited === false,
+                            disabled: true,
+                          },
+                        ]
                         : sites.map((site: any) => ({
-                            value: site.id,
-                            name: site.name,
-                            disabled: site.can_visited === false,
-                          }));
+                          value: site.id,
+                          name: site.name,
+                          disabled: site.can_visited === false,
+                        }));
 
                       // console.log('invitation', invitation);
                     } else {
@@ -1103,7 +1103,7 @@ const RenderDetailRows = ({
                               ))}
                           </RadioGroup>
                         </FormControl>
-
+                        <br />
                         {errorMessage && (
                           <Typography variant="caption" color="error">
                             {errorMessage}
@@ -1181,7 +1181,7 @@ const RenderDetailRows = ({
                       remark === 'visitor_period_start' &&
                       filteredDetails[index + 1] &&
                       (filteredDetails[index + 1].remarks || '').toLowerCase() ===
-                        'visitor_period_end'
+                      'visitor_period_end'
                     ) {
                       const startItem = item;
                       const endItem = filteredDetails[index + 1];
@@ -1722,7 +1722,7 @@ const RenderDetailRows = ({
                             pointerEvents: 'auto',
                             opacity: 1,
                           }}
-                          // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                         >
                           <Box
                             sx={{
