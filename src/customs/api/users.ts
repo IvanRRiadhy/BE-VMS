@@ -92,8 +92,14 @@ export const loginSatker = async (
 //   }
 // };
 
+// export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+//   const response = await axiosInstance.post<RefreshTokenResponse>('/_Auth/RefreshToken');
+
+//   return response.data;
+// };
+
 export const refreshToken = async (): Promise<RefreshTokenResponse> => {
-  const response = await axiosInstance.post<RefreshTokenResponse>('/_Auth/RefreshToken');
+  const response = await axiosInstance.post<RefreshTokenResponse>('/_Auth/RefreshToken', {});
 
   return response.data;
 };

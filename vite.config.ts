@@ -10,30 +10,33 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://192.168.1.116:8000',
-    //     changeOrigin: true,
-    //     secure: false,
-    //     rewrite: (path) => path.replace(/^\/api/, ''),
-    //   },
-    // },
+    proxy: {
+      '/api': {
+        target: 'http://10.5.65.20:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
+
   build: {
     outDir: 'dist',
     minify: true,
     cssMinify: true,
   },
+
   resolve: {
     alias: {
       src: resolve(__dirname, 'src'),
     },
   },
+
   esbuild: {
     loader: 'tsx',
-    include: /src\/.*\.tsx?$/,
+    include: /src\/.*\.[jt]sx?$/,
     exclude: [],
   },
+
   optimizeDeps: {
     esbuildOptions: {
       plugins: [

@@ -3,7 +3,8 @@ import { exportReportParking, getReportParking } from 'src/customs/api/Admin/Rep
 
 export const useReportParking = () => {
   return useMutation({
-    mutationFn: getReportParking,
+    mutationKey: ['report-parking'],
+    mutationFn: (payload: any) => getReportParking(payload),
   });
 };
 

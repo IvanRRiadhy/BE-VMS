@@ -93,9 +93,9 @@ const Content = () => {
         const res = await getAllEmployee();
         const map = Array.isArray(res?.collection)
           ? res.collection.reduce((acc: any, emp: any) => {
-              acc[emp.id] = emp.name;
-              return acc;
-            }, {})
+            acc[emp.id] = emp.name;
+            return acc;
+          }, {})
           : {};
         setEmployeeMap(map);
       } catch (err) {
@@ -160,13 +160,14 @@ const Content = () => {
   }, [response, employeeMap, employeeLoading]);
 
   const totalRecords = response?.RecordsTotal ?? 0;
+  const totalFilteredRecords = response?.RecordsFiltered ?? 0;
   const hasFetched = currentQuery.isSuccess;
   const loading = currentQuery.isLoading || currentQuery.isFetching || employeeLoading;
 
   const totals = {
-    organization: organizationQuery.data?.RecordsFiltered ?? 0,
-    department: departmentQuery.data?.RecordsFiltered ?? 0,
-    district: districtQuery.data?.RecordsFiltered ?? 0,
+    organization: organizationQuery.data?.RecordsTotal ?? 0,
+    department: departmentQuery.data?.RecordsTotal ?? 0,
+    district: districtQuery.data?.RecordsTotal ?? 0,
   };
 
   const cards = useMemo(
@@ -427,7 +428,7 @@ const Content = () => {
                   key={tableKey}
                   loading={loading}
                   isHavePagination
-                  totalCount={totalRecords}
+                  totalCount={totalFilteredRecords}
                   currentPage={page}
                   defaultRowsPerPage={rowsPerPage}
                   onPaginationChange={(newPage, newRowsPerPage) => {

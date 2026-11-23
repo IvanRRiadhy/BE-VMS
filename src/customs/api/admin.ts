@@ -871,7 +871,7 @@ export const getAllVisitorCardPagination = async (
   }
 
   if (is_used !== undefined && is_used !== null) {
-    params.is_used = is_used;
+    params['is-used'] = is_used;
   }
 
   try {

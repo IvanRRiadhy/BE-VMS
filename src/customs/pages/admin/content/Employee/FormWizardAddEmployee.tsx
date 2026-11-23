@@ -149,8 +149,8 @@ const FormWizardAddEmployee = ({
 
     const serverPath =
       localForm.faceimage &&
-      !localForm.faceimage.startsWith('data:') &&
-      !/^https?:\/\//i.test(localForm.faceimage)
+        !localForm.faceimage.startsWith('data:') &&
+        !/^https?:\/\//i.test(localForm.faceimage)
         ? localForm.faceimage
         : null;
 
@@ -234,9 +234,9 @@ const FormWizardAddEmployee = ({
       ...prev,
       ...employee,
       gender: normalizedGender,
-      organization_id: String(employee.organization_id ?? ''),
-      department_id: String(employee.department_id ?? ''),
-      district_id: String(employee.district_id ?? ''),
+      organization_id: String(employee.organization_id ?? null),
+      department_id: employee.department_id ?? null,
+      district_id: employee.district_id ?? null,
     }));
   }, [employee]);
 
@@ -420,8 +420,8 @@ const FormWizardAddEmployee = ({
   const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
     ...v,
     organization_id: String(v.organization_id ?? ''),
-    department_id: v.department_id ?? null,
-    district_id: v.district_id ?? null,
+    department_id: v.department_id || null,
+    district_id: v.district_id || null,
     type: String(v.type ?? 'Permanent'),
   });
 
@@ -762,12 +762,12 @@ const FormWizardAddEmployee = ({
     ),
     ...(currentCardNumber
       ? [
-          {
-            label: currentCardNumber,
-            value: currentCardNumber,
-            cardMac: currentCardMac,
-          },
-        ]
+        {
+          label: currentCardNumber,
+          value: currentCardNumber,
+          cardMac: currentCardMac,
+        },
+      ]
       : []),
   ];
 

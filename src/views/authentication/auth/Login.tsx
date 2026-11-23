@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import {
   Grid2 as Grid,
@@ -21,6 +21,8 @@ import {
   Select,
   FormControl,
   MenuItem,
+  ListSubheader,
+  TextField,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -55,6 +57,7 @@ import { getConfig } from 'src/config';
 import BackToTopButton from '../components/BackToTopButton';
 import { getCaptcha } from 'src/customs/api/captcha';
 import { IconBuilding } from '@tabler/icons-react';
+import { SATKER_OPTIONS, toSatkerValue } from '../constants/satkerOptions';
 
 const Login = () => {
   const theme = useTheme();
@@ -407,7 +410,7 @@ const Login = () => {
 
   const roleOptions: Record<Exclude<AccessType, 'visitor'>, string[]> = {
     'user-system': ['Super Admin', 'Admin', 'Operator'],
-    satker: ['DLAF', 'DLDS', 'DPID', 'DPSS', 'DPU', 'DSDM', 'Departemen Jasa Perbankan, Perizinan, dan Operasional Tresuri'],
+    satker: SATKER_OPTIONS,
   };
 
   const handleSelectAccess = (type: Exclude<AccessType, 'visitor'>) => {
@@ -432,6 +435,29 @@ const Login = () => {
       setEmployeeRole('DLAF');
     }
   }, [accessType]);
+
+  const [searchRole, setSearchRole] = useState('');
+
+  const roles = useMemo(
+    () =>
+      accessType === 'visitor'
+        ? ['Visitor']
+        : accessType
+          ? roleOptions[accessType]
+          : [],
+    [accessType],
+  );
+
+  const filteredRoles = useMemo(() => {
+    const keyword = searchRole.trim().toLowerCase();
+
+    if (!keyword) return roles;
+
+    return roles.filter((role) =>
+      role.toLowerCase().includes(keyword),
+    );
+  }, [roles, searchRole]);
+
   return (
     <>
       {/* {!isAuthenticated && ( */}
@@ -979,81 +1005,154 @@ const Login = () => {
                         </Box>
                       </Box>
                       <Box sx={{ width: '100%', mb: 1.5, mt: 3 }}>
-                        <FormControl fullWidth size="medium">
-                          <Select
-                            value={employeeRole}
-                            onChange={(e) => {
-                              setEmployeeRole(e.target.value);
-                            }}
-                            fullWidth
-                            sx={{
-                              minHeight: 55,
-                              color: '#fff',
-                              bgcolor: '#061D3D',
-                              borderRadius: 2,
 
-                              '& .MuiSelect-select': {
-                                bgcolor: 'transparent',
-                              },
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(255,255,255,0.25)',
-                              },
-                              '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#FFC247',
-                              },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#FFC247',
-                              },
-                              '& .MuiSvgIcon-root': {
+
+                        <Box sx={{ width: '100%', mb: 1.5, mt: 3 }}>
+                          <FormControl fullWidth size="medium">
+                            <Select
+                              value={employeeRole}
+                              onOpen={() => setSearchRole('')}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setEmployeeRole(value);
+                                setSearchRole('');
+                              }}
+                              fullWidth
+                              displayEmpty
+                              sx={{
+                                minHeight: 55,
                                 color: '#fff',
-                              },
-                            }}
-                            MenuProps={{
-                              PaperProps: {
-                                sx: {
-                                  bgcolor: '#061D3D',
-                                  color: '#fff',
-                                  border: '1px solid rgba(255,255,255,0.15)',
-                                  mt: 0.5,
+                                bgcolor: '#061D3D',
+                                borderRadius: 2,
 
-                                  '& .MuiMenuItem-root': {
+                                '& .MuiSelect-select': {
+                                  bgcolor: 'transparent',
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: 'rgba(255,255,255,0.25)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#FFC247',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#FFC247',
+                                },
+                                '& .MuiSvgIcon-root': {
+                                  color: '#fff',
+                                },
+                              }}
+                              MenuProps={{
+                                autoFocus: false,
+                                disableAutoFocusItem: true,
+                                MenuListProps: {
+                                  autoFocusItem: false,
+                                },
+                                PaperProps: {
+                                  sx: {
                                     bgcolor: '#061D3D',
                                     color: '#fff',
-                                  },
-                                  '& .MuiMenuItem-root:hover': {
-                                    bgcolor: '#12365F',
-                                  },
-                                  '& .MuiMenuItem-root.Mui-selected': {
-                                    bgcolor: '#174B7A',
-                                  },
-                                  '& .MuiMenuItem-root.Mui-selected:hover': {
-                                    bgcolor: '#205B91',
+                                    maxHeight: 300,
+                                    mt: 0.5,
+
+                                    '& .MuiMenuItem-root': {
+                                      bgcolor: '#061D3D',
+                                      color: '#fff',
+                                    },
+                                    '& .MuiMenuItem-root:hover': {
+                                      bgcolor: '#12365F',
+                                    },
+                                    '& .MuiMenuItem-root.Mui-selected': {
+                                      bgcolor: '#174B7A',
+                                    },
+                                    '& .MuiMenuItem-root.Mui-selected:hover': {
+                                      bgcolor: '#205B91',
+                                    },
                                   },
                                 },
-                              },
-                            }}
-                          >
-                            {(accessType === 'visitor'
-                              ? ['Visitor']
-                              : accessType
-                                ? roleOptions[accessType]
-                                : []
-                            ).map((role) => (
-                              <MenuItem key={role} value={role}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                  <IconUser size={25} />
-                                  <Typography variant="h6">{role}</Typography>
-                                </Box>
-                              </MenuItem>
-                            ))}
-                            {/* <MenuItem value="Visitor">
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <IconUserPlus size={25} />
-                                <Typography variant="h6">Visitor</Typography>
-                              </Box>
-                            </MenuItem> */}
-                          </Select>
-                        </FormControl>
+                              }}
+                            >
+                              <ListSubheader
+                                sx={{
+                                  bgcolor: '#061D3D',
+                                  p: 1,
+                                  position: 'sticky',
+                                  top: 0,
+                                  zIndex: 2,
+                                }}
+                              >
+                                {/* <TextField
+                                  // autoFocus
+                                  size="small"
+                                  fullWidth
+                                  placeholder="Search role / Satker..."
+                                  value={searchRole}
+                                  onChange={(e) => setSearchRole(e.target.value)}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      color: '#fff',
+                                      bgcolor: '#12365F',
+                                      '& fieldset': {
+                                        borderColor: 'rgba(255,255,255,0.25)',
+                                      },
+                                      '&:hover fieldset': {
+                                        borderColor: '#FFC247',
+                                      },
+                                      '&.Mui-focused fieldset': {
+                                        borderColor: '#FFC247',
+                                      },
+                                    },
+                                    '& input::placeholder': {
+                                      color: 'rgba(255,255,255,0.6)',
+                                      opacity: 1,
+                                    },
+                                  }}
+                                /> */}
+                                <TextField
+                                  autoFocus
+                                  size="small"
+                                  fullWidth
+                                  placeholder="Search Satker..."
+                                  value={searchRole}
+                                  onChange={(e) => setSearchRole(e.target.value)}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                  sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                      color: '#fff',
+                                      bgcolor: '#12365F',
+                                      borderRadius: 1.5,
+                                    },
+                                    '& input': {
+                                      color: '#fff',
+                                    },
+                                  }}
+                                />
+                              </ListSubheader>
+
+                              {filteredRoles.length > 0 ? (
+                                filteredRoles.map((role) => (
+                                  <MenuItem
+                                    key={role}
+                                    value={accessType === 'satker' ? toSatkerValue(role) : role}
+                                  >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                      <IconUser size={25} />
+                                      <Typography variant="h6">{role}</Typography>
+                                    </Box>
+                                  </MenuItem>
+                                ))
+                              ) : (
+                                <MenuItem disabled>
+                                  <Typography color="rgba(255,255,255,0.6)">
+                                    No results found
+                                  </Typography>
+                                </MenuItem>
+                              )}
+                            </Select>
+                          </FormControl>
+                        </Box>
+
+
                       </Box>
 
                       <Box mt={0}>

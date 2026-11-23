@@ -281,6 +281,25 @@ export const getReportVisitor = async (payload: any) => {
   }
 };
 
+export const exportReportVisitor = async (payload: any) => {
+  const response = await axiosInstance.post(
+    `/report/visitor/behavior/generate`,
+    {
+      ...payload,
+      is_export: true,
+      export_report: 'Excell',
+    },
+    {
+      responseType: 'blob',
+      headers: {
+        Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    },
+  );
+
+  return response.data;
+};
+
 export const getReportSecurityIncident = async (payload: any) => {
   try {
     const response = await axiosInstance.post(
@@ -297,4 +316,23 @@ export const getReportSecurityIncident = async (payload: any) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const exportReportSecurityIncident = async (payload: any) => {
+  const response = await axiosInstance.post(
+    '/report/security/security-incident/generate',
+    {
+      ...payload,
+      is_export: true,
+      export_report: 'Excell',
+    },
+    {
+      responseType: 'blob',
+      headers: {
+        Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    },
+  );
+
+  return response.data;
 };

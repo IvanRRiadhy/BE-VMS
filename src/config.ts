@@ -1,6 +1,5 @@
 export interface RuntimeConfig {
   API_BASE_URL: string;
-  API_URL: string;
   WS_URL: string;
   LOGO_URL?: string;
   LOGIN_LOGO_URL?: string;
