@@ -153,6 +153,7 @@ type GuestAccessPassProps = {
   onDownload: () => void;
   onInsertInvitationCode: () => void;
   onOpenParking?: () => void;
+  oOpenParkingMap?: () => void;
   isParkingLoading?: boolean;
   activePassIndex?: number;
   totalPass?: number;
@@ -168,6 +169,7 @@ const GuestAccessPass = ({
   loading,
   onInsertInvitationCode,
   onOpenParking,
+  oOpenParkingMap,
   isParkingLoading = false,
   activePassIndex = 0,
   totalPass = 0,
@@ -180,7 +182,10 @@ const GuestAccessPass = ({
   const config = getConfig();
 
   const logoUrl = config.LOGO_URL;
-
+  const hasParkingMap =
+    typeof accessPass.parking_map === 'string' &&
+    accessPass.parking_map.trim() !== '' &&
+    accessPass.parking_map.trim().toLowerCase() !== 'not available';
   const Field = ({
     label,
     value,
@@ -519,21 +524,99 @@ const GuestAccessPass = ({
             marginTop: '10px',
           }}
         >
+          {/* QR CODE + NAVIGATION */}
           <Box
             sx={{
-              p: 1,
-              backgroundColor: '#fff',
-              borderRadius: 1.5,
-              boxShadow: '0px 2px 8px rgba(0,0,0,0.12)',
+              position: 'relative',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              mt: 1.5,
+              width: '100%',
             }}
           >
-            <QRCode value={String(accessPass.visitor_number ?? '')} size={150} />
-          </Box>
+            {/* PREVIOUS */}
+            {totalPass > 1 && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreviousPass?.();
+                }}
+                sx={{
+                  position: 'absolute',
+                  left: { xs: 0, sm: 4 },
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 36,
+                  height: 36,
+                  bgcolor: 'error.main',
+                  color: '#fff',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                <IconChevronLeft size={22} />
+              </IconButton>
+            )}
 
-          <Typography
+            {/* QR CODE */}
+            <Box
+              sx={{
+                p: 1,
+                backgroundColor: '#fff',
+                borderRadius: 1.5,
+                boxShadow: '0px 2px 8px rgba(0,0,0,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <QRCode value={String(accessPass.visitor_number ?? '')} size={150} />
+            </Box>
+
+            {/* NEXT */}
+            {totalPass > 1 && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNextPass?.();
+                }}
+                sx={{
+                  position: 'absolute',
+                  right: { xs: 0, sm: 4 },
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 36,
+                  height: 36,
+                  bgcolor: 'error.main',
+                  color: '#fff',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                <IconChevronRight size={22} />
+              </IconButton>
+            )}
+
+            {/* Invitation Code dan ID */}
+            <Typography
+              variant="body2"
+              color="primary"
+              fontWeight={500}
+              textAlign="center"
+              sx={{ mt: 1 }}
+            >
+              Invitation Code
+            </Typography>
+
+            {/* Lanjutkan Box invitation code dan ID yang sudah ada */}
+          </Box>
+          {/* <Typography
             variant="body2"
             color="primary"
             fontWeight={500}
@@ -544,7 +627,7 @@ const GuestAccessPass = ({
             }}
           >
             Invitation Code
-          </Typography>
+          </Typography> */}
 
           <Box
             sx={{
@@ -654,33 +737,54 @@ const GuestAccessPass = ({
         {/* ================================
             PARKING BUTTON
         ================================= */}
-        <Button
-          fullWidth
-          className="no-print"
-          variant="contained"
-          startIcon={<IconCar size={18} />}
-          disabled={
-            isParkingLoading ||
-            !accessPass.can_parking ||
-            !accessPass.vehicle_type ||
-            !accessPass.vehicle_plate_number
-          }
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenParking?.();
-          }}
-          sx={{
-            mt: 2.5,
-            height: 38,
-            textTransform: 'none',
-            fontWeight: 600,
-            borderRadius: 1.5,
-          }}
-        >
-          {isParkingLoading ? 'Opening...' : 'Open Parking Portal'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            fullWidth
+            className="no-print"
+            variant="contained"
+            startIcon={<IconCar size={18} />}
+            disabled={
+              isParkingLoading ||
+              !accessPass.can_parking ||
+              !accessPass.vehicle_type ||
+              !accessPass.vehicle_plate_number
+            }
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenParking?.();
+            }}
+            sx={{
+              mt: 2.5,
+              height: 38,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 1.5,
+            }}
+          >
+            {isParkingLoading ? 'Opening...' : 'Open Parking Portal'}
+          </Button>
+          <Button
+            fullWidth
+            className="no-print"
+            variant="contained"
+            startIcon={<IconCar size={18} />}
+            disabled={isParkingLoading || !hasParkingMap}
+            onClick={(event) => {
+              event.stopPropagation();
+              oOpenParkingMap?.();
+            }}
+            sx={{
+              mt: 2.5,
+              height: 38,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 1.5,
+            }}
+          >
+            {isParkingLoading ? 'Opening...' : 'Parking Map'}
+          </Button>
+        </Box>
 
-        {/* PAGINATION */}
         {/* PAGINATION */}
         {totalPass > 1 && (
           <Box
@@ -704,7 +808,7 @@ const GuestAccessPass = ({
               }}
             >
               {/* PREVIOUS */}
-              <IconButton
+              {/* <IconButton
                 size="small"
                 onClick={onPreviousPass}
                 sx={{
@@ -723,7 +827,7 @@ const GuestAccessPass = ({
                 }}
               >
                 <IconChevronLeft size={20} />
-              </IconButton>
+              </IconButton> */}
 
               {/* DOTS */}
               <Box
@@ -758,7 +862,7 @@ const GuestAccessPass = ({
               </Box>
 
               {/* NEXT */}
-              <IconButton
+              {/* <IconButton
                 size="small"
                 onClick={onNextPass}
                 sx={{
@@ -777,7 +881,7 @@ const GuestAccessPass = ({
                 }}
               >
                 <IconChevronRight size={20} />
-              </IconButton>
+              </IconButton> */}
             </Box>
 
             {/* NUMBER */}

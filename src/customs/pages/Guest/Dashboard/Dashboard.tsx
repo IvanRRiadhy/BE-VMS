@@ -219,6 +219,59 @@ const Dashboard = () => {
 
   const handleOpenParkingBlocker = async () => {
     if (!currentAccessPass?.id || isParkingLoading) return;
+    // const {
+    //   parking_slot,
+    //   parking_map,
+    //   vehicle_plate_number,
+    //   vehicle_type,
+    //   parking_area,
+    //   visitor_id,
+    //   visitor_number,
+    // } = currentAccessPass;
+
+    // const result = await showSwal('confirm', 'Are you sure to open the parking blocker?');
+
+    // if (!result?.isConfirmed) return;
+
+    setIsParkingLoading(true);
+
+    try {
+      // 1. Tunggu sampai API selesai
+      await openParkingBlocker({
+        trx_visitor_id: currentAccessPass.id,
+      });
+
+      // sessionStorage.setItem(
+      //   'guest_parking_data',
+      //   JSON.stringify({
+      //     trx_visitor_id: currentAccessPass.id,
+      //     visitor_id,
+      //     visitor_number,
+      //     vehicle_plate_number,
+      //     vehicle_type,
+      //     parking_area,
+      //     parking_slot,
+      //     parking_map,
+      //   }),
+      // );
+
+      // 2. API sukses, tampilkan notifikasi
+
+      // 3. Mulai cooldown 3 detik setelah API selesai
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      showSwal('success', 'Successfully opened parking blocker.');
+      // navigate('/guest/parking');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
+    } finally {
+      // 4. Aktifkan kembali tombol
+      setIsParkingLoading(false);
+    }
+  };
+
+  const handleOpenMapParkingBlocker = () => {
+    if (!currentAccessPass?.id || isParkingLoading) return;
+
     const {
       parking_slot,
       parking_map,
@@ -229,44 +282,26 @@ const Dashboard = () => {
       visitor_number,
     } = currentAccessPass;
 
-    const result = await showSwal('confirm', 'Are you sure to open the parking blocker?');
-
-    if (!result?.isConfirmed) return;
-
-    setIsParkingLoading(true);
-
-    try {
-      // 1. Tunggu sampai API selesai
-      await openParkingBlocker({
-        trx_visitor_id: currentAccessPass.id,
-      });
-
-      sessionStorage.setItem(
-        'guest_parking_data',
-        JSON.stringify({
-          trx_visitor_id: currentAccessPass.id,
-          visitor_id,
-          visitor_number,
-          vehicle_plate_number,
-          vehicle_type,
-          parking_area,
-          parking_slot,
-          parking_map,
-        }),
-      );
-
-      // 2. API sukses, tampilkan notifikasi
-
-      // 3. Mulai cooldown 3 detik setelah API selesai
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      // showSwal('success', 'Successfully opened parking blocker.');
-      navigate('/guest/parking');
-    } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg || 'Failed to open parking blocker.');
-    } finally {
-      // 4. Aktifkan kembali tombol
-      setIsParkingLoading(false);
+    if (!parking_map) {
+      showSwal('error', 'Parking map is not available.');
+      return;
     }
+
+    sessionStorage.setItem(
+      'guest_parking_data',
+      JSON.stringify({
+        trx_visitor_id: currentAccessPass.id,
+        visitor_id,
+        visitor_number,
+        vehicle_plate_number,
+        vehicle_type,
+        parking_area,
+        parking_slot,
+        parking_map,
+      }),
+    );
+
+    navigate('/guest/parking');
   };
 
   const accessPassPdfRef = useRef<HTMLDivElement>(null);
@@ -388,6 +423,7 @@ const Dashboard = () => {
               onDownload={handleDownloadPDF}
               onInsertInvitationCode={() => setOpenInputInvitationCode(true)}
               onOpenParking={handleOpenParkingBlocker}
+              oOpenParkingMap={handleOpenMapParkingBlocker}
               isParkingLoading={isParkingLoading}
               activePassIndex={activePassIndex}
               totalPass={accessPass.length}

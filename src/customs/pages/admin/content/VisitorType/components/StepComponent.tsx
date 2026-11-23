@@ -40,6 +40,7 @@ import { useInvitationVisitorEmployee } from 'src/hooks/Invitation/useInvitation
 import { useDebounce } from 'src/hooks/useDebounce';
 import { useTranslation } from 'react-i18next';
 import { useSites } from 'src/hooks/Sites/useSites';
+import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
 
 interface StepContentProps {
   activeStep: number;
@@ -160,38 +161,33 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
   const debounceSearch = useDebounce(hostInput, 500);
   const {
-    data: visitorEmployee = [],
+    data: employeeResponse,
     isFetching,
     isError,
-  } = useInvitationVisitorEmployee({
-    search: debounceSearch,
+  } = useEmployeePagination({
+    'search[value]': debounceSearch,
     start: 0,
-    length: 10,
+    length: 100,
   });
 
-  // const selectedSite = sites.find((site: any) => String(site.id) === String(formData.pre_site_id));
+  const visitorEmployee = employeeResponse?.collection ?? [];
+
   const selectedSite = useMemo(
     () =>
       sites.find(
         (site: any) =>
-          String(site.id).toLowerCase() === String(formData.pre_site_id ?? '').toLowerCase(),
+          String(site.id).toLowerCase() ===
+          String(formData.pre_site_id ?? '').toLowerCase(),
       ) ?? null,
     [sites, formData.pre_site_id],
   );
+
   const destinationHostId = selectedSite?.host;
-  const sortedVisitorEmployee = [...visitorEmployee].sort((a: any, b: any) => {
-    const aIsDestination = String(a.id) === String(destinationHostId);
-    const bIsDestination = String(b.id) === String(destinationHostId);
-
-    if (aIsDestination && !bIsDestination) return -1;
-    if (!aIsDestination && bIsDestination) return 1;
-
-    return 0;
-  });
 
   const [selectedHost, setSelectedHost] = useState<any>(null);
+
   useEffect(() => {
-    const hostId = formData.pre_host_id;
+    const hostId = String(formData.pre_host_id ?? '').toLowerCase();
 
     if (!hostId) {
       setSelectedHost(null);
@@ -200,7 +196,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     }
 
     const found = visitorEmployee.find(
-      (item: any) => String(item.id).toLowerCase() === String(hostId).toLowerCase(),
+      (item: any) =>
+        String(item.id).toLowerCase() === hostId,
     );
 
     if (found) {
@@ -209,13 +206,31 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     }
   }, [formData.pre_host_id, visitorEmployee]);
 
+  const sortedVisitorEmployee = useMemo(
+    () =>
+      [...visitorEmployee].sort((a: any, b: any) => {
+        const aIsDestination =
+          String(a.id).toLowerCase() ===
+          String(destinationHostId ?? '').toLowerCase();
+
+        const bIsDestination =
+          String(b.id).toLowerCase() ===
+          String(destinationHostId ?? '').toLowerCase();
+
+        return Number(bIsDestination) - Number(aIsDestination);
+      }),
+    [visitorEmployee, destinationHostId],
+  );
+
   const hostOptions = useMemo(() => {
     const options = [...sortedVisitorEmployee];
 
     if (
       selectedHost &&
       !options.some(
-        (item: any) => String(item.id).toLowerCase() === String(selectedHost.id).toLowerCase(),
+        (item: any) =>
+          String(item.id).toLowerCase() ===
+          String(selectedHost.id).toLowerCase(),
       )
     ) {
       options.unshift(selectedHost);
@@ -690,10 +705,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.duration_visit || ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>
@@ -723,10 +738,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.max_time_visit ?? ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           {/* <Grid size={12}>
@@ -794,10 +809,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               helperText={errors.grace_time || ''}
               fullWidth
               type="text"
-              // inputProps={{
-              //   inputMode: 'numeric',
-              //   pattern: '[0-9]*',
-              // }}
+            // inputProps={{
+            //   inputMode: 'numeric',
+            //   pattern: '[0-9]*',
+            // }}
             />
           </Grid>
           <Grid size={12}>

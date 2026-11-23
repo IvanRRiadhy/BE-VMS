@@ -24,41 +24,64 @@ import {
 
 import PageContainer from 'src/components/container/PageContainer';
 import { useTranslation } from 'react-i18next';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { openParkingBlocker } from 'src/customs/api/visitor';
 
 const Parking = () => {
   const [showInfo, setShowInfo] = useState(true);
-  const [parkingData, setParkingData] = useState<any | null>(null);
   const publicUrl =
     'https://parking-app.app.bio-experience.com/Maps/Public?blockSlotUid=d46a6a89-2c3f-4046-ac65-42af27b7287d';
 
-  const iframeUrl = parkingData?.parking_slot?.trim()
-    ? parkingData?.parking_map || publicUrl
-    : publicUrl;
+  const [parkingData, setParkingData] = useState<any>(null);
+  const iframeUrl = parkingData?.parking_map ?? publicUrl;
+
   useEffect(() => {
     const storedData = sessionStorage.getItem('guest_parking_data');
 
-    if (!storedData) return;
-
-    try {
-      const data: any = JSON.parse(storedData);
-      setParkingData(data);
-    } catch (error) {
-      console.error('Failed to parse parking data:', error);
+    if (storedData) {
+      try {
+        setParkingData(JSON.parse(storedData));
+      } catch (error) {
+        console.error('Failed to parse parking data:', error);
+      }
     }
   }, []);
-  const handleAuthorize = () => {
-    const isAuthorized = localStorage.getItem('parking');
 
-    if (isAuthorized === 'true') {
-      window.location.href = 'http://localhost:5000/dashboard';
-      return;
-    }
 
-    localStorage.setItem('parking', 'true');
-    window.location.href = 'http://localhost:5000/auth/authorize';
-  };
 
   const { t } = useTranslation();
+
+  const [isParkingLoading, setIsParkingLoading] = useState(false);
+
+  const handleOpenParkingBlocker = async () => {
+    if (!parkingData?.trx_visitor_id || isParkingLoading) return;
+
+    // const result = await showSwal(
+    //   'confirm',
+    //   'Are you sure to open the parking blocker?',
+    // );
+
+    // if (!result?.isConfirmed) return;
+
+    setIsParkingLoading(true);
+
+    try {
+      await openParkingBlocker({
+        trx_visitor_id: parkingData.trx_visitor_id,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      showSwal('success', 'Successfully opened parking blocker.');
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error?.response?.data?.msg || 'Failed to open parking blocker.',
+      );
+    } finally {
+      setIsParkingLoading(false);
+    }
+  };
 
   return (
     <PageContainer title="Parking">
@@ -238,9 +261,14 @@ const Parking = () => {
                   {t('parking.parkingInstruction')}
                 </Typography>
 
-                {/* <Button variant="contained" color="primary" onClick={() => setShowInfo(false)}>
-                  Open Parking Blocker
-                </Button> */}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleOpenParkingBlocker}
+                  disabled={isParkingLoading || !parkingData?.trx_visitor_id}
+                >
+                  {isParkingLoading ? 'Opening...' : 'Open Parking Blocker'}
+                </Button>
               </Stack>
             </CardContent>
           </Card>

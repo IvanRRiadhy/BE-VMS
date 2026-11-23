@@ -12,7 +12,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://10.5.65.20:8000',
+        target: '[http://10.5.65.20:8000](http://10.5.65.20:8000)',
         changeOrigin: true,
         secure: false,
       },

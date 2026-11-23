@@ -174,7 +174,7 @@ const Content = () => {
     () => [
       {
         title: `Total ${t('navigation.site_space')}`,
-        subTitle: `${totalRecords}`,
+        subTitle: `${totalFilteredRecords}`,
         icon: IconSitemap,
         subTitleSetting: 10,
         color: 'none',
@@ -467,17 +467,21 @@ const Content = () => {
     [setPage, setSearch],
   );
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setSelectedRows([]);
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sites'] }),
+      queryClient.invalidateQueries({ queryKey: ['registeredSites'] }),
+      queryClient.invalidateQueries({ queryKey: ['site-access'] }),
+      queryClient.invalidateQueries({ queryKey: ['site-parkings'] }),
+      queryClient.invalidateQueries({ queryKey: ['site-trackings'] }),
+      queryClient.invalidateQueries({ queryKey: ['sites-parking'] }),
+      queryClient.invalidateQueries({ queryKey: ['sites-tracking'] }),
+      queryClient.invalidateQueries({ queryKey: ['site-documents'] }),
+    ]);
+
     handleCloseModalCreateSiteSpace();
-
-    queryClient.invalidateQueries({
-      queryKey: ['sites'],
-    });
-
-    queryClient.invalidateQueries({
-      queryKey: ['registeredSites'],
-    });
     setIsDirty(false);
   };
 
@@ -561,7 +565,7 @@ const Content = () => {
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
                     // onClose={() => setOpenFilter(false)}
-                    onClose={() => {}}
+                    onClose={() => { }}
                   />
                 }
                 // onBatchEdit={handleBatchEdit}

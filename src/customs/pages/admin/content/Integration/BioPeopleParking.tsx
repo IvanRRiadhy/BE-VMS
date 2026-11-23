@@ -80,9 +80,9 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
   const [totals, setTotals] = useState<{ [key: string]: number }>({
     visitor_type: 0,
     area: 0,
-    slot: 0,
+    // slot: 0,
     vehicle: 0,
-    block: 0,
+    // block: 0,
   });
 
   const { t } = useTranslation();
@@ -204,29 +204,58 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     vehicle: 'Vehicle',
   };
 
+  // const getCount = (res: any) => {
+  //   if (!res) return 0;
+  //   if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
+  //   if (Array.isArray(res?.collection)) return res.collection.length;
+
+  //   if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
+  //   if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
+
+  //   if (typeof res?.total === 'number') return res.total;
+  //   if (typeof res?.count === 'number') return res.count;
+
+  //   return 0;
+  // };
+
   const getCount = (res: any) => {
-    if (!res) return 0;
-    if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
-    if (Array.isArray(res?.collection)) return res.collection.length;
-
-    if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
-    if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
-
-    if (typeof res?.total === 'number') return res.total;
-    if (typeof res?.count === 'number') return res.count;
+    if (Array.isArray(res?.collection)) {
+      return res.collection.length;
+    }
 
     return 0;
   };
+
+  // const loadTotals = async () => {
+  //   if (!id) return;
+
+  //   const settled = await Promise.allSettled([
+  //     getVisitorTypeParking(id as string), // 0
+  //     getAreaParking(id as string), // 1
+  //     // getBlockParking(id as string), // 2
+  //     // getSlotParking(id as string), // 3
+  //     getVehicleParking(id as string), // 4
+  //   ]);
+
+  //   const countOf = (i: number) =>
+  //     settled[i].status === 'fulfilled'
+  //       ? getCount((settled[i] as PromiseFulfilledResult<any>).value)
+  //       : 0;
+
+  //   setTotals({
+  //     visitor_type: countOf(0),
+  //     area: countOf(1),
+  //     vehicle: countOf(4),
+  //   });
+  // };
 
   const loadTotals = async () => {
     if (!id) return;
 
     const settled = await Promise.allSettled([
-      getVisitorTypeParking(id as string), // 0
-      getAreaParking(id as string), // 1
-      // getBlockParking(id as string), // 2
-      // getSlotParking(id as string), // 3
-      getVehicleParking(id as string), // 4
+      getVisitorTypeParking(id),
+      getAreaParking(id),
+      getVehicleParking(id),
     ]);
 
     const countOf = (i: number) =>
@@ -237,9 +266,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
     setTotals({
       visitor_type: countOf(0),
       area: countOf(1),
-      // block: countOf(2),
-      // slot: countOf(3),
-      vehicle: countOf(4),
+      vehicle: countOf(2),
     });
   };
 
@@ -903,7 +930,7 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
               <Grid size={{ xs: 12, lg: 12 }}>
                 <DynamicTable
                   loading={loading}
-                  isHavePagination
+                  isHavePagination={false}
                   rowsPerPageOptions={[10, 50]}
                   overflowX={'auto'}
                   data={listData}
@@ -938,8 +965,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  isHaveAddData={selectedType === 'visitor_type'}
-                  onAddData={handleOpenCreateVisitorType}
+                  // isHaveAddData={selectedType === 'visitor_type'}
+                  // onAddData={handleOpenCreateVisitorType}
                 // isCopy={true}
                 // onCopy={(row) => {
                 //   handleCopy(row);
