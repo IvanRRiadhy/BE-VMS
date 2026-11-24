@@ -48,6 +48,7 @@
   "removeAll": "Remove All",
   "noDataAvailable": "No data available",
   "employeeAddress": "Employee Address",
+   "scan_qr_visitor_invitation": "Scan this QR Code to identify the visitor invitation.",
   "previewInvitation": "Preview Invitation",
   "reviewVisitorInformationBeforeSubmitting": "Review the visitor information before submitting.",
   "exitDate": "Exit Date",

@@ -905,27 +905,39 @@ export const createBatchVisitor = async (
 export const createVisitorCard = async (
   data: CreateVisitorCardRequest,
 ): Promise<CreateVisitorResponse> => {
-  const response = await axiosInstance.post('/card', data, {
-    headers: { Accept: 'application/json' },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.post('/card', data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateVisitorCard = async (
   id: string,
   data: UpdateVisitorCardRequest,
 ): Promise<UpdateVisitorCardResponse> => {
-  const response = await axiosInstance.put(`/card/${id}`, data, {
-    headers: { Accept: 'application/json' },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.put(`/card/${id}`, data, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const deleteVisitorCard = async (id: string): Promise<DeleteVisitorResponse> => {
-  const response = await axiosInstance.delete(`/card/${id}`, {
-    headers: { Accept: 'application/json' },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.delete(`/card/${id}`, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 //#region Visitor

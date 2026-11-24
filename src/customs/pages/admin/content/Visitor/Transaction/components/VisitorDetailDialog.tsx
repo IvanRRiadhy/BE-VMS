@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -14,6 +15,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
+import { IconDownload } from '@tabler/icons-react';
 
 import {
   IconCalendarEvent,
@@ -30,6 +32,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import QRCode from 'react-qr-code';
 
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -77,6 +81,8 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
   useEffect(() => {
     if (open) setTab(0);
   }, [open, visitor?.id]);
+
+  const { t } = useTranslation();
 
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d',
@@ -149,6 +155,7 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
         <Tab label="Detail" />
         <Tab label="Card" />
         <Tab label="Parking" />
+        <Tab label="QR Code" />
       </Tabs>
 
       <DialogContent dividers sx={{ minHeight: 300, maxHeight: '65vh' }}>
@@ -176,11 +183,10 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
 
             <DetailItem
               label="Visit End"
-              value={`${
-                visitor.visitor_period_end?.startsWith('9999-01-01')
-                  ? '-'
-                  : formatDateTime(visitor.visitor_period_end, visitor.extend_visitor_period)
-              }`}
+              value={`${visitor.visitor_period_end?.startsWith('9999-01-01')
+                ? '-'
+                : formatDateTime(visitor.visitor_period_end, visitor.extend_visitor_period)
+                }`}
               icon={<IconCalendarEvent size={18} />}
             />
 
@@ -317,6 +323,103 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
               icon={<IconSquareRounded size={18} />}
             />
           </>
+        )}
+        {tab === 3 && (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            py={4}
+            gap={2}
+          >
+            <Typography variant="h6" fontWeight={700}>
+              Invitation QR Code
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              {t("scan_qr_visitor_invitation")}
+            </Typography>
+
+            <Box
+              id="invitation-qr"
+              sx={{
+                bgcolor: '#fff',
+                p: 2,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <QRCode
+                value={visitor.invitation_code || ''}
+                size={220}
+                level="H"
+                fgColor="#000000"
+                bgColor="#FFFFFF"
+              />
+            </Box>
+
+            <Typography fontWeight={700} color="primary.main">
+              {visitor.invitation_code || '-'}
+            </Typography>
+
+            <Button
+              variant="contained"
+              startIcon={<IconDownload size={18} />}
+              disabled={!visitor.invitation_code}
+              onClick={() => {
+                const svg = document.querySelector('#invitation-qr svg');
+
+                if (!svg) return;
+
+                const serializer = new XMLSerializer();
+                const svgData = serializer.serializeToString(svg);
+
+                const svgBlob = new Blob([svgData], {
+                  type: 'image/svg+xml;charset=utf-8',
+                });
+
+                const url = URL.createObjectURL(svgBlob);
+                const img = new Image();
+
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const scale = 3;
+
+                  canvas.width = img.width * scale;
+                  canvas.height = img.height * scale;
+
+                  const ctx = canvas.getContext('2d');
+
+                  if (!ctx) {
+                    URL.revokeObjectURL(url);
+                    return;
+                  }
+
+                  ctx.fillStyle = '#FFFFFF';
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                  URL.revokeObjectURL(url);
+
+                  const pngUrl = canvas.toDataURL('image/png');
+
+                  const link = document.createElement('a');
+                  link.href = pngUrl;
+                  link.download = `invitation-${visitor.invitation_code}.png`;
+                  link.click();
+                };
+
+                img.onerror = () => URL.revokeObjectURL(url);
+
+                img.src = url;
+              }}
+            >
+              Download QR Code
+            </Button>
+          </Box>
         )}
       </DialogContent>
     </Dialog>

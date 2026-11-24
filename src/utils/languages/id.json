@@ -42,6 +42,7 @@
   "reviewVisitorInformationBeforeSubmitting": "Periksa informasi pengunjung sebelum mengirimkan undangan.",
   "addVisitor": "Tambah Pengunjung",
   "back": "Kembali",
+  "scan_qr_visitor_invitation": "Pindai Kode QR ini untuk mengidentifikasi undangan pengunjung.",
   "next": "Selanjutnya",
   "action": "Aksi",
   "noDataAvailable": "Data tidak tersedia",

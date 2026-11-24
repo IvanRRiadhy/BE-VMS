@@ -155,13 +155,15 @@ const FormWizardAddVisitorCard = ({
       BLE: 2,
     };
 
+
+    const registeredSite = localForm.registered_site || null;
+
     try {
       if (isBatchEdit && selectedRows.length > 0) {
         setLoading(true);
 
         try {
           const updatedFields: Partial<UpdateBatchCardSchema> = {};
-          console.log('enabledFields:', enabledFields);
 
           if (enabledFields?.is_employee_used)
             updatedFields.is_employee_used = localForm.is_employee_used as boolean;
@@ -202,7 +204,9 @@ const FormWizardAddVisitorCard = ({
                 registered_site:
                   updatedFields.is_multi_site === true
                     ? null
-                    : (updatedFields.registered_site ?? (row.registered_site as string)),
+                    : updatedFields.registered_site !== undefined
+                      ? updatedFields.registered_site || null
+                      : row.registered_site || null,
 
                 employee_name: updatedFields.employee_name ?? (row.employee_name as string),
               };
@@ -221,8 +225,8 @@ const FormWizardAddVisitorCard = ({
           showSwal(
             'error',
             err?.response?.data?.message ??
-              err?.response?.data?.msg ??
-              'Some cards failed to update.',
+            err?.response?.data?.msg ??
+            'Some cards failed to update.',
           );
         } finally {
           setLoading(false);
@@ -237,6 +241,7 @@ const FormWizardAddVisitorCard = ({
         const updatedData: UpdateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
+          registered_site: registeredSite,
         } as UpdateVisitorCardRequest;
         await updateMutation.mutateAsync({
           id: edittingId,
@@ -247,6 +252,7 @@ const FormWizardAddVisitorCard = ({
         const createdData: CreateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
+          registered_site: registeredSite,
         };
         await createMutation.mutateAsync(createdData);
         showSwal('success', t('createSuccess', { name: 'Card' }));
@@ -513,10 +519,10 @@ const FormWizardAddVisitorCard = ({
                   localForm.is_multi_site
                     ? null
                     : siteSpaceRes.find(
-                        (s) =>
-                          String(s.id).toLowerCase() ===
-                          String(localForm.registered_site ?? '').toLowerCase(),
-                      ) || null
+                      (s) =>
+                        String(s.id).toLowerCase() ===
+                        String(localForm.registered_site ?? '').toLowerCase(),
+                    ) || null
                 }
                 isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                 onChange={(_, newValue) => {

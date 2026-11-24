@@ -24,13 +24,13 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
   const visitorNumber = visitorDetail?.visitor_number ?? '';
   const invitationCode = visitorDetail?.invitation_code ?? '';
 
-  const isExpired =
-    visitorDetail?.visitor_period_end && dayjs(visitorDetail.visitor_period_end).isBefore(dayjs());
+  // const isExpired =
+  //   visitorDetail?.visitor_period_end && dayjs(visitorDetail.visitor_period_end).isBefore(dayjs());
 
   const qrRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = async () => {
-    if (!qrRef.current || isExpired) return;
+    if (!qrRef.current) return;
 
     const canvas = await html2canvas(qrRef.current, {
       backgroundColor: '#ffffff',
@@ -86,7 +86,7 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
             }}
           >
             <QRCode value={visitorNumber} size={220} viewBox="0 0 256 256" />
-
+            {/* 
             {isExpired && (
               <Box
                 sx={{
@@ -98,7 +98,7 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
                   backgroundColor: 'rgba(255,255,255,0.65)',
                 }}
               >
-                {/* Circle */}
+               
                 <Box
                   sx={{
                     width: 145,
@@ -108,7 +108,7 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
                     position: 'relative',
                   }}
                 >
-                  {/* Diagonal slash */}
+                 
                   <Box
                     sx={{
                       position: 'absolute',
@@ -123,11 +123,11 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
                   />
                 </Box>
               </Box>
-            )}
+            )} */}
           </Box>
 
           {/* Expired text */}
-          {isExpired && (
+          {/* {isExpired && (
             <Typography
               mt={2}
               variant="h5"
@@ -140,7 +140,7 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
             >
               QR Code Has Expired
             </Typography>
-          )}
+          )} */}
 
           <Typography mt={2} variant="body2">
             Invitation Code
@@ -161,8 +161,8 @@ const VisitorQrCodeDialog = ({ open, onClose, visitorDetail }: Props) => {
       </DialogContent>
 
       <DialogActions>
-        <Button variant="contained" onClick={handleDownload} fullWidth disabled={isExpired}>
-          {isExpired ? 'QR Code Expired' : 'Download QR Code'}
+        <Button variant="contained" onClick={handleDownload} fullWidth >
+          Download QR Code
         </Button>
       </DialogActions>
     </Dialog>
