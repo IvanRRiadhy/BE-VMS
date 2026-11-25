@@ -17,7 +17,7 @@ interface DialogSiteSpaceProps {
   isBatchEdit: boolean;
   selectedRows: any[];
   enabledFields: any;
-  employee: any;
+  // employee: any;
 
   formData: any;
   setFormData: (data: any) => void;
@@ -37,7 +37,7 @@ const DialogSiteSpace = ({
   isBatchEdit,
   selectedRows,
   enabledFields,
-  employee,
+  // employee,
   formData,
   setFormData,
   setEnabledFields,
@@ -131,7 +131,7 @@ const DialogSiteSpace = ({
               gap: 2,
             }}
           >
-            <CircularProgress size={36} />
+            <CircularProgress size={40} thickness={4} />
           </Box>
         ) : (
           <Box>
@@ -145,7 +145,7 @@ const DialogSiteSpace = ({
                 selectedRows={selectedRows}
                 enabledFields={enabledFields}
                 setEnabledFields={setEnabledFields}
-                employee={employee}
+                // employee={employee}
                 setIsDirty={setIsDirty}
               />
             </Box>

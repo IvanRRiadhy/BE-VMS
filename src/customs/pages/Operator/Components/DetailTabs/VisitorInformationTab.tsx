@@ -253,7 +253,9 @@ const VisitorInformationTab = ({
                                 <Box>
                                     <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visit Period End</CustomFormLabel>
                                     <Typography>
-                                        {formatDateTime(data?.visitor_period_end, data?.extend_visitor_period)}
+                                        {data?.visitor_period_end?.startsWith('9999-01-01')
+                                            ? '-'
+                                            : formatDateTime(data?.visitor_period_end, data?.extend_visitor_period)}
                                     </Typography>
                                 </Box>
                             </Box>

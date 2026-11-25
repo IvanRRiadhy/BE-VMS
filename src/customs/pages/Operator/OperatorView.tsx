@@ -2791,7 +2791,14 @@ const OperatorView = () => {
   // Live Visitor
   const upcomingVisitors = liveVisitorQuery.data?.collection ?? [];
   const liveRecordsTotal = liveVisitorQuery.data?.recordsTotal ?? 0;
-  const liveRecordsFiltered = liveVisitorQuery.data?.recordsFiltered ?? 0;
+  // const liveRecordsFiltered = liveVisitorQuery.data?.recordsFiltered ?? 0;
+  const liveRecordsFiltered = useMemo(() => {
+    return (
+      liveVisitorQuery.data?.collection?.filter(
+        (v: any) => v.is_host !== true
+      ).length ?? 0
+    );
+  }, [liveVisitorQuery.data?.collection]);
 
   // Detail Purpose
   const upcomingPurposeVisitors = purposeVisitorQuery.data?.collection ?? [];
@@ -3422,7 +3429,6 @@ const OperatorView = () => {
                   handleValidateVisitor={handleValidateVisitor}
                 />
                 <VisitorListCard
-
                   isFullscreen={isFullscreen}
                   onClear={handleClearAll}
                   typeVisitor={typeVisitor}

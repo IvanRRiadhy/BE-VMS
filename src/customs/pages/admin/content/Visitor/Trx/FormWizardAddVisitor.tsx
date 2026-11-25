@@ -90,6 +90,7 @@ import InvitationAndVisitorTypeStep from './components/ui/InvitationAndVisitorTy
 import VisitorFormStep from './components/ui/VisitorFormStep';
 import PreviewInvitation from './components/Dialog/PreviewInvitation';
 import { InfoOutlined } from '@mui/icons-material';
+import { getInvitationSiteParkingAvailable } from 'src/customs/api/Admin/InvitationData';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -801,6 +802,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       'phone',
       'organization',
       'indentity_id',
+      'identity_type',
       'gender',
       'employee',
     ];
@@ -811,20 +813,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           sectionIndex !== currentStep
             ? section
             : updateSectionForm(section, (arr) =>
-                arr.map((item) => {
-                  if (resetKeys.includes(item.remarks)) {
-                    const fieldKey = item.custom_field_id || item.id;
-                    const errorKey = `${currentStep}:${fieldKey}`;
+              arr.map((item) => {
+                if (resetKeys.includes(item.remarks)) {
+                  const fieldKey = item.custom_field_id || item.id;
+                  const errorKey = `${currentStep}:${fieldKey}`;
 
-                    return {
-                      ...item,
-                      answer_text: '',
-                    };
-                  }
+                  return {
+                    ...item,
+                    answer_text: '',
+                  };
+                }
 
-                  return item;
-                }),
-              ),
+                return item;
+              }),
+            ),
         ),
       );
 
@@ -843,6 +845,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       phone: v.phone,
       organization: isEmployee ? v.Organization?.name || '' : v.organization || '',
       indentity_id: v.identity_id,
+      identity_type: v.identity_type,
       gender: genderValue,
       employee: v.id,
     };
@@ -852,22 +855,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         sectionIndex !== currentStep
           ? section
           : updateSectionForm(section, (arr) =>
-              arr.map((item) => {
-                if (mapping[item.remarks] !== undefined) {
-                  const fieldKey = item.custom_field_id || item.id;
-                  const errorKey = `${currentStep}:${fieldKey}`;
+            arr.map((item) => {
+              if (mapping[item.remarks] !== undefined) {
+                const fieldKey = item.custom_field_id || item.id;
+                const errorKey = `${currentStep}:${fieldKey}`;
 
-                  clearFieldError(errorKey);
+                clearFieldError(errorKey);
 
-                  return {
-                    ...item,
-                    answer_text: mapping[item.remarks]!,
-                  };
-                }
+                return {
+                  ...item,
+                  answer_text: mapping[item.remarks]!,
+                };
+              }
 
-                return item;
-              }),
-            ),
+              return item;
+            }),
+          ),
       ),
     );
   };
@@ -938,9 +941,68 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         hasAns={hasAns}
         pickAns={pickAns}
         t={t}
+        loadingParking={loadingParking}
+        availableVisitorSlot={availableVisitorSlot}
+
+      // selectedVisitorType={selectedVisitorType}
+      // siteId={selectedVisitorType?.pre_site_id}
+      // visitorPeriodStart={sectionsData
+      //   .flatMap((section: any) => formsOf(section))
+      //   .find((field: any) => field.remarks?.toLowerCase() === 'visitor_period_start')
+      //   ?.answer_datetime}
+      // visitorPeriodEnd={sectionsData
+      //   .flatMap((section: any) => formsOf(section))
+      //   .find((field: any) => field.remarks?.toLowerCase() === 'visitor_period_end')
+      //   ?.answer_datetime}
       />
     );
   };
+
+  const [loadingParking, setLoadingParking] = useState(false);
+  const [availableVisitorSlot, setAvailableVisitorSlot] = useState<number | null>(null);
+
+
+
+  useEffect(() => {
+    if (availableVisitorSlot !== 0) return;
+
+    setDataVisitor((prev: any[]) => {
+      let hasChanges = false;
+
+      const next = prev.map((visitor) => ({
+        ...visitor,
+        question_page: visitor.question_page?.map((page: any) => {
+          if (!page?.form) return page;
+
+          let pageChanged = false;
+
+          const form = page.form.map((field: any) => {
+            if (
+              String(field.remarks || '').toLowerCase() === 'is_driving' &&
+              String(field.answer_text).toLowerCase() !== 'false'
+            ) {
+              pageChanged = true;
+              return {
+                ...field,
+                answer_text: 'false',
+              };
+            }
+
+            return field;
+          });
+
+          if (pageChanged) {
+            hasChanges = true;
+            return { ...page, form };
+          }
+
+          return page;
+        }),
+      }));
+
+      return hasChanges ? next : prev;
+    });
+  }, [availableVisitorSlot, setDataVisitor]);
 
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
 
@@ -994,8 +1056,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => {})
-            .catch((err) => {}),
+            .then(() => { })
+            .catch((err) => { }),
         ),
       );
 
@@ -1081,9 +1143,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               inputProps={
                 (field.remarks || '').toLowerCase() === 'phone'
                   ? {
-                      inputMode: 'numeric',
-                      pattern: '[0-9]*',
-                    }
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  }
                   : undefined
               }
               placeholder={
@@ -1391,9 +1453,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           }
 
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
+            const isDrivingField = field.remarks?.toLowerCase() === 'is_driving';
+
+            const disableDriving =
+              isDrivingField &&
+              (loadingParking || availableVisitorSlot === 0);
             return (
               <>
-                <FormControl error={!!errorMessage} sx={{ width: '170px' }}>
+                <FormControl error={!!errorMessage} sx={{ width: '170px' }} disabled={disableDriving}>
                   <RadioGroup
                     row
                     value={field.answer_text || 'false'}
@@ -1986,15 +2053,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path);
+        const path = await uploadFileToCDN(file);
+        if (path) onChange(idx, 'answer_file', path);
 
-      e.target.value = '';
-    };
+        e.target.value = '';
+      };
 
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
@@ -2225,10 +2292,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const setter = isSelfOnly
       ? (callback: any) =>
-          setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-            ...prevMap,
-            [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-          }))
+        setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+          ...prevMap,
+          [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+        }))
       : setSelectedSiteIds;
 
     setter((prev: string[]) => {
@@ -2360,26 +2427,52 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // const getVisibilityMap = (details: any[]) => {
+  //   const getFlag = (key: string) => {
+  //     const field = details.find((f: any) => f.remarks?.toLowerCase() === key.toLowerCase());
+
+  //     if (!field) return false;
+
+  //     const value = String(field.answer_text ?? '')
+  //       .trim()
+  //       .toLowerCase();
+
+  //     return ['true', 'yes', '1'].includes(value);
+  //   };
+
+  //   const isDriving = getFlag('is_driving');
+  //   const isEmployee = getFlag('is_employee');
+
+  //   return {
+  //     vehicle_id: isDriving,
+  //     vehicle_plate: isDriving,
+  //     employee: isEmployee,
+  //   };
+  // };
+
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
-      const field = details.find((f: any) => f.remarks?.toLowerCase() === key.toLowerCase());
+      const field = details.find(
+        (f: any) => f.remarks?.toLowerCase() === key,
+      );
 
-      if (!field) return false;
-
-      const value = String(field.answer_text ?? '')
-        .trim()
-        .toLowerCase();
-
-      return ['true', 'yes', '1'].includes(value);
+      return ['true', '1', 'yes'].includes(
+        String(field?.answer_text ?? '').toLowerCase(),
+      );
     };
 
+    const parkingUnavailable =
+      availableVisitorSlot === 0 ||
+      (details.find(
+        (f: any) => f.remarks?.toLowerCase() === 'vehicle_id',
+      )?.multiple_option_fields?.length ?? 0) === 0;
+
     const isDriving = getFlag('is_driving');
-    const isEmployee = getFlag('is_employee');
 
     return {
-      vehicle_id: isDriving,
-      vehicle_plate: isDriving,
-      employee: isEmployee,
+      vehicle_id: parkingUnavailable || isDriving,
+      vehicle_plate: parkingUnavailable || isDriving,
+      employee: getFlag('is_employee'),
     };
   };
 
@@ -2492,6 +2585,24 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     //   return !!item.mandatory;
     // };
 
+    // const isFieldMandatory = (item: any, visibilityMap: any) => {
+    //   const remark = (item.remarks || '').toLowerCase();
+
+    //   if (item.is_enable !== true) {
+    //     return false;
+    //   }
+
+    //   if (remark === 'is_driving' || remark === 'is_employee') {
+    //     return false;
+    //   }
+
+    //   if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+    //     return true;
+    //   }
+
+    //   return !!item.mandatory;
+    // };
+
     const isFieldMandatory = (item: any, visibilityMap: any) => {
       const remark = (item.remarks || '').toLowerCase();
 
@@ -2499,43 +2610,79 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return false;
       }
 
+      if (
+        availableVisitorSlot === 0 &&
+        ['vehicle_id', 'vehicle_plate'].includes(remark)
+      ) {
+        return false;
+      }
+
       if (remark === 'is_driving' || remark === 'is_employee') {
         return false;
       }
 
-      if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
+      if (
+        ['vehicle_id', 'vehicle_plate'].includes(remark) &&
+        visibilityMap[remark] === true
+      ) {
         return true;
       }
 
       return !!item.mandatory;
     };
 
+    // const getVisibilityMapForValidation = (details: any[]) => {
+    //   const getFieldValue = (remarkName: string) => {
+    //     const field = details.find(
+    //       (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
+    //     );
+
+    //     return String(field?.answer_text ?? '')
+    //       .trim()
+    //       .toLowerCase();
+    //   };
+
+    //   const isDriving = ['true', 'yes', '1'].includes(getFieldValue('is_driving'));
+
+    //   const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
+
+    //   const vehicleType = getFieldValue('vehicle_id');
+
+    //   const isBicycle = vehicleType === 'bicycle';
+
+    //   return {
+    //     vehicle_id: isDriving,
+
+    //     // Vehicle plate tidak berlaku untuk Bicycle
+    //     vehicle_plate: isDriving && !isBicycle,
+
+    //     employee: isEmployee,
+    //   };
+    // };
+
     const getVisibilityMapForValidation = (details: any[]) => {
-      const getFieldValue = (remarkName: string) => {
+      const getFlag = (key: string) => {
         const field = details.find(
-          (f: any) => (f.remarks || '').toLowerCase() === remarkName.toLowerCase(),
+          (f: any) => (f.remarks || '').toLowerCase() === key,
         );
 
-        return String(field?.answer_text ?? '')
-          .trim()
-          .toLowerCase();
+        return ['true', 'yes', '1'].includes(
+          String(field?.answer_text ?? '').trim().toLowerCase(),
+        );
       };
 
-      const isDriving = ['true', 'yes', '1'].includes(getFieldValue('is_driving'));
+      const parkingUnavailable =
+        availableVisitorSlot === 0 ||
+        (details.find(
+          (f: any) => f.remarks?.toLowerCase() === 'vehicle_id',
+        )?.multiple_option_fields?.length ?? 0) === 0;
 
-      const isEmployee = ['true', 'yes', '1'].includes(getFieldValue('is_employee'));
-
-      const vehicleType = getFieldValue('vehicle_id');
-
-      const isBicycle = vehicleType === 'bicycle';
+      const isDriving = getFlag('is_driving');
 
       return {
-        vehicle_id: isDriving,
-
-        // Vehicle plate tidak berlaku untuk Bicycle
-        vehicle_plate: isDriving && !isBicycle,
-
-        employee: isEmployee,
+        vehicle_id: parkingUnavailable || isDriving,
+        vehicle_plate: parkingUnavailable || isDriving,
+        employee: getFlag('is_employee'),
       };
     };
 
@@ -2552,11 +2699,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           return shared
             ? {
-                ...f,
-                answer_text: shared.answer_text,
-                answer_datetime: shared.answer_datetime,
-                answer_file: shared.answer_file,
-              }
+              ...f,
+              answer_text: shared.answer_text,
+              answer_datetime: shared.answer_datetime,
+              answer_file: shared.answer_file,
+            }
             : f;
         });
 
@@ -2771,6 +2918,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const isOtherAgenda =
         showOtherAgenda[originalIndex] ||
         (!!item.answer_text && !agendaOptions.includes(item.answer_text));
+
+
+      const isDrivingDisabled =
+        remark === 'is_driving' &&
+        (loadingParking || availableVisitorSlot === 0);
+
+        
       return (
         <TableRow key={key}>
           <TableCell
@@ -2913,9 +3067,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       inputProps={
                         (item.remarks || '').toLowerCase() === 'phone'
                           ? {
-                              inputMode: 'numeric',
-                              pattern: '[0-9]*',
-                            }
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*',
+                          }
                           : undefined
                       }
                       disabled={item.remarks === 'name' && isEmployee}
@@ -3136,21 +3290,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
                           .length > 0 && (
-                          <SimpleTreeView>
-                            {(isSelfOnly
-                              ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
-                              : siteTree
-                            ).map((node) =>
-                              renderTree(
-                                node,
-                                originalIndex,
-                                handleSitePlaceChange,
-                                isSelfOnly,
-                                isAddTransaction,
-                              ),
-                            )}
-                          </SimpleTreeView>
-                        )}
+                            <SimpleTreeView>
+                              {(isSelfOnly
+                                ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                                : siteTree
+                              ).map((node) =>
+                                renderTree(
+                                  node,
+                                  originalIndex,
+                                  handleSitePlaceChange,
+                                  isSelfOnly,
+                                  isAddTransaction,
+                                ),
+                              )}
+                            </SimpleTreeView>
+                          )}
                       </>
                     );
                   }
@@ -3338,41 +3492,41 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               sIdx !== activeStep - 1
                                 ? s
                                 : updateSectionForm(s, (arr) =>
-                                    arr.map((item) => {
-                                      switch (item.remarks) {
-                                        case 'name':
-                                          return { ...item, answer_text: selected.name || '' };
+                                  arr.map((item) => {
+                                    switch (item.remarks) {
+                                      case 'name':
+                                        return { ...item, answer_text: selected.name || '' };
 
-                                        case 'email':
-                                          return { ...item, answer_text: selected?.email ?? '' };
+                                      case 'email':
+                                        return { ...item, answer_text: selected?.email ?? '' };
 
-                                        case 'phone':
-                                          return { ...item, answer_text: selected?.phone || '' };
+                                      case 'phone':
+                                        return { ...item, answer_text: selected?.phone || '' };
 
-                                        case 'employee':
-                                          return { ...item, answer_text: selected?.id || '' };
+                                      case 'employee':
+                                        return { ...item, answer_text: selected?.id || '' };
 
-                                        case 'organization':
-                                          return {
-                                            ...item,
-                                            answer_text:
-                                              selected.Organization?.name ||
-                                              selected.organization ||
-                                              '',
-                                          };
+                                      case 'organization':
+                                        return {
+                                          ...item,
+                                          answer_text:
+                                            selected.Organization?.name ||
+                                            selected.organization ||
+                                            '',
+                                        };
 
-                                        case 'identity_id':
-                                        case 'indentity_id':
-                                          return {
-                                            ...item,
-                                            answer_text: selected?.identity_id || '',
-                                          };
+                                      case 'identity_id':
+                                      case 'indentity_id':
+                                        return {
+                                          ...item,
+                                          answer_text: selected?.identity_id || '',
+                                        };
 
-                                        default:
-                                          return item;
-                                      }
-                                    }),
-                                  ),
+                                      default:
+                                        return item;
+                                    }
+                                  }),
+                                ),
                             ),
                           );
                         }}
@@ -3477,7 +3631,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 case 5: // Radio
                   return (
                     <>
-                      <FormControl component="fieldset" error={!!errorMessage}>
+                      <FormControl component="fieldset" error={!!errorMessage} disabled={isDrivingDisabled}>
                         <RadioGroup
                           value={String(
                             item.answer_text === null ||
@@ -3620,7 +3774,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     remark === 'visitor_period_start' &&
                     filteredDetails[originalIndex + 1] &&
                     (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
-                      'visitor_period_end'
+                    'visitor_period_end'
                   ) {
                     const startItem = item;
                     const endItem = filteredDetails[originalIndex + 1];
@@ -4191,7 +4345,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           pointerEvents: 'auto',
                           opacity: 1,
                         }}
-                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                      // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                       >
                         <Box
                           sx={{
@@ -4811,16 +4965,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const finalFormsTpl = isPurposeVisit(section)
           ? [
-              ...formsTpl,
-              ...purposeRemarks
-                .filter(
-                  (remark) => !formsTpl.some((field: any) => sanitize(field.remarks) === remark),
-                )
-                .map((remark) =>
-                  allFormTemplates.find((field: any) => sanitize(field.remarks) === remark),
-                )
-                .filter(Boolean),
-            ]
+            ...formsTpl,
+            ...purposeRemarks
+              .filter(
+                (remark) => !formsTpl.some((field: any) => sanitize(field.remarks) === remark),
+              )
+              .map((remark) =>
+                allFormTemplates.find((field: any) => sanitize(field.remarks) === remark),
+              )
+              .filter(Boolean),
+          ]
           : formsTpl;
 
         const form = finalFormsTpl.map((tpl: any, fIdx: number) => {
@@ -4923,6 +5077,75 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     (type: any) => String(type.id) === String(formData.visitor_type),
   );
 
+
+  const siteId = selectedVisitorType?.pre_site_id;
+  const visitorPeriodStart = sectionsData
+    .flatMap((section: any) => formsOf(section))
+    .find(
+      (field: any) =>
+        field.remarks?.toLowerCase() === 'visitor_period_start',
+    )?.answer_datetime;
+
+  const visitorPeriodEnd = sectionsData
+    .flatMap((section: any) => formsOf(section))
+    .find(
+      (field: any) =>
+        field.remarks?.toLowerCase() === 'visitor_period_end',
+    )?.answer_datetime;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchParkingAvailable = async () => {
+      if (
+        !siteId ||
+        !selectedVisitorType?.id ||
+        !visitorPeriodStart ||
+        !visitorPeriodEnd
+      ) {
+        setAvailableVisitorSlot(null);
+        setLoadingParking(false);
+        return;
+      }
+
+      try {
+        setLoadingParking(true);
+
+        const res = await getInvitationSiteParkingAvailable({
+          site_id: siteId,
+          visitor_type_id: selectedVisitorType.id,
+          start_date: visitorPeriodStart,
+          end_date: visitorPeriodEnd,
+        });
+
+        if (!isMounted) return;
+
+        setAvailableVisitorSlot(
+          res.collection?.total_available_visitor_slot ?? 0,
+        );
+      } catch (error) {
+        if (!isMounted) return;
+
+        console.error('Failed to fetch parking availability:', error);
+        setAvailableVisitorSlot(null);
+      } finally {
+        if (isMounted) {
+          setLoadingParking(false);
+        }
+      }
+    };
+
+    fetchParkingAvailable();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    siteId,
+    selectedVisitorType?.id,
+    visitorPeriodStart,
+    visitorPeriodEnd,
+  ]);
   const visitorTypeMeta = {
     pre_agenda: selectedVisitorType?.pre_agenda ?? null,
     pre_site_id: selectedVisitorType?.pre_site_id ?? null,
@@ -5321,11 +5544,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const errorData = err.response?.data;
       const errorMessage = Array.isArray(errorData?.collection)
         ? errorData.collection
-            .flatMap((item: any) =>
-              Array.isArray(item.error) ? item.error.map((err: any) => err.message) : [],
-            )
-            .filter(Boolean)
-            .join('\n')
+          .flatMap((item: any) =>
+            Array.isArray(item.error) ? item.error.map((err: any) => err.message) : [],
+          )
+          .filter(Boolean)
+          .join('\n')
         : errorData?.message || errorData?.msg || 'Failed to create visitor.';
 
       showSwal('error', errorMessage);
@@ -5383,13 +5606,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const errorMessage = Array.isArray(errorData?.collection)
         ? errorData.collection
-            .flatMap((item: any) =>
-              Array.isArray(item.error)
-                ? item.error.map((error: any) => error.message)
-                : [item.message ?? item.msg],
-            )
-            .filter(Boolean)
-            .join('\n')
+          .flatMap((item: any) =>
+            Array.isArray(item.error)
+              ? item.error.map((error: any) => error.message)
+              : [item.message ?? item.msg],
+          )
+          .filter(Boolean)
+          .join('\n')
         : errorData?.message || errorData?.msg || 'Failed to submit visitor.';
 
       showSwal('error', errorMessage);
@@ -5430,18 +5653,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const cloneForms = (forms?: any[]) =>
     Array.isArray(forms)
       ? forms.map((f, idx) => ({
-          ...f,
-          sort: f.sort ?? idx,
-          foreign_id: asStr(f.foreign_id),
-          answer_text: '',
-          answer_datetime: '',
-          answer_file: '',
-          multiple_option_fields: Array.isArray(f.multiple_option_fields)
-            ? f.multiple_option_fields.map((opt: any) =>
-                typeof opt === 'object' ? { ...opt } : opt,
-              )
-            : [],
-        }))
+        ...f,
+        sort: f.sort ?? idx,
+        foreign_id: asStr(f.foreign_id),
+        answer_text: '',
+        answer_datetime: '',
+        answer_file: '',
+        multiple_option_fields: Array.isArray(f.multiple_option_fields)
+          ? f.multiple_option_fields.map((opt: any) =>
+            typeof opt === 'object' ? { ...opt } : opt,
+          )
+          : [],
+      }))
       : [];
 
   const DOC_REMARKS = new Set(['selfie_image', 'identity_image', 'nda']);
@@ -5572,112 +5795,112 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const vi = viSrc
       ? {
-          ...viSrc,
-          name: 'Visitor Information (Group)',
-          can_multiple_used: true,
-          is_document: false,
+        ...viSrc,
+        name: 'Visitor Information (Group)',
+        can_multiple_used: true,
+        is_document: false,
 
-          [FORM_KEY]: (() => {
-            const base = cloneForms(formsOf(viSrc));
-            const extra = cloneForms(otherSingles);
-            const startExtra = base.length;
-            const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
+        [FORM_KEY]: (() => {
+          const base = cloneForms(formsOf(viSrc));
+          const extra = cloneForms(otherSingles);
+          const startExtra = base.length;
+          const extraWithSort = extra.map((f, i) => ({ ...f, sort: f.sort ?? startExtra + i }));
 
-            const startDocs = startExtra + extraWithSort.length;
-            const docsWithSort = docForms.map((f, i) => ({ ...f, sort: f.sort ?? startDocs + i }));
+          const startDocs = startExtra + extraWithSort.length;
+          const docsWithSort = docForms.map((f, i) => ({ ...f, sort: f.sort ?? startDocs + i }));
 
-            return [...base, ...extraWithSort, ...docsWithSort];
-          })(),
-        }
+          return [...base, ...extraWithSort, ...docsWithSort];
+        })(),
+      }
       : {
-          Id: 'visitor_info_group',
-          sort: 0,
-          name: 'Visitor Information (Group)',
-          is_document: false,
-          can_multiple_used: true,
-          [FORM_KEY]: cloneForms([
-            {
-              short_name: 'Full Name',
-              long_display_text: 'Full Name',
-              field_type: 0,
-              remarks: 'name',
-            },
-            { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
-            {
-              short_name: 'Organization',
-              long_display_text: 'Organization',
-              field_type: 0,
-              remarks: 'organization',
-            },
-            {
-              short_name: 'Selfie Image',
-              long_display_text: 'Selfie Image',
-              field_type: 10,
-              remarks: 'selfie_image',
-            },
-            {
-              short_name: 'Upload Identity',
-              long_display_text: 'Upload Identity',
-              field_type: 12,
-              remarks: 'identity_image',
-            },
-            {
-              short_name: 'Sign NDA',
-              long_display_text: 'Sign NDA',
-              field_type: 11,
-              remarks: 'nda',
-            },
-          ]),
-        };
+        Id: 'visitor_info_group',
+        sort: 0,
+        name: 'Visitor Information (Group)',
+        is_document: false,
+        can_multiple_used: true,
+        [FORM_KEY]: cloneForms([
+          {
+            short_name: 'Full Name',
+            long_display_text: 'Full Name',
+            field_type: 0,
+            remarks: 'name',
+          },
+          { short_name: 'Email', long_display_text: 'Email', field_type: 2, remarks: 'email' },
+          {
+            short_name: 'Organization',
+            long_display_text: 'Organization',
+            field_type: 0,
+            remarks: 'organization',
+          },
+          {
+            short_name: 'Selfie Image',
+            long_display_text: 'Selfie Image',
+            field_type: 10,
+            remarks: 'selfie_image',
+          },
+          {
+            short_name: 'Upload Identity',
+            long_display_text: 'Upload Identity',
+            field_type: 12,
+            remarks: 'identity_image',
+          },
+          {
+            short_name: 'Sign NDA',
+            long_display_text: 'Sign NDA',
+            field_type: 11,
+            remarks: 'nda',
+          },
+        ]),
+      };
 
     // Purpose Visit
     const pv = pvSrc
       ? {
-          ...pvSrc,
-          name: 'Purpose Visit',
-          can_multiple_used: false,
-          is_document: false,
-          [FORM_KEY]: cloneForms(formsOf(pvSrc)),
-        }
+        ...pvSrc,
+        name: 'Purpose Visit',
+        can_multiple_used: false,
+        is_document: false,
+        [FORM_KEY]: cloneForms(formsOf(pvSrc)),
+      }
       : {
-          Id: 'purpose_visit',
-          sort: 1,
-          name: 'Purpose Visit',
-          is_document: false,
-          can_multiple_used: true,
-          [FORM_KEY]: cloneForms([
-            {
-              short_name: 'Host PIC Visit',
-              long_display_text: 'Host PIC Visit',
-              field_type: 3,
-              remarks: 'host',
-            },
-            {
-              short_name: 'Agenda',
-              long_display_text: 'Agenda',
-              field_type: 0,
-              remarks: 'agenda',
-            },
-            {
-              short_name: 'Site Place',
-              long_display_text: 'Site Place',
-              field_type: 0,
-              remarks: 'site_place',
-            },
-            {
-              short_name: 'Visit Start',
-              long_display_text: 'Visit Start',
-              field_type: 9,
-              remarks: 'visitor_period_start',
-            },
-            {
-              short_name: 'Visit End',
-              long_display_text: 'Visit End',
-              field_type: 9,
-              remarks: 'visitor_period_end',
-            },
-          ]),
-        };
+        Id: 'purpose_visit',
+        sort: 1,
+        name: 'Purpose Visit',
+        is_document: false,
+        can_multiple_used: true,
+        [FORM_KEY]: cloneForms([
+          {
+            short_name: 'Host PIC Visit',
+            long_display_text: 'Host PIC Visit',
+            field_type: 3,
+            remarks: 'host',
+          },
+          {
+            short_name: 'Agenda',
+            long_display_text: 'Agenda',
+            field_type: 0,
+            remarks: 'agenda',
+          },
+          {
+            short_name: 'Site Place',
+            long_display_text: 'Site Place',
+            field_type: 0,
+            remarks: 'site_place',
+          },
+          {
+            short_name: 'Visit Start',
+            long_display_text: 'Visit Start',
+            field_type: 9,
+            remarks: 'visitor_period_start',
+          },
+          {
+            short_name: 'Visit End',
+            long_display_text: 'Visit End',
+            field_type: 9,
+            remarks: 'visitor_period_end',
+          },
+        ]),
+      };
     return [pv, vi];
   };
 
@@ -5848,7 +6071,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
           {!isMobile ? (
-            <DragDropContext onDragEnd={() => {}}>
+            <DragDropContext onDragEnd={() => { }}>
               <Droppable
                 droppableId="stepper"
                 direction="horizontal"
@@ -5958,7 +6181,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       : '#9e9e9e',
                                   color:
                                     snapshot.isDragging ||
-                                    activeStep === (isAddTransaction ? index : index + 1)
+                                      activeStep === (isAddTransaction ? index : index + 1)
                                       ? '#fff'
                                       : '#fff',
                                   width: 30,

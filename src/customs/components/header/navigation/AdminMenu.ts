@@ -125,12 +125,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCards,
         href: '/admin/manage/card',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.timeaccess',
-        icon: IconCalendarCheck,
-        href: '/admin/manage/time-access',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.timeaccess',
+      //   icon: IconCalendarCheck,
+      //   href: '/admin/manage/time-access',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.visitor_type',
@@ -514,12 +514,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconCards,
         href: '/admin/manage/card',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.timeaccess',
-        icon: IconCalendarCheck,
-        href: '/admin/manage/time-access',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.timeaccess',
+      //   icon: IconCalendarCheck,
+      //   href: '/admin/manage/time-access',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.visitor_type',
@@ -848,12 +848,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCards,
         href: '/operator-admin/manage/card',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.timeaccess',
-        icon: IconCalendarCheck,
-        href: '/operator-admin/manage/time-access',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.timeaccess',
+      //   icon: IconCalendarCheck,
+      //   href: '/operator-admin/manage/time-access',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.visitor_type',
@@ -1097,12 +1097,12 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
         icon: IconCards,
         href: '/operator-admin/manage/card',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.timeaccess',
-        icon: IconCalendarCheck,
-        href: '/operator-admin/manage/time-access',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.timeaccess',
+      //   icon: IconCalendarCheck,
+      //   href: '/operator-admin/manage/time-access',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.visitor_type',

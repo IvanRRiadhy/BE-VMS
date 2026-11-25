@@ -293,10 +293,16 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
       } else if (type === 'area') {
         const res = await getAreaParking(id as string);
 
-        const data = (res.collection ?? []).map(({ integration_id, need_barier, need_block, ...item }) => item);
-
+        const data = (res.collection ?? []).map(
+          ({ integration_id, need_barier, need_block, ...item }) => ({
+            ...item,
+            active: item.active ?? false,
+          })
+        );
 
         setListData(data);
+
+
       } else if (type === 'vehicle') {
         const res = await getVehicleParking(id as string);
 
@@ -965,8 +971,8 @@ const BioPeopleParking = ({ id, integrationName }: { id: string; integrationName
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  // isHaveAddData={selectedType === 'visitor_type'}
-                  // onAddData={handleOpenCreateVisitorType}
+                // isHaveAddData={selectedType === 'visitor_type'}
+                // onAddData={handleOpenCreateVisitorType}
                 // isCopy={true}
                 // onCopy={(row) => {
                 //   handleCopy(row);

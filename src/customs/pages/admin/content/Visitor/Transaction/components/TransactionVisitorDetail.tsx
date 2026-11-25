@@ -37,6 +37,9 @@ import { useEffect, useMemo, useState } from 'react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useDebounce } from 'src/hooks/useDebounce';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { IconQrcode } from '@tabler/icons-react';
+import VisitorBulkQRCodeDialog from './VisitorBulkQRCodeDialog';
+import { getConfig } from 'src/config';
 
 interface TransactionVisitorDetailProps {
   selectedGroupId: string | null;
@@ -108,6 +111,42 @@ const TransactionVisitorDetail = ({
   useEffect(() => {
     setPage(1);
   }, [selectedGroupId, debouncedSearch, statusFilter]);
+
+  const [selectedQrIds, setSelectedQrIds] = useState<(string | number)[]>([]);
+  const [openQrDialog, setOpenQrDialog] = useState(false);
+
+  const selectedQrVisitors = useMemo(
+    () => filteredVisitors.filter((visitor) => selectedQrIds.includes(visitor.id)),
+    [filteredVisitors, selectedQrIds],
+  );
+
+  const allSelected =
+    filteredVisitors.length > 0 &&
+    filteredVisitors.every((visitor) => selectedQrIds.includes(visitor.id));
+
+  const someSelected =
+    filteredVisitors.some((visitor) => selectedQrIds.includes(visitor.id));
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedQrIds(
+      checked
+        ? filteredVisitors.map((visitor) => visitor.id)
+        : []
+    );
+  };
+
+
+  const handleSelectVisitor = (visitorId: string | number, checked: boolean) => {
+    setSelectedQrIds((prev) =>
+      checked
+        ? [...new Set([...prev, visitorId])]
+        : prev.filter((id) => id !== visitorId),
+    );
+  };
+
+  const config = getConfig();
+
+  const logoSrc = config.LOGO_URL || undefined;
   return (
     <Box
       flexGrow={1}
@@ -230,7 +269,43 @@ const TransactionVisitorDetail = ({
                 </TableRow>
 
                 <TableRow>
-                  <TableCell>{/* <Checkbox /> */}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, gap: 0.3 }}>
+                      <Tooltip title="Select All" arrow>
+                        <Checkbox
+                          checked={allSelected}
+                          indeterminate={someSelected && !allSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          disabled={filteredVisitors.length === 0}
+                        // size="small"
+                        />
+                      </Tooltip>
+
+                      {selectedQrIds.length > 0 && (
+                        <Tooltip title="View Selected QR Codes" arrow>
+                          <IconButton
+                            onClick={() => setOpenQrDialog(true)}
+                            disableRipple
+                            sx={{
+                              color: 'white',
+                              backgroundColor: '#055499!important',
+                              width: 28,
+                              height: 28,
+                              cursor: 'pointer',
+                              padding: 0.5,
+                              borderRadius: '50%',
+                              '&:hover': {
+                                backgroundColor: 'success.dark',
+                                color: 'white',
+                              },
+                            }}
+                          >
+                            <IconQrcode width={18} height={18} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Visitor Name
                   </TableCell>
@@ -240,6 +315,7 @@ const TransactionVisitorDetail = ({
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Phone
                   </TableCell>
+
                   <TableCell component="th" scope="row" sx={{ fontSize: '14px' }}>
                     Identity ID
                   </TableCell>
@@ -275,6 +351,19 @@ const TransactionVisitorDetail = ({
                     <VisitorSkeleton rows={5} />
                   ) : paginatedVisitors.length > 0 ? (
                     paginatedVisitors.map((visitor: any, index: number) => (
+                      // <VisitorRow
+                      //   key={visitor.id}
+                      //   visitor={visitor}
+                      //   index={startIndex + index}
+                      //   selectedVisitor={selectedVisitor}
+                      //   setSelectedVisitor={setSelectedVisitor}
+                      //   handleRemoveVisitor={handleRemoveVisitor}
+                      //   handleViewDetail={handleViewDetail}
+                      //   qrSelected={selectedQrIds.includes(visitor.id)}
+                      //   onQrSelect={(checked: boolean) =>
+                      //     handleSelectVisitor(visitor.id, checked)
+                      //   }
+                      // />
                       <VisitorRow
                         key={visitor.id}
                         visitor={visitor}
@@ -283,6 +372,11 @@ const TransactionVisitorDetail = ({
                         setSelectedVisitor={setSelectedVisitor}
                         handleRemoveVisitor={handleRemoveVisitor}
                         handleViewDetail={handleViewDetail}
+                        qrSelected={selectedQrIds.includes(visitor.id)}
+                        onQrSelect={(checked) =>
+                          handleSelectVisitor(visitor.id, checked)
+                        }
+                        logoSrc={logoSrc}
                       />
                     ))
                   ) : (
@@ -347,6 +441,12 @@ const TransactionVisitorDetail = ({
           </Button>
         </Box>
       )}
+      <VisitorBulkQRCodeDialog
+        open={openQrDialog}
+        onClose={() => setOpenQrDialog(false)}
+        visitors={selectedQrVisitors}
+        logoSrc={logoSrc}
+      />
     </Box>
   );
 };
@@ -398,6 +498,7 @@ const VisitorSkeleton = ({ rows = 5 }: { rows?: number }) => {
           </TableCell>
         </TableRow>
       ))}
+
     </>
   );
 };

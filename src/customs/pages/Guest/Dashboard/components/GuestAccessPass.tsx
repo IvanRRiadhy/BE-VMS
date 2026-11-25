@@ -183,7 +183,7 @@ const GuestAccessPass = ({
 
   const logoUrl = config.LOGO_URL;
   const hasParkingMap =
-    typeof accessPass.parking_map === 'string' &&
+    typeof accessPass?.parking_map === 'string' &&
     accessPass.parking_map.trim() !== '' &&
     accessPass.parking_map.trim().toLowerCase() !== 'not available';
   const Field = ({

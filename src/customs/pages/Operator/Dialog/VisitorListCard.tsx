@@ -671,7 +671,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                }}
+                                }}  
                               >
                                 S
                               </Box>

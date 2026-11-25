@@ -343,18 +343,17 @@ const VisitorInformation = ({
                   icon={<IconNumber size={18} />}
                   label="Invitation Code"
                   value={invitationCode[0]?.invitation_code}
-                /> */}
-
+                /> */}   <InfoRow
+                  icon={<IconCreditCard size={18} />}
+                  label="Identity Type"
+                  value={invitationCode[0]?.identity_type_name}
+                />
                 <InfoRow
                   icon={<IconCreditCard size={18} />}
                   label="Identity ID"
                   value={invitationCode[0]?.visitor_identity_id}
                 />
-                <InfoRow
-                  icon={<IconCreditCard size={18} />}
-                  label="Identity Type"
-                  value={invitationCode[0]?.visitor_identity_type}
-                />
+
                 {/* <InfoRow
                   icon={
                     <Box

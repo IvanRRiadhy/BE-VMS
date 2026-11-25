@@ -99,7 +99,7 @@ const HostInformation = ({
         }}
         id="tour-host-info"
       >
-        <CardHeader title="Host Information" sx={{ pb: '0 !important', pt: '15px !important' }} />
+        <CardHeader title="Host Information" sx={{ pb: '0 !important', pt: '15px !important', px: '15px ' }} />
         {/* <Divider /> */}
         <CardContent
           sx={{
@@ -109,10 +109,10 @@ const HostInformation = ({
             justifyContent: 'center',
             pb: '0 !important',
             pt: '25px !important',
-            px: '15px !important',
+            px: '10px !important',
           }}
         >
-          <Box sx={{ display: 'flex', gap: 4 }}>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: { xs: 'wrap', xl: 'nowrap' } }}>
             <Avatar
               src={
                 host?.faceimage

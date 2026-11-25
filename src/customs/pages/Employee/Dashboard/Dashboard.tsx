@@ -143,18 +143,18 @@ const DashboardEmployee = () => {
     setOpenAccess(false);
   };
 
-  const {
-    data,
-    isLoading: isLoadingShareLink,
-    isFetching,
-  } = useShareLinkPagination({
-    page,
-    rowsPerPage,
-    search: searchKeyword,
-    sortDir,
-  });
+  // const {
+  //   data,
+  //   isLoading: isLoadingShareLink,
+  //   isFetching,
+  // } = useShareLinkPagination({
+  //   page,
+  //   rowsPerPage,
+  //   search: searchKeyword,
+  //   sortDir,
+  // });
 
-  const shareLinkList = data?.collection ?? [];
+  // const shareLinkList = data?.collection ?? [];
   const debouncedKeyword = useDebounce(searchKeyword, 500);
 
   const [shareLinkDialogPage, setShareLinkDialogPage] = useState(0);

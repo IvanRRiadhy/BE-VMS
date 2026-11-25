@@ -268,10 +268,14 @@ const PreviewDialog = ({
                                     src={`${axiosInstance2.defaults.baseURL}/cdn${value}`}
                                     alt={f.remarks}
                                     style={{
+                                      display: 'block',
                                       width: '100%',
-                                      maxHeight: 200,
-                                      objectFit: 'cover',
-                                      borderRadius: 8,
+                                      maxWidth: 400,
+                                      maxHeight: 250,
+                                      objectFit: 'contain',
+                                      borderRadius: 2,
+                                      border: '1px solid',
+                                      borderColor: 'divider',
                                     }}
                                   />
                                 </Box>

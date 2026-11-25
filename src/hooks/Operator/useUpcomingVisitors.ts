@@ -58,10 +58,12 @@ export const useUpcomingVisitors = ({
         endDate,
       });
 
+        const filteredCollection = res.collection.filter((items: any) => items.is_host !== true);
+
       return {
         recordsTotal: res.RecordsTotal,
         recordsFiltered: res.RecordsFiltered,
-        collection: res.collection.map((items: any) => ({
+        collection: filteredCollection.map((items: any) => ({
           id: items.id,
           name: items.visitor_name,
           invitation_code: items.invitation_code,

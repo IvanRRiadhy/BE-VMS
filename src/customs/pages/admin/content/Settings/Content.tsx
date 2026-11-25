@@ -200,7 +200,7 @@ const Content = () => {
               <Tab label="Visitor Setting" />
               <Tab label="Approval Workflow" />
               <Tab label="Apikey Setting" />
-              <Tab label="License" />
+              {/* <Tab label="License" /> */}
               <Tab label="Vehicle" />
               <Tab label="Identity Type" />
               {/* <Tab label="Visitor Card Setting" /> */}
@@ -280,18 +280,18 @@ const Content = () => {
                 </Box>
               ) : null} */}
 
-              {tabIndex === 4 ? (
+              {/* {tabIndex === 4 ? (
                 <LicenseSettings
                   uploadingLicense={uploadingLicense}
                   licenseFileName={licenseFileName}
                   handleLicenseUpload={handleLicenseUpload}
                   handleRemoveLicense={handleRemoveLicense}
                 />
-              ) : null}
+              ) : null} */}
 
-              {tabIndex === 5 ? <Vehicle /> : null}
+              {tabIndex === 4 ? <Vehicle /> : null}
 
-              {tabIndex === 6 ? <IdentityType /> : null}
+              {tabIndex === 5 ? <IdentityType /> : null}
             </Box>
           </Paper>
         </Box>

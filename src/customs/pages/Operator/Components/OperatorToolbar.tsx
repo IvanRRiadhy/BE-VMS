@@ -163,11 +163,11 @@ const OperatorToolbar = ({
           Blacklist Visitor
         </MenuItem>
       </Menu> */}
-      <Tooltip title="Information Guide Operator" {...tooltipProps}>
+      {/* <Tooltip title="Information Guide Operator" {...tooltipProps}>
         <Button variant="contained" onClick={onOpenInfo} sx={{ width: 18, height: 36, p: 0.7 }}>
           <IconHelpCircle size={25} />
         </Button>
-      </Tooltip>
+      </Tooltip> */}
       {/* 
       <Tooltip title="Tap to toggle Fullscreen" {...tooltipProps}>
         <IconButton

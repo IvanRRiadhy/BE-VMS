@@ -15,7 +15,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
-import { IconDownload } from '@tabler/icons-react';
+import { IconCards, IconCreditCard, IconDownload } from '@tabler/icons-react';
 
 import {
   IconCalendarEvent,
@@ -155,7 +155,7 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
         <Tab label="Detail" />
         <Tab label="Card" />
         <Tab label="Parking" />
-        <Tab label="QR Code" />
+        {/* <Tab label="QR Code" /> */}
       </Tabs>
 
       <DialogContent dividers sx={{ minHeight: 300, maxHeight: '65vh' }}>
@@ -200,6 +200,17 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
               label="Phone"
               value={visitor.visitor_phone}
               icon={<IconPhone size={18} />}
+            />
+            <DetailItem
+              label="Identity Type"
+              value={visitor.identity_type_name}
+              icon={<IconCreditCard size={18} />}
+            />
+
+            <DetailItem
+              label="Identity ID"
+              value={visitor.visitor_identity_id}
+              icon={<IconCreditCard size={18} />}
             />
 
             <DetailItem label="Email" value={visitor.visitor_email} icon={<IconMail size={18} />} />
@@ -324,7 +335,7 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
             />
           </>
         )}
-        {tab === 3 && (
+        {/* {tab === 3 && (
           <Box
             display="flex"
             flexDirection="column"
@@ -420,7 +431,7 @@ export default function VisitorDetailDialog({ open, onClose, visitor }: Props) {
               Download QR Code
             </Button>
           </Box>
-        )}
+        )} */}
       </DialogContent>
     </Dialog>
   );

@@ -15,6 +15,7 @@ import {
   IconClock,
   IconDotsVertical,
   IconEye,
+  IconQrcode,
   IconTimeDuration0,
   IconTrash,
 } from '@tabler/icons-react';
@@ -23,6 +24,8 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useProfile } from 'src/hooks/Profile/useProfile';
 
 import moment from 'moment-timezone';
+import VisitorQRCodeDialog from './components/VisitorQrDialog';
+import { getConfig } from 'src/config';
 
 export const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
   if (!dateStr) return '-';
@@ -66,6 +69,9 @@ function VisitorRow({
   handleRemoveVisitor,
   handleExtend,
   handleViewDetail,
+  qrSelected,
+  onQrSelect,
+  logoSrc
 }: {
   visitor: any;
   index: number;
@@ -74,6 +80,9 @@ function VisitorRow({
   handleRemoveVisitor?: () => void;
   handleExtend?: () => void;
   handleViewDetail?: (visitor: any) => void;
+  qrSelected?: boolean;
+  onQrSelect?: (checked: boolean) => void;
+  logoSrc?: any;
 }) {
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
@@ -109,15 +118,52 @@ function VisitorRow({
 
   const isHost = profile?.id === visitor?.host_id;
   const canExtend = ['Preregis', 'Checkin', 'Available'].includes(visitor.visitor_status) && isHost;
+  const [openQR, setOpenQR] = useState(false);
+
+
+
+
   return (
     <>
       <TableRow>
-        <TableCell>
-          <Checkbox
-            checked={selectedVisitor?.id === visitor.id}
-            onChange={() => setSelectedVisitor(selectedVisitor?.id === visitor.id ? null : visitor)}
-          />
+        <TableCell >
+          <Box sx={{ display: 'flex', alignItems: "center", mt: 0.5 }}>
+            {/* <Checkbox
+              checked={selectedVisitor?.id === visitor.id}
+              onChange={() => setSelectedVisitor(selectedVisitor?.id === visitor.id ? null : visitor)}
+            /> */}
+
+            <Checkbox
+              checked={qrSelected ?? false}
+              onChange={(e) => onQrSelect?.(e.target.checked)}
+            />
+            <Tooltip title="QR Code" arrow>
+              <IconButton
+                onClick={() => setOpenQR(true)}
+
+                disableRipple
+                sx={{
+                  color: 'white',
+                  bgcolor: 'background.paper',
+                  backgroundColor: '#055499!important',
+                  width: 28,
+                  height: 28,
+                  padding: 0.5,
+                  borderRadius: '50%',
+                  '&:hover': {
+                    backgroundColor: 'success.dark',
+                    color: 'white',
+                  },
+                }}
+              >
+                <IconQrcode width={18} height={18} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+
         </TableCell>
+
         {/* 
         <TableCell
           sx={{
@@ -326,6 +372,12 @@ function VisitorRow({
           </Box>
         </TableCell>
       </TableRow>
+      <VisitorQRCodeDialog
+        open={openQR}
+        onClose={() => setOpenQR(false)}
+        visitor={visitor}
+        logoSrc={logoSrc}
+      />
     </>
   );
 }

@@ -95,7 +95,7 @@ const Content = () => {
   };
 
   const { data: allData = [] } = useSites();
-  const { employee } = useEmployees();
+  // const { employee } = useEmployees();
   useEffect(() => {
     // if (!allData) return;
     if (!allData || allData.length === 0) return;
@@ -474,10 +474,10 @@ const Content = () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] }),
       queryClient.invalidateQueries({ queryKey: ['registeredSites'] }),
       queryClient.invalidateQueries({ queryKey: ['site-access'] }),
-      queryClient.invalidateQueries({ queryKey: ['site-parkings'] }),
-      queryClient.invalidateQueries({ queryKey: ['site-trackings'] }),
-      queryClient.invalidateQueries({ queryKey: ['sites-parking'] }),
-      queryClient.invalidateQueries({ queryKey: ['sites-tracking'] }),
+      // queryClient.invalidateQueries({ queryKey: ['site-parkings'] }),
+      // queryClient.invalidateQueries({ queryKey: ['site-trackings'] }),
+      // queryClient.invalidateQueries({ queryKey: ['sites-parking'] }),
+      // queryClient.invalidateQueries({ queryKey: ['sites-tracking'] }),
       queryClient.invalidateQueries({ queryKey: ['site-documents'] }),
     ]);
 
@@ -593,7 +593,7 @@ const Content = () => {
         isBatchEdit={isBatchEdit}
         selectedRows={selectedRows}
         enabledFields={enabledFields}
-        employee={employee}
+        // employee={employee}
         formData={formDataAddSite}
         setFormData={setFormDataAddSite}
         setEnabledFields={setEnabledFields}

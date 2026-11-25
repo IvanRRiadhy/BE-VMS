@@ -85,6 +85,7 @@ import { useSitesTracking } from 'src/hooks/Sites/useSitesTracking';
 import { useSiteDocuments } from 'src/hooks/Sites/useSiteDocuments';
 import { useTranslation } from 'react-i18next';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useSites } from 'src/hooks/Sites/useSites';
 
 type EnabledFields = {
   type: boolean;
@@ -109,7 +110,7 @@ interface FormSiteProps {
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
-  employee?: any;
+  // employee?: any;
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -122,7 +123,7 @@ const FormSite = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
-  employee,
+  // employee,
   setIsDirty,
 }: FormSiteProps) => {
   const location = useLocation();
@@ -166,6 +167,7 @@ const FormSite = ({
   const [initialTracking, setInitialTracking] = useState([]);
   const [initialParking, setInitialParking] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     setRetentionInput(newDocument.retentionTime.toString());
   }, [newDocument.retentionTime]);
@@ -177,7 +179,7 @@ const FormSite = ({
   const { data: siteAccess } = useSiteAccess(editingId);
   const { data: parkingRelations } = useSitesParking();
   const { data: trackingRelations } = useSitesTracking();
-  const { data: siteDocuments } = useSiteDocuments(editingId);
+  // const { data: siteDocuments } = useSiteDocuments(editingId);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -197,7 +199,7 @@ const FormSite = ({
     const trackingMaster = siteTracking?.collection ?? [];
     const parkingRelation = parkingRelations?.collection ?? [];
     const trackingRelation = trackingRelations?.collection ?? [];
-    const siteDocumentRelations = siteDocuments?.collection ?? [];
+    // const siteDocumentRelations = siteDocuments?.collection ?? [];
 
     const normalizedId = editingId.toLowerCase();
 
@@ -258,7 +260,7 @@ const FormSite = ({
     setInitialTracking(mappedTracking);
     setInitialParking(mappedParking);
 
-    setFilteredSiteDocumentList(siteDocumentRelations);
+    // setFilteredSiteDocumentList(siteDocumentRelations);/
 
     setLocalForm((prev) => ({
       ...prev,
@@ -277,7 +279,7 @@ const FormSite = ({
     siteTracking,
     parkingRelations,
     trackingRelations,
-    siteDocuments,
+    // siteDocuments,
   ]);
 
   const handleChange = (e: any) => {
@@ -356,7 +358,13 @@ const FormSite = ({
     return date.toISOString().slice(11, 16);
   };
 
-  const { create, update, isPending } = useSiteMutation();
+  const { create, update, isPending,
+    deleteTracking,
+    updateTracking,
+    createTracking,
+    deleteParking,
+    updateParking,
+    createParking, } = useSiteMutation();
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,7 +373,7 @@ const FormSite = ({
     if (!validateRequiredFields()) {
       return;
     }
-
+    setIsSubmitting(true);
     try {
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
@@ -384,7 +392,7 @@ const FormSite = ({
           await updateSite(row.id, { ...row, ...updatedFields });
         }
 
-        showSwal('success', 'Batch update successful!');
+        showSwal('success', 'Successfully edit batch');
         resetEnabledFields();
         onSuccess?.();
         return;
@@ -399,7 +407,11 @@ const FormSite = ({
           can_signout: true,
           open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
+          approval_workflow_id: localForm.need_approval
+            ? localForm.approval_workflow_id
+            : null,
         };
+
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
 
@@ -426,8 +438,17 @@ const FormSite = ({
         const deletedParking = initialParking.filter(
           (old) => !(localForm.parking ?? []).some((cur: any) => cur.id === old.id),
         );
-        await Promise.all(deletedTracking.map((item) => deleteSiteTracking(item.id)));
-        await Promise.all(deletedParking.map((item) => deleteSiteParking(item.id)));
+        await Promise.all(
+          deletedTracking.map((item) =>
+            deleteTracking.mutateAsync(item.id),
+          ),
+        );
+
+        await Promise.all(
+          deletedParking.map((item) =>
+            deleteParking.mutateAsync(item.id),
+          ),
+        );
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {
@@ -437,8 +458,13 @@ const FormSite = ({
               trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
               early_access: t.early_access ?? false,
             };
+            return t.id
+              ? updateTracking.mutateAsync({
+                id: t.id,
+                data: payload,
+              })
+              : createTracking.mutateAsync(payload);
 
-            return t.id ? updateSiteTracking(t.id, payload) : createSiteTracking(payload);
           }),
         );
 
@@ -451,39 +477,44 @@ const FormSite = ({
               early_access: p.early_access ?? false,
             };
 
-            return p.id ? updateSiteParking(p.id, payload) : createSiteParking(payload);
+            return p.id
+              ? updateParking.mutateAsync({
+                id: p.id,
+                data: payload,
+              })
+              : createParking.mutateAsync(payload);
           }),
         );
 
         // await handleFileUpload(editingId);
 
-        if (!localForm.need_document) {
-          try {
-            const { collection = [] } = await getSiteDocumentBySiteId(editingId);
+        // if (!localForm.need_document) {
+        //   try {
+        //     const { collection = [] } = await getSiteDocumentBySiteId(editingId);
 
-            await Promise.all(collection.map((doc: any) => deleteSiteDocument(doc.id)));
-          } catch (err: any) {
-            const status = err?.response?.status;
+        //     await Promise.all(collection.map((doc: any) => deleteSiteDocument(doc.id)));
+        //   } catch (err: any) {
+        //     const status = err?.response?.status;
 
-            // Kalau memang tidak ada document, lanjut saja
-            if (status !== 404) {
-              throw err;
-            }
-          }
-        } else {
-          // Hapus document yang memang dihapus user
-          await Promise.all(deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)));
+        //     // Kalau memang tidak ada document, lanjut saja
+        //     if (status !== 404) {
+        //       throw err;
+        //     }
+        //   }
+        // } else {
+        //   // Hapus document yang memang dihapus user
+        //   await Promise.all(deletedSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id)));
 
-          await Promise.all(
-            newSiteDocuments.map((doc) =>
-              createSiteDocument({
-                site_id: editingId,
-                document_id: doc.document_id,
-                retention_time: doc.retention_time,
-              }),
-            ),
-          );
-        }
+        //   await Promise.all(
+        //     newSiteDocuments.map((doc) =>
+        //       createSiteDocument({
+        //         site_id: editingId,
+        //         document_id: doc.document_id,
+        //         retention_time: doc.retention_time,
+        //       }),
+        //     ),
+        //   );
+        // }
 
         showSwal('success', t('updatedSuccess', { name: 'Site Space' }));
         setDeletedSiteDocuments([]);
@@ -504,6 +535,9 @@ const FormSite = ({
           can_signout: true,
           open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
           close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
+          approval_workflow_id: localForm.need_approval
+            ? localForm.approval_workflow_id
+            : null,
         };
         // console.log('finalFormData', JSON.stringify(finalFormData, null, 2));
         const createData = CreateSiteRequestSchema.parse(finalFormData);
@@ -513,16 +547,25 @@ const FormSite = ({
         const newSiteId = res.collection?.id as string;
         const trackingPayload = normalizeTrackingPayloads(localForm.tracking ?? [], newSiteId);
         if (trackingPayload.data.length > 0) {
-          await createSiteTrackingBulk(trackingPayload);
+          // await createSiteTrackingBulk(trackingPayload);
+          await Promise.all(
+            trackingPayload.data.map((item) =>
+              createTracking.mutateAsync(item)
+            )
+          );
         }
 
         const parkingPayload = normalizeParkingPayloads(localForm.parking ?? [], newSiteId);
 
         if (parkingPayload.data.length > 0) {
-          await createSiteParkingBulk(parkingPayload);
+          await Promise.all(
+            parkingPayload.data.map((item) =>
+              createParking.mutateAsync(item)
+            )
+          );
         }
 
-        await createSiteDocumentsForNewSite();
+        // await createSiteDocumentsForNewSite(newSiteId);
         await handleFileUpload(newSiteId);
 
         showSwal('success', t('createSuccess', { name: 'Site Space' }));
@@ -532,6 +575,8 @@ const FormSite = ({
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err.message ?? err.msg ?? 'Failed to create site');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -655,24 +700,24 @@ const FormSite = ({
     } finally {
       setIsUploadingImage(false);
     }
-  };
+  }
 
-  const createSiteDocumentsForNewSite = async () => {
-    const allSitesRes = await getAllSite();
-    const newSite = allSitesRes.collection.find(
-      (site: any) => site.name === localForm.name && site.description === localForm.description,
+  const { data: allSites = [], refetch: refetchSites } = useSites();
+
+  const createSiteDocumentsForNewSite = async (siteId: string) => {
+    const { data: latestSites = [] } = await refetchSites();
+
+    const newSite = latestSites.find(
+      (site: any) => site.id === siteId
     );
 
-    if (!newSite) {
-      return;
-    }
+    if (!newSite) return;
+
     for (const doc of newSiteDocuments) {
       const docWithSiteId: CreateSiteDocumentRequest = {
         ...doc,
         site_id: newSite.id,
       };
-
-      console.log('docWithSiteId', docWithSiteId);
 
       try {
         await createSiteDocument(docWithSiteId);
@@ -986,7 +1031,7 @@ const FormSite = ({
                     sx={{ mb: 2 }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                {/* <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <CustomFormLabel sx={{ mt: 0 }}>Site Host</CustomFormLabel>
 
@@ -1021,7 +1066,7 @@ const FormSite = ({
                       />
                     )}
                   />
-                </Grid>
+                </Grid> */}
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <CustomFormLabel sx={{ mt: 0 }}>Code</CustomFormLabel>
@@ -1644,7 +1689,7 @@ const FormSite = ({
                       <CustomSelect
                         id="approval_workflow_id"
                         name="approval_workflow_id"
-                        value={localForm.approval_workflow_id ?? ''}
+                        value={localForm.approval_workflow_id ?? null}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           // const value = Number(e.target.value);
                           setLocalForm((prev) => ({
@@ -2266,7 +2311,7 @@ const FormSite = ({
           </Alert>
         </Snackbar>
       </Portal>
-      <GlobalBackdropLoading open={isPending} />
+      <GlobalBackdropLoading open={isSubmitting} />
     </form>
   );
 };

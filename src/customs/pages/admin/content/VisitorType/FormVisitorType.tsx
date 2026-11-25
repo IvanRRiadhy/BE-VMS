@@ -32,6 +32,7 @@ import NewSectionDialog from './components/NewSectionDialog';
 import { useCameraAnalytics } from 'src/hooks/VisitorType/useCameraAnalaytics';
 import { useVisitorTypeMutation } from 'src/hooks/VisitorType/useVisitorTypeMutation';
 import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -66,6 +67,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingName, setEditingName] = useState('');
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
@@ -271,7 +273,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         visitor_category: localForm.visitor_category ?? null,
       };
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
-      console.log('parseData', parseData);
+      // console.log('parseData', parseData);
       if (edittingId) {
         // await updateVisitorType(edittingId, parseData);
         await updateMutation.mutateAsync({
@@ -339,6 +341,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         }
         showSwal('success', t('createSuccess', { name: 'Visitor Type' }));
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: ['invitation-visitor-type'],
+      });
+
+
 
       onSuccess?.();
       setLoading(false);
@@ -555,9 +563,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       prev.map((section, idx) =>
         idx === activeStep - 1
           ? {
-              ...section,
-              [key]: newData,
-            }
+            ...section,
+            [key]: newData,
+          }
           : section,
       ),
     );
