@@ -2480,6 +2480,7 @@ const FormSelfPraregistration = ({
   };
 
   const isLockedVisitorType = !!invitation?.visitor_type?.id || !!invitation?.visitor_type_id;
+
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const vehicleOptions = useMemo(() => {
     const vehicleField = rawSections
@@ -2599,6 +2600,10 @@ const FormSelfPraregistration = ({
   const selectedVisitorType = visitorType?.find(
     (type: any) => String(type.id) === String(formData.visitor_type),
   );
+  const isRemise =
+    selectedVisitorType?.visitor_category
+      ?.trim()
+      .toLowerCase() === 'remise';
 
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
@@ -3112,10 +3117,12 @@ const FormSelfPraregistration = ({
               if (sectionType === 'parking') {
                 return (
                   <>
-                    <ParkingAvailability
-                      loadingParking={loadingParking}
-                      availableVisitorSlot={availableVisitorSlot}
-                    />
+                    {!isRemise && (
+                      <ParkingAvailability
+                        loadingParking={loadingParking}
+                        availableVisitorSlot={availableVisitorSlot}
+                      />
+                    )}
 
                     {renderTable()}
                   </>
@@ -3138,7 +3145,7 @@ const FormSelfPraregistration = ({
           <Grid>
             <RequiredFieldNotice />
 
-            {getSectionType(currentSection) !== 'purpose_visit' && (
+            {!isRemise && getSectionType(currentSection) !== 'purpose_visit' && (
               <ParkingAvailability
                 loadingParking={loadingParking}
                 availableVisitorSlot={availableVisitorSlot}

@@ -511,7 +511,14 @@ const GuestAccessPass = ({
               </Box>
             </Field>
 
-            <Field label="Visit End">{formatDateTime(accessPass.visitor_period_end)}</Field>
+            <Field label="Visit End">
+              {accessPass.visitor_period_end === '9999-01-01T00:00:00'
+                ? '-'
+                : formatDateTime(
+                  accessPass.visitor_period_end,
+                  accessPass.extend_visitor_period,
+                )}
+            </Field>
           </Box>
         </Box>
         {/* QR CODE */}

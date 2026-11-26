@@ -491,14 +491,19 @@ const Login = () => {
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '100vh',
+            minHeight: '100dvh',
+            height: { xs: 'auto', md: '100vh' },
             position: 'relative',
             backgroundImage: "url('/assets/images/vms_bg.webp')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             borderRadius: '0 !important',
-            overflow: 'hidden',
+
+            // Mobile bisa scroll, desktop tetap mengikuti tinggi layar
+            overflowY: { xs: 'auto', md: 'hidden' },
+            overflowX: 'hidden',
+
             '&::before': {
               content: '""',
               position: 'absolute',

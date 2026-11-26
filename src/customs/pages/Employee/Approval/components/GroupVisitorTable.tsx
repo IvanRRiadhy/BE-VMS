@@ -162,7 +162,13 @@ const GroupVisitorTable = ({
                     <Typography variant="h6" fontWeight="bold">
                       Visit End
                     </Typography>
-                    <Typography>{formatDateTime(groupHeader?.visitor_period_end)}</Typography>
+                    <Typography>
+                      {groupHeader?.visitor_period_end === '9999-01-01T00:00:00'
+                        ? '-'
+                        : formatDateTime(
+                          groupHeader?.visitor_period_end
+                        )}
+                    </Typography>
                   </Box>
                 </TableCell>
 

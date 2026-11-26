@@ -185,7 +185,7 @@ const FormCustomField = ({
             setNewMultiOption({
                 id: selected?.id ?? '',
                 name: selected?.name ?? '',
-                value: selected?.value ?? '',
+                value: selected?.id ?? '',
             });
         } else {
             const selected = identityType.find(
@@ -571,7 +571,7 @@ const FormCustomField = ({
                                                                 </TableCell>
 
                                                                 <TableCell>
-                                                                    {isVehicleField ? mult.name : mult.value}
+                                                                    {isVehicleField ? mult.id : mult.value}
                                                                 </TableCell>
 
                                                                 <TableCell align="right">
