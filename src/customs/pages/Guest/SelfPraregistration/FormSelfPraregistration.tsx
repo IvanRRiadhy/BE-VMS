@@ -3381,7 +3381,7 @@ const FormSelfPraregistration = ({
                                     variant="contained"
                                     startIcon={<IconPlus />}
                                   >
-                                    Add New
+                                    {t('add') + 'New'}
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -4127,6 +4127,7 @@ const FormSelfPraregistration = ({
         sites={sites}
         invitation={invitation}
         vehicleOptions={vehicleOptions}
+        visitorTypeSections={rawSections}
       />
       <GlobalBackdropLoading open={loading} />
       <Portal>

@@ -963,47 +963,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
 
 
-  useEffect(() => {
-    if (availableVisitorSlot !== 0) return;
-
-    setDataVisitor((prev: any[]) => {
-      let hasChanges = false;
-
-      const next = prev.map((visitor) => ({
-        ...visitor,
-        question_page: visitor.question_page?.map((page: any) => {
-          if (!page?.form) return page;
-
-          let pageChanged = false;
-
-          const form = page.form.map((field: any) => {
-            if (
-              String(field.remarks || '').toLowerCase() === 'is_driving' &&
-              String(field.answer_text).toLowerCase() !== 'false'
-            ) {
-              pageChanged = true;
-              return {
-                ...field,
-                answer_text: 'false',
-              };
-            }
-
-            return field;
-          });
-
-          if (pageChanged) {
-            hasChanges = true;
-            return { ...page, form };
-          }
-
-          return page;
-        }),
-      }));
-
-      return hasChanges ? next : prev;
-    });
-  }, [availableVisitorSlot, setDataVisitor]);
-
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
 
   const handleAddDetail = (sectionKey: SectionKey) => {
@@ -1120,6 +1079,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         .toLowerCase();
 
       const isBicycle = vehicleType === 'bicycle';
+      const isParkingFull =
+        availableVisitorSlot !== null &&
+        Number(availableVisitorSlot) <= 0;
+
+      const isVehicleDisabled =
+        loadingParking ||
+        (!isParkingFull && (!isDriving || shouldForceNotDriving));
 
       switch (field.field_type) {
         case 0: // Text
@@ -1158,8 +1124,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               disabled={
                 shouldDisable ||
                 ((field.remarks || '').toLowerCase() === 'name' && employeeSelected) ||
-                ((field.remarks || '').toLowerCase() === 'vehicle_plate' &&
-                  (!isDriving || isBicycle))
+                (
+                  (field.remarks || '').toLowerCase() === 'vehicle_plate' &&
+                  (
+                    isBicycle ||
+                    (!isDriving && !(isGroup && isParkingFull))
+                  )
+                )
               }
             />
           );
@@ -1428,6 +1399,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           }
 
           if (field.remarks === 'vehicle_id') {
+
             return (
               <CustomTextField
                 select
@@ -1439,7 +1411,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   if (value) clearFieldError(errorKey);
                 }}
                 fullWidth
-                disabled={!isDriving}
+                disabled={shouldDisable || isVehicleDisabled}
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
@@ -1455,15 +1427,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             const isDrivingField = field.remarks?.toLowerCase() === 'is_driving';
 
+            const isParkingFull =
+              availableVisitorSlot !== null &&
+              Number(availableVisitorSlot) <= 0;
+
             const disableDriving =
               isDrivingField &&
-              (loadingParking || availableVisitorSlot === 0);
+              (
+                loadingParking ||
+                shouldForceNotDriving ||
+                isParkingFull
+              );
             return (
               <>
                 <FormControl error={!!errorMessage} sx={{ width: '170px' }} disabled={disableDriving}>
                   <RadioGroup
                     row
-                    value={field.answer_text || 'false'}
+                    value={
+                      isDrivingField && shouldForceNotDriving
+                        ? 'false'
+                        : field.answer_text || 'false'
+                    }
                     onChange={(e) => {
                       onChange(index, 'answer_text', e.target.value);
                       if (e.target.value) clearFieldError(errorKey);
@@ -2462,6 +2446,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
 
     const parkingUnavailable =
+      selectedVisitorType?.can_parking === false ||
       availableVisitorSlot === 0 ||
       (details.find(
         (f: any) => f.remarks?.toLowerCase() === 'vehicle_id',
@@ -2573,35 +2558,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       });
     });
 
-    // const isFieldMandatory = (item: any, visibilityMap: any) => {
-    //   const remark = (item.remarks || '').toLowerCase();
-    //   if (remark === 'is_driving' || remark === 'is_employee') {
-    //     return false;
-    //   }
-    //   if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
-    //     return true;
-    //   }
 
-    //   return !!item.mandatory;
-    // };
-
-    // const isFieldMandatory = (item: any, visibilityMap: any) => {
-    //   const remark = (item.remarks || '').toLowerCase();
-
-    //   if (item.is_enable !== true) {
-    //     return false;
-    //   }
-
-    //   if (remark === 'is_driving' || remark === 'is_employee') {
-    //     return false;
-    //   }
-
-    //   if (['vehicle_id', 'vehicle_plate'].includes(remark) && visibilityMap[remark] === true) {
-    //     return true;
-    //   }
-
-    //   return !!item.mandatory;
-    // };
+    const shouldSkipVehicleValidation =
+      selectedVisitorType?.can_parking === false ||
+      availableVisitorSlot === 0;
 
     const isFieldMandatory = (item: any, visibilityMap: any) => {
       const remark = (item.remarks || '').toLowerCase();
@@ -2611,7 +2571,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
 
       if (
-        availableVisitorSlot === 0 &&
+        shouldSkipVehicleValidation &&
         ['vehicle_id', 'vehicle_plate'].includes(remark)
       ) {
         return false;
@@ -2672,10 +2632,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       };
 
       const parkingUnavailable =
+        selectedVisitorType?.can_parking === false ||
         availableVisitorSlot === 0 ||
         (details.find(
           (f: any) => f.remarks?.toLowerCase() === 'vehicle_id',
         )?.multiple_option_fields?.length ?? 0) === 0;
+
 
       const isDriving = getFlag('is_driving');
 
@@ -2766,6 +2728,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     return Object.keys(errors).length === 0;
   };
+
   const clearFieldError = (key: string) => {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
@@ -2922,9 +2885,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const isDrivingDisabled =
         remark === 'is_driving' &&
-        (loadingParking || availableVisitorSlot === 0);
+        (!canParking ||
+          loadingParking ||
+          availableVisitorSlot === 0);
 
-        
       return (
         <TableRow key={key}>
           <TableCell
@@ -4864,6 +4828,45 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   //   return out;
   // };
 
+  // const mapFieldOut = (
+  //   tpl: any,
+  //   sortIdx: number,
+  //   src?: any,
+  //   preAnswerByRemarks: Record<string, string | null> = {},
+  // ) => {
+  //   const out: any = {
+  //     remarks: tpl.remarks ?? '',
+  //     visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
+  //     field_type: tpl.field_type ?? 0,
+  //     sort: tpl.sort ?? sortIdx,
+  //     short_name: tpl.short_name ?? '',
+  //     long_display_text: tpl.long_display_text ?? '',
+  //     custom_field_id: tpl.custom_field_id ?? null,
+  //     form_visitor_type_id: '',
+  //   };
+
+  //   const ans = pickAns(src ?? {});
+  //   const remarks = sanitize(tpl.remarks);
+
+  //   const hasPreAnswer = Object.prototype.hasOwnProperty.call(preAnswerByRemarks, remarks);
+
+  //   const answerText = hasPreAnswer ? preAnswerByRemarks[remarks] : ans?.answer_text;
+
+  //   if (tpl.field_type === 9 && ans?.answer_datetime) {
+  //     const parsed = dayjs(ans.answer_datetime);
+
+  //     out.answer_datetime = parsed.isValid()
+  //       ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
+  //       : ans.answer_datetime;
+  //   } else if ([10, 11, 12].includes(tpl.field_type) && ans?.answer_file) {
+  //     out.answer_file = ans.answer_file;
+  //   } else if (answerText != null && answerText !== '') {
+  //     out.answer_text = answerText;
+  //   }
+
+  //   return out;
+  // };
+
   const mapFieldOut = (
     tpl: any,
     sortIdx: number,
@@ -4879,14 +4882,25 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       long_display_text: tpl.long_display_text ?? '',
       custom_field_id: tpl.custom_field_id ?? null,
       form_visitor_type_id: '',
+
+      // TAMBAHKAN INI
+      multiple_option_fields:
+        src?.multiple_option_fields ??
+        tpl?.multiple_option_fields ??
+        [],
     };
 
     const ans = pickAns(src ?? {});
     const remarks = sanitize(tpl.remarks);
 
-    const hasPreAnswer = Object.prototype.hasOwnProperty.call(preAnswerByRemarks, remarks);
+    const hasPreAnswer = Object.prototype.hasOwnProperty.call(
+      preAnswerByRemarks,
+      remarks,
+    );
 
-    const answerText = hasPreAnswer ? preAnswerByRemarks[remarks] : ans?.answer_text;
+    const answerText = hasPreAnswer
+      ? preAnswerByRemarks[remarks]
+      : ans?.answer_text;
 
     if (tpl.field_type === 9 && ans?.answer_datetime) {
       const parsed = dayjs(ans.answer_datetime);
@@ -4902,6 +4916,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     return out;
   };
+
 
   const indexBy = (arr: any[]) => {
     const byRemarks = new Map<string, any>();
@@ -5077,25 +5092,55 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     (type: any) => String(type.id) === String(formData.visitor_type),
   );
 
-
+  const canParking = selectedVisitorType?.can_parking !== false;
   const siteId = selectedVisitorType?.pre_site_id;
-  const visitorPeriodStart = sectionsData
-    .flatMap((section: any) => formsOf(section))
-    .find(
+  // const visitorPeriodStart = sectionsData
+  //   .flatMap((section: any) => formsOf(section))
+  //   .find(
+  //     (field: any) =>
+  //       field.remarks?.toLowerCase() === 'visitor_period_start',
+  //   )?.answer_datetime;
+
+  // const visitorPeriodEnd = sectionsData
+  //   .flatMap((section: any) => formsOf(section))
+  //   .find(
+  //     (field: any) =>
+  //       field.remarks?.toLowerCase() === 'visitor_period_end',
+  //   )?.answer_datetime;
+
+  const getVisitorPeriod = (remark: string) => {
+    // Ambil dari sectionsData (Single maupun Group)
+    const sectionValue = sectionsData
+      .flatMap((section: any) => formsOf(section))
+      .find(
+        (field: any) =>
+          field.remarks?.toLowerCase() === remark,
+      )?.answer_datetime;
+
+    if (sectionValue) return sectionValue;
+
+    // Fallback dari groupedPages (khusus Group)
+    const groupedValue = groupedPages?.single_page?.find(
       (field: any) =>
-        field.remarks?.toLowerCase() === 'visitor_period_start',
+        field.remarks?.toLowerCase() === remark,
     )?.answer_datetime;
 
-  const visitorPeriodEnd = sectionsData
-    .flatMap((section: any) => formsOf(section))
-    .find(
-      (field: any) =>
-        field.remarks?.toLowerCase() === 'visitor_period_end',
-    )?.answer_datetime;
+    return groupedValue ?? '';
+  };
+
+  const visitorPeriodStart = getVisitorPeriod('visitor_period_start');
+  const visitorPeriodEnd = getVisitorPeriod('visitor_period_end');
+
+
 
   useEffect(() => {
     let isMounted = true;
-
+    console.log('GROUP PARKING PARAMS:', {
+      siteId,
+      visitorTypeId: selectedVisitorType?.id,
+      visitorPeriodStart,
+      visitorPeriodEnd,
+    });
     const fetchParkingAvailable = async () => {
       if (
         !siteId ||
@@ -5146,6 +5191,51 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     visitorPeriodStart,
     visitorPeriodEnd,
   ]);
+
+  const shouldForceNotDriving =
+    selectedVisitorType?.can_parking === false ||
+    availableVisitorSlot === 0;
+  useEffect(() => {
+    if (!shouldForceNotDriving) return;
+
+    setDataVisitor((prev: any[]) => {
+      let hasChanges = false;
+
+      const next = prev.map((visitor) => ({
+        ...visitor,
+        question_page: visitor.question_page?.map((page: any) => {
+          if (!page?.form) return page;
+
+          let pageChanged = false;
+
+          const form = page.form.map((field: any) => {
+            if (
+              String(field.remarks || '').toLowerCase() === 'is_driving' &&
+              String(field.answer_text).toLowerCase() !== 'false'
+            ) {
+              pageChanged = true;
+
+              return {
+                ...field,
+                answer_text: 'false',
+              };
+            }
+
+            return field;
+          });
+
+          if (pageChanged) {
+            hasChanges = true;
+            return { ...page, form };
+          }
+
+          return page;
+        }),
+      }));
+
+      return hasChanges ? next : prev;
+    });
+  }, [shouldForceNotDriving]);
   const visitorTypeMeta = {
     pre_agenda: selectedVisitorType?.pre_agenda ?? null,
     pre_site_id: selectedVisitorType?.pre_site_id ?? null,

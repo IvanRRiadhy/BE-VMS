@@ -38,6 +38,7 @@ interface Props {
   searchKeyword?: string;
   user_group_id?: string;
   'is-employee'?: boolean;
+  keepPreviousData?: boolean;
 }
 
 export const useUserPagination = ({
@@ -47,6 +48,7 @@ export const useUserPagination = ({
   searchKeyword,
   user_group_id,
   'is-employee': is_employee,
+  keepPreviousData = true,
 }: Props) => {
   return useQuery({
     queryKey: [
@@ -59,7 +61,6 @@ export const useUserPagination = ({
       user_group_id,
       is_employee,
     ],
-    // enabled: !!token,
     queryFn: () =>
       getUserPagination(
         page * rowsPerPage,
@@ -69,6 +70,6 @@ export const useUserPagination = ({
         user_group_id,
         is_employee,
       ),
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData ? (previousData) => previousData : undefined,
   });
 };

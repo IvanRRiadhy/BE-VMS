@@ -65,15 +65,17 @@ const VisitorFilterSidebar = ({
   const [sort_column, setSortColumn] = useState<string>('created_at');
   const debouncedVisitorTypeSearch = useDebounce(search, 500);
 
-  const { visitorType: invitationVisitorType = [], isLoading: isLoadingInvitation } =
-    useInvitationVisitorType(
-      {
-        'search[value]': debouncedVisitorTypeSearch,
-      },
-      {
-        enabled: !isAdmin,
-      },
-    );
+  const {
+    visitorType: invitationVisitorType = [],
+    isLoading: isLoadingInvitation,
+  } = useInvitationVisitorType(
+    {
+      'search[value]': debouncedVisitorTypeSearch,
+    },
+    {
+      enabled: !isAdmin && debouncedVisitorTypeSearch.trim().length >= 1,
+    },
+  );
 
   const { data: visitorTypePagination, isLoading: isLoadingPagination } = useVisitorTypePagination(
     {
@@ -390,56 +392,56 @@ const VisitorFilterSidebar = ({
           />
           {isLoading
             ? Array.from({ length: 5 }).map((_, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    py: 0.4,
-                    gap: 1,
-                  }}
-                >
-                  <Skeleton
-                    variant="rectangular"
-                    width={18}
-                    height={18}
-                    sx={{ borderRadius: '3px' }}
-                  />
-                  <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
-                </Box>
-              ))
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  py: 0.4,
+                  gap: 1,
+                }}
+              >
+                <Skeleton
+                  variant="rectangular"
+                  width={18}
+                  height={18}
+                  sx={{ borderRadius: '3px' }}
+                />
+                <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
+              </Box>
+            ))
             : organizations.map((item: any) => (
-                <Box
-                  key={item.id}
+              <Box
+                key={item.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  py: 0.4,
+                }}
+              >
+                <FormControlLabel
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    py: 0.4,
+                    m: 0,
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: 14,
+                    },
                   }}
-                >
-                  <FormControlLabel
-                    sx={{
-                      m: 0,
-                      '& .MuiFormControlLabel-label': {
-                        fontSize: 14,
-                      },
-                    }}
-                    control={
-                      <Checkbox
-                        size="small"
-                        sx={{ p: 0.4 }}
-                        checked={selectedHostId === item.id}
-                        onChange={(e) => {
-                          if (onHostChange) {
-                            onHostChange(e.target.checked ? item.id : '');
-                          }
-                        }}
-                      />
-                    }
-                    label={item.name}
-                  />
-                </Box>
-              ))}
+                  control={
+                    <Checkbox
+                      size="small"
+                      sx={{ p: 0.4 }}
+                      checked={selectedHostId === item.id}
+                      onChange={(e) => {
+                        if (onHostChange) {
+                          onHostChange(e.target.checked ? item.id : '');
+                        }
+                      }}
+                    />
+                  }
+                  label={item.name}
+                />
+              </Box>
+            ))}
         </Box>
       )}
 
@@ -470,54 +472,54 @@ const VisitorFilterSidebar = ({
         />
         {isLoadingVisitor
           ? Array.from({ length: 5 }).map((_, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  py: 0.4,
-                  gap: 1,
-                }}
-              >
-                <Skeleton
-                  variant="rectangular"
-                  width={18}
-                  height={18}
-                  sx={{ borderRadius: '3px' }}
-                />
-                <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
-              </Box>
-            ))
-          : visitorType.map((item: any) => (
-              <FormControlLabel
-                key={item.id}
-                sx={{
-                  m: 0,
-                  display: 'flex',
-                  '& .MuiFormControlLabel-label': {
-                    fontSize: 14,
-                  },
-                }}
-                control={
-                  <Checkbox
-                    size="small"
-                    sx={{ p: 0.4 }}
-                    checked={filters?.visitor_type === item.id}
-                    onChange={(e) => {
-                      const selectedId = e.target.checked ? item.id : '';
-
-                      setFilters?.((prev: any) => ({
-                        ...prev,
-                        visitor_type: selectedId,
-                      }));
-
-                      onVisitorTypeChange?.(selectedId);
-                    }}
-                  />
-                }
-                label={item.name}
+            <Box
+              key={index}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                py: 0.4,
+                gap: 1,
+              }}
+            >
+              <Skeleton
+                variant="rectangular"
+                width={18}
+                height={18}
+                sx={{ borderRadius: '3px' }}
               />
-            ))}
+              <Skeleton variant="text" width={`${60 + (index % 3) * 15}%`} height={24} />
+            </Box>
+          ))
+          : visitorType.map((item: any) => (
+            <FormControlLabel
+              key={item.id}
+              sx={{
+                m: 0,
+                display: 'flex',
+                '& .MuiFormControlLabel-label': {
+                  fontSize: 14,
+                },
+              }}
+              control={
+                <Checkbox
+                  size="small"
+                  sx={{ p: 0.4 }}
+                  checked={filters?.visitor_type === item.id}
+                  onChange={(e) => {
+                    const selectedId = e.target.checked ? item.id : '';
+
+                    setFilters?.((prev: any) => ({
+                      ...prev,
+                      visitor_type: selectedId,
+                    }));
+
+                    onVisitorTypeChange?.(selectedId);
+                  }}
+                />
+              }
+              label={item.name}
+            />
+          ))}
       </Box>
 
       <Divider sx={{ my: 1.5 }} />

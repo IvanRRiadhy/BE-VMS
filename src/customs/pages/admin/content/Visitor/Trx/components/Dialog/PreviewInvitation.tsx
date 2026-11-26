@@ -125,6 +125,18 @@ const PreviewInvitation: React.FC<PreviewInvitationProps> = ({
       return selectedOption?.name ?? '—';
     }
 
+    if (field?.remarks === 'vehicle_id') {
+
+      const selectedOption = (field?.multiple_option_fields ?? []).find(
+        (opt: any) =>
+          String(opt?.value).trim().toLowerCase() ===
+          String(answer ?? '').trim().toLowerCase(),
+      );
+
+      return selectedOption?.name ?? answer ?? '—';
+    }
+
+
     if (fieldType === 9) {
       return field?.answer_datetime;
     }

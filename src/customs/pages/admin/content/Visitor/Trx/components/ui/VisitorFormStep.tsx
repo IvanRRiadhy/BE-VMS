@@ -57,10 +57,6 @@ const VisitorFormStep = ({
   handleAddDetails,
   handleOpenSelfOnly,
   t,
-  selectedVisitorType,
-  siteId,
-  visitorPeriodStart,
-  visitorPeriodEnd,
   loadingParking,
   availableVisitorSlot
 }: any) => {

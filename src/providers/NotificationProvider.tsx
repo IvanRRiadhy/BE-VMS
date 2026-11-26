@@ -79,7 +79,7 @@ const NotificationProvider = () => {
     });
 
     client.on('reconnect', () => {
-      console.log('MQTT reconnecting...');
+      // console.log('MQTT reconnecting...');
     });
 
     return () => {

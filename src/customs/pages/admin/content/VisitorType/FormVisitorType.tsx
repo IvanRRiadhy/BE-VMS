@@ -427,7 +427,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         if (i === activeStep - 1) {
           const originalFields = section[sectionKey];
           if (!Array.isArray(originalFields)) {
-            console.error(`Expected array for ${sectionKey}, got:`, originalFields);
+            // console.error(`Expected array for ${sectionKey}, got:`, originalFields);
             return section;
           }
 

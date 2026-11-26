@@ -31,9 +31,11 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getAllUser, getAllEmployee } from 'src/customs/api/admin';
 import { useEmployees } from 'src/hooks/Employee/useEmployees';
 import useApprovalWorkflowMutation from 'src/hooks/ApprovalWorkflow/useApprovalWorkflowMutation';
-import useUsers from 'src/hooks/User/useUsers';
+import useUsers, { useUserPagination } from 'src/hooks/User/useUsers';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useTranslation } from 'react-i18next';
+import GlobalBackdropLoading from '../../components/GlobalBackdrop';
+import { useDebounce } from 'src/hooks/useDebounce';
 interface FormApproveProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -72,7 +74,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
     { label: 'PIC', value: 'PIC' },
   ];
   const [expanded, setExpanded] = useState<string[]>([]);
-  const { employee } = useEmployees();
+  // const { employee } = useEmployees();
   const { createMutation, updateMutation } = useApprovalWorkflowMutation();
 
   const createId = () => Math.random().toString(36).substring(2, 9);
@@ -396,24 +398,51 @@ const FormApprove: React.FC<FormApproveProps> = ({
     markDirty();
   };
 
-  const { data: user } = useUsers();
-  const users = user?.collection ?? [];
+  // const { data: user } = useUsers();
+  // const users = user?.collection ?? [];
+
   const [userSearch, setUserSearch] = useState<Record<string, string>>({});
+  const [searchKeyword, setSearchKeyword] = useState('');
+
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchKeyword.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchKeyword]);
+
+  const {
+    data: userPagination,
+    isFetching: isFetchingUsers,
+  } = useUserPagination({
+    page: 0,
+    rowsPerPage: 100,
+    sortDir: 'desc',
+    searchKeyword: debouncedSearch,
+    'is-employee': true,
+    keepPreviousData: false,
+  });
+
+  const users = userPagination?.collection ?? [];
+  // const [userSearch, setUserSearch] = useState<Record<string, string>>({});
 
   const getOptionsByRole = (role?: string) => {
     if (role === 'Manager') {
       return users
-        .filter((u) => u.group_name === 'Manager')
-        .map((u) => ({
+        .filter((u: any) => u.group_name === 'Manager')
+        .map((u: any) => ({
           label: u.fullname,
           value: u.id,
         }));
     }
 
     if (role === 'PIC') {
-      return users.map((e: any) => ({
-        label: e.fullname,
-        value: e.id,
+      return users.map((u: any) => ({
+        label: u.fullname,
+        value: u.id,
       }));
     }
 
@@ -439,12 +468,12 @@ const FormApprove: React.FC<FormApproveProps> = ({
       selectedOption || !node.entity_id
         ? baseOptions
         : [
-            ...baseOptions,
-            {
-              label: userSearch[node.id] || node.entity_id,
-              value: node.entity_id,
-            },
-          ];
+          ...baseOptions,
+          {
+            label: userSearch[node.id] || node.entity_id,
+            value: node.entity_id,
+          },
+        ];
     if (node.type === 'ROLE') {
       return (
         <TreeItem
@@ -469,96 +498,47 @@ const FormApprove: React.FC<FormApproveProps> = ({
               >
                 {node.role}
               </Typography>
-              {/* <CustomSelect
-                size="small"
-                value={node.entity_id || ''}
-                sx={{ minWidth: 150 }}
-                onChange={(e: any) => {
-                  const value = e.target.value;
-
-                  const update = (nodes: any[]): any[] =>
-                    nodes.map((n) => {
-                      if (n.id === node.id) {
-                        return { ...n, entity_id: value };
-                      }
-                      if (n.children) {
-                        return { ...n, children: update(n.children) };
-                      }
-                      return n;
-                    });
-
-                  setRules(update);
-                }}
-              >
-                <MenuItem value="">Select User</MenuItem>
-
-                {options.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </CustomSelect> */}
-              {/* <Autocomplete
-                size="small"
-                options={options}
-                value={options.find((opt) => opt.value === node.entity_id) || null}
-                getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) => option.value === value.value}
-                sx={{
-                  minWidth: 200,
-                  // '& .MuiInputBase-root': {
-                  //   height: '36px !important', // atur tinggi
-                  // },
-                }}
-                onChange={(_, selected) => {
-                  const value = selected?.value || '';
-
-                  const update = (nodes: any[]): any[] =>
-                    nodes.map((n) => {
-                      if (n.id === node.id) {
-                        return { ...n, entity_id: value };
-                      }
-                      if (n.children) {
-                        return { ...n, children: update(n.children) };
-                      }
-                      return n;
-                    });
-
-                  setRules(update);
-                  markDirty();
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} placeholder="Select User" size="small" />
-                )}
-                slotProps={{
-                  listbox: {
-                    sx: {
-                      maxHeight: 200,
-                      minWidth: '200px !important',
-                    },
-                  },
-                }}
-              /> */}
               <Autocomplete
                 size="small"
                 options={options}
-                value={options.find((opt) => String(opt.value) === String(node.entity_id)) ?? null}
+                loading={isFetchingUsers}
+                value={
+                  options.find(
+                    (opt) => String(opt.value) === String(node.entity_id ?? ''),
+                  ) ?? null
+                }
                 inputValue={
                   userSearch[node.id] ??
-                  options.find((opt) => String(opt.value) === String(node.entity_id))?.label ??
+                  options.find(
+                    (opt) => String(opt.value) === String(node.entity_id ?? ''),
+                  )?.label ??
                   ''
                 }
-                getOptionLabel={(option) => option.label ?? ''}
+                getOptionLabel={(option) => String(option.label ?? '')}
                 isOptionEqualToValue={(option, value) =>
                   String(option.value) === String(value.value)
                 }
-                sx={{ minWidth: 200 }}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props;
+
+                  return (
+                    <li
+                      {...otherProps}
+                      key={String(option.value)}
+                    >
+                      {option.label}
+                    </li>
+                  );
+                }}
+                filterOptions={(options) => options}
                 onInputChange={(_, newValue, reason) => {
                   if (reason === 'input' || reason === 'clear') {
                     setUserSearch((prev) => ({
                       ...prev,
                       [node.id]: newValue,
                     }));
+
+                    setSearchKeyword(newValue);
                   }
                 }}
                 onChange={(_, selected) => {
@@ -572,8 +552,11 @@ const FormApprove: React.FC<FormApproveProps> = ({
                           };
                         }
 
-                        if (n.children) {
-                          return { ...n, children: update(n.children) };
+                        if (n.children?.length) {
+                          return {
+                            ...n,
+                            children: update(n.children),
+                          };
                         }
 
                         return n;
@@ -587,15 +570,32 @@ const FormApprove: React.FC<FormApproveProps> = ({
                     [node.id]: selected?.label ?? '',
                   }));
 
+                  setSearchKeyword('');
                   markDirty();
                 }}
-                filterOptions={(options, state) =>
-                  options.filter((option) =>
-                    option.label.toLowerCase().includes(state.inputValue.toLowerCase()),
-                  )
-                }
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                }}
+                sx={{
+                  minWidth: 200,
+                  '& .MuiInputBase-root': {
+                    height: 36,
+                  },
+                }}
+                slotProps={{
+                  listbox: {
+                    sx: {
+                      maxHeight: 200,
+                      minWidth: 200,
+                    },
+                  },
+                }}
                 renderInput={(params) => (
-                  <TextField {...params} placeholder="Select User" size="small" />
+                  <TextField
+                    {...params}
+                    placeholder="Search User"
+                    size="small"
+                  />
                 )}
               />
 
@@ -991,8 +991,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
           </Grid2>
         </Grid2>
       </form>
+      <GlobalBackdropLoading open={loading} />
 
-      <Portal>
+      {/* <Portal>
         <Backdrop
           open={loading}
           sx={{
@@ -1002,7 +1003,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         >
           <CircularProgress />
         </Backdrop>
-      </Portal>
+      </Portal> */}
     </>
   );
 };

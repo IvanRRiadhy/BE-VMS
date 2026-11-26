@@ -47,6 +47,7 @@ const PreviewDialog = ({
   isGroup = false,
   groupVisitors = [],
   vehicleOptions = [],
+  visitorTypeSections = [],
 }: any) => {
   const sections = invitationData?.question_page ?? [];
 
@@ -106,6 +107,22 @@ const PreviewDialog = ({
   //   return raw;
   // };
 
+  const getIdentityTypeName = (value: any) => {
+    const identityField = visitorTypeSections
+      .flatMap((section: any) => [
+        ...(section.visit_form ?? []),
+        ...(section.pra_form ?? []),
+        ...(section.checkout_form ?? []),
+      ])
+      .find((field: any) => field.remarks === 'identity_type');
+
+    const selected = identityField?.multiple_option_fields?.find(
+      (option: any) => String(option.value) === String(value),
+    );
+
+    return selected?.name ?? value;
+  };
+
   const getVehicleTypeName = (vehicleId: any) => {
     const selected = vehicleOptions.find(
       (opt: any) => String(opt.value ?? opt.id).toLowerCase() === String(vehicleId).toLowerCase(),
@@ -133,6 +150,10 @@ const PreviewDialog = ({
         visitor?.site || invitation?.site || sites?.find((s: any) => String(s.id) === String(raw));
 
       return site?.name || raw;
+    }
+
+    if (f.remarks === 'identity_type') {
+      return getIdentityTypeName(raw);
     }
 
     if (f.multiple_option_fields?.length) {
@@ -211,6 +232,16 @@ const PreviewDialog = ({
 
                     <Grid container spacing={2}>
                       {section.form.map((f: any, idx: number) => {
+                        if (f.remarks === 'identity_type') {
+                          console.log('IDENTITY TYPE PREVIEW:', {
+                            isGroup,
+                            visitor,
+                            field: f,
+                            answer: f.answer_text,
+                            options: f.multiple_option_fields,
+                            invitationQuestionPage: invitationData?.question_page,
+                          });
+                        }
                         let value = resolveValue(f, visitor);
 
                         if (f.remarks === 'host') {

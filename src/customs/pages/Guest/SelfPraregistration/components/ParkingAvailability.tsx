@@ -61,7 +61,7 @@ const ParkingAvailability = ({
 
             <Box>
               <Typography variant="h4" fontWeight={700} color="primary.main">
-                {loadingParking ? '...' : (availableVisitorSlot ?? '-')}
+                {loadingParking ? '...' : (availableVisitorSlot ?? '0')}
               </Typography>
 
               <Typography variant="body2" color="text.secondary">

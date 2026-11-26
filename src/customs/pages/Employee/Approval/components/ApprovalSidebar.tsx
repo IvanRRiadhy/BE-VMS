@@ -7,7 +7,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Stack } from '@mui/system';
+import { Stack, textAlign, width } from '@mui/system';
 import {
   IconCalendarEvent,
   IconCalendarTime,
@@ -160,19 +160,48 @@ const ApprovalSidebar = ({
                 onClick={() => onSelectGroup(group)}
               >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography
-                    variant="h6"
-                    fontWeight="bold"
-                    sx={{
-                      width: '150px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {group.agenda}
-                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%' }} justifyContent={'space-between'}>
+                    <Typography
+                      variant="h6"
+                      fontWeight="bold"
+                      sx={{
+                        width: '150px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {group.agenda}
+                    </Typography>
 
+                    {group.approval_actor_status &&
+                      group.approval_actor_status !== 'Pending' && (
+                        <Typography
+                          sx={{
+                            width: '90px',
+                            px: 1.2,
+                            py: 0.3,
+                            marginLeft: 'auto',
+                            marginTop: '5px',
+                            borderRadius: '12px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            border: '1px solid',
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            borderColor:
+                              group.approval_actor_status === 'Approved'
+                                ? 'success.main'
+                                : 'error.main',
+                            backgroundColor: 'transparent',
+                            color:
+                              group.approval_actor_status === 'Approved' ? 'success.main' : '#D32F2F',
+                          }}
+                        >
+                          {group.approval_actor_status}
+                        </Typography>
+                      )}
+                  </Box>
                   {group.approval_status === 'Pending' &&
                     group.approval_actor_status === 'Pending' && (
                       <Box display="flex" gap={0.5}>
@@ -216,6 +245,8 @@ const ApprovalSidebar = ({
                         </Tooltip>
                       </Box>
                     )}
+
+                  {/* approval_actor_status */}
                 </Box>
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" mt={0.5}>
@@ -240,12 +271,13 @@ const ApprovalSidebar = ({
 
                 <Typography
                   sx={{
-                    width: 'fit-content',
+                    width: '90px',
                     px: 1.2,
                     py: 0.3,
                     marginLeft: 'auto',
                     marginTop: '5px',
                     borderRadius: '12px',
+                    textAlign: 'center',
                     fontSize: '14px',
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
@@ -254,11 +286,11 @@ const ApprovalSidebar = ({
                       color: '#616161',
                     }),
                     ...(group.approval_status === 'Approved' && {
-                      backgroundColor: '#4CAF50',
+                      backgroundColor: 'success.main',
                       color: '#fff',
                     }),
                     ...(group.approval_status === 'Rejected' && {
-                      backgroundColor: '#f44336',
+                      backgroundColor: 'error.main',
                       color: '#fff',
                     }),
                   }}

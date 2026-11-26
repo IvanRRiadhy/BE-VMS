@@ -164,7 +164,7 @@ const Content = () => {
     type: appliedType !== -1 ? appliedType : undefined,
     parent,
     isChild: is_child,
-    sort_column: 'created_at',
+    // sort_column: 'created_at',
   });
 
   const totalRecords = sitePagination?.RecordsTotal ?? 0;
