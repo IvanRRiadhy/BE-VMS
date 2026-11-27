@@ -1172,6 +1172,8 @@ const TableRowItem = React.memo(
                 col === 'is_employee_used' ||
                 col === 'is_multi_site' ||
                 col === 'is_used' ||
+                col === 'require_parking_slot' || 
+                col === 'can_parking' ||
                 col === 'is_alarm' ||
                 col === 'link_status' ||
                 col === 'is_active' ||

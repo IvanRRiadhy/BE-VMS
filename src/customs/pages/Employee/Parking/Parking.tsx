@@ -1,54 +1,54 @@
-// import { Grid2 as Grid, Typography } from '@mui/material';
-// import { Box } from '@mui/system';
-// import { IconCar } from '@tabler/icons-react';
-// import React from 'react';
-// import PageContainer from 'src/components/container/PageContainer';
+
+
+
+
+
 import TopCard from 'src/customs/components/cards/TopCard';
-// import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
-// const Parking = () => {
-//
 
-//   return (
-//     <PageContainer title="Parking" description="Parking page">
-//       <Box>
-//         <Grid container spacing={3}>
-//           <Grid size={{ xs: 12, lg: 12 }}>
-//             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-//           </Grid>
-//           <Grid size={{ xs: 12, lg: 12 }}>
-//             {/* {isDataReady ? ( */}
-//             <DynamicTable
-//               overflowX={'auto'}
-//               data={[]}
-//               isHavePagination={true}
-//               // selectedRows={selectedRows}
-//               // defaultRowsPerPage={rowsPerPage}
-//               rowsPerPageOptions={[10, 20, 100]}
-//               // onPaginationChange={(page, rowsPerPage) => {
-//               //   setPage(page);
-//               //   setRowsPerPage(rowsPerPage);
-//               // }}
-//               isHaveChecked={true}
-//               isHaveAction={true}
-//               isHaveSearch={true}
-//               isHaveFilter={true}
-//               isHaveExportPdf={false}
-//               isHaveExportXlf={false}
-//               isHaveFilterDuration={false}
-//               isHaveAddData={false}
-//               isHaveFilterMore={false}
-//               isHaveHeader={false}
-//               isHavePdf={false}
-//             />
-//           </Grid>
-//         </Grid>
-//       </Box>
-//     </PageContainer>
-//   );
-// };
 
-// export default Parking;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -81,6 +81,7 @@ import {
   Avatar,
   useMediaQuery,
   useTheme,
+  TablePagination,
 } from '@mui/material';
 
 import {
@@ -99,6 +100,8 @@ import {
 } from '@tabler/icons-react';
 
 import PageContainer from 'src/components/container/PageContainer';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { useInvitationVisitorTypeVehicles } from 'src/hooks/Invitation/useInvitationVisitorTypeVehicles';
 
 interface ParkingActivity {
   id: number;
@@ -172,10 +175,16 @@ const initialData: ParkingActivity[] = [
 const Parking = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const {
+    data: vehicleOptions = [],
+    isLoading,
+    isFetching,
+    error,
+  } = useInvitationVisitorTypeVehicles();
   const cards = [
     {
       title: 'Total Parking',
-      subTitle: `4`,
+      subTitle: `${vehicleOptions.length}`,
       subTitleSetting: 10,
       icon: IconCar,
       color: 'none',
@@ -187,7 +196,7 @@ const Parking = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Activity detail ditampilkan hanya setelah user memilih menu
+
   const [selectedActivity, setSelectedActivity] =
     useState<ParkingActivity | null>(null);
 
@@ -300,11 +309,18 @@ const Parking = () => {
 
   return (
     <PageContainer
-      title="Riwayat Parkir"
+      title="Parking"
       description="Parking activity history"
     >
       <Box>
-
+        <Grid container spacing={2.5} alignItems="flex-start">
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <DynamicTable loading={isLoading} data={vehicleOptions} isHaveChecked={true} isHaveActive={true} isDataVerified isHaveHeaderTitle titleHeader='Parking' overflowX='auto' isNoActionTableHead />
+          </Grid>
+        </Grid>
         {/* HEADER */}
         {/* <Stack
           direction="row"
@@ -339,13 +355,13 @@ const Parking = () => {
           </Stack>
         </Stack> */}
 
-        {/* MAIN CONTENT */}
+        {/* 
         <Grid container spacing={2.5} alignItems="flex-start">
           <Grid size={{ xs: 12, lg: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
 
-          {/* HISTORY TABLE */}
+       
           <Grid size={{ xs: 12, md: selectedActivity ? 8 : 12 }}>
             <Card
               variant="outlined"
@@ -353,7 +369,7 @@ const Parking = () => {
             >
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
 
-                {/* FILTER */}
+       
                 <Grid container spacing={1.5} mb={2.5}>
                   <Grid size={{ xs: 12, sm: 12, md: 5 }}>
                     <TextField
@@ -423,13 +439,13 @@ const Parking = () => {
                   </Grid>
                 </Grid>
 
-                {/* TABLE */}
+          
                 <TableContainer sx={{ overflowX: 'auto' }}>
                   <Table sx={{ minWidth: 850 }}>
                     <TableHead>
                       <TableRow
                         sx={{
-                          bgcolor: 'action.hover',
+
                           '& th': {
                             fontWeight: 700,
                             whiteSpace: 'nowrap',
@@ -470,9 +486,9 @@ const Parking = () => {
                         <TableCell>Pegawai</TableCell>
                         <TableCell>Plat Nomor</TableCell>
                         <TableCell>Lokasi Gate</TableCell>
-                        <TableCell>Aksi</TableCell>
+                        <TableCell>Status</TableCell>
                         <TableCell>Durasi</TableCell>
-                        <TableCell align="center">Aksi</TableCell>
+                        <TableCell align="center">Action</TableCell>
                       </TableRow>
                     </TableHead>
 
@@ -480,7 +496,7 @@ const Parking = () => {
                       {paginatedData.map((item) => (
                         <TableRow
                           key={item.id}
-                          hover
+
                           selected={selectedActivity?.id === item.id}
                           sx={{
                             '& td': { whiteSpace: 'nowrap' },
@@ -609,66 +625,52 @@ const Parking = () => {
                   </Table>
                 </TableContainer>
 
-                {/* PAGINATION */}
                 <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  justifyContent="space-between"
+                  direction="row"
+                  justifyContent="flex-end"
                   alignItems="center"
-                  spacing={2}
-                  mt={3}
+                  mt={1}
                 >
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    textAlign={{ xs: 'center', sm: 'left' }}
-                  >
-                    Menampilkan{' '}
-                    {filteredData.length === 0
-                      ? 0
-                      : (page - 1) * rowsPerPage + 1}
-                    –
-                    {Math.min(page * rowsPerPage, filteredData.length)} dari{' '}
-                    {filteredData.length} data
-                  </Typography>
-
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.5}
-                    flexWrap="wrap"
-                    justifyContent="center"
-                  >
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={(_, value) => setPage(value)}
-                      color="primary"
-                      size={isMobile ? 'small' : 'medium'}
-                      siblingCount={isMobile ? 0 : 1}
-                    />
-
-                    {/* <FormControl size="small" sx={{ minWidth: 85 }}>
-                      <Select
-                        value={rowsPerPage}
-                        onChange={(e) => {
-                          setRowsPerPage(Number(e.target.value));
-                          setPage(1);
-                        }}
-                      >
-                        {[10, 20, 100].map((value) => (
-                          <MenuItem key={value} value={value}>
-                            {value} / halaman
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl> */}
-                  </Stack>
+                  <TablePagination
+                    component="div"
+                    count={filteredData.length}
+                    page={page - 1}
+                    onPageChange={(_, newPage) => setPage(newPage + 1)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(event) => {
+                      setRowsPerPage(Number(event.target.value));
+                      setPage(1);
+                    }}
+                    rowsPerPageOptions={[10, 20, 50, 100]}
+                    labelRowsPerPage="Rows per page:"
+                    labelDisplayedRows={({ from, to, count }) =>
+                      `${from}–${to} of ${count}`
+                    }
+                    sx={{
+                      border: 'none',
+                      '& .MuiTablePagination-toolbar': {
+                        minHeight: 40,
+                        padding: 0,
+                      },
+                      '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                        fontSize: 13,
+                        color: 'text.secondary',
+                        margin: 0,
+                      },
+                      '& .MuiTablePagination-select': {
+                        fontSize: 13,
+                      },
+                      '& .MuiTablePagination-actions': {
+                        marginLeft: 2,
+                      },
+                    }}
+                  />
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* ACTIVITY DETAIL - RIGHT SIDE */}
+    
           {selectedActivity && (
             <Grid size={{ xs: 12, md: 4 }}>
               <Card
@@ -680,7 +682,7 @@ const Parking = () => {
                 }}
               >
                 <CardContent sx={{ p: 2.5 }}>
-                  {/* HEADER */}
+              
                   <Stack
                     direction="row"
                     alignItems="center"
@@ -701,7 +703,7 @@ const Parking = () => {
 
                   <Divider sx={{ mb: 2.5 }} />
 
-                  {/* EMPLOYEE */}
+           
                   <Stack
                     direction="row"
                     alignItems="center"
@@ -737,7 +739,6 @@ const Parking = () => {
                     {getStatus(selectedActivity.status)}
                   </Stack>
 
-                  {/* DETAIL INFORMATION */}
                   <Stack spacing={2.5}>
                     <Stack direction="row" spacing={1.5}>
                       <IconCar size={24} color={theme.palette.text.secondary} />
@@ -828,7 +829,6 @@ const Parking = () => {
                     </Box>
                   </Stack>
 
-                  {/* ACTION BUTTONS */}
                   {selectedActivity.status === 'Waiting' && (
                     <>
                       <Divider sx={{ my: 2.5 }} />
@@ -871,9 +871,9 @@ const Parking = () => {
               </Card>
             </Grid>
           )}
-        </Grid>
+        </Grid> */}
 
-        {/* ROW ACTION MENU */}
+        {/*    
         <Menu
           anchorEl={menuAnchor}
           open={Boolean(menuAnchor)}
@@ -890,7 +890,7 @@ const Parking = () => {
           <MenuItem onClick={handleViewActivity}>
             Lihat Activity Parking
           </MenuItem>
-        </Menu>
+        </Menu> */}
       </Box>
     </PageContainer>
   );

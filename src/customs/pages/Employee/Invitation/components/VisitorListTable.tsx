@@ -41,6 +41,9 @@ import { IconSearch } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'src/hooks/useDebounce';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { updateInvitationVisitor } from 'src/customs/api/operator';
+import EditVisitorDialog from './Dialog/EditVisitorDialog';
 type Props = {
   selectedGroupId: any;
   groupHeader: any;
@@ -54,6 +57,7 @@ type Props = {
   handleExtend: any;
   handleViewDetail: (visitor: any) => void;
   onHistoryApproval: () => void;
+  onRefreshGroup?: any;
 };
 
 export default function VisitorListTable({
@@ -69,6 +73,7 @@ export default function VisitorListTable({
   handleExtend,
   handleViewDetail,
   onHistoryApproval,
+  onRefreshGroup
 }: Props) {
   const { t } = useTranslation();
   const lg = window.innerWidth > 1200;
@@ -103,6 +108,45 @@ export default function VisitorListTable({
 
   const from = totalCount === 0 ? 0 : startIndex + 1;
   const to = Math.min(startIndex + rowsPerPage, totalCount);
+
+  const [openEdit, setOpenEdit] = useState(false);
+  const [selectedEditVisitor, setSelectedEditVisitor] = useState<any>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
+  const handleOpenEdit = (visitor: any) => {
+    setSelectedEditVisitor(visitor);
+    setOpenEdit(true);
+  };
+
+  const handleSubmitEdit = async (data: any) => {
+    try {
+      // if (!selectedEditVisitor?.id) {
+      //   toast.error('Visitor ID not found');
+      //   return;
+      // }
+
+      setEditLoading(true);
+
+      await updateInvitationVisitor(selectedEditVisitor.id, data);
+
+      showSwal("success", "Successfully Edit Visitor");
+
+      setOpenEdit(false);
+      setSelectedEditVisitor(null);
+
+      // Refresh data group dari parent
+      onRefreshGroup?.();
+
+    } catch (error: any) {
+      console.error('Update visitor failed:', error);
+      // toast.error(
+      //   error?.response?.data?.message || 'Failed to update visitor',
+      // );
+      showSwal('error', error?.response?.data?.msg || "Failed Update Visitor")
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   useEffect(() => {
     setPage(1);
@@ -309,6 +353,7 @@ export default function VisitorListTable({
                   setSelectedVisitor={setSelectedVisitor}
                   handleExtend={() => handleExtend(visitor)}
                   handleViewDetail={handleViewDetail}
+                  handleEditVisitor={handleOpenEdit}
                 />
               ))
             ) : (
@@ -346,6 +391,18 @@ export default function VisitorListTable({
           />
         </Box>
       )}
+
+      <EditVisitorDialog
+        open={openEdit}
+        visitor={selectedEditVisitor}
+        loading={editLoading}
+        onClose={() => {
+          setOpenEdit(false);
+          setSelectedEditVisitor(null);
+        }}
+        onSubmit={handleSubmitEdit}
+      />
+
     </Box>
   );
 }

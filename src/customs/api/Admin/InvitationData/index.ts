@@ -107,3 +107,13 @@ export const getInvitationSiteParkingAvailable = async (
     throw error;
   }
 };
+
+// get invitation visitor type vehicles
+export const getInvitationVisitorTypeVehicles = async (): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/invitation-visitor-type/vehicles');
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};

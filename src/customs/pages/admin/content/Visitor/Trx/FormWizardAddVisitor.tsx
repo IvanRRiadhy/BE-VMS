@@ -5135,12 +5135,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    console.log('GROUP PARKING PARAMS:', {
-      siteId,
-      visitorTypeId: selectedVisitorType?.id,
-      visitorPeriodStart,
-      visitorPeriodEnd,
-    });
+  
     const fetchParkingAvailable = async () => {
       if (
         !siteId ||

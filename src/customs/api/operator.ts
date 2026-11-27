@@ -596,10 +596,29 @@ export const getValidateVisitorId = async (id: string): Promise<any> => {
 };
 
 // get validate visitor id and registered id
-export const getValidateVisitorIdAndRegisteredId = async (id: string, registeredId: string): Promise<any> => {
+export const getValidateVisitorIdAndRegisteredId = async (
+  id: string,
+  registeredId: string,
+): Promise<any> => {
   try {
     const response = await axiosInstance.get(
       `/operator-invitation/validate/visitor/${id}/registered-site/${registeredId}`,
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// update-invitation
+export const updateInvitationVisitor = async (id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(
+      `/operator-invitation/action/${id}/update-invitation`,
+      data,
       {
         headers: { Accept: 'application/json' },
       },

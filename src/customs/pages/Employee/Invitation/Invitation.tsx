@@ -247,9 +247,11 @@ const Content = () => {
   const totalFilteredRecords = tableTransaction?.pages[0]?.RecordsFiltered ?? 0;
   const totalRecords = tableTransaction?.pages[0]?.RecordsTotal ?? 0;
 
-  const { data: detailData, isLoading: groupDetailLoading } = useTransactionVisitorDetail(
-    selectedGroupId as string,
-  );
+  const {
+    data: detailData,
+    isLoading: groupDetailLoading,
+    refetch: refetchGroupDetail,
+  } = useTransactionVisitorDetail(selectedGroupId as string);
 
   const [loadedGroupId, setLoadedGroupId] = useState<string | null>(null);
 
@@ -961,6 +963,7 @@ const Content = () => {
                   handleExtend={handleOpenExtend}
                   handleViewDetail={handleViewDetail}
                   onHistoryApproval={() => setHistoryApprovalOpen(true)}
+                  onRefreshGroup={refetchGroupDetail}
                 />
                 {/* Detail From List */}
                 {/* {selectedVisitor && (

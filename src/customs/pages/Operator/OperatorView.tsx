@@ -30,6 +30,7 @@ import {
   getInvitationCode,
   getInvitationOperatorRelated,
   getValidateVisitorId,
+  updateInvitationVisitor,
   validateVisitor,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -3310,6 +3311,25 @@ const OperatorView = () => {
     }
   };
 
+  const handleEditVisitor = async (data: any) => {
+    try {
+      const visitorId = invitationCode?.[0]?.id;
+
+      if (!visitorId) return;
+
+      await updateInvitationVisitor(visitorId, data);
+
+      // Refresh data visitor
+      await fetchRelatedVisitorsByInvitationId(invitationId as any);
+
+      setOpenEnableEdit(false);
+
+    } catch (error: any) {
+      // console.error('Failed to update visitor:', error);
+      showSwal('error', error?.response?.data?.msg ?? 'Failed update data visitor')
+    }
+  };
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <Box
@@ -3561,9 +3581,7 @@ const OperatorView = () => {
           open={openEnableEdit}
           onClose={() => setOpenEnableEdit(false)}
           visitor={invitationCode?.[0]}
-          onSubmit={(data) => {
-            console.log('Edit visitor:', data);
-          }}
+          onSubmit={handleEditVisitor}
         />
 
         {/* Print */}

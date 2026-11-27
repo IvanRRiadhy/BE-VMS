@@ -1407,13 +1407,13 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   //   chipColor: 'secondary',
   //   href: '/employee/notification',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/employee/parking',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/employee/parking',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1491,13 +1491,13 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   chipColor: 'secondary',
   //   href: '/employee/notification',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/employee/parking',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/employee/parking',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1627,13 +1627,13 @@ export const SecurityMonitorNavListingData: ItemDataCustomNavListing[] = [
   //   chipColor: 'secondary',
   //   href: '/employee/notification',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Parking',
-  //   icon: IconCar,
-  //   chipColor: 'secondary',
-  //   href: '/employee/parking',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/employee/parking',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',

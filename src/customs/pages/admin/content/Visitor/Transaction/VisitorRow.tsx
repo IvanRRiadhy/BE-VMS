@@ -15,6 +15,7 @@ import {
   IconClock,
   IconDotsVertical,
   IconEye,
+  IconPencil,
   IconQrcode,
   IconTimeDuration0,
   IconTrash,
@@ -71,7 +72,8 @@ function VisitorRow({
   handleViewDetail,
   qrSelected,
   onQrSelect,
-  logoSrc
+  logoSrc,
+  handleEditVisitor
 }: {
   visitor: any;
   index: number;
@@ -83,6 +85,7 @@ function VisitorRow({
   qrSelected?: boolean;
   onQrSelect?: (checked: boolean) => void;
   logoSrc?: any;
+  handleEditVisitor?: any;
 }) {
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d', // hijau
@@ -341,6 +344,19 @@ function VisitorRow({
                 <IconEye size={20} />
                 Detail
               </MenuItem>
+              {isHost && (
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    handleEditVisitor?.(visitor);
+                  }}
+                  sx={{ gap: 1 }}
+                >
+                  <IconPencil size={20} />
+                  Edit Data
+                </MenuItem>
+              )}
+
               {/* {isAdmin && visitor.visitor_status !== 'Canceled' && (
                 <MenuItem
                   onClick={() => {
