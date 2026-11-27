@@ -468,19 +468,32 @@ export default function DnDOutsideCourier({
     return disabled;
   };
 
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
+
+
   const handleSelectSlot = useCallback(
     (slotInfo?: any) => {
-      console.log('==== HANDLE SELECT SLOT (ROBUST) ====');
-      console.log('slotInfo param:', slotInfo);
+
 
       // prefer slotInfo.start if looks valid
       let start = slotInfo?.start ?? dragSlotRef.current?.start;
       let end = slotInfo?.end ?? dragSlotRef.current?.end;
 
-      console.log('initial start/end cand:', {
-        start: start ? dayjs(start).format('YYYY-MM-DD HH:mm') : null,
-        end: end ? dayjs(end).format('YYYY-MM-DD HH:mm') : null,
-      });
+
 
       const looksSuspicious =
         start &&
@@ -539,7 +552,7 @@ export default function DnDOutsideCourier({
       updateVisitorPeriod(start, end);
 
       setSelectedEvent({
-        id: crypto.randomUUID(),
+        id: generateUUIDv4(),
         start,
         end,
         title: '',
@@ -848,15 +861,15 @@ export default function DnDOutsideCourier({
 
   const handlePDFUploadFor =
     (formIndex: number, onChange: (fieldKey: string, value: any, idx: number) => void) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      const path = await uploadFileToCDN(file);
-      if (path) onChange('answer_file', path, formIndex);
+        const path = await uploadFileToCDN(file);
+        if (path) onChange('answer_file', path, formIndex);
 
-      e.target.value = ''; // reset input
-    };
+        e.target.value = ''; // reset input
+      };
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
@@ -1103,12 +1116,12 @@ export default function DnDOutsideCourier({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                          ? ''
-                          : item.remarks === 'organization'
-                          ? ''
-                          : item.remarks === 'indentity_id'
-                          ? ''
-                          : ''
+                            ? ''
+                            : item.remarks === 'organization'
+                              ? ''
+                              : item.remarks === 'indentity_id'
+                                ? ''
+                                : ''
                       }
                       fullWidth
                     />
@@ -1272,8 +1285,8 @@ export default function DnDOutsideCourier({
                         const answerArray = Array.isArray(item.answer_text)
                           ? item.answer_text
                           : item.answer_text
-                          ? [String(item.answer_text)]
-                          : [];
+                            ? [String(item.answer_text)]
+                            : [];
 
                         return (
                           <FormControlLabel
@@ -1348,7 +1361,7 @@ export default function DnDOutsideCourier({
                           pointerEvents: 'auto',
                           opacity: 1,
                         }}
-                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                      // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                       >
                         <Box
                           sx={{
@@ -2259,9 +2272,9 @@ export default function DnDOutsideCourier({
                 minDateTime={
                   field.remarks === 'visitor_period_end'
                     ? (() => {
-                        const start = field.__pairStartDatetime;
-                        return start ? dayjs.utc(start).local() : undefined;
-                      })()
+                      const start = field.__pairStartDatetime;
+                      return start ? dayjs.utc(start).local() : undefined;
+                    })()
                     : undefined
                 }
                 onChange={(newValue) => {

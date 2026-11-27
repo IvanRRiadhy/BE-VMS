@@ -307,28 +307,28 @@ const Content = () => {
     // },
     ...(!isOperatorAdmin
       ? [
-          {
-            title: t('add') + ' Invitation',
-            icon: IconUserPlus,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          {
-            title: t('shareLink'),
-            icon: IconLink,
-            subTitle: iconAdd,
-            subTitleSetting: 'image',
-            color: 'none',
-          },
-          // {
-          //   title: t('add') + ' Pre Registration',
-          //   icon: IconUserPlus,
-          //   subTitle: iconAdd,
-          //   subTitleSetting: 'image',
-          //   color: 'none',
-          // },
-        ]
+        {
+          title: t('add') + ' Invitation',
+          icon: IconUserPlus,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        {
+          title: t('shareLink'),
+          icon: IconLink,
+          subTitle: iconAdd,
+          subTitleSetting: 'image',
+          color: 'none',
+        },
+        // {
+        //   title: t('add') + ' Pre Registration',
+        //   icon: IconUserPlus,
+        //   subTitle: iconAdd,
+        //   subTitleSetting: 'image',
+        //   color: 'none',
+        // },
+      ]
       : []),
   ];
 
@@ -512,6 +512,22 @@ const Content = () => {
     );
   });
 
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
+
   const handleDuplicate = async (group: any) => {
     try {
       const res = await getVisitorTransactionByIds(group.id);
@@ -534,7 +550,7 @@ const Content = () => {
       if (isGroup) {
         setGroupVisitors([
           {
-            id: crypto.randomUUID(),
+            id: generateUUIDv4(),
             group_name: visitors[0]?.group_name || '',
             group_code: visitors[0]?.visitor_code || '',
             // data_visitor: [],
@@ -816,7 +832,7 @@ const Content = () => {
         search={setHostSearch}
         isLoadingEmployee={isLoadingEmployee}
         duplicateData={duplicateData}
-        // isAddTransaction={isAddTransaction}
+      // isAddTransaction={isAddTransaction}
       />
 
       <RegisteredSiteDialog

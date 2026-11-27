@@ -112,7 +112,8 @@ const SortableRow = React.memo(
       background: isDragging ? '#f0f0f0' : undefined,
     };
 
-    const isDropdown = selectList.length > 0;
+    // const isDropdown = selectList.length > 0;
+    const isDropdown = ['access', 'parking', 'tracking'].includes(sectionKey);
 
     return (
       <TableRow ref={setNodeRef} style={style} {...attributes}>
@@ -122,7 +123,7 @@ const SortableRow = React.memo(
         </TableCell>
 
         {/* Name / Dropdown */}
-        <TableCell>
+        {/* <TableCell>
           {isDropdown ? (
             <Autocomplete
               fullWidth
@@ -138,9 +139,9 @@ const SortableRow = React.memo(
                     selectedIndex !== index &&
                     String(
                       selected[fieldName] ||
-                        selected.trk_ble_card_access_id ||
-                        selected.prk_area_parking_id ||
-                        selected.access_control_id,
+                      selected.trk_ble_card_access_id ||
+                      selected.prk_area_parking_id ||
+                      selected.access_control_id,
                     ).toLowerCase() === String(option.id).toLowerCase(),
                 )
               }
@@ -153,10 +154,10 @@ const SortableRow = React.memo(
                 ) ||
                 (item[fieldName]
                   ? {
-                      id: item[fieldName],
-                      masked_area_name: item.name,
-                      area_name: item.name,
-                    }
+                    id: item[fieldName],
+                    masked_area_name: item.name,
+                    area_name: item.name,
+                  }
                   : null)
               }
               onChange={(_, newValue) => {
@@ -177,6 +178,85 @@ const SortableRow = React.memo(
               }}
               renderInput={(params) => (
                 <CustomTextField {...params} placeholder={`Select ${sectionKey}`} />
+              )}
+              ListboxProps={{
+                style: {
+                  maxHeight: 250,
+                  overflow: 'auto',
+                },
+              }}
+            />
+          ) : (
+            <TextField
+              fullWidth
+              size="small"
+              value={item.name || ''}
+              onChange={(e) => onChange(sectionKey, index, 'name', e.target.value)}
+            />
+          )}
+        </TableCell> */}
+
+        <TableCell>
+          {isDropdown ? (
+            <Autocomplete
+              fullWidth
+              size="small"
+              options={selectList ?? []}
+              getOptionLabel={(option: any) =>
+                option.area_name || option.masked_area_name || option.name || ''
+              }
+              getOptionDisabled={(option: any) =>
+                items.some(
+                  (selected: any, selectedIndex: number) =>
+                    selectedIndex !== index &&
+                    String(
+                      selected[fieldName] ||
+                      selected.trk_ble_card_access_id ||
+                      selected.prk_area_parking_id ||
+                      selected.access_control_id,
+                    ).toLowerCase() === String(option.id).toLowerCase(),
+                )
+              }
+              value={
+                selectList.find(
+                  (x: any) =>
+                    String(x.id) === String(item[fieldName]) ||
+                    String(x.id) === String(item.trk_ble_card_access_id) ||
+                    String(x.id) === String(item.prk_area_parking_id),
+                ) ||
+                (item[fieldName]
+                  ? {
+                    id: item[fieldName],
+                    masked_area_name: item.name,
+                    area_name: item.name,
+                  }
+                  : null)
+              }
+              onChange={(_, newValue) => {
+                const selectedId =
+                  newValue?.trk_ble_card_access_id ||
+                  newValue?.prk_area_parking_id ||
+                  newValue?.id ||
+                  '';
+
+                onChange(sectionKey, index, fieldName, selectedId);
+
+                if (newValue) {
+                  const label =
+                    newValue.area_name ||
+                    newValue.masked_area_name ||
+                    newValue.name ||
+                    '';
+
+                  onChange(sectionKey, index, 'name', label);
+                }
+              }}
+              noOptionsText=""
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  placeholder={`Select ${sectionKey}`}
+                />
               )}
               ListboxProps={{
                 style: {

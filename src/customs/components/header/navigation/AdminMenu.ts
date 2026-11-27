@@ -73,7 +73,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconBuildingSkyscraper,
         href: '/admin/manage/companys-deparments',
       },
-
       {
         id: uniqueId(),
         title: 'Enrollment',
@@ -113,12 +112,45 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
           // },
         ],
       },
+
       {
         id: uniqueId(),
-        title: 'navigation.site_space',
-        icon: IconSitemap,
-        href: '/admin/manage/site-space',
+        title: 'Site & Visitor Type',
+        icon: IconPackageExport,
+        href: '/admin/manage/configuration',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'navigation.access_control',
+            icon: IconAccessible,
+            href: '/admin/manage/access-control',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.custom_field',
+            icon: IconSettings,
+            href: '/admin/manage/custom-field',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.site_space',
+            icon: IconSitemap,
+            href: '/admin/manage/site-space',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.visitor_type',
+            icon: IconUsersGroup,
+            href: '/admin/manage/visitor-type',
+          },
+        ],
       },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.site_space',
+      //   icon: IconSitemap,
+      //   href: '/admin/manage/site-space',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.card',
@@ -131,12 +163,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   icon: IconCalendarCheck,
       //   href: '/admin/manage/time-access',
       // },
-      {
-        id: uniqueId(),
-        title: 'navigation.visitor_type',
-        icon: IconUsersGroup,
-        href: '/admin/manage/visitor-type',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.visitor_type',
+      //   icon: IconUsersGroup,
+      //   href: '/admin/manage/visitor-type',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.document',
@@ -182,18 +214,18 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   icon: IconMailFilled,
       //   href: '/admin/manage/setting-smtp',
       // },
-      {
-        id: uniqueId(),
-        title: 'navigation.access_control',
-        icon: IconAccessible,
-        href: '/admin/manage/access-control',
-      },
-      {
-        id: uniqueId(),
-        title: 'navigation.custom_field',
-        icon: IconSettings,
-        href: '/admin/manage/custom-field',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.access_control',
+      //   icon: IconAccessible,
+      //   href: '/admin/manage/access-control',
+      // },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.custom_field',
+      //   icon: IconSettings,
+      //   href: '/admin/manage/custom-field',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.visitor_role',
@@ -502,11 +534,44 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
           // },
         ],
       },
+
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.site_space',
+      //   icon: IconSitemap,
+      //   href: '/admin/manage/site-space',
+      // },
       {
         id: uniqueId(),
-        title: 'navigation.site_space',
-        icon: IconSitemap,
-        href: '/admin/manage/site-space',
+        title: 'Site & Visitor Type',
+        icon: IconPackageExport,
+        href: '/admin/manage/configuration',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'navigation.access_control',
+            icon: IconAccessible,
+            href: '/admin/manage/access-control',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.custom_field',
+            icon: IconSettings,
+            href: '/admin/manage/custom-field',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.site_space',
+            icon: IconSitemap,
+            href: '/admin/manage/site-space',
+          },
+          {
+            id: uniqueId(),
+            title: 'navigation.visitor_type',
+            icon: IconUsersGroup,
+            href: '/admin/manage/visitor-type',
+          },
+        ],
       },
       {
         id: uniqueId(),
@@ -520,12 +585,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       //   icon: IconCalendarCheck,
       //   href: '/admin/manage/time-access',
       // },
-      {
-        id: uniqueId(),
-        title: 'navigation.visitor_type',
-        icon: IconUsersGroup,
-        href: '/admin/manage/visitor-type',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.visitor_type',
+      //   icon: IconUsersGroup,
+      //   href: '/admin/manage/visitor-type',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.document',
@@ -570,18 +635,18 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       //   icon: IconMailFilled,
       //   href: '/admin/manage/setting-smtp',
       // },
-      {
-        id: uniqueId(),
-        title: 'navigation.access_control',
-        icon: IconAccessible,
-        href: '/admin/manage/access-control',
-      },
-      {
-        id: uniqueId(),
-        title: 'navigation.custom_field',
-        icon: IconSettings,
-        href: '/admin/manage/custom-field',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.access_control',
+      //   icon: IconAccessible,
+      //   href: '/admin/manage/access-control',
+      // },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.custom_field',
+      //   icon: IconSettings,
+      //   href: '/admin/manage/custom-field',
+      // },
       // {
       //   id: uniqueId(),
       //   title: 'navigation.visitor_role',

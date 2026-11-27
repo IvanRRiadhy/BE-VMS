@@ -1754,9 +1754,9 @@ const GuestInformationStepper = () => {
                       inputProps={
                         (f.remarks || '').toLowerCase() === 'phone'
                           ? {
-                              inputMode: 'numeric',
-                              pattern: '[0-9]*',
-                            }
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*',
+                          }
                           : undefined
                       }
                       placeholder={
@@ -1831,7 +1831,7 @@ const GuestInformationStepper = () => {
                   mandatory: true,
                   remarks: f.remarks,
                   custom_field_id:
-                    fieldDef.custom_field_id ?? f.custom_field_id ?? crypto.randomUUID(),
+                    fieldDef.custom_field_id ?? f.custom_field_id,
                   multiple_option_fields: fieldDef.multiple_option_fields ?? [],
                   visitor_form_type: 1,
                 };
@@ -1926,7 +1926,7 @@ const GuestInformationStepper = () => {
             justifyContent="center"
             alignItems="center"
             sx={{ width: '100%' }}
-            // sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
+          // sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
           >
             <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
               <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>

@@ -4,6 +4,7 @@ import {
   CircularProgress,
   IconButton,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -198,11 +199,20 @@ const GroupVisitorTable = ({
               </TableRow>
 
               {groupDetailLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 5}).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    {Array.from({ length: 10 }).map((_, colIndex) => (
+                      <TableCell key={colIndex}>
+                        <Skeleton
+                          variant="text"
+                          animation="wave"
+                          height={28}
+                          width={colIndex === 0 ? '40%' : '80%'}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : groupVisitors.length > 0 ? (
                 groupVisitors.map((visitor, index) => (
                   <VisitorRow key={visitor.id} visitor={visitor} index={index} />

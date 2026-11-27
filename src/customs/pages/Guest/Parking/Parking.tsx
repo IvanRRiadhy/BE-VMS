@@ -15,11 +15,9 @@ import {
 
 import {
   IconCar,
-  IconHistory,
-  IconShieldCheck,
-  IconChevronDown,
   IconChevronUp,
   IconX,
+  IconMap,
 } from '@tabler/icons-react';
 
 import PageContainer from 'src/components/container/PageContainer';
@@ -29,11 +27,44 @@ import { openParkingBlocker } from 'src/customs/api/visitor';
 
 const Parking = () => {
   const [showInfo, setShowInfo] = useState(true);
-  const publicUrl =
-    'https://parking-app.app.bio-experience.com/Maps/Public?blockSlotUid=d46a6a89-2c3f-4046-ac65-42af27b7287d';
+  // const publicUrl =
+  //   'https://parking-app.app.bio-experience.com/Maps/Public?blockSlotUid=d46a6a89-2c3f-4046-ac65-42af27b7287d';
 
   const [parkingData, setParkingData] = useState<any>(null);
-  const iframeUrl = parkingData?.parking_map ?? publicUrl;
+  const [viewMode, setViewMode] = useState<'map' | 'camera'>('map');
+
+  // const iframeUrl = React.useMemo(() => {
+  //   const url = new URL(parkingData?.parking_map || publicUrl);
+
+  //   if (viewMode === 'camera') {
+  //     url.searchParams.set('mode', 'camera');
+  //   } else {
+  //     url.searchParams.delete('mode');
+  //   }
+
+  //   return url.toString();
+  // }, [parkingData?.parking_map, viewMode]);
+
+  const iframeUrl = React.useMemo(() => {
+    const parkingMap = parkingData?.parking_map?.trim();
+
+    if (!parkingMap) return null;
+
+    try {
+      const url = new URL(parkingMap);
+
+      if (viewMode === 'camera') {
+        url.searchParams.set('mode', 'camera');
+      } else {
+        url.searchParams.delete('mode');
+      }
+
+      return url.toString();
+    } catch (error) {
+      console.error('Invalid parking map URL:', parkingMap, error);
+      return null;
+    }
+  }, [parkingData?.parking_map, viewMode]);
 
   useEffect(() => {
     const storedData = sessionStorage.getItem('guest_parking_data');
@@ -93,6 +124,7 @@ const Parking = () => {
           overflow: 'hidden',
         }}
       >
+
         {/* Public iFrame */}
         <Box
           sx={{
@@ -102,16 +134,42 @@ const Parking = () => {
             transition: 'bottom 0.3s ease',
           }}
         >
-          <iframe
-            src={iframeUrl}
-            title="Public Parking"
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-            }}
-            allow="fullscreen"
-          />
+
+          {iframeUrl ? (
+            <iframe
+              src={iframeUrl}
+              title="Public Parking"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+              allow="fullscreen"
+            />
+          ) : (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                color: 'text.secondary',
+                p: 3,
+                textAlign: 'center',
+              }}
+            >
+              <IconCar size={48} />
+              <Typography variant="h6" fontWeight={700}>
+                Parking Map Unavailable
+              </Typography>
+              <Typography variant="body2">
+                Parking map is not available for this visitor.
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Information Panel */}
@@ -149,39 +207,74 @@ const Parking = () => {
           >
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               {/* Header */}
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 2,
-                      bgcolor: 'primary.light',
-                      color: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <IconCar size={24} />
-                  </Box>
 
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
-                      {t('parking.information')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('parking.registeredParkingDetails')}
-                    </Typography>
-                  </Box>
+              {/* Header */}
+              <Stack spacing={0.5}>
+                {/* Baris atas: Map & Camera */}
+                <Stack
+                  direction="row"
+                  justifyContent="flex-end"
+                  spacing={0.5}
+                >
+                  <Button
+                    size="small"
+                    variant={viewMode === 'map' ? 'contained' : 'outlined'}
+                    startIcon={<IconMap size={16} />}
+                    onClick={() => setViewMode('map')}
+                  >
+                    Top View
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant={viewMode === 'camera' ? 'contained' : 'outlined'}
+                    startIcon={<IconCar size={16} />}
+                    onClick={() => setViewMode('camera')}
+                  >
+                    Point Of View
+                  </Button>
                 </Stack>
 
-                <Tooltip title={t('parking.hideInformation')}>
-                  <IconButton onClick={() => setShowInfo(false)}>
-                    <IconX size={20} />
-                  </IconButton>
-                </Tooltip>
+                {/* Baris bawah: Title & Close */}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 2,
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <IconCar size={24} />
+                    </Box>
+
+                    <Box>
+                      <Typography variant="h6" fontWeight={700}>
+                        {t('parking.information')}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('parking.registeredParkingDetails')}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Tooltip title={t('parking.hideInformation')}>
+                    <IconButton onClick={() => setShowInfo(false)}>
+                      <IconX size={20} />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
               </Stack>
+
 
               {/* Vehicle Information */}
               <Box

@@ -63,7 +63,6 @@ import CreateLinkDialog from 'src/customs/pages/Employee/ShareLink/components/Cr
 import DetailLinkDialog from '../../admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { extend } from 'lodash';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -173,6 +172,53 @@ const DashboardEmployee = () => {
   const totalFilteredRecords = shareLinkDialogData?.RecordsFiltered ?? 0;
   const [approvalStatus, setApprovalStatus] = useState<string>('');
 
+
+  const {
+    data: todayVisitorsRes,
+    isLoading: loadingTodayVisitors,
+    refetch: refetchTodayVisitors,
+  } = useQuery({
+    queryKey: ['today-visitors'],
+    queryFn: () =>
+      getTodayVisitors({
+        today: 'true',
+        start: 0,
+        length: 5,
+        sortDir: 'desc',
+      }),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // const {
+  //   data: currentlyVisitingRes,
+  //   isLoading: loadingCurrentlyVisiting,
+  //   refetch: refetchCurrentlyVisiting,
+  // } = useQuery({
+  //   queryKey: ['currently-visiting', startDate, endDate],
+  //   queryFn: () =>
+  //     getCurrentlyVisiting({
+  //       today: 'true',
+  //       // startDate: formatLocalDate(startDate),
+  //       // endDate: formatLocalDate(endDate),
+  //       start: 0,
+  //       length: 5,
+  //       sort_dir: 'desc',
+  //     }),
+  // });
+
+  const invitationMonitoringData =
+    todayVisitorsRes?.collection?.slice(0, 5).map((item: any) => ({
+      id: item.id,
+      name: item.visitor_name,
+      email: item.visitor_email,
+      visitor_period_start: item.visitor_period_start,
+      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+      host: item.host_name ?? '-',
+      site: item.site_place_name,
+      visitor_status: item.visitor_status,
+    })) ?? [];
+
   const {
     data: approvalRes,
     refetch: refetchApproval,
@@ -215,52 +261,6 @@ const DashboardEmployee = () => {
       }),
     ) || [];
 
-  const {
-    data: todayVisitorsRes,
-    isLoading: loadingTodayVisitors,
-    refetch: refetchTodayVisitors,
-  } = useQuery({
-    queryKey: ['today-visitors', startDate, endDate],
-    queryFn: () =>
-      getTodayVisitors({
-        today: 'true',
-        // today: 'false',
-        // startDate: formatLocalDate(startDate),
-        // endDate: formatLocalDate(endDate),
-        start: 0,
-        length: 5,
-        sortDir: 'desc',
-      }),
-  });
-
-  // const {
-  //   data: currentlyVisitingRes,
-  //   isLoading: loadingCurrentlyVisiting,
-  //   refetch: refetchCurrentlyVisiting,
-  // } = useQuery({
-  //   queryKey: ['currently-visiting', startDate, endDate],
-  //   queryFn: () =>
-  //     getCurrentlyVisiting({
-  //       today: 'true',
-  //       // startDate: formatLocalDate(startDate),
-  //       // endDate: formatLocalDate(endDate),
-  //       start: 0,
-  //       length: 5,
-  //       sort_dir: 'desc',
-  //     }),
-  // });
-
-  const invitationMonitoringData =
-    todayVisitorsRes?.collection?.slice(0, 5).map((item: any) => ({
-      id: item.id,
-      name: item.visitor_name,
-      email: item.visitor_email,
-      visitor_period_start: item.visitor_period_start,
-      visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-      host: item.host_name ?? '-',
-      site: item.site_place_name,
-      visitor_status: item.visitor_status,
-    })) ?? [];
 
   // const currentlyVisiting =
   //   currentlyVisitingRes?.collection?.slice(0, 5).map((item: any) => ({
